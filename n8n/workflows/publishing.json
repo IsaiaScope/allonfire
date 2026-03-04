@@ -1,0 +1,11 @@
+{
+  "name": "AllOnFire — Publishing",
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Publishes scheduled posts every hour. Queries posts with status=SCHEDULED and scheduledAt<=now(), calls platform APIs (LinkedIn, Twitter/X, YouTube, TikTok), updates status to PUBLISHED or FAILED with retry logic (3 attempts)."
+  }
+}

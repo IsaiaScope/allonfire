@@ -1,0 +1,66 @@
+{
+  "name": "allonfire",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.1.1",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "ultracite check",
+    "lint:fix": "ultracite fix",
+    "check-types": "turbo run check-types",
+    "test": "turbo run test",
+    "pre-commit": "pnpm lint && pnpm check-types && lint-staged --allow-empty",
+    "commit-msg": "npx --no -- commitlint --edit",
+    "prepare": "husky",
+    "db": "pnpm --filter @allonfire/database db:push",
+    "db:generate": "pnpm --filter @allonfire/database db:generate",
+    "docker:up": "docker compose -f docker/docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db",
+    "dev:full": "pnpm dev:setup && pnpm dev",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/node": "^22.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "turbo": "^2.5.3",
+    "typescript": "~5.8.2",
+    "ultracite": "7.2.4"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "scope-case": [
+        2,
+        "always",
+        [
+          "lower-case",
+          "upper-case"
+        ]
+      ],
+      "scope-empty": [
+        2,
+        "never"
+      ]
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "biome check --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "biome format --write"
+    ]
+  },
+  "volta": {
+    "node": "22.14.0"
+  }
+}

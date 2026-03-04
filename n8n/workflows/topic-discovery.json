@@ -1,0 +1,11 @@
+{
+  "name": "AllOnFire — Topic Discovery",
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Discovers trending programming/AI topics from RSS feeds and APIs every 6-12h. Sources: Hacker News, Dev.to, Lobsters, Reddit, YouTube channels, Twitter/X accounts. Deduplicates, auto-categorizes (NEWS, MEME_WORTHY, LEARNING, TOOL_RELEASE, AI_UPDATE), and stores in PostgreSQL."
+  }
+}

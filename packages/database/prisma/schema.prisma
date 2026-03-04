@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Topics ============
+
+model Topic {
+  id           String        @id @default(cuid())
+  title        String
+  summary      String
+  sourceUrl    String
+  sourceName   String
+  category     TopicCategory
+  status       TopicStatus   @default(DISCOVERED)
+  rawData      Json?
+  discoveredAt DateTime      @default(now())
+  posts        Post[]
+}
+
+// ============ Posts ============
+
+model Post {
+  id             String      @id @default(cuid())
+  topicId        String?
+  topic          Topic?      @relation(fields: [topicId], references: [id])
+  type           PostType
+  platform       Platform
+  status         PostStatus  @default(DRAFT)
+  content        String
+  mediaUrl       String?
+  mediaType      MediaType?
+  scheduledAt    DateTime?
+  publishedAt    DateTime?
+  platformPostId String?
+  errorMessage   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+// ============ Auth ============
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
+
+// BetterAuth creates its own session/account/verification tables via migration
+
+// ============ Enums ============
+
+enum TopicCategory {
+  NEWS
+  MEME_WORTHY
+  LEARNING
+  TOOL_RELEASE
+  AI_UPDATE
+}
+
+enum TopicStatus {
+  DISCOVERED
+  SELECTED
+  GENERATING
+  GENERATED
+  ARCHIVED
+}
+
+enum PostType {
+  MEME
+  NEWS
+  LEARNING
+}
+
+enum PostStatus {
+  DRAFT
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum Platform {
+  LINKEDIN
+  TWITTER
+  YOUTUBE
+  TIKTOK
+}
+
+enum MediaType {
+  IMAGE
+  CAROUSEL
+  VIDEO_SCRIPT
+}

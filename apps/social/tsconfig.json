@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/config/typescript/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@allonfire/ui/*": ["../../packages/ui/src/*"],
+      "@allonfire/database": ["../../packages/database/src/index.ts"]
+    },
+    "allowJs": true
+  },
+  "include": ["src", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

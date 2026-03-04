@@ -1,0 +1,11 @@
+{
+  "name": "AllOnFire — Notifications",
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Sends Telegram notifications: new topic batches discovered, publishing failures, daily summary of published posts."
+  }
+}
