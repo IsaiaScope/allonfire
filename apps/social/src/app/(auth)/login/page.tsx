@@ -1,5 +1,16 @@
 "use client";
 
+import { Button } from "@allonfire/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@allonfire/ui/components/card";
+import { Input } from "@allonfire/ui/components/input";
+import { Label } from "@allonfire/ui/components/label";
+import { Flame } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
@@ -31,55 +42,52 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-sm space-y-6 p-8">
-        <div className="space-y-2 text-center">
-          <h1 className="font-bold text-2xl tracking-tight">AllOnFire</h1>
-          <p className="text-muted-foreground text-sm">
-            Sign in to your dashboard
-          </p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <label className="font-medium text-sm" htmlFor="email">
-              Email
-            </label>
-            <input
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              id="email"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              type="email"
-              value={email}
-            />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Flame className="size-6" />
           </div>
+          <CardTitle className="text-xl tracking-tight">AllOnFire</CardTitle>
+          <CardDescription>Sign in to your dashboard</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@allonfire.com"
+                required
+                type="email"
+                value={email}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <label className="font-medium text-sm" htmlFor="password">
-              Password
-            </label>
-            <input
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              id="password"
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </div>
 
-          {error && <p className="text-destructive text-sm">{error}</p>}
+            {error && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
+                {error}
+              </p>
+            )}
 
-          <button
-            className="w-full rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50"
-            disabled={loading}
-            type="submit"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-      </div>
+            <Button className="w-full" disabled={loading} type="submit">
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

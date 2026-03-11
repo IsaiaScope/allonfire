@@ -1,15 +1,12 @@
+import { prisma } from "@allonfire/database";
+import { ScrollArea } from "@allonfire/ui/components/scroll-area";
+import { Separator } from "@allonfire/ui/components/separator";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { SidebarLogo, SidebarNav } from "@/components/sidebar-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import { auth } from "@/lib/auth";
-
-const navItems = [
-  { href: "/", label: "Overview" },
-  { href: "/discover", label: "Discover" },
-  { href: "/generate", label: "Generate" },
-  { href: "/drafts", label: "Drafts" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/settings", label: "Settings" },
-];
 
 export default async function DashboardLayout({
   children,
@@ -24,28 +21,35 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
   return (
-    <div className="flex min-h-screen">
-      <aside className="w-64 border-sidebar-border border-r bg-sidebar-background p-4">
-        <div className="mb-8">
-          <h2 className="font-bold text-lg">AllOnFire</h2>
-          <p className="text-sidebar-foreground/60 text-xs">
-            {session.user.email}
-          </p>
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <aside className="flex w-60 flex-col border-sidebar-border border-r bg-sidebar">
+        <div className="p-4">
+          <SidebarLogo />
         </div>
-        <nav className="space-y-1">
-          {navItems.map((item) => (
-            <a
-              className="block rounded-md px-3 py-2 text-sidebar-foreground text-sm hover:bg-sidebar-accent"
-              href={item.href}
-              key={item.href}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
+        <Separator className="bg-sidebar-border" />
+        <ScrollArea className="flex-1 py-4">
+          <SidebarNav role={user.role} />
+        </ScrollArea>
+        <Separator className="bg-sidebar-border" />
+        <div className="p-3">
+          <div className="flex items-center justify-between">
+            <UserMenu email={session.user.email} name={session.user.name} />
+            <ThemeToggle />
+          </div>
+        </div>
       </aside>
-      <main className="flex-1 p-8">{children}</main>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-6xl p-8">{children}</div>
+      </main>
     </div>
   );
 }
