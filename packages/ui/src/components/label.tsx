@@ -1,15 +1,12 @@
 "use client";
 
 import { cn } from "@allonfire/ui/lib/utils";
-import { Field } from "@base-ui/react/field";
 import type * as React from "react";
 
-function Label({
-  className,
-  ...props
-}: React.ComponentProps<typeof Field.Label>) {
+function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
-    <Field.Label
+    // biome-ignore lint/a11y/noLabelWithoutControl: reusable primitive; consumers provide htmlFor or wrap inputs
+    <label
       className={cn(
         "flex select-none items-center gap-2 font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
         className

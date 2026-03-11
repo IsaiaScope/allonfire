@@ -1,51 +1,88 @@
-import { prisma } from "@allonfire/database";
+import { getDrafts } from "@allonfire/database";
+import { Badge } from "@allonfire/ui/components/badge";
+import { Button } from "@allonfire/ui/components/button";
+import { Card, CardContent, CardHeader } from "@allonfire/ui/components/card";
+import { FileText, Pencil } from "lucide-react";
+import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
+import {
+  ApprovePostButton,
+  RejectPostButton,
+  SchedulePostButton,
+} from "@/components/post-actions";
+
+const platformIcon: Record<string, string> = {
+  LINKEDIN: "in",
+  TWITTER: "\u{1D54F}",
+  YOUTUBE: "\u25B6",
+  TIKTOK: "\u266A",
+};
 
 export default async function DraftsPage() {
-  const drafts = await prisma.post.findMany({
-    where: { status: "DRAFT" },
-    orderBy: { createdAt: "desc" },
-    include: { topic: true },
-  });
+  const drafts = await getDrafts();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-bold text-2xl">Draft Posts</h1>
-        <p className="text-muted-foreground text-sm">
-          {drafts.length} drafts ready for review
-        </p>
+        <div>
+          <h1 className="font-bold text-2xl tracking-tight">Drafts</h1>
+          <p className="text-muted-foreground text-sm">
+            Review and approve generated content.
+          </p>
+        </div>
+        {drafts.length > 0 && (
+          <Badge variant="secondary">
+            {drafts.length} draft{drafts.length !== 1 ? "s" : ""}
+          </Badge>
+        )}
       </div>
 
       {drafts.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">
-          No draft posts. Generate content from selected topics first.
-        </p>
+        <EmptyState
+          description="Generate content from selected topics first. Drafts will appear here for review."
+          icon={FileText}
+          title="No drafts to review"
+        />
       ) : (
         <div className="space-y-3">
           {drafts.map((post) => (
-            <div className="rounded-lg border bg-card p-4" key={post.id}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex gap-2">
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs">
-                      {post.platform}
-                    </span>
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
-                      {post.type}
-                    </span>
-                  </div>
+            <Card key={post.id}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-6 items-center justify-center rounded bg-primary/10 font-bold text-primary text-xs">
+                    {platformIcon[post.platform] ?? post.platform[0]}
+                  </span>
+                  <Badge className="text-xs" variant="outline">
+                    {post.platform}
+                  </Badge>
+                  <Badge className="text-xs" variant="secondary">
+                    {post.type}
+                  </Badge>
                   {post.topic && (
-                    <p className="text-muted-foreground text-xs">
-                      Topic: {post.topic.title}
-                    </p>
+                    <span className="ml-auto text-muted-foreground text-xs">
+                      {post.topic.title}
+                    </span>
                   )}
-                  <p className="whitespace-pre-wrap text-sm">
-                    {post.content.slice(0, 300)}
-                    {post.content.length > 300 ? "..." : ""}
-                  </p>
                 </div>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm leading-relaxed">
+                  {post.content.slice(0, 400)}
+                  {post.content.length > 400 ? "..." : ""}
+                </p>
+                <div className="flex gap-2">
+                  <ApprovePostButton postId={post.id} />
+                  <SchedulePostButton postId={post.id} />
+                  <Button asChild size="xs" variant="outline">
+                    <Link href={`/drafts/${post.id}`}>
+                      <Pencil className="size-3" />
+                      Edit
+                    </Link>
+                  </Button>
+                  <RejectPostButton postId={post.id} />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
