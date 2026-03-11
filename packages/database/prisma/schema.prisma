@@ -41,18 +41,90 @@ model Post {
   errorMessage   String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+
+  @@index([status, scheduledAt])
 }
 
 // ============ Auth ============
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
+enum Role {
+  ADMIN
+  USER
 }
 
-// BetterAuth creates its own session/account/verification tables via migration
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+// ============ Settings ============
+
+model Settings {
+  id                  String   @id @default("singleton")
+  webhookDiscoveryUrl String?
+  webhookPublishUrl   String?
+  webhookNotifyUrl    String?
+  anthropicApiKey     String?
+  updatedAt           DateTime @updatedAt
+}
+
+// ============ Webhook Logging ============
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  endpoint  String
+  method    String
+  payload   Json?
+  response  Json?
+  status    Int
+  createdAt DateTime @default(now())
+}
 
 // ============ Enums ============
 

@@ -5,18 +5,22 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./env": "./src/env.ts",
     "./generated/prisma": "./generated/prisma/index.ts"
   },
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx src/seed.ts",
+    "db:seed": "tsx --env-file=.env src/seed.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@t3-oss/env-core": "^0.13.10",
+    "better-auth": "^1.2.0",
     "prisma": "^6.19.0",
-    "@prisma/client": "^6.19.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
