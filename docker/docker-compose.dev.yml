@@ -1,3 +1,5 @@
+name: allonfire
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,24 +17,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.dev
-    restart: unless-stopped
-    ports:
-      - "3100:3100"
-    environment:
-      DATABASE_URL: postgresql://allonfire:allonfire_dev@postgres:5432/allonfire
-      BETTER_AUTH_SECRET: dev-secret-change-in-production
-      BETTER_AUTH_URL: http://localhost:3100
-    volumes:
-      - ../apps/social/src:/app/apps/social/src
-      - ../packages:/app/packages
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   adminer:
     image: adminer

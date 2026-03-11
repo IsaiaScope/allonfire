@@ -1,47 +1,41 @@
-# ── Stage 1: Install dependencies ──────────────────────────────
-FROM node:22-alpine AS deps
+# syntax=docker/dockerfile:1
+ARG NODE_VERSION=22
 
+# Stage 1: Prune monorepo to only the target app's dependency tree
+FROM node:${NODE_VERSION}-alpine AS pruner
 RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
+COPY . .
+ARG APP_NAME
+RUN npx turbo prune @allonfire/${APP_NAME} --docker
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json ./
-COPY apps/social/package.json apps/social/
-COPY packages/database/package.json packages/database/
-COPY packages/ui/package.json packages/ui/
-COPY packages/config/package.json packages/config/
-COPY packages/content-generator/package.json packages/content-generator/
-
+# Stage 2: Install dependencies (cached unless package.jsons change)
+FROM node:${NODE_VERSION}-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
+WORKDIR /app
+COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
-# ── Stage 2: Build application ─────────────────────────────────
-FROM node:22-alpine AS builder
-
+# Stage 3: Build the app
+FROM node:${NODE_VERSION}-alpine AS builder
 RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
+COPY --from=deps /app/ .
+COPY --from=pruner /app/out/full/ .
+ARG APP_NAME
+RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
+RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 
-COPY --from=deps /app/ ./
-COPY . .
-
-# Generate Prisma client and build Next.js
-RUN pnpm --filter @allonfire/database db:generate
-RUN pnpm --filter @allonfire/social build
-
-# ── Stage 3: Production runner ─────────────────────────────────
-FROM node:22-alpine AS runner
-
+# Stage 4: Production runner (Next.js standalone)
+FROM node:${NODE_VERSION}-alpine AS runner
 WORKDIR /app
-
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Copy Next.js standalone output
-COPY --from=builder --chown=nextjs:nodejs /app/apps/social/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/social/.next/static ./apps/social/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/social/public ./apps/social/public
-
-USER nextjs
-EXPOSE 3100
-ENV PORT=3100
-ENV NODE_ENV=production
-
-CMD ["node", "apps/social/server.js"]
+    adduser --system --uid 1001 appuser
+ARG APP_NAME
+COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/standalone ./
+COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/static ./apps/${APP_NAME}/.next/static
+COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/public ./apps/${APP_NAME}/public
+USER appuser
+ENV PORT=3000 NODE_ENV=production
+EXPOSE 3000
+CMD ["sh", "-c", "node apps/${APP_NAME}/server.js"]

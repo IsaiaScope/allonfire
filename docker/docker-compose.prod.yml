@@ -1,0 +1,33 @@
+name: allonfire
+
+services:
+  social:
+    image: allonfire-social:latest
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    env_file: ../.env.prod
+    networks:
+      - allonfire
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.social.rule=Host(`social.allonfire.com`)"
+      - "traefik.http.services.social.loadbalancer.server.port=3000"
+
+  # Future apps follow the same pattern:
+  # api:
+  #   image: allonfire-api:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3200:3000"
+  #   env_file: ../.env.prod
+  #   networks:
+  #     - allonfire
+  #     - traefik
+
+networks:
+  allonfire:
+    driver: bridge
+  traefik:
+    external: true

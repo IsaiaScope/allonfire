@@ -9,7 +9,7 @@
     "./platforms/*": "./src/platforms/*.ts"
   },
   "scripts": {
-    "generate": "tsx src/generate.ts"
+    "generate": "tsx src/cli.ts"
   },
   "dependencies": {
     "@allonfire/database": "workspace:*",

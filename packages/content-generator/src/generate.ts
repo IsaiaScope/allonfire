@@ -57,9 +57,9 @@ async function generateForPlatform(
     messages: [{ role: "user", content: prompt }],
   });
 
-  const block = message.content[0];
-  if (block.type !== "text") {
-    throw new Error(`Unexpected response type: ${block.type}`);
+  const block = message.content.at(0);
+  if (!block || block.type !== "text") {
+    throw new Error(`Unexpected response type: ${block?.type ?? "empty"}`);
   }
   return block.text;
 }
@@ -112,31 +112,3 @@ export async function generatePostsForTopic(topicId: string): Promise<void> {
     data: { status: "GENERATED" },
   });
 }
-
-// CLI entry point
-async function main() {
-  const topics = await prisma.topic.findMany({
-    where: { status: "SELECTED" },
-  });
-
-  if (topics.length === 0) {
-    console.log("No selected topics to generate posts for.");
-    return;
-  }
-
-  console.log(`Generating posts for ${topics.length} topic(s)...`);
-
-  for (const topic of topics) {
-    await generatePostsForTopic(topic.id);
-  }
-
-  console.log("Done!");
-}
-
-main()
-  .then(() => prisma.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
