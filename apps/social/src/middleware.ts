@@ -2,8 +2,14 @@ import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const sessionCookie = getSessionCookie(request);
   const { pathname } = request.nextUrl;
+
+  // Webhook API routes use API key auth, not session auth
+  if (pathname.startsWith("/api/webhooks")) {
+    return NextResponse.next();
+  }
+
+  const sessionCookie = getSessionCookie(request);
 
   // Redirect authenticated users away from login
   if (sessionCookie && pathname === "/login") {
@@ -19,5 +25,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };
