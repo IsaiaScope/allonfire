@@ -5,12 +5,12 @@ import {
   Calendar,
   Compass,
   FileText,
-  Flame,
   LayoutDashboard,
   Settings,
   Sparkles,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,9 +24,9 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-interface SidebarNavProps {
+type SidebarNavProps = {
   role?: string;
-}
+};
 
 export function SidebarNav({ role }: SidebarNavProps) {
   const pathname = usePathname();
@@ -62,9 +62,13 @@ export function SidebarNav({ role }: SidebarNavProps) {
 export function SidebarLogo() {
   return (
     <Link className="flex items-center gap-2.5 px-4 py-1" href="/">
-      <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <Flame className="size-4" />
-      </div>
+      <Image
+        alt="AllOnFire"
+        className="rounded-md"
+        height={32}
+        src="/allonfire.svg"
+        width={32}
+      />
       <div>
         <p className="font-bold text-sm tracking-tight">AllOnFire</p>
         <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">

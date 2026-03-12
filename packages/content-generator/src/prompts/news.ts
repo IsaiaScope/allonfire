@@ -1,5 +1,5 @@
 import type { Platform } from "@allonfire/database";
-import { getPlatformRules } from "../platforms/index.js";
+import { getPlatformRules } from "../platforms/index";
 
 export function newsPrompt(
   topic: { title: string; summary: string; sourceUrl: string },

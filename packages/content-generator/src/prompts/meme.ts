@@ -1,5 +1,5 @@
 import type { Platform } from "@allonfire/database";
-import { getPlatformRules } from "../platforms/index.js";
+import { getPlatformRules } from "../platforms/index";
 
 export function memePrompt(
   topic: { title: string; summary: string },

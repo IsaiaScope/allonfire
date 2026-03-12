@@ -1,8 +1,8 @@
 import { type Platform, type PostType, prisma } from "@allonfire/database";
 import Anthropic from "@anthropic-ai/sdk";
-import { learningPrompt } from "./prompts/learning.js";
-import { memePrompt } from "./prompts/meme.js";
-import { newsPrompt } from "./prompts/news.js";
+import { learningPrompt } from "./prompts/learning";
+import { memePrompt } from "./prompts/meme";
+import { newsPrompt } from "./prompts/news";
 
 const PLATFORMS: Platform[] = ["LINKEDIN", "TWITTER", "YOUTUBE", "TIKTOK"];
 

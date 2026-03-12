@@ -1,11 +1,9 @@
-"use client";
-
 import { Badge } from "@allonfire/ui/components/badge";
 
-interface PlatformPreviewProps {
+type PlatformPreviewProps = {
   content: string;
   platform: string;
-}
+};
 
 const PLATFORM_CONFIG: Record<
   string,

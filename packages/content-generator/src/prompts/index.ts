@@ -1,7 +1,7 @@
 // biome-ignore lint/performance/noBarrelFile: prompt module entry point
-export { learningPrompt } from "./learning.js";
-export { memePrompt } from "./meme.js";
-export { newsPrompt } from "./news.js";
+export { learningPrompt } from "./learning";
+export { memePrompt } from "./meme";
+export { newsPrompt } from "./news";
 
 export const PROMPT_TEMPLATES = {
   MEME: "meme",

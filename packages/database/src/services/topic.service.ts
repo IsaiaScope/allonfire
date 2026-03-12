@@ -54,14 +54,14 @@ export async function archiveTopic(topicId: string) {
   });
 }
 
-interface IngestTopicData {
+type IngestTopicData = {
   category: TopicCategory;
   rawData?: unknown;
   sourceName: string;
   sourceUrl: string;
   summary: string;
   title: string;
-}
+};
 
 export async function ingestTopics(topics: IngestTopicData[]) {
   const results: Topic[] = [];

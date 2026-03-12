@@ -1,93 +1,176 @@
 "use client";
 
 import { Button } from "@allonfire/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@allonfire/ui/components/card";
+import { Card, CardContent } from "@allonfire/ui/components/card";
 import { Input } from "@allonfire/ui/components/input";
 import { Label } from "@allonfire/ui/components/label";
-import { Flame } from "lucide-react";
+import { Wrapper } from "@allonfire/ui/components/wrapper";
+import { ArrowRight, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
+
+type LoginFields = {
+  email: string;
+  password: string;
+};
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [serverError, setServerError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFields>();
 
-    const result = await authClient.signIn.email({
-      email,
-      password,
-    });
-
-    if (result.error) {
-      setError(result.error.message ?? "Login failed");
-      setLoading(false);
-      return;
+  function buttonContent() {
+    if (success) {
+      return (
+        <>
+          <Sparkles className="size-5 animate-pulse" />
+          Welcome back
+        </>
+      );
     }
+    if (pending) {
+      return (
+        <>
+          <Loader2 className="size-5 animate-spin" />
+          Signing in...
+        </>
+      );
+    }
+    return (
+      <>
+        Sign in
+        <ArrowRight className="size-5 transition-transform duration-200 group-hover:translate-x-1" />
+      </>
+    );
+  }
 
-    router.push("/");
+  function onSubmit(data: LoginFields) {
+    setServerError("");
+
+    startTransition(async () => {
+      const result = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (result.error) {
+        setServerError(result.error.message ?? "Login failed");
+        return;
+      }
+
+      setSuccess(true);
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      router.push("/");
+    });
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Flame className="size-6" />
-          </div>
-          <CardTitle className="text-xl tracking-tight">AllOnFire</CardTitle>
-          <CardDescription>Sign in to your dashboard</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+    <Wrapper
+      className="flex flex-1 flex-col items-center justify-center bg-linear-to-br from-background via-background to-primary/5 px-4 py-8 sm:px-6 sm:py-12"
+      tag="main"
+    >
+      <Card className="relative w-full max-w-104 shadow-lg">
+        <div className="absolute top-2.5 right-2.5 z-10">
+          <ThemeToggle />
+        </div>
+        <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-2">
+          <Image
+            alt="AllOnFire Social"
+            className="w-full max-w-64"
+            height={220}
+            priority
+            src="/allonfire-social-horizontal.svg"
+            width={740}
+          />
+          <p className="text-center text-base text-muted-foreground">
+            Sign in to your dashboard
+          </p>
+        </div>
+        <CardContent className="pb-2">
+          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label className="text-base" htmlFor="email">
+                Email
+              </Label>
               <Input
+                autoComplete="username"
+                className="text-base"
                 id="email"
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@allonfire.com"
-                required
                 type="email"
-                value={email}
+                {...register("email", { required: "Email is required" })}
               />
+              {errors.email && (
+                <p className="text-base text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                type="password"
-                value={password}
-              />
+            <div className="space-y-3">
+              <Label className="text-base" htmlFor="password">
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  autoComplete="current-password"
+                  className="pr-10 text-base"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
+                />
+                <button
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  type="button"
+                >
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="text-base text-destructive">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
-                {error}
+            <Button
+              className="group my-4 w-full py-2 text-base shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-110 active:scale-[0.98]"
+              disabled={pending}
+              size="lg"
+              type="submit"
+              variant={success ? "secondary" : "default"}
+            >
+              {buttonContent()}
+            </Button>
+
+            {serverError && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-base text-destructive">
+                {serverError}
               </p>
             )}
-
-            <Button className="w-full" disabled={loading} type="submit">
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </Wrapper>
   );
 }

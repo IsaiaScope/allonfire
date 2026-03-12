@@ -7,12 +7,12 @@ import { Check, Loader2 } from "lucide-react";
 import { useTransition } from "react";
 import { updateSettingsAction } from "@/app/actions/settings";
 
-interface SettingsFormProps {
+type SettingsFormProps = {
   hasApiKey: boolean;
   webhookDiscoveryUrl: string | null;
   webhookNotifyUrl: string | null;
   webhookPublishUrl: string | null;
-}
+};
 
 export function SettingsForm({
   webhookDiscoveryUrl,

@@ -1,5 +1,5 @@
 import { prisma } from "@allonfire/database";
-import { generatePostsForTopic } from "./generate.js";
+import { generatePostsForTopic } from "./generate";
 
 async function main() {
   const topics = await prisma.topic.findMany({

@@ -13,6 +13,13 @@ node_modules
 # Testing
 coverage
 
+# Playwright
+screenshots/
+!screenshots/.gitkeep
+test-results/
+playwright-report/
+.playwright-mcp/
+
 # Turbo
 .turbo
 
@@ -37,6 +44,7 @@ yarn-error.log*
 
 # Claude Code
 .claude/*.local.json
+.superpowers/
 
 # Worktrees
 .worktrees
