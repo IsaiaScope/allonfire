@@ -1,20 +1,16 @@
-import type { Metadata } from "next";
-import { Fira_Code, Merriweather, Oxanium } from "next/font/google";
+import { Wrapper } from "@allonfire/ui/components/wrapper";
+import type { Metadata, Viewport } from "next";
+import { Poppins, Roboto_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const fontSans = Oxanium({
+const fontSans = Poppins({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-sans",
 });
 
-const fontSerif = Merriweather({
-  subsets: ["latin"],
-  weight: ["300", "400", "700", "900"],
-  variable: "--font-serif",
-});
-
-const fontMono = Fira_Code({
+const fontMono = Roboto_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 });
@@ -22,6 +18,19 @@ const fontMono = Fira_Code({
 export const metadata: Metadata = {
   title: "AllOnFire — Social Content Dashboard",
   description: "Automated social media content creation and publishing",
+  appleWebApp: {
+    capable: true,
+    title: "AllOnFire",
+    statusBarStyle: "black-translucent",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#151515",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -32,9 +41,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} min-h-screen bg-background font-sans antialiased`}
+        className={`${fontSans.variable} ${fontMono.variable} flex min-h-dvh flex-col bg-background font-sans antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <Wrapper className="flex flex-1 flex-col" tag="div">
+            {children}
+          </Wrapper>
+        </Providers>
       </body>
     </html>
   );

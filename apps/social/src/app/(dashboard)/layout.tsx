@@ -1,6 +1,7 @@
 import { prisma } from "@allonfire/database";
 import { ScrollArea } from "@allonfire/ui/components/scroll-area";
 import { Separator } from "@allonfire/ui/components/separator";
+import { Wrapper } from "@allonfire/ui/components/wrapper";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SidebarLogo, SidebarNav } from "@/components/sidebar-nav";
@@ -27,9 +28,11 @@ export default async function DashboardLayout({
   });
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <aside className="flex w-60 flex-col border-sidebar-border border-r bg-sidebar">
+    <Wrapper className="flex flex-1 flex-row overflow-hidden" tag="div">
+      <Wrapper
+        className="flex w-60 flex-col border-sidebar-border border-r bg-sidebar"
+        tag="aside"
+      >
         <div className="p-4">
           <SidebarLogo />
         </div>
@@ -44,12 +47,11 @@ export default async function DashboardLayout({
             <ThemeToggle />
           </div>
         </div>
-      </aside>
+      </Wrapper>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <Wrapper className="flex-1 overflow-y-auto" tag="main">
         <div className="mx-auto max-w-6xl p-8">{children}</div>
-      </main>
-    </div>
+      </Wrapper>
+    </Wrapper>
   );
 }

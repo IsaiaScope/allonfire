@@ -2,6 +2,24 @@
 
 Read AGENTS.md first for universal conventions. This file adds Claude Code-specific guidance.
 
+## Server-Side Rendering First
+
+Default to Server Components. Only add `"use client"` when the component actually needs:
+- React hooks (`useState`, `useEffect`, `useTransition`, `useForm`, etc.)
+- Event handlers (`onClick`, `onChange`, `onSubmit`)
+- Browser APIs (`window`, `localStorage`, `navigator`)
+- Third-party client libraries (`useTheme`, `usePathname`, context providers)
+
+**Do not** add `"use client"` to pure presentational components that just receive props and render JSX — they work as Server Components with zero client JS cost.
+
+**Pragmatic rule**: if making something server-side requires significantly more complexity (extra data-fetching layers, prop-drilling through many levels, splitting one simple component into server/client pairs), just use `"use client"`. Simplicity wins over purity.
+
+### Patterns
+- Fetch data in Server Components (pages, layouts), pass as props to client components
+- Use Server Actions for mutations — keep form logic in client components but action definitions server-side
+- Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
+- Providers (`ThemeProvider`, `QueryClientProvider`) must be client — wrap them in a single `Providers` component
+
 ## Context7 Usage
 
 Always use Context7 MCP tools when generating code involving:

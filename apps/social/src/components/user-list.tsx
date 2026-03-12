@@ -8,18 +8,18 @@ import { deleteUserAction } from "@/app/actions/users";
 
 const INITIALS_SPLIT = /[\s@]/;
 
-interface User {
+type User = {
   createdAt: Date;
   email: string;
   id: string;
   name: string | null;
   role: "ADMIN" | "USER";
-}
+};
 
-interface UserListProps {
+type UserListProps = {
   currentUserId: string;
   users: User[];
-}
+};
 
 function UserRow({
   user,

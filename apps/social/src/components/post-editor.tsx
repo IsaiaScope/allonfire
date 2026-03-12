@@ -12,11 +12,11 @@ const PLATFORM_LIMITS: Record<string, number> = {
   TIKTOK: 2200,
 };
 
-interface PostEditorProps {
+type PostEditorProps = {
   content: string;
   platform: string;
   postId: string;
-}
+};
 
 export function PostEditor({ postId, content, platform }: PostEditorProps) {
   const [value, setValue] = useState(content);
