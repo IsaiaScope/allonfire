@@ -1,12 +1,10 @@
 import { type Platform, type PostType, prisma } from "@allonfire/database";
-import Anthropic from "@anthropic-ai/sdk";
 import { learningPrompt } from "./prompts/learning";
 import { memePrompt } from "./prompts/meme";
 import { newsPrompt } from "./prompts/news";
+import { getActiveProviderClient } from "./providers";
 
 const PLATFORMS: Platform[] = ["LINKEDIN", "TWITTER", "YOUTUBE", "TIKTOK"];
-
-const client = new Anthropic();
 
 function getPrompt(
   topic: { title: string; summary: string; sourceUrl: string },
@@ -46,28 +44,27 @@ async function generateForPlatform(
     sourceUrl: string;
     category: string;
   },
-  platform: Platform
+  platform: Platform,
+  provider: Awaited<ReturnType<typeof getActiveProviderClient>>
 ): Promise<string> {
   const type = inferPostType(topic.category);
   const prompt = getPrompt(topic, type, platform);
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
+  const response = await provider.client.generate({
+    model: provider.model,
+    maxTokens: 1024,
     messages: [{ role: "user", content: prompt }],
   });
 
-  const block = message.content.at(0);
-  if (!block || block.type !== "text") {
-    throw new Error(`Unexpected response type: ${block?.type ?? "empty"}`);
-  }
-  return block.text;
+  return response.text;
 }
 
 export async function generatePostsForTopic(topicId: string): Promise<void> {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
   });
+
+  const provider = await getActiveProviderClient();
 
   await prisma.topic.update({
     where: { id: topicId },
@@ -78,7 +75,7 @@ export async function generatePostsForTopic(topicId: string): Promise<void> {
 
   for (const platform of PLATFORMS) {
     try {
-      const content = await generateForPlatform(topic, platform);
+      const content = await generateForPlatform(topic, platform, provider);
 
       await prisma.post.create({
         data: {

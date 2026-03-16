@@ -5,6 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./providers": "./src/providers/index.ts",
+    "./providers/anthropic": "./src/providers/anthropic.ts",
+    "./providers/openrouter": "./src/providers/openrouter.ts",
+    "./providers/models": "./src/providers/models.ts",
     "./prompts/*": "./src/prompts/*.ts",
     "./platforms/*": "./src/platforms/*.ts"
   },
@@ -13,7 +17,8 @@
   },
   "dependencies": {
     "@allonfire/database": "workspace:*",
-    "@anthropic-ai/sdk": "^0.39.0"
+    "@anthropic-ai/sdk": "^0.39.0",
+    "openai": "^6.27.0"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

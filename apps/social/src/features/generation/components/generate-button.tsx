@@ -3,7 +3,7 @@
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Sparkles } from "lucide-react";
 import { useTransition } from "react";
-import { triggerGenerationAction } from "@/app/actions/generate";
+import { triggerGenerationAction } from "../actions/generate";
 
 export function GenerateButton({ topicId }: { topicId: string }) {
   const [pending, startTransition] = useTransition();

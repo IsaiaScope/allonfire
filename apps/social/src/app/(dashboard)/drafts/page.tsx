@@ -9,7 +9,7 @@ import {
   ApprovePostButton,
   RejectPostButton,
   SchedulePostButton,
-} from "@/components/post-actions";
+} from "@/features/posts/components/post-actions";
 
 const platformIcon: Record<string, string> = {
   LINKEDIN: "in",

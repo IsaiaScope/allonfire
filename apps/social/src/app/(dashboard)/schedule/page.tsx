@@ -8,7 +8,7 @@ import {
 } from "@allonfire/ui/components/card";
 import { Calendar } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
-import { UnschedulePostButton } from "@/components/post-actions";
+import { UnschedulePostButton } from "@/features/posts/components/post-actions";
 
 export default async function SchedulePage() {
   const scheduled = await getScheduledPosts();

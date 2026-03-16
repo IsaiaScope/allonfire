@@ -26,5 +26,37 @@ services:
     depends_on:
       - postgres
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.10.2
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_SECURE_COOKIE=false
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - N8N_TEMPLATES_ENABLED=false
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=allonfire
+      - DB_POSTGRESDB_USER=allonfire
+      - DB_POSTGRESDB_PASSWORD=allonfire_dev
+      - ALLONFIRE_WEBHOOK_URL=http://host.docker.internal:3100
+      - ALLONFIRE_API_KEY=${ALLONFIRE_API_KEY:-dev-api-key}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  n8n_data:

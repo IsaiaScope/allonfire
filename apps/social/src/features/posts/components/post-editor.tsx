@@ -3,7 +3,7 @@
 import { Button } from "@allonfire/ui/components/button";
 import { Check, Loader2 } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { updatePostContentAction } from "@/app/actions/posts";
+import { updatePostContentAction } from "../actions/posts";
 
 const PLATFORM_LIMITS: Record<string, number> = {
   TWITTER: 280,

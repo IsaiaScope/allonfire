@@ -3,7 +3,7 @@
 import { Button } from "@allonfire/ui/components/button";
 import { Archive, Sparkles } from "lucide-react";
 import { useTransition } from "react";
-import { archiveTopicAction, selectTopicAction } from "@/app/actions/topics";
+import { archiveTopicAction, selectTopicAction } from "../actions/topics";
 
 export function SelectTopicButton({ topicId }: { topicId: string }) {
   const [pending, startTransition] = useTransition();

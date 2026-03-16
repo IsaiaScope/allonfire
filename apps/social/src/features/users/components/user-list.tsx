@@ -4,7 +4,7 @@ import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { deleteUserAction } from "@/app/actions/users";
+import { deleteUserAction } from "../actions/users";
 
 const INITIALS_SPLIT = /[\s@]/;
 

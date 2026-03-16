@@ -5,10 +5,9 @@ import { Input } from "@allonfire/ui/components/input";
 import { Label } from "@allonfire/ui/components/label";
 import { Check, Loader2 } from "lucide-react";
 import { useTransition } from "react";
-import { updateSettingsAction } from "@/app/actions/settings";
+import { updateSettingsAction } from "../actions/settings";
 
 type SettingsFormProps = {
-  hasApiKey: boolean;
   webhookDiscoveryUrl: string | null;
   webhookNotifyUrl: string | null;
   webhookPublishUrl: string | null;
@@ -18,7 +17,6 @@ export function SettingsForm({
   webhookDiscoveryUrl,
   webhookPublishUrl,
   webhookNotifyUrl,
-  hasApiKey,
 }: SettingsFormProps) {
   const [pending, startTransition] = useTransition();
 
@@ -28,7 +26,6 @@ export function SettingsForm({
         (formData.get("webhookDiscoveryUrl") as string) || null,
       webhookPublishUrl: (formData.get("webhookPublishUrl") as string) || null,
       webhookNotifyUrl: (formData.get("webhookNotifyUrl") as string) || null,
-      anthropicApiKey: (formData.get("anthropicApiKey") as string) || null,
     };
     startTransition(async () => {
       await updateSettingsAction(data);
@@ -65,21 +62,6 @@ export function SettingsForm({
             placeholder="https://n8n.example.com/webhook/..."
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="anthropicApiKey">Claude API Key</Label>
-        <Input
-          id="anthropicApiKey"
-          name="anthropicApiKey"
-          placeholder={hasApiKey ? "sk-ant-••••••••" : "sk-ant-..."}
-          type="password"
-        />
-        {hasApiKey && (
-          <p className="text-muted-foreground text-xs">
-            API key is set. Leave blank to keep current key.
-          </p>
-        )}
       </div>
 
       <Button disabled={pending} type="submit">

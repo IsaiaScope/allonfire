@@ -1,11 +1,1409 @@
 {
   "name": "AllOnFire — Topic Discovery",
-  "nodes": [],
-  "connections": {},
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 6AM UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 600]
+    },
+    {
+      "parameters": {
+        "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+        "options": {}
+      },
+      "id": "hn-top",
+      "name": "HN Top Story IDs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, -800],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const ids = $input.first().json;\nreturn ids.slice(0, 30).map(id => ({ json: { id } }));"
+      },
+      "id": "hn-slice",
+      "name": "HN Take Top 30",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, -800],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://hacker-news.firebaseio.com/v0/item/{{ $json.id }}.json",
+        "options": {}
+      },
+      "id": "hn-fetch",
+      "name": "HN Fetch Item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, -800],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.filter(i => i.json.url && i.json.title).map(i => {\n  const d = i.json;\n  return { json: {\n    title: d.title, summary: d.title,\n    sourceUrl: d.url, sourceName: 'Hacker News',\n    rawData: { score: d.score, by: d.by, commentCount: d.descendants || 0, hnUrl: 'https://news.ycombinator.com/item?id=' + d.id }\n  }};\n});"
+      },
+      "id": "hn-map",
+      "name": "HN Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, -800],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/api/articles?top=1&per_page=15",
+        "options": {}
+      },
+      "id": "devto-top",
+      "name": "Dev.to Top Articles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, -550],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/api/articles?tag=ai&top=1&per_page=10",
+        "options": {}
+      },
+      "id": "devto-ai",
+      "name": "Dev.to AI Tag",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, -450],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://dev.to/api/articles?tag=webdev&top=1&per_page=10",
+        "options": {}
+      },
+      "id": "devto-webdev",
+      "name": "Dev.to WebDev Tag",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, -350],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json.error && i.json.url && i.json.title).map(i => {\n  const d = i.json;\n  return { json: {\n    title: d.title, summary: d.description || d.title,\n    sourceUrl: d.url, sourceName: 'Dev.to',\n    rawData: { tags: d.tag_list, reactions: d.positive_reactions_count, readingTime: d.reading_time_minutes, author: d.user?.username }\n  }};\n});"
+      },
+      "id": "devto-map",
+      "name": "Dev.to Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, -450],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/newest?points=100",
+        "options": {}
+      },
+      "id": "rss-hn",
+      "name": "RSS HN 100+ Points",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, -100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+        "options": {}
+      },
+      "id": "rss-tc",
+      "name": "RSS TechCrunch AI",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 0],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
+        "options": {}
+      },
+      "id": "rss-verge",
+      "name": "RSS The Verge AI",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://blog.openai.com/rss/",
+        "options": {}
+      },
+      "id": "rss-openai",
+      "name": "RSS OpenAI Blog",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.arstechnica.com/arstechnica/technology-lab",
+        "options": {}
+      },
+      "id": "rss-ars",
+      "name": "RSS Ars Technica",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst sourceMap = { 'techcrunch.com': 'TechCrunch', 'theverge.com': 'The Verge', 'openai.com': 'OpenAI Blog', 'arstechnica.com': 'Ars Technica', 'news.ycombinator.com': 'Hacker News' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'RSS';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+      },
+      "id": "rss-map",
+      "name": "RSS Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://github.com/trending?since=daily",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "gh-html",
+      "name": "GitHub Trending HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $input.first().json.data;\nconst repos = [];\nconst re = /<article class=\"Box-row\">[\\s\\S]*?<h2[^>]*>[\\s\\S]*?<a href=\"\\/([^\"]+)\"[^>]*>[\\s\\S]*?<\\/h2>[\\s\\S]*?(?:<p class=\"col-9[^\"]*\"[^>]*>([\\s\\S]*?)<\\/p>)?[\\s\\S]*?<\\/article>/gm;\nlet m; let c = 0;\nwhile ((m = re.exec(html)) !== null && c < 10) {\n  const name = m[1].trim(); const desc = m[2] ? m[2].trim().replace(/<[^>]*>/g, '').trim() : '';\n  repos.push({ json: { title: name, summary: desc || 'Trending repo: ' + name, sourceUrl: 'https://github.com/' + name, sourceName: 'GitHub Trending', rawData: {} } });\n  c++;\n}\nif (repos.length === 0) {\n  const simple = /href=\"\\/([\\w-]+\\/[\\w.-]+)\"\\s+class/g;\n  let sm; const seen = new Set();\n  while ((sm = simple.exec(html)) !== null && repos.length < 10) {\n    if (!seen.has(sm[1])) { seen.add(sm[1]); repos.push({ json: { title: sm[1], summary: 'Trending repo: ' + sm[1], sourceUrl: 'https://github.com/' + sm[1], sourceName: 'GitHub Trending', rawData: {} } }); }\n  }\n}\nreturn repos.length > 0 ? repos : [{ json: { _skip: true } }];"
+      },
+      "id": "gh-extract",
+      "name": "GitHub Extract Repos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "gh-filter-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notTrue"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "gh-filter",
+      "name": "GitHub Filter Empty",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [740, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.producthunt.com/feed",
+        "options": {}
+      },
+      "id": "ph-rss",
+      "name": "Product Hunt RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 750],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().slice(0, 10);\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'Product Hunt', rawData: { tagline: d.contentSnippet || '', pubDate: d.pubDate || d.isoDate } } };\n});"
+      },
+      "id": "ph-map",
+      "name": "PH Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 750],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://deepmind.google/blog/rss.xml",
+        "options": {}
+      },
+      "id": "ai-deepmind",
+      "name": "AI Blog DeepMind",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 950],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://blog.google/technology/ai/rss/",
+        "options": {}
+      },
+      "id": "ai-google",
+      "name": "AI Blog Google AI",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 1050],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://huggingface.co/blog/feed.xml",
+        "options": {}
+      },
+      "id": "ai-hf",
+      "name": "AI Blog Hugging Face",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 1150],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://cohere.com/blog/rss.xml",
+        "options": {}
+      },
+      "id": "ai-cohere",
+      "name": "AI Blog Cohere",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 1250],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst sourceMap = { 'deepmind.google': 'Google DeepMind', 'blog.google': 'Google AI Blog', 'huggingface.co': 'Hugging Face Blog', 'cohere.com': 'Cohere Blog' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'AI Blog';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+      },
+      "id": "ai-blogs-map",
+      "name": "AI Blogs Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 1100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/LocalLLaMA/top.json?t=day&limit=10",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "AllOnFire/1.0 (Topic Discovery Bot)"
+            }
+          ]
+        }
+      },
+      "id": "reddit-llama",
+      "name": "Reddit r/LocalLLaMA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 1450],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/MachineLearning/top.json?t=day&limit=10",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "AllOnFire/1.0 (Topic Discovery Bot)"
+            }
+          ]
+        }
+      },
+      "id": "reddit-ml",
+      "name": "Reddit r/MachineLearning",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 1550],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/ProgrammerHumor/top.json?t=day&limit=5",
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "AllOnFire/1.0 (Topic Discovery Bot)"
+            }
+          ]
+        }
+      },
+      "id": "reddit-humor",
+      "name": "Reddit r/ProgrammerHumor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 1650],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst topics = [];\nfor (const item of items) {\n  if (item.json.error) continue;\n  const children = item.json?.data?.children || [];\n  for (const child of children) {\n    const d = child.data;\n    if (!d || !d.title) continue;\n    const url = d.url && !d.url.startsWith('/r/') ? d.url : 'https://reddit.com' + d.permalink;\n    topics.push({ json: { title: d.title, summary: d.selftext ? d.selftext.substring(0, 280) : d.title, sourceUrl: url, sourceName: 'Reddit r/' + d.subreddit, rawData: { score: d.score, numComments: d.num_comments, subreddit: d.subreddit, permalink: 'https://reddit.com' + d.permalink } } });\n  }\n}\nreturn topics.length > 0 ? topics : [{ json: { _skip: true } }];"
+      },
+      "id": "reddit-map",
+      "name": "Reddit Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 1550],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA",
+        "options": {}
+      },
+      "id": "yt-fireship",
+      "name": "YouTube Fireship",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 1850],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg",
+        "options": {}
+      },
+      "id": "yt-2min",
+      "name": "YouTube Two Minute Papers",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 1950],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).slice(0, 10).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'YouTube', rawData: { pubDate: d.pubDate || d.isoDate, author: d.author || d.creator } } };\n});"
+      },
+      "id": "yt-map",
+      "name": "YouTube Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 1900],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/category/ai/feed/",
+        "options": {}
+      },
+      "id": "news-vb",
+      "name": "VentureBeat AI RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 2100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://www.techmeme.com/feed.xml",
+        "options": {}
+      },
+      "id": "news-tm",
+      "name": "Techmeme RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 2200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://lobste.rs/t/ai.rss",
+        "options": {}
+      },
+      "id": "news-lob",
+      "name": "Lobsters AI RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [300, 2300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst sourceMap = { 'venturebeat.com': 'VentureBeat', 'techmeme.com': 'Techmeme', 'lobste.rs': 'Lobsters' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'News';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+      },
+      "id": "news-map",
+      "name": "News Map to Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 2200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst valid = items.filter(i => { const d = i.json; return !d.error && !d._skip && !d._empty && d.title && d.sourceUrl; });\nreturn valid.length > 0 ? valid : [{ json: { _empty: true } }];"
+      },
+      "id": "collect-api",
+      "name": "Collect API Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, -600],
+      "continueOnFail": true,
+      "notes": "Collects items from Hacker News and Dev.to API branches"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst valid = items.filter(i => { const d = i.json; return !d.error && !d._skip && !d._empty && d.title && d.sourceUrl; });\nreturn valid.length > 0 ? valid : [{ json: { _empty: true } }];"
+      },
+      "id": "collect-rss",
+      "name": "Collect RSS Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 400],
+      "continueOnFail": true,
+      "notes": "Collects items from RSS feeds, AI company blogs, and additional news"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst valid = items.filter(i => { const d = i.json; return !d.error && !d._skip && !d._empty && d.title && d.sourceUrl; });\nreturn valid.length > 0 ? valid : [{ json: { _empty: true } }];"
+      },
+      "id": "collect-scraped",
+      "name": "Collect Scraped Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 600],
+      "continueOnFail": true,
+      "notes": "Collects items from GitHub Trending HTML scrape"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst valid = items.filter(i => { const d = i.json; return !d.error && !d._skip && !d._empty && d.title && d.sourceUrl; });\nreturn valid.length > 0 ? valid : [{ json: { _empty: true } }];"
+      },
+      "id": "collect-social",
+      "name": "Collect Social Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 1200],
+      "continueOnFail": true,
+      "notes": "Collects items from Product Hunt, Reddit, and YouTube"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json._empty);"
+      },
+      "id": "merge-all",
+      "name": "Merge All Collections",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 400],
+      "continueOnFail": true,
+      "notes": "Combines all 4 collector outputs into a single stream"
+    },
+    {
+      "parameters": {
+        "options": {
+          "duplicateHandling": "removeDuplicates"
+        },
+        "compare": "selectedFields",
+        "fieldsToCompare": "sourceUrl"
+      },
+      "id": "dedup",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1,
+      "position": [1700, 400],
+      "notes": "Deduplicates by sourceUrl — same article from multiple sources kept once"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst batches = [];\nfor (let i = 0; i < items.length; i += 10) {\n  const batch = items.slice(i, i + 10);\n  const articles = batch.map((item, idx) => ({ index: i + idx, title: item.json.title, summary: item.json.summary, source: item.json.sourceName, url: item.json.sourceUrl }));\n  batches.push({ json: { articles: JSON.stringify(articles), originalItems: batch.map(b => b.json) } });\n}\nreturn batches;"
+      },
+      "id": "batch-ai",
+      "name": "Batch for AI (groups of 10)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1900, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"claude-haiku-4-5-20251001\", \"max_tokens\": 4096, \"system\": \"You are a content curator for AllOnFire, a tech/AI social media platform.\\nYou classify articles into exactly one category and score relevance.\\n\\nCategories:\\n- NEWS: Industry news, acquisitions, regulations, market moves\\n- MEME_WORTHY: Dev humor, relatable content, viral-potential programming culture\\n- LEARNING: Tutorials, best practices, educational deep-dives\\n- TOOL_RELEASE: New tools, frameworks, libraries, major version releases\\n- AI_UPDATE: AI model releases, research breakthroughs, AI product updates\\n\\nScoring guide:\\n- 0.9-1.0: Breaking news, major releases, viral content\\n- 0.7-0.8: Interesting to most developers or AI practitioners\\n- 0.5-0.6: Niche but valuable to some audience segment\\n- Below 0.5: Off-topic, low-quality, or duplicate content\", \"messages\": [{\"role\": \"user\", \"content\": \"Classify these articles as JSON array. Each object needs \\\"index\\\", \\\"category\\\", \\\"summary\\\" (max 280 chars, engaging), \\\"relevance\\\" (0.0-1.0).\\n\\n{{ $json.articles }}\"}, {\"role\": \"assistant\", \"content\": \"[\"}]}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "ai-classify",
+      "name": "AI Classify (Claude Haiku)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2100, 400],
+      "continueOnFail": true,
+      "notes": "System + user + assistant prefill pattern for reliable JSON output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\nfor (const item of items) {\n  const originalItems = item.json.originalItems;\n  let classifications;\n  try {\n    let responseText = item.json.content?.[0]?.text || '';\n    let jsonStr = responseText.trim().startsWith('[') ? responseText : '[' + responseText;\n    if (!jsonStr.trim().endsWith(']')) jsonStr = jsonStr.trim() + ']';\n    classifications = JSON.parse(jsonStr);\n  } catch (e) {\n    classifications = (originalItems || []).map((_, idx) => ({ index: idx, category: 'NEWS', summary: null, relevance: 0.6 }));\n  }\n  if (!originalItems) continue;\n  for (const cls of classifications) {\n    const orig = originalItems[cls.index % originalItems.length];\n    if (!orig) continue;\n    const relevance = Number(cls.relevance) || 0;\n    if (relevance < 0.5) continue;\n    const validCategories = ['NEWS', 'MEME_WORTHY', 'LEARNING', 'TOOL_RELEASE', 'AI_UPDATE'];\n    const category = validCategories.includes(cls.category) ? cls.category : 'NEWS';\n    results.push({ json: { title: orig.title, summary: cls.summary || orig.summary, sourceUrl: orig.sourceUrl, sourceName: orig.sourceName, category, rawData: { ...orig.rawData, aiRelevance: relevance } } });\n  }\n}\nreturn results.length > 0 ? results : [{ json: { _empty: true } }];"
+      },
+      "id": "parse-ai",
+      "name": "Parse AI & Filter Low Relevance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2300, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-empty",
+              "leftValue": "={{ $json._empty }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notTrue"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-empty",
+      "name": "Filter Empty Results",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [2500, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst batches = [];\nfor (let i = 0; i < items.length; i += 20) {\n  const batch = items.slice(i, i + 20);\n  batches.push({ json: { topics: batch.map(b => b.json) } });\n}\nreturn batches;"
+      },
+      "id": "batch-webhook",
+      "name": "Build Webhook Payload (groups of 20)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2700, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.ALLONFIRE_WEBHOOK_URL }}/api/webhooks/topics",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.ALLONFIRE_API_KEY }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ topics: $json.topics }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "webhook-post",
+      "name": "POST to AllOnFire Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2900, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst summary = { timestamp: new Date().toISOString(), webhookBatches: items.length, totalIngested: 0, totalDuplicatesSkipped: 0, errors: [] };\nfor (const item of items) {\n  const d = item.json;\n  if (d.error) { summary.errors.push(d.error); }\n  else { summary.totalIngested += d.ingested || 0; summary.totalDuplicatesSkipped += d.duplicatesSkipped || 0; }\n}\nreturn [{ json: summary }];"
+      },
+      "id": "summary",
+      "name": "Execution Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3100, 400],
+      "continueOnFail": true,
+      "notes": "Logs per-source counts and delivery stats for the execution log"
+    },
+    {
+      "parameters": {
+        "content": "## 📡 DATA SOURCES\n\n9 parallel branches fetch from APIs, RSS feeds, HTML scrapes, and social platforms.\nEach source has `continueOnFail: true` — one failing API won't block others.",
+        "width": 700,
+        "height": 3300,
+        "color": 4
+      },
+      "id": "sticky-sources",
+      "name": "Sticky: Data Sources",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, -900]
+    },
+    {
+      "parameters": {
+        "content": "## 🔀 MERGE & DEDUP\n\n4 Collector nodes group sources by type.\nDuplicates removed by `sourceUrl`.",
+        "width": 700,
+        "height": 2100,
+        "color": 2
+      },
+      "id": "sticky-merge",
+      "name": "Sticky: Merge & Dedup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1100, -700]
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI CLASSIFICATION\n\nClaude Haiku classifies each article into one of 5 categories.\nSystem + user + assistant prefill pattern ensures reliable JSON.\nItems with relevance < 0.5 are filtered out.",
+        "width": 900,
+        "height": 450,
+        "color": 6
+      },
+      "id": "sticky-ai",
+      "name": "Sticky: AI Classification",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1800, 200]
+    },
+    {
+      "parameters": {
+        "content": "## 📤 DELIVERY\n\nClassified topics are batched (20/request) and POSTed to the AllOnFire webhook.\nThe app deduplicates against existing DB records.",
+        "width": 600,
+        "height": 450,
+        "color": 3
+      },
+      "id": "sticky-delivery",
+      "name": "Sticky: Delivery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2600, 200]
+    },
+    {
+      "parameters": {
+        "content": "## 📊 EXECUTION SUMMARY\n\nLogs total items ingested, duplicates skipped, and any errors.",
+        "width": 400,
+        "height": 350,
+        "color": 1
+      },
+      "id": "sticky-summary",
+      "name": "Sticky: Summary",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [3000, 200]
+    }
+  ],
+  "connections": {
+    "Daily 6AM UTC": {
+      "main": [
+        [
+          {
+            "node": "HN Top Story IDs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Dev.to Top Articles",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Dev.to AI Tag",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Dev.to WebDev Tag",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS HN 100+ Points",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS TechCrunch AI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS The Verge AI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS OpenAI Blog",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Ars Technica",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GitHub Trending HTML",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Product Hunt RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Blog DeepMind",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Blog Google AI",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Blog Hugging Face",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Blog Cohere",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit r/LocalLLaMA",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit r/MachineLearning",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reddit r/ProgrammerHumor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Fireship",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Two Minute Papers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "VentureBeat AI RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Techmeme RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lobsters AI RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HN Top Story IDs": {
+      "main": [
+        [
+          {
+            "node": "HN Take Top 30",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HN Take Top 30": {
+      "main": [
+        [
+          {
+            "node": "HN Fetch Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HN Fetch Item": {
+      "main": [
+        [
+          {
+            "node": "HN Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dev.to Top Articles": {
+      "main": [
+        [
+          {
+            "node": "Dev.to Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dev.to AI Tag": {
+      "main": [
+        [
+          {
+            "node": "Dev.to Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dev.to WebDev Tag": {
+      "main": [
+        [
+          {
+            "node": "Dev.to Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS HN 100+ Points": {
+      "main": [
+        [
+          {
+            "node": "RSS Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS TechCrunch AI": {
+      "main": [
+        [
+          {
+            "node": "RSS Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS The Verge AI": {
+      "main": [
+        [
+          {
+            "node": "RSS Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS OpenAI Blog": {
+      "main": [
+        [
+          {
+            "node": "RSS Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Ars Technica": {
+      "main": [
+        [
+          {
+            "node": "RSS Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Trending HTML": {
+      "main": [
+        [
+          {
+            "node": "GitHub Extract Repos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Extract Repos": {
+      "main": [
+        [
+          {
+            "node": "GitHub Filter Empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Hunt RSS": {
+      "main": [
+        [
+          {
+            "node": "PH Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Blog DeepMind": {
+      "main": [
+        [
+          {
+            "node": "AI Blogs Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Blog Google AI": {
+      "main": [
+        [
+          {
+            "node": "AI Blogs Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Blog Hugging Face": {
+      "main": [
+        [
+          {
+            "node": "AI Blogs Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Blog Cohere": {
+      "main": [
+        [
+          {
+            "node": "AI Blogs Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit r/LocalLLaMA": {
+      "main": [
+        [
+          {
+            "node": "Reddit Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit r/MachineLearning": {
+      "main": [
+        [
+          {
+            "node": "Reddit Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit r/ProgrammerHumor": {
+      "main": [
+        [
+          {
+            "node": "Reddit Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Fireship": {
+      "main": [
+        [
+          {
+            "node": "YouTube Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Two Minute Papers": {
+      "main": [
+        [
+          {
+            "node": "YouTube Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VentureBeat AI RSS": {
+      "main": [
+        [
+          {
+            "node": "News Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Techmeme RSS": {
+      "main": [
+        [
+          {
+            "node": "News Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lobsters AI RSS": {
+      "main": [
+        [
+          {
+            "node": "News Map to Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HN Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect API Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dev.to Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect API Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect RSS Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Blogs Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect RSS Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect RSS Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Filter Empty": {
+      "main": [
+        [
+          {
+            "node": "Collect Scraped Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PH Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect Social Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reddit Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect Social Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Map to Topic": {
+      "main": [
+        [
+          {
+            "node": "Collect Social Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect API Items": {
+      "main": [
+        [
+          {
+            "node": "Merge All Collections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect RSS Items": {
+      "main": [
+        [
+          {
+            "node": "Merge All Collections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Scraped Items": {
+      "main": [
+        [
+          {
+            "node": "Merge All Collections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Social Items": {
+      "main": [
+        [
+          {
+            "node": "Merge All Collections",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Collections": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Batch for AI (groups of 10)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch for AI (groups of 10)": {
+      "main": [
+        [
+          {
+            "node": "AI Classify (Claude Haiku)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Classify (Claude Haiku)": {
+      "main": [
+        [
+          {
+            "node": "Parse AI & Filter Low Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI & Filter Low Relevance": {
+      "main": [
+        [
+          {
+            "node": "Filter Empty Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Empty Results": {
+      "main": [
+        [
+          {
+            "node": "Build Webhook Payload (groups of 20)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Webhook Payload (groups of 20)": {
+      "main": [
+        [
+          {
+            "node": "POST to AllOnFire Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to AllOnFire Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execution Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
   },
   "meta": {
-    "description": "Discovers trending programming/AI topics from RSS feeds and APIs every 6-12h. Sources: Hacker News, Dev.to, Lobsters, Reddit, YouTube channels, Twitter/X accounts. Deduplicates, auto-categorizes (NEWS, MEME_WORTHY, LEARNING, TOOL_RELEASE, AI_UPDATE), and stores in PostgreSQL."
+    "description": "Discovers trending programming/AI topics from 9 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, additional news) daily at 6 AM UTC. Uses 4 Collector nodes instead of binary merge trees. Deduplicates by URL, classifies with Claude Haiku (system+user+prefill pattern) into NEWS/MEME_WORTHY/LEARNING/TOOL_RELEASE/AI_UPDATE, filters by relevance ≥ 0.5, and POSTs batches to AllOnFire webhook. Expected: 80-150 items/day before dedup, ~40-80 after AI filter."
   }
 }

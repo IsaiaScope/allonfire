@@ -9,8 +9,8 @@ import {
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PlatformPreview } from "@/components/platform-preview";
-import { PostEditor } from "@/components/post-editor";
+import { PlatformPreview } from "@/features/posts/components/platform-preview";
+import { PostEditor } from "@/features/posts/components/post-editor";
 
 export default async function PostEditPage({
   params,

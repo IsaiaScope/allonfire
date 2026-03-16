@@ -17,3 +17,4 @@ jobs:
       - run: pnpm db:generate
       - run: pnpm check-types
       - run: pnpm lint
+      - run: pnpm build

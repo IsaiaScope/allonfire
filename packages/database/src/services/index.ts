@@ -12,6 +12,14 @@ export {
   unschedulePost,
   updatePostContent,
 } from "./post.service";
+export {
+  deleteProvider,
+  getActiveProvider,
+  getProviders,
+  getProviderWithDecryptedKey,
+  setActiveProvider,
+  upsertProvider,
+} from "./provider.service";
 export { getSettings, updateSettings } from "./settings.service";
 export {
   getDailySummary,
@@ -21,6 +29,7 @@ export {
 export {
   archiveTopic,
   getDiscoveredTopics,
+  getDiscoveredTopicsPaginated,
   getTopicsByStatus,
   getTopicsByStatusWithPosts,
   ingestTopics,

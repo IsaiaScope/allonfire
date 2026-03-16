@@ -10,8 +10,8 @@ import { Separator } from "@allonfire/ui/components/separator";
 import { Shield, UserPlus } from "lucide-react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { AddUserForm } from "@/components/add-user-form";
-import { UserList } from "@/components/user-list";
+import { AddUserForm } from "@/features/users/components/add-user-form";
+import { UserList } from "@/features/users/components/user-list";
 import { auth } from "@/lib/auth";
 
 export default async function UsersPage() {

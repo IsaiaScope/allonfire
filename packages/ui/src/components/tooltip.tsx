@@ -5,7 +5,7 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import type * as React from "react";
 
 function TooltipProvider({
-  delay = 0,
+  delay = 500,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider> & {
   delayDuration?: number;

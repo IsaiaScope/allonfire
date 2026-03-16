@@ -103,15 +103,36 @@ model Verification {
   updatedAt  DateTime? @updatedAt
 }
 
+// ============ AI Providers ============
+
+model AiProvider {
+  id             String       @id @default(cuid())
+  provider       ProviderType @unique
+  apiKey         String // Encrypted with AES-256-GCM
+  model          String // e.g., "claude-sonnet-4-20250514"
+  isVerified     Boolean      @default(false)
+  lastVerifiedAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  activeForSettings Settings[] @relation("ActiveProvider")
+}
+
+enum ProviderType {
+  ANTHROPIC
+  OPENROUTER
+}
+
 // ============ Settings ============
 
 model Settings {
-  id                  String   @id @default("singleton")
+  id                  String      @id @default("singleton")
   webhookDiscoveryUrl String?
   webhookPublishUrl   String?
   webhookNotifyUrl    String?
-  anthropicApiKey     String?
-  updatedAt           DateTime @updatedAt
+  activeProviderId    String?
+  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id])
+  updatedAt           DateTime    @updatedAt
 }
 
 // ============ Webhook Logging ============

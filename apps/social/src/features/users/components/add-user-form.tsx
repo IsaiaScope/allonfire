@@ -5,7 +5,7 @@ import { Input } from "@allonfire/ui/components/input";
 import { Label } from "@allonfire/ui/components/label";
 import { Loader2, UserPlus } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { createUserAction } from "@/app/actions/users";
+import { createUserAction } from "../actions/users";
 
 export function AddUserForm() {
   const [pending, startTransition] = useTransition();

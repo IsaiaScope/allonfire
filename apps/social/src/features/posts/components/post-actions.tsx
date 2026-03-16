@@ -9,7 +9,7 @@ import {
   rejectPostAction,
   schedulePostAction,
   unschedulePostAction,
-} from "@/app/actions/posts";
+} from "../actions/posts";
 
 export function ApprovePostButton({ postId }: { postId: string }) {
   const [pending, startTransition] = useTransition();
