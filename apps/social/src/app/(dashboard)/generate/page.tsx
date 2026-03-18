@@ -8,7 +8,7 @@ import {
 } from "@allonfire/ui/components/card";
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
-import { GenerateButton } from "@/components/generate-button";
+import { GenerateButton } from "@/features/generation/components/generate-button";
 
 export default async function GeneratePage() {
   const selectedTopics = await getTopicsByStatusWithPosts([

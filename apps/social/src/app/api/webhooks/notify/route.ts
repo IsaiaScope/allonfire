@@ -4,10 +4,10 @@ import {
   logWebhook,
 } from "@allonfire/database";
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }

@@ -1,12 +1,12 @@
 import { ingestTopics, logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 const topicSchema = z.object({
   title: z.string().min(1),
   summary: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   sourceName: z.string().min(1),
   category: z.enum([
     "NEWS",
@@ -23,7 +23,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }

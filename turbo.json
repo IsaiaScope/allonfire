@@ -1,6 +1,12 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "N8N_API_KEY"
+  ],
 
   "tasks": {
     "build": {

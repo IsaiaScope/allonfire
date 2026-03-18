@@ -6,7 +6,7 @@ import "./globals.css";
 
 const fontSans = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
 });
 
@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} flex min-h-dvh flex-col bg-background font-sans antialiased`}
+        className={`${fontSans.variable} ${fontMono.variable} flex h-dvh flex-col overflow-hidden bg-background font-sans antialiased`}
       >
         <Providers>
           <Wrapper className="flex flex-1 flex-col" tag="div">
