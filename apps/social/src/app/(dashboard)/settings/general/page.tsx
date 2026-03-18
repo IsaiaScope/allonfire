@@ -73,7 +73,7 @@ export default async function GeneralSettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Key className="size-4 text-primary" />
-            <CardTitle className="text-base">Webhook API Key</CardTitle>
+            <CardTitle className="text-base">n8n Bearer Token</CardTitle>
           </div>
           <CardDescription>
             Shared secret for n8n-to-app communication.
@@ -83,13 +83,13 @@ export default async function GeneralSettingsPage() {
           <p className="text-sm">
             Set{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">
-              ALLONFIRE_API_KEY
+              N8N_API_KEY
             </code>{" "}
-            in your environment variables. n8n workflows use this key in the{" "}
+            in your environment variables. n8n workflows send this token in the{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">
-              X-API-Key
+              Authorization: Bearer
             </code>{" "}
-            header when calling webhook endpoints.
+            header when calling webhook and classification endpoints.
           </p>
         </CardContent>
       </Card>
@@ -120,14 +120,14 @@ export default async function GeneralSettingsPage() {
       <Separator />
 
       <p className="text-muted-foreground text-sm">
-        AI provider keys are now managed in{" "}
+        AI provider keys are managed in the{" "}
         <Link
           className="text-primary underline underline-offset-4"
-          href="/settings/providers"
+          href="/admin/providers"
         >
-          AI Providers
-        </Link>{" "}
-        settings.
+          Admin Panel
+        </Link>
+        .
       </p>
     </div>
   );

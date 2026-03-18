@@ -12,11 +12,11 @@ import { Bot, CircleCheck, CircleX, Minus } from "lucide-react";
 
 type ProviderCardProps = {
   name: string;
-  provider: "ANTHROPIC" | "OPENROUTER";
+  provider: "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
   isActive: boolean;
   isConfigured: boolean;
   isVerified: boolean;
-  maskedKey: string | null;
+
   model: string | null;
   isSelected: boolean;
   onSelect: () => void;
@@ -60,7 +60,7 @@ export function ProviderCard({
   isActive,
   isConfigured,
   isVerified,
-  maskedKey,
+
   model,
   isSelected,
   onSelect,
@@ -104,9 +104,6 @@ export function ProviderCard({
           <p className="truncate text-muted-foreground text-xs">
             Model: {model}
           </p>
-        )}
-        {maskedKey && (
-          <p className="font-mono text-muted-foreground text-xs">{maskedKey}</p>
         )}
       </CardContent>
     </Card>

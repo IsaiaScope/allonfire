@@ -19,6 +19,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -31,15 +32,13 @@ export default async function DashboardLayout({
     where: { id: session.user.id },
     select: { role: true },
   });
-
-  const cookieStore = await cookies();
   const sidebarCookie = cookieStore.get(COOKIE_NAME)?.value;
   const defaultState = parseCookieState(sidebarCookie);
 
   return (
     <SidebarProvider defaultState={defaultState}>
       <Wrapper
-        className="flex flex-1 flex-col overflow-hidden md:flex-row"
+        className="flex h-dvh flex-col overflow-hidden md:flex-row"
         tag="div"
       >
         <MobileTopBar />

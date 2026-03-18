@@ -1,13 +1,12 @@
 "use client";
 
 import { cn } from "@allonfire/ui/lib/utils";
-import { Bell, Bot, Settings, TrendingUp } from "lucide-react";
+import { Bell, Settings, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const settingsLinks = [
   { href: "/settings/general", label: "General", icon: Settings },
-  { href: "/settings/providers", label: "AI Providers", icon: Bot },
   {
     href: "/settings/notifications",
     label: "Notifications",

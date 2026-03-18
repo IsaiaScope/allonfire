@@ -1,7 +1,7 @@
 import { getProviders, getSettings } from "@allonfire/database";
-import { ProvidersHub } from "@/features/providers/components/providers-hub";
+import { ProvidersHub } from "@/features/ai-providers/components/providers-hub";
 
-export default async function ProvidersPage() {
+export default async function AdminProvidersPage() {
   const [providers, settings] = await Promise.all([
     getProviders(),
     getSettings(),

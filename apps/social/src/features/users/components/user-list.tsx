@@ -1,8 +1,20 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@allonfire/ui/components/alert-dialog";
+import { Avatar, AvatarFallback } from "@allonfire/ui/components/avatar";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteUserAction } from "../actions/users";
 
@@ -30,13 +42,10 @@ function UserRow({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const isCurrentUser = user.id === currentUserId;
 
-  function handleDelete() {
-    // biome-ignore lint/suspicious/noAlert: intentional confirmation for destructive action
-    if (!window.confirm(`Delete ${user.email}? This cannot be undone.`)) {
-      return;
-    }
+  function handleConfirmDelete() {
     setError(null);
     startTransition(async () => {
       try {
@@ -54,39 +63,72 @@ function UserRow({
     .join("");
 
   return (
-    <div className="flex items-center justify-between rounded-md border px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex size-8 items-center justify-center rounded-full bg-muted font-medium text-muted-foreground text-xs">
-          {initials}
-        </div>
-        <div>
+    <div className="flex items-center justify-between rounded-md border px-4 py-3 transition-colors hover:bg-muted/50">
+      <Link
+        className="flex min-w-0 flex-1 items-center gap-3"
+        href={`/admin/users/${user.id}`}
+      >
+        <Avatar className="size-8 shrink-0">
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">
               {user.name ?? user.email}
             </span>
-            {isCurrentUser && <Badge variant="secondary">You</Badge>}
-            <Badge variant={user.role === "ADMIN" ? "default" : "outline"}>
+            {isCurrentUser && (
+              <Badge className="px-1.5 py-0 text-[10px]" variant="secondary">
+                You
+              </Badge>
+            )}
+            <Badge
+              className="px-1.5 py-0 text-[10px]"
+              variant={user.role === "ADMIN" ? "default" : "outline"}
+            >
               {user.role}
             </Badge>
           </div>
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
-      </div>
+      </Link>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {error && <span className="text-destructive text-xs">{error}</span>}
-        <Button
-          disabled={isCurrentUser || pending}
-          onClick={handleDelete}
-          size="sm"
-          variant="ghost"
-        >
-          {pending ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="size-3.5" />
-          )}
-        </Button>
+        <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+          <Button
+            className="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"
+            disabled={isCurrentUser || pending}
+            onClick={() => setConfirmOpen(true)}
+            size="sm"
+            variant="ghost"
+          >
+            {pending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="size-3.5" />
+            )}
+          </Button>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete user?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete{" "}
+                <span className="font-medium text-foreground">
+                  {user.email}
+                </span>
+                . This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

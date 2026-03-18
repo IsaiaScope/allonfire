@@ -15,6 +15,7 @@ export function MobileTopBar() {
         <Image
           alt="AllOnFire Social"
           height={36}
+          priority
           src="/allonfire-social-horizontal.svg"
           width={120}
         />

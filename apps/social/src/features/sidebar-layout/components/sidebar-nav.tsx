@@ -12,8 +12,8 @@ import {
   Compass,
   FileText,
   LayoutDashboard,
+  ShieldCheck,
   Sparkles,
-  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,7 +26,7 @@ export const navItems = [
   { href: "/generate", label: "Generate", icon: Sparkles },
   { href: "/drafts", label: "Drafts", icon: FileText },
   { href: "/schedule", label: "Schedule", icon: Calendar },
-  { href: "/users", label: "Users", icon: Users, adminOnly: true },
+  { href: "/admin", label: "Admin Panel", icon: ShieldCheck, adminOnly: true },
 ];
 
 type SidebarNavProps = {
@@ -137,6 +137,7 @@ export function SidebarLogo({ collapsed }: { collapsed?: boolean }) {
             collapsed ? "opacity-0" : "opacity-100"
           )}
           height={46}
+          priority
           src="/allonfire-social-horizontal.svg"
           width={156}
         />

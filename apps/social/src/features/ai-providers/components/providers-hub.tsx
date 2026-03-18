@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  ANTHROPIC_MODELS,
-  DEFAULT_MODELS,
-  OPENROUTER_MODELS,
-} from "@allonfire/content-generator/providers/models";
 import { AlertTriangle, CircleCheck } from "lucide-react";
 import { useState } from "react";
 import { ProviderCard } from "./provider-card";
@@ -12,7 +7,7 @@ import { ProviderConfigPanel } from "./provider-config-panel";
 
 type ProviderData = {
   id: string;
-  provider: "ANTHROPIC" | "OPENROUTER";
+  provider: "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
   maskedKey: string;
   model: string;
   isVerified: boolean;
@@ -25,28 +20,21 @@ type ProvidersHubProps = {
 };
 
 const PROVIDER_META = {
-  ANTHROPIC: {
-    name: "Anthropic",
-    models: ANTHROPIC_MODELS,
-    defaultModel: DEFAULT_MODELS.ANTHROPIC,
-  },
-  OPENROUTER: {
-    name: "OpenRouter",
-    models: OPENROUTER_MODELS,
-    defaultModel: DEFAULT_MODELS.OPENROUTER,
-  },
+  ANTHROPIC: { name: "Anthropic" },
+  OPENROUTER: { name: "OpenRouter" },
+  GOOGLE_GEMINI: { name: "Google Gemini" },
 } as const;
 
-const PROVIDER_TYPES = ["ANTHROPIC", "OPENROUTER"] as const;
+const PROVIDER_TYPES = ["ANTHROPIC", "OPENROUTER", "GOOGLE_GEMINI"] as const;
 
 export function ProvidersHub({
   providers,
   activeProviderId,
   activeProvider,
 }: ProvidersHubProps) {
-  const [selected, setSelected] = useState<"ANTHROPIC" | "OPENROUTER" | null>(
-    null
-  );
+  const [selected, setSelected] = useState<
+    "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI" | null
+  >(null);
 
   const providerMap = new Map(providers.map((p) => [p.provider, p]));
 
@@ -86,7 +74,6 @@ export function ProvidersHub({
               isSelected={selected === type}
               isVerified={data?.isVerified ?? false}
               key={type}
-              maskedKey={data?.maskedKey ?? null}
               model={data?.model ?? null}
               name={meta.name}
               onSelect={() => setSelected(selected === type ? null : type)}
@@ -98,13 +85,12 @@ export function ProvidersHub({
 
       {selected && (
         <ProviderConfigPanel
-          defaultModel={PROVIDER_META[selected].defaultModel}
           existingId={providerMap.get(selected)?.id ?? null}
           existingModel={providerMap.get(selected)?.model ?? null}
           isActive={providerMap.get(selected)?.id === activeProviderId}
           isVerified={providerMap.get(selected)?.isVerified ?? false}
+          key={selected}
           maskedKey={providerMap.get(selected)?.maskedKey ?? null}
-          models={PROVIDER_META[selected].models}
           name={PROVIDER_META[selected].name}
           onClose={() => setSelected(null)}
           provider={selected}

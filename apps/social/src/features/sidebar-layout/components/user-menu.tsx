@@ -63,7 +63,7 @@ export function UserMenu({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56" side="top">
+      <DropdownMenuContent align="start" className="w-48" side="top">
         <DropdownMenuItem render={<Link href="/settings" />}>
           <Settings className="size-4 text-current" />
           Settings

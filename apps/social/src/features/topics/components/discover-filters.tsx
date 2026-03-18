@@ -1,5 +1,6 @@
 "use client";
 
+import { useMounted } from "@allonfire/hooks/use-mounted";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Input } from "@allonfire/ui/components/input";
 import {
@@ -9,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@allonfire/ui/components/select";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const CATEGORIES = [
@@ -41,6 +42,7 @@ export function DiscoverFilters({
   totalCount,
 }: DiscoverFiltersProps) {
   const [localSearch, setLocalSearch] = useState(search);
+  const mounted = useMounted();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -65,16 +67,23 @@ export function DiscoverFilters({
           />
         </div>
         <div className="flex items-center gap-2">
-          <Select onValueChange={onSortChange} value={sort}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
-              <SelectItem value="source">By source</SelectItem>
-            </SelectContent>
-          </Select>
+          {mounted ? (
+            <Select onValueChange={onSortChange} value={sort}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+                <SelectItem value="source">By source</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex h-9 w-[150px] items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-muted-foreground text-sm shadow-xs dark:bg-input/30">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading...
+            </div>
+          )}
           <Badge variant="secondary">{totalCount} topics</Badge>
         </div>
       </div>
