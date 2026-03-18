@@ -1,24 +1,42 @@
 name: CI
 on:
   pull_request:
-    branches: [dev, test, prod]
+    branches: [dev, test]
 
 jobs:
-  check:
+  ci:
     runs-on: ubuntu-latest
+    environment: dev
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: allonfire
+          POSTGRES_PASSWORD: allonfire
+          POSTGRES_DB: allonfire
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U allonfire"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+      N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:generate
       - run: pnpm check-types
       - run: pnpm lint
+      - run: pnpm db:push
       - run: pnpm build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+      - run: pnpm turbo run test

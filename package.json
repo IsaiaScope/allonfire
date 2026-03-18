@@ -41,7 +41,8 @@
     "lint-staged": "^16.0.0",
     "turbo": "^2.5.3",
     "typescript": "~5.8.2",
-    "ultracite": "7.2.4"
+    "ultracite": "7.2.4",
+    "vitest": "^4.1.0"
   },
   "commitlint": {
     "extends": [

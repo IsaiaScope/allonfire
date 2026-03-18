@@ -51,6 +51,7 @@ services:
       - DB_POSTGRESDB_PASSWORD=allonfire
       - N8N_WEBHOOK_BASE_URL=http://host.docker.internal:3100
       - N8N_API_KEY=${N8N_API_KEY:-dev-api-key}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
     volumes:

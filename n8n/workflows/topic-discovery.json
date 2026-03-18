@@ -573,7 +573,12 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ items: $input.all().map(i => i.json) }) }}",
         "options": {
-          "timeout": 60000
+          "timeout": 60000,
+          "batching": {
+            "batch": {
+              "batchSize": -1
+            }
+          }
         },
         "method": "POST"
       },
