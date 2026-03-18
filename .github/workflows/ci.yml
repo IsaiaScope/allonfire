@@ -18,3 +18,5 @@ jobs:
       - run: pnpm check-types
       - run: pnpm lint
       - run: pnpm build
+        env:
+          SKIP_ENV_VALIDATION: "1"

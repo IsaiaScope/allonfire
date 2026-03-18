@@ -11,4 +11,5 @@ export const env = createEnv({
   client: {},
   extends: [dbEnv],
   experimental__runtimeEnv: {},
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });
