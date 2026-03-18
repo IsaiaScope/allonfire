@@ -1,5 +1,5 @@
 {
-  "name": "AllOnFire — Topic Discovery",
+  "name": "AllOnFire \u2014 Topic Discovery",
   "nodes": [
     {
       "parameters": {
@@ -551,7 +551,7 @@
       "type": "n8n-nodes-base.removeDuplicates",
       "typeVersion": 1,
       "position": [1700, 400],
-      "notes": "Deduplicates by sourceUrl — same article from multiple sources kept once"
+      "notes": "Deduplicates by sourceUrl \u2014 same article from multiple sources kept once"
     },
     {
       "parameters": {
@@ -574,7 +574,8 @@
         "jsonBody": "={{ JSON.stringify({ items: $input.all().map(i => i.json) }) }}",
         "options": {
           "timeout": 60000
-        }
+        },
+        "method": "POST"
       },
       "id": "classify-api",
       "name": "POST to Classify API",
@@ -656,7 +657,8 @@
         "jsonBody": "={{ JSON.stringify({ topics: $json.topics }) }}",
         "options": {
           "timeout": 15000
-        }
+        },
+        "method": "POST"
       },
       "id": "webhook-post",
       "name": "POST to AllOnFire Webhook",
@@ -679,7 +681,7 @@
     },
     {
       "parameters": {
-        "content": "## 📡 DATA SOURCES\n\n9 parallel branches fetch from APIs, RSS feeds, HTML scrapes, and social platforms.\nEach source has `continueOnFail: true` — one failing API won't block others.",
+        "content": "## \ud83d\udce1 DATA SOURCES\n\n9 parallel branches fetch from APIs, RSS feeds, HTML scrapes, and social platforms.\nEach source has `continueOnFail: true` \u2014 one failing API won't block others.",
         "width": 700,
         "height": 3300,
         "color": 4
@@ -692,7 +694,7 @@
     },
     {
       "parameters": {
-        "content": "## 🔀 MERGE & DEDUP\n\n4 Collector nodes group sources by type.\nDuplicates removed by `sourceUrl`.",
+        "content": "## \ud83d\udd00 MERGE & DEDUP\n\n4 Collector nodes group sources by type.\nDuplicates removed by `sourceUrl`.",
         "width": 700,
         "height": 2100,
         "color": 2
@@ -705,7 +707,7 @@
     },
     {
       "parameters": {
-        "content": "## 🤖 AI CLASSIFICATION\n\nClaude Haiku classifies each article into one of 5 categories.\nSystem + user + assistant prefill pattern ensures reliable JSON.\nItems with relevance < 0.5 are filtered out.",
+        "content": "## \ud83e\udd16 AI CLASSIFICATION\n\nClaude Haiku classifies each article into one of 5 categories.\nSystem + user + assistant prefill pattern ensures reliable JSON.\nItems with relevance < 0.5 are filtered out.",
         "width": 900,
         "height": 450,
         "color": 6
@@ -718,7 +720,7 @@
     },
     {
       "parameters": {
-        "content": "## 📤 DELIVERY\n\nClassified topics are batched (20/request) and POSTed to the AllOnFire webhook.\nThe app deduplicates against existing DB records.",
+        "content": "## \ud83d\udce4 DELIVERY\n\nClassified topics are batched (20/request) and POSTed to the AllOnFire webhook.\nThe app deduplicates against existing DB records.",
         "width": 600,
         "height": 450,
         "color": 3
@@ -731,7 +733,7 @@
     },
     {
       "parameters": {
-        "content": "## 📊 EXECUTION SUMMARY\n\nLogs total items ingested, duplicates skipped, and any errors.",
+        "content": "## \ud83d\udcca EXECUTION SUMMARY\n\nLogs total items ingested, duplicates skipped, and any errors.",
         "width": 400,
         "height": 350,
         "color": 1
@@ -1378,6 +1380,6 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "meta": {
-    "description": "Discovers trending programming/AI topics from 9 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, additional news) daily at 6 AM UTC. Uses 4 Collector nodes instead of binary merge trees. Deduplicates by URL, classifies via server-side /api/classify-topics endpoint (uses active AI provider from database) into NEWS/MEME_WORTHY/LEARNING/TOOL_RELEASE/AI_UPDATE, filters by relevance ≥ 0.5, and POSTs batches to AllOnFire webhook. Auth via Bearer token. Expected: 80-150 items/day before dedup, ~40-80 after AI filter."
+    "description": "Discovers trending programming/AI topics from 9 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, additional news) daily at 6 AM UTC. Uses 4 Collector nodes instead of binary merge trees. Deduplicates by URL, classifies via server-side /api/classify-topics endpoint (uses active AI provider from database) into NEWS/MEME_WORTHY/LEARNING/TOOL_RELEASE/AI_UPDATE, filters by relevance \u2265 0.5, and POSTs batches to AllOnFire webhook. Auth via Bearer token. Expected: 80-150 items/day before dedup, ~40-80 after AI filter."
   }
 }

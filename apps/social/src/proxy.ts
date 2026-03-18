@@ -4,8 +4,11 @@ import { type NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Webhook API routes use API key auth, not session auth
-  if (pathname.startsWith("/api/webhooks")) {
+  // API routes that use Bearer token auth instead of session auth
+  if (
+    pathname.startsWith("/api/webhooks") ||
+    pathname === "/api/classify-topics"
+  ) {
     return NextResponse.next();
   }
 
