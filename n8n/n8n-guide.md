@@ -77,7 +77,7 @@ Dynamic values inside node parameters, written as `{{ expression }}`:
 
 Used in our workflow for:
 - Dynamic URLs: `https://hacker-news.firebaseio.com/v0/item/{{ $json.id }}.json`
-- Environment vars: `{{ $env.ALLONFIRE_API_KEY }}`
+- Environment vars: `{{ $env.N8N_API_KEY }}`
 - Template strings in the AI prompt: `{{ $json.articles }}`
 
 ### `continueOnFail`

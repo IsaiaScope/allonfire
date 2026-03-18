@@ -15,10 +15,16 @@ export function createOpenRouterProvider(apiKey: string): ProviderClient {
 
   return {
     async generate(request: GenerateRequest): Promise<GenerateResponse> {
+      const messages = [
+        ...(request.system
+          ? [{ role: "system" as const, content: request.system }]
+          : []),
+        ...request.messages,
+      ];
       const completion = await client.chat.completions.create({
         model: request.model,
         max_tokens: request.maxTokens,
-        messages: request.messages,
+        messages,
       });
 
       const choice = completion.choices.at(0);
@@ -44,6 +50,15 @@ export function createOpenRouterProvider(apiKey: string): ProviderClient {
         messages: [{ role: "user", content: "Hi" }],
       });
       return (completion.choices.at(0)?.message.content?.length ?? 0) > 0;
+    },
+
+    async listModels() {
+      const response = await client.models.list();
+      const models: Array<{ id: string; label: string }> = [];
+      for await (const model of response) {
+        models.push({ id: model.id, label: model.id });
+      }
+      return models;
     },
   };
 }

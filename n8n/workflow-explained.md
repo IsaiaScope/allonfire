@@ -299,7 +299,7 @@ These categories match the `TopicCategory` enum in the Prisma schema exactly.
 |------|------|-------------|
 | **Filter Empty Results** | Filter | Safety net — drops the `_empty` sentinel if AI classification produced zero results |
 | **Build Webhook Payload (groups of 20)** | Code | Groups classified topics into batches of 20 for the webhook payload. The webhook expects `{ topics: [...] }` |
-| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.ALLONFIRE_WEBHOOK_URL }}/api/webhooks/topics` with `X-API-Key` header. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows |
+| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.N8N_WEBHOOK_BASE_URL }}/api/webhooks/topics` with `X-API-Key` header. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows |
 
 **Webhook response:**
 ```json
@@ -407,8 +407,8 @@ Set these in the n8n service environment (Dokploy panel):
 | Variable | Used by | Purpose |
 |----------|---------|---------|
 | `ANTHROPIC_API_KEY` | AI Classify node | Authenticates with Claude API |
-| `ALLONFIRE_WEBHOOK_URL` | POST node | Base URL of the social app (e.g., `https://social.allonfire.com`) |
-| `ALLONFIRE_API_KEY` | POST node | Matches the `ALLONFIRE_API_KEY` env var in the social app |
+| `N8N_WEBHOOK_BASE_URL` | POST node | Base URL of the social app (e.g., `https://social.allonfire.com`) |
+| `N8N_API_KEY` | POST node | Matches the `N8N_API_KEY` env var in the social app |
 
 ---
 
@@ -442,7 +442,7 @@ Set these in the n8n service environment (Dokploy panel):
 
 - Docker running
 - The AllOnFire social app running locally on port 3100 (`pnpm dev --filter @allonfire/social`)
-- `ALLONFIRE_API_KEY` set in the social app's `.env` file
+- `N8N_API_KEY` set in the social app's `.env` file
 
 ### 1. Start n8n locally
 
@@ -469,12 +469,12 @@ The `ANTHROPIC_API_KEY` is read from your shell environment via `${ANTHROPIC_API
 3. Select `n8n/workflows/topic-discovery.json`
 4. Save
 
-### 4. Set the ALLONFIRE_API_KEY
+### 4. Set the N8N_API_KEY
 
-The local n8n defaults to `dev-api-key` for `ALLONFIRE_API_KEY`. Make sure your social app's `.env` has the same value:
+The local n8n defaults to `dev-api-key` for `N8N_API_KEY`. Make sure your social app's `.env` has the same value:
 
 ```
-ALLONFIRE_API_KEY=dev-api-key
+N8N_API_KEY=dev-api-key
 ```
 
 ### 5. Test the workflow
@@ -502,7 +502,7 @@ Click **Test Workflow** in the n8n UI. Watch the execution — each node shows i
 │    ▼                         │
 │  postgres (:5432)            │
 │                              │
-│    │ ALLONFIRE_WEBHOOK_URL=  │
+│    │ N8N_WEBHOOK_BASE_URL=  │
 │    │ "host.docker.internal"  │
 │    ▼                         │
 └────┼─────────────────────────┘
@@ -522,7 +522,7 @@ Click **Test Workflow** in the n8n UI. Watch the execution — each node shows i
 |---------|-----|
 | n8n can't reach the social app | Make sure the social app is running on port 3100. On Linux, `host.docker.internal` may not work — use `172.17.0.1` instead |
 | AI classification returns errors | Check that `ANTHROPIC_API_KEY` is set. Click the "AI Classify" node to see the raw API response |
-| Webhook returns 401 | `ALLONFIRE_API_KEY` mismatch between n8n env and social app `.env` |
-| Webhook returns 500 "API key not configured" | Add `ALLONFIRE_API_KEY=dev-api-key` to `apps/social/.env` |
+| Webhook returns 401 | `N8N_API_KEY` mismatch between n8n env and social app `.env` |
+| Webhook returns 500 "API key not configured" | Add `N8N_API_KEY=dev-api-key` to `apps/social/.env` |
 | Reddit returns 429 | Reddit rate-limits unauthenticated requests. The workflow runs once daily so this is rare — if testing repeatedly, wait 60 seconds between runs |
 | n8n won't start | Check `docker logs allonfire-n8n-1` — usually a PostgreSQL connection issue. Make sure postgres is healthy first |

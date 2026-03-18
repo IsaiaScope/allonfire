@@ -36,5 +36,9 @@ export {
   selectTopic,
   selectTopics,
 } from "./topic.service";
-export { deleteUser, getUserCount, getUsers } from "./user.service";
+export {
+  deleteUser,
+  getUserById,
+  getUsers,
+} from "./user.service";
 export { logWebhook } from "./webhook-log.service";

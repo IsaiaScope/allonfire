@@ -52,8 +52,8 @@ Add these to the n8n service environment in Dokploy (alongside existing vars):
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | Anthropic API key for Claude Haiku classification | `sk-ant-...` |
-| `ALLONFIRE_WEBHOOK_URL` | Base URL of the AllOnFire social app | `https://social.allonfire.com` |
-| `ALLONFIRE_API_KEY` | API key matching `ALLONFIRE_API_KEY` env var in the social app | `your-secret-key` |
+| `N8N_WEBHOOK_BASE_URL` | Base URL of the AllOnFire social app | `https://social.allonfire.com` |
+| `N8N_API_KEY` | API key matching `N8N_API_KEY` env var in the social app | `your-secret-key` |
 
 After adding env vars, redeploy the n8n service in Dokploy for them to take effect.
 
@@ -102,8 +102,8 @@ docker compose -f docker-compose.dev.yml up -d
 n8n will be available at `http://localhost:5678` (admin/admin).
 
 Set environment variables in n8n Settings → Variables:
-- `ALLONFIRE_WEBHOOK_URL` → `http://host.docker.internal:3100`
-- `ALLONFIRE_API_KEY` → same as your local app's `ALLONFIRE_API_KEY`
+- `N8N_WEBHOOK_BASE_URL` → `http://host.docker.internal:3100`
+- `N8N_API_KEY` → same as your local app's `N8N_API_KEY`
 - `ANTHROPIC_API_KEY` → your Anthropic key
 
 ## Monitoring

@@ -2,13 +2,14 @@ name: allonfire
 
 services:
   postgres:
+    container_name: allonfire-postgres
     image: postgres:16-alpine
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: allonfire
-      POSTGRES_PASSWORD: allonfire_dev
+      POSTGRES_PASSWORD: allonfire
       POSTGRES_DB: allonfire
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -19,6 +20,7 @@ services:
       retries: 5
 
   adminer:
+    container_name: allonfire-adminer
     image: adminer
     restart: unless-stopped
     ports:
@@ -27,6 +29,7 @@ services:
       - postgres
 
   n8n:
+    container_name: allonfire-n8n
     image: docker.n8n.io/n8nio/n8n:2.10.2
     restart: unless-stopped
     ports:
@@ -45,10 +48,9 @@ services:
       - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=allonfire
       - DB_POSTGRESDB_USER=allonfire
-      - DB_POSTGRESDB_PASSWORD=allonfire_dev
-      - ALLONFIRE_WEBHOOK_URL=http://host.docker.internal:3100
-      - ALLONFIRE_API_KEY=${ALLONFIRE_API_KEY:-dev-api-key}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DB_POSTGRESDB_PASSWORD=allonfire
+      - N8N_WEBHOOK_BASE_URL=http://host.docker.internal:3100
+      - N8N_API_KEY=${N8N_API_KEY:-dev-api-key}
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
     volumes:

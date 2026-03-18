@@ -13,6 +13,7 @@ export function createAnthropicProvider(apiKey: string): ProviderClient {
       const message = await client.messages.create({
         model: request.model,
         max_tokens: request.maxTokens,
+        ...(request.system && { system: request.system }),
         messages: request.messages,
       });
 
@@ -37,6 +38,14 @@ export function createAnthropicProvider(apiKey: string): ProviderClient {
         messages: [{ role: "user", content: "Hi" }],
       });
       return message.content.length > 0;
+    },
+
+    async listModels() {
+      const models: Array<{ id: string; label: string }> = [];
+      for await (const model of client.models.list()) {
+        models.push({ id: model.id, label: model.display_name });
+      }
+      return models;
     },
   };
 }

@@ -1,5 +1,18 @@
 import { prisma } from "../index";
 
+export async function getUserById(userId: string) {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+}
+
 export async function getUsers() {
   return await prisma.user.findMany({
     select: {
@@ -11,10 +24,6 @@ export async function getUsers() {
     },
     orderBy: { createdAt: "asc" },
   });
-}
-
-export async function getUserCount() {
-  return await prisma.user.count();
 }
 
 export async function deleteUser(userId: string) {

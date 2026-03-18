@@ -89,7 +89,7 @@ export async function getProviderWithDecryptedKey(provider: ProviderType) {
 function maskKey(encryptedKey: string): string {
   try {
     const plaintext = decrypt(encryptedKey);
-    return `${"•".repeat(Math.max(0, plaintext.length - 4))}${plaintext.slice(-4)}`;
+    return "•".repeat(Math.min(plaintext.length, 32));
   } catch {
     return "••••••••";
   }

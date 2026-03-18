@@ -5,10 +5,8 @@
   "type": "module",
   "exports": {
     "./use-breakpoint": "./src/use-breakpoint.ts",
+    "./use-mounted": "./src/use-mounted.ts",
     "./breakpoints": "./src/breakpoints.ts"
-  },
-  "dependencies": {
-    "react-responsive": "^10.0.1"
   },
   "peerDependencies": {
     "react": "^19.0.0"

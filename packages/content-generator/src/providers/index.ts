@@ -1,5 +1,6 @@
 import { getActiveProvider as getActiveProviderFromDB } from "@allonfire/database";
 import { createAnthropicProvider } from "./anthropic";
+import { createGeminiProvider } from "./gemini";
 import { createOpenRouterProvider } from "./openrouter";
 import type { ProviderClient } from "./types";
 
@@ -11,7 +12,7 @@ export async function getActiveProviderClient(): Promise<{
 
   if (!provider) {
     throw new Error(
-      "No AI provider configured. Set up a provider at /settings/providers."
+      "No AI provider configured. Set up a provider at /admin/providers."
     );
   }
 
@@ -22,6 +23,8 @@ export async function getActiveProviderClient(): Promise<{
       return { client: createAnthropicProvider(apiKey), model };
     case "OPENROUTER":
       return { client: createOpenRouterProvider(apiKey), model };
+    case "GOOGLE_GEMINI":
+      return { client: createGeminiProvider(apiKey), model };
     default: {
       const _exhaustive: never = providerType;
       throw new Error(`Unknown provider type: ${_exhaustive}`);

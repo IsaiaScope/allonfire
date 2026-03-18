@@ -11,7 +11,7 @@ datasource db {
 // ============ Topics ============
 
 model Topic {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid(2))
   title        String
   summary      String
   sourceUrl    String
@@ -26,7 +26,7 @@ model Topic {
 // ============ Posts ============
 
 model Post {
-  id             String      @id @default(cuid())
+  id             String      @id @default(cuid(2))
   topicId        String?
   topic          Topic?      @relation(fields: [topicId], references: [id])
   type           PostType
@@ -53,7 +53,7 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(cuid(2))
   email         String    @unique
   name          String?
   emailVerified Boolean   @default(false)
@@ -66,7 +66,7 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   expiresAt DateTime
   token     String   @unique
   ipAddress String?
@@ -78,7 +78,7 @@ model Session {
 }
 
 model Account {
-  id                    String    @id @default(cuid())
+  id                    String    @id @default(cuid(2))
   accountId             String
   providerId            String
   userId                String
@@ -95,7 +95,7 @@ model Account {
 }
 
 model Verification {
-  id         String    @id @default(cuid())
+  id         String    @id @default(cuid(2))
   identifier String
   value      String
   expiresAt  DateTime
@@ -106,7 +106,7 @@ model Verification {
 // ============ AI Providers ============
 
 model AiProvider {
-  id             String       @id @default(cuid())
+  id             String       @id @default(cuid(2))
   provider       ProviderType @unique
   apiKey         String // Encrypted with AES-256-GCM
   model          String // e.g., "claude-sonnet-4-20250514"
@@ -121,6 +121,7 @@ model AiProvider {
 enum ProviderType {
   ANTHROPIC
   OPENROUTER
+  GOOGLE_GEMINI
 }
 
 // ============ Settings ============
@@ -138,7 +139,7 @@ model Settings {
 // ============ Webhook Logging ============
 
 model WebhookLog {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   endpoint  String
   method    String
   payload   Json?

@@ -60,11 +60,14 @@ app/(dashboard)/
 ├── drafts/page.tsx         → Draft review. Imports from @/features/posts/
 ├── drafts/[id]/page.tsx    → Post editor. Imports from @/features/posts/
 ├── schedule/page.tsx       → Scheduled posts. Imports from @/features/posts/
-├── users/page.tsx          → User management. Imports from @/features/users/
+├── admin/layout.tsx        → Admin panel shell (auth guard, submenu). Imports from @/features/admin/
+├── admin/page.tsx          → Redirect to /admin/users
+├── admin/users/page.tsx    → User management. Imports from @/features/users/
+├── admin/users/[id]/page.tsx → User detail. Imports from @/features/users/
+├── admin/providers/page.tsx → AI providers. Imports from @/features/ai-providers/
 ├── settings/layout.tsx     → Settings nav. Imports from @/features/settings/
 ├── settings/page.tsx       → Redirect to /settings/general
-├── settings/general/page.tsx    → Webhooks. Imports from @/features/settings/
-└── settings/providers/page.tsx  → AI providers. Imports from @/features/providers/
+└── settings/general/page.tsx    → Webhooks. Imports from @/features/settings/
 ```
 
 ### Feature Layer (`features/`)
@@ -78,7 +81,7 @@ import { GenerateButton } from "@/features/generation/components/generate-button
 import { GenerateButton } from "@/features/generation";
 ```
 
-Features: `layout/`, `topics/`, `generation/`, `posts/`, `users/`, `settings/`, `providers/`
+Features: `layout/`, `topics/`, `generation/`, `posts/`, `users/`, `settings/`, `ai-providers/`, `admin/`
 
 Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
 
@@ -103,8 +106,9 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, 
 - `/drafts` — Review + approve generated posts
 - `/schedule` — Calendar of scheduled posts
 - `/settings` — n8n webhook URLs, platform config
-- `/settings/providers` — AI provider management
-- `/users` — User management (admin only)
+- `/admin` — Admin panel redirect → `/admin/users`
+- `/admin/users` — User management (admin only)
+- `/admin/providers` — AI provider management (admin only)
 
 ## Deployment
 
