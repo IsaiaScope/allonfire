@@ -8,7 +8,7 @@ import { Wrapper } from "@allonfire/ui/components/wrapper";
 import { ArrowRight, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { authClient } from "@/lib/auth-client";
@@ -20,10 +20,18 @@ type LoginFields = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [pending, startTransition] = useTransition();
   const [serverError, setServerError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirect already-authenticated users to dashboard
+  useEffect(() => {
+    if (session) {
+      router.replace("/");
+    }
+  }, [session, router]);
 
   const {
     register,

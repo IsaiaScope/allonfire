@@ -2,14 +2,14 @@ import { generatePostsForTopic } from "@allonfire/content-generator";
 import { getTopicsByStatus, logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 const bodySchema = z.object({
   topicId: z.string().cuid().optional(),
 });
 
 export async function POST(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }

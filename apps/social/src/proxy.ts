@@ -11,13 +11,15 @@ export function proxy(request: NextRequest) {
 
   const sessionCookie = getSessionCookie(request);
 
-  // Redirect authenticated users away from login
-  if (sessionCookie && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+  // Let /login render freely — the page handles authenticated users client-side.
+  // Middleware can't validate session tokens, so redirecting away from /login
+  // based on cookie existence causes redirect loops when sessions are stale.
+  if (pathname === "/login") {
+    return NextResponse.next();
   }
 
   // Redirect unauthenticated users to login (all non-login routes are protected)
-  if (!sessionCookie && pathname !== "/login") {
+  if (!sessionCookie) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

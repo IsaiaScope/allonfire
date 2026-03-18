@@ -6,10 +6,10 @@ import {
 } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }
@@ -54,7 +54,7 @@ const resultSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }
