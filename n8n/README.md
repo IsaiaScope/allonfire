@@ -17,7 +17,7 @@ Schedule (6 AM UTC daily)
   └── Additional News (VentureBeat AI, Techmeme, Lobsters AI RSS)
        │
        ▼
-  Collector → Deduplicate by URL → AI Classification (Claude Haiku) → Filter (relevance ≥ 0.5) → POST to webhook
+  Collector → Deduplicate by URL → Classify (batches of 50) → Rerank & Prune (top 5-10) → POST to webhook
 ```
 
 Each source branch uses `continueOnFail: true` — a single failing API won't block others.
@@ -51,7 +51,6 @@ Add these to the n8n service environment in Dokploy (alongside existing vars):
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Anthropic API key for Claude Haiku classification | `sk-ant-...` |
 | `N8N_WEBHOOK_BASE_URL` | Base URL of the AllOnFire social app | `https://social.allonfire.com` |
 | `N8N_API_KEY` | API key matching `N8N_API_KEY` env var in the social app | `your-secret-key` |
 
@@ -67,15 +66,34 @@ After adding env vars, redeploy the n8n service in Dokploy for them to take effe
 
 ### Expected Output
 
-- **80-150 topics per day** depending on source activity (54 nodes)
+- **5-10 topics per day** — the pipeline collects ~150 raw items, classifies ~30-50 above the 0.85 relevance threshold, then the global reranker picks the top 5-10
 - Each topic has: `title`, `summary` (AI-generated), `sourceUrl`, `sourceName`, `category`, `rawData`
 - Categories: `NEWS`, `MEME_WORTHY`, `LEARNING`, `TOOL_RELEASE`, `AI_UPDATE`
-- Items with relevance < 0.5 are filtered out
 
 ### Cost
 
-- **Claude Haiku 4.5**: ~200-400 items/day × ~200 tokens each ≈ $0.03-0.06/day (~$1.50/month)
+- **Classification + Reranking**: Handled server-side by the social app's `/api/classify-topics` and `/api/rerank-and-prune` endpoints. The AI provider API key is stored encrypted in the database (not in n8n) — configure it via the admin panel at `/admin/providers`
 - **All data sources**: Free, no API keys required
+
+## Authentication Architecture
+
+The system uses two separate tokens — n8n only needs one of them:
+
+| Token | Where Stored | Purpose | Used By |
+|-------|-------------|---------|---------|
+| `N8N_API_KEY` | Env var (n8n + social app) | Bearer token for n8n → app auth | All 6 n8n-facing API routes |
+| AI Provider API Key | Database (AES-256-GCM encrypted) | AI model calls (Anthropic/OpenRouter/Gemini) | `/api/classify-topics`, `/api/rerank-and-prune` only |
+
+n8n sends `Authorization: Bearer <N8N_API_KEY>` on every request. The social app validates this via `validateBearerToken()` in `apps/social/src/lib/api-auth.ts`. The proxy middleware (`apps/social/src/proxy.ts`) bypasses session auth for these Bearer-protected routes:
+
+- `POST /api/classify-topics` — AI classification (Bearer + AI provider key from DB)
+- `POST /api/rerank-and-prune` — Global reranking + pruning (Bearer + AI provider key from DB)
+- `POST /api/webhooks/topics` — Topic ingestion (Bearer only, no AI)
+- `POST /api/webhooks/generate` — Triggers post generation (Bearer only)
+- `GET /api/webhooks/notify` — Daily stats for notifications (Bearer only)
+- `GET+PATCH /api/webhooks/publish` — Gets due posts & marks as published (Bearer only)
+
+The AI provider API key is managed through the admin panel at `/admin/providers` and never exposed to n8n.
 
 ## Existing Deployment Details
 
@@ -104,7 +122,6 @@ n8n will be available at `http://localhost:5678` (admin/admin).
 Set environment variables in n8n Settings → Variables:
 - `N8N_WEBHOOK_BASE_URL` → `http://host.docker.internal:3100`
 - `N8N_API_KEY` → same as your local app's `N8N_API_KEY`
-- `ANTHROPIC_API_KEY` → your Anthropic key
 
 ## Monitoring
 

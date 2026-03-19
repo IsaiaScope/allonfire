@@ -1,6 +1,6 @@
 import {
   getDailySummary,
-  getOverviewStats,
+  getTopicStats,
   logWebhook,
 } from "@allonfire/database";
 import { NextResponse } from "next/server";
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const [stats, daily] = await Promise.all([
-      getOverviewStats(),
+      getTopicStats(),
       getDailySummary(),
     ]);
 

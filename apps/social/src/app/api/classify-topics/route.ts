@@ -3,6 +3,7 @@ import { logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
+import { stripCodeBlock } from "@/lib/parse-ai-response";
 
 const itemSchema = z.object({
   title: z.string().min(1),
@@ -15,11 +16,10 @@ const itemSchema = z.object({
 type Item = z.infer<typeof itemSchema>;
 
 const bodySchema = z.object({
-  items: z.array(itemSchema).min(1).max(100),
+  items: z.array(itemSchema).min(1).max(500),
 });
 
-const RELEVANCE_THRESHOLD = 0.7;
-const MAX_FINAL_TOPICS = 10;
+const RELEVANCE_THRESHOLD = 0.6;
 const BATCH_SIZE = 10;
 
 const CLASSIFICATION_SYSTEM_PROMPT = `You are a ruthlessly selective content curator for AllOnFire, a social media brand serving AI practitioners — people who build, deploy, and research AI systems.
@@ -42,21 +42,15 @@ Scoring — be extremely selective. Most articles are NOT worth posting about:
 
 For each item, ask: "Would an AI engineer share this with their team?" If not, score below 0.7.
 
-Return JSON array: [{ "index": 0, "category": "...", "summary": "max 500 chars, hook-driven and engaging for AI practitioners — provide enough context to create a social post from this summary alone", "relevance": 0.0-1.0 }]`;
+Return JSON array: [{ "index": 0, "category": "...", "summary": "...", "relevance": 0.0-1.0 }]
 
-const RERANKING_SYSTEM_PROMPT = `You are a senior editorial curator for AllOnFire, selecting the day's top content for AI practitioners.
-
-You will receive a list of pre-classified articles that already passed initial quality screening. Your job: pick the absolute best and rank them.
-
-Selection criteria (in priority order):
-1. IMPACT — Will AI practitioners talk about this today? Does it change how people think or work?
-2. CONTENT POTENTIAL — Could this become a compelling social media post, thread, or short video? Strong hook?
-3. UNIQUENESS — Does this offer a fresh angle, or is it the same take everyone else has?
-4. TIMELINESS — Is this breaking/fresh, or could it have been posted last week?
-
-Select the top items (maximum 10). It's better to return 5 excellent picks than 10 mediocre ones. If fewer than 5 items are truly outstanding, return fewer.
-
-Return JSON: { "selected": [3, 7, 1, 12, 5], "reasoning": "one sentence explaining the editorial theme of today's picks" }`;
+Summary rules:
+- Summarize what is known from the title and available context. State the topic, why it matters to AI practitioners, and what kind of social post it could become.
+- Do NOT invent specifics not present in the input. Never fabricate quotes, stats, or details.
+- If the title alone is unclear, say what the topic appears to be about and frame it as a content opportunity.
+- Write like an editorial pitch note: "this is what this topic is about, here's why it's postable."
+- Be direct and confident about what IS known, but never pretend to know more than the input provides.
+- Max 600 chars.`;
 
 const VALID_CATEGORIES = new Set([
   "NEWS",
@@ -65,18 +59,6 @@ const VALID_CATEGORIES = new Set([
   "TOOL_RELEASE",
   "AI_UPDATE",
 ]);
-
-const CODE_BLOCK_START = /^```(?:json)?\n?/;
-const CODE_BLOCK_END = /\n?```$/;
-const ARRAY_EXTRACT = /\[[\d,\s]+\]/;
-
-function stripCodeBlock(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.startsWith("```")) {
-    return trimmed.replace(CODE_BLOCK_START, "").replace(CODE_BLOCK_END, "");
-  }
-  return trimmed;
-}
 
 type ClassificationResult = {
   index: number;
@@ -144,96 +126,6 @@ function mapClassification(
   };
 }
 
-function parseRerankingResponse(text: string): {
-  selected: number[];
-  reasoning?: string;
-} {
-  const cleaned = stripCodeBlock(text);
-  try {
-    const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed.selected)) {
-      return parsed;
-    }
-    if (Array.isArray(parsed)) {
-      return { selected: parsed };
-    }
-  } catch {
-    const match = cleaned.match(ARRAY_EXTRACT);
-    if (match) {
-      return { selected: JSON.parse(match[0]) };
-    }
-  }
-  return { selected: [] };
-}
-
-function fallbackByRelevance(candidates: ClassifiedTopic[]): ClassifiedTopic[] {
-  return [...candidates]
-    .sort((a, b) => {
-      const relA =
-        ((a.rawData as Record<string, unknown>)?.aiRelevance as number) ?? 0;
-      const relB =
-        ((b.rawData as Record<string, unknown>)?.aiRelevance as number) ?? 0;
-      return relB - relA;
-    })
-    .slice(0, MAX_FINAL_TOPICS);
-}
-
-async function rerankCandidates(
-  candidates: ClassifiedTopic[],
-  client: {
-    generate: (req: {
-      model: string;
-      maxTokens: number;
-      system: string;
-      messages: Array<{ role: "user" | "assistant"; content: string }>;
-    }) => Promise<{ text: string }>;
-  },
-  model: string
-): Promise<ClassifiedTopic[]> {
-  if (candidates.length <= MAX_FINAL_TOPICS) {
-    return candidates;
-  }
-
-  const candidatePayload = candidates.map((c, idx) => ({
-    index: idx,
-    title: c.title,
-    summary: c.summary,
-    category: c.category,
-    source: c.sourceName,
-    relevance: (c.rawData as Record<string, unknown>)?.aiRelevance ?? 0,
-  }));
-
-  try {
-    const response = await client.generate({
-      model,
-      maxTokens: 1024,
-      system: RERANKING_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Select the top articles from these ${candidates.length} candidates:\n\n${JSON.stringify(candidatePayload)}`,
-        },
-      ],
-    });
-
-    const parsed = parseRerankingResponse(response.text);
-
-    const reranked = parsed.selected
-      .filter((idx) => idx >= 0 && idx < candidates.length)
-      .slice(0, MAX_FINAL_TOPICS)
-      .map((idx) => candidates[idx])
-      .filter((topic): topic is ClassifiedTopic => topic !== undefined);
-
-    if (reranked.length === 0) {
-      return fallbackByRelevance(candidates);
-    }
-
-    return reranked;
-  } catch {
-    return fallbackByRelevance(candidates);
-  }
-}
-
 export async function POST(request: Request) {
   const authError = validateBearerToken(request);
   if (authError) {
@@ -292,14 +184,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Stage 2: Listwise reranking — pick the best from all candidates
-    const finalTopics = await rerankCandidates(classified, client, model);
-
     const result = {
-      classified: finalTopics,
-      filtered: items.length - finalTopics.length,
+      classified,
+      filtered: items.length - classified.length,
       total: items.length,
-      candidatesBeforeReranking: classified.length,
     };
 
     await logWebhook({
@@ -307,9 +195,8 @@ export async function POST(request: Request) {
       method: "POST",
       payload: { itemCount: items.length },
       response: {
-        selected: finalTopics.length,
-        candidatesBeforeReranking: classified.length,
-        filtered: items.length - finalTopics.length,
+        candidates: classified.length,
+        filtered: items.length - classified.length,
         total: items.length,
       },
       status: 200,

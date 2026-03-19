@@ -1,4 +1,5 @@
 import { type Platform, type PostType, prisma } from "@allonfire/database";
+import { extractArticle } from "./extract-article";
 import { learningPrompt } from "./prompts/learning";
 import { memePrompt } from "./prompts/meme";
 import { newsPrompt } from "./prompts/news";
@@ -6,8 +7,15 @@ import { getActiveProviderClient } from "./providers";
 
 const PLATFORMS: Platform[] = ["LINKEDIN", "TWITTER", "YOUTUBE", "TIKTOK"];
 
+export type TopicInput = {
+  title: string;
+  summary: string;
+  sourceUrl: string;
+  articleContent?: string;
+};
+
 function getPrompt(
-  topic: { title: string; summary: string; sourceUrl: string },
+  topic: TopicInput,
   type: PostType,
   platform: Platform
 ): string {
@@ -38,12 +46,7 @@ function inferPostType(category: string): PostType {
 }
 
 async function generateForPlatform(
-  topic: {
-    title: string;
-    summary: string;
-    sourceUrl: string;
-    category: string;
-  },
+  topic: TopicInput & { category: string },
   platform: Platform,
   provider: Awaited<ReturnType<typeof getActiveProviderClient>>
 ): Promise<string> {
@@ -66,16 +69,30 @@ export async function generatePostsForTopic(topicId: string): Promise<void> {
 
   const provider = await getActiveProviderClient();
 
-  await prisma.topic.update({
-    where: { id: topicId },
-    data: { status: "GENERATING" },
-  });
+  // Try to fetch article content for richer generation
+  const rawData = (topic.rawData ?? {}) as Record<string, unknown>;
+  let articleContent = rawData.articleContent as string | undefined;
 
+  if (!articleContent && topic.sourceUrl) {
+    const article = await extractArticle(topic.sourceUrl);
+    if (article) {
+      articleContent = article.text;
+      // Cache for future generations
+      await prisma.topic.update({
+        where: { id: topicId },
+        data: {
+          rawData: { ...rawData, articleContent: article.text },
+        },
+      });
+    }
+  }
+
+  const topicInput = { ...topic, articleContent };
   const type = inferPostType(topic.category);
 
   for (const platform of PLATFORMS) {
     try {
-      const content = await generateForPlatform(topic, platform, provider);
+      const content = await generateForPlatform(topicInput, platform, provider);
 
       await prisma.post.create({
         data: {
@@ -103,9 +120,4 @@ export async function generatePostsForTopic(topicId: string): Promise<void> {
       });
     }
   }
-
-  await prisma.topic.update({
-    where: { id: topicId },
-    data: { status: "GENERATED" },
-  });
 }

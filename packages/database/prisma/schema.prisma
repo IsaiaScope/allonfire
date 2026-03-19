@@ -160,10 +160,8 @@ enum TopicCategory {
 
 enum TopicStatus {
   DISCOVERED
+  AI_PICKED
   SELECTED
-  GENERATING
-  GENERATED
-  ARCHIVED
 }
 
 enum PostType {

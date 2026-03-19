@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed": "tsx mock-data/seed.ts",
+    "seed:clear": "tsx mock-data/seed.ts --clear"
   },
   "dependencies": {
     "@allonfire/content-generator": "workspace:*",
@@ -26,9 +28,8 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
-    "react-resizable-panels": "^4.7.2",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.0"
+    "sonner": "^2.0.7",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",

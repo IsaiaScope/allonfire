@@ -7,7 +7,8 @@ export function proxy(request: NextRequest) {
   // API routes that use Bearer token auth instead of session auth
   if (
     pathname.startsWith("/api/webhooks") ||
-    pathname === "/api/classify-topics"
+    pathname === "/api/classify-topics" ||
+    pathname === "/api/rerank-and-prune"
   ) {
     return NextResponse.next();
   }

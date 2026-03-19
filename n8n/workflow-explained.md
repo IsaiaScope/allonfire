@@ -44,22 +44,32 @@ Visual map of every node in `workflows/topic-discovery.json`, what it does, and 
                           └──────┬───────┘
                                  ▼
                           ┌──────────────┐
-                          │ Batch for AI │
-                          │(groups of 10)│
+                          │Batch for     │
+                          │Classify (x50)│
                           └──────┬───────┘
                                  ▼
                           ┌──────────────┐
-                          │ AI Classify  │
-                          │(Claude Haiku)│
+                          │POST to       │
+                          │Classify API  │
                           └──────┬───────┘
                                  ▼
                           ┌──────────────┐
-                          │Parse AI &    │
-                          │Filter <0.5   │
+                          │Unpack        │
+                          │Classified    │
                           └──────┬───────┘
                                  ▼
                           ┌──────────────┐
                           │Filter Empty  │
+                          └──────┬───────┘
+                                 ▼
+                          ┌──────────────┐
+                          │Collect All   │
+                          │Candidates    │
+                          └──────┬───────┘
+                                 ▼
+                          ┌──────────────┐
+                          │POST to       │
+                          │Rerank API    │
                           └──────┬───────┘
                                  ▼
                           ┌──────────────┐
@@ -220,7 +230,7 @@ The old workflow used a binary merge tree of 10 Merge nodes to combine sources. 
 
 **Why Collector nodes instead of Merge nodes?** n8n's built-in Merge node only accepts 2 inputs and requires careful configuration. The Collector pattern uses Code nodes that accept multiple connections on the same input — n8n concatenates items automatically. Each Collector validates and filters its inputs, and the final Merge All node simply strips empty sentinels. This reduces 10 Merge nodes to 5 Code nodes and is easier to extend when adding new sources.
 
-At this point we have ~80-150 raw items.
+At this point we have ~150 raw items (RSS feeds are capped at 15 items per source).
 
 ---
 
@@ -238,68 +248,33 @@ This is layer 1 of 2 deduplication. Layer 2 happens at the database level — th
 
 | Node | Type | What it does |
 |------|------|-------------|
-| **Batch for AI (groups of 10)** | Code | Groups items into batches of 10. Serializes each batch as a JSON string of `{index, title, summary, source, url}` objects. Also carries `originalItems` forward so we can reconstruct the full topic shape after classification |
-| **AI Classify (Claude Haiku)** | HTTP Request | POST to `https://api.anthropic.com/v1/messages` with Claude Haiku 4.5. Sends all 10 articles in a single prompt. Asks for: `category` (one of 5 enums), `summary` (max 280 chars), `relevance` (0.0-1.0). Uses `$env.ANTHROPIC_API_KEY` from n8n's environment. 30-second timeout per request |
-| **Parse AI & Filter Low Relevance** | Code | Parses Claude's JSON response. Prepends `[` to the response (since the assistant prefill already started the array). Appends `]` if needed. Validates categories against the 5 allowed values (defaults to NEWS if invalid). **Drops items with relevance < 0.5** — this is the quality gate that filters noise. If AI parsing fails entirely, falls back to assigning NEWS category with 0.6 relevance |
+| **Batch for Classify (groups of 50)** | Code | Groups items into batches of 50 for the classify API. Each batch is sent as a JSON array of topic objects |
+| **POST to Classify API** | HTTP Request | POST to `{{ $env.N8N_WEBHOOK_BASE_URL }}/api/classify-topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. The social app handles AI classification server-side (prompt, AI provider call, relevance ≥ 0.85 filtering). 30-second timeout per request |
+| **Unpack Classified Topics** | Code | Unpacks the classify API responses. Each response contains a `classified` array of topics that passed the relevance threshold. Returns `[{ _empty: true }]` sentinel if a batch returned zero classified items |
 
-**Why batch by 10?** Sending all 100+ items in one prompt would exceed context limits and produce unreliable JSON. Groups of 10 keep each prompt focused and the response parseable. With ~8-15 batches, this means ~8-15 API calls per run.
+**Why batch by 50?** The classify API accepts up to 100 items per request. Batches of 50 balance throughput with reliability — smaller batches mean fewer items lost if a single request fails.
 
-**Why raw HTTP instead of n8n's AI nodes?** The workflow uses a direct HTTP POST to the Anthropic API instead of n8n's built-in LangChain nodes. This means the `ANTHROPIC_API_KEY` lives in n8n's environment variables (set in Dokploy), making the workflow fully portable — import the JSON file and set 3 env vars, done. No credential configuration in n8n's UI required.
-
-**Cost**: ~80-150 items/day, ~200 tokens per item = ~30K-50K tokens/day. Claude Haiku 4.5 pricing: $0.80/1M input + $4/1M output = **~$0.03-0.05/day (~$1.50/month)**.
-
-### The AI Prompt
-
-The prompt uses a **system + user + assistant prefill** pattern for reliable JSON output.
-
-**System message:**
-
-```
-You are a content curator for AllOnFire, a tech/AI social media platform.
-You classify articles into exactly one category and score relevance.
-
-Categories:
-- NEWS:         Industry news, acquisitions, regulations, market moves
-- MEME_WORTHY:  Dev humor, relatable content, viral-potential programming culture
-- LEARNING:     Tutorials, best practices, educational deep-dives
-- TOOL_RELEASE: New tools, frameworks, libraries, major version releases
-- AI_UPDATE:    AI model releases, research breakthroughs, AI product updates
-
-Scoring guide:
-- 0.9-1.0: Breaking news, major releases, viral content
-- 0.7-0.8: Interesting to most developers or AI practitioners
-- 0.5-0.6: Niche but valuable to some audience segment
-- Below 0.5: Off-topic, low-quality, or duplicate content
-```
-
-**User message:**
-
-```
-Classify these articles as JSON array. Each object needs "index", "category",
-"summary" (max 280 chars, engaging), "relevance" (0.0-1.0).
-
-{{ $json.articles }}
-```
-
-**Assistant prefill:**
-
-```
-[
-```
-
-The assistant prefill `[` forces Claude to immediately start outputting a JSON array, preventing preamble text or markdown fencing. The Parse node prepends `[` back to reconstruct valid JSON.
-
-These categories match the `TopicCategory` enum in the Prisma schema exactly.
+**Why server-side classification?** Classification logic (AI prompt, relevance threshold, category validation) lives in the social app's `/api/classify-topics` endpoint. The AI provider API key is stored encrypted in the database and retrieved at runtime via `getActiveProviderClient()` — n8n never touches AI credentials. This means n8n only needs 2 env vars and AI providers can be hot-swapped via the admin panel without touching n8n config.
 
 ---
 
-## Phase 5: Delivery (3 nodes)
+## Phase 5: Global Reranking (2 nodes)
 
 | Node | Type | What it does |
 |------|------|-------------|
-| **Filter Empty Results** | Filter | Safety net — drops the `_empty` sentinel if AI classification produced zero results |
-| **Build Webhook Payload (groups of 20)** | Code | Groups classified topics into batches of 20 for the webhook payload. The webhook expects `{ topics: [...] }` |
-| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.N8N_WEBHOOK_BASE_URL }}/api/webhooks/topics` with `X-API-Key` header. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows |
+| **Collect All Candidates** | Code | Aggregates all classified candidates from the previous batches into a single payload. Filters out `_empty` sentinels |
+| **POST to Rerank API** | HTTP Request | POST to `{{ $env.N8N_WEBHOOK_BASE_URL }}/api/rerank-and-prune` with `Bearer {{ $env.N8N_API_KEY }}` auth. Reads all DISCOVERED topics from the database, uses AI to globally rank them, promotes the top 5-10 to AI_PICKED status, and deletes the rest. 60-second timeout |
+
+**Why a separate reranking step?** Classification scores each item independently (is this relevant?), but reranking compares items against each other (which are the *most* important today?). This two-stage approach — classify broadly, then rerank globally — produces a tightly curated daily feed instead of dumping 30-50 items.
+
+---
+
+## Phase 6: Delivery (2 nodes)
+
+| Node | Type | What it does |
+|------|------|-------------|
+| **Build Webhook Payload (groups of 20)** | Code | Groups the reranked topics into batches of 20 for the webhook payload. The webhook expects `{ topics: [...] }`. With 5-10 topics from the reranker, this is typically a single batch |
+| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.N8N_WEBHOOK_BASE_URL }}/api/webhooks/topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows |
 
 **Webhook response:**
 ```json
@@ -311,7 +286,7 @@ These categories match the `TopicCategory` enum in the Prisma schema exactly.
 
 ---
 
-## Phase 6: Execution Summary (1 node) — NEW
+## Phase 7: Execution Summary (1 node)
 
 | Node | Type | What it does |
 |------|------|-------------|
@@ -332,17 +307,41 @@ These categories match the `TopicCategory` enum in the Prisma schema exactly.
 
 ## Error Handling Strategy
 
-| Layer | Mechanism |
-|-------|-----------|
-| **Per source** | `continueOnFail: true` on every source node — one failing API doesn't block others |
+Error handling uses a **two-layer defense**:
+
+### Layer 1: Inline Error Handling (per-workflow)
+
+Handles **expected operational failures** — a source API is down, a batch times out, classification returns zero results. The workflow continues and reports what happened.
+
+| Mechanism | What it does |
+|-----------|-------------|
+| **`continueOnFail: true`** | On every source node — one failing API doesn't block others |
 | **Collector validation** | Each Collector Code node filters out items with `error`, `_skip`, or missing `title`/`sourceUrl` fields |
 | **Empty sentinels** | Collectors that receive zero valid items return `[{ _empty: true }]` — the Merge All node strips these so empty branches don't crash downstream |
-| **AI fallback** | If Claude's response can't be parsed as JSON, items get default category NEWS with relevance 0.6 (still delivered) |
-| **Category validation** | If Claude returns an invalid category, defaults to NEWS |
-| **Relevance filter** | Items scoring < 0.5 are dropped — prevents low-quality content from entering the system |
+| **Classification fallback** | If the classify API returns an error, the batch is skipped (continueOnFail) — other batches still deliver |
+| **Relevance filter** | The classify API filters items below the relevance threshold server-side — only high-quality items are returned |
 | **Database dedup** | `ingestTopics()` checks `sourceUrl` uniqueness — same URL won't create duplicate Topic rows across runs |
 | **Webhook logging** | Every POST is logged to the `WebhookLog` table with status, payload size, and response |
-| **Execution Summary** | Aggregates errors across all webhook batches for easy monitoring in the n8n execution log |
+| **Execution Summary** | Aggregates rerank results (`kept`/`deleted`/`total`) and routes through a Check Errors IF node |
+| **Check Errors → Telegram** | IF node evaluates success conditions and routes to either Telegram Success or Telegram Failure notification with detailed HTML messages |
+
+### Layer 2: Shared Error Workflow (`notifications.json`)
+
+Handles **unexpected catastrophic failures** — unhandled exceptions, out-of-memory errors, timeouts that bypass `continueOnFail`. This is n8n's built-in Error Workflow mechanism.
+
+```
+Any workflow crashes → n8n invokes notifications.json → Telegram crash alert
+```
+
+| Node | What it does |
+|------|-------------|
+| **Error Trigger** | n8n auto-fires this when a referencing workflow fails with an unhandled exception. Receives execution metadata (workflow name, failing node, error message, execution mode) |
+| **Format Error Message** | Builds an HTML-formatted Telegram message with crash details |
+| **Telegram Alert** | Sends the crash notification to the "Bot - Main VPS Alerts" Telegram bot (chat ID `665702360`) |
+
+**How it's connected:** Each workflow references the notifications workflow by ID in its `settings.errorWorkflow` field. After importing `notifications.json` into n8n, grab the assigned workflow ID and update the `errorWorkflow` value in `topic-discovery.json` (and any future workflows).
+
+**Why two layers?** Layer 1 handles the 95% case — individual sources failing gracefully with detailed reporting. Layer 2 is the safety net for the 5% case — crashes that bypass the normal execution flow entirely. Without Layer 2, a catastrophic failure would silently disappear into the n8n execution log with no notification.
 
 ---
 
@@ -382,20 +381,25 @@ These categories match the `TopicCategory` enum in the Prisma schema exactly.
 }
 ```
 
-The AI replaces the raw `summary` (which was just the title) with an engaging 280-char summary, assigns a category, and the relevance score is stored in `rawData.aiRelevance` for later analysis.
+The classify API replaces the raw `summary` (which was just the title) with an engaging 280-char summary, assigns a category, and filters items below 0.85 relevance. The relevance score is stored in `rawData.aiRelevance` for analysis.
+
+### After global reranking (final)
+
+The rerank API receives all classified candidates and returns only the top 5-10, with titles truncated to ≤100 characters. The shape is the same as after classification — no new fields are added, but lower-ranked items are removed.
 
 ---
 
 ## Canvas Organization
 
-The workflow includes 5 Sticky Note nodes for visual grouping in the n8n editor:
+The workflow includes 6 Sticky Note nodes for visual grouping in the n8n editor:
 
 | Sticky Note | Color | What it covers |
 |-------------|-------|----------------|
 | **Data Sources** | Blue | All 9 source branches (23 source nodes + 9 mapper nodes) |
 | **Merge & Dedup** | Green | 4 Collector nodes + Merge All + Remove Duplicates |
-| **AI Classification** | Purple | Batch + Classify + Parse nodes |
-| **Delivery** | Yellow | Filter + Payload + POST nodes |
+| **AI Classification** | Purple | Batch + Classify + Unpack nodes |
+| **Global Reranking** | Red | Collect candidates + Rerank API |
+| **Delivery** | Yellow | Payload + POST nodes |
 | **Execution Summary** | Orange | Summary node |
 
 ---
@@ -406,9 +410,8 @@ Set these in the n8n service environment (Dokploy panel):
 
 | Variable | Used by | Purpose |
 |----------|---------|---------|
-| `ANTHROPIC_API_KEY` | AI Classify node | Authenticates with Claude API |
-| `N8N_WEBHOOK_BASE_URL` | POST node | Base URL of the social app (e.g., `https://social.allonfire.com`) |
-| `N8N_API_KEY` | POST node | Matches the `N8N_API_KEY` env var in the social app |
+| `N8N_WEBHOOK_BASE_URL` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Base URL of the social app (e.g., `https://social.allonfire.com`) |
+| `N8N_API_KEY` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Matches the `N8N_API_KEY` env var in the social app |
 
 ---
 
@@ -428,11 +431,12 @@ Set these in the n8n service environment (Dokploy panel):
 | Additional News | 4 | 3 feeds + transform |
 | Collection & merging | 5 | 4 Collectors + Merge All |
 | Deduplication | 1 | By sourceUrl |
-| AI classification | 3 | Batch + classify + parse |
-| Delivery | 3 | Filter + batch + POST |
+| AI classification | 3 | Batch + classify API + unpack |
+| Global reranking | 2 | Collect candidates + rerank API |
+| Delivery | 2 | Batch + POST |
 | Summary | 1 | Execution logging |
 | Sticky Notes | 5 | Canvas organization |
-| **Total** | **54** | |
+| **Total** | **56** | |
 
 ---
 
@@ -455,21 +459,14 @@ This starts n8n at `http://localhost:5678` backed by the same local PostgreSQL u
 
 On first visit, n8n will ask you to create an owner account — use any email/password for local dev.
 
-### 2. Set your Anthropic key
-
-The `ANTHROPIC_API_KEY` is read from your shell environment via `${ANTHROPIC_API_KEY:-}` in docker-compose. Either:
-
-- Export it before starting: `export ANTHROPIC_API_KEY=sk-ant-... && docker compose -f docker-compose.dev.yml up n8n -d`
-- Or add it to a `.env` file in the `docker/` directory
-
-### 3. Import the workflow
+### 2. Import the workflow
 
 1. Open `http://localhost:5678`
 2. Go to **Workflows** -> **Import from File**
 3. Select `n8n/workflows/topic-discovery.json`
 4. Save
 
-### 4. Set the N8N_API_KEY
+### 3. Set the N8N_API_KEY
 
 The local n8n defaults to `dev-api-key` for `N8N_API_KEY`. Make sure your social app's `.env` has the same value:
 
@@ -477,14 +474,14 @@ The local n8n defaults to `dev-api-key` for `N8N_API_KEY`. Make sure your social
 N8N_API_KEY=dev-api-key
 ```
 
-### 5. Test the workflow
+### 4. Test the workflow
 
 Click **Test Workflow** in the n8n UI. Watch the execution — each node shows its input/output.
 
 **What to check:**
 - Source branches return items (click each "Map to Topic" node to see transformed data)
 - Collector nodes show the correct item counts per source group
-- AI classification returns valid JSON with categories and relevance scores
+- Classify API returns classified topics with categories and relevance scores
 - The webhook POST returns `{ "ingested": N, "duplicatesSkipped": M }`
 - Execution Summary shows aggregated totals
 - New topics appear at `http://localhost:3100/discover`
@@ -521,7 +518,7 @@ Click **Test Workflow** in the n8n UI. Watch the execution — each node shows i
 | Problem | Fix |
 |---------|-----|
 | n8n can't reach the social app | Make sure the social app is running on port 3100. On Linux, `host.docker.internal` may not work — use `172.17.0.1` instead |
-| AI classification returns errors | Check that `ANTHROPIC_API_KEY` is set. Click the "AI Classify" node to see the raw API response |
+| Classification returns errors | Check that the social app is running and `N8N_API_KEY` matches. Click the "POST to Classify API" node to see the raw response |
 | Webhook returns 401 | `N8N_API_KEY` mismatch between n8n env and social app `.env` |
 | Webhook returns 500 "API key not configured" | Add `N8N_API_KEY=dev-api-key` to `apps/social/.env` |
 | Reddit returns 429 | Reddit rate-limits unauthenticated requests. The workflow runs once daily so this is rare — if testing repeatedly, wait 60 seconds between runs |
