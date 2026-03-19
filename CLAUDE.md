@@ -62,9 +62,9 @@ app/(dashboard)/
 ├── schedule/page.tsx       → Scheduled posts. Imports from @/features/posts/
 ├── admin/layout.tsx        → Admin panel shell (auth guard, submenu). Imports from @/features/admin/
 ├── admin/page.tsx          → Redirect to /admin/users
-├── admin/users/page.tsx    → User management. Imports from @/features/users/
-├── admin/users/[id]/page.tsx → User detail. Imports from @/features/users/
-├── admin/providers/page.tsx → AI providers. Imports from @/features/ai-providers/
+├── admin/users/page.tsx    → User management. Imports from @/features/admin/
+├── admin/users/[id]/page.tsx → User detail. Imports from @/features/admin/
+├── admin/providers/page.tsx → AI providers. Imports from @/features/admin/
 ├── settings/layout.tsx     → Settings nav. Imports from @/features/settings/
 ├── settings/page.tsx       → Redirect to /settings/general
 └── settings/general/page.tsx    → Webhooks. Imports from @/features/settings/
@@ -81,7 +81,7 @@ import { GenerateButton } from "@/features/generation/components/generate-button
 import { GenerateButton } from "@/features/generation";
 ```
 
-Features: `layout/`, `topics/`, `generation/`, `posts/`, `users/`, `settings/`, `ai-providers/`, `admin/`
+Features: `layout/`, `topics/`, `generation/`, `posts/`, `settings/`, `admin/` (includes user management + AI providers)
 
 Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
 

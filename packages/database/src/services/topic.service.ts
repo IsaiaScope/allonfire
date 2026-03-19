@@ -36,7 +36,7 @@ export async function getDiscoveredTopicsPaginated({
   sort = "newest",
 }: PaginatedTopicsParams = {}): Promise<PaginatedTopicsResult> {
   const where: Prisma.TopicWhereInput = {
-    status: "DISCOVERED",
+    status: "AI_PICKED",
     ...(category && { category }),
     ...(search && {
       OR: [
@@ -104,13 +104,6 @@ export async function selectTopics(topicIds: string[]) {
   });
 }
 
-export async function archiveTopic(topicId: string) {
-  return await prisma.topic.update({
-    where: { id: topicId },
-    data: { status: "ARCHIVED" },
-  });
-}
-
 type IngestTopicData = {
   category: TopicCategory;
   rawData?: unknown;
@@ -120,16 +113,60 @@ type IngestTopicData = {
   title: string;
 };
 
-export async function ingestTopics(topics: IngestTopicData[]) {
-  const results: Topic[] = [];
-  for (const topic of topics) {
-    const existing = await prisma.topic.findFirst({
-      where: { sourceUrl: topic.sourceUrl },
-    });
-    if (existing) {
-      continue;
-    }
+export async function deleteTopic(topicId: string): Promise<void> {
+  await prisma.$transaction([
+    prisma.post.updateMany({
+      where: { topicId },
+      data: { topicId: null },
+    }),
+    prisma.topic.delete({ where: { id: topicId } }),
+  ]);
+}
 
+export async function deleteAllTopics(
+  category?: TopicCategory,
+  status?: TopicStatus
+): Promise<number> {
+  const where: Prisma.TopicWhereInput = {
+    ...(status && { status }),
+    ...(category && { category }),
+  };
+
+  const topicIds = await prisma.topic.findMany({
+    where,
+    select: { id: true },
+  });
+
+  if (topicIds.length === 0) {
+    return 0;
+  }
+
+  const ids = topicIds.map((t) => t.id);
+  const [, deleteResult] = await prisma.$transaction([
+    prisma.post.updateMany({
+      where: { topicId: { in: ids } },
+      data: { topicId: null },
+    }),
+    prisma.topic.deleteMany({ where: { id: { in: ids } } }),
+  ]);
+  return deleteResult.count;
+}
+
+export async function ingestTopics(topics: IngestTopicData[]) {
+  const urls = topics.map((t) => t.sourceUrl);
+  const existing = await prisma.topic.findMany({
+    where: { sourceUrl: { in: urls } },
+    select: { sourceUrl: true },
+  });
+  const existingUrls = new Set(existing.map((t) => t.sourceUrl));
+
+  const newTopics = topics.filter((t) => !existingUrls.has(t.sourceUrl));
+  if (newTopics.length === 0) {
+    return [];
+  }
+
+  const results: Topic[] = [];
+  for (const topic of newTopics) {
     const created = await prisma.topic.create({
       data: {
         title: topic.title,

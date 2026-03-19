@@ -6,15 +6,13 @@ import { Compass } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { TopicCard } from "./topic-card";
+import { DiscoverActions } from "./topic-card-discover-actions";
 
 type TopicListProps = {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onAction: () => void;
   onFetchNextPage: () => void;
-  onToggleSelect: (id: string) => void;
-  selectedIds: Set<string>;
-  showBottomPadding: boolean;
   topics: Topic[];
 };
 
@@ -23,9 +21,6 @@ export function TopicList({
   isFetchingNextPage,
   onAction,
   onFetchNextPage,
-  onToggleSelect,
-  selectedIds,
-  showBottomPadding,
   topics,
 }: TopicListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -60,14 +55,14 @@ export function TopicList({
   }
 
   return (
-    <div className={showBottomPadding ? "pb-20" : ""}>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+    <div>
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
         {topics.map((topic) => (
           <TopicCard
-            isSelected={selectedIds.has(topic.id)}
             key={topic.id}
-            onAction={onAction}
-            onToggleSelect={onToggleSelect}
+            renderActions={(props) => (
+              <DiscoverActions {...props} onAction={onAction} />
+            )}
             topic={topic}
           />
         ))}

@@ -27,7 +27,7 @@ There are ~400 built-in node types. The ones we use:
 | Node Type | Icon | What it does | Our usage |
 |-----------|------|-------------|-----------|
 | **Schedule Trigger** | Clock | Starts the workflow on a cron schedule | Daily at 6 AM UTC |
-| **HTTP Request** | Globe | Makes an API call (GET, POST, etc.) | Fetching HN, Dev.to, GitHub, calling Claude API, POSTing to webhook |
+| **HTTP Request** | Globe | Makes an API call (GET, POST, etc.) | Fetching HN, Dev.to, GitHub, calling classify API, POSTing to webhook |
 | **RSS Feed Read** | RSS icon | Reads an RSS/Atom feed and returns items | TechCrunch, The Verge, OpenAI Blog, Ars Technica, Product Hunt |
 | **Code** | `</>` | Runs custom JavaScript | Transforming data, batching, parsing AI responses |
 | **Merge** | Arrows joining | Combines items from 2 inputs into 1 stream | Merging source branches together |
@@ -71,7 +71,7 @@ Dynamic values inside node parameters, written as `{{ expression }}`:
 ```
 {{ $json.title }}              → Current item's title field
 {{ $json.id }}                 → Current item's id field
-{{ $env.ANTHROPIC_API_KEY }}   → Environment variable
+{{ $env.N8N_API_KEY }}         → Environment variable
 {{ $input.first().json }}      → First item from input
 ```
 
@@ -131,8 +131,8 @@ return items.map(item => ({
 We use Code nodes for:
 - **Slicing** (take first 30 HN stories)
 - **Transforming** (reshape API responses into our topic format)
-- **Batching** (group 100 items into batches of 10 for AI processing)
-- **Parsing** (extract JSON from Claude's response text)
+- **Batching** (group items into batches of 50 for the classify API)
+- **Unpacking** (extract classified topics from API responses)
 
 ### Environment Variables vs Credentials
 
@@ -145,7 +145,7 @@ Two ways to store secrets in n8n:
 | **Portable** | Yes — workflow JSON uses `$env` references | No — credential IDs are instance-specific |
 | **Our choice** | This one | Not used |
 
-We use env vars so the workflow JSON is fully portable — import it anywhere, set 3 env vars, done.
+We use env vars so the workflow JSON is fully portable — import it anywhere, set 2 env vars (`N8N_WEBHOOK_BASE_URL`, `N8N_API_KEY`), done.
 
 ### Triggers vs Regular Nodes
 
@@ -174,19 +174,33 @@ Every source worth scraping, organized by what kind of content it provides. Mark
 
 ## Currently Active Sources (in the workflow)
 
+All RSS feeds are capped at 15 items per source to keep the pipeline manageable (~150 raw items total).
+
 | Source | Type | Items/day | Categories it feeds |
 |--------|------|-----------|-------------------|
 | Hacker News API | API (free) | ~30 | NEWS, TOOL_RELEASE, LEARNING |
 | Dev.to (3 tags) | API (free) | ~35 | LEARNING, TOOL_RELEASE |
-| HN RSS 100+ pts | RSS | ~10-20 | NEWS, TOOL_RELEASE |
-| TechCrunch AI | RSS | ~5-10 | NEWS, AI_UPDATE |
-| The Verge AI | RSS | ~5-10 | NEWS, AI_UPDATE |
+| HN RSS 100+ pts | RSS | ~15 | NEWS, TOOL_RELEASE |
+| TechCrunch AI | RSS | ~15 | NEWS, AI_UPDATE |
+| The Verge AI | RSS | ~15 | NEWS, AI_UPDATE |
 | OpenAI Blog | RSS | ~1-2 | AI_UPDATE |
-| Ars Technica | RSS | ~5-10 | NEWS, LEARNING |
+| Ars Technica | RSS | ~15 | NEWS, LEARNING |
 | GitHub Trending | Scrape | 10 | TOOL_RELEASE |
-| Product Hunt | RSS | 10 | TOOL_RELEASE |
+| Product Hunt | RSS | ~15 | TOOL_RELEASE |
+| DeepMind Blog | RSS | ~1-2 | AI_UPDATE |
+| Google AI Blog | RSS | ~1-2 | AI_UPDATE |
+| Hugging Face Blog | RSS | ~1-2 | AI_UPDATE, TOOL_RELEASE |
+| Cohere Blog | RSS | ~1-2 | AI_UPDATE |
+| Reddit r/LocalLLaMA | JSON API | ~10 | AI_UPDATE, TOOL_RELEASE |
+| Reddit r/MachineLearning | JSON API | ~10 | AI_UPDATE, LEARNING |
+| Reddit r/ProgrammerHumor | JSON API | ~5 | MEME_WORTHY |
+| YouTube Fireship | RSS | ~1-2 | NEWS, MEME_WORTHY |
+| YouTube Two Minute Papers | RSS | ~1-2 | AI_UPDATE, LEARNING |
+| VentureBeat AI | RSS | ~15 | NEWS, AI_UPDATE |
+| Techmeme | RSS | ~15 | NEWS |
+| Lobsters AI | RSS | ~15 | LEARNING, AI_UPDATE |
 
-**Total: ~110-140 items/day → ~40-80 after dedup + relevance filter**
+**Total: ~150 items/day → ~30-50 after classification (≥ 0.85 relevance) → 5-10 after global reranking**
 
 ---
 
@@ -213,7 +227,7 @@ These are the primary sources for AI_UPDATE category. When a company drops a new
 
 **Note on missing feeds**: Anthropic, Meta AI, and Mistral don't publish official RSS. For Anthropic, a community-maintained GitHub feed scrapes the site daily. For Meta and Mistral, we'd need to either use [RSSHub](https://docs.rsshub.app/) (a community RSS generator for sites that don't have feeds) or build a simple scraper node.
 
-**Priority additions**: Anthropic (community feed), Google DeepMind, Google AI, Hugging Face — these 4 cover 90% of major model releases.
+**Already active**: Google DeepMind, Google AI, Hugging Face, Cohere. **Still missing**: Anthropic (community feed — no official RSS).
 
 ---
 
@@ -410,32 +424,22 @@ What to add to the workflow, in priority order:
 
 ### Tier 1 — Add Now (highest value, easiest)
 
-These are RSS feeds, plug directly into the existing workflow with zero auth:
+Most Tier 1 sources are now active. Remaining gaps:
 
 | Source | Why | Expected items/day |
 |--------|-----|-------------------|
-| **Anthropic Blog** | We use Claude — know about updates first | 0-1 |
-| **Google AI Blog** | Gemini releases, DeepMind research | 1-2 |
-| **Meta AI Blog** | Llama releases, open-source models | 1-2 |
-| **Hugging Face Blog** | Open-source AI ecosystem center | 1-2 |
-| **VentureBeat AI** | High-volume AI news | 5-10 |
-| **Lobsters** | High-signal dev community | 5-10 |
-| **TLDR AI Newsletter** | Curated daily AI digest | 3-5 |
-| **Fireship (YouTube)** | Dev news + meme-worthy format | 0-1 |
-| **Two Minute Papers (YouTube)** | AI research made fun | 0-1 |
-| **r/LocalLLaMA** | Hottest AI community | 10 |
-| **r/ProgrammerHumor** | Meme content source | 10 |
+| **Anthropic Blog** | We use Claude — know about updates first (no official RSS, use community feed) | 0-1 |
+| **Meta AI Blog** | Llama releases, open-source models (no official RSS, needs RSSHub or scraper) | 1-2 |
+| **TLDR AI Newsletter** | Curated daily AI digest (acts as safety net for missed stories) | 3-5 |
 
-**Impact**: +35-55 items/day raw → +15-25 after dedup + filtering. Fills the AI_UPDATE gap (company blogs) and MEME_WORTHY gap (Reddit + Fireship).
+**Already added since initial catalog**: Google AI Blog, DeepMind, Hugging Face, Cohere, VentureBeat AI, Techmeme, Lobsters AI, Reddit (3 subs), YouTube (Fireship, Two Minute Papers).
 
 ### Tier 2 — Add Next (good value, slightly more setup)
 
 | Source | Why | Notes |
 |--------|-----|-------|
-| **Reddit r/MachineLearning** | Research-grade content | JSON API, same pattern as Tier 1 |
 | **Reddit r/singularity** | Hype + real breakthroughs | Good for MEME_WORTHY too |
 | **Hugging Face Daily Papers** | Curated ML papers | Better than raw ArXiv |
-| **Techmeme** | Editor-curated aggregator | RSS feed |
 | **MIT Tech Review** | Deep analysis | Weekly, high quality |
 | **Theo (YouTube)** | Daily web dev + AI takes | RSS feed |
 | **Ben's Bites Newsletter** | AI tools + news | RSS feed |

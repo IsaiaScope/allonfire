@@ -23,11 +23,12 @@ export {
 export { getSettings, updateSettings } from "./settings.service";
 export {
   getDailySummary,
-  getOverviewStats,
   getRecentPosts,
+  getTopicStats,
 } from "./stats.service";
 export {
-  archiveTopic,
+  deleteAllTopics,
+  deleteTopic,
   getDiscoveredTopics,
   getDiscoveredTopicsPaginated,
   getTopicsByStatus,

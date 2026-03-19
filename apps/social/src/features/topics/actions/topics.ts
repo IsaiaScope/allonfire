@@ -1,9 +1,9 @@
 "use server";
 
 import {
-  archiveTopic as archiveTopicService,
+  deleteAllTopics,
+  deleteTopic,
   selectTopic as selectTopicService,
-  selectTopics as selectTopicsService,
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -18,8 +18,7 @@ async function requireAuth() {
   return session;
 }
 
-const idSchema = z.string().cuid();
-const idsSchema = z.array(z.string().cuid()).min(1);
+const idSchema = z.string().cuid2();
 
 export async function selectTopicAction(topicId: string) {
   await requireAuth();
@@ -30,19 +29,25 @@ export async function selectTopicAction(topicId: string) {
   return { success: true };
 }
 
-export async function bulkSelectTopicsAction(topicIds: string[]) {
+export async function deleteTopicAction(topicId: string) {
   await requireAuth();
-  const ids = idsSchema.parse(topicIds);
-  await selectTopicsService(ids);
+  const id = idSchema.parse(topicId);
+  await deleteTopic(id);
   revalidatePath("/discover");
   revalidatePath("/generate");
+  revalidatePath("/");
   return { success: true };
 }
 
-export async function archiveTopicAction(topicId: string) {
+const categorySchema = z
+  .enum(["NEWS", "MEME_WORTHY", "LEARNING", "TOOL_RELEASE", "AI_UPDATE"])
+  .optional();
+
+export async function deleteAllTopicsAction(category?: string) {
   await requireAuth();
-  const id = idSchema.parse(topicId);
-  await archiveTopicService(id);
+  const validCategory = categorySchema.parse(category || undefined);
+  const count = await deleteAllTopics(validCategory, "AI_PICKED");
   revalidatePath("/discover");
-  return { success: true };
+  revalidatePath("/");
+  return { count, success: true };
 }

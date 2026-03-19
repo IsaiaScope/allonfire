@@ -19,6 +19,8 @@
     "@allonfire/database": "workspace:*",
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/genai": "^1.0.0",
+    "@mozilla/readability": "^0.6.0",
+    "linkedom": "^0.18.12",
     "openai": "^6.27.0"
   },
   "devDependencies": {

@@ -1,18 +1,19 @@
 {
-  "name": "AllOnFire \u2014 Topic Discovery",
+  "id": "1",
+  "name": "AllOnFire — Topic Discovery",
   "nodes": [
     {
       "parameters": {
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 6
+              "triggerAtHour": 12
             }
           ]
         }
       },
       "id": "schedule-trigger",
-      "name": "Daily 6AM UTC",
+      "name": "Daily 3PM Romania",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [0, 600]
@@ -172,7 +173,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst sourceMap = { 'techcrunch.com': 'TechCrunch', 'theverge.com': 'The Verge', 'openai.com': 'OpenAI Blog', 'arstechnica.com': 'Ars Technica', 'news.ycombinator.com': 'Hacker News' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'RSS';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'techcrunch.com': 'TechCrunch', 'theverge.com': 'The Verge', 'openai.com': 'OpenAI Blog', 'arstechnica.com': 'Ars Technica', 'news.ycombinator.com': 'Hacker News' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'RSS';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "rss-map",
       "name": "RSS Map to Topic",
@@ -313,7 +314,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst sourceMap = { 'deepmind.google': 'Google DeepMind', 'blog.google': 'Google AI Blog', 'huggingface.co': 'Hugging Face Blog', 'anthropic.com': 'Anthropic Blog' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'AI Blog';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'deepmind.google': 'Google DeepMind', 'blog.google': 'Google AI Blog', 'huggingface.co': 'Hugging Face Blog', 'anthropic.com': 'Anthropic Blog' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'AI Blog';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "ai-blogs-map",
       "name": "AI Blogs Map to Topic",
@@ -469,7 +470,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst sourceMap = { 'venturebeat.com': 'VentureBeat', 'techmeme.com': 'Techmeme', 'lobste.rs': 'Lobsters' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'News';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'venturebeat.com': 'VentureBeat', 'techmeme.com': 'Techmeme', 'lobste.rs': 'Lobsters' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'News';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "news-map",
       "name": "News Map to Topic",
@@ -528,7 +529,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json._empty);"
+        "jsCode": "return $input.all().filter(i => !i.json._empty);"
       },
       "id": "merge-all",
       "name": "Merge All Collections",
@@ -536,7 +537,7 @@
       "typeVersion": 2,
       "position": [1500, 400],
       "continueOnFail": true,
-      "notes": "Combines all 4 collector outputs into a single stream"
+      "notes": "Passes through valid items from each collector (runs per-source)"
     },
     {
       "parameters": {
@@ -551,7 +552,19 @@
       "type": "n8n-nodes-base.removeDuplicates",
       "typeVersion": 1,
       "position": [1700, 400],
-      "notes": "Deduplicates by sourceUrl \u2014 same article from multiple sources kept once"
+      "notes": "Deduplicates by sourceUrl — same article from multiple sources kept once"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nreturn [{ json: { items: items.map(b => b.json) } }];"
+      },
+      "id": "batch-classify",
+      "name": "Package All for Classify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1800, 400],
+      "continueOnFail": true,
+      "notes": "Packages all deduplicated items into a single request for server-side classification"
     },
     {
       "parameters": {
@@ -571,14 +584,9 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ items: $input.all().map(i => i.json) }) }}",
+        "jsonBody": "={{ JSON.stringify({ items: $json.items }) }}",
         "options": {
-          "timeout": 60000,
-          "batching": {
-            "batch": {
-              "batchSize": -1
-            }
-          }
+          "timeout": 300000
         },
         "method": "POST"
       },
@@ -586,60 +594,21 @@
       "name": "POST to Classify API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1900, 400],
+      "position": [2000, 400],
       "continueOnFail": true,
       "notes": "Server-side classification using active AI provider from database"
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst classified = response.classified || [];\nif (classified.length === 0) return [{ json: { _empty: true } }];\nreturn classified.map(item => ({ json: item }));"
+        "jsCode": "const classified = $input.first().json.classified || [];\nconst valid = classified.filter(c => c.title && c.sourceUrl);\nif (valid.length === 0) return [];\nreturn [{ json: { topics: valid } }];"
       },
-      "id": "unpack-classified",
-      "name": "Unpack Classified Topics",
+      "id": "build-payload",
+      "name": "Build Webhook Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2100, 400],
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "filter-empty",
-              "leftValue": "={{ $json._empty }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "notTrue"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "filter-empty",
-      "name": "Filter Empty Results",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 2,
-      "position": [2500, 400]
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nconst batches = [];\nfor (let i = 0; i < items.length; i += 20) {\n  const batch = items.slice(i, i + 20);\n  batches.push({ json: { topics: batch.map(b => b.json) } });\n}\nreturn batches;"
-      },
-      "id": "batch-webhook",
-      "name": "Build Webhook Payload (groups of 20)",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [2700, 400],
-      "continueOnFail": true
+      "position": [2300, 400],
+      "continueOnFail": true,
+      "notes": "Extracts classified array from API response into a single webhook payload — no item explosion"
     },
     {
       "parameters": {
@@ -669,24 +638,102 @@
       "name": "POST to AllOnFire Webhook",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2900, 400],
+      "position": [3500, 400],
       "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst summary = { timestamp: new Date().toISOString(), webhookBatches: items.length, totalIngested: 0, totalDuplicatesSkipped: 0, errors: [] };\nfor (const item of items) {\n  const d = item.json;\n  if (d.error) { summary.errors.push(d.error); }\n  else { summary.totalIngested += d.ingested || 0; summary.totalDuplicatesSkipped += d.duplicatesSkipped || 0; }\n}\nreturn [{ json: summary }];"
+        "jsCode": "const items = $input.all();\nconst d = items[0]?.json || {};\nconst summary = {\n  timestamp: new Date().toISOString(),\n  kept: d.kept || 0,\n  deleted: d.deleted || 0,\n  total: d.total || 0,\n  error: d.error || null,\n  success: !d.error && (d.kept > 0 || d.total === 0)\n};\nreturn [{ json: summary }];"
       },
       "id": "summary",
       "name": "Execution Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3100, 400],
+      "position": [3900, 400],
       "continueOnFail": true,
-      "notes": "Logs per-source counts and delivery stats for the execution log"
+      "notes": "Reads rerank-and-prune response (kept/deleted/total) and builds a summary for notification routing"
     },
     {
       "parameters": {
-        "content": "## \ud83d\udce1 DATA SOURCES\n\n9 parallel branches fetch from APIs, RSS feeds, HTML scrapes, and social platforms.\nEach source has `continueOnFail: true` \u2014 one failing API won't block others.",
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "check-error",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "check-zero-kept",
+              "leftValue": "={{ $json.kept }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "check-errors",
+      "name": "Check Errors",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [4100, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "665702360",
+        "text": "=✅ <b>Topic Discovery Complete</b>\n📊 {{ $json.kept }} topics promoted, {{ $json.deleted }} pruned ({{ $json.total }} candidates)\n📅 {{ $json.timestamp }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-success",
+      "name": "Telegram Success",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [4300, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "qQKlpOBmgPQfFbzH",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "665702360",
+        "text": "=🚨 <b>Topic Discovery Failed</b>\n❌ {{ $json.error || 'No topics promoted (0 kept from ' + $json.total + ' candidates)' }}\n📅 {{ $json.timestamp }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-failure",
+      "name": "Telegram Failure",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [4300, 500],
+      "credentials": {
+        "telegramApi": {
+          "id": "qQKlpOBmgPQfFbzH",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📡 DATA SOURCES\n\n9 parallel branches fetch from APIs, RSS feeds, HTML scrapes, and social platforms.\nEach source has `continueOnFail: true` — one failing API won't block others.",
         "width": 700,
         "height": 3300,
         "color": 4
@@ -699,7 +746,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udd00 MERGE & DEDUP\n\n4 Collector nodes group sources by type.\nDuplicates removed by `sourceUrl`.",
+        "content": "## 🔀 MERGE & DEDUP\n\n4 Collector nodes group sources by type.\nDuplicates removed by `sourceUrl`.",
         "width": 700,
         "height": 2100,
         "color": 2
@@ -712,7 +759,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83e\udd16 AI CLASSIFICATION\n\nClaude Haiku classifies each article into one of 5 categories.\nSystem + user + assistant prefill pattern ensures reliable JSON.\nItems with relevance < 0.5 are filtered out.",
+        "content": "## 🤖 AI CLASSIFICATION\n\nServer-side classification via /api/classify-topics endpoint.\nAI provider configured in admin panel (Anthropic/OpenRouter/Gemini).\nItems with relevance < 0.6 are filtered out.",
         "width": 900,
         "height": 450,
         "color": 6
@@ -725,7 +772,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udce4 DELIVERY\n\nClassified topics are batched (20/request) and POSTed to the AllOnFire webhook.\nThe app deduplicates against existing DB records.",
+        "content": "## 📤 DELIVERY & RERANKING\n\nClassified topics are delivered in a single batch via POST to the AllOnFire webhook.\nThe app deduplicates against existing DB records.\n\nAfter webhook delivery, /api/rerank-and-prune runs once:\n• 0 candidates → skip (empty run)\n• 1–10 candidates → promote all without AI\n• 11+ candidates → AI reranks, keeps top 10, deletes the rest",
         "width": 600,
         "height": 450,
         "color": 3
@@ -738,7 +785,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udcca EXECUTION SUMMARY\n\nLogs total items ingested, duplicates skipped, and any errors.",
+        "content": "## 📊 EXECUTION SUMMARY\n\nReads rerank output (kept/deleted/total).\nRoutes to Telegram success or failure notification.",
         "width": 400,
         "height": 350,
         "color": 1
@@ -748,10 +795,58 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [3000, 200]
+    },
+    {
+      "parameters": {
+        "content": "## 📲 NOTIFICATIONS\n\nTelegram alerts via Bot - Main VPS Alerts.\n• Success: topic count + prune stats\n• Failure: error message or zero-kept warning",
+        "width": 500,
+        "height": 300,
+        "color": 5
+      },
+      "id": "sticky-notifications",
+      "name": "Sticky: Notifications",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [4050, 100]
+    },
+    {
+      "parameters": {
+        "curlImport": "",
+        "method": "POST",
+        "url": "={{ $env.N8N_WEBHOOK_BASE_URL }}/api/rerank-and-prune",
+        "authentication": "none",
+        "provideSslCertificates": false,
+        "sendQuery": false,
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.N8N_API_KEY }}"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "rerank-prune",
+      "name": "POST to Rerank & Prune",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3700, 400],
+      "continueOnFail": true,
+      "notes": "Prunes low-ranked DISCOVERED topics — promotes top 10 to AI_PICKED, deletes the rest"
     }
   ],
   "connections": {
-    "Daily 6AM UTC": {
+    "Daily 3PM Romania": {
       "main": [
         [
           {
@@ -1316,7 +1411,7 @@
       "main": [
         [
           {
-            "node": "POST to Classify API",
+            "node": "Package All for Classify",
             "type": "main",
             "index": 0
           }
@@ -1327,36 +1422,14 @@
       "main": [
         [
           {
-            "node": "Unpack Classified Topics",
+            "node": "Build Webhook Payload",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Unpack Classified Topics": {
-      "main": [
-        [
-          {
-            "node": "Filter Empty Results",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Filter Empty Results": {
-      "main": [
-        [
-          {
-            "node": "Build Webhook Payload (groups of 20)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build Webhook Payload (groups of 20)": {
+    "Build Webhook Payload": {
       "main": [
         [
           {
@@ -1371,7 +1444,58 @@
       "main": [
         [
           {
+            "node": "POST to Rerank & Prune",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Package All for Classify": {
+      "main": [
+        [
+          {
+            "node": "POST to Classify API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to Rerank & Prune": {
+      "main": [
+        [
+          {
             "node": "Execution Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execution Summary": {
+      "main": [
+        [
+          {
+            "node": "Check Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Errors": {
+      "main": [
+        [
+          {
+            "node": "Telegram Failure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Success",
             "type": "main",
             "index": 0
           }
@@ -1382,9 +1506,10 @@
   "settings": {
     "executionOrder": "v1",
     "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "2"
   },
   "meta": {
-    "description": "Discovers trending programming/AI topics from 9 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, additional news) daily at 6 AM UTC. Uses 4 Collector nodes instead of binary merge trees. Deduplicates by URL, classifies via server-side /api/classify-topics endpoint (uses active AI provider from database) into NEWS/MEME_WORTHY/LEARNING/TOOL_RELEASE/AI_UPDATE, filters by relevance \u2265 0.5, and POSTs batches to AllOnFire webhook. Auth via Bearer token. Expected: 80-150 items/day before dedup, ~40-80 after AI filter."
+    "description": "Discovers trending programming/AI topics from 23 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, news) daily at 12 PM UTC (3 PM Romania). Uses 4 Collector nodes. Deduplicates by URL, classifies via /api/classify-topics (relevance >= 0.6), then globally reranks via /api/rerank-and-prune to select the top 5-10 topics across all sources. RSS feeds capped at 15 items per source. Auth via Bearer token. Expected: ~150 raw items, ~30-50 after classification, 5-10 after global reranking."
   }
 }

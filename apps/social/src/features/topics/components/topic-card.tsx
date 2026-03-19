@@ -2,30 +2,18 @@
 
 import type { Topic, TopicCategory } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
-import { Button } from "@allonfire/ui/components/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@allonfire/ui/components/card";
-import { Checkbox } from "@allonfire/ui/components/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@allonfire/ui/components/collapsible";
-import {
-  Archive,
-  ChevronDown,
-  ChevronUp,
-  ExternalLink,
-  Sparkles,
-} from "lucide-react";
-import { useState, useTransition } from "react";
-import { archiveTopicAction, selectTopicAction } from "../actions/topics";
+import { Collapsible } from "@allonfire/ui/components/collapsible";
+import { ExternalLink } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const categoryColors: Record<string, string> = {
+export const categoryColors: Record<string, string> = {
   NEWS: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   MEME_WORTHY: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   LEARNING: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -33,52 +21,50 @@ const categoryColors: Record<string, string> = {
   AI_UPDATE: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
 };
 
-function formatCategory(category: TopicCategory): string {
+export function formatCategory(category: TopicCategory): string {
   return category.replace("_", " ");
 }
 
-type TopicCardProps = {
-  isSelected: boolean;
-  onAction: () => void;
-  onToggleSelect: (id: string) => void;
+export type TopicCardActionProps = {
+  isClamped: boolean;
+  open: boolean;
   topic: Topic;
 };
 
-export function TopicCard({
-  isSelected,
-  onAction,
-  onToggleSelect,
-  topic,
-}: TopicCardProps) {
+type TopicCardProps = {
+  renderActions: (props: TopicCardActionProps) => ReactNode;
+  topic: Topic;
+};
+
+export function TopicCard({ renderActions, topic }: TopicCardProps) {
   const [open, setOpen] = useState(false);
-  const [selectPending, startSelectTransition] = useTransition();
-  const [archivePending, startArchiveTransition] = useTransition();
+  const [isClamped, setIsClamped] = useState(false);
+  const summaryRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = summaryRef.current;
+    if (!el) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (!open) {
+        const clamped = el.scrollHeight > el.clientHeight;
+        setIsClamped((prev) => (prev === clamped ? prev : clamped));
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open]);
 
   return (
     <Collapsible onOpenChange={setOpen} open={open}>
-      <Card
-        className={`transition-colors ${
-          isSelected
-            ? "border-primary bg-primary/[0.02]"
-            : "hover:border-primary/30"
-        }`}
-      >
+      <Card className="flex flex-col gap-2 transition-colors hover:border-primary/30">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
-            <Checkbox
-              aria-label={`Select ${topic.title}`}
-              checked={isSelected}
-              className="mt-0.5"
-              onCheckedChange={() => onToggleSelect(topic.id)}
-            />
             <div className="min-w-0 flex-1">
-              <CollapsibleTrigger asChild>
-                <button className="w-full text-left" type="button">
-                  <CardTitle className="text-sm leading-snug">
-                    {topic.title}
-                  </CardTitle>
-                </button>
-              </CollapsibleTrigger>
+              <CardTitle className="line-clamp-5 text-sm leading-snug">
+                {topic.title}
+              </CardTitle>
             </div>
             <a
               aria-label="Open source"
@@ -87,33 +73,21 @@ export function TopicCard({
               rel="noopener noreferrer"
               target="_blank"
             >
-              <ExternalLink className="size-3.5" />
+              <ExternalLink className="size-4.5" />
             </a>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-1 flex-col">
           <p
-            className={`mb-3 text-muted-foreground text-sm ${
-              open ? "" : "line-clamp-2"
+            className={`mb-2 text-muted-foreground text-sm ${
+              open ? "" : "line-clamp-6"
             }`}
+            ref={summaryRef}
           >
             {topic.summary}
           </p>
 
-          <CollapsibleContent>
-            {topic.rawData && (
-              <div className="mb-3 rounded-md border bg-muted/30 p-3">
-                <p className="mb-1.5 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                  Raw Data
-                </p>
-                <pre className="max-h-48 overflow-auto font-mono text-muted-foreground text-xs leading-relaxed">
-                  {JSON.stringify(topic.rawData, null, 2)}
-                </pre>
-              </div>
-            )}
-          </CollapsibleContent>
-
-          <div className="flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <Badge
               className={
                 categoryColors[topic.category] ??
@@ -132,50 +106,7 @@ export function TopicCard({
           </div>
 
           <div className="mt-3 flex items-center gap-2 border-t pt-3">
-            <Button
-              disabled={selectPending}
-              onClick={() =>
-                startSelectTransition(async () => {
-                  await selectTopicAction(topic.id);
-                  onAction();
-                })
-              }
-              size="xs"
-              variant="default"
-            >
-              <Sparkles className="size-3" />
-              {selectPending ? "Selecting..." : "Select"}
-            </Button>
-            <Button
-              disabled={archivePending}
-              onClick={() =>
-                startArchiveTransition(async () => {
-                  await archiveTopicAction(topic.id);
-                  onAction();
-                })
-              }
-              size="xs"
-              variant="ghost"
-            >
-              <Archive className="size-3" />
-              {archivePending ? "Archiving..." : "Archive"}
-            </Button>
-
-            <CollapsibleTrigger asChild>
-              <Button className="ml-auto" size="xs" variant="ghost">
-                {open ? (
-                  <>
-                    <ChevronUp className="size-3" />
-                    Collapse
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="size-3" />
-                    Details
-                  </>
-                )}
-              </Button>
-            </CollapsibleTrigger>
+            {renderActions({ isClamped, open, topic })}
           </div>
         </CardContent>
       </Card>

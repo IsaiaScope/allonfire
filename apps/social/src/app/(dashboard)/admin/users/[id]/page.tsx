@@ -1,7 +1,7 @@
 import { getUserById } from "@allonfire/database";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { UserDetail } from "@/features/users/components/user-detail";
+import { UserDetail } from "@/features/admin/components/user-detail";
 import { auth } from "@/lib/auth";
 
 type UserDetailPageProps = {
