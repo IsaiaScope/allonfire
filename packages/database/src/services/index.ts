@@ -13,6 +13,12 @@ export {
   updatePostContent,
 } from "./post.service";
 export {
+  createPrompt,
+  deletePrompt,
+  getPromptCount,
+  getPromptsByTopicId,
+} from "./prompt.service";
+export {
   deleteProvider,
   getActiveProvider,
   getProviders,
@@ -33,6 +39,8 @@ export {
   getDiscoveredTopicsPaginated,
   getTopicsByStatus,
   getTopicsByStatusWithPosts,
+  getTopicsByStatusWithPrompts,
+  getTopicWithPrompts,
   ingestTopics,
   selectTopic,
   selectTopics,

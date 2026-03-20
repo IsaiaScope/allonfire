@@ -90,6 +90,25 @@ export async function getTopicsByStatusWithPosts(
   });
 }
 
+export async function getTopicsByStatusWithPrompts(
+  statuses: TopicStatus[],
+  limit = 50
+) {
+  return await prisma.topic.findMany({
+    where: { status: { in: statuses } },
+    orderBy: { discoveredAt: "desc" },
+    take: limit,
+    include: { prompts: { orderBy: { createdAt: "desc" } } },
+  });
+}
+
+export async function getTopicWithPrompts(topicId: string) {
+  return await prisma.topic.findUnique({
+    where: { id: topicId },
+    include: { prompts: { orderBy: { createdAt: "desc" } } },
+  });
+}
+
 export async function selectTopic(topicId: string) {
   return await prisma.topic.update({
     where: { id: topicId },

@@ -21,6 +21,19 @@ model Topic {
   rawData      Json?
   discoveredAt DateTime      @default(now())
   posts        Post[]
+  prompts      Prompt[]
+}
+
+// ============ Prompts ============
+
+model Prompt {
+  id        String   @id @default(cuid(2))
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([topicId])
 }
 
 // ============ Posts ============
@@ -122,6 +135,7 @@ enum ProviderType {
   ANTHROPIC
   OPENROUTER
   GOOGLE_GEMINI
+  GROQ
 }
 
 // ============ Settings ============

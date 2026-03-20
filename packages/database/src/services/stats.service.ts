@@ -1,15 +1,27 @@
 import { prisma } from "../index";
 
 export async function getTopicStats() {
-  const [discoveredCount, aiPickedCount, selectedCount, totalCount] =
-    await Promise.all([
-      prisma.topic.count({ where: { status: "DISCOVERED" } }),
-      prisma.topic.count({ where: { status: "AI_PICKED" } }),
-      prisma.topic.count({ where: { status: "SELECTED" } }),
-      prisma.topic.count(),
-    ]);
+  const [
+    discoveredCount,
+    aiPickedCount,
+    selectedCount,
+    totalCount,
+    promptCount,
+  ] = await Promise.all([
+    prisma.topic.count({ where: { status: "DISCOVERED" } }),
+    prisma.topic.count({ where: { status: "AI_PICKED" } }),
+    prisma.topic.count({ where: { status: "SELECTED" } }),
+    prisma.topic.count(),
+    prisma.prompt.count(),
+  ]);
 
-  return { discoveredCount, aiPickedCount, selectedCount, totalCount };
+  return {
+    discoveredCount,
+    aiPickedCount,
+    selectedCount,
+    totalCount,
+    promptCount,
+  };
 }
 
 export async function getRecentPosts(limit = 5) {

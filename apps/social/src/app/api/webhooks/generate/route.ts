@@ -1,11 +1,11 @@
-import { generatePostsForTopic } from "@allonfire/content-generator";
+import { generatePromptForTopic } from "@allonfire/content-generator";
 import { getTopicsByStatus, logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
 
 const bodySchema = z.object({
-  topicId: z.string().cuid().optional(),
+  topicId: z.cuid2().optional(),
 });
 
 export async function POST(request: Request) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     for (const id of topicIds) {
       try {
-        await generatePostsForTopic(id);
+        await generatePromptForTopic(id);
         results.push({ topicId: id, success: true });
       } catch (error) {
         results.push({
