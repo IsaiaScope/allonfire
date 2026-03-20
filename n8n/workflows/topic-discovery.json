@@ -173,7 +173,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'techcrunch.com': 'TechCrunch', 'theverge.com': 'The Verge', 'openai.com': 'OpenAI Blog', 'arstechnica.com': 'Ars Technica', 'news.ycombinator.com': 'Hacker News' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'RSS';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 50);\nconst sourceMap = { 'techcrunch.com': 'TechCrunch', 'theverge.com': 'The Verge', 'openai.com': 'OpenAI Blog', 'arstechnica.com': 'Ars Technica', 'news.ycombinator.com': 'Hacker News' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'RSS';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "rss-map",
       "name": "RSS Map to Topic",
@@ -255,7 +255,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all().slice(0, 10);\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'Product Hunt', rawData: { tagline: d.contentSnippet || '', pubDate: d.pubDate || d.isoDate } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 20);\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'Product Hunt', rawData: { tagline: d.contentSnippet || '', pubDate: d.pubDate || d.isoDate } } };\n});"
       },
       "id": "ph-map",
       "name": "PH Map to Topic",
@@ -314,7 +314,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'deepmind.google': 'Google DeepMind', 'blog.google': 'Google AI Blog', 'huggingface.co': 'Hugging Face Blog', 'anthropic.com': 'Anthropic Blog' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'AI Blog';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 30);\nconst sourceMap = { 'deepmind.google': 'Google DeepMind', 'blog.google': 'Google AI Blog', 'huggingface.co': 'Hugging Face Blog', 'anthropic.com': 'Anthropic Blog' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'AI Blog';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "ai-blogs-map",
       "name": "AI Blogs Map to Topic",
@@ -423,7 +423,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).slice(0, 10).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'YouTube', rawData: { pubDate: d.pubDate || d.isoDate, author: d.author || d.creator } } };\n});"
+        "jsCode": "const items = $input.all();\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).slice(0, 15).map(i => {\n  const d = i.json;\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: d.link, sourceName: 'YouTube', rawData: { pubDate: d.pubDate || d.isoDate, author: d.author || d.creator } } };\n});"
       },
       "id": "yt-map",
       "name": "YouTube Map to Topic",
@@ -470,7 +470,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all().slice(0, 15);\nconst sourceMap = { 'venturebeat.com': 'VentureBeat', 'techmeme.com': 'Techmeme', 'lobste.rs': 'Lobsters' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'News';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
+        "jsCode": "const items = $input.all().slice(0, 30);\nconst sourceMap = { 'venturebeat.com': 'VentureBeat', 'techmeme.com': 'Techmeme', 'lobste.rs': 'Lobsters' };\nreturn items.filter(i => !i.json.error && i.json.link && i.json.title).map(i => {\n  const d = i.json; const url = d.link;\n  let sourceName = 'News';\n  for (const [domain, name] of Object.entries(sourceMap)) { if (url.includes(domain)) { sourceName = name; break; } }\n  return { json: { title: d.title, summary: d.contentSnippet || d.content?.substring(0, 280) || d.title, sourceUrl: url, sourceName, rawData: { pubDate: d.pubDate || d.isoDate, creator: d.creator || d['dc:creator'], categories: d.categories } } };\n});"
       },
       "id": "news-map",
       "name": "News Map to Topic",
@@ -1504,12 +1504,12 @@
     }
   },
   "settings": {
-    "executionOrder": "v1",
+    "executionOrder": "v0",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "2"
   },
   "meta": {
-    "description": "Discovers trending programming/AI topics from 23 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, news) daily at 12 PM UTC (3 PM Romania). Uses 4 Collector nodes. Deduplicates by URL, classifies via /api/classify-topics (relevance >= 0.6), then globally reranks via /api/rerank-and-prune to select the top 5-10 topics across all sources. RSS feeds capped at 15 items per source. Auth via Bearer token. Expected: ~150 raw items, ~30-50 after classification, 5-10 after global reranking."
+    "description": "Discovers trending programming/AI topics from 23 sources (Hacker News, Dev.to, RSS feeds, GitHub Trending, Product Hunt, AI company blogs, Reddit, YouTube, news) daily at 12 PM UTC (3 PM Romania). Uses 4 Collector nodes. Deduplicates by URL, classifies via /api/classify-topics (relevance >= 0.6), then globally reranks via /api/rerank-and-prune to select the top 5-10 topics across all sources. RSS feeds capped at 30-50 items per source group. Auth via Bearer token. Expected: ~150 raw items, ~30-50 after classification, 5-10 after global reranking."
   }
 }

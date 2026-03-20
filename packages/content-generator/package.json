@@ -9,6 +9,7 @@
     "./providers/anthropic": "./src/providers/anthropic.ts",
     "./providers/openrouter": "./src/providers/openrouter.ts",
     "./providers/gemini": "./src/providers/gemini.ts",
+    "./providers/groq": "./src/providers/groq.ts",
     "./prompts/*": "./src/prompts/*.ts",
     "./platforms/*": "./src/platforms/*.ts"
   },

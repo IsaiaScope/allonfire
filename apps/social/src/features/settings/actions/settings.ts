@@ -18,7 +18,15 @@ export async function updateSettingsAction(data: {
 }) {
   await requireAuth();
   const parsed = settingsSchema.parse(data);
-  await updateSettingsService(parsed);
-  revalidatePath("/settings");
-  return { success: true };
+  try {
+    await updateSettingsService(parsed);
+    revalidatePath("/settings");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }

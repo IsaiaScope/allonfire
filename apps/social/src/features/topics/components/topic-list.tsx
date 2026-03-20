@@ -2,13 +2,16 @@
 
 import type { Topic } from "@allonfire/database";
 import { Skeleton } from "@allonfire/ui/components/skeleton";
+import { m } from "framer-motion";
 import { Compass } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { EmptyState } from "@/components/empty-state";
+import { fadeInUp, staggerContainer } from "@/lib/animation-variants";
 import { TopicCard } from "./topic-card";
 import { DiscoverActions } from "./topic-card-discover-actions";
 
 type TopicListProps = {
+  filterKey: string;
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onAction: () => void;
@@ -17,6 +20,7 @@ type TopicListProps = {
 };
 
 export function TopicList({
+  filterKey,
   hasNextPage,
   isFetchingNextPage,
   onAction,
@@ -56,15 +60,22 @@ export function TopicList({
 
   return (
     <div>
-      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
+      <m.div
+        animate="visible"
+        className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2"
+        initial="hidden"
+        key={filterKey}
+        variants={staggerContainer}
+      >
         {topics.map((topic) => (
-          <TopicCard
-            key={topic.id}
-            renderActions={(props) => (
-              <DiscoverActions {...props} onAction={onAction} />
-            )}
-            topic={topic}
-          />
+          <m.div key={topic.id} variants={fadeInUp}>
+            <TopicCard
+              renderActions={(props) => (
+                <DiscoverActions {...props} onAction={onAction} />
+              )}
+              topic={topic}
+            />
+          </m.div>
         ))}
 
         {isFetchingNextPage &&
@@ -83,7 +94,7 @@ export function TopicList({
               </div>
             </div>
           ))}
-      </div>
+      </m.div>
 
       <div ref={sentinelRef} />
     </div>

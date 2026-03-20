@@ -44,9 +44,7 @@ export function DesktopSidebar({ role, email, name }: DesktopSidebarProps) {
       className="hidden flex-col overflow-hidden border-sidebar-border border-r bg-sidebar max-lg:max-w-[60px] md:flex"
       initial={false}
       onAnimationComplete={() => {
-        if (effectiveCollapsed) {
-          onCollapseAnimationComplete();
-        }
+        onCollapseAnimationComplete();
       }}
       transition={{ duration: 0.2, ease: "easeOut" }}
     >

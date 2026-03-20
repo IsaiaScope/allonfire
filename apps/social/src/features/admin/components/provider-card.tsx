@@ -8,11 +8,13 @@ import {
   CardTitle,
 } from "@allonfire/ui/components/card";
 import { cn } from "@allonfire/ui/lib/utils";
-import { Bot, CircleCheck, CircleX, Minus } from "lucide-react";
+import { CircleCheck, CircleX, Minus } from "lucide-react";
+import type { ProviderType } from "../actions/providers";
+import { ProviderIcon } from "./provider-icons";
 
 type ProviderCardProps = {
   name: string;
-  provider: "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
+  provider: ProviderType;
   isActive: boolean;
   isConfigured: boolean;
   isVerified: boolean;
@@ -64,6 +66,7 @@ export function ProviderCard({
   model,
   isSelected,
   onSelect,
+  provider,
 }: ProviderCardProps) {
   return (
     <Card
@@ -85,7 +88,10 @@ export function ProviderCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bot className="size-5 text-muted-foreground" />
+            <ProviderIcon
+              className="size-5 text-muted-foreground"
+              provider={provider}
+            />
             <CardTitle className="text-base">{name}</CardTitle>
           </div>
           <div className="flex gap-1.5">

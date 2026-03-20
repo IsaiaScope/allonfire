@@ -1,5 +1,5 @@
 import { prisma } from "@allonfire/database";
-import { generatePostsForTopic } from "./generate";
+import { generatePromptForTopic } from "./generate";
 
 async function main() {
   const topics = await prisma.topic.findMany({
@@ -7,14 +7,14 @@ async function main() {
   });
 
   if (topics.length === 0) {
-    console.log("No selected topics to generate posts for.");
+    console.log("No selected topics to generate prompts for.");
     return;
   }
 
-  console.log(`Generating posts for ${topics.length} topic(s)...`);
+  console.log(`Generating prompts for ${topics.length} topic(s)...`);
 
   for (const topic of topics) {
-    await generatePostsForTopic(topic.id);
+    await generatePromptForTopic(topic.id);
   }
 
   console.log("Done!");

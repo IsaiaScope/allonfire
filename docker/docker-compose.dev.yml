@@ -53,6 +53,7 @@ services:
       - N8N_API_KEY=${N8N_API_KEY:-dev-api-key}
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:

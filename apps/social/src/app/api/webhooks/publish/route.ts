@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 const resultSchema = z.object({
   results: z.array(
     z.object({
-      postId: z.string().cuid(),
+      postId: z.cuid2(),
       success: z.boolean(),
       platformPostId: z.string().optional(),
       error: z.string().optional(),
