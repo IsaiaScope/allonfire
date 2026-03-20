@@ -2,12 +2,13 @@
 
 import { AlertTriangle, CircleCheck } from "lucide-react";
 import { useState } from "react";
+import type { ProviderType } from "../actions/providers";
 import { ProviderCard } from "./provider-card";
 import { ProviderConfigPanel } from "./provider-config-panel";
 
 type ProviderData = {
   id: string;
-  provider: "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
+  provider: ProviderType;
   maskedKey: string;
   model: string;
   isVerified: boolean;
@@ -23,18 +24,22 @@ const PROVIDER_META = {
   ANTHROPIC: { name: "Anthropic" },
   OPENROUTER: { name: "OpenRouter" },
   GOOGLE_GEMINI: { name: "Google Gemini" },
+  GROQ: { name: "Groq" },
 } as const;
 
-const PROVIDER_TYPES = ["ANTHROPIC", "OPENROUTER", "GOOGLE_GEMINI"] as const;
+const PROVIDER_TYPES = [
+  "ANTHROPIC",
+  "OPENROUTER",
+  "GOOGLE_GEMINI",
+  "GROQ",
+] as const;
 
 export function ProvidersHub({
   providers,
   activeProviderId,
   activeProvider,
 }: ProvidersHubProps) {
-  const [selected, setSelected] = useState<
-    "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI" | null
-  >(null);
+  const [selected, setSelected] = useState<ProviderType | null>(null);
 
   const providerMap = new Map(providers.map((p) => [p.provider, p]));
 

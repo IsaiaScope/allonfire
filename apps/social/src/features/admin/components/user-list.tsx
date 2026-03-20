@@ -16,6 +16,8 @@ import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { deleteUserAction } from "../actions/users";
 
 const INITIALS_SPLIT = /[\s@]/;
@@ -41,17 +43,18 @@ function UserRow({
   currentUserId: string;
 }) {
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isCurrentUser = user.id === currentUserId;
 
   function handleConfirmDelete() {
-    setError(null);
     startTransition(async () => {
-      try {
-        await deleteUserAction(user.id);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to delete user");
+      const result = await deleteUserAction(user.id);
+      if (!result.success) {
+        toast.error("Failed to delete user", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }
@@ -95,7 +98,6 @@ function UserRow({
       </Link>
 
       <div className="flex shrink-0 items-center gap-2">
-        {error && <span className="text-destructive text-xs">{error}</span>}
         <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
           <Button
             className="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"

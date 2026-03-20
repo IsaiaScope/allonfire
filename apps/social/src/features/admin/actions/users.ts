@@ -67,28 +67,37 @@ export async function createUserAction(data: {
   }
 }
 
-export async function deleteUserAction(userId: string) {
+export async function deleteUserAction(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
   const session = await requireAdmin();
 
   if (userId === session.user.id) {
-    throw new Error("Cannot delete yourself");
+    return { success: false, error: "Cannot delete yourself" };
   }
 
-  // Prevent deleting the last admin
-  const adminCount = await prisma.user.count({
-    where: { role: "ADMIN" },
-  });
-  const targetUser = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { role: true },
-  });
-  if (targetUser.role === "ADMIN" && adminCount <= 1) {
-    throw new Error("Cannot delete the last admin");
-  }
+  try {
+    const adminCount = await prisma.user.count({
+      where: { role: "ADMIN" },
+    });
+    const targetUser = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (targetUser.role === "ADMIN" && adminCount <= 1) {
+      return { success: false, error: "Cannot delete the last admin" };
+    }
 
-  await deleteUser(userId);
-  revalidatePath("/admin/users");
-  return { success: true };
+    await deleteUser(userId);
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function updateUserRoleAction(
@@ -101,25 +110,33 @@ export async function updateUserRoleAction(
     return { success: false, error: "You cannot change your own role" };
   }
 
-  if (role === "USER") {
-    const adminCount = await prisma.user.count({
-      where: { role: "ADMIN" },
-    });
-    const targetUser = await prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { role: true },
-    });
-    if (targetUser.role === "ADMIN" && adminCount <= 1) {
-      return { success: false, error: "Cannot demote the last admin" };
+  try {
+    if (role === "USER") {
+      const adminCount = await prisma.user.count({
+        where: { role: "ADMIN" },
+      });
+      const targetUser = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (targetUser.role === "ADMIN" && adminCount <= 1) {
+        return { success: false, error: "Cannot demote the last admin" };
+      }
     }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { role },
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
   }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { role },
-  });
-
-  revalidatePath("/admin/users");
-  revalidatePath(`/admin/users/${userId}`);
-  return { success: true };
 }

@@ -10,10 +10,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAuth } from "@/lib/server-auth";
 
-type ProviderType = "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
+export type ProviderType =
+  | "ANTHROPIC"
+  | "OPENROUTER"
+  | "GOOGLE_GEMINI"
+  | "GROQ";
 
 const providerSchema = z.object({
-  provider: z.enum(["ANTHROPIC", "OPENROUTER", "GOOGLE_GEMINI"]),
+  provider: z.enum(["ANTHROPIC", "OPENROUTER", "GOOGLE_GEMINI", "GROQ"]),
   apiKey: z.string().optional(),
   model: z.string(),
 });
@@ -38,6 +42,12 @@ async function createProviderClient(type: ProviderType, apiKey: string) {
       );
       return createGeminiProvider(apiKey);
     }
+    case "GROQ": {
+      const { createGroqProvider } = await import(
+        "@allonfire/content-generator/providers/groq"
+      );
+      return createGroqProvider(apiKey);
+    }
     default: {
       const _exhaustive: never = type;
       throw new Error(`Unknown provider type: ${_exhaustive}`);
@@ -61,7 +71,7 @@ export async function saveProviderAction(data: {
       await client.validate();
     } catch (error) {
       return {
-        success: false,
+        success: false as const,
         error:
           error instanceof Error ? error.message : "Failed to validate API key",
       };
@@ -75,14 +85,14 @@ export async function saveProviderAction(data: {
     });
 
     revalidatePath("/admin/providers");
-    return { success: true };
+    return { success: true as const };
   }
 
   // No new key — update model only using existing key from DB
   const existing = await getProviderWithDecryptedKey(parsed.provider);
   if (!existing) {
     return {
-      success: false,
+      success: false as const,
       error: "No existing API key found. Please provide one.",
     };
   }
@@ -95,14 +105,22 @@ export async function saveProviderAction(data: {
   });
 
   revalidatePath("/admin/providers");
-  return { success: true };
+  return { success: true as const };
 }
 
 export async function setActiveProviderAction(providerId: string) {
   await requireAuth();
-  await setActiveProviderService(providerId);
-  revalidatePath("/admin/providers");
-  return { success: true };
+  try {
+    await setActiveProviderService(providerId);
+    revalidatePath("/admin/providers");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function testConnectionAction(
@@ -115,7 +133,7 @@ export async function testConnectionAction(
   if (!key) {
     const record = await getProviderWithDecryptedKey(provider);
     if (!record) {
-      return { success: false, error: "Provider not configured" };
+      return { success: false as const, error: "Provider not configured" };
     }
     key = record.apiKey;
   }
@@ -124,10 +142,10 @@ export async function testConnectionAction(
 
   try {
     await client.validate();
-    return { success: true };
+    return { success: true as const };
   } catch (error) {
     return {
-      success: false,
+      success: false as const,
       error: error instanceof Error ? error.message : "Connection test failed",
     };
   }
@@ -135,11 +153,19 @@ export async function testConnectionAction(
 
 export async function revealApiKeyAction(provider: ProviderType) {
   await requireAuth();
-  const record = await getProviderWithDecryptedKey(provider);
-  if (!record) {
-    return { success: false as const, error: "Provider not configured" };
+  try {
+    const record = await getProviderWithDecryptedKey(provider);
+    if (!record) {
+      return { success: false as const, error: "Provider not configured" };
+    }
+    return { success: true as const, apiKey: record.apiKey };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
   }
-  return { success: true as const, apiKey: record.apiKey };
 }
 
 export async function listModelsAction(
@@ -184,10 +210,10 @@ export async function deleteProviderAction(providerId: string) {
   try {
     await deleteProviderService(providerId);
     revalidatePath("/admin/providers");
-    return { success: true };
+    return { success: true as const };
   } catch (error) {
     return {
-      success: false,
+      success: false as const,
       error:
         error instanceof Error ? error.message : "Failed to delete provider",
     };

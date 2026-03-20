@@ -20,6 +20,8 @@ import {
 import { ArrowLeft, Loader2, Mail, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { updateUserRoleAction } from "../actions/users";
 
 const INITIALS_SPLIT = /[\s@]/;
@@ -39,28 +41,24 @@ export function UserDetail({ user, currentUserId }: UserDetailProps) {
   const [role, setRole] = useState(user.role);
   const [pending, startTransition] = useTransition();
   const mounted = useMounted();
-  const [feedback, setFeedback] = useState<{
-    message: string;
-    type: "error" | "success";
-  } | null>(null);
 
   const isCurrentUser = user.id === currentUserId;
 
   function handleRoleChange(newRole: string) {
     const nextRole = newRole as "ADMIN" | "USER";
-    setFeedback(null);
     const previousRole = role;
     setRole(nextRole);
 
     startTransition(async () => {
       const result = await updateUserRoleAction(user.id, nextRole);
       if (result.success) {
-        setFeedback({ type: "success", message: "Role updated" });
+        toast.success("Role updated.");
       } else {
         setRole(previousRole);
-        setFeedback({
-          type: "error",
-          message: result.error ?? "Failed to update role",
+        toast.error("Failed to update role", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
         });
       }
     });
@@ -146,14 +144,6 @@ export function UserDetail({ user, currentUserId }: UserDetailProps) {
                 <Loader2 className="size-3.5 animate-spin" />
                 Loading...
               </div>
-            )}
-
-            {feedback && (
-              <p
-                className={`text-sm ${feedback.type === "error" ? "text-destructive" : "text-green-600"}`}
-              >
-                {feedback.message}
-              </p>
             )}
           </CardContent>
         </Card>

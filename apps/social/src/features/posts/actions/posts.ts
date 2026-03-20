@@ -8,63 +8,94 @@ import {
   updatePostContent as updatePostContentService,
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/server-auth";
 
-async function requireAuth() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-  return session;
-}
-
-const idSchema = z.string().cuid();
+const idSchema = z.cuid2();
 
 export async function approvePostAction(postId: string) {
   await requireAuth();
   const id = idSchema.parse(postId);
-  await approvePostService(id);
-  revalidatePath("/drafts");
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await approvePostService(id);
+    revalidatePath("/drafts");
+    revalidatePath("/");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function rejectPostAction(postId: string) {
   await requireAuth();
   const id = idSchema.parse(postId);
-  await rejectPostService(id);
-  revalidatePath("/drafts");
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await rejectPostService(id);
+    revalidatePath("/drafts");
+    revalidatePath("/");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function schedulePostAction(postId: string, scheduledAt: Date) {
   await requireAuth();
   const id = idSchema.parse(postId);
   z.date().min(new Date()).parse(scheduledAt);
-  await schedulePostService(id, scheduledAt);
-  revalidatePath("/drafts");
-  revalidatePath("/schedule");
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await schedulePostService(id, scheduledAt);
+    revalidatePath("/drafts");
+    revalidatePath("/schedule");
+    revalidatePath("/");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function unschedulePostAction(postId: string) {
   await requireAuth();
   const id = idSchema.parse(postId);
-  await unschedulePostService(id);
-  revalidatePath("/schedule");
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await unschedulePostService(id);
+    revalidatePath("/schedule");
+    revalidatePath("/");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function updatePostContentAction(postId: string, content: string) {
   await requireAuth();
   const id = idSchema.parse(postId);
   z.string().min(1).max(5000).parse(content);
-  await updatePostContentService(id, content);
-  revalidatePath("/drafts");
-  return { success: true };
+  try {
+    await updatePostContentService(id, content);
+    revalidatePath("/drafts");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }

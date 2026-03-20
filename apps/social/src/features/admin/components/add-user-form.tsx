@@ -13,6 +13,8 @@ import {
 } from "@allonfire/ui/components/select";
 import { Loader2, UserPlus } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { createUserAction } from "../actions/users";
 
 export function AddUserForm() {
@@ -32,16 +34,17 @@ export function AddUserForm() {
     };
 
     startTransition(async () => {
-      try {
-        const result = await createUserAction(data);
-        if (!result.success) {
-          setError(result.error ?? "Failed to create user");
-          return;
-        }
+      const result = await createUserAction(data);
+      if (result.success) {
         formRef.current?.reset();
         setRole("USER");
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to create user");
+      } else {
+        setError(result.error ?? "Failed to create user");
+        toast.error("Failed to create user", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }

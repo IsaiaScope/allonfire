@@ -35,6 +35,9 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
+import type { ProviderType } from "../actions/providers";
 import {
   deleteProviderAction,
   listModelsAction,
@@ -45,7 +48,7 @@ import {
 } from "../actions/providers";
 
 type ProviderConfigPanelProps = {
-  provider: "ANTHROPIC" | "OPENROUTER" | "GOOGLE_GEMINI";
+  provider: ProviderType;
   name: string;
   existingId: string | null;
   existingModel: string | null;
@@ -304,17 +307,6 @@ function ModelSelector({
   );
 }
 
-function parseErrorMessage(raw: string): string {
-  try {
-    const parsed = JSON.parse(raw);
-    const msg = parsed?.error?.message ?? parsed?.message ?? raw;
-    const code = parsed?.error?.code ?? parsed?.error?.status;
-    return code ? `${msg} (${code})` : msg;
-  } catch {
-    return raw;
-  }
-}
-
 export function ProviderConfigPanel({
   provider,
   name,
@@ -338,10 +330,6 @@ export function ProviderConfigPanel({
   const [activating, startActivateTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
   const [loadingModels, startModelsTransition] = useTransition();
-  const [result, setResult] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const [copied, setCopied] = useState(false);
   const testDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasFetchedModels = useRef(false);
@@ -371,6 +359,12 @@ export function ProviderConfigPanel({
           }
           return res.models[0]?.id ?? "";
         });
+      } else {
+        toast.error("Failed to load models", {
+          description: parseErrorMessage(
+            res.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }, [existingId, provider]);
@@ -389,6 +383,10 @@ export function ProviderConfigPanel({
       if (res.success) {
         setStoredKey(res.apiKey);
         setShowKey(true);
+      } else {
+        toast.error("Failed to reveal API key", {
+          description: res.error ?? "An unexpected error occurred.",
+        });
       }
     });
   }, [showKey, storedKey, provider]);
@@ -408,12 +406,15 @@ export function ProviderConfigPanel({
         navigator.clipboard.writeText(res.apiKey);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      } else {
+        toast.error("Failed to reveal API key", {
+          description: res.error ?? "An unexpected error occurred.",
+        });
       }
     });
   }, [apiKey, storedKey, provider]);
 
   const handleRefreshModels = useCallback(() => {
-    setResult(null);
     startModelsTransition(async () => {
       const res = await listModelsAction(provider, apiKey || undefined);
       if (res.success) {
@@ -424,14 +425,11 @@ export function ProviderConfigPanel({
           }
           return res.models[0]?.id ?? "";
         });
-        setResult({
-          type: "success",
-          message: `Loaded ${res.models.length} models`,
-        });
       } else {
-        setResult({
-          type: "error",
-          message: res.error ?? "Failed to fetch models",
+        toast.error("Failed to load models", {
+          description: parseErrorMessage(
+            res.error ?? "An unexpected error occurred."
+          ),
         });
       }
     });
@@ -441,7 +439,6 @@ export function ProviderConfigPanel({
     if (!(apiKey || maskedKey)) {
       return;
     }
-    setResult(null);
 
     startSaveTransition(async () => {
       const res = await saveProviderAction({
@@ -450,17 +447,14 @@ export function ProviderConfigPanel({
         model,
       });
       if (res.success) {
-        setResult({
-          type: "success",
-          message: apiKey ? "Provider saved and verified" : "Model updated",
-        });
         setApiKey("");
         setShowKey(false);
         setStoredKey(null);
       } else {
-        setResult({
-          type: "error",
-          message: res.error ?? "Failed to save",
+        toast.error("Failed to save provider", {
+          description: parseErrorMessage(
+            res.error ?? "An unexpected error occurred."
+          ),
         });
       }
     });
@@ -471,15 +465,15 @@ export function ProviderConfigPanel({
       clearTimeout(testDebounce.current);
     }
     testDebounce.current = setTimeout(() => {
-      setResult(null);
       startTestTransition(async () => {
         const res = await testConnectionAction(provider, apiKey || undefined);
         if (res.success) {
-          setResult({ type: "success", message: "Connection successful" });
+          toast.success("Connection successful.");
         } else {
-          setResult({
-            type: "error",
-            message: res.error ?? "Connection failed",
+          toast.error("Connection failed", {
+            description: parseErrorMessage(
+              res.error ?? "An unexpected error occurred."
+            ),
           });
         }
       });
@@ -491,12 +485,15 @@ export function ProviderConfigPanel({
       return;
     }
     startActivateTransition(async () => {
-      // Persist model selection before activating
       if (model) {
         await saveProviderAction({ provider, model });
       }
-      await setActiveProviderAction(existingId);
-      setResult({ type: "success", message: "Set as active provider" });
+      const result = await setActiveProviderAction(existingId);
+      if (!result.success) {
+        toast.error("Failed to activate provider", {
+          description: result.error ?? "An unexpected error occurred.",
+        });
+      }
     });
   }, [existingId, provider, model]);
 
@@ -509,9 +506,10 @@ export function ProviderConfigPanel({
       if (res.success) {
         onClose();
       } else {
-        setResult({
-          type: "error",
-          message: res.error ?? "Failed to delete",
+        toast.error("Failed to delete provider", {
+          description: parseErrorMessage(
+            res.error ?? "An unexpected error occurred."
+          ),
         });
       }
     });
@@ -558,23 +556,6 @@ export function ProviderConfigPanel({
           <p className="text-muted-foreground text-xs">
             Save your API key first — model selection will appear after
             validation.
-          </p>
-        )}
-
-        {result && (
-          <p
-            className={`flex max-w-full items-center gap-1.5 overflow-hidden break-words text-sm ${
-              result.type === "success" ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {result.type === "success" ? (
-              <Check className="size-3.5 shrink-0" />
-            ) : (
-              <X className="size-3.5 shrink-0" />
-            )}
-            {result.type === "error"
-              ? parseErrorMessage(result.message)
-              : result.message}
           </p>
         )}
 

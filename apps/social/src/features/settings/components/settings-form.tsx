@@ -5,6 +5,8 @@ import { Input } from "@allonfire/ui/components/input";
 import { Label } from "@allonfire/ui/components/label";
 import { Check, Loader2 } from "lucide-react";
 import { useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { updateSettingsAction } from "../actions/settings";
 
 type SettingsFormProps = {
@@ -28,7 +30,14 @@ export function SettingsForm({
       webhookNotifyUrl: (formData.get("webhookNotifyUrl") as string) || null,
     };
     startTransition(async () => {
-      await updateSettingsAction(data);
+      const result = await updateSettingsAction(data);
+      if (!result.success) {
+        toast.error("Failed to save settings", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
     });
   }
 
