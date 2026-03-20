@@ -1,12 +1,14 @@
-import { getTopicsByStatusWithPrompts } from "@allonfire/database";
+import { getSelectedTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
-import { GenerateTopicList } from "@/features/generation/components/generate-topic-list";
+import { GenerateClient } from "@/features/generation/components/generate-client";
 
 export default async function GeneratePage() {
-  const selectedTopics = await getTopicsByStatusWithPrompts(["SELECTED"]);
-  const totalPrompts = selectedTopics.reduce(
+  const initialData = await getSelectedTopicsPaginated();
+  const totalCount = initialData.totalCount ?? 0;
+
+  const totalPrompts = initialData.topics.reduce(
     (sum, t) => sum + t.prompts.length,
     0
   );
@@ -16,8 +18,8 @@ export default async function GeneratePage() {
       <div>
         <div className="flex items-center gap-3">
           <h1 className="font-bold text-2xl tracking-tight">Generate</h1>
-          {selectedTopics.length > 0 && (
-            <Badge variant="secondary">{selectedTopics.length} selected</Badge>
+          {totalCount > 0 && (
+            <Badge variant="secondary">{totalCount} selected</Badge>
           )}
           {totalPrompts > 0 && (
             <Badge className="bg-primary text-primary-foreground">
@@ -30,14 +32,14 @@ export default async function GeneratePage() {
         </p>
       </div>
 
-      {selectedTopics.length === 0 ? (
+      {totalCount === 0 ? (
         <EmptyState
           description="Select topics from the Discover page to queue them for prompt generation."
           icon={Sparkles}
           title="No topics selected"
         />
       ) : (
-        <GenerateTopicList topics={selectedTopics} />
+        <GenerateClient initialData={initialData} />
       )}
     </div>
   );

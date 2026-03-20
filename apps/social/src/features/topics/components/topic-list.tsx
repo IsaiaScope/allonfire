@@ -1,7 +1,6 @@
 "use client";
 
 import type { Topic } from "@allonfire/database";
-import { Skeleton } from "@allonfire/ui/components/skeleton";
 import { m } from "framer-motion";
 import { Compass } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -9,10 +8,12 @@ import { EmptyState } from "@/components/empty-state";
 import { fadeInUp, staggerContainer } from "@/lib/animation-variants";
 import { TopicCard } from "./topic-card";
 import { DiscoverActions } from "./topic-card-discover-actions";
+import { TopicCardSkeleton } from "./topic-card-skeleton";
 
 type TopicListProps = {
   filterKey: string;
   hasNextPage: boolean;
+  isFetching: boolean;
   isFetchingNextPage: boolean;
   onAction: () => void;
   onFetchNextPage: () => void;
@@ -22,6 +23,7 @@ type TopicListProps = {
 export function TopicList({
   filterKey,
   hasNextPage,
+  isFetching,
   isFetchingNextPage,
   onAction,
   onFetchNextPage,
@@ -48,13 +50,24 @@ export function TopicList({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, onFetchNextPage]);
 
-  if (topics.length === 0 && !isFetchingNextPage) {
+  if (topics.length === 0 && !isFetchingNextPage && !isFetching) {
     return (
       <EmptyState
         description="No topics match your current filters. Try adjusting your search or category selection."
         icon={Compass}
         title="No topics found"
       />
+    );
+  }
+
+  if (topics.length === 0 && isFetching) {
+    return (
+      <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
+          <TopicCardSkeleton key={`skeleton-${i}`} />
+        ))}
+      </div>
     );
   }
 
@@ -80,19 +93,8 @@ export function TopicList({
 
         {isFetchingNextPage &&
           Array.from({ length: 4 }).map((_, i) => (
-            <div
-              className="space-y-3 rounded-lg border bg-card p-4"
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
-              key={`skeleton-${i}`}
-            >
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-1/2" />
-              <div className="flex gap-2 pt-2">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-20" />
-              </div>
-            </div>
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders
+            <TopicCardSkeleton key={`skeleton-${i}`} />
           ))}
       </m.div>
 

@@ -15,71 +15,84 @@ import {
 import { Button } from "@allonfire/ui/components/button";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { deleteAllSelectedTopicsAction } from "@/features/topics/actions/topics";
 import { parseErrorMessage } from "@/lib/parse-error-message";
-import { deleteAllTopicsAction } from "../actions/topics";
-import { CATEGORIES, DiscoverFilters } from "./discover-filters";
-import { TopicList } from "./topic-list";
+import { GenerateFilters, RATINGS } from "./generate-filters";
+import { GenerateTopicList } from "./generate-topic-list";
+
+export type TopicWithPrompts = Topic & {
+  prompts: { id: string; rating: string | null; ratingNote: string | null }[];
+};
 
 type PaginatedResult = {
   nextCursor: string | null;
-  topics: Topic[];
+  topics: TopicWithPrompts[];
   totalCount: number | null;
 };
 
-type DiscoverClientProps = {
-  initialCategory: string;
+type GenerateClientProps = {
   initialData: PaginatedResult;
 };
 
 async function fetchTopics(params: {
-  category: string;
   cursor?: string;
+  rating: string;
   search: string;
-  sort: string;
 }): Promise<PaginatedResult> {
   const searchParams = new URLSearchParams();
   if (params.cursor) {
     searchParams.set("cursor", params.cursor);
   }
-  if (params.category) {
-    searchParams.set("category", params.category);
+  if (params.rating === "HAS_NOTES") {
+    searchParams.set("hasNotes", "true");
+  } else if (params.rating) {
+    searchParams.set("rating", params.rating);
   }
   if (params.search && params.search.length >= 2) {
     searchParams.set("search", params.search);
   }
-  if (params.sort) {
-    searchParams.set("sort", params.sort);
-  }
 
-  const res = await fetch(`/api/topics/discover?${searchParams.toString()}`);
+  const res = await fetch(`/api/topics/generate?${searchParams.toString()}`);
   if (!res.ok) {
     throw new Error("Failed to fetch topics");
   }
   return res.json();
 }
 
-function DeleteAllTopicsButton({
-  category,
+function DeleteAllSelectedButton({
   count,
   onDeleted,
+  rating,
 }: {
-  category: string;
   count: number;
   onDeleted: () => void;
+  rating: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
-  const categoryLabel = category
-    ? CATEGORIES.find((c) => c.value === category)?.label
-    : undefined;
+  const hasNotes = rating === "HAS_NOTES";
+
+  let description = `This will permanently delete all ${count} selected topics.`;
+  if (hasNotes) {
+    description = `This will permanently delete all ${count} selected topics with noted prompts.`;
+  } else if (rating) {
+    const ratingLabel = RATINGS.find(
+      (r) => r.value === rating
+    )?.label?.toLowerCase();
+    description = `This will permanently delete all ${count} selected topics with ${ratingLabel}-rated prompts.`;
+  }
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteAllTopicsAction(category || undefined);
+      const result = await deleteAllSelectedTopicsAction({
+        rating: hasNotes
+          ? undefined
+          : (rating as "POSITIVE" | "NEGATIVE") || undefined,
+        hasNotes: hasNotes || undefined,
+      });
       setOpen(false);
       if (result.success) {
         onDeleted();
@@ -113,15 +126,8 @@ function DeleteAllTopicsButton({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Delete {categoryLabel ? `${categoryLabel} topics` : "all topics"}?
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {categoryLabel
-              ? `This will permanently delete all ${count} discovered ${categoryLabel} topics.`
-              : `This will permanently delete all ${count} discovered topics.`}{" "}
-            Topics selected for generation will not be affected.
-          </AlertDialogDescription>
+          <AlertDialogTitle>Delete selected topics?</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
@@ -134,25 +140,18 @@ function DeleteAllTopicsButton({
   );
 }
 
-export function DiscoverClient({
-  initialCategory,
-  initialData,
-}: DiscoverClientProps) {
+export function GenerateClient({ initialData }: GenerateClientProps) {
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [rating, setRating] = useState("");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("newest");
 
-  const matchesInitialFetch =
-    category === initialCategory && search === "" && sort === "newest";
+  const matchesInitialFetch = rating === "" && search === "";
 
   const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
     useInfiniteQuery({
-      queryKey: ["discover-topics", { category, search, sort }],
+      queryKey: ["generate-topics", { rating, search }],
       queryFn: ({ pageParam }) =>
-        fetchTopics({ cursor: pageParam, category, search, sort }),
+        fetchTopics({ cursor: pageParam, rating, search }),
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       initialPageParam: undefined as string | undefined,
       ...(matchesInitialFetch && {
@@ -170,40 +169,27 @@ export function DiscoverClient({
   const totalCount = data?.pages[0]?.totalCount ?? initialData.totalCount ?? 0;
 
   const invalidateQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["discover-topics"] });
     queryClient.invalidateQueries({ queryKey: ["generate-topics"] });
   }, [queryClient]);
 
-  const handleCategoryChange = useCallback(
-    (cat: string) => {
-      setCategory(cat);
-      router.replace(`/discover${cat ? `?category=${cat}` : ""}`, {
-        scroll: false,
-      });
-    },
-    [router]
-  );
-
   return (
     <div className="space-y-4">
-      <DiscoverFilters
-        category={category}
+      <GenerateFilters
         deleteButton={
-          <DeleteAllTopicsButton
-            category={category}
+          <DeleteAllSelectedButton
             count={totalCount}
             onDeleted={invalidateQueries}
+            rating={rating}
           />
         }
-        onCategoryChange={handleCategoryChange}
+        onRatingChange={setRating}
         onSearchChange={setSearch}
-        onSortChange={setSort}
+        rating={rating}
         search={search}
-        sort={sort}
       />
 
-      <TopicList
-        filterKey={`${category}-${search}-${sort}`}
+      <GenerateTopicList
+        filterKey={`${rating}-${search}`}
         hasNextPage={hasNextPage}
         isFetching={isFetching}
         isFetchingNextPage={isFetchingNextPage}
