@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@allonfire/ui/components/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -15,6 +16,7 @@ type GeneratePromptButtonProps = {
 export function GeneratePromptButton({ topicId }: GeneratePromptButtonProps) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   function handleGenerate() {
     startTransition(async () => {
@@ -28,11 +30,12 @@ export function GeneratePromptButton({ topicId }: GeneratePromptButtonProps) {
       }
 
       router.refresh();
+      queryClient.invalidateQueries({ queryKey: ["generate-topics"] });
     });
   }
 
   return (
-    <Button disabled={pending} onClick={handleGenerate} size="sm">
+    <Button disabled={pending} onClick={handleGenerate} size="xs">
       {pending ? (
         <>
           <Loader2 className="size-4 animate-spin" />

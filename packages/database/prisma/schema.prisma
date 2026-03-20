@@ -27,13 +27,22 @@ model Topic {
 // ============ Prompts ============
 
 model Prompt {
-  id        String   @id @default(cuid(2))
-  topicId   String
-  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  content   String
-  createdAt DateTime @default(now())
+  id         String        @id @default(cuid(2))
+  topicId    String
+  topic      Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  content    String
+  postType   PostType?
+  rating     PromptRating?
+  ratingNote String?
+  ratedAt    DateTime?
+  createdAt  DateTime      @default(now())
 
   @@index([topicId])
+}
+
+enum PromptRating {
+  POSITIVE
+  NEGATIVE
 }
 
 // ============ Posts ============
@@ -196,7 +205,6 @@ enum Platform {
   LINKEDIN
   TWITTER
   YOUTUBE
-  TIKTOK
 }
 
 enum MediaType {
