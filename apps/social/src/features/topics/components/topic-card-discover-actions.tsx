@@ -5,6 +5,7 @@ import { CollapsibleTrigger } from "@allonfire/ui/components/collapsible";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { deleteTopicAction, selectTopicAction } from "../actions/topics";
 import { DeleteTopicDialog } from "./delete-topic-dialog";
 import type { TopicCardActionProps } from "./topic-card";
@@ -22,11 +23,15 @@ export function DiscoverActions({
 
   function handleDelete() {
     startDeleteTransition(async () => {
-      try {
-        await deleteTopicAction(topic.id);
+      const result = await deleteTopicAction(topic.id);
+      if (result.success) {
         onAction();
-      } catch {
-        toast.error("Failed to delete topic. Please try again.");
+      } else {
+        toast.error("Failed to delete topic", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }
@@ -38,11 +43,15 @@ export function DiscoverActions({
         disabled={selectPending}
         onClick={() =>
           startSelectTransition(async () => {
-            try {
-              await selectTopicAction(topic.id);
+            const result = await selectTopicAction(topic.id);
+            if (result.success) {
               onAction();
-            } catch {
-              toast.error("Failed to select topic. Please try again.");
+            } else {
+              toast.error("Failed to select topic", {
+                description: parseErrorMessage(
+                  result.error ?? "An unexpected error occurred."
+                ),
+              });
             }
           })
         }

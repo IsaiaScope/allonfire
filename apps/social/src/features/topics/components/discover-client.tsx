@@ -17,6 +17,8 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { deleteAllTopicsAction } from "../actions/topics";
 import { CATEGORIES, DiscoverFilters } from "./discover-filters";
 import { TopicList } from "./topic-list";
@@ -77,9 +79,17 @@ function DeleteAllTopicsButton({
 
   function handleDelete() {
     startTransition(async () => {
-      await deleteAllTopicsAction(category || undefined);
+      const result = await deleteAllTopicsAction(category || undefined);
       setOpen(false);
-      onDeleted();
+      if (result.success) {
+        onDeleted();
+      } else {
+        toast.error("Failed to delete topics", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
     });
   }
 
@@ -192,6 +202,7 @@ export function DiscoverClient({
       />
 
       <TopicList
+        filterKey={`${category}-${search}-${sort}`}
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         onAction={invalidateQueries}

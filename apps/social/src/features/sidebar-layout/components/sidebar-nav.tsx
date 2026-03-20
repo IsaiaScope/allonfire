@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useSidebarContext } from "../hooks/use-sidebar-context";
 
 export const navItems = [
@@ -38,6 +39,20 @@ export function SidebarNav({ role, collapsed }: SidebarNavProps) {
   const pathname = usePathname();
   const { isCollapseAnimationDone } = useSidebarContext();
 
+  // Controls when the active indicator participates in Framer Motion layout animations.
+  // Disabled synchronously when collapse/expand starts (avoids sweep during width animation),
+  // re-enabled one frame AFTER animation completes (lets tooltip DOM restructuring settle first).
+  const [layoutIdReady, setLayoutIdReady] = useState(true);
+  if (!isCollapseAnimationDone && layoutIdReady) {
+    setLayoutIdReady(false);
+  }
+  useEffect(() => {
+    if (isCollapseAnimationDone) {
+      const id = requestAnimationFrame(() => setLayoutIdReady(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isCollapseAnimationDone]);
+
   const visibleItems = navItems.filter(
     (item) => !item.adminOnly || role === "ADMIN"
   );
@@ -53,17 +68,28 @@ export function SidebarNav({ role, collapsed }: SidebarNavProps) {
         const link = (
           <Link
             className={cn(
-              "group flex items-center overflow-hidden rounded-md font-medium text-sm",
+              "group relative flex items-center rounded-md font-medium text-sm",
               collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
               isActive
-                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                ? "text-sidebar-primary-foreground"
                 : "text-sidebar-foreground/70 hover:bg-accent/50 hover:text-accent-foreground"
             )}
             href={item.href}
           >
+            {isActive && (
+              <m.div
+                className="absolute inset-0 rounded-md bg-sidebar-primary"
+                layoutId="sidebar-active"
+                transition={
+                  layoutIdReady
+                    ? { type: "spring", bounce: 0.15, duration: 0.4 }
+                    : { layout: { duration: 0 } }
+                }
+              />
+            )}
             <item.icon
               className={cn(
-                "shrink-0 transition-transform duration-150 group-hover:scale-110",
+                "relative z-10 shrink-0 transition-transform duration-150 group-hover:scale-110",
                 collapsed ? "size-5" : "size-4"
               )}
             />
@@ -71,7 +97,7 @@ export function SidebarNav({ role, collapsed }: SidebarNavProps) {
               {!collapsed && (
                 <m.span
                   animate={{ opacity: 1, width: "auto" }}
-                  className="overflow-hidden whitespace-nowrap"
+                  className="relative z-10 overflow-hidden whitespace-nowrap"
                   exit={{ opacity: 0, width: 0 }}
                   initial={{ opacity: 0, width: 0 }}
                   key="label"

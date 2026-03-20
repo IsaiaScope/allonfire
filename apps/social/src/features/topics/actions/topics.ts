@@ -6,37 +6,44 @@ import {
   selectTopic as selectTopicService,
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/server-auth";
 
-async function requireAuth() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-  return session;
-}
-
-const idSchema = z.string().cuid2();
+const idSchema = z.cuid2();
 
 export async function selectTopicAction(topicId: string) {
   await requireAuth();
   const id = idSchema.parse(topicId);
-  await selectTopicService(id);
-  revalidatePath("/discover");
-  revalidatePath("/generate");
-  return { success: true };
+  try {
+    await selectTopicService(id);
+    revalidatePath("/discover");
+    revalidatePath("/generate");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 export async function deleteTopicAction(topicId: string) {
   await requireAuth();
   const id = idSchema.parse(topicId);
-  await deleteTopic(id);
-  revalidatePath("/discover");
-  revalidatePath("/generate");
-  revalidatePath("/");
-  return { success: true };
+  try {
+    await deleteTopic(id);
+    revalidatePath("/discover");
+    revalidatePath("/generate");
+    revalidatePath("/");
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }
 
 const categorySchema = z
@@ -46,8 +53,17 @@ const categorySchema = z
 export async function deleteAllTopicsAction(category?: string) {
   await requireAuth();
   const validCategory = categorySchema.parse(category || undefined);
-  const count = await deleteAllTopics(validCategory, "AI_PICKED");
-  revalidatePath("/discover");
-  revalidatePath("/");
-  return { count, success: true };
+  try {
+    const count = await deleteAllTopics(validCategory, "AI_PICKED");
+    revalidatePath("/discover");
+    revalidatePath("/");
+    return { count, success: true as const };
+  } catch (error) {
+    return {
+      count: 0,
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
 }

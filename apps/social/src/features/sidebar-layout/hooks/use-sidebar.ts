@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   COOKIE_NAME,
   DEFAULT_WIDTH,
@@ -25,16 +25,7 @@ export function useSidebar(defaultState?: SidebarState) {
     () => defaultState ?? { isCollapsed: false, width: DEFAULT_WIDTH }
   );
   const [isMobileSheetOpen, setMobileSheetOpen] = useState(false);
-  const [isCollapseAnimationDone, setCollapseAnimationDone] = useState(false);
-
-  // When the sidebar loads already collapsed (from persisted state),
-  // defer enabling tooltips until after the first paint to avoid a flash
-  const initialCollapsed = defaultState?.isCollapsed ?? false;
-  useEffect(() => {
-    if (initialCollapsed) {
-      setCollapseAnimationDone(true);
-    }
-  }, [initialCollapsed]);
+  const [isCollapseAnimationDone, setCollapseAnimationDone] = useState(true);
 
   const toggle = useCallback(() => {
     setState((prev) => {

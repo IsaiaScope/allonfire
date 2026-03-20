@@ -1,6 +1,6 @@
 "use client";
 
-import { domAnimation, LazyMotion } from "framer-motion";
+import { domMax, LazyMotion } from "framer-motion";
 import { createContext } from "react";
 import type { SidebarState } from "../constants/sidebar-constants";
 import { useSidebar } from "../hooks/use-sidebar";
@@ -19,7 +19,7 @@ export function SidebarProvider({
   const sidebar = useSidebar(defaultState);
 
   return (
-    <LazyMotion features={domAnimation}>
+    <LazyMotion features={domMax}>
       <SidebarContext value={sidebar}>{children}</SidebarContext>
     </LazyMotion>
   );

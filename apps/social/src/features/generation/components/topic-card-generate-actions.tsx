@@ -8,9 +8,12 @@ import { toast } from "sonner";
 import { deleteTopicAction } from "@/features/topics/actions/topics";
 import { DeleteTopicDialog } from "@/features/topics/components/delete-topic-dialog";
 import type { TopicCardActionProps } from "@/features/topics/components/topic-card";
+import { parseErrorMessage } from "@/lib/parse-error-message";
 import { triggerGenerationAction } from "../actions/generate";
 
-type GenerateActionsProps = TopicCardActionProps & { onAction: () => void };
+type GenerateActionsProps = TopicCardActionProps & {
+  onAction: () => void;
+};
 
 export function GenerateActions({
   isClamped,
@@ -25,21 +28,29 @@ export function GenerateActions({
     startGenerateTransition(async () => {
       const result = await triggerGenerationAction(topic.id);
       if (result.success) {
-        toast.success("Posts generated successfully.");
+        toast.success("Prompt generated.");
         onAction();
       } else {
-        toast.error(result.error ?? "Generation failed. Please try again.");
+        toast.error("Failed to generate prompt", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }
 
   function handleDelete() {
     startDeleteTransition(async () => {
-      try {
-        await deleteTopicAction(topic.id);
+      const result = await deleteTopicAction(topic.id);
+      if (result.success) {
         onAction();
-      } catch {
-        toast.error("Failed to delete topic. Please try again.");
+      } else {
+        toast.error("Failed to delete topic", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
       }
     });
   }
