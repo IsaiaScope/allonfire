@@ -15,7 +15,6 @@ const platformIcon: Record<string, string> = {
   LINKEDIN: "in",
   TWITTER: "\u{1D54F}",
   YOUTUBE: "\u25B6",
-  TIKTOK: "\u266A",
 };
 
 export default async function DraftsPage() {

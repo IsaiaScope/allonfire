@@ -10,13 +10,6 @@ export default async function OverviewPage() {
       <div className="flex items-center gap-3">
         <h1 className="font-bold text-2xl tracking-tight">Overview</h1>
         <Badge variant="secondary">{stats.totalCount} topics</Badge>
-        {stats.promptCount > 0 && (
-          <Badge className="bg-primary text-primary-foreground">
-            {stats.promptCount === 1
-              ? "1 prompt"
-              : `${stats.promptCount} prompts`}
-          </Badge>
-        )}
       </div>
 
       <PipelineStats stats={stats} />

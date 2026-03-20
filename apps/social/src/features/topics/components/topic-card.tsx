@@ -113,7 +113,7 @@ export function TopicCard({
             {/* biome-ignore lint/a11y/noStaticElementInteractions: event propagation barrier, not interactive */}
             {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: same — prevents parent onClick on child button clicks */}
             <div
-              className="mt-3 flex items-center gap-2 border-t pt-3"
+              className="mt-2 flex items-center gap-2 border-t pt-3"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >

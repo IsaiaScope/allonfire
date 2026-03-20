@@ -27,12 +27,6 @@ const PLATFORM_CONFIG: Record<
     maxPreview: 500,
     style: "font-sans",
   },
-  TIKTOK: {
-    label: "TikTok",
-    icon: "\u266A",
-    maxPreview: 2200,
-    style: "font-sans",
-  },
 };
 
 export function PlatformPreview({ content, platform }: PlatformPreviewProps) {
