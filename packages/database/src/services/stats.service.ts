@@ -1,26 +1,35 @@
 import { prisma } from "../index";
 
 export async function getTopicStats() {
-  const [
-    discoveredCount,
-    aiPickedCount,
-    selectedCount,
-    totalCount,
-    promptCount,
-  ] = await Promise.all([
-    prisma.topic.count({ where: { status: "DISCOVERED" } }),
-    prisma.topic.count({ where: { status: "AI_PICKED" } }),
-    prisma.topic.count({ where: { status: "SELECTED" } }),
-    prisma.topic.count(),
-    prisma.prompt.count(),
-  ]);
+  const [topicsByStatus, promptsByRating, totalCount, promptCount, notesCount] =
+    await Promise.all([
+      prisma.topic.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+      prisma.prompt.groupBy({
+        by: ["rating"],
+        _count: true,
+      }),
+      prisma.topic.count(),
+      prisma.prompt.count(),
+      prisma.prompt.count({ where: { ratingNote: { not: null } } }),
+    ]);
+
+  const statusCount = (status: string) =>
+    topicsByStatus.find((g) => g.status === status)?._count ?? 0;
+  const ratingCount = (rating: string) =>
+    promptsByRating.find((g) => g.rating === rating)?._count ?? 0;
 
   return {
-    discoveredCount,
-    aiPickedCount,
-    selectedCount,
+    discoveredCount: statusCount("DISCOVERED"),
+    aiPickedCount: statusCount("AI_PICKED"),
+    selectedCount: statusCount("SELECTED"),
     totalCount,
     promptCount,
+    positivePromptCount: ratingCount("POSITIVE"),
+    negativePromptCount: ratingCount("NEGATIVE"),
+    notesCount,
   };
 }
 

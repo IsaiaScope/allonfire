@@ -1,4 +1,9 @@
-import { createPrompt, prisma } from "@allonfire/database";
+import type { PostType, TopicCategory } from "@allonfire/database";
+import {
+  createPrompt,
+  getPositivePromptsByCategory,
+  prisma,
+} from "@allonfire/database";
 import { extractArticle } from "./extract-article";
 import { metaPrompt } from "./prompts/meta-prompt";
 import { getActiveProviderClient } from "./providers";
@@ -10,16 +15,26 @@ export type TopicInput = {
   articleContent?: string;
 };
 
+const CATEGORY_TO_POST_TYPE: Partial<Record<TopicCategory, PostType>> = {
+  MEME_WORTHY: "MEME",
+  NEWS: "NEWS",
+  AI_UPDATE: "NEWS",
+  LEARNING: "LEARNING",
+  TOOL_RELEASE: "LEARNING",
+};
+
 export async function generatePromptForTopic(topicId: string): Promise<void> {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
   });
 
+  const postType: PostType = CATEGORY_TO_POST_TYPE[topic.category] ?? "NEWS";
+
   const rawData = (topic.rawData ?? {}) as Record<string, unknown>;
   const cachedArticle = rawData.articleContent as string | undefined;
 
-  // Fetch provider and extract article in parallel (independent I/O)
-  const [provider, articleContent] = await Promise.all([
+  // Fetch provider, extract article, and load few-shot examples in parallel
+  const [provider, articleContent, fewShotExamples] = await Promise.all([
     getActiveProviderClient(),
     cachedArticle
       ? Promise.resolve(cachedArticle)
@@ -40,6 +55,9 @@ export async function generatePromptForTopic(topicId: string): Promise<void> {
           }
           return undefined;
         })(),
+    getPositivePromptsByCategory(topic.category, 2).then((prompts) =>
+      prompts.map((p) => ({ title: p.topic.title, content: p.content }))
+    ),
   ]);
 
   const prompt = metaPrompt({
@@ -47,14 +65,16 @@ export async function generatePromptForTopic(topicId: string): Promise<void> {
     summary: topic.summary,
     sourceUrl: topic.sourceUrl,
     category: topic.category,
+    postType,
     articleContent,
+    fewShotExamples,
   });
 
   const response = await provider.client.generate({
     model: provider.model,
-    maxTokens: 4096,
+    maxTokens: 6144,
     messages: [{ role: "user", content: prompt }],
   });
 
-  await createPrompt(topicId, response.text);
+  await createPrompt(topicId, response.text, postType);
 }
