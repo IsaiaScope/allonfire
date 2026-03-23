@@ -64,7 +64,7 @@ export async function upsertSocialAccount(data: {
     update: {
       accessToken: encryptedAccessToken,
       refreshToken: encryptedRefreshToken,
-      tokenExpiresAt: data.tokenExpiresAt ?? null,
+      tokenExpiresAt: data.tokenExpiresAt ?? undefined,
       platformUserId: data.platformUserId ?? undefined,
       platformUsername: data.platformUsername ?? undefined,
     },
