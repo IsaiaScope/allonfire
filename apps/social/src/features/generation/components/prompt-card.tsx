@@ -1,6 +1,6 @@
 "use client";
 
-import type { Prompt } from "@allonfire/database";
+import type { Prompt, PromptRating } from "@allonfire/database";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,11 +19,23 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@allonfire/ui/components/collapsible";
-import { Check, ChevronDown, ChevronUp, Copy, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  ThumbsDown,
+  ThumbsUp,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { parseErrorMessage } from "@/lib/parse-error-message";
-import { deletePromptAction } from "../actions/prompt";
+import {
+  deletePromptAction,
+  ratePromptAction,
+  updateNoteAction,
+} from "../actions/prompt";
 
 type PromptCardProps = {
   onAction: () => void;
@@ -33,13 +45,24 @@ type PromptCardProps = {
 export function PromptCard({ onAction, prompt }: PromptCardProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [currentRating, setCurrentRating] = useState<PromptRating | null>(
+    prompt.rating
+  );
+  const [note, setNote] = useState(prompt.ratingNote ?? "");
   const [deletePending, startDeleteTransition] = useTransition();
+  const [ratePending, startRateTransition] = useTransition();
+  const [notePending, startNoteTransition] = useTransition();
+  const [noteSaved, setNoteSaved] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const noteTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
+      }
+      if (noteTimeoutRef.current) {
+        clearTimeout(noteTimeoutRef.current);
       }
     };
   }, []);
@@ -68,26 +91,85 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
     });
   }
 
+  function handleRate(rating: PromptRating) {
+    startRateTransition(async () => {
+      const result = await ratePromptAction(prompt.id, rating);
+      if (result.success) {
+        setCurrentRating(rating);
+      } else {
+        toast.error("Failed to rate prompt", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
+    });
+  }
+
+  function handleSaveNote() {
+    startNoteTransition(async () => {
+      const result = await updateNoteAction(prompt.id, note);
+      if (result.success) {
+        setNoteSaved(true);
+        if (noteTimeoutRef.current) {
+          clearTimeout(noteTimeoutRef.current);
+        }
+        noteTimeoutRef.current = setTimeout(() => setNoteSaved(false), 2000);
+      } else {
+        toast.error("Failed to save note", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
+    });
+  }
+
+  function handleDeleteNote() {
+    startNoteTransition(async () => {
+      const result = await updateNoteAction(prompt.id, "");
+      if (result.success) {
+        setNote("");
+      } else {
+        toast.error("Failed to delete note", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
+    });
+  }
+
   const preview = prompt.content.slice(0, 150).replace(/\n/g, " ");
-  const timestamp = new Date(prompt.createdAt).toLocaleString();
+  const timestamp = new Date(prompt.createdAt).toLocaleString(undefined, {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
   return (
     <Collapsible onOpenChange={setOpen} open={open}>
-      <Card className="transition-colors hover:border-primary/30">
-        <CardHeader className="pb-2">
-          <div className="flex items-start gap-2">
+      <Card className="gap-1 py-3 transition-colors hover:border-primary/30">
+        <CardHeader className="px-4 pb-0">
+          <div className="flex items-center gap-2">
             <CollapsibleTrigger asChild>
               <button
-                className="flex min-w-0 flex-1 cursor-pointer items-start gap-2 text-left"
+                className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
                 type="button"
               >
                 {open ? (
-                  <ChevronUp className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <ChevronUp className="size-5 shrink-0 text-muted-foreground" />
                 ) : (
-                  <ChevronDown className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                  <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-muted-foreground text-xs">{timestamp}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground text-sm">{timestamp}</p>
+                    <RatingBadge rating={currentRating} />
+                  </div>
                   {!open && (
                     <p className="mt-1 line-clamp-2 text-sm">
                       {preview}
@@ -97,50 +179,22 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                 </div>
               </button>
             </CollapsibleTrigger>
-            <Button
-              className="shrink-0"
-              onClick={handleCopy}
-              size="xs"
-              variant="ghost"
-            >
-              {copied ? (
-                <Check className="size-3.5 text-green-500" />
-              ) : (
-                <Copy className="size-3.5" />
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CollapsibleContent>
-          <CardContent className="pt-0">
-            <div className="rounded-md bg-muted/50 p-4">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                {prompt.content}
-              </pre>
-            </div>
-            <div className="mt-3 flex items-center gap-2 border-t pt-3">
-              <Button onClick={handleCopy} size="xs" variant="outline">
+            <div className="flex shrink-0 items-center gap-0.5">
+              <Button onClick={handleCopy} size="icon-sm" variant="ghost">
                 {copied ? (
-                  <>
-                    <Check className="size-3 text-green-500" />
-                    Copied
-                  </>
+                  <Check className="size-3.5 text-green-500" />
                 ) : (
-                  <>
-                    <Copy className="size-3" />
-                    Copy prompt
-                  </>
+                  <Copy className="size-3.5" />
                 )}
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     disabled={deletePending}
-                    size="xs"
-                    variant="destructive"
+                    size="icon-sm"
+                    variant="ghost"
                   >
-                    <Trash2 className="size-3" />
-                    {deletePending ? "Deleting..." : "Delete"}
+                    <Trash2 className="size-3.5 text-destructive" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -160,9 +214,124 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          </div>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="px-4 pt-0">
+            <div className="rounded-md bg-muted/50 p-3">
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                {prompt.content}
+              </pre>
+            </div>
+            <div className="mt-4 flex items-center gap-4 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  className={
+                    currentRating === "POSITIVE"
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-green-600/10 text-green-600 hover:bg-green-600/20 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20"
+                  }
+                  disabled={ratePending}
+                  onClick={() => handleRate("POSITIVE")}
+                  size="icon-sm"
+                  variant={
+                    currentRating === "POSITIVE" ? "default" : "secondary"
+                  }
+                >
+                  <ThumbsUp className="size-4" />
+                </Button>
+                <Button
+                  className={
+                    currentRating === "NEGATIVE"
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-red-600/10 text-red-600 hover:bg-red-600/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                  }
+                  disabled={ratePending}
+                  onClick={() => handleRate("NEGATIVE")}
+                  size="icon-sm"
+                  variant={
+                    currentRating === "NEGATIVE" ? "default" : "secondary"
+                  }
+                >
+                  <ThumbsDown className="size-4" />
+                </Button>
+              </div>
+              <Button
+                className="ml-auto"
+                onClick={handleCopy}
+                size="icon-sm"
+                variant="ghost"
+              >
+                {copied ? (
+                  <Check className="size-3.5 text-green-500" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+              </Button>
+            </div>
+            <div className="mt-3 flex flex-col gap-2">
+              <textarea
+                className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                maxLength={500}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Add a note about this prompt..."
+                value={note}
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  className={
+                    noteSaved
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : ""
+                  }
+                  disabled={notePending || !note}
+                  onClick={handleSaveNote}
+                  size="xs"
+                  variant="default"
+                >
+                  {noteSaved && (
+                    <>
+                      <Check className="size-3" />
+                      Saved
+                    </>
+                  )}
+                  {!noteSaved && (notePending ? "Saving..." : "Save Note")}
+                </Button>
+                {note && (
+                  <Button
+                    className="ml-auto"
+                    disabled={notePending}
+                    onClick={handleDeleteNote}
+                    size="xs"
+                    variant="destructive"
+                  >
+                    <Trash2 className="size-3" />
+                    Delete Note
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardContent>
         </CollapsibleContent>
       </Card>
     </Collapsible>
+  );
+}
+
+function RatingBadge({ rating }: { rating: PromptRating | null }) {
+  if (!rating) {
+    return null;
+  }
+  if (rating === "POSITIVE") {
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-green-600 text-xs dark:text-green-400">
+        <ThumbsUp className="size-3" />
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/10 px-1.5 py-0.5 text-red-600 text-xs dark:text-red-400">
+      <ThumbsDown className="size-2.5" />
+    </span>
   );
 }

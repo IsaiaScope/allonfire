@@ -1,6 +1,7 @@
 "use client";
 
 import type { Prompt } from "@allonfire/database";
+import { useQueryClient } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
@@ -12,9 +13,11 @@ type PromptListProps = {
 
 export function PromptList({ prompts }: PromptListProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   function handleAction() {
     router.refresh();
+    queryClient.invalidateQueries({ queryKey: ["generate-topics"] });
   }
 
   if (prompts.length === 0) {

@@ -26,9 +26,9 @@ export default async function TopicDetailPage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3 md:space-y-5">
       <div>
-        <div className="mb-4">
+        <div className="mb-2 md:mb-4">
           <Button asChild size="sm" variant="ghost">
             <Link href="/generate">
               <ArrowLeft className="size-3.5" />
@@ -37,12 +37,12 @@ export default async function TopicDetailPage({
           </Button>
         </div>
 
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2 md:gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="line-clamp-3 font-bold text-xl leading-snug tracking-tight">
+            <h1 className="line-clamp-3 font-bold text-lg leading-snug tracking-tight md:text-xl">
               {topic.title}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 md:mt-2 md:gap-2">
               <Badge
                 className={getCategoryColor(topic.category)}
                 variant="secondary"
@@ -68,12 +68,12 @@ export default async function TopicDetailPage({
           </a>
         </div>
 
-        <p className="mt-3 line-clamp-10 text-muted-foreground text-sm">
+        <p className="mt-2 line-clamp-10 text-muted-foreground text-sm md:mt-3">
           {topic.summary}
         </p>
       </div>
 
-      <div className="flex items-center justify-between border-t pt-4">
+      <div className="flex items-center justify-between border-t pt-3 md:pt-4">
         <h2 className="font-semibold text-lg">
           Prompts
           {topic.prompts.length > 0 && (

@@ -3,6 +3,7 @@ import { getDiscoveredTopics, logWebhook, prisma } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { validateBearerToken } from "@/lib/api-auth";
 import { stripCodeBlock } from "@/lib/parse-ai-response";
+import { safeRawData } from "@/lib/raw-data";
 
 const MAX_FINAL_TOPICS = 10;
 
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
       summary: t.summary,
       category: t.category,
       source: t.sourceName,
-      relevance: (t.rawData as Record<string, unknown>)?.aiRelevance ?? 0,
+      relevance: safeRawData(t.rawData)?.aiRelevance ?? 0,
     }));
 
     let selectedIndices: number[];
@@ -125,9 +126,7 @@ export async function POST(request: Request) {
       selectedIndices = topics
         .map((t, i) => ({
           i,
-          rel:
-            ((t.rawData as Record<string, unknown>)?.aiRelevance as number) ??
-            0,
+          rel: (safeRawData(t.rawData).aiRelevance as number) ?? 0,
         }))
         .sort((a, b) => b.rel - a.rel)
         .slice(0, MAX_FINAL_TOPICS)

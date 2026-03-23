@@ -28,18 +28,17 @@ export default async function DiscoverPage({
   const initialData = await getDiscoveredTopicsPaginated({
     ...(validCategory && { category: validCategory }),
   });
+  const totalCount = initialData.totalCount ?? 0;
 
-  const showEmptyState = !validCategory && initialData.totalCount === 0;
+  const showEmptyState = !validCategory && totalCount === 0;
 
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
           <h1 className="font-bold text-2xl tracking-tight">Discover</h1>
-          {initialData.totalCount > 0 && (
-            <Badge variant="secondary">
-              {initialData.totalCount} AI picked
-            </Badge>
+          {totalCount > 0 && (
+            <Badge variant="secondary">{totalCount} AI picked</Badge>
           )}
         </div>
         <p className="text-muted-foreground text-sm">

@@ -15,8 +15,10 @@ export {
 export {
   createPrompt,
   deletePrompt,
-  getPromptCount,
+  getPositivePromptsByCategory,
   getPromptsByTopicId,
+  ratePrompt,
+  updatePromptNote,
 } from "./prompt.service";
 export {
   deleteProvider,
@@ -29,14 +31,15 @@ export {
 export { getSettings, updateSettings } from "./settings.service";
 export {
   getDailySummary,
-  getRecentPosts,
   getTopicStats,
 } from "./stats.service";
 export {
   deleteAllTopics,
+  deleteSelectedTopics,
   deleteTopic,
   getDiscoveredTopics,
   getDiscoveredTopicsPaginated,
+  getSelectedTopicsPaginated,
   getTopicsByStatus,
   getTopicsByStatusWithPosts,
   getTopicsByStatusWithPrompts,

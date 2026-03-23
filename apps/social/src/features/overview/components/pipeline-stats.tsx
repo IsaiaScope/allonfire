@@ -7,7 +7,15 @@ import {
   CardTitle,
 } from "@allonfire/ui/components/card";
 import { m } from "framer-motion";
-import { Compass, FileText, Search, Sparkles } from "lucide-react";
+import {
+  Compass,
+  FileText,
+  MessageSquare,
+  Search,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+} from "lucide-react";
 import Link from "next/link";
 
 const stages = [
@@ -83,8 +91,32 @@ type PipelineStatsProps = {
     aiPickedCount: number;
     selectedCount: number;
     promptCount: number;
+    positivePromptCount: number;
+    negativePromptCount: number;
+    notesCount: number;
   };
 };
+
+const feedbackMetrics = [
+  {
+    key: "positive",
+    icon: ThumbsUp,
+    color: "text-green-600 dark:text-green-400",
+    bg: "bg-green-500/10",
+  },
+  {
+    key: "negative",
+    icon: ThumbsDown,
+    color: "text-red-600 dark:text-red-400",
+    bg: "bg-red-500/10",
+  },
+  {
+    key: "notes",
+    icon: MessageSquare,
+    color: "text-muted-foreground",
+    bg: "bg-muted",
+  },
+] as const;
 
 export function PipelineStats({ stats }: PipelineStatsProps) {
   const values = [
@@ -93,6 +125,17 @@ export function PipelineStats({ stats }: PipelineStatsProps) {
     stats.selectedCount,
     stats.promptCount,
   ];
+
+  const hasFeedback =
+    stats.positivePromptCount > 0 ||
+    stats.negativePromptCount > 0 ||
+    stats.notesCount > 0;
+
+  const feedbackValues: Record<string, number> = {
+    positive: stats.positivePromptCount,
+    negative: stats.negativePromptCount,
+    notes: stats.notesCount,
+  };
 
   return (
     <m.div
@@ -109,6 +152,52 @@ export function PipelineStats({ stats }: PipelineStatsProps) {
           value={values[i] ?? 0}
         />
       ))}
+
+      {hasFeedback && (
+        <m.div
+          className="group"
+          variants={cardVariants}
+          whileHover={{
+            y: -4,
+            transition: { duration: 0.2 },
+          }}
+        >
+          <Card className="h-full gap-3 border-border/50 bg-gradient-to-br from-chart-5/5 to-chart-5/15 py-4">
+            <CardHeader className="flex flex-row items-start justify-between pb-0">
+              <div>
+                <CardTitle className="font-medium text-muted-foreground text-sm">
+                  Prompt Feedback
+                </CardTitle>
+                <p className="text-muted-foreground/70 text-xs">
+                  Ratings and notes
+                </p>
+              </div>
+              <div className="flex items-center justify-center rounded-full bg-chart-5/10 p-2">
+                <MessageSquare className="size-4 text-chart-5" />
+              </div>
+            </CardHeader>
+            <CardContent className="mt-auto">
+              <div className="flex items-center gap-4">
+                {feedbackMetrics.map((metric) => {
+                  const Icon = metric.icon;
+                  return (
+                    <div className="flex items-center gap-2" key={metric.key}>
+                      <span className="font-bold text-3xl tabular-nums">
+                        {feedbackValues[metric.key]}
+                      </span>
+                      <div
+                        className={`flex items-center justify-center rounded-full p-2 ${metric.bg}`}
+                      >
+                        <Icon className={`size-4 ${metric.color}`} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </m.div>
+      )}
     </m.div>
   );
 }
@@ -133,7 +222,7 @@ function PipelineCard({ stage, value, index }: PipelineCardProps) {
     >
       <CardWrapper href={stage.href}>
         <Card
-          className={`gap-3 bg-gradient-to-br py-4 ${stage.gradient} border-border/50 transition-shadow duration-300 ${stage.href ? "cursor-pointer" : ""}`}
+          className={`h-full gap-3 bg-gradient-to-br py-4 ${stage.gradient} border-border/50 transition-shadow duration-300 ${stage.href ? "cursor-pointer" : ""}`}
           onMouseEnter={(e) => {
             e.currentTarget.style.boxShadow = stage.glowHover;
           }}

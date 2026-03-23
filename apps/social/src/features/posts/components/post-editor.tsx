@@ -9,7 +9,6 @@ const PLATFORM_LIMITS: Record<string, number> = {
   TWITTER: 280,
   LINKEDIN: 3000,
   YOUTUBE: 500,
-  TIKTOK: 2200,
 };
 
 type PostEditorProps = {

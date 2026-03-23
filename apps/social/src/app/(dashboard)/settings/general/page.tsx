@@ -49,17 +49,15 @@ export default async function GeneralSettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {["LinkedIn", "Twitter / X", "YouTube", "TikTok"].map(
-              (platform) => (
-                <div
-                  className="flex items-center justify-between rounded-md border px-4 py-3"
-                  key={platform}
-                >
-                  <span className="font-medium text-sm">{platform}</span>
-                  <Badge variant="secondary">Via n8n</Badge>
-                </div>
-              )
-            )}
+            {["LinkedIn", "Twitter / X", "YouTube"].map((platform) => (
+              <div
+                className="flex items-center justify-between rounded-md border px-4 py-3"
+                key={platform}
+              >
+                <span className="font-medium text-sm">{platform}</span>
+                <Badge variant="secondary">Via n8n</Badge>
+              </div>
+            ))}
           </div>
           <p className="mt-3 text-muted-foreground text-xs">
             Platform connections are managed through n8n OAuth credentials.

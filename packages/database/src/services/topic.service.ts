@@ -25,7 +25,7 @@ type PaginatedTopicsParams = {
 type PaginatedTopicsResult = {
   topics: Topic[];
   nextCursor: string | null;
-  totalCount: number;
+  totalCount: number | null;
 };
 
 export async function getDiscoveredTopicsPaginated({
@@ -53,6 +53,8 @@ export async function getDiscoveredTopicsPaginated({
   };
   const orderBy = sortMap[sort] ?? sortMap.newest;
 
+  const isFirstPage = !cursor;
+
   const [items, totalCount] = await Promise.all([
     prisma.topic.findMany({
       where,
@@ -60,7 +62,7 @@ export async function getDiscoveredTopicsPaginated({
       take: limit + 1,
       ...(cursor && { cursor: { id: cursor }, skip: 1 }),
     }),
-    prisma.topic.count({ where }),
+    isFirstPage ? prisma.topic.count({ where }) : Promise.resolve(null),
   ]);
 
   const hasMore = items.length > limit;
@@ -151,22 +153,100 @@ export async function deleteAllTopics(
     ...(category && { category }),
   };
 
-  const topicIds = await prisma.topic.findMany({
-    where,
-    select: { id: true },
-  });
-
-  if (topicIds.length === 0) {
-    return 0;
-  }
-
-  const ids = topicIds.map((t) => t.id);
   const [, deleteResult] = await prisma.$transaction([
     prisma.post.updateMany({
-      where: { topicId: { in: ids } },
+      where: { topic: where },
       data: { topicId: null },
     }),
-    prisma.topic.deleteMany({ where: { id: { in: ids } } }),
+    prisma.topic.deleteMany({ where }),
+  ]);
+  return deleteResult.count;
+}
+
+type SelectedTopicsParams = {
+  cursor?: string;
+  hasNotes?: boolean;
+  limit?: number;
+  rating?: "POSITIVE" | "NEGATIVE";
+  search?: string;
+};
+
+type SelectedTopicsResult = {
+  topics: (Topic & {
+    prompts: { id: string; rating: string | null; ratingNote: string | null }[];
+  })[];
+  nextCursor: string | null;
+  totalCount: number | null;
+};
+
+export async function getSelectedTopicsPaginated({
+  cursor,
+  limit = 20,
+  rating,
+  hasNotes,
+  search,
+}: SelectedTopicsParams = {}): Promise<SelectedTopicsResult> {
+  const where: Prisma.TopicWhereInput = {
+    status: "SELECTED",
+    ...(rating && {
+      prompts: { some: { rating } },
+    }),
+    ...(hasNotes && {
+      prompts: { some: { ratingNote: { not: null } } },
+    }),
+    ...(search && {
+      OR: [
+        { title: { contains: search, mode: "insensitive" as const } },
+        { summary: { contains: search, mode: "insensitive" as const } },
+      ],
+    }),
+  };
+
+  const isFirstPage = !cursor;
+
+  const [items, totalCount] = await Promise.all([
+    prisma.topic.findMany({
+      where,
+      orderBy: { discoveredAt: "desc" },
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+      include: {
+        prompts: {
+          orderBy: { createdAt: "desc" },
+          select: { id: true, rating: true, ratingNote: true },
+        },
+      },
+    }),
+    isFirstPage ? prisma.topic.count({ where }) : Promise.resolve(null),
+  ]);
+
+  const hasMore = items.length > limit;
+  const topics = hasMore ? items.slice(0, limit) : items;
+  const nextCursor = hasMore ? (topics.at(-1)?.id ?? null) : null;
+
+  return { topics, nextCursor, totalCount };
+}
+
+export async function deleteSelectedTopics(filters?: {
+  hasNotes?: boolean;
+  rating?: "POSITIVE" | "NEGATIVE";
+}): Promise<number> {
+  const where: Prisma.TopicWhereInput = {
+    status: "SELECTED",
+    ...(filters?.rating && {
+      prompts: { some: { rating: filters.rating } },
+    }),
+    ...(filters?.hasNotes && {
+      prompts: { some: { ratingNote: { not: null } } },
+    }),
+  };
+
+  const [, deleteResult] = await prisma.$transaction([
+    prisma.post.updateMany({
+      where: { topic: where },
+      data: { topicId: null },
+    }),
+    prisma.topic.deleteMany({ where }),
   ]);
   return deleteResult.count;
 }

@@ -18,7 +18,7 @@ export function QuickNavBadges({ role }: QuickNavBadgesProps) {
   );
 
   return (
-    <div className="flex gap-2 overflow-x-auto border-sidebar-border border-b px-4 py-2.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+    <div className="flex gap-2 overflow-x-auto overscroll-x-contain border-sidebar-border border-b px-4 py-2.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
       {visibleItems.map((item) => {
         const isActive =
           item.href === "/"

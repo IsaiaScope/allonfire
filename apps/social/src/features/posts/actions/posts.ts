@@ -9,11 +9,12 @@ import {
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { ActionResult } from "@/lib/action-result";
 import { requireAuth } from "@/lib/server-auth";
 
 const idSchema = z.cuid2();
 
-export async function approvePostAction(postId: string) {
+export async function approvePostAction(postId: string): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(postId);
   try {
@@ -30,7 +31,7 @@ export async function approvePostAction(postId: string) {
   }
 }
 
-export async function rejectPostAction(postId: string) {
+export async function rejectPostAction(postId: string): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(postId);
   try {
@@ -47,7 +48,10 @@ export async function rejectPostAction(postId: string) {
   }
 }
 
-export async function schedulePostAction(postId: string, scheduledAt: Date) {
+export async function schedulePostAction(
+  postId: string,
+  scheduledAt: Date
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(postId);
   z.date().min(new Date()).parse(scheduledAt);
@@ -66,7 +70,9 @@ export async function schedulePostAction(postId: string, scheduledAt: Date) {
   }
 }
 
-export async function unschedulePostAction(postId: string) {
+export async function unschedulePostAction(
+  postId: string
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(postId);
   try {
@@ -83,7 +89,10 @@ export async function unschedulePostAction(postId: string) {
   }
 }
 
-export async function updatePostContentAction(postId: string, content: string) {
+export async function updatePostContentAction(
+  postId: string,
+  content: string
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(postId);
   z.string().min(1).max(5000).parse(content);
