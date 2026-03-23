@@ -1,144 +1,28 @@
 "use client";
 
 import type { Topic } from "@allonfire/database";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@allonfire/ui/components/alert-dialog";
-import { Button } from "@allonfire/ui/components/button";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
-import { parseErrorMessage } from "@/lib/parse-error-message";
+import { useCallback, useMemo, useState } from "react";
+import { useTopicsPaginated } from "@/features/topics/hooks/use-topics-paginated";
+import type { PaginatedTopicResult } from "@/features/topics/types/topic-types";
 import { deleteAllTopicsAction } from "../actions/topics";
+import { DeleteAllDialog } from "./delete-all-dialog";
 import { CATEGORIES, DiscoverFilters } from "./discover-filters";
+import { TopicCard } from "./topic-card";
+import { DiscoverActions } from "./topic-card-discover-actions";
 import { TopicList } from "./topic-list";
 
-type PaginatedResult = {
-  nextCursor: string | null;
-  topics: Topic[];
-  totalCount: number | null;
-};
+const CROSS_INVALIDATE_KEYS = ["generate-topics"] as const;
 
 type DiscoverClientProps = {
   initialCategory: string;
-  initialData: PaginatedResult;
+  initialData: PaginatedTopicResult<Topic>;
 };
-
-async function fetchTopics(params: {
-  category: string;
-  cursor?: string;
-  search: string;
-  sort: string;
-}): Promise<PaginatedResult> {
-  const searchParams = new URLSearchParams();
-  if (params.cursor) {
-    searchParams.set("cursor", params.cursor);
-  }
-  if (params.category) {
-    searchParams.set("category", params.category);
-  }
-  if (params.search && params.search.length >= 2) {
-    searchParams.set("search", params.search);
-  }
-  if (params.sort) {
-    searchParams.set("sort", params.sort);
-  }
-
-  const res = await fetch(`/api/topics/discover?${searchParams.toString()}`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch topics");
-  }
-  return res.json();
-}
-
-function DeleteAllTopicsButton({
-  category,
-  count,
-  onDeleted,
-}: {
-  category: string;
-  count: number;
-  onDeleted: () => void;
-}) {
-  const [isPending, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
-
-  const categoryLabel = category
-    ? CATEGORIES.find((c) => c.value === category)?.label
-    : undefined;
-
-  function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteAllTopicsAction(category || undefined);
-      setOpen(false);
-      if (result.success) {
-        onDeleted();
-      } else {
-        toast.error("Failed to delete topics", {
-          description: parseErrorMessage(
-            result.error ?? "An unexpected error occurred."
-          ),
-        });
-      }
-    });
-  }
-
-  if (count === 0) {
-    return null;
-  }
-
-  return (
-    <AlertDialog onOpenChange={setOpen} open={open}>
-      <AlertDialogTrigger asChild>
-        <Button
-          className="relative h-7 items-center gap-1 pr-4 pl-2 text-xs"
-          variant="destructive"
-        >
-          <Trash2 className="size-3" />
-          Delete
-          <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-secondary font-semibold text-[10px] text-secondary-foreground">
-            {count}
-          </span>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
-            Delete {categoryLabel ? `${categoryLabel} topics` : "all topics"}?
-          </AlertDialogTitle>
-          <AlertDialogDescription>
-            {categoryLabel
-              ? `This will permanently delete all ${count} discovered ${categoryLabel} topics.`
-              : `This will permanently delete all ${count} discovered topics.`}{" "}
-            Topics selected for generation will not be affected.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={isPending} onClick={handleDelete}>
-            {isPending ? "Deleting..." : "Delete"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
 
 export function DiscoverClient({
   initialCategory,
   initialData,
 }: DiscoverClientProps) {
-  const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
@@ -148,31 +32,36 @@ export function DiscoverClient({
   const matchesInitialFetch =
     category === initialCategory && search === "" && sort === "newest";
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
-    useInfiniteQuery({
-      queryKey: ["discover-topics", { category, search, sort }],
-      queryFn: ({ pageParam }) =>
-        fetchTopics({ cursor: pageParam, category, search, sort }),
-      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-      initialPageParam: undefined as string | undefined,
-      ...(matchesInitialFetch && {
-        initialData: {
-          pages: [initialData],
-          pageParams: [undefined],
-        },
-      }),
-    });
+  const buildSearchParams = useCallback(() => {
+    const params = new URLSearchParams();
+    if (category) {
+      params.set("category", category);
+    }
+    if (search && search.length >= 2) {
+      params.set("search", search);
+    }
+    if (sort) {
+      params.set("sort", sort);
+    }
+    return params;
+  }, [category, search, sort]);
 
-  const allTopics = useMemo(
-    () => data?.pages.flatMap((page) => page.topics) ?? [],
-    [data]
-  );
-  const totalCount = data?.pages[0]?.totalCount ?? initialData.totalCount ?? 0;
-
-  const invalidateQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["discover-topics"] });
-    queryClient.invalidateQueries({ queryKey: ["generate-topics"] });
-  }, [queryClient]);
+  const {
+    allTopics,
+    totalCount,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    invalidateQueries,
+  } = useTopicsPaginated<Topic>({
+    endpoint: "/api/topics/discover",
+    queryKey: "discover-topics",
+    buildSearchParams,
+    initialData,
+    matchesInitialFetch,
+    invalidateKeys: CROSS_INVALIDATE_KEYS,
+  });
 
   const handleCategoryChange = useCallback(
     (cat: string) => {
@@ -184,15 +73,38 @@ export function DiscoverClient({
     [router]
   );
 
+  const categoryLabel = useMemo(
+    () =>
+      category
+        ? CATEGORIES.find((c) => c.value === category)?.label
+        : undefined,
+    [category]
+  );
+
+  const handleDeleteConfirm = useCallback(
+    () => deleteAllTopicsAction(category || undefined),
+    [category]
+  );
+
   return (
     <div className="space-y-4">
       <DiscoverFilters
         category={category}
         deleteButton={
-          <DeleteAllTopicsButton
-            category={category}
+          <DeleteAllDialog
             count={totalCount}
+            description={
+              categoryLabel
+                ? `This will permanently delete all ${totalCount} discovered ${categoryLabel} topics. Topics selected for generation will not be affected.`
+                : `This will permanently delete all ${totalCount} discovered topics. Topics selected for generation will not be affected.`
+            }
+            onConfirm={handleDeleteConfirm}
             onDeleted={invalidateQueries}
+            title={
+              categoryLabel
+                ? `Delete ${categoryLabel} topics?`
+                : "Delete all topics?"
+            }
           />
         }
         onCategoryChange={handleCategoryChange}
@@ -207,8 +119,15 @@ export function DiscoverClient({
         hasNextPage={hasNextPage}
         isFetching={isFetching}
         isFetchingNextPage={isFetchingNextPage}
-        onAction={invalidateQueries}
         onFetchNextPage={fetchNextPage}
+        renderCard={(topic) => (
+          <TopicCard
+            renderActions={(props) => (
+              <DiscoverActions {...props} onAction={invalidateQueries} />
+            )}
+            topic={topic}
+          />
+        )}
         topics={allTopics}
       />
     </div>

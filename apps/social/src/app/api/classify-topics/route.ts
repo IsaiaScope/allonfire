@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
 import { stripCodeBlock } from "@/lib/parse-ai-response";
+import { safeRawData } from "@/lib/raw-data";
 
 const itemSchema = z.object({
   title: z.string().min(1),
@@ -108,8 +109,7 @@ function mapClassification(
 
   const category = VALID_CATEGORIES.has(cls.category) ? cls.category : "NEWS";
 
-  const hasRawData =
-    typeof original.rawData === "object" && original.rawData !== null;
+  const existingData = safeRawData(original.rawData);
 
   return {
     title: original.title,
@@ -117,12 +117,10 @@ function mapClassification(
     sourceUrl: original.sourceUrl,
     sourceName: original.sourceName,
     category,
-    rawData: hasRawData
-      ? {
-          ...(original.rawData as Record<string, unknown>),
-          aiRelevance: relevance,
-        }
-      : { aiRelevance: relevance },
+    rawData: {
+      ...existingData,
+      aiRelevance: relevance,
+    },
   };
 }
 

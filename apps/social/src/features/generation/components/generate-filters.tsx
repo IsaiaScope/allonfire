@@ -11,7 +11,7 @@ import {
 } from "@allonfire/ui/components/select";
 import { Loader2, Search } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useDebouncedSearch } from "@/features/topics/hooks/use-debounced-search";
 
 export const RATINGS = [
   { value: "", label: "All" },
@@ -35,17 +35,11 @@ export function GenerateFilters({
   rating,
   search,
 }: GenerateFiltersProps) {
-  const [localSearch, setLocalSearch] = useState(search);
+  const { localSearch, setLocalSearch } = useDebouncedSearch({
+    search,
+    onSearchChange,
+  });
   const mounted = useMounted();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localSearch !== search) {
-        onSearchChange(localSearch);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [localSearch, search, onSearchChange]);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">

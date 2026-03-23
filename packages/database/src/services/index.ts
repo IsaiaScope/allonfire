@@ -16,8 +16,6 @@ export {
   createPrompt,
   deletePrompt,
   getPositivePromptsByCategory,
-  getPromptCount,
-  getPromptRatingStats,
   getPromptsByTopicId,
   ratePrompt,
   updatePromptNote,
@@ -33,7 +31,6 @@ export {
 export { getSettings, updateSettings } from "./settings.service";
 export {
   getDailySummary,
-  getRecentPosts,
   getTopicStats,
 } from "./stats.service";
 export {

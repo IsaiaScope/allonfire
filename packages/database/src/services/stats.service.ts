@@ -33,14 +33,6 @@ export async function getTopicStats() {
   };
 }
 
-export async function getRecentPosts(limit = 5) {
-  return await prisma.post.findMany({
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    include: { topic: true },
-  });
-}
-
 export async function getDailySummary() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

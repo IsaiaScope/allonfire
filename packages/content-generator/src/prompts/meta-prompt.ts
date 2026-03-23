@@ -40,30 +40,28 @@ function getTypeInstructions(postType: string): string {
 function getVisualStrategy(postType: string): string {
   switch (postType) {
     case "MEME":
-      return `**Visual Strategy: Meme / Humor**
-- Bold text overlay on a gradient or themed background
-- Setup/punchline format — the image should deliver the joke visually
-- Dev humor visuals: code editor mockups, terminal screenshots, "me vs the compiler" reaction formats
-- Use large, impactful typography (48-72px) with comedic emphasis (bold keywords, color highlights)
-- Create 1-2 images: a hero meme image and optionally a reaction/follow-up panel`;
+      return `**Visual Strategy: Meme / Humor — pick 2 distinct approaches from these:**
+- **Fake code editor:** VS Code-style screenshot with a humorous code snippet, absurd variable names, or a funny error message. Use a dark editor theme with syntax highlighting colors.
+- **Terminal mockup:** Console/terminal window with a funny command output, stack trace, or git log. Monospace font, green-on-black or dark theme.
+- **Before/After split:** Left panel = expectation, right panel = reality. Use contrasting colors (calm blue vs chaotic red/orange).
+- **Chat mockup:** Fake Slack/Discord conversation with a funny team exchange about the topic. Use chat bubble layouts with avatars.
+- **Bold text meme:** Large impactful typography (48-72px) with setup/punchline on a gradient background. Comedic emphasis via bold keywords and color highlights.`;
 
     case "LEARNING":
-      return `**Visual Strategy: Educational Carousel**
-- Create a carousel of 4-6 slides (each a separate PNG):
-  - Slide 1: Title/hook slide with the main question or problem statement
-  - Slides 2-5: One concept per slide — use diagrams, code snippets rendered as styled blocks, or step-by-step visuals
-  - Final slide: Summary with key takeaway and CTA
-- Use consistent layout across slides: header bar, content area, slide number indicator
-- Code snippets should be rendered as styled code blocks with syntax highlighting colors
-- Diagrams should use simple shapes, arrows, and labels — not complex illustrations`;
+      return `**Visual Strategy: Educational — pick 2-3 distinct approaches from these:**
+- **Code snippet with annotations:** Syntax-highlighted code block with arrow callouts pointing to key lines. Use colored \`<span>\` tags for highlighting (green=strings, blue=keywords, orange=functions).
+- **Flowchart/architecture diagram:** Boxes connected by arrows using CSS flexbox/grid. Each box = one concept with a label and icon/emoji.
+- **Before/After code comparison:** Two-panel layout — left panel (red tint) = bad/old code, right panel (green tint) = good/new code. Highlight the difference.
+- **Step-by-step visual:** Numbered steps (1→2→3→4) in a vertical or grid layout, each with an icon and a brief label. Show the progression visually.
+- **Carousel slides** (4-6 PNGs): Slide 1 = title/hook, slides 2-5 = one concept per slide, final = summary/CTA. Consistent header bar and slide number across all.`;
 
     default:
-      return `**Visual Strategy: News Social Card**
-- Create a social card with a large, bold headline (2-3 lines max)
-- Include source attribution and a key statistic or quote as a pull-quote
-- Clean editorial design: dark background, prominent white/orange text, minimal elements
-- Optionally create a 2nd image with a data visualization or key facts breakdown
-- The card should look like a premium tech newsletter header`;
+      return `**Visual Strategy: News — pick 2 distinct approaches from these:**
+- **Social card:** Large bold headline (2-3 lines), source attribution, and a key stat pulled out as a big number with context label.
+- **Timeline visualization:** Horizontal or vertical timeline showing before → announcement → expected impact. Use connected nodes with dates/labels.
+- **Comparison layout:** Two-column or table layout showing "what was" vs "what changed." Use contrasting colors for old/new.
+- **Quote card:** Key statement from the article as a large pull-quote with attribution. Elegant editorial design with accent borders.
+- **Key facts breakdown:** 3-4 data points laid out in a grid, each with a large number/icon and a one-line explanation.`;
   }
 }
 
@@ -111,9 +109,37 @@ ${topic.articleContent}
 
   const fewShotSection = buildFewShotSection(topic.fewShotExamples ?? []);
 
-  return `You are a content strategist for a tech-focused social media brand. Your job is to create a comprehensive, self-contained prompt optimized for **Claude Code** — a CLI tool that can write files, execute code, and use Playwright to capture screenshots.
+  return `You are a content strategist for a tech-focused social media brand. Your job is to create a comprehensive, self-contained prompt optimized for **Claude Code**.
 
 Your output will be copied directly into Claude Code by a content creator. Claude Code will then execute it to produce post text and image files.
+
+## How Claude Code Works (CRITICAL — Read This First)
+
+Claude Code is a **conversational AI agent** in a CLI. It reads natural language instructions and executes them by writing files and running shell commands. It does NOT have a JavaScript SDK or custom API.
+
+**Your output must be plain English instructions with embedded content.** Do NOT output executable code, function calls, or pseudo-code. Claude Code cannot run \`claude.writeFile()\`, \`claude.run()\`, or any custom API.
+
+**CORRECT format — natural language with inline content:**
+\`\`\`
+Create a file \`output/post.md\` with this content:
+
+[the actual post text here]
+
+---
+
+Create a file \`output/image-1.html\` with this content:
+
+[the actual HTML/CSS here]
+
+Then take a screenshot of \`output/image-1.html\` at 1080x1080 pixels and save it as \`output/image-1.png\` using Playwright:
+npx playwright screenshot --viewport-size=1080,1080 output/image-1.html output/image-1.png
+\`\`\`
+
+**WRONG format — DO NOT do this:**
+\`\`\`
+claude.writeFile("output/post.md", content);
+claude.screenshot("output/image-1.html", "output/image-1.png");
+\`\`\`
 
 ## Topic Information
 - **Title:** ${topic.title}
@@ -152,18 +178,24 @@ Claude Code should save the post text to \`output/post.md\`.
 
 ## TASK 2: CREATE IMAGES
 
-Instruct Claude Code to create PNG image files using one of these methods:
-1. **HTML/CSS + Playwright screenshot** (preferred) — write an HTML file with inline CSS, then use Playwright to screenshot it at 1080x1080px
-2. **SVG → PNG conversion** — write SVG markup, convert via Playwright or sharp
-3. **Canvas API** — write a Node.js script using the canvas package
+Instruct Claude Code to create PNG image files using this exact workflow:
+
+1. Write an HTML file with **all styles inline** (no external dependencies, no \`<link>\` tags)
+2. Screenshot it with Playwright CLI: \`npx playwright screenshot --viewport-size=1080,1080 output/image-1.html output/image-1.png\`
+
+**The prompt must include the complete, ready-to-render HTML source code for each image** — not a description of what to build, but the actual HTML that Claude Code will write to a file.
 
 **Image specifications:**
-- Dimensions: **1080×1080px** (square format, works on all platforms)
+- Dimensions: **1080×1080px** (square format)
 - High contrast, readable at mobile sizes
-- Brand palette: \`#0f172a\` (dark background), \`#f97316\` (orange accent), \`#3b82f6\` (blue accent), \`#ffffff\` (text)
-- Typography: sans-serif fonts (Inter, system-ui), bold weights
-- Max **30 words** of text per image — images must communicate visually, not through paragraphs
+- **Primary palette:** \`#0f172a\` (dark bg), \`#f97316\` (orange accent), \`#3b82f6\` (blue accent), \`#ffffff\` (text)
+- **Extend with contextual colors** when the visual calls for it — syntax highlighting colors for code snippets, green/red for before/after comparisons, gradient backgrounds for variety
+- Typography: sans-serif fonts (system-ui) for headlines, **monospace (Fira Code, Consolas, monospace)** for code snippets
+- Max **30 words** of text per image (code snippets don't count toward this limit)
+- Each image must use a **different visual approach** — don't make two images that look like the same template with different text
 - Save images to \`output/image-1.png\`, \`output/image-2.png\`, etc.
+
+**Visual variety is critical.** Do NOT create multiple images that are just "headline text on a colored background." At least one image should include a structured visual element: a code snippet, a diagram, a comparison layout, a mockup, or a data visualization rendered in HTML/CSS.
 
 ${getVisualStrategy(topic.postType)}
 
@@ -182,5 +214,5 @@ output/
 
 **Context & Key Facts** — All essential information about the topic must be embedded in the prompt so Claude Code needs no additional context or web searches.
 
-Output ONLY the prompt text — no preamble, no explanation, no meta-commentary. The output should start directly with the prompt that the user will copy into Claude Code.`;
+Output ONLY natural language instructions with embedded content (the actual post text, the actual HTML files, and the shell commands to run). No preamble, no code blocks wrapping the entire output, no fictional APIs, no pseudo-code. The output should read like a step-by-step task brief that Claude Code can follow directly.`;
 }

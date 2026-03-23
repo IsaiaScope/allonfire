@@ -26,10 +26,6 @@ export async function getPromptsByTopicId(topicId: string) {
   });
 }
 
-export async function getPromptCount() {
-  return await prisma.prompt.count();
-}
-
 export async function deletePrompt(promptId: string) {
   return await prisma.prompt.delete({
     where: { id: promptId },
@@ -74,23 +70,4 @@ export async function getPositivePromptsByCategory(
       topic: { select: { title: true, category: true } },
     },
   });
-}
-
-export async function getPromptRatingStats() {
-  const results = await prisma.$queryRaw<
-    Array<{ category: string; rating: string; count: bigint }>
-  >`
-    SELECT t."category", p."rating", COUNT(*)::bigint as count
-    FROM "Prompt" p
-    JOIN "Topic" t ON p."topicId" = t."id"
-    WHERE p."rating" IS NOT NULL
-    GROUP BY t."category", p."rating"
-    ORDER BY t."category", p."rating"
-  `;
-
-  return results.map((r) => ({
-    category: r.category,
-    rating: r.rating,
-    count: Number(r.count),
-  }));
 }

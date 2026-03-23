@@ -8,11 +8,14 @@ import {
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { ActionResult } from "@/lib/action-result";
 import { requireAuth } from "@/lib/server-auth";
 
 const idSchema = z.cuid2();
 
-export async function selectTopicAction(topicId: string) {
+export async function selectTopicAction(
+  topicId: string
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(topicId);
   try {
@@ -29,7 +32,9 @@ export async function selectTopicAction(topicId: string) {
   }
 }
 
-export async function deleteTopicAction(topicId: string) {
+export async function deleteTopicAction(
+  topicId: string
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(topicId);
   try {
@@ -55,17 +60,16 @@ const selectedFiltersSchema = z.object({
 export async function deleteAllSelectedTopicsAction(filters?: {
   hasNotes?: boolean;
   rating?: "POSITIVE" | "NEGATIVE";
-}) {
+}): Promise<ActionResult> {
   await requireAuth();
   const validated = selectedFiltersSchema.parse(filters ?? {});
   try {
-    const count = await deleteSelectedTopics(validated);
+    await deleteSelectedTopics(validated);
     revalidatePath("/generate");
     revalidatePath("/");
-    return { count, success: true as const };
+    return { success: true as const };
   } catch (error) {
     return {
-      count: 0,
       success: false as const,
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",
@@ -77,17 +81,18 @@ const categorySchema = z
   .enum(["NEWS", "MEME_WORTHY", "LEARNING", "TOOL_RELEASE", "AI_UPDATE"])
   .optional();
 
-export async function deleteAllTopicsAction(category?: string) {
+export async function deleteAllTopicsAction(
+  category?: string
+): Promise<ActionResult> {
   await requireAuth();
   const validCategory = categorySchema.parse(category || undefined);
   try {
-    const count = await deleteAllTopics(validCategory, "AI_PICKED");
+    await deleteAllTopics(validCategory, "AI_PICKED");
     revalidatePath("/discover");
     revalidatePath("/");
-    return { count, success: true as const };
+    return { success: true as const };
   } catch (error) {
     return {
-      count: 0,
       success: false as const,
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",

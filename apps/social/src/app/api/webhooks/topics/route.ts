@@ -50,12 +50,16 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
 
-    await logWebhook({
-      endpoint: "/api/webhooks/topics",
-      method: "POST",
-      response: { error: message },
-      status: 400,
-    });
+    try {
+      await logWebhook({
+        endpoint: "/api/webhooks/topics",
+        method: "POST",
+        response: { error: message },
+        status: 400,
+      });
+    } catch {
+      // Best-effort logging — don't mask the original error
+    }
 
     return NextResponse.json({ error: message }, { status: 400 });
   }

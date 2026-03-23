@@ -8,6 +8,7 @@ import {
 import { hashPassword } from "better-auth/crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { ActionResult } from "@/lib/action-result";
 import { requireAdmin } from "@/lib/server-auth";
 
 export async function getUsersAction() {
@@ -27,7 +28,7 @@ export async function createUserAction(data: {
   password: string;
   name: string;
   role: "ADMIN" | "USER";
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<ActionResult> {
   await requireAdmin();
   const parsed = createUserSchema.parse(data);
 
@@ -36,7 +37,10 @@ export async function createUserAction(data: {
     select: { id: true },
   });
   if (existing) {
-    return { success: false, error: "A user with this email already exists" };
+    return {
+      success: false as const,
+      error: "A user with this email already exists",
+    };
   }
 
   try {
@@ -61,19 +65,17 @@ export async function createUserAction(data: {
     });
 
     revalidatePath("/admin/users");
-    return { success: true };
+    return { success: true as const };
   } catch {
-    return { success: false, error: "Failed to create user" };
+    return { success: false as const, error: "Failed to create user" };
   }
 }
 
-export async function deleteUserAction(
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
+export async function deleteUserAction(userId: string): Promise<ActionResult> {
   const session = await requireAdmin();
 
   if (userId === session.user.id) {
-    return { success: false, error: "Cannot delete yourself" };
+    return { success: false as const, error: "Cannot delete yourself" };
   }
 
   try {
@@ -85,15 +87,18 @@ export async function deleteUserAction(
       select: { role: true },
     });
     if (targetUser.role === "ADMIN" && adminCount <= 1) {
-      return { success: false, error: "Cannot delete the last admin" };
+      return {
+        success: false as const,
+        error: "Cannot delete the last admin",
+      };
     }
 
     await deleteUser(userId);
     revalidatePath("/admin/users");
-    return { success: true };
+    return { success: true as const };
   } catch (error) {
     return {
-      success: false,
+      success: false as const,
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",
     };
@@ -103,11 +108,14 @@ export async function deleteUserAction(
 export async function updateUserRoleAction(
   userId: string,
   role: "ADMIN" | "USER"
-): Promise<{ success: boolean; error?: string }> {
+): Promise<ActionResult> {
   const session = await requireAdmin();
 
   if (userId === session.user.id) {
-    return { success: false, error: "You cannot change your own role" };
+    return {
+      success: false as const,
+      error: "You cannot change your own role",
+    };
   }
 
   try {
@@ -120,7 +128,10 @@ export async function updateUserRoleAction(
         select: { role: true },
       });
       if (targetUser.role === "ADMIN" && adminCount <= 1) {
-        return { success: false, error: "Cannot demote the last admin" };
+        return {
+          success: false as const,
+          error: "Cannot demote the last admin",
+        };
       }
     }
 
@@ -131,10 +142,10 @@ export async function updateUserRoleAction(
 
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
-    return { success: true };
+    return { success: true as const };
   } catch (error) {
     return {
-      success: false,
+      success: false as const,
       error:
         error instanceof Error ? error.message : "An unexpected error occurred",
     };

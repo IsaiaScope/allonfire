@@ -38,6 +38,18 @@ export async function GET(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+
+    try {
+      await logWebhook({
+        endpoint: "/api/webhooks/publish",
+        method: "GET",
+        response: { error: message },
+        status: 500,
+      });
+    } catch {
+      // Best-effort logging — don't mask the original error
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -88,6 +100,17 @@ export async function PATCH(request: Request) {
     return NextResponse.json(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
+
+    try {
+      await logWebhook({
+        endpoint: "/api/webhooks/publish",
+        method: "PATCH",
+        response: { error: message },
+        status: 400,
+      });
+    } catch {
+      // Best-effort logging — don't mask the original error
+    }
 
     return NextResponse.json({ error: message }, { status: 400 });
   }

@@ -8,11 +8,14 @@ import {
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { ActionResult } from "@/lib/action-result";
 import { requireAuth } from "@/lib/server-auth";
 
 const idSchema = z.cuid2();
 
-export async function deletePromptAction(promptId: string) {
+export async function deletePromptAction(
+  promptId: string
+): Promise<ActionResult> {
   await requireAuth();
   const id = idSchema.parse(promptId);
   try {
@@ -33,7 +36,10 @@ const noteSchema = z.object({
   note: z.string().max(500),
 });
 
-export async function updateNoteAction(promptId: string, note: string) {
+export async function updateNoteAction(
+  promptId: string,
+  note: string
+): Promise<ActionResult> {
   await requireAuth();
   const parsed = noteSchema.parse({ promptId, note });
   try {
@@ -59,7 +65,7 @@ export async function ratePromptAction(
   promptId: string,
   rating: PromptRating,
   note?: string
-) {
+): Promise<ActionResult> {
   await requireAuth();
   const parsed = rateSchema.parse({ promptId, rating, note });
   try {

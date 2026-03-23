@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     cursor,
     limit,
     rating: rating === "HAS_NOTES" ? undefined : rating,
-    hasNotes: rating === "HAS_NOTES" || undefined,
+    hasNotes: rating === "HAS_NOTES" ? true : undefined,
     search,
   });
 
