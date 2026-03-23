@@ -83,8 +83,9 @@ model User {
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  sessions       Session[]
+  accounts       Account[]
+  socialAccounts SocialAccount[]
 }
 
 model Session {
@@ -114,6 +115,22 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+}
+
+model SocialAccount {
+  id               String    @id @default(cuid(2))
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         Platform
+  accessToken      String // Encrypted AES-256-GCM
+  refreshToken     String? // Encrypted AES-256-GCM
+  tokenExpiresAt   DateTime?
+  platformUserId   String?
+  platformUsername  String?
+  connectedAt      DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, platform])
 }
 
 model Verification {
@@ -191,6 +208,7 @@ enum PostType {
   MEME
   NEWS
   LEARNING
+  FREEFORM
 }
 
 enum PostStatus {

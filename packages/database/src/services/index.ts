@@ -30,6 +30,12 @@ export {
 } from "./provider.service";
 export { getSettings, updateSettings } from "./settings.service";
 export {
+  deleteSocialAccount,
+  getConnectedAccounts,
+  getSocialAccount,
+  upsertSocialAccount,
+} from "./social-account.service";
+export {
   getDailySummary,
   getTopicStats,
 } from "./stats.service";
