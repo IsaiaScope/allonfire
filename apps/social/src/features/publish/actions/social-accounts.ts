@@ -48,6 +48,7 @@ export async function disconnectAccountAction(
   try {
     await deleteSocialAccount(session.user.id, validatedPlatform);
     revalidatePath("/publish");
+    revalidatePath("/settings");
     return { success: true as const };
   } catch (error) {
     return {

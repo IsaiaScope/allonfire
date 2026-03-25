@@ -1,4 +1,8 @@
-<h1 align="center"><img src="docs/assets/allonfire.svg" width="36" alt="" />&nbsp;&nbsp;AllOnFire 🔥</h1>
+<p align="center">
+  <img src="docs/assets/allonfire.png" width="80" alt="AllOnFire logo" />
+</p>
+
+<h3 align="center">AllOnFire 🔥</h3>
 
 <br />
 
@@ -21,11 +25,13 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
 <!-- Add a screenshot for each app as it's built -->
 <!-- <p align="center"><img src="docs/screenshots/social.png" width="600" alt="Social App" /></p> -->
 
-### 🔥 [social](apps/social/) — Social Media Dashboard
+<p align="center">
+  <img src="docs/assets/allonfire-social-horizontal.svg" width="200" alt="AllOnFire Social" />
+</p>
 
-Discover topics, generate AI content, and publish to Twitter and LinkedIn from a single dashboard.
+<h3 align="center">Social Media Dashboard</h3>
 
-<p>
+<p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
@@ -34,22 +40,19 @@ Discover topics, generate AI content, and publish to Twitter and LinkedIn from a
   <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white" alt="TanStack Query" />
 </p>
 
-> 📖 See the full docs in [apps/social/](apps/social/)
+<p align="center">
+  Discover topics, generate AI content, and publish to Twitter and LinkedIn from a single dashboard.
+</p>
+
+<p align="center">
+  📖 <a href="apps/social/">See the full docs</a>
+</p>
 
 ---
 
-## 🚀 Quick Start
-
-```bash
-pnpm install                 # Install all dependencies
-pnpm docker:up               # Start PostgreSQL, n8n, Adminer
-pnpm db:push && pnpm db:seed # Push schema and seed data
-pnpm dev                     # Start the social app on :3100
-```
-
-> Or run everything at once with `pnpm dev:full`
-
 ## 📦 Packages
+
+Shared libraries consumed by all apps in the monorepo.
 
 | | Package | Description |
 |-|---------|-------------|
@@ -61,20 +64,17 @@ pnpm dev                     # Start the social app on :3100
 | 🔧 | **[@allonfire/utils](packages/utils/)** | Type-safe utility functions |
 | ⚙️ | **[@allonfire/config](packages/config/)** | Shared TypeScript configuration |
 
-## 🛠️ Scripts
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start social app with hot reload |
-| `pnpm build` | Build all packages via Turbo |
-| `pnpm dev:setup` | Full local setup (Docker + DB + seed + n8n) |
-| `pnpm docker:up` / `docker:down` | Start/stop dev containers |
-| `pnpm db:push` | Push Prisma schema to database |
-| `pnpm db:seed` | Seed database with test data |
-| `pnpm lint` / `lint:fix` | Ultracite (Biome) linter |
-| `pnpm check-types` | TypeScript type checking |
-
 ## 🗂️ Project Structure
+
+<p>
+  <img src="https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/n8n-2.10-EA4B71?logo=n8n&logoColor=white" alt="n8n" />
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
+  <img src="https://img.shields.io/badge/Husky-hooks-000?logo=git&logoColor=white" alt="Husky" />
+</p>
+
+Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm workspaces and Turborepo.
 
 ```
 allonfire/
@@ -96,15 +96,20 @@ allonfire/
 
 ## 🏗️ Infrastructure
 
+Production deployment stack powering all apps and services.
+
 | | Component | Stack |
 |-|-----------|-------|
-| 🖥️ | **VPS** | Hetzner CAX11 |
+| 🖥️ | **VPS** | Hetzner |
 | 🚀 | **Orchestrator** | Dokploy |
 | 🐘 | **Database** | PostgreSQL 16 |
 | 🔒 | **Proxy** | Traefik + Let's Encrypt SSL |
 | ⚡ | **Automation** | n8n (self-hosted) |
 | 🔄 | **CI** | GitHub Actions |
 
-## ⚡ n8n Automation
+---
 
-Daily discovery pipeline scraping 9 sources for trending tech topics. See [n8n/README.md](n8n/README.md) for details.
+<p align="center">
+  Made with ❤️ and way too much ☕
+</p>
+

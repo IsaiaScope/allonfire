@@ -15,7 +15,7 @@ export {
   setActiveProvider,
   upsertProvider,
 } from "./provider.service";
-export { getSettings, updateSettings } from "./settings.service";
+export { getSettings } from "./settings.service";
 export {
   deleteSocialAccount,
   getConnectedAccounts,
@@ -34,8 +34,6 @@ export {
   getDiscoveredTopicsPaginated,
   getSelectedTopicsPaginated,
   getTopicsByStatus,
-  getTopicsByStatusWithPosts,
-  getTopicsByStatusWithPrompts,
   getTopicWithPrompts,
   ingestTopics,
   selectTopic,

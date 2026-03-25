@@ -14,8 +14,8 @@ node_modules
 coverage
 
 # Playwright
-screenshots/
-!screenshots/.gitkeep
+/screenshots/
+!/screenshots/.gitkeep
 test-results/
 playwright-report/
 .playwright-mcp/

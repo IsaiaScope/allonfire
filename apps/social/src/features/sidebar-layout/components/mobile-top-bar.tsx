@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@allonfire/ui/components/button";
-import { Menu, Plus } from "lucide-react";
+import { Menu } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSidebarContext } from "../hooks/use-sidebar-context";
@@ -20,22 +20,14 @@ export function MobileTopBar() {
           width={120}
         />
       </Link>
-      <div className="flex items-center gap-3">
-        <Button asChild size="icon-sm" variant="ghost">
-          <Link href="/generate">
-            <Plus className="size-4" />
-            <span className="sr-only">Create new content</span>
-          </Link>
-        </Button>
-        <Button
-          aria-label="Open menu"
-          onClick={openSheet}
-          size="icon-sm"
-          variant="ghost"
-        >
-          <Menu className="size-5" />
-        </Button>
-      </div>
+      <Button
+        aria-label="Open menu"
+        onClick={openSheet}
+        size="icon-sm"
+        variant="ghost"
+      >
+        <Menu className="size-5" />
+      </Button>
     </header>
   );
 }

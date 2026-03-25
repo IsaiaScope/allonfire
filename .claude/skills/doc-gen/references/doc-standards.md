@@ -1,257 +1,125 @@
 # Documentation Standards
 
-Visual, structural, and content standards for all documentation in the AllOnFire monorepo.
+Visual, structural, and content standards for all documentation in the AllOnFire monorepo. These rules were refined through hands-on documentation sessions and reflect the user's actual preferences.
 
 ## 1. File Hierarchy
 
 | Level | Files | Purpose |
 |-------|-------|---------|
-| **Root** | `README.md` | Public-facing project overview, badges, screenshots, quick start |
+| **Root** | `README.md` | Monorepo overview — generic, badges, apps list, packages, structure |
 | **Root** | `CLAUDE.md`, `.claude/CLAUDE.md` | AI assistant coding rules and conventions |
 | **Package/App** | `{package}/README.md` | Package API reference, setup, usage examples |
 | **Feature** | `features/{name}/README.md` | Feature overview, component hierarchy, data flow |
 | **Feature** | `features/{name}/CLAUDE.md` | AI-oriented modification guide, gotchas, dependencies |
 | **Guides** | `docs/{nn}-{topic}.md` | Progressive numbered guides (overview, architecture, database, deployment, dev) |
 
-## 2. Image Formatting
+### Documentation Assets
 
-Always use HTML-centered images, never raw markdown `![]()`:
+- `docs/assets/` — logos, icons, shared images (copy from app `public/` folders)
+- `docs/screenshots/` — committed screenshots for READMEs (tracked by git)
+- `/screenshots/` — gitignored, for ad-hoc dev/debug screenshots only
 
-### Single Image
+**Important:** `.gitignore` must use `/screenshots/` (root-only) not `screenshots/` which would also ignore `docs/screenshots/`.
+
+## 2. Consistent README Structure
+
+**Every README** (package, feature, app) follows this exact structure:
 
 ```html
+<!-- HEADER BLOCK — all centered -->
+<h1 align="center">Title</h1>
+
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="400" alt="Dashboard overview" />
+  <img src="badge1" /> <img src="badge2" /> ...
 </p>
-```
 
-### Image Grid (3 per row)
+<p align="center">Brief description of what this is.</p>
 
-```html
+---
+
+<!-- SCREENSHOTS — desktop + mobile side by side -->
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" width="260" />
+  <img src="path/to/desktop.png" width="600" alt="Desktop view" />
   &nbsp;&nbsp;
-  <img src="docs/screenshots/discover.png" width="260" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/generate.png" width="260" />
+  <img src="path/to/mobile.png" width="200" alt="Mobile view" />
 </p>
+
+<!-- CONTENT SECTIONS — left-aligned markdown with emoji headings -->
+## 📁 Directory Structure
+## 📦 API Reference
+## 🔧 Usage
+...
 ```
 
-### Width Guidelines
+### Key Rules
 
-| Context | Width | Example |
-|---------|-------|---------|
-| Grid (3 per row) | `260` | Root README screenshot grid |
-| Grid (2 per row) | `400` | Feature walkthrough |
-| Standalone | `600` | Full-page screenshot |
-| Logo/icon | `180` | Header logo |
+- **`<h1 align="center">`** for all page titles (NOT `<h3>`, NOT markdown `#`)
+- **Exception:** Root README uses `<h3>` to avoid the GitHub h1/h2 underline
+- **Badges always as `<img>` HTML** inside `<p align="center">` — never markdown `![]()`
+- **Description always in `<p align="center">`** — never raw paragraph text
+- **Section headings** (`##`) are left-aligned standard markdown with emoji prefix
+- **No emoji shortcodes** — use actual Unicode emoji (📸 not `:camera_flash:`, 📁 not `:file_folder:`)
+- **`---` divider** between header block and content sections
 
-Rules:
-- Always include `width` attribute (prevents layout shift)
-- Always include `alt` attribute (accessibility)
-- Use relative paths from the file's location
+## 3. Screenshot Layout
 
-## 3. Badges
-
-Place in root README header only:
+Screenshots always appear as a **2-column grid** — desktop on left, mobile on right, in a single centered `<p>`:
 
 ```html
 <p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" />
-  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" />
-  <img src="https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white" />
+  <img src="..." width="600" alt="Desktop" />
+  &nbsp;&nbsp;
+  <img src="..." width="200" alt="Mobile" />
 </p>
 ```
 
-## 4. Heading Emoji
+**Never** put desktop and mobile in separate `<p>` blocks — they must be side by side.
 
-Use sparingly in root README only for scanability:
+### Dimension Standards (in pixels)
 
-```markdown
-## What is AllOnFire?
-## Packages
-## Quick Start
-## Architecture
-## Project Structure
-## Documentation
+| Context | Desktop | Mobile |
+|---------|---------|--------|
+| **Feature READMEs** | `600` | `200` |
+| **App README gallery** | `550` | `180` |
+| **Admin pair (2 desktop)** | `380` | `380` |
+
+### Relative Paths
+
+From feature READMEs at `apps/social/src/features/{name}/`:
+```
+../../../../../docs/screenshots/{image}.png    (5 levels up to repo root)
 ```
 
-Do NOT use emoji in package/feature docs — keep those clean and technical.
-
-## 5. Diagram Standards
-
-### Core Rules
-
-1. **Max 5-7 nodes per diagram** — if more needed, split into multiple
-2. **One diagram per flow** — never combine happy path, error path, alt flow
-3. **Full descriptive labels** — no abbreviations (CG, SP, LI)
-4. **Consistent box characters**: `---`, `|`, arrows `--->`
-
-### ASCII Diagrams
-
-Use for: linear flows, component hierarchies, directory trees, simple architecture.
-
-**Pattern 1 — Architecture blocks:**
+From app README at `apps/social/`:
 ```
-┌─────────────┐    ┌──────────────────┐    ┌───────────────┐
-│  n8n Cron    │───>│  Social App API  │───>│  PostgreSQL   │
-└─────────────┘    └──────────────────┘    └───────────────┘
+../../docs/screenshots/{image}.png             (2 levels up to repo root)
 ```
 
-**Pattern 2 — Linear pipeline:**
-```
-Discover ──> Classify ──> Generate ──> Adapt ──> Publish
-```
-
-**Pattern 3 — Component tree:**
-```
-DashboardLayout (server)
- └ SidebarProvider
-    ├ MobileTopBar          < md
-    ├ DesktopSidebar        md+
-    │  ├ SidebarNav
-    │  └ UserMenu
-    └ main (page content)
-```
-
-**Pattern 4 — Decision tree:**
-```
-delivery.tsx decides what to render:
-         |
-         +-- isRunning? ----> DeliveryRunning
-         |
-         +-- else ----------> DeliveryComplete
-```
-
-**Pattern 5 — Directory tree:**
-```
-feature-name/
-├── components/
-│   ├── component-a.tsx
-│   └── component-b.tsx
-├── actions/
-│   └── feature-actions.ts
-├── README.md
-└── CLAUDE.md
-```
-
-### Mermaid Diagrams
-
-Use for: sequence diagrams, flowcharts with conditions, ER diagrams.
-
-**Sequence diagram (OAuth):**
-```mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant Platform
-    participant Database
-
-    User->>App: Click "Connect"
-    App->>Platform: Redirect to OAuth URL
-    Platform->>App: Callback with auth code
-    App->>Platform: Exchange code for tokens
-    App->>Database: Store encrypted tokens
-```
-
-**ER diagram (schema subset):**
-```mermaid
-erDiagram
-    Topic ||--o{ Post : generates
-    Post }o--|| User : "created by"
-    SocialAccount }o--|| User : "belongs to"
-```
-
-Rules:
-- Max 5 participants in sequence diagrams
-- Descriptive participant names (not single letters)
-- Use `sequenceDiagram` for multi-party interactions
-- Use `erDiagram` for database schema
-
-## 6. Table Standards
-
-Use markdown tables for all structured reference data:
-
-```markdown
-| Column A | Column B | Column C |
-|----------|----------|----------|
-| Value    | Value    | Value    |
-```
-
-Common table types:
-- **Routes table**: Route, Page, Description
-- **Scripts table**: Command, Description
-- **Components table**: File, Purpose
-- **Dependencies table**: Package, Why
-- **Environment variables table**: Variable, Required, Description
-- **API Reference table**: Export, Type, Description
-
-## 7. Package README Template
-
-```markdown
-# @allonfire/{name}
-
-One-line description of what this package does.
-
-## API Reference
-
-| Export | Type | Description |
-|--------|------|-------------|
-| `functionName` | Function | What it does |
-| `TypeName` | Type | What it represents |
-
-## Directory Structure
-
-[ASCII tree of src/ files with inline descriptions]
-
-## Usage
-
-[2-3 code snippets showing primary usage from the social app]
-
-## Dependencies
-
-| Package | Why |
-|---------|-----|
-| `dep-name` | Purpose |
-```
-
-## 8. Feature README Template
-
-Follow `sidebar-layout/README.md` exactly:
-
-1. Feature description (1-2 sentences)
-2. **Directory Structure** — ASCII tree with inline file descriptions
-3. **Component Hierarchy** — ASCII tree showing nesting and viewport breakpoints
-4. **Responsive Behavior** table (if applicable)
-5. **State Management Flow** (if stateful)
-6. **Data Flow** descriptions for key user interactions
-7. **Animation Details** table (if animated)
-8. **Key Constants** table
-9. **Import Patterns** with code examples
-
-## 9. Feature CLAUDE.md Template
-
-Follow `sidebar-layout/CLAUDE.md` exactly:
-
-1. **Feature Scope** — "Owns:" and "Does not own:"
-2. **File Responsibilities** table (File, Purpose)
-3. **Modification Guide** — numbered steps for common tasks (add X, change Y)
-4. **Gotchas** — bullet points explaining non-obvious behavior
-5. **Dependencies** table (Package, Why)
-
-## 10. Screenshot Conventions
+**Count carefully** — wrong path depth is the #1 cause of broken images.
 
 ### Capture Process
 
 1. Ensure app is running: `pnpm dev` (port 3100)
-2. Use Playwright MCP tools:
-   - `browser_resize` to target resolution
-   - `browser_navigate` to the page
-   - Wait for content to load (`browser_wait_for` if needed)
-   - `browser_take_screenshot` with save path in `docs/screenshots/`
+2. **Hide Next.js dev tools** before every screenshot:
+   ```js
+   // Run via browser_evaluate after each page navigation
+   document.querySelectorAll('button').forEach(b => {
+     if ((b.textContent||'').includes('Next.js Dev Tools') ||
+         (b.textContent||'').includes('Issue') ||
+         (b.textContent||'').includes('Rendering')) {
+       let p = b;
+       while (p && p !== document.body) {
+         if (getComputedStyle(p).position === 'fixed') {
+           p.style.display = 'none'; break;
+         }
+         p = p.parentElement;
+       }
+       b.style.display = 'none';
+     }
+   });
+   document.querySelectorAll('[role="alert"]').forEach(e => e.style.display = 'none');
+   ```
+3. Use Playwright MCP: `browser_resize` → `browser_navigate` → hide dev tools → `browser_take_screenshot`
 
 ### Resolutions
 
@@ -264,42 +132,189 @@ Follow `sidebar-layout/CLAUDE.md` exactly:
 
 ```
 docs/screenshots/{page-name}.png          — Default state
-docs/screenshots/{page-name}-{state}.png  — Specific state (e.g., publish-preview)
+docs/screenshots/{page-name}-{state}.png  — Specific state
 docs/screenshots/mobile-{page-name}.png   — Mobile viewport
 ```
 
-### Storage
+## 4. Badges
 
-- **Committed**: `docs/screenshots/` (tracked by git)
-- **Temporary/dev**: `screenshots/` (gitignored, for ad-hoc debugging)
+### Style
 
-## 11. Memory File Standards
+Always `flat` style (dark left label + colored right value). Never `flat-square`.
 
-### Frontmatter Format
-
-```markdown
----
-name: Short descriptive name
-description: One sentence explaining what this memory captures
-type: feedback | project | reference | user
----
-
-[Memory content]
+```
+https://img.shields.io/badge/{label}-{value}-{color}?logo={logo}&logoColor=white
 ```
 
-### Naming Convention
+### Badge Placement Rules
 
-- `feedback_{topic}.md` — User preferences
-- `project_{topic}.md` — Codebase architecture knowledge
-- `reference_{topic}.md` — External references (accounts, URLs)
+| Location | What badges show |
+|----------|-----------------|
+| **Root README** | Monorepo tooling only: pnpm, Turborepo, TypeScript, Biome, Node |
+| **Root README app section** | App-specific stack: Next.js, React, Prisma, Tailwind, etc. |
+| **App README** | Same as app section in root |
+| **Feature README** | Feature-specific libraries: dnd-kit, TanStack Query, Framer Motion, etc. |
+| **Package README** | Package-specific tech: Prisma, Sharp, Twitter API, etc. |
+| **Project Structure section** | Infra tech: Docker, PostgreSQL, n8n, GitHub Actions, Husky |
 
-### MEMORY.md Index
+### Always use HTML `<img>`, never markdown `![]()`
 
-Must list every memory file with a link and one-line description:
-```markdown
-# Memory Index
+```html
+<!-- Correct -->
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
+</p>
 
-- [filename.md](filename.md) — One-line description
+<!-- Wrong — never use this -->
+![React](https://img.shields.io/badge/React-19-61DAFB)
 ```
 
-Keep the index under 200 lines (truncated beyond that in context).
+## 5. Emoji Usage
+
+### Section Headings — actual Unicode only
+
+```markdown
+## 📁 Directory Structure
+## 📦 API Reference
+## 📸 Screenshots
+## 🔧 Usage
+## 🏗️ Infrastructure
+```
+
+**Never** use GitHub shortcodes like `:camera_flash:` or `:file_folder:` — they don't render in all contexts.
+
+### Table Row Icons
+
+Each row in packages/infrastructure tables gets an emoji:
+
+```markdown
+| 🗄️ | **@allonfire/database** | ... |
+| 🤖 | **@allonfire/content-generator** | ... |
+```
+
+## 6. Diagram Standards
+
+### No Box-Drawing Characters
+
+**NEVER** use `┌ ─ ┐ │ └ ┘ ├ ┤ ┬ ┴ ┼`. They misalign across editors.
+
+Use plain `──>`, `+--`, `|` only.
+
+### Directory Trees — plain indentation
+
+```
+allonfire/
+  apps/
+    social/               Next.js dashboard app
+  packages/
+    database/             Prisma ORM + services
+```
+
+NOT `├──` and `└──`.
+
+### Core Rules
+
+1. Max 5-7 nodes per diagram
+2. One diagram per flow
+3. Full descriptive labels, no abbreviations
+4. Plain characters only
+
+## 7. Root README Structure
+
+The root README is a **generic monorepo overview** that grows over time.
+
+### Sections (in order)
+
+1. **Logo** — centered, ~80px, `.png` format (not `.svg` — better preview compatibility)
+2. **Title** — `<h3 align="center">` (h3 to avoid GitHub underline on root only)
+3. **Spacer** — `<br />`
+4. **Root badges** — monorepo stack only, centered
+5. **Divider** — `---`
+6. **About** — 1-2 generic sentences about the monorepo
+7. **Apps** — each app: centered logo (~200px) → centered `<h3>` subtitle → centered badges → centered description → centered link
+8. **Divider** — `---`
+9. **Packages** — brief description + emoji table
+10. **Project Structure** — infra badges + description + plain-indentation folder tree
+11. **Infrastructure** — brief description + emoji table. No sensitive details.
+12. **Divider** — `---`
+13. **Footer** — centered casual sign-off
+
+### What NOT to include
+
+- Quick Start / Scripts tables (put in app README)
+- n8n-specific sections (put in n8n/README.md)
+- Tagline under the title
+- Detailed route maps (put in app README)
+- Sensitive details (machine types, IPs, SSH info)
+
+## 8. Package/Feature README Template
+
+```html
+<h1 align="center">Title</h1>
+
+<p align="center">
+  <img src="badge" /> ...
+</p>
+
+<p align="center">Brief description.</p>
+
+---
+
+<p align="center">
+  <img src="desktop.png" width="600" alt="Desktop" />
+  &nbsp;&nbsp;
+  <img src="mobile.png" width="200" alt="Mobile" />
+</p>
+
+## 📁 Directory Structure
+
+[Plain indentation tree]
+
+## 📦 API Reference (packages) / Key Files (features)
+
+[Table]
+
+## 🔧 Usage / Data Flow
+
+[Examples or descriptions]
+
+## 📦 Dependencies
+
+[Table: Package | Why]
+```
+
+## 9. Feature CLAUDE.md Template
+
+Follow `sidebar-layout/CLAUDE.md`:
+
+1. **Feature Scope** — "Owns:" and "Does not own:"
+2. **File Responsibilities** table
+3. **Modification Guide** — numbered steps
+4. **Gotchas** — bullet points
+5. **Dependencies** table
+
+## 10. Image Format Rules
+
+- Use `.png` for logos in READMEs (better preview compatibility than `.svg`)
+- Store in `docs/assets/` — copy from app `public/` folders
+- Always include `width` and `alt` attributes
+- Use HTML `<img>` tags, never markdown `![]()`
+
+## 11. Markdown Best Practices
+
+- Trailing newline at end of file
+- Blank line before/after headings, code blocks, and HTML blocks
+- No trailing whitespace
+- No duplicate headings at same level
+- Alt text on all images
+- When using `sed` or find-and-replace on READMEs, be careful not to modify content inside code blocks (e.g., JSX examples containing `<h3>` tags)
+
+## 12. General Principles
+
+- **Consistent structure** — every README follows the same header pattern
+- **Keep it lightweight** — root README is a navigation hub, not a manual
+- **Brief descriptions** — 1 sentence between section heading and content
+- **Grow over time** — start minimal, add as the project evolves
+- **No sensitive details** — never include machine types, IPs, SSH credentials
+- **Footer** — always end with a centered casual sign-off
+- **LICENSE** — MIT at repo root

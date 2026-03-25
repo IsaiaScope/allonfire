@@ -118,12 +118,15 @@ export function PlatformConnect({
   if (isConnected) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">
-          Logged in as{" "}
-          <span className="font-medium text-foreground">
-            {username ?? "Unknown"}
-          </span>
+        <span className="flex size-6 items-center justify-center rounded bg-muted font-bold text-muted-foreground text-xs">
+          {display.icon}
         </span>
+        <div className="min-w-0">
+          <span className="font-medium text-sm">{display.label}</span>
+          <p className="truncate text-muted-foreground text-xs">
+            {username ?? "Unknown"}
+          </p>
+        </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

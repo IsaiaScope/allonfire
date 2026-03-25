@@ -8,14 +8,3 @@ export async function getSettings() {
     include: { activeProvider: true },
   });
 }
-
-export async function updateSettings(data: {
-  webhookDiscoveryUrl?: string | null;
-  webhookNotifyUrl?: string | null;
-}) {
-  return await prisma.settings.upsert({
-    where: { id: "singleton" },
-    create: { id: "singleton", ...data },
-    update: data,
-  });
-}
