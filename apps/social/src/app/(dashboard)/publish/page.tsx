@@ -13,9 +13,6 @@ function getConfiguredPlatforms(): Platform[] {
   if (env.LINKEDIN_CLIENT_ID && env.LINKEDIN_CLIENT_SECRET) {
     platforms.push("LINKEDIN");
   }
-  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-    platforms.push("YOUTUBE");
-  }
   return platforms;
 }
 

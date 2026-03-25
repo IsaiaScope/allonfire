@@ -5,20 +5,19 @@ const SCOPES = ["tweet.write", "tweet.read", "users.read", "offline.access"];
 
 export function getTwitterAuthUrl(
   state: string,
-  _codeVerifier: string,
   config: OAuthConfig
-): string {
+): { url: string; codeVerifier: string } {
   const client = new TwitterApi({
     clientId: config.clientId,
     clientSecret: config.clientSecret,
   });
 
-  const { url, codeVerifier: _cv } = client.generateOAuth2AuthLink(
+  const { url, codeVerifier } = client.generateOAuth2AuthLink(
     config.redirectUri,
     { scope: SCOPES, state }
   );
 
-  return url;
+  return { url, codeVerifier };
 }
 
 export async function exchangeTwitterCode(
@@ -60,12 +59,4 @@ export async function refreshTwitterToken(
     refreshToken: result.refreshToken,
     expiresIn: result.expiresIn,
   };
-}
-
-export function generateCodeVerifier(): string {
-  const { codeVerifier } = new TwitterApi({
-    clientId: "temp",
-    clientSecret: "temp",
-  }).generateOAuth2AuthLink("http://localhost", { scope: SCOPES });
-  return codeVerifier;
 }

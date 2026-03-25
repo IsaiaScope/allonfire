@@ -132,6 +132,7 @@ export function createLinkedInAdapter(): PlatformAdapter {
         return {
           success: true,
           platformPostId: postUrn,
+          platformUrl: `https://www.linkedin.com/feed/update/${postUrn}`,
         };
       } catch (error) {
         return {

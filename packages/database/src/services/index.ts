@@ -1,10 +1,5 @@
 // biome-ignore lint/performance/noBarrelFile: service layer entry point — consumers import from @allonfire/database/services
 export {
-  getDueScheduledPosts,
-  markFailed,
-  markPublished,
-} from "./post.service";
-export {
   createPrompt,
   deletePrompt,
   getPositivePromptsByCategory,

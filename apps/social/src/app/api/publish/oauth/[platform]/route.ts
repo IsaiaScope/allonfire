@@ -7,20 +7,17 @@ import type {
 import {
   exchangeLinkedInCode,
   exchangeTwitterCode,
-  exchangeYouTubeCode,
-  generateCodeVerifier,
   getLinkedInAuthUrl,
   getTwitterAuthUrl,
-  getYouTubeAuthUrl,
 } from "@allonfire/social-publisher/oauth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { env } from "@/env";
 import { requireAuth } from "@/lib/server-auth";
 
-function errorHtml(message: string): NextResponse {
+function errorHtml(message: string, platform?: string): NextResponse {
   const html = `<html><body><script>
-window.opener.postMessage({ type: "oauth-error", error: ${JSON.stringify(message)} }, window.location.origin);
+window.opener.postMessage({ type: "oauth-error", platform: ${JSON.stringify(platform ?? "")}, error: ${JSON.stringify(message)} }, window.location.origin);
 window.close();
 </script><p>${message}</p></body></html>`;
   return new NextResponse(html, {
@@ -29,16 +26,12 @@ window.close();
   });
 }
 
-const VALID_PLATFORMS = ["twitter", "linkedin", "youtube"] as const;
+const VALID_PLATFORMS = ["twitter", "linkedin"] as const;
 type ValidPlatform = (typeof VALID_PLATFORMS)[number];
 
-const PLATFORM_DB_MAP: Record<
-  ValidPlatform,
-  "TWITTER" | "LINKEDIN" | "YOUTUBE"
-> = {
+const PLATFORM_DB_MAP: Record<ValidPlatform, "TWITTER" | "LINKEDIN"> = {
   twitter: "TWITTER",
   linkedin: "LINKEDIN",
-  youtube: "YOUTUBE",
 };
 
 function isValidPlatform(value: string): value is ValidPlatform {
@@ -87,10 +80,6 @@ function getOAuthConfig(
       id: env.LINKEDIN_CLIENT_ID,
       secret: env.LINKEDIN_CLIENT_SECRET,
     },
-    youtube: {
-      id: env.GOOGLE_CLIENT_ID,
-      secret: env.GOOGLE_CLIENT_SECRET,
-    },
   };
 
   const creds = configMap[platform];
@@ -108,16 +97,12 @@ function getOAuthConfig(
 function buildAuthUrl(
   platform: ValidPlatform,
   state: string,
-  config: OAuthConfig,
-  codeVerifier: string | undefined
-): string {
+  config: OAuthConfig
+): { url: string; codeVerifier?: string } {
   if (platform === "twitter") {
-    return getTwitterAuthUrl(state, codeVerifier ?? "", config);
+    return getTwitterAuthUrl(state, config);
   }
-  if (platform === "linkedin") {
-    return getLinkedInAuthUrl(state, config);
-  }
-  return getYouTubeAuthUrl(state, config);
+  return { url: getLinkedInAuthUrl(state, config) };
 }
 
 function exchangeCode(
@@ -129,10 +114,7 @@ function exchangeCode(
   if (platform === "twitter") {
     return exchangeTwitterCode(code, codeVerifier ?? "", config);
   }
-  if (platform === "linkedin") {
-    return exchangeLinkedInCode(code, config);
-  }
-  return exchangeYouTubeCode(code, config);
+  return exchangeLinkedInCode(code, config);
 }
 
 async function handleAuthorize(
@@ -148,17 +130,18 @@ async function handleAuthorize(
   }
 
   const state = encodeState(session.user.id);
-  const codeVerifier =
-    platformParam === "twitter" ? generateCodeVerifier() : undefined;
-
-  const authUrl = buildAuthUrl(platformParam, state, config, codeVerifier);
+  const { url: authUrl, codeVerifier } = buildAuthUrl(
+    platformParam,
+    state,
+    config
+  );
   const response = NextResponse.redirect(authUrl);
 
   if (codeVerifier) {
     const cookieStore = await cookies();
     cookieStore.set("twitter_code_verifier", codeVerifier, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 600,
       path: "/api/publish/oauth/twitter",
@@ -180,22 +163,6 @@ async function fetchPlatformProfile(
       if (res.ok) {
         const data = (await res.json()) as { sub?: string; name?: string };
         return { id: data.sub ?? null, name: data.name ?? null };
-      }
-    }
-    if (platform === "youtube") {
-      const res = await fetch(
-        "https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true",
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      if (res.ok) {
-        const data = (await res.json()) as {
-          items?: Array<{ id?: string; snippet?: { title?: string } }>;
-        };
-        const channel = data.items?.[0];
-        return {
-          id: channel?.id ?? null,
-          name: channel?.snippet?.title ?? null,
-        };
       }
     }
     if (platform === "twitter") {
@@ -308,7 +275,10 @@ export async function GET(
   if (oauthError) {
     const description =
       url.searchParams.get("error_description") ?? "Authorization was denied";
-    return errorHtml(`Connection denied: ${description}`);
+    return errorHtml(
+      `Connection denied: ${description}`,
+      PLATFORM_DB_MAP[platformParam]
+    );
   }
 
   try {
@@ -321,10 +291,16 @@ export async function GET(
     }
   } catch (error) {
     if (error instanceof Error && error.message === "Unauthorized") {
-      return errorHtml("You must be logged in to connect a social account.");
+      return errorHtml(
+        "You must be logged in to connect a social account.",
+        PLATFORM_DB_MAP[platformParam]
+      );
     }
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorHtml(`OAuth failed: ${message}`);
+    return errorHtml(
+      `OAuth failed: ${message}`,
+      PLATFORM_DB_MAP[platformParam]
+    );
   }
 
   return NextResponse.json(

@@ -61,21 +61,18 @@ function SortableImage({
       <span className="absolute -top-2 -left-2 z-10 flex size-5 items-center justify-center rounded-full bg-primary font-bold text-[10px] text-primary-foreground shadow-sm">
         {index + 1}
       </span>
-      <button
-        className="aspect-square w-full cursor-pointer select-none rounded-md border bg-transparent p-0 [-webkit-touch-callout:none]"
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: drag-to-reorder handles keyboard via KeyboardSensor */}
+      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: click for preview, drag handled by dnd-kit */}
+      {/* biome-ignore lint/performance/noImgElement: blob URL preview */}
+      <img
+        alt={fileName}
+        className="aspect-square w-full select-none rounded-md border object-contain [-webkit-touch-callout:none]"
+        draggable={false}
+        height={200}
         onClick={onPreview}
-        type="button"
-      >
-        {/* biome-ignore lint/performance/noImgElement: blob URL preview */}
-        <img
-          alt={fileName}
-          className="size-full rounded-md object-contain"
-          draggable={false}
-          height={200}
-          src={url}
-          width={200}
-        />
-      </button>
+        src={url}
+        width={200}
+      />
       <button
         className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
         onClick={onRemove}

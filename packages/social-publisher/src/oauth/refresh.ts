@@ -2,9 +2,8 @@ import type { DecryptedTokens } from "../types";
 import { refreshLinkedInToken } from "./linkedin";
 import { refreshTwitterToken } from "./twitter";
 import type { OAuthConfig } from "./types";
-import { refreshYouTubeToken } from "./youtube";
 
-type Platform = "TWITTER" | "LINKEDIN" | "YOUTUBE";
+type Platform = "TWITTER" | "LINKEDIN";
 
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
@@ -21,7 +20,6 @@ const refreshers: Record<
 > = {
   TWITTER: refreshTwitterToken,
   LINKEDIN: refreshLinkedInToken,
-  YOUTUBE: refreshYouTubeToken,
 };
 
 export async function refreshIfNeeded(

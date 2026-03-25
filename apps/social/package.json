@@ -12,7 +12,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx mock-data/seed.ts",
-    "seed:clear": "tsx mock-data/seed.ts --clear"
+    "seed:clear": "tsx mock-data/seed.ts --clear",
+    "seed:export": "tsx mock-data/export.ts"
   },
   "dependencies": {
     "@allonfire/content-generator": "workspace:*",

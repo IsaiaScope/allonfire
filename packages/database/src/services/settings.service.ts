@@ -11,7 +11,6 @@ export async function getSettings() {
 
 export async function updateSettings(data: {
   webhookDiscoveryUrl?: string | null;
-  webhookPublishUrl?: string | null;
   webhookNotifyUrl?: string | null;
 }) {
   return await prisma.settings.upsert({

@@ -20,10 +20,4 @@ export const PLATFORM_IMAGE_SPECS: Record<Platform, ImageSpec> = {
     maxSizeKb: 10_240,
     formats: ["jpeg", "png"],
   },
-  YOUTUBE: {
-    maxWidth: 1280,
-    maxHeight: 720,
-    maxSizeKb: 2048,
-    formats: ["jpeg", "png"],
-  },
 };

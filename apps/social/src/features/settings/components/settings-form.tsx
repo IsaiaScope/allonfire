@@ -12,12 +12,10 @@ import { updateSettingsAction } from "../actions/settings";
 type SettingsFormProps = {
   webhookDiscoveryUrl: string | null;
   webhookNotifyUrl: string | null;
-  webhookPublishUrl: string | null;
 };
 
 export function SettingsForm({
   webhookDiscoveryUrl,
-  webhookPublishUrl,
   webhookNotifyUrl,
 }: SettingsFormProps) {
   const [pending, startTransition] = useTransition();
@@ -26,7 +24,6 @@ export function SettingsForm({
     const data = {
       webhookDiscoveryUrl:
         (formData.get("webhookDiscoveryUrl") as string) || null,
-      webhookPublishUrl: (formData.get("webhookPublishUrl") as string) || null,
       webhookNotifyUrl: (formData.get("webhookNotifyUrl") as string) || null,
     };
     startTransition(async () => {
@@ -50,15 +47,6 @@ export function SettingsForm({
             defaultValue={webhookDiscoveryUrl ?? ""}
             id="webhookDiscoveryUrl"
             name="webhookDiscoveryUrl"
-            placeholder="https://n8n.example.com/webhook/..."
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="webhookPublishUrl">Publishing Webhook URL</Label>
-          <Input
-            defaultValue={webhookPublishUrl ?? ""}
-            id="webhookPublishUrl"
-            name="webhookPublishUrl"
             placeholder="https://n8n.example.com/webhook/..."
           />
         </div>

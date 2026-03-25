@@ -7,13 +7,7 @@ export {
 export { refreshIfNeeded } from "./refresh";
 export {
   exchangeTwitterCode,
-  generateCodeVerifier,
   getTwitterAuthUrl,
   refreshTwitterToken,
 } from "./twitter";
 export type { OAuthConfig, TokenResponse } from "./types";
-export {
-  exchangeYouTubeCode,
-  getYouTubeAuthUrl,
-  refreshYouTubeToken,
-} from "./youtube";

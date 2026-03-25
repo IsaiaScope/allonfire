@@ -17,7 +17,6 @@ type WizardState = {
   imagePreviewUrls: string[];
   selectedPlatforms: Platform[];
   platformContents: PlatformContent[];
-  scheduleAt: Date | null;
   results: PublishResultItem[];
   loadingPhase: LoadingPhase;
 };
@@ -30,7 +29,6 @@ type WizardAction =
   | { type: "REORDER_IMAGES"; files: File[]; previewUrls: string[] }
   | { type: "TOGGLE_PLATFORM"; platform: Platform }
   | { type: "SET_PLATFORM_CONTENTS"; contents: PlatformContent[] }
-  | { type: "SET_SCHEDULE_AT"; date: Date | null }
   | { type: "SET_RESULTS"; results: PublishResultItem[] }
   | { type: "SET_LOADING_PHASE"; phase: LoadingPhase }
   | { type: "RESET" };
@@ -42,7 +40,6 @@ const initialState: WizardState = {
   imagePreviewUrls: [],
   selectedPlatforms: [],
   platformContents: [],
-  scheduleAt: null,
   results: [],
   loadingPhase: "idle",
 };
@@ -89,8 +86,6 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     }
     case "SET_PLATFORM_CONTENTS":
       return { ...state, platformContents: action.contents };
-    case "SET_SCHEDULE_AT":
-      return { ...state, scheduleAt: action.date };
     case "SET_RESULTS":
       return { ...state, results: action.results };
     case "SET_LOADING_PHASE":
@@ -120,8 +115,6 @@ export function usePublishWizard() {
       dispatch({ type: "TOGGLE_PLATFORM", platform }),
     setPlatformContents: (contents: PlatformContent[]) =>
       dispatch({ type: "SET_PLATFORM_CONTENTS", contents }),
-    setScheduleAt: (date: Date | null) =>
-      dispatch({ type: "SET_SCHEDULE_AT", date }),
     setResults: (results: PublishResultItem[]) =>
       dispatch({ type: "SET_RESULTS", results }),
     setPublishing: (value: boolean) =>

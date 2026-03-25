@@ -25,14 +25,13 @@ export default async function GeneralSettingsPage() {
             <CardTitle className="text-base">n8n Integration</CardTitle>
           </div>
           <CardDescription>
-            Webhook URLs for discovery, publishing, and notification workflows.
+            Webhook URLs for discovery and notification workflows.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <SettingsForm
             webhookDiscoveryUrl={settings.webhookDiscoveryUrl}
             webhookNotifyUrl={settings.webhookNotifyUrl}
-            webhookPublishUrl={settings.webhookPublishUrl}
           />
         </CardContent>
       </Card>
@@ -49,7 +48,7 @@ export default async function GeneralSettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {["LinkedIn", "Twitter / X", "YouTube"].map((platform) => (
+            {["LinkedIn", "Twitter / X"].map((platform) => (
               <div
                 className="flex items-center justify-between rounded-md border px-4 py-3"
                 key={platform}

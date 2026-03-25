@@ -2,7 +2,6 @@
 export {
   createLinkedInAdapter,
   createTwitterAdapter,
-  createYouTubeAdapter,
   getAdapter,
 } from "./adapters/index";
 export type { PlatformAdapter } from "./adapters/types";
@@ -17,16 +16,10 @@ export {
 export { refreshIfNeeded } from "./oauth/refresh";
 export {
   exchangeTwitterCode,
-  generateCodeVerifier,
   getTwitterAuthUrl,
   refreshTwitterToken,
 } from "./oauth/twitter";
 export type { OAuthConfig, TokenResponse } from "./oauth/types";
-export {
-  exchangeYouTubeCode,
-  getYouTubeAuthUrl,
-  refreshYouTubeToken,
-} from "./oauth/youtube";
 export type {
   DecryptedTokens,
   Platform,

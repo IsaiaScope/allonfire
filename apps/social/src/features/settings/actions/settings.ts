@@ -7,13 +7,11 @@ import { requireAuth } from "@/lib/server-auth";
 
 const settingsSchema = z.object({
   webhookDiscoveryUrl: z.url().nullish(),
-  webhookPublishUrl: z.url().nullish(),
   webhookNotifyUrl: z.url().nullish(),
 });
 
 export async function updateSettingsAction(data: {
   webhookDiscoveryUrl?: string | null;
-  webhookPublishUrl?: string | null;
   webhookNotifyUrl?: string | null;
 }) {
   await requireAuth();

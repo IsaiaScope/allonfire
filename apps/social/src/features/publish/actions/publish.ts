@@ -4,12 +4,12 @@ import { getActiveProviderClient } from "@allonfire/content-generator";
 import { getPlatformRules } from "@allonfire/content-generator/platforms/index";
 import { getSocialAccount, type Platform, prisma } from "@allonfire/database";
 import { getAdapter, resizeAllForPlatform } from "@allonfire/social-publisher";
-import { objectKeys } from "@allonfire/utils";
+import { formatErrorMessage, objectKeys } from "@allonfire/utils";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
 import { requireAuth } from "@/lib/server-auth";
-import { platformEnum } from "../constants/platforms";
+import { PLATFORM_CONFIG, platformEnum } from "../constants/platforms";
 import type { PublishResultItem } from "../types/publish-types";
 
 export async function elaborateAction(
@@ -34,8 +34,7 @@ export async function elaborateAction(
   } catch (error) {
     return {
       success: false as const,
-      error:
-        error instanceof Error ? error.message : "Failed to elaborate content",
+      error: formatErrorMessage(error, "Failed to elaborate content"),
     };
   }
 }
@@ -55,14 +54,47 @@ export async function adaptContentAction(
     const results = await Promise.all(
       validatedPlatforms.map(async (platform) => {
         const platformRules = getPlatformRules(platform);
-        const response = await client.generate({
-          model,
-          maxTokens: 2048,
-          system: `Adapt the following social media post for ${platform}. Follow these platform rules strictly:\n\n${platformRules}\n\nIMPORTANT:\n- Output PLAIN TEXT only. No markdown formatting (no **, *, #, etc.)\n- Use CAPS, line breaks, or emojis for emphasis instead of markdown\n- Include relevant hashtags as specified in the platform rules\n- Return ONLY the adapted post text, nothing else.`,
-          messages: [{ role: "user", content: validatedContent }],
-        });
+        const charLimit = PLATFORM_CONFIG[platform]?.charLimit ?? 1000;
+        const minChars = Math.round(charLimit * 0.7);
+        const maxTokens = Math.max(Math.ceil(charLimit / 2), 512);
+        const systemPrompt = `Adapt the following social media post for ${platform}.\n\nLENGTH: Write exactly ${minChars}-${charLimit} characters. Not shorter, not longer.\n\nFollow these platform rules strictly:\n\n${platformRules}\n\nIMPORTANT:\n- Output PLAIN TEXT only. No markdown formatting (no **, *, #, etc.)\n- Use CAPS, line breaks, or emojis for emphasis instead of markdown\n- Follow the hashtag rules specified in the platform rules above\n- Return ONLY the adapted post text, nothing else.`;
 
-        return [platform, response.text] as const;
+        let text = "";
+        const maxAttempts = 3;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          const userContent =
+            attempt === 1
+              ? `${validatedContent}\n\nWrite ${minChars}-${charLimit} characters using the 3-part structure from the example.`
+              : `${validatedContent}\n\nYour previous attempt was only ${text.length} characters which is TOO SHORT. You MUST write at least ${minChars} characters. Expand with more details, add context, include a question, and add hashtags. Follow the example structure exactly.`;
+
+          const response = await client.generate({
+            model,
+            maxTokens,
+            system: systemPrompt,
+            messages: [{ role: "user", content: userContent }],
+          });
+
+          text = response.text;
+          if (text.length >= minChars && text.length <= charLimit) {
+            break;
+          }
+          if (text.length > charLimit) {
+            // Trim at last sentence boundary within limit
+            const trimmed = text.slice(0, charLimit);
+            const lastBreak = Math.max(
+              trimmed.lastIndexOf(". "),
+              trimmed.lastIndexOf("? "),
+              trimmed.lastIndexOf("! "),
+              trimmed.lastIndexOf("\n")
+            );
+            text =
+              lastBreak > minChars ? trimmed.slice(0, lastBreak + 1) : trimmed;
+            break;
+          }
+        }
+
+        return [platform, text] as const;
       })
     );
 
@@ -75,7 +107,7 @@ export async function adaptContentAction(
   } catch (error) {
     return {
       success: false as const,
-      error: error instanceof Error ? error.message : "Failed to adapt content",
+      error: formatErrorMessage(error, "Failed to adapt content"),
     };
   }
 }
@@ -84,10 +116,9 @@ async function publishToPlatform(params: {
   userId: string;
   platform: Platform;
   content: string;
-  scheduleAt: Date | null;
   images: Array<{ buffer: Buffer; mimeType: string }>;
 }): Promise<PublishResultItem> {
-  const { userId, platform, content, scheduleAt, images } = params;
+  const { userId, platform, content, images } = params;
 
   const socialAccount = await getSocialAccount(userId, platform);
   if (!socialAccount) {
@@ -96,19 +127,6 @@ async function publishToPlatform(params: {
       success: false,
       error: `No connected account for ${platform}`,
     };
-  }
-
-  if (scheduleAt) {
-    await prisma.post.create({
-      data: {
-        type: "FREEFORM",
-        platform,
-        status: "SCHEDULED",
-        content,
-        scheduledAt: scheduleAt,
-      },
-    });
-    return { platform, success: true };
   }
 
   const adapter = getAdapter(platform);
@@ -163,8 +181,6 @@ export async function publishAction(
       .parse(JSON.parse(adaptationsJson));
 
     const imageEntries = formData.getAll("images") as File[];
-    const scheduleAtStr = formData.get("scheduleAt") as string | null;
-    const scheduleAt = scheduleAtStr ? new Date(scheduleAtStr) : null;
 
     const images: Array<{ buffer: Buffer; mimeType: string }> = [];
     for (const file of imageEntries) {
@@ -183,14 +199,13 @@ export async function publishAction(
             userId,
             platform,
             content: adaptations[platform] ?? "",
-            scheduleAt,
             images,
           });
         } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : `Failed to publish to ${platform}`;
+          const errorMessage = formatErrorMessage(
+            error,
+            `Failed to publish to ${platform}`
+          );
 
           await prisma.post.create({
             data: {
@@ -213,8 +228,7 @@ export async function publishAction(
   } catch (error) {
     return {
       success: false as const,
-      error:
-        error instanceof Error ? error.message : "Failed to publish content",
+      error: formatErrorMessage(error, "Failed to publish content"),
     };
   }
 }

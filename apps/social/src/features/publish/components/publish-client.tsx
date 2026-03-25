@@ -100,10 +100,6 @@ export function PublishClient({
       for (const file of state.imageFiles) {
         formData.append("images", file);
       }
-      if (state.scheduleAt) {
-        formData.set("scheduleAt", state.scheduleAt.toISOString());
-      }
-
       const result = await publishAction(formData);
       if (result.success) {
         actions.setResults(result.data.results);
@@ -116,7 +112,7 @@ export function PublishClient({
     } finally {
       actions.setPublishing(false);
     }
-  }, [state.platformContents, state.imageFiles, state.scheduleAt, actions]);
+  }, [state.platformContents, state.imageFiles, actions]);
 
   function goTo(step: "compose" | "platforms" | "preview" | "confirm") {
     actions.setStep(step);
@@ -176,7 +172,6 @@ export function PublishClient({
 
       {state.step === "confirm" && (
         <ConfirmStep
-          actions={actions}
           onBack={() => goTo("preview")}
           onPublish={handlePublish}
           state={state}

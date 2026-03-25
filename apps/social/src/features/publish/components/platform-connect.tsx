@@ -14,7 +14,7 @@ import {
 } from "@allonfire/ui/components/alert-dialog";
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { disconnectAccountAction } from "../actions/social-accounts";
 import { PLATFORM_CONFIG } from "../constants/platforms";
@@ -41,31 +41,62 @@ export function PlatformConnect({
     charLimit: 1000,
   };
 
-  const handleOAuthMessage = useCallback(
-    (event: MessageEvent) => {
-      if (event.data?.type === "oauth-complete") {
-        setIsLoading(false);
-        onConnected();
-      } else if (event.data?.type === "oauth-error") {
-        setIsLoading(false);
-        toast.error(event.data.message ?? "OAuth connection failed");
-      }
-    },
-    [onConnected]
-  );
+  const onConnectedRef = useRef(onConnected);
+  onConnectedRef.current = onConnected;
+  const popupRef = useRef<Window | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    window.addEventListener("message", handleOAuthMessage);
-    return () => window.removeEventListener("message", handleOAuthMessage);
-  }, [handleOAuthMessage]);
+    function handleMessage(event: MessageEvent) {
+      if (
+        event.data?.type === "oauth-complete" &&
+        event.data.platform === platform
+      ) {
+        stopPolling();
+        setIsLoading(false);
+        onConnectedRef.current();
+      } else if (
+        event.data?.type === "oauth-error" &&
+        (!event.data.platform || event.data.platform === platform)
+      ) {
+        stopPolling();
+        setIsLoading(false);
+        toast.error(event.data.error ?? "OAuth connection failed");
+      }
+    }
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      stopPolling();
+      popupRef.current?.close();
+    };
+  }, [platform, stopPolling]);
 
   function handleConnect() {
     setIsLoading(true);
-    window.open(
+    const popup = window.open(
       `/api/publish/oauth/${platform.toLowerCase()}?action=authorize`,
       "oauth-popup",
       "width=600,height=700,scrollbars=yes"
     );
+    popupRef.current = popup;
+
+    // Poll for popup closed without completing OAuth
+    stopPolling();
+    pollRef.current = setInterval(() => {
+      if (popup?.closed) {
+        stopPolling();
+        setIsLoading(false);
+      }
+    }, 500);
   }
 
   async function handleDisconnect() {

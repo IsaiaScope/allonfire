@@ -15,30 +15,29 @@ export function createTwitterAdapter(): PlatformAdapter {
     ): Promise<PublishResult> {
       try {
         const client = createClient(tokens.accessToken);
-        const mediaIds: string[] = [];
 
-        if (request.images && request.images.length > 0) {
-          const imagesToUpload = request.images.slice(0, 4); // Twitter max 4
-          for (const img of imagesToUpload) {
-            const mediaId = await client.v1.uploadMedia(img.buffer, {
-              mimeType: img.mimeType,
-              target: "tweet",
-            });
-            mediaIds.push(mediaId);
-          }
-        }
+        // Image upload requires Basic tier ($100/mo) or higher — v1 media upload API
+        // Uncomment when upgrading from pay-per-use to a plan with v1 access:
+        //
+        // const mediaIds: string[] = [];
+        // if (request.images && request.images.length > 0) {
+        //   for (const img of request.images.slice(0, 4)) {
+        //     const mediaId = await client.v1.uploadMedia(img.buffer, {
+        //       mimeType: img.mimeType,
+        //       target: "tweet",
+        //     });
+        //     mediaIds.push(mediaId);
+        //   }
+        // }
+        // const tweetPayload: Parameters<typeof client.v2.tweet>[0] = {
+        //   text: request.content,
+        //   ...(mediaIds.length > 0 && {
+        //     media: { media_ids: mediaIds as unknown as [string] },
+        //   }),
+        // };
+        // const result = await client.v2.tweet(tweetPayload);
 
-        const tweetPayload: Parameters<typeof client.v2.tweet>[0] = {
-          text: request.content,
-        };
-
-        if (mediaIds.length > 0) {
-          tweetPayload.media = {
-            media_ids: mediaIds as unknown as [string],
-          };
-        }
-
-        const result = await client.v2.tweet(tweetPayload);
+        const result = await client.v2.tweet({ text: request.content });
         const tweetId = result.data.id;
 
         return {

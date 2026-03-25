@@ -57,14 +57,13 @@ model Post {
   content        String
   mediaUrl       String?
   mediaType      MediaType?
-  scheduledAt    DateTime?
   publishedAt    DateTime?
   platformPostId String?
   errorMessage   String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  @@index([status, scheduledAt])
+  @@index([status])
 }
 
 // ============ Auth ============
@@ -169,7 +168,6 @@ enum ProviderType {
 model Settings {
   id                  String      @id @default("singleton")
   webhookDiscoveryUrl String?
-  webhookPublishUrl   String?
   webhookNotifyUrl    String?
   activeProviderId    String?
   activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id])
@@ -214,7 +212,6 @@ enum PostType {
 enum PostStatus {
   DRAFT
   APPROVED
-  SCHEDULED
   PUBLISHED
   FAILED
 }
@@ -222,7 +219,6 @@ enum PostStatus {
 enum Platform {
   LINKEDIN
   TWITTER
-  YOUTUBE
 }
 
 enum MediaType {
