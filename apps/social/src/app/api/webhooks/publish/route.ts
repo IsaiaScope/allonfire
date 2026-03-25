@@ -8,6 +8,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
 
+// TODO: For FREEFORM posts created via /publish, scheduled publishing requires
+// a process-scheduled route that resolves the post creator's SocialAccount tokens.
+// Currently, the Post model has no userId field, so we can't look up tokens for
+// scheduled FREEFORM posts. Options: (1) add userId to Post, (2) add a PostCreator
+// join table, or (3) store userId in post metadata. Until then, FREEFORM posts
+// with scheduling are picked up by this webhook for external processing (e.g. n8n).
 export async function GET(request: Request) {
   const authError = validateBearerToken(request);
   if (authError) {

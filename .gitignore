@@ -28,6 +28,7 @@ playwright-report/
 out/
 build
 dist
+next-env.d.ts
 
 # Prisma
 packages/database/generated/
@@ -50,3 +51,4 @@ docs/superpowers/
 # Worktrees
 .worktrees
 *.tsbuildinfo
+.next-mobile

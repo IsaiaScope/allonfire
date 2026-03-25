@@ -58,7 +58,7 @@ const stages = [
   {
     key: "prompts",
     label: "Prompts",
-    description: "Generated content prompts",
+    description: "Content prompts",
     icon: FileText,
     href: "/generate",
     gradient: "from-chart-4/5 to-chart-4/15",

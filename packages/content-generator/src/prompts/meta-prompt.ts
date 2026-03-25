@@ -65,6 +65,48 @@ function getVisualStrategy(postType: string): string {
   }
 }
 
+function getCssRecipes(): string {
+  return `## CSS Techniques for Visual Richness
+
+Use these HTML/CSS patterns to create visually compelling images. Combine them — don't just use text on a solid background.
+
+**Window chrome (macOS-style)** — wraps any mockup to look like a real app:
+\`\`\`html
+<div style="border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+  <div style="background:#1e1e1e;padding:10px 16px;display:flex;gap:8px;align-items:center;">
+    <span style="width:12px;height:12px;border-radius:50%;background:#ff5f56;"></span>
+    <span style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;"></span>
+    <span style="width:12px;height:12px;border-radius:50%;background:#27c93f;"></span>
+    <span style="color:#888;font-size:13px;margin-left:8px;">filename.js</span>
+  </div>
+  <div style="background:#1e1e1e;padding:24px;font-family:Consolas,monospace;">
+    <!-- code or terminal content here -->
+  </div>
+</div>
+\`\`\`
+
+**Syntax highlighting** — colored spans for code (VS Code dark theme):
+\`\`\`html
+<span style="color:#569cd6;">const</span> <span style="color:#4ec9b0;">result</span> = <span style="color:#dcdcaa;">await</span> <span style="color:#dcdcaa;">fetch</span>(<span style="color:#ce9178;">"url"</span>);
+<span style="color:#6a9955;">// comment</span>
+\`\`\`
+Color key: keywords=#569cd6, types=#4ec9b0, functions=#dcdcaa, strings=#ce9178, comments=#6a9955, variables=#9cdcfe
+
+**Visual depth** — always use on card elements:
+\`border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);\`
+
+**Grid layouts** — for comparisons, stat grids, steps:
+\`\`\`html
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div style="background:#1e293b;border-radius:12px;padding:24px;">Panel A</div>
+  <div style="background:#1e293b;border-radius:12px;padding:24px;">Panel B</div>
+</div>
+\`\`\`
+
+**Gradient backgrounds** — more engaging than solid colors:
+\`background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);\``;
+}
+
 function buildFewShotSection(
   examples: Array<{ title: string; content: string }>
 ): string {
@@ -129,9 +171,24 @@ Create a file \`output/post.md\` with this content:
 
 Create a file \`output/image-1.html\` with this content:
 
-[the actual HTML/CSS here]
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;background:linear-gradient(135deg,#0f172a,#1e293b);display:flex;align-items:center;justify-content:center;height:100vh;">
+  <div style="width:900px;">
+    <div style="border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      <div style="background:#1e1e1e;padding:10px 16px;display:flex;gap:8px;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#ff5f56;"></span>
+        <span style="width:12px;height:12px;border-radius:50%;background:#ffbd2e;"></span>
+        <span style="width:12px;height:12px;border-radius:50%;background:#27c93f;"></span>
+      </div>
+      <div style="background:#1e1e1e;padding:24px;font-family:Consolas,monospace;font-size:18px;line-height:1.6;">
+        <span style="color:#569cd6;">const</span> <span style="color:#9cdcfe;">x</span> = ...
+      </div>
+    </div>
+  </div>
+</body></html>
 
-Then take a screenshot of \`output/image-1.html\` at 1080x1080 pixels and save it as \`output/image-1.png\` using Playwright:
+Then screenshot it:
 npx playwright screenshot --viewport-size=1080,1080 output/image-1.html output/image-1.png
 \`\`\`
 
@@ -195,9 +252,15 @@ Instruct Claude Code to create PNG image files using this exact workflow:
 - Each image must use a **different visual approach** — don't make two images that look like the same template with different text
 - Save images to \`output/image-1.png\`, \`output/image-2.png\`, etc.
 
-**Visual variety is critical.** Do NOT create multiple images that are just "headline text on a colored background." At least one image should include a structured visual element: a code snippet, a diagram, a comparison layout, a mockup, or a data visualization rendered in HTML/CSS.
+**Visual richness is required.** Every image must have visual depth — not flat text on a solid rectangle:
+- Use **box-shadow** and **border-radius** on all card elements
+- Use **gradient backgrounds** instead of solid colors for the outer container
+- At least one image must include a **UI mockup** (code editor, terminal, chat, browser) with window chrome (macOS-style title bar dots)
+- Text-only headline images are NOT acceptable — combine text with structured visual elements (code blocks, grids, diagrams, mockups)
 
 ${getVisualStrategy(topic.postType)}
+
+${getCssRecipes()}
 
 ---
 

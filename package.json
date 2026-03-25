@@ -21,6 +21,8 @@
     "docker:test:down": "docker compose -f docker/docker-compose.test.yml down",
     "n8n:import": "sh docker/import-n8n-workflows.sh",
     "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db:push && pnpm db:seed && pnpm n8n:import",
+    "dev:mobile": "pnpm --filter @allonfire/social dev:mobile",
+    "dev:tunnel": "pnpm --filter @allonfire/social dev:tunnel",
     "dev:full": "pnpm dev:setup && pnpm dev",
     "db:seed": "pnpm --filter @allonfire/database db:seed",
     "docker:build:social": "docker build --build-arg APP_NAME=social -f docker/Dockerfile -t allonfire-social .",

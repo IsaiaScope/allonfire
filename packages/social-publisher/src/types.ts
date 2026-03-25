@@ -6,10 +6,14 @@ export type DecryptedTokens = {
   tokenExpiresAt?: Date;
 };
 
+export type ImagePayload = {
+  buffer: Buffer;
+  mimeType: string;
+};
+
 export type PublishRequest = {
   content: string;
-  imageBuffer?: Buffer;
-  imageMimeType?: string;
+  images?: ImagePayload[];
 };
 
 export type PublishResult = {

@@ -6,6 +6,18 @@ const MIN_QUALITY = 40;
 const QUALITY_STEP = 10;
 const INITIAL_QUALITY = 90;
 
+export async function resizeAllForPlatform(
+  images: Array<{ buffer: Buffer; mimeType: string }>,
+  platform: Platform
+): Promise<Array<{ buffer: Buffer; mimeType: string }>> {
+  const results: Array<{ buffer: Buffer; mimeType: string }> = [];
+  for (const img of images) {
+    const resized = await resizeForPlatform(img.buffer, platform);
+    results.push({ buffer: resized, mimeType: "image/jpeg" });
+  }
+  return results;
+}
+
 export async function resizeForPlatform(
   imageBuffer: Buffer,
   platform: Platform
