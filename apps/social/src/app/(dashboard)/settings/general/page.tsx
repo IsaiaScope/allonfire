@@ -1,5 +1,4 @@
-import { getSettings } from "@allonfire/database";
-import { Badge } from "@allonfire/ui/components/badge";
+import { getSettings, prisma } from "@allonfire/database";
 import {
   Card,
   CardContent,
@@ -7,92 +6,82 @@ import {
   CardHeader,
   CardTitle,
 } from "@allonfire/ui/components/card";
-import { Separator } from "@allonfire/ui/components/separator";
-import { Globe, Key, Palette, Webhook } from "lucide-react";
+import { Bot, Globe, Palette } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SettingsForm } from "@/features/settings/components/settings-form";
+import { ConnectedPlatforms } from "@/features/settings/components/connected-platforms";
+import { requireAuth } from "@/lib/server-auth";
 
 export default async function GeneralSettingsPage() {
-  const settings = await getSettings();
+  const [settings, session] = await Promise.all([getSettings(), requireAuth()]);
+  const activeProvider = settings.activeProvider;
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  const isAdmin = user.role === "ADMIN";
 
   return (
     <div className="max-w-2xl space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Webhook className="size-4 text-primary" />
-            <CardTitle className="text-base">n8n Integration</CardTitle>
-          </div>
-          <CardDescription>
-            Webhook URLs for discovery, publishing, and notification workflows.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SettingsForm
-            webhookDiscoveryUrl={settings.webhookDiscoveryUrl}
-            webhookNotifyUrl={settings.webhookNotifyUrl}
-            webhookPublishUrl={settings.webhookPublishUrl}
-          />
-        </CardContent>
-      </Card>
-
-      <Separator />
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
             <Globe className="size-4 text-primary" />
             <CardTitle className="text-base">Platforms</CardTitle>
           </div>
-          <CardDescription>Connected social media accounts.</CardDescription>
+          <CardDescription>
+            Manage your connected social media accounts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {["LinkedIn", "Twitter / X", "YouTube"].map((platform) => (
-              <div
-                className="flex items-center justify-between rounded-md border px-4 py-3"
-                key={platform}
-              >
-                <span className="font-medium text-sm">{platform}</span>
-                <Badge variant="secondary">Via n8n</Badge>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-muted-foreground text-xs">
-            Platform connections are managed through n8n OAuth credentials.
-          </p>
+          <ConnectedPlatforms />
         </CardContent>
       </Card>
-
-      <Separator />
 
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Key className="size-4 text-primary" />
-            <CardTitle className="text-base">n8n Bearer Token</CardTitle>
+            <Bot className="size-4 text-primary" />
+            <CardTitle className="text-base">AI Model</CardTitle>
           </div>
-          <CardDescription>
-            Shared secret for n8n-to-app communication.
-          </CardDescription>
+          <CardDescription>Currently active AI provider.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm">
-            Set{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">
-              N8N_API_KEY
-            </code>{" "}
-            in your environment variables. n8n workflows send this token in the{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">
-              Authorization: Bearer
-            </code>{" "}
-            header when calling webhook and classification endpoints.
-          </p>
+          {activeProvider ? (
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <p className="font-medium text-sm">{activeProvider.provider}</p>
+                <p className="text-muted-foreground text-xs">
+                  {activeProvider.model}
+                </p>
+              </div>
+              {isAdmin && (
+                <Link
+                  className="text-primary text-xs underline underline-offset-4"
+                  href="/admin/providers"
+                >
+                  Manage
+                </Link>
+              )}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No model configured.
+              {isAdmin && (
+                <>
+                  {" "}
+                  <Link
+                    className="text-primary underline underline-offset-4"
+                    href="/admin/providers"
+                  >
+                    Set one up
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
         </CardContent>
       </Card>
-
-      <Separator />
 
       <Card>
         <CardHeader>
@@ -103,30 +92,19 @@ export default async function GeneralSettingsPage() {
           <CardDescription>Toggle between light and dark mode.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 space-y-0.5">
               <p className="font-medium text-sm">Dark mode</p>
               <p className="text-muted-foreground text-xs">
                 Switch the interface between light and dark theme.
               </p>
             </div>
-            <ThemeToggle />
+            <div className="shrink-0">
+              <ThemeToggle />
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      <Separator />
-
-      <p className="text-muted-foreground text-sm">
-        AI provider keys are managed in the{" "}
-        <Link
-          className="text-primary underline underline-offset-4"
-          href="/admin/providers"
-        >
-          Admin Panel
-        </Link>
-        .
-      </p>
     </div>
   );
 }

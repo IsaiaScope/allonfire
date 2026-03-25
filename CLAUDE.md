@@ -57,9 +57,7 @@ app/(dashboard)/
 ├── page.tsx                → Overview stats (standalone, no feature imports)
 ├── discover/page.tsx       → Topic discovery. Imports from @/features/topics/
 ├── generate/page.tsx       → Generation queue. Imports from @/features/generation/
-├── drafts/page.tsx         → Draft review. Imports from @/features/posts/
-├── drafts/[id]/page.tsx    → Post editor. Imports from @/features/posts/
-├── schedule/page.tsx       → Scheduled posts. Imports from @/features/posts/
+├── publish/page.tsx        → Social media publishing wizard. Imports from @/features/publish/
 ├── admin/layout.tsx        → Admin panel shell (auth guard, submenu). Imports from @/features/admin/
 ├── admin/page.tsx          → Redirect to /admin/users
 ├── admin/users/page.tsx    → User management. Imports from @/features/admin/
@@ -81,7 +79,7 @@ import { GenerateButton } from "@/features/generation/components/generate-button
 import { GenerateButton } from "@/features/generation";
 ```
 
-Features: `layout/`, `topics/`, `generation/`, `posts/`, `settings/`, `admin/` (includes user management + AI providers)
+Features: `layout/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
 
 Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
 
@@ -103,8 +101,7 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, 
 - `/` — Overview with stats
 - `/discover` — Browse discovered topics
 - `/generate` — Trigger + monitor generation
-- `/drafts` — Review + approve generated posts
-- `/schedule` — Calendar of scheduled posts
+- `/publish` — Compose and publish social media posts
 - `/settings` — n8n webhook URLs, platform config
 - `/admin` — Admin panel redirect → `/admin/users`
 - `/admin/users` — User management (admin only)

@@ -1,18 +1,5 @@
 // biome-ignore lint/performance/noBarrelFile: service layer entry point — consumers import from @allonfire/database/services
 export {
-  approvePost,
-  getDrafts,
-  getDueScheduledPosts,
-  getPostById,
-  getScheduledPosts,
-  markFailed,
-  markPublished,
-  rejectPost,
-  schedulePost,
-  unschedulePost,
-  updatePostContent,
-} from "./post.service";
-export {
   createPrompt,
   deletePrompt,
   getPositivePromptsByCategory,
@@ -28,7 +15,13 @@ export {
   setActiveProvider,
   upsertProvider,
 } from "./provider.service";
-export { getSettings, updateSettings } from "./settings.service";
+export { getSettings } from "./settings.service";
+export {
+  deleteSocialAccount,
+  getConnectedAccounts,
+  getSocialAccount,
+  upsertSocialAccount,
+} from "./social-account.service";
 export {
   getDailySummary,
   getTopicStats,
@@ -41,8 +34,6 @@ export {
   getDiscoveredTopicsPaginated,
   getSelectedTopicsPaginated,
   getTopicsByStatus,
-  getTopicsByStatusWithPosts,
-  getTopicsByStatusWithPrompts,
   getTopicWithPrompts,
   ingestTopics,
   selectTopic,

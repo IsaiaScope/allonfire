@@ -5,19 +5,27 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3100",
+    "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3101 next dev --port 3101 --hostname 0.0.0.0",
+    "dev:tunnel": "npx localtunnel --port 3101",
     "build": "next build",
     "start": "next start",
     "check-types": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx mock-data/seed.ts",
-    "seed:clear": "tsx mock-data/seed.ts --clear"
+    "seed:clear": "tsx mock-data/seed.ts --clear",
+    "seed:export": "tsx mock-data/export.ts"
   },
   "dependencies": {
     "@allonfire/content-generator": "workspace:*",
     "@allonfire/database": "workspace:*",
     "@allonfire/hooks": "workspace:*",
+    "@allonfire/social-publisher": "workspace:*",
     "@allonfire/ui": "workspace:*",
+    "@allonfire/utils": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",
+    "@dnd-kit/dom": "^0.3.2",
+    "@dnd-kit/helpers": "^0.3.2",
+    "@dnd-kit/react": "^0.3.2",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-query": "^5.62.0",
     "better-auth": "^1.2.0",

@@ -113,8 +113,7 @@ Defined in `sidebar-nav.tsx` as `navItems` (exported for reuse by `QuickNavBadge
 | `/`          | Overview  | LayoutDashboard | No         |
 | `/discover`  | Discover  | Compass         | No         |
 | `/generate`  | Generate  | Sparkles        | No         |
-| `/drafts`    | Drafts    | FileText        | No         |
-| `/schedule`  | Schedule  | Calendar        | No         |
+| `/publish`   | Publish   | Send            | No         |
 | `/users`     | Users     | Users           | Yes        |
 
 Settings is handled separately in `MobileSheetNav` and `QuickNavBadges` (not in the `navItems` array).

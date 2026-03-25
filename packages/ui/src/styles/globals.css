@@ -189,11 +189,6 @@
   * {
     scrollbar-color: var(--border) transparent;
     scrollbar-width: thin;
-    transition:
-      background-color 0.4s ease,
-      color 0.4s ease,
-      border-color 0.4s ease,
-      box-shadow 0.4s ease !important;
     @apply border-border outline-ring/50;
   }
   body {

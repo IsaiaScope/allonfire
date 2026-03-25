@@ -8,10 +8,9 @@ import {
 import { cn } from "@allonfire/ui/lib/utils";
 import { AnimatePresence, m } from "framer-motion";
 import {
-  Calendar,
   Compass,
-  FileText,
   LayoutDashboard,
+  Send,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -25,8 +24,7 @@ export const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/discover", label: "Discover", icon: Compass },
   { href: "/generate", label: "Generate", icon: Sparkles },
-  { href: "/drafts", label: "Drafts", icon: FileText },
-  { href: "/schedule", label: "Schedule", icon: Calendar },
+  { href: "/publish", label: "Publish", icon: Send },
   { href: "/admin", label: "Admin Panel", icon: ShieldCheck, adminOnly: true },
 ];
 
@@ -68,7 +66,7 @@ export function SidebarNav({ role, collapsed }: SidebarNavProps) {
         const link = (
           <Link
             className={cn(
-              "group relative flex items-center rounded-md font-medium text-sm",
+              "group relative flex items-center rounded-md font-medium text-sm transition-colors duration-150",
               collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2",
               isActive
                 ? "text-sidebar-primary-foreground"
