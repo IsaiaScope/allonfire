@@ -1,8 +1,23 @@
 {
   "name": "allonfire",
+  "description": "Turborepo monorepo powering AI-driven social content automation and an interactive Laura site with photos and games",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
+  "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
   "packageManager": "pnpm@9.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IsaiaScope/allonfire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IsaiaScope/allonfire/issues"
+  },
+  "homepage": "https://github.com/IsaiaScope/allonfire#readme",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
