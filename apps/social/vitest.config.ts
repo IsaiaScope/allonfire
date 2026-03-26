@@ -10,5 +10,7 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 60_000,
     setupFiles: ["./vitest.setup.ts"],
+    exclude: ["e2e/**", "node_modules/**"],
+    fileParallelism: false,
   },
 });

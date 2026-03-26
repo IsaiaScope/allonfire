@@ -3,8 +3,11 @@ import { logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
-import { stripCodeBlock } from "@/lib/parse-ai-response";
-import { safeRawData } from "@/lib/raw-data";
+import {
+  type ClassifiedTopic,
+  mapClassification,
+  parseClassifications,
+} from "./classify-utils";
 
 const itemSchema = z.object({
   title: z.string().min(1),
@@ -14,13 +17,10 @@ const itemSchema = z.object({
   rawData: z.unknown().optional(),
 });
 
-type Item = z.infer<typeof itemSchema>;
-
 const bodySchema = z.object({
   items: z.array(itemSchema).min(1).max(500),
 });
 
-const RELEVANCE_THRESHOLD = 0.6;
 const BATCH_SIZE = 10;
 
 const CLASSIFICATION_SYSTEM_PROMPT = `You are a ruthlessly selective content curator for AllOnFire, a social media brand serving AI practitioners — people who build, deploy, and research AI systems.
@@ -52,77 +52,6 @@ Summary rules:
 - Write like an editorial pitch note: "this is what this topic is about, here's why it's postable."
 - Be direct and confident about what IS known, but never pretend to know more than the input provides.
 - Max 600 chars.`;
-
-const VALID_CATEGORIES = new Set([
-  "NEWS",
-  "MEME_WORTHY",
-  "LEARNING",
-  "TOOL_RELEASE",
-  "AI_UPDATE",
-]);
-
-type ClassificationResult = {
-  index: number;
-  category: string;
-  summary: string;
-  relevance: number;
-};
-
-type ClassifiedTopic = {
-  title: string;
-  summary: string;
-  sourceUrl: string;
-  sourceName: string;
-  category: string;
-  rawData?: unknown;
-};
-
-function parseClassifications(
-  responseText: string,
-  batchLength: number
-): ClassificationResult[] {
-  try {
-    return JSON.parse(stripCodeBlock(responseText));
-  } catch {
-    return Array.from({ length: batchLength }, (_, idx) => ({
-      index: idx,
-      category: "NEWS",
-      summary: "",
-      relevance: 0.4,
-    }));
-  }
-}
-
-function mapClassification(
-  cls: ClassificationResult,
-  batch: Item[]
-): ClassifiedTopic | null {
-  const relevance = Number(cls.relevance) || 0;
-  if (relevance < RELEVANCE_THRESHOLD) {
-    return null;
-  }
-
-  const original = batch[cls.index % batch.length];
-  if (!original) {
-    return null;
-  }
-
-  const category = VALID_CATEGORIES.has(cls.category) ? cls.category : "NEWS";
-
-  const existingData = safeRawData(original.rawData);
-
-  return {
-    title: original.title,
-    summary: cls.summary || original.summary || original.title,
-    sourceUrl: original.sourceUrl,
-    sourceName: original.sourceName,
-    category,
-    rawData: {
-      ...existingData,
-      aiRelevance: relevance,
-    },
-  };
-}
 
 export async function POST(request: Request) {
   const authError = validateBearerToken(request);
