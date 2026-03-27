@@ -32,9 +32,30 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-  test-unit:
-    name: Unit Tests
+  test:
+    name: Tests
     runs-on: ubuntu-latest
+    environment: dev
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: allonfire
+          POSTGRES_PASSWORD: allonfire
+          POSTGRES_DB: allonfire
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U allonfire"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
+      N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -51,6 +72,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
+      - name: Push schema to database
+        run: pnpm db:push
       - name: Run tests
         run: pnpm turbo run test
 
