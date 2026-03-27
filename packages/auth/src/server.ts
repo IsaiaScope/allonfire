@@ -29,6 +29,18 @@ export async function requireAuth(auth: Auth): Promise<Session> {
   return session;
 }
 
+export async function requireUser(auth: Auth): Promise<Session> {
+  const session = await requireAuth(auth);
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (user.role === "VIEWER") {
+    throw new Error("Forbidden: viewers have read-only access");
+  }
+  return session;
+}
+
 export async function requireAdmin(auth: Auth): Promise<Session> {
   const session = await requireAuth(auth);
   const user = await prisma.user.findUniqueOrThrow({

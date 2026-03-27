@@ -10,6 +10,7 @@ import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
 import { Bot, Globe, Palette } from "lucide-react";
 import Link from "next/link";
 import { ConnectedPlatforms } from "@/features/settings/components/connected-platforms";
+import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
 import { requireAuth } from "@/lib/server-auth";
 
 export default async function GeneralSettingsPage() {
@@ -23,6 +24,7 @@ export default async function GeneralSettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
+      {user.role === "VIEWER" && <ViewerBanner />}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -34,7 +36,7 @@ export default async function GeneralSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ConnectedPlatforms />
+          <ConnectedPlatforms role={user.role} />
         </CardContent>
       </Card>
 

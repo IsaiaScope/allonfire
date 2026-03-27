@@ -2,66 +2,73 @@
 
 import { authClient } from "@allonfire/auth/client";
 import { Button } from "@allonfire/ui/components/button";
+import { Separator } from "@allonfire/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@allonfire/ui/components/sheet";
-import { cn } from "@allonfire/ui/lib/utils";
-import { Heart, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import { navItems } from "./nav-links";
+import { NavLinkContent } from "./nav-link-content";
+import { isLinkActive, navSections } from "./nav-links";
 
 type MobileNavProps = {
   open: boolean;
   onClose: () => void;
-  userName?: string | null;
 };
 
-export function MobileNav({ open, onClose, userName }: MobileNavProps) {
+export function MobileNav({ open, onClose }: MobileNavProps) {
   const pathname = usePathname();
   const t = useTranslations("Nav");
 
   return (
     <Sheet onOpenChange={(v) => !v && onClose()} open={open}>
-      <SheetContent className="w-72" side="right">
-        <SheetHeader className="px-4 pb-4">
-          <SheetTitle className="flex items-center gap-2">
-            <Heart className="size-5 text-primary" />
-            {t("appName")}
+      <SheetContent className="flex w-72 flex-col" side="right">
+        <SheetHeader className="px-4 pb-2">
+          <SheetTitle>
+            <Image
+              alt="Laura"
+              height={32}
+              src="/allonfire-laura-horizontal.svg"
+              width={108}
+            />
           </SheetTitle>
         </SheetHeader>
 
-        <nav className="flex flex-col gap-1 px-2">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-
-            return (
-              <Button
-                asChild
-                className={cn("justify-start", isActive && "bg-accent")}
-                key={item.href}
-                onClick={onClose}
-                variant="ghost"
-              >
-                <Link href={item.href}>
-                  <item.icon className="size-4" />
-                  {t(item.labelKey)}
-                </Link>
-              </Button>
-            );
-          })}
+        <nav className="flex flex-1 flex-col gap-1 px-2">
+          {navSections.map((section, idx) => (
+            <div key={section.labelKey}>
+              {idx > 0 && <Separator className="my-2" />}
+              <p className="px-3 pt-2 pb-1 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                {t(section.labelKey)}
+              </p>
+              {section.links.map((link) => {
+                const active = isLinkActive(pathname, link.href);
+                return (
+                  <Link
+                    className="block rounded-sm px-2.5 py-2 transition-colors hover:bg-white/5 hover:text-inherit"
+                    href={link.href}
+                    key={link.href}
+                    onClick={onClose}
+                  >
+                    <NavLinkContent
+                      active={active}
+                      description={t(link.descriptionKey)}
+                      label={t(link.labelKey)}
+                      link={link}
+                    />
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-        <div className="mt-auto border-border border-t px-4 pt-4">
-          {userName && (
-            <p className="mb-2 text-muted-foreground text-sm">{userName}</p>
-          )}
+        <div className="border-border border-t px-4 pt-4">
           <Button
             className="w-full justify-start"
             onClick={() => authClient.signOut()}

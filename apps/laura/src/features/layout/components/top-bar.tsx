@@ -1,16 +1,24 @@
 "use client";
 
-import { authClient } from "@allonfire/auth/client";
 import { Button } from "@allonfire/ui/components/button";
-import { cn } from "@allonfire/ui/lib/utils";
-import { Heart, LogOut, Menu } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@allonfire/ui/components/navigation-menu";
+import { Menu } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { MobileNav } from "./mobile-nav";
-import { navItems } from "./nav-links";
+import { NavLinkContent } from "./nav-link-content";
+import { isLinkActive, navSections } from "./nav-links";
 
-export function TopBar({ userName }: { userName?: string | null }) {
+export function TopBar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("Nav");
@@ -18,47 +26,59 @@ export function TopBar({ userName }: { userName?: string | null }) {
   return (
     <>
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-border border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Link className="flex items-center gap-2" href="/">
-          <Heart className="size-5 text-primary" />
-          <span className="font-semibold text-lg">{t("appName")}</span>
+        <Link className="shrink-0" href="/">
+          <Image
+            alt="Laura"
+            className="block lg:hidden"
+            height={32}
+            src="/allonfire-laura.svg"
+            width={32}
+          />
+          <Image
+            alt="Laura"
+            className="hidden lg:block"
+            height={32}
+            src="/allonfire-laura-horizontal.svg"
+            width={108}
+          />
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-
-            return (
-              <Button
-                asChild
-                className={cn(isActive && "bg-accent")}
-                key={item.href}
-                size="sm"
-                variant="ghost"
-              >
-                <Link href={item.href}>
-                  <item.icon className="size-4" />
-                  {t(item.labelKey)}
-                </Link>
-              </Button>
-            );
-          })}
-        </nav>
-
-        <div className="hidden items-center gap-3 lg:flex">
-          {userName && (
-            <span className="text-muted-foreground text-sm">{userName}</span>
-          )}
-          <Button
-            onClick={() => authClient.signOut()}
-            size="sm"
-            variant="ghost"
-          >
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+        <NavigationMenu className="hidden lg:flex" viewport={false}>
+          <NavigationMenuList>
+            {navSections.map((section) => (
+              <NavigationMenuItem key={section.labelKey}>
+                <NavigationMenuTrigger>
+                  <section.icon className="mr-1.5 size-4" />
+                  {t(section.labelKey)}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent className="backdrop-blur-xl">
+                  <ul className="grid w-[280px] p-1.5">
+                    {section.links.map((link) => {
+                      const active = isLinkActive(pathname, link.href);
+                      return (
+                        <li key={link.href}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              className="block select-none rounded-sm px-2.5 py-2 no-underline outline-none transition-colors hover:bg-white/5 hover:text-inherit focus:bg-white/5"
+                              href={link.href}
+                            >
+                              <NavLinkContent
+                                active={active}
+                                description={t(link.descriptionKey)}
+                                label={t(link.labelKey)}
+                                link={link}
+                              />
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            ))}
+          </NavigationMenuList>
+        </NavigationMenu>
 
         <Button
           className="lg:hidden"
@@ -69,13 +89,11 @@ export function TopBar({ userName }: { userName?: string | null }) {
           <Menu className="size-5" />
           <span className="sr-only">{t("openMenu")}</span>
         </Button>
+
+        <div className="hidden w-8 lg:block" />
       </header>
 
-      <MobileNav
-        onClose={() => setMobileOpen(false)}
-        open={mobileOpen}
-        userName={userName}
-      />
+      <MobileNav onClose={() => setMobileOpen(false)} open={mobileOpen} />
     </>
   );
 }

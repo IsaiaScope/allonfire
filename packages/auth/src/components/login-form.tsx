@@ -64,10 +64,10 @@ export function LoginForm({
   const accessDenied = searchParams.get("error") === "access-denied";
 
   useEffect(() => {
-    if (session) {
+    if (session && !accessDenied) {
       router.replace("/");
     }
-  }, [session, router]);
+  }, [session, router, accessDenied]);
 
   const {
     register,

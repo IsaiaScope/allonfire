@@ -15,11 +15,13 @@ import { Button } from "@allonfire/ui/components/button";
 import { Trash2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import type { ActionResult } from "@/lib/action-result";
 import { parseErrorMessage } from "@/lib/parse-error-message";
 
 type DeleteAllDialogProps = {
   count: number;
+  disabled?: boolean;
   title: string;
   description: string;
   onConfirm: () => Promise<ActionResult>;
@@ -28,6 +30,7 @@ type DeleteAllDialogProps = {
 
 export function DeleteAllDialog({
   count,
+  disabled,
   title,
   description,
   onConfirm,
@@ -38,6 +41,21 @@ export function DeleteAllDialog({
 
   if (count === 0) {
     return null;
+  }
+
+  if (disabled) {
+    return (
+      <ReadOnlyButton
+        className="relative h-7 items-center gap-1 pr-4 pl-2 text-xs"
+        variant="destructive"
+      >
+        <Trash2 className="size-3" />
+        Delete
+        <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-secondary font-semibold text-[10px] text-secondary-foreground">
+          {count}
+        </span>
+      </ReadOnlyButton>
+    );
   }
 
   function handleDelete() {

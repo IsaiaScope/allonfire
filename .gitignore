@@ -52,3 +52,5 @@ docs/superpowers/
 .worktrees
 *.tsbuildinfo
 .next-mobile
+
+TODO.*

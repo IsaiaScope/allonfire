@@ -21,12 +21,14 @@ type PublishClientProps = {
   connectedAccounts: ConnectedAccount[];
   configuredPlatforms: Platform[];
   hasAiProvider: boolean;
+  role: string;
 };
 
 export function PublishClient({
   connectedAccounts: initialAccounts,
   configuredPlatforms,
   hasAiProvider,
+  role,
 }: PublishClientProps) {
   const { state, actions } = usePublishWizard();
   const [accounts, setAccounts] = useState<ConnectedAccount[]>(initialAccounts);
@@ -140,6 +142,7 @@ export function PublishClient({
         <ComposeStep
           actions={actions}
           onNext={() => goTo("platforms")}
+          role={role}
           state={state}
         />
       )}
@@ -155,6 +158,7 @@ export function PublishClient({
             goTo("preview");
           }}
           onRefreshAccounts={refreshAccounts}
+          role={role}
           state={state}
         />
       )}
@@ -174,6 +178,7 @@ export function PublishClient({
         <ConfirmStep
           onBack={() => goTo("preview")}
           onPublish={handlePublish}
+          role={role}
           state={state}
         />
       )}

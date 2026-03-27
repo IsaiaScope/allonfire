@@ -4,12 +4,14 @@ import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Sparkles, Upload } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 
 type ContentEditorProps = {
   content: string;
   onContentChange: (content: string) => void;
   onElaborate: () => void;
   isElaborating: boolean;
+  role?: string;
 };
 
 export function ContentEditor({
@@ -17,7 +19,9 @@ export function ContentEditor({
   onContentChange,
   onElaborate,
   isElaborating,
+  role,
 }: ContentEditorProps) {
+  const isViewer = role === "VIEWER";
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -74,18 +78,26 @@ export function ContentEditor({
             <Upload className="mr-1.5 size-4" />
             .md
           </Button>
-          <Button
-            disabled={content.length === 0 || isElaborating}
-            onClick={onElaborate}
-          >
-            {isElaborating ? (
-              <Loader2 className="mr-1.5 size-4 animate-spin" />
-            ) : (
+          {isViewer ? (
+            <ReadOnlyButton>
               <Sparkles className="mr-1.5 size-4" />
-            )}
-            <span className="hidden sm:inline">Elaborate</span>
-            <span className="sm:hidden">AI</span>
-          </Button>
+              <span className="hidden sm:inline">Elaborate</span>
+              <span className="sm:hidden">AI</span>
+            </ReadOnlyButton>
+          ) : (
+            <Button
+              disabled={content.length === 0 || isElaborating}
+              onClick={onElaborate}
+            >
+              {isElaborating ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1.5 size-4" />
+              )}
+              <span className="hidden sm:inline">Elaborate</span>
+              <span className="sm:hidden">AI</span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

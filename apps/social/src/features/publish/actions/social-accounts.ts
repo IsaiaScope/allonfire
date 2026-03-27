@@ -7,7 +7,7 @@ import {
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
-import { requireAuth } from "@/lib/server-auth";
+import { requireAuth, requireUser } from "@/lib/server-auth";
 import { platformEnum } from "../constants/platforms";
 import type { ConnectedAccount } from "../types/publish-types";
 
@@ -41,7 +41,7 @@ export async function getConnectedAccountsAction(): Promise<
 export async function disconnectAccountAction(
   platform: Platform
 ): Promise<ActionResult> {
-  const session = await requireAuth();
+  const session = await requireUser();
 
   const validatedPlatform = platformEnum.parse(platform);
 

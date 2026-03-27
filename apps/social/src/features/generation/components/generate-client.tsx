@@ -20,9 +20,10 @@ import { GenerateActions } from "./topic-card-generate-actions";
 
 type GenerateClientProps = {
   initialData: PaginatedTopicResult<TopicWithPrompts>;
+  role: string;
 };
 
-export function GenerateClient({ initialData }: GenerateClientProps) {
+export function GenerateClient({ initialData, role }: GenerateClientProps) {
   const router = useRouter();
   const [rating, setRating] = useState("");
   const [search, setSearch] = useState("");
@@ -91,6 +92,7 @@ export function GenerateClient({ initialData }: GenerateClientProps) {
           <DeleteAllDialog
             count={totalCount}
             description={deleteDescription}
+            disabled={role === "VIEWER"}
             onConfirm={handleDeleteConfirm}
             onDeleted={invalidateQueries}
             title="Delete selected topics?"
@@ -115,7 +117,11 @@ export function GenerateClient({ initialData }: GenerateClientProps) {
           <TopicCard
             onClick={() => router.push(`/generate/${topic.id}`)}
             renderActions={(props) => (
-              <GenerateActions {...props} onAction={invalidateQueries} />
+              <GenerateActions
+                {...props}
+                onAction={invalidateQueries}
+                role={role}
+              />
             )}
             renderMetaEnd={
               <Badge

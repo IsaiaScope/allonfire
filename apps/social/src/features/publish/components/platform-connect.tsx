@@ -16,6 +16,7 @@ import { Button } from "@allonfire/ui/components/button";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import { disconnectAccountAction } from "../actions/social-accounts";
 import { PLATFORM_CONFIG } from "../constants/platforms";
 
@@ -25,6 +26,7 @@ type PlatformConnectProps = {
   username?: string | null;
   onConnected: () => void;
   onDisconnected: () => void;
+  role?: string;
 };
 
 export function PlatformConnect({
@@ -33,8 +35,10 @@ export function PlatformConnect({
   username,
   onConnected,
   onDisconnected,
+  role,
 }: PlatformConnectProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const isViewer = role === "VIEWER";
   const display = PLATFORM_CONFIG[platform] ?? {
     label: platform,
     icon: platform[0],
@@ -127,36 +131,46 @@ export function PlatformConnect({
             {username ?? "Unknown"}
           </p>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              className="ml-auto"
-              disabled={isLoading}
-              size="sm"
-              variant="secondary"
-            >
-              {isLoading && (
-                <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-              )}
-              Disconnect
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Disconnect {display.label}?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will remove your {display.label} connection. You will need
-                to reconnect to publish to this platform.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDisconnect}>
+        {isViewer ? (
+          <ReadOnlyButton
+            size="sm"
+            variant="secondary"
+            wrapperClassName="ml-auto"
+          >
+            Disconnect
+          </ReadOnlyButton>
+        ) : (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="ml-auto"
+                disabled={isLoading}
+                size="sm"
+                variant="secondary"
+              >
+                {isLoading && (
+                  <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                )}
                 Disconnect
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Disconnect {display.label}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove your {display.label} connection. You will
+                  need to reconnect to publish to this platform.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDisconnect}>
+                  Disconnect
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     );
   }
@@ -167,15 +181,21 @@ export function PlatformConnect({
         {display.icon}
       </span>
       <span className="text-muted-foreground text-sm">{display.label}</span>
-      <Button
-        className="ml-auto"
-        disabled={isLoading}
-        onClick={handleConnect}
-        size="sm"
-      >
-        {isLoading && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
-        Connect
-      </Button>
+      {isViewer ? (
+        <ReadOnlyButton size="sm" wrapperClassName="ml-auto">
+          Connect
+        </ReadOnlyButton>
+      ) : (
+        <Button
+          className="ml-auto"
+          disabled={isLoading}
+          onClick={handleConnect}
+          size="sm"
+        >
+          {isLoading && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
+          Connect
+        </Button>
+      )}
     </div>
   );
 }

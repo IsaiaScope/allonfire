@@ -7,6 +7,14 @@
     "gallery": "Galleria",
     "upload": "Carica",
     "settings": "Impostazioni",
+    "games": "Giochi",
+    "gallerySection": "Galleria",
+    "gamesSection": "Giochi",
+    "settingsSection": "Impostazioni",
+    "galleryDescription": "Sfoglia tutte le nostre foto insieme",
+    "uploadDescription": "Aggiungi nuove foto alla galleria",
+    "gamesDescription": "Giochi divertenti da fare insieme",
+    "settingsDescription": "Lingua, tema e account",
     "signOut": "Esci",
     "openMenu": "Apri menu",
     "appName": "Laura"
@@ -39,7 +47,7 @@
     "fullSizeAlt": "Foto a dimensione intera"
   },
   "Error": {
-    "title": "Qualcosa \u00e8 andato storto",
+    "title": "Qualcosa è andato storto",
     "retry": "Riprova"
   },
   "NotFound": {
@@ -52,8 +60,8 @@
     "signIn": "Accedi",
     "signingIn": "Accesso in corso...",
     "welcome": "Benvenuto",
-    "emailRequired": "L'email \u00e8 obbligatoria",
-    "passwordRequired": "La password \u00e8 obbligatoria",
+    "emailRequired": "L'email è obbligatoria",
+    "passwordRequired": "La password è obbligatoria",
     "loginFailed": "Accesso fallito",
     "accessDenied": "Non hai accesso a questa applicazione. Contatta un amministratore.",
     "showPassword": "Mostra password",
@@ -65,6 +73,15 @@
     "language": "Lingua",
     "languageDescription": "Scegli la lingua dell'interfaccia",
     "italian": "Italiano",
-    "english": "English"
+    "english": "English",
+    "appearance": "Aspetto",
+    "appearanceDescription": "Passa tra tema chiaro e scuro",
+    "userInfo": "Account",
+    "role": "Ruolo",
+    "appAccess": "Accesso app"
+  },
+  "Games": {
+    "title": "Giochi",
+    "comingSoon": "I giochi stanno arrivando! Resta sintonizzato."
   }
 }

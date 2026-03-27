@@ -14,11 +14,11 @@ export default async function DashboardLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const { session } = await checkAppAccess(auth, "laura");
+  await checkAppAccess(auth, "laura");
 
   return (
     <Wrapper className="flex h-dvh flex-col overflow-hidden" tag="div">
-      <TopBar userName={session.user.name} />
+      <TopBar />
       <Wrapper className="flex-1 overflow-y-auto" tag="main">
         <div className="mx-auto max-w-6xl p-4 md:p-8">{children}</div>
       </Wrapper>

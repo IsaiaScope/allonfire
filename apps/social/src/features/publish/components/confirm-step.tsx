@@ -4,6 +4,7 @@ import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { Card } from "@allonfire/ui/components/card";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import { PLATFORM_CONFIG } from "../constants/platforms";
 import type { usePublishWizard } from "../hooks/use-publish-wizard";
 
@@ -13,9 +14,16 @@ type ConfirmStepProps = {
   state: PublishWizardState;
   onPublish: () => void;
   onBack: () => void;
+  role?: string;
 };
 
-export function ConfirmStep({ state, onPublish, onBack }: ConfirmStepProps) {
+export function ConfirmStep({
+  state,
+  onPublish,
+  onBack,
+  role,
+}: ConfirmStepProps) {
+  const isViewer = role === "VIEWER";
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <Card className="p-6">
@@ -43,18 +51,25 @@ export function ConfirmStep({ state, onPublish, onBack }: ConfirmStepProps) {
           <ArrowLeft className="mr-1.5 size-4" />
           Back
         </Button>
-        <Button
-          className="w-full sm:w-auto"
-          disabled={state.loadingPhase === "publishing"}
-          onClick={onPublish}
-        >
-          {state.loadingPhase === "publishing" ? (
-            <Loader2 className="mr-1.5 size-4 animate-spin" />
-          ) : (
+        {isViewer ? (
+          <ReadOnlyButton className="w-full sm:w-auto">
             <Send className="mr-1.5 size-4" />
-          )}
-          Publish
-        </Button>
+            Publish
+          </ReadOnlyButton>
+        ) : (
+          <Button
+            className="w-full sm:w-auto"
+            disabled={state.loadingPhase === "publishing"}
+            onClick={onPublish}
+          >
+            {state.loadingPhase === "publishing" ? (
+              <Loader2 className="mr-1.5 size-4 animate-spin" />
+            ) : (
+              <Send className="mr-1.5 size-4" />
+            )}
+            Publish
+          </Button>
+        )}
       </div>
     </div>
   );

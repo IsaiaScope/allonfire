@@ -1,9 +1,13 @@
 import { LoginForm } from "@allonfire/auth/components/login-form";
+import { checkUserAppAccess } from "@allonfire/database";
 import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
 import { Heart } from "lucide-react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 import { checkAppAccessAction } from "@/actions/check-access";
+import { auth } from "@/lib/auth";
 
 export default async function LoginPage({
   params,
@@ -12,6 +16,14 @@ export default async function LoginPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) {
+    const hasAccess = await checkUserAppAccess(session.user.id, "laura");
+    if (hasAccess) {
+      redirect("/");
+    }
+  }
 
   const t = await getTranslations("Auth");
 

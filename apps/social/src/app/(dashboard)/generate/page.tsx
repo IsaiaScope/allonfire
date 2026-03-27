@@ -1,10 +1,14 @@
+import { checkAppAccess } from "@allonfire/auth/guard";
 import { getSelectedTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { GenerateClient } from "@/features/generation/components/generate-client";
+import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
+import { auth } from "@/lib/auth";
 
 export default async function GeneratePage() {
+  const { user } = await checkAppAccess(auth, "social");
   const initialData = await getSelectedTopicsPaginated();
   const totalCount = initialData.totalCount ?? 0;
 
@@ -32,6 +36,8 @@ export default async function GeneratePage() {
         </p>
       </div>
 
+      {user.role === "VIEWER" && <ViewerBanner />}
+
       {totalCount === 0 ? (
         <EmptyState
           description="Select topics from the Discover page to queue them for prompt generation."
@@ -39,7 +45,7 @@ export default async function GeneratePage() {
           title="No topics selected"
         />
       ) : (
-        <GenerateClient initialData={initialData} />
+        <GenerateClient initialData={initialData} role={user.role} />
       )}
     </div>
   );

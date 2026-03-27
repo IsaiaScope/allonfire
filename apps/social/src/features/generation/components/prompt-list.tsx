@@ -9,9 +9,10 @@ import { PromptCard } from "./prompt-card";
 
 type PromptListProps = {
   prompts: Prompt[];
+  role?: string;
 };
 
-export function PromptList({ prompts }: PromptListProps) {
+export function PromptList({ prompts, role }: PromptListProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -33,7 +34,12 @@ export function PromptList({ prompts }: PromptListProps) {
   return (
     <div className="space-y-3">
       {prompts.map((prompt) => (
-        <PromptCard key={prompt.id} onAction={handleAction} prompt={prompt} />
+        <PromptCard
+          key={prompt.id}
+          onAction={handleAction}
+          prompt={prompt}
+          role={role}
+        />
       ))}
     </div>
   );

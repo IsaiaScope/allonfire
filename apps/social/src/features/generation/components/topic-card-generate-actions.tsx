@@ -5,6 +5,7 @@ import { CollapsibleTrigger } from "@allonfire/ui/components/collapsible";
 import { ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import { deleteTopicAction } from "@/features/topics/actions/topics";
 import { DeleteTopicDialog } from "@/features/topics/components/delete-topic-dialog";
 import type { TopicCardActionProps } from "@/features/topics/components/topic-card";
@@ -13,16 +14,19 @@ import { triggerGenerationAction } from "../actions/generate";
 
 type GenerateActionsProps = TopicCardActionProps & {
   onAction: () => void;
+  role?: string;
 };
 
 export function GenerateActions({
   isClamped,
   onAction,
   open,
+  role,
   topic,
 }: GenerateActionsProps) {
   const [generatePending, startGenerateTransition] = useTransition();
   const [deletePending, startDeleteTransition] = useTransition();
+  const isViewer = role === "VIEWER";
 
   function handleGenerate() {
     startGenerateTransition(async () => {
@@ -57,27 +61,35 @@ export function GenerateActions({
 
   return (
     <>
-      <Button
-        className="px-3 py-2"
-        disabled={generatePending}
-        onClick={handleGenerate}
-        size="xs"
-        variant="default"
-      >
-        {generatePending ? (
-          <>
-            <Loader2 className="size-3 animate-spin" />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Sparkles className="size-3" />
-            Generate
-          </>
-        )}
-      </Button>
+      {isViewer ? (
+        <ReadOnlyButton className="px-3 py-2" size="xs" variant="default">
+          <Sparkles className="size-3" />
+          Generate
+        </ReadOnlyButton>
+      ) : (
+        <Button
+          className="px-3 py-2"
+          disabled={generatePending}
+          onClick={handleGenerate}
+          size="xs"
+          variant="default"
+        >
+          {generatePending ? (
+            <>
+              <Loader2 className="size-3 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="size-3" />
+              Generate
+            </>
+          )}
+        </Button>
+      )}
       <DeleteTopicDialog
         deletePending={deletePending}
+        disabled={isViewer}
         onDelete={handleDelete}
         topic={topic}
       />

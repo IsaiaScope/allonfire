@@ -7,6 +7,14 @@
     "gallery": "Gallery",
     "upload": "Upload",
     "settings": "Settings",
+    "games": "Games",
+    "gallerySection": "Gallery",
+    "gamesSection": "Games",
+    "settingsSection": "Settings",
+    "galleryDescription": "Browse all our photos together",
+    "uploadDescription": "Add new photos to the gallery",
+    "gamesDescription": "Fun games to play together",
+    "settingsDescription": "Language, theme, and account",
     "signOut": "Sign out",
     "openMenu": "Open menu",
     "appName": "Laura"
@@ -65,6 +73,15 @@
     "language": "Language",
     "languageDescription": "Choose the interface language",
     "italian": "Italiano",
-    "english": "English"
+    "english": "English",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark theme",
+    "userInfo": "Account",
+    "role": "Role",
+    "appAccess": "App access"
+  },
+  "Games": {
+    "title": "Games",
+    "comingSoon": "Games are coming soon! Stay tuned."
   }
 }

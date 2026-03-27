@@ -6,17 +6,23 @@ import { Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import { parseErrorMessage } from "@/lib/parse-error-message";
 import { triggerGenerationAction } from "../actions/generate";
 
 type GeneratePromptButtonProps = {
   topicId: string;
+  role?: string;
 };
 
-export function GeneratePromptButton({ topicId }: GeneratePromptButtonProps) {
+export function GeneratePromptButton({
+  topicId,
+  role,
+}: GeneratePromptButtonProps) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const isViewer = role === "VIEWER";
 
   function handleGenerate() {
     startTransition(async () => {
@@ -32,6 +38,15 @@ export function GeneratePromptButton({ topicId }: GeneratePromptButtonProps) {
       router.refresh();
       queryClient.invalidateQueries({ queryKey: ["generate-topics"] });
     });
+  }
+
+  if (isViewer) {
+    return (
+      <ReadOnlyButton size="xs">
+        <Sparkles className="size-4" />
+        Generate prompt
+      </ReadOnlyButton>
+    );
   }
 
   return (

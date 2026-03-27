@@ -14,18 +14,30 @@ import {
 } from "@allonfire/ui/components/alert-dialog";
 import { Button } from "@allonfire/ui/components/button";
 import { Trash2 } from "lucide-react";
+import { ReadOnlyButton } from "@/components/read-only-button";
 
 type DeleteTopicDialogProps = {
   deletePending: boolean;
+  disabled?: boolean;
   onDelete: () => void;
   topic: Topic;
 };
 
 export function DeleteTopicDialog({
   deletePending,
+  disabled,
   onDelete,
   topic,
 }: DeleteTopicDialogProps) {
+  if (disabled) {
+    return (
+      <ReadOnlyButton className="px-3 py-2" size="xs" variant="destructive">
+        <Trash2 className="size-3" />
+        Delete
+      </ReadOnlyButton>
+    );
+  }
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>

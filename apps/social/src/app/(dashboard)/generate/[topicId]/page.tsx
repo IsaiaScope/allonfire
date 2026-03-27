@@ -1,3 +1,4 @@
+import { checkAppAccess } from "@allonfire/auth/guard";
 import { getTopicWithPrompts } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
@@ -6,10 +7,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GeneratePromptButton } from "@/features/generation/components/generate-prompt-button";
 import { PromptList } from "@/features/generation/components/prompt-list";
+import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
 import {
   formatCategory,
   getCategoryColor,
 } from "@/features/topics/components/topic-utils";
+import { auth } from "@/lib/auth";
 
 type TopicDetailPageProps = {
   params: Promise<{ topicId: string }>;
@@ -18,6 +21,7 @@ type TopicDetailPageProps = {
 export default async function TopicDetailPage({
   params,
 }: TopicDetailPageProps) {
+  const { user } = await checkAppAccess(auth, "social");
   const { topicId } = await params;
   const topic = await getTopicWithPrompts(topicId);
 
@@ -27,6 +31,7 @@ export default async function TopicDetailPage({
 
   return (
     <div className="space-y-3 md:space-y-5">
+      {user.role === "VIEWER" && <ViewerBanner />}
       <div>
         <div className="mb-2 md:mb-4">
           <Button asChild size="sm" variant="ghost">
@@ -82,10 +87,10 @@ export default async function TopicDetailPage({
             </span>
           )}
         </h2>
-        <GeneratePromptButton topicId={topic.id} />
+        <GeneratePromptButton role={user.role} topicId={topic.id} />
       </div>
 
-      <PromptList prompts={topic.prompts} />
+      <PromptList prompts={topic.prompts} role={user.role} />
     </div>
   );
 }

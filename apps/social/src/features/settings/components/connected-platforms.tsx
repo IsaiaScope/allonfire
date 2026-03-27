@@ -7,7 +7,7 @@ import { PlatformConnect } from "@/features/publish/components/platform-connect"
 import { platformEnum } from "@/features/publish/constants/platforms";
 import type { ConnectedAccount } from "@/features/publish/types/publish-types";
 
-export function ConnectedPlatforms() {
+export function ConnectedPlatforms({ role }: { role?: string }) {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
 
   const fetchAccounts = useCallback(async () => {
@@ -35,6 +35,7 @@ export function ConnectedPlatforms() {
               onConnected={fetchAccounts}
               onDisconnected={fetchAccounts}
               platform={platform}
+              role={role}
               username={account?.platformUsername}
             />
           </div>

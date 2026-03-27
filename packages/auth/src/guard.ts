@@ -1,9 +1,13 @@
 import { prisma } from "@allonfire/database";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { Auth } from "./server";
 
-export async function checkAppAccess(auth: Auth, appName: string) {
+export const checkAppAccess = cache(async function checkAppAccess(
+  auth: Auth,
+  appName: string
+) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -22,4 +26,4 @@ export async function checkAppAccess(auth: Auth, appName: string) {
   }
 
   return { session, user };
-}
+});

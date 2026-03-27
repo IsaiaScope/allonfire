@@ -30,39 +30,32 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { ReadOnlyButton } from "@/components/read-only-button";
 import { parseErrorMessage } from "@/lib/parse-error-message";
-import {
-  deletePromptAction,
-  ratePromptAction,
-  updateNoteAction,
-} from "../actions/prompt";
+import { deletePromptAction, ratePromptAction } from "../actions/prompt";
+import { PromptNoteEditor } from "./prompt-note-editor";
 
 type PromptCardProps = {
   onAction: () => void;
   prompt: Prompt;
+  role?: string;
 };
 
-export function PromptCard({ onAction, prompt }: PromptCardProps) {
+export function PromptCard({ onAction, prompt, role }: PromptCardProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentRating, setCurrentRating] = useState<PromptRating | null>(
     prompt.rating
   );
-  const [note, setNote] = useState(prompt.ratingNote ?? "");
   const [deletePending, startDeleteTransition] = useTransition();
   const [ratePending, startRateTransition] = useTransition();
-  const [notePending, startNoteTransition] = useTransition();
-  const [noteSaved, setNoteSaved] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const noteTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const isViewer = role === "VIEWER";
 
   useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
         clearTimeout(copyTimeoutRef.current);
-      }
-      if (noteTimeoutRef.current) {
-        clearTimeout(noteTimeoutRef.current);
       }
     };
   }, []);
@@ -98,40 +91,6 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
         setCurrentRating(rating);
       } else {
         toast.error("Failed to rate prompt", {
-          description: parseErrorMessage(
-            result.error ?? "An unexpected error occurred."
-          ),
-        });
-      }
-    });
-  }
-
-  function handleSaveNote() {
-    startNoteTransition(async () => {
-      const result = await updateNoteAction(prompt.id, note);
-      if (result.success) {
-        setNoteSaved(true);
-        if (noteTimeoutRef.current) {
-          clearTimeout(noteTimeoutRef.current);
-        }
-        noteTimeoutRef.current = setTimeout(() => setNoteSaved(false), 2000);
-      } else {
-        toast.error("Failed to save note", {
-          description: parseErrorMessage(
-            result.error ?? "An unexpected error occurred."
-          ),
-        });
-      }
-    });
-  }
-
-  function handleDeleteNote() {
-    startNoteTransition(async () => {
-      const result = await updateNoteAction(prompt.id, "");
-      if (result.success) {
-        setNote("");
-      } else {
-        toast.error("Failed to delete note", {
           description: parseErrorMessage(
             result.error ?? "An unexpected error occurred."
           ),
@@ -187,32 +146,38 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                   <Copy className="size-3.5" />
                 )}
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    disabled={deletePending}
-                    size="icon-sm"
-                    variant="ghost"
-                  >
-                    <Trash2 className="size-3.5 text-destructive" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this prompt?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete this generated prompt. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      {deletePending ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {isViewer ? (
+                <ReadOnlyButton size="icon-sm" variant="ghost">
+                  <Trash2 className="size-3.5 text-destructive" />
+                </ReadOnlyButton>
+              ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      disabled={deletePending}
+                      size="icon-sm"
+                      variant="ghost"
+                    >
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this prompt?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete this generated prompt. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        {deletePending ? "Deleting..." : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -231,7 +196,7 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                       ? "bg-green-600 text-white hover:bg-green-700"
                       : "bg-green-600/10 text-green-600 hover:bg-green-600/20 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20"
                   }
-                  disabled={ratePending}
+                  disabled={isViewer || ratePending}
                   onClick={() => handleRate("POSITIVE")}
                   size="icon-sm"
                   variant={
@@ -246,7 +211,7 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                       ? "bg-red-600 text-white hover:bg-red-700"
                       : "bg-red-600/10 text-red-600 hover:bg-red-600/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                   }
-                  disabled={ratePending}
+                  disabled={isViewer || ratePending}
                   onClick={() => handleRate("NEGATIVE")}
                   size="icon-sm"
                   variant={
@@ -269,48 +234,12 @@ export function PromptCard({ onAction, prompt }: PromptCardProps) {
                 )}
               </Button>
             </div>
-            <div className="mt-3 flex flex-col gap-2">
-              <textarea
-                className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                maxLength={500}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a note about this prompt..."
-                value={note}
-              />
-              <div className="flex items-center gap-2">
-                <Button
-                  className={
-                    noteSaved
-                      ? "bg-green-600 text-white hover:bg-green-700"
-                      : ""
-                  }
-                  disabled={notePending || !note}
-                  onClick={handleSaveNote}
-                  size="xs"
-                  variant="default"
-                >
-                  {noteSaved && (
-                    <>
-                      <Check className="size-3" />
-                      Saved
-                    </>
-                  )}
-                  {!noteSaved && (notePending ? "Saving..." : "Save Note")}
-                </Button>
-                {note && (
-                  <Button
-                    className="ml-auto"
-                    disabled={notePending}
-                    onClick={handleDeleteNote}
-                    size="xs"
-                    variant="destructive"
-                  >
-                    <Trash2 className="size-3" />
-                    Delete Note
-                  </Button>
-                )}
-              </div>
-            </div>
+            <PromptNoteEditor
+              disabled={isViewer}
+              initialNote={prompt.ratingNote ?? ""}
+              onAction={onAction}
+              promptId={prompt.id}
+            />
           </CardContent>
         </CollapsibleContent>
       </Card>

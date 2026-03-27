@@ -31,6 +31,7 @@ type PlatformsStepProps = {
   onRefreshAccounts: () => void;
   onNext: () => void;
   onBack: () => void;
+  role?: string;
 };
 
 export function PlatformsStep({
@@ -41,6 +42,7 @@ export function PlatformsStep({
   onRefreshAccounts,
   onNext,
   onBack,
+  role,
 }: PlatformsStepProps) {
   const hasSelectedPlatforms = state.selectedPlatforms.length > 0;
 
@@ -101,6 +103,7 @@ export function PlatformsStep({
                     onConnected={onRefreshAccounts}
                     onDisconnected={onRefreshAccounts}
                     platform={key}
+                    role={role}
                     username={account?.platformUsername}
                   />
                 ) : (

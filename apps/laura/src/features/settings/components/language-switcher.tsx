@@ -22,12 +22,9 @@ export function LanguageSwitcher() {
 
   return (
     <div className="space-y-3">
-      <div>
-        <h3 className="font-medium text-base">{t("language")}</h3>
-        <p className="text-muted-foreground text-sm">
-          {t("languageDescription")}
-        </p>
-      </div>
+      <p className="text-muted-foreground text-sm">
+        {t("languageDescription")}
+      </p>
       <div className="flex gap-2">
         {locales.map((l) => (
           <Button
