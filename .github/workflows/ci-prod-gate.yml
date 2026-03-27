@@ -5,9 +5,10 @@ on:
 
 jobs:
   verify-source:
+    name: Verify Source Branch
     runs-on: ubuntu-latest
     steps:
-      - name: Verify PR comes from test branch
+      - name: Ensure PR comes from test branch
         run: |
           if [ "${{ github.head_ref }}" != "test" ]; then
             echo "❌ PRs to prod must come from the 'test' branch."

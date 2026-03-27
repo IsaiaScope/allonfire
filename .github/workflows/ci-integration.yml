@@ -3,8 +3,13 @@ on:
   pull_request:
     branches: [dev, test]
 
+concurrency:
+  group: ci-integration-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-integration:
+    name: Integration Tests
     runs-on: ubuntu-latest
     environment: dev
     services:
@@ -28,13 +33,22 @@ jobs:
       N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
       ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm db:generate
-      - run: pnpm db:push
-      - run: pnpm turbo run test
+      - name: Turbo Cache
+        uses: rharkor/caching-for-turbo@v2.2.1
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm db:generate
+      - name: Push schema to database
+        run: pnpm db:push
+      - name: Run tests
+        run: pnpm turbo run test
