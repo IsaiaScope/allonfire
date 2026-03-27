@@ -1,0 +1,70 @@
+{
+  "Metadata": {
+    "title": "Laura",
+    "description": "La nostra galleria fotografica"
+  },
+  "Nav": {
+    "gallery": "Galleria",
+    "upload": "Carica",
+    "settings": "Impostazioni",
+    "signOut": "Esci",
+    "openMenu": "Apri menu",
+    "appName": "Laura"
+  },
+  "Gallery": {
+    "title": "Galleria",
+    "subtitle": "Le nostre foto insieme",
+    "allLoaded": "Tutte le foto caricate"
+  },
+  "GalleryEmpty": {
+    "title": "Nessuna foto",
+    "subtitle": "Carica le tue prime foto per iniziare",
+    "uploadButton": "Carica foto"
+  },
+  "Upload": {
+    "title": "Carica foto",
+    "subtitle": "Aggiungi nuove foto alla galleria",
+    "dropzone": "Trascina qui le foto o clicca per sfogliare",
+    "fileTypes": "PNG, JPEG o WebP fino a 10MB ciascuno",
+    "selectedCount": "{count, plural, =1 {1 foto selezionata} other {# foto selezionate}}",
+    "uploadButton": "Carica",
+    "uploading": "Caricamento...",
+    "successToast": "{count, plural, =1 {Caricata 1 foto} other {Caricate # foto}}",
+    "errorToast": "Caricamento fallito",
+    "remove": "Rimuovi {name}"
+  },
+  "PhotoPreview": {
+    "ariaLabel": "Anteprima foto",
+    "closeLabel": "Chiudi anteprima",
+    "fullSizeAlt": "Foto a dimensione intera"
+  },
+  "Error": {
+    "title": "Qualcosa \u00e8 andato storto",
+    "retry": "Riprova"
+  },
+  "NotFound": {
+    "title": "Pagina non trovata",
+    "goHome": "Torna alla home"
+  },
+  "Auth": {
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "signIn": "Accedi",
+    "signingIn": "Accesso in corso...",
+    "welcome": "Benvenuto",
+    "emailRequired": "L'email \u00e8 obbligatoria",
+    "passwordRequired": "La password \u00e8 obbligatoria",
+    "loginFailed": "Accesso fallito",
+    "accessDenied": "Non hai accesso a questa applicazione. Contatta un amministratore.",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password",
+    "subtitle": "Accedi al nostro sito Spinny"
+  },
+  "Settings": {
+    "title": "Impostazioni",
+    "language": "Lingua",
+    "languageDescription": "Scegli la lingua dell'interfaccia",
+    "italian": "Italiano",
+    "english": "English"
+  }
+}

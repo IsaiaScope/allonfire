@@ -10,8 +10,8 @@ import {
 } from "@allonfire/ui/components/sheet";
 import { cn } from "@allonfire/ui/lib/utils";
 import { Heart, LogOut } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 import { navItems } from "./nav-links";
 
 type MobileNavProps = {
@@ -22,6 +22,7 @@ type MobileNavProps = {
 
 export function MobileNav({ open, onClose, userName }: MobileNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("Nav");
 
   return (
     <Sheet onOpenChange={(v) => !v && onClose()} open={open}>
@@ -29,7 +30,7 @@ export function MobileNav({ open, onClose, userName }: MobileNavProps) {
         <SheetHeader className="px-4 pb-4">
           <SheetTitle className="flex items-center gap-2">
             <Heart className="size-5 text-primary" />
-            Laura
+            {t("appName")}
           </SheetTitle>
         </SheetHeader>
 
@@ -50,7 +51,7 @@ export function MobileNav({ open, onClose, userName }: MobileNavProps) {
               >
                 <Link href={item.href}>
                   <item.icon className="size-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </Button>
             );
@@ -67,7 +68,7 @@ export function MobileNav({ open, onClose, userName }: MobileNavProps) {
             variant="ghost"
           >
             <LogOut className="size-4" />
-            Sign out
+            {t("signOut")}
           </Button>
         </div>
       </SheetContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Role } from "@allonfire/database";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +28,7 @@ type User = {
   email: string;
   id: string;
   name: string | null;
-  role: "ADMIN" | "USER";
+  role: Role;
   allowedApps: string[];
 };
 
@@ -67,9 +68,9 @@ function UserRow({
     .join("");
 
   return (
-    <div className="flex items-center justify-between rounded-md border px-4 py-3 transition-colors hover:bg-muted/50">
+    <div className="flex items-center justify-between rounded-md border px-3 py-2 transition-colors hover:bg-muted/50">
       <Link
-        className="flex min-w-0 flex-1 items-center gap-3"
+        className="flex min-w-0 flex-1 items-center gap-2.5"
         href={`/admin/users/${user.id}`}
       >
         <Avatar className="size-8 shrink-0">
@@ -78,21 +79,27 @@ function UserRow({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate font-medium text-sm">
               {user.name ?? user.email}
             </span>
             {isCurrentUser && (
-              <Badge className="px-1.5 py-0 text-[10px]" variant="secondary">
+              <Badge
+                className="shrink-0 px-1.5 py-0 text-[10px]"
+                variant="secondary"
+              >
                 You
               </Badge>
             )}
             <Badge
-              className="px-1.5 py-0 text-[10px]"
+              className="shrink-0 px-1.5 py-0 text-[10px]"
               variant={user.role === "ADMIN" ? "default" : "outline"}
             >
               {user.role}
             </Badge>
+          </div>
+          <p className="truncate text-muted-foreground text-xs">{user.email}</p>
+          <div className="mt-1 flex flex-wrap gap-1">
             {user.allowedApps.map((app) => (
               <Badge
                 className="px-1.5 py-0 text-[10px]"
@@ -103,11 +110,10 @@ function UserRow({
               </Badge>
             ))}
           </div>
-          <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
       </Link>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center">
         <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
           <Button
             className="cursor-pointer disabled:pointer-events-auto disabled:cursor-not-allowed"

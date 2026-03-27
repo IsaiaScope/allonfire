@@ -175,7 +175,7 @@ function ActionButtons({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button disabled={isBusy || !hasKey} onClick={onSave}>
+      <Button disabled={isBusy || !hasKey} onClick={onSave} size="sm">
         {saving ? (
           <Loader2 className="size-3.5 animate-spin" />
         ) : (
@@ -185,7 +185,12 @@ function ActionButtons({
       </Button>
 
       {existingId && (
-        <Button disabled={isBusy} onClick={onTest} variant="secondary">
+        <Button
+          disabled={isBusy}
+          onClick={onTest}
+          size="sm"
+          variant="secondary"
+        >
           {testing ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
@@ -196,7 +201,12 @@ function ActionButtons({
       )}
 
       {existingId && !isActive && (
-        <Button disabled={isBusy} onClick={onActivate} variant="secondary">
+        <Button
+          disabled={isBusy}
+          onClick={onActivate}
+          size="sm"
+          variant="secondary"
+        >
           {activating ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
@@ -211,6 +221,7 @@ function ActionButtons({
           <Button
             disabled={isBusy}
             onClick={() => setConfirmOpen(true)}
+            size="sm"
             variant="ghost"
           >
             {deleting ? (

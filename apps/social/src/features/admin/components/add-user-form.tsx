@@ -1,8 +1,8 @@
 "use client";
 
+import type { Role } from "@allonfire/database";
 import { useMounted } from "@allonfire/hooks/use-mounted";
 import { Button } from "@allonfire/ui/components/button";
-import { Checkbox } from "@allonfire/ui/components/checkbox";
 import { Input } from "@allonfire/ui/components/input";
 import { Label } from "@allonfire/ui/components/label";
 import {
@@ -17,12 +17,12 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { parseErrorMessage } from "@/lib/parse-error-message";
 import { createUserAction } from "../actions/users";
-import { ALL_APPS } from "../constants/apps";
+import { AppAccessSelect } from "./app-access-select";
 
 export function AddUserForm() {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<"ADMIN" | "USER">("USER");
+  const [role, setRole] = useState<Role>("USER");
   const [allowedApps, setAllowedApps] = useState<string[]>(["all"]);
   const mounted = useMounted();
   const formRef = useRef<HTMLFormElement>(null);
@@ -61,8 +61,8 @@ export function AddUserForm() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4" ref={formRef}>
-      <div className="space-y-2">
+    <form action={handleSubmit} className="space-y-3" ref={formRef}>
+      <div className="space-y-1.5">
         <Label htmlFor="name">Name</Label>
         <Input
           autoComplete="name"
@@ -72,7 +72,7 @@ export function AddUserForm() {
           required
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="email">Email</Label>
         <Input
           autoComplete="email"
@@ -83,7 +83,7 @@ export function AddUserForm() {
           type="email"
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="password">Password</Label>
         <Input
           autoComplete="new-password"
@@ -95,60 +95,46 @@ export function AddUserForm() {
           type="password"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="role">Role</Label>
-        {mounted ? (
-          <Select
-            name="role"
-            onValueChange={(v) => setRole(v as "ADMIN" | "USER")}
-            value={role}
-          >
-            <SelectTrigger id="role">
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="USER">User</SelectItem>
-              <SelectItem value="ADMIN">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-        ) : (
-          <button
-            className="flex h-9 w-fit items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-muted-foreground text-sm shadow-xs disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30"
-            disabled
-            id="role"
-            type="button"
-          >
-            <Loader2 className="size-3.5 animate-spin" />
-            Loading...
-          </button>
-        )}
-      </div>
 
-      <div className="space-y-2">
-        <Label>App Access</Label>
-        <div className="space-y-2">
-          {ALL_APPS.map((app) => (
-            <label
-              className="flex cursor-pointer items-center gap-3"
-              htmlFor={`app-${app.id}`}
-              key={app.id}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex-1 space-y-1.5">
+          <Label htmlFor="role">Role</Label>
+          {mounted ? (
+            <Select
+              name="role"
+              onValueChange={(v) => setRole(v as Role)}
+              value={role}
             >
-              <Checkbox
-                checked={allowedApps.includes(app.id)}
-                id={`app-${app.id}`}
-                onCheckedChange={(checked) =>
-                  handleAppToggle(app.id, checked === true)
-                }
-              />
-              <span className="text-sm">{app.label}</span>
-            </label>
-          ))}
+              <SelectTrigger className="w-full" id="role">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USER">User</SelectItem>
+                <SelectItem value="ADMIN">Admin</SelectItem>
+                <SelectItem value="VIEWER">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-muted-foreground text-sm shadow-xs dark:bg-input/30">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading...
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 space-y-1.5">
+          <Label>App Access</Label>
+          <AppAccessSelect
+            idPrefix="add-app"
+            onToggle={handleAppToggle}
+            value={allowedApps}
+          />
         </div>
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
-      <Button disabled={pending} type="submit">
+      <Button className="mt-1" disabled={pending} type="submit">
         {pending ? (
           <>
             <Loader2 className="size-3.5 animate-spin" />

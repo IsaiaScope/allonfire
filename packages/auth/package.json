@@ -8,6 +8,7 @@
     "./client": "./src/client.ts",
     "./route": "./src/route.ts",
     "./guard": "./src/guard.ts",
+    "./actions/check-access": "./src/actions/check-access.ts",
     "./env": "./src/env.ts",
     "./components/login-form": "./src/components/login-form.tsx",
     "./components/theme-provider": "./src/components/theme-provider.tsx",

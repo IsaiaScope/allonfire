@@ -1,13 +1,19 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
 import { Wrapper } from "@allonfire/ui/components/wrapper";
+import { setRequestLocale } from "next-intl/server";
 import { TopBar } from "@/features/layout/components/top-bar";
 import { auth } from "@/lib/auth";
 
 export default async function DashboardLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const { session } = await checkAppAccess(auth, "laura");
 
   return (

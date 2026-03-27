@@ -2,6 +2,7 @@
 
 import { cn } from "@allonfire/ui/lib/utils";
 import { Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
 
 type UploadDropzoneProps = {
@@ -14,6 +15,7 @@ const ACCEPTED_TYPES = "image/png,image/jpeg,image/webp";
 export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("Upload");
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -66,12 +68,8 @@ export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
     >
       <Upload className="size-10 text-muted-foreground" />
       <div className="text-center">
-        <p className="font-medium text-base">
-          Drop photos here or click to browse
-        </p>
-        <p className="mt-1 text-muted-foreground text-sm">
-          PNG, JPEG, or WebP up to 10MB each
-        </p>
+        <p className="font-medium text-base">{t("dropzone")}</p>
+        <p className="mt-1 text-muted-foreground text-sm">{t("fileTypes")}</p>
       </div>
       <input
         accept={ACCEPTED_TYPES}

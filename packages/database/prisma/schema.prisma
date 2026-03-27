@@ -71,6 +71,7 @@ model Post {
 enum Role {
   ADMIN
   USER
+  VIEWER
 }
 
 model User {

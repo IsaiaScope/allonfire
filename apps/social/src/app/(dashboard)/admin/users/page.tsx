@@ -20,7 +20,7 @@ export default async function AdminUsersPage() {
   ]);
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export default async function AdminUsersPage() {
             Create a new account and assign a role.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <AddUserForm />
         </CardContent>
       </Card>
@@ -49,7 +49,7 @@ export default async function AdminUsersPage() {
             access.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <UserList currentUserId={session?.user.id ?? ""} users={users} />
         </CardContent>
       </Card>

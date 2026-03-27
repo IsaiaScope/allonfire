@@ -2,6 +2,7 @@
 
 import { Button } from "@allonfire/ui/components/button";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type UploadPreviewGridProps = {
   files: File[];
@@ -14,6 +15,8 @@ export function UploadPreviewGrid({
   previewUrls,
   onRemove,
 }: UploadPreviewGridProps) {
+  const t = useTranslations("Upload");
+
   if (files.length === 0) {
     return null;
   }
@@ -36,7 +39,7 @@ export function UploadPreviewGrid({
             variant="destructive"
           >
             <X className="size-3" />
-            <span className="sr-only">Remove {file.name}</span>
+            <span className="sr-only">{t("remove", { name: file.name })}</span>
           </Button>
           <p className="mt-1 truncate text-muted-foreground text-xs">
             {file.name}

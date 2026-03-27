@@ -1,6 +1,7 @@
-import { Images, Upload } from "lucide-react";
+import { Images, Settings, Upload } from "lucide-react";
 
 export const navItems = [
-  { href: "/", label: "Gallery", icon: Images },
-  { href: "/upload", label: "Upload", icon: Upload },
+  { href: "/", labelKey: "gallery" as const, icon: Images },
+  { href: "/upload", labelKey: "upload" as const, icon: Upload },
+  { href: "/settings", labelKey: "settings" as const, icon: Settings },
 ] as const;

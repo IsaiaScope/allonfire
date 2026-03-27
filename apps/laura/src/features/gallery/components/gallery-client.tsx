@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { GalleryPage } from "@/features/gallery/actions/gallery";
 import { getPhotosAction } from "@/features/gallery/actions/gallery";
@@ -17,6 +18,7 @@ type GalleryClientProps = {
 export function GalleryClient({ initialData }: GalleryClientProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const { currentPhoto, openPreview, closePreview } = usePhotoPreview();
+  const t = useTranslations("Gallery");
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useInfiniteQuery({
@@ -30,13 +32,16 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
       },
     });
 
+  const canFetchRef = useRef(false);
+  canFetchRef.current = hasNextPage && !isFetchingNextPage;
+
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+      if (entries[0]?.isIntersecting && canFetchRef.current) {
         fetchNextPage();
       }
     },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
+    [fetchNextPage]
   );
 
   useEffect(() => {
@@ -79,7 +84,7 @@ export function GalleryClient({ initialData }: GalleryClientProps) {
           <Loader2 className="mx-auto size-6 animate-spin text-muted-foreground" />
         )}
         {!hasNextPage && allPhotos.length > 0 && (
-          <p className="text-muted-foreground text-sm">All photos loaded</p>
+          <p className="text-muted-foreground text-sm">{t("allLoaded")}</p>
         )}
       </div>
 

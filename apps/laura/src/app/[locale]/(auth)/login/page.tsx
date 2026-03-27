@@ -1,0 +1,45 @@
+import { LoginForm } from "@allonfire/auth/components/login-form";
+import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
+import { Heart } from "lucide-react";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Suspense } from "react";
+import { checkAppAccessAction } from "@/actions/check-access";
+
+export default async function LoginPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations("Auth");
+
+  return (
+    <Suspense>
+      <LoginForm
+        appName="laura"
+        checkAccess={checkAppAccessAction}
+        emailPlaceholder="laura@domain.com"
+        labels={{
+          emailLabel: t("emailLabel"),
+          passwordLabel: t("passwordLabel"),
+          signIn: t("signIn"),
+          signingIn: t("signingIn"),
+          welcome: t("welcome"),
+          emailRequired: t("emailRequired"),
+          passwordRequired: t("passwordRequired"),
+          loginFailed: t("loginFailed"),
+          accessDenied: t("accessDenied"),
+          showPassword: t("showPassword"),
+          hidePassword: t("hidePassword"),
+        }}
+        logoAlt="AllOnFire Laura"
+        logoSrc="/allonfire-laura-horizontal.svg"
+        subtitle={t("subtitle")}
+        successIcon={<Heart className="size-5 animate-pulse" />}
+        topRightSlot={<ThemeToggle />}
+      />
+    </Suspense>
+  );
+}

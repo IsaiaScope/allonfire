@@ -10,7 +10,6 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { checkAppAccessAction } from "../actions/check-access";
 import { authClient } from "../client";
 
 type LoginFields = {
@@ -18,24 +17,42 @@ type LoginFields = {
   password: string;
 };
 
+type LoginFormLabels = {
+  emailLabel?: string;
+  passwordLabel?: string;
+  signIn?: string;
+  signingIn?: string;
+  welcome?: string;
+  emailRequired?: string;
+  passwordRequired?: string;
+  loginFailed?: string;
+  accessDenied?: string;
+  showPassword?: string;
+  hidePassword?: string;
+};
+
 type LoginFormProps = {
   appName: string;
+  checkAccess: (appName: string) => Promise<boolean>;
   logoSrc: string;
   logoAlt: string;
   subtitle: string;
   emailPlaceholder?: string;
   successIcon?: React.ReactNode;
   topRightSlot?: React.ReactNode;
+  labels?: LoginFormLabels;
 };
 
 export function LoginForm({
   appName,
+  checkAccess,
   logoSrc,
   logoAlt,
   subtitle,
   emailPlaceholder = "you@example.com",
   successIcon = <Sparkles className="size-5 animate-pulse" />,
   topRightSlot,
+  labels,
 }: LoginFormProps) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
@@ -63,7 +80,7 @@ export function LoginForm({
       return (
         <>
           {successIcon}
-          Welcome
+          {labels?.welcome ?? "Welcome"}
         </>
       );
     }
@@ -71,13 +88,13 @@ export function LoginForm({
       return (
         <>
           <Loader2 className="size-5 animate-spin" />
-          Signing in...
+          {labels?.signingIn ?? "Signing in..."}
         </>
       );
     }
     return (
       <>
-        Sign in
+        {labels?.signIn ?? "Sign in"}
         <ArrowRight className="size-5 transition-transform duration-200 group-hover:translate-x-1" />
       </>
     );
@@ -93,15 +110,18 @@ export function LoginForm({
       });
 
       if (result.error) {
-        setServerError(result.error.message ?? "Login failed");
+        setServerError(
+          result.error.message ?? labels?.loginFailed ?? "Login failed"
+        );
         return;
       }
 
-      const hasAccess = await checkAppAccessAction(appName);
+      const hasAccess = await checkAccess(appName);
       if (!hasAccess) {
         await authClient.signOut();
         setServerError(
-          "You don't have access to this application. Contact an administrator."
+          labels?.accessDenied ??
+            "You don't have access to this application. Contact an administrator."
         );
         return;
       }
@@ -138,7 +158,7 @@ export function LoginForm({
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <Label className="text-base" htmlFor="email">
-                Email
+                {labels?.emailLabel ?? "Email"}
               </Label>
               <Input
                 autoComplete="username"
@@ -146,7 +166,9 @@ export function LoginForm({
                 id="email"
                 placeholder={emailPlaceholder}
                 type="email"
-                {...register("email", { required: "Email is required" })}
+                {...register("email", {
+                  required: labels?.emailRequired ?? "Email is required",
+                })}
               />
               {errors.email && (
                 <p className="text-base text-destructive">
@@ -157,7 +179,7 @@ export function LoginForm({
 
             <div className="space-y-3">
               <Label className="text-base" htmlFor="password">
-                Password
+                {labels?.passwordLabel ?? "Password"}
               </Label>
               <div className="relative">
                 <Input
@@ -166,11 +188,16 @@ export function LoginForm({
                   id="password"
                   type={showPassword ? "text" : "password"}
                   {...register("password", {
-                    required: "Password is required",
+                    required:
+                      labels?.passwordRequired ?? "Password is required",
                   })}
                 />
                 <button
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword
+                      ? (labels?.hidePassword ?? "Hide password")
+                      : (labels?.showPassword ?? "Show password")
+                  }
                   className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword((prev) => !prev)}
                   type="button"
@@ -207,8 +234,8 @@ export function LoginForm({
           </form>
           {accessDenied && !serverError && (
             <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-base text-destructive">
-              You don't have access to this application. Contact an
-              administrator.
+              {labels?.accessDenied ??
+                "You don't have access to this application. Contact an administrator."}
             </p>
           )}
         </CardContent>

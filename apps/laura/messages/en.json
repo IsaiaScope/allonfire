@@ -1,0 +1,70 @@
+{
+  "Metadata": {
+    "title": "Laura",
+    "description": "Our photo gallery"
+  },
+  "Nav": {
+    "gallery": "Gallery",
+    "upload": "Upload",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "appName": "Laura"
+  },
+  "Gallery": {
+    "title": "Gallery",
+    "subtitle": "Our photos together",
+    "allLoaded": "All photos loaded"
+  },
+  "GalleryEmpty": {
+    "title": "No photos yet",
+    "subtitle": "Upload your first photos to get started",
+    "uploadButton": "Upload Photos"
+  },
+  "Upload": {
+    "title": "Upload Photos",
+    "subtitle": "Add new photos to the gallery",
+    "dropzone": "Drop photos here or click to browse",
+    "fileTypes": "PNG, JPEG, or WebP up to 10MB each",
+    "selectedCount": "{count, plural, =1 {1 photo selected} other {# photos selected}}",
+    "uploadButton": "Upload",
+    "uploading": "Uploading...",
+    "successToast": "{count, plural, =1 {Uploaded 1 photo} other {Uploaded # photos}}",
+    "errorToast": "Upload failed",
+    "remove": "Remove {name}"
+  },
+  "PhotoPreview": {
+    "ariaLabel": "Photo preview",
+    "closeLabel": "Close preview",
+    "fullSizeAlt": "Full size photo"
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "retry": "Try again"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "goHome": "Go home"
+  },
+  "Auth": {
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "welcome": "Welcome",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "loginFailed": "Login failed",
+    "accessDenied": "You don't have access to this application. Contact an administrator.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "subtitle": "Sign in to our Spinny site"
+  },
+  "Settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Choose the interface language",
+    "italian": "Italiano",
+    "english": "English"
+  }
+}

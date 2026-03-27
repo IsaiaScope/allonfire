@@ -3,6 +3,7 @@
 import { Button } from "@allonfire/ui/components/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { uploadPhotosAction } from "@/features/upload/actions/upload";
@@ -15,6 +16,7 @@ export function UploadClient() {
   const [pending, startTransition] = useTransition();
   const queryClient = useQueryClient();
   const urlsRef = useRef<string[]>([]);
+  const t = useTranslations("Upload");
 
   useEffect(() => {
     urlsRef.current = previewUrls;
@@ -57,17 +59,12 @@ export function UploadClient() {
       const result = await uploadPhotosAction(formData);
 
       if (result.success) {
-        toast.success(
-          `Uploaded ${result.count} photo${result.count === 1 ? "" : "s"}`
-        );
-        for (const url of previewUrls) {
-          URL.revokeObjectURL(url);
-        }
+        toast.success(t("successToast", { count: result.count }));
         setFiles([]);
         setPreviewUrls([]);
         await queryClient.invalidateQueries({ queryKey: ["photos"] });
       } else {
-        toast.error(result.error ?? "Upload failed");
+        toast.error(result.error ?? t("errorToast"));
       }
     });
   }
@@ -85,18 +82,18 @@ export function UploadClient() {
       {files.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground text-sm">
-            {files.length} photo{files.length === 1 ? "" : "s"} selected
+            {t("selectedCount", { count: files.length })}
           </p>
           <Button disabled={pending} onClick={handleUpload}>
             {pending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Uploading...
+                {t("uploading")}
               </>
             ) : (
               <>
                 <Upload className="size-4" />
-                Upload
+                {t("uploadButton")}
               </>
             )}
           </Button>

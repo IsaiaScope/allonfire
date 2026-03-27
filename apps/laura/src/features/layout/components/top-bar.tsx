@@ -4,22 +4,23 @@ import { authClient } from "@allonfire/auth/client";
 import { Button } from "@allonfire/ui/components/button";
 import { cn } from "@allonfire/ui/lib/utils";
 import { Heart, LogOut, Menu } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { Link, usePathname } from "@/i18n/navigation";
 import { MobileNav } from "./mobile-nav";
 import { navItems } from "./nav-links";
 
 export function TopBar({ userName }: { userName?: string | null }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = useTranslations("Nav");
 
   return (
     <>
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-border border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Link className="flex items-center gap-2" href="/">
           <Heart className="size-5 text-primary" />
-          <span className="font-semibold text-lg">Laura</span>
+          <span className="font-semibold text-lg">{t("appName")}</span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -39,7 +40,7 @@ export function TopBar({ userName }: { userName?: string | null }) {
               >
                 <Link href={item.href}>
                   <item.icon className="size-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </Button>
             );
@@ -66,7 +67,7 @@ export function TopBar({ userName }: { userName?: string | null }) {
           variant="ghost"
         >
           <Menu className="size-5" />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">{t("openMenu")}</span>
         </Button>
       </header>
 
