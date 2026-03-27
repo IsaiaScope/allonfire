@@ -21,7 +21,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.2.1
+        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
@@ -65,7 +65,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.2.1
+        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
@@ -94,7 +94,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.2.1
+        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
