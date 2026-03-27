@@ -1,5 +1,6 @@
 "use client";
 
+import { authClient } from "@allonfire/auth/client";
 import { Avatar, AvatarFallback } from "@allonfire/ui/components/avatar";
 import { Button } from "@allonfire/ui/components/button";
 import {
@@ -13,7 +14,6 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
 
 export function UserMenu({
   email,

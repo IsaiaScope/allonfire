@@ -13,6 +13,7 @@
     "seed:clear": "tsx mock-data/seed.ts --clear"
   },
   "dependencies": {
+    "@allonfire/auth": "workspace:*",
     "@allonfire/content-generator": "workspace:*",
     "@allonfire/database": "workspace:*",
     "@allonfire/hooks": "workspace:*",

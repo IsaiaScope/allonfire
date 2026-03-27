@@ -1,4 +1,11 @@
-// biome-ignore lint/performance/noBarrelFile: service layer entry point — consumers import from @allonfire/database/services
+export type { PhotoWithUser } from "./photo.service";
+// biome-ignore lint/performance/noBarrelFile: service layer entry point
+export {
+  createPhoto,
+  deletePhoto,
+  getPhotoCount,
+  getPhotosPaginated,
+} from "./photo.service";
 export {
   approvePost,
   getDrafts,
@@ -49,8 +56,10 @@ export {
   selectTopics,
 } from "./topic.service";
 export {
+  checkUserAppAccess,
   deleteUser,
   getUserById,
   getUsers,
+  updateUserAllowedApps,
 } from "./user.service";
 export { logWebhook } from "./webhook-log.service";

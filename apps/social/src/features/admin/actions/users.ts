@@ -21,6 +21,7 @@ const createUserSchema = z.object({
   password: z.string().min(8),
   name: z.string().min(1),
   role: z.enum(["ADMIN", "USER"]),
+  allowedApps: z.array(z.string()).min(1, "At least one app must be selected"),
 });
 
 export async function createUserAction(data: {
@@ -28,6 +29,7 @@ export async function createUserAction(data: {
   password: string;
   name: string;
   role: "ADMIN" | "USER";
+  allowedApps: string[];
 }): Promise<ActionResult> {
   await requireAdmin();
   const parsed = createUserSchema.parse(data);
@@ -52,6 +54,7 @@ export async function createUserAction(data: {
         name: parsed.name,
         emailVerified: true,
         role: parsed.role,
+        allowedApps: parsed.allowedApps,
       },
     });
 
@@ -140,6 +143,40 @@ export async function updateUserRoleAction(
       data: { role },
     });
 
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+import { VALID_APP_IDS } from "../constants/apps";
+
+export async function updateUserAllowedAppsAction(
+  userId: string,
+  allowedApps: string[]
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const filtered = allowedApps.filter((app) => VALID_APP_IDS.has(app));
+
+  if (filtered.length === 0) {
+    return {
+      success: false as const,
+      error: "At least one app must be selected",
+    };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { allowedApps: filtered },
+    });
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
     return { success: true as const };

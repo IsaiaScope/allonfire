@@ -81,10 +81,12 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   role          Role      @default(USER)
+  allowedApps   String[]  @default(["all"])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  photos        Photo[]
 }
 
 model Session {
@@ -123,6 +125,24 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
+}
+
+// ============ Photos ============
+
+model Photo {
+  id           String   @id @default(cuid(2))
+  url          String
+  thumbnailUrl String
+  width        Int
+  height       Int
+  blurHash     String
+  caption      String?
+  uploadedBy   String
+  user         User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([uploadedBy])
 }
 
 // ============ AI Providers ============

@@ -1,7 +1,6 @@
-import { prisma } from "@allonfire/database";
+import { checkAppAccess } from "@allonfire/auth/guard";
 import { Wrapper } from "@allonfire/ui/components/wrapper";
-import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { DesktopSidebar } from "@/features/sidebar-layout/components/desktop-sidebar";
 import { MobileSheetNav } from "@/features/sidebar-layout/components/mobile-sheet-nav";
 import { MobileTopBar } from "@/features/sidebar-layout/components/mobile-top-bar";
@@ -19,19 +18,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { session, user } = await checkAppAccess(auth, "social");
   const cookieStore = await cookies();
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
   const sidebarCookie = cookieStore.get(COOKIE_NAME)?.value;
   const defaultState = parseCookieState(sidebarCookie);
 
@@ -43,20 +31,17 @@ export default async function DashboardLayout({
       >
         <MobileTopBar />
         <QuickNavBadges role={user.role} />
-
         <DesktopSidebar
           email={session.user.email}
           name={session.user.name}
           role={user.role}
         />
         <SidebarResizeHandle />
-
         <MobileSheetNav
           email={session.user.email}
           name={session.user.name}
           role={user.role}
         />
-
         <Wrapper className="flex-1 overflow-y-auto" tag="main">
           <div className="mx-auto max-w-6xl p-4 md:p-8">{children}</div>
         </Wrapper>

@@ -1,0 +1,36 @@
+{
+  "name": "@allonfire/auth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./route": "./src/route.ts",
+    "./guard": "./src/guard.ts",
+    "./env": "./src/env.ts",
+    "./components/login-form": "./src/components/login-form.tsx",
+    "./components/theme-provider": "./src/components/theme-provider.tsx",
+    "./components/sonner": "./src/components/sonner.tsx",
+    "./components/providers": "./src/components/providers.tsx"
+  },
+  "dependencies": {
+    "@allonfire/database": "workspace:*",
+    "@allonfire/ui": "workspace:*",
+    "@better-auth/prisma-adapter": "^1.5.3",
+    "@tanstack/react-query": "^5.62.0",
+    "better-auth": "^1.2.0",
+    "lucide-react": "^0.474.0",
+    "next": "^16.1.6",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.71.2",
+    "sonner": "^2.0.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "typescript": "~5.8.2"
+  }
+}

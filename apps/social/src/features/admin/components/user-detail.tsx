@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@allonfire/ui/components/card";
+import { Checkbox } from "@allonfire/ui/components/checkbox";
 import {
   Select,
   SelectContent,
@@ -17,12 +18,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@allonfire/ui/components/select";
-import { ArrowLeft, Loader2, Mail, Shield, User } from "lucide-react";
+import {
+  AppWindow,
+  ArrowLeft,
+  Loader2,
+  Mail,
+  Shield,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { parseErrorMessage } from "@/lib/parse-error-message";
-import { updateUserRoleAction } from "../actions/users";
+import {
+  updateUserAllowedAppsAction,
+  updateUserRoleAction,
+} from "../actions/users";
+import { ALL_APPS } from "../constants/apps";
 
 const INITIALS_SPLIT = /[\s@]/;
 
@@ -34,12 +46,15 @@ type UserDetailProps = {
     id: string;
     name: string | null;
     role: "ADMIN" | "USER";
+    allowedApps: string[];
   };
 };
 
 export function UserDetail({ user, currentUserId }: UserDetailProps) {
   const [role, setRole] = useState(user.role);
   const [pending, startTransition] = useTransition();
+  const [allowedApps, setAllowedApps] = useState<string[]>(user.allowedApps);
+  const [appsPending, startAppsTransition] = useTransition();
   const mounted = useMounted();
 
   const isCurrentUser = user.id === currentUserId;
@@ -56,6 +71,34 @@ export function UserDetail({ user, currentUserId }: UserDetailProps) {
       } else {
         setRole(previousRole);
         toast.error("Failed to update role", {
+          description: parseErrorMessage(
+            result.error ?? "An unexpected error occurred."
+          ),
+        });
+      }
+    });
+  }
+
+  function handleAppToggle(appId: string, checked: boolean) {
+    const previous = allowedApps;
+    const next = checked
+      ? [...allowedApps, appId]
+      : allowedApps.filter((a) => a !== appId);
+
+    if (next.length === 0) {
+      toast.error("At least one app must be selected");
+      return;
+    }
+
+    setAllowedApps(next);
+
+    startAppsTransition(async () => {
+      const result = await updateUserAllowedAppsAction(user.id, next);
+      if (result.success) {
+        toast.success("App access updated.");
+      } else {
+        setAllowedApps(previous);
+        toast.error("Failed to update app access", {
           description: parseErrorMessage(
             result.error ?? "An unexpected error occurred."
           ),
@@ -145,6 +188,37 @@ export function UserDetail({ user, currentUserId }: UserDetailProps) {
                 Loading...
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AppWindow className="size-4 text-primary" />
+              <CardTitle className="text-base">App Access</CardTitle>
+            </div>
+            <CardDescription>
+              Control which applications this user can access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {ALL_APPS.map((app) => (
+              <label
+                className="flex cursor-pointer items-center gap-3"
+                htmlFor={`app-${app.id}`}
+                key={app.id}
+              >
+                <Checkbox
+                  checked={allowedApps.includes(app.id)}
+                  disabled={appsPending}
+                  id={`app-${app.id}`}
+                  onCheckedChange={(checked) =>
+                    handleAppToggle(app.id, checked === true)
+                  }
+                />
+                <span className="text-sm">{app.label}</span>
+              </label>
+            ))}
           </CardContent>
         </Card>
       </div>

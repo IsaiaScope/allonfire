@@ -8,9 +8,9 @@ import {
   CardTitle,
 } from "@allonfire/ui/components/card";
 import { Separator } from "@allonfire/ui/components/separator";
+import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
 import { Globe, Key, Palette, Webhook } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { SettingsForm } from "@/features/settings/components/settings-form";
 
 export default async function GeneralSettingsPage() {

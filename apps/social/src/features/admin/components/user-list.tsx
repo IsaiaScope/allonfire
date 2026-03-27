@@ -28,6 +28,7 @@ type User = {
   id: string;
   name: string | null;
   role: "ADMIN" | "USER";
+  allowedApps: string[];
 };
 
 type UserListProps = {
@@ -92,6 +93,15 @@ function UserRow({
             >
               {user.role}
             </Badge>
+            {user.allowedApps.map((app) => (
+              <Badge
+                className="px-1.5 py-0 text-[10px]"
+                key={app}
+                variant="secondary"
+              >
+                {app}
+              </Badge>
+            ))}
           </div>
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>

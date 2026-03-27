@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.ts",
+    "./services": "./src/services/index.ts",
     "./generated/prisma": "./generated/prisma/index.ts"
   },
   "scripts": {

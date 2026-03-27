@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
   transpilePackages: [
+    "@allonfire/auth",
     "@allonfire/ui",
     "@allonfire/database",
     "@allonfire/content-generator",
