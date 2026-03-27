@@ -191,7 +191,7 @@ model Settings {
   webhookDiscoveryUrl String?
   webhookNotifyUrl    String?
   activeProviderId    String?
-  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id])
+  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id], onDelete: SetNull)
   updatedAt           DateTime    @updatedAt
 }
 

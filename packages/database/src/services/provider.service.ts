@@ -66,6 +66,11 @@ export async function setActiveProvider(providerId: string) {
 }
 
 export async function deleteProvider(providerId: string) {
+  await prisma.settings.updateMany({
+    where: { activeProviderId: providerId },
+    data: { activeProviderId: null },
+  });
+
   return await prisma.aiProvider.delete({
     where: { id: providerId },
   });
