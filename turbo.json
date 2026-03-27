@@ -32,7 +32,21 @@
     },
     "test": {
       "dependsOn": ["^test"],
-      "inputs": [".env*"]
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "vitest.config.ts",
+        "vitest.setup.ts",
+        ".env*",
+        "../../packages/database/prisma/schema.prisma"
+      ],
+      "outputs": ["coverage/**"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "N8N_API_KEY",
+        "ENCRYPTION_KEY"
+      ]
     },
     "db:generate": {
       "cache": false

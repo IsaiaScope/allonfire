@@ -14,7 +14,8 @@
     "./platforms/*": "./src/platforms/*.ts"
   },
   "scripts": {
-    "generate": "tsx src/cli.ts"
+    "generate": "tsx src/cli.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@allonfire/database": "workspace:*",

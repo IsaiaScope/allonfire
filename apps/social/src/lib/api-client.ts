@@ -1,3 +1,5 @@
+import { objectEntries } from "@allonfire/utils";
+
 const DEFAULT_TIMEOUT = 30_000;
 
 export class ApiError extends Error {
@@ -33,7 +35,7 @@ async function get<T>(
   const url = new URL(endpoint, window.location.origin);
 
   if (params) {
-    for (const [key, value] of Object.entries(params)) {
+    for (const [key, value] of objectEntries(params)) {
       if (value !== undefined) {
         url.searchParams.set(key, String(value));
       }

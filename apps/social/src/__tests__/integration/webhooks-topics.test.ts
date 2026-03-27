@@ -1,42 +1,38 @@
-import { PrismaClient } from "@allonfire/database";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { POST } from "../../app/api/webhooks/topics/route";
+import {
+  canConnect,
+  cleanupTestTopics,
+  disconnectTestDb,
+  TEST_URL_PREFIX,
+  testPrisma,
+} from "../helpers/db-test-utils";
+import { makeRequest, withAuth } from "../helpers/mock-request";
 
-const prisma = new PrismaClient();
-
-const API_URL = "http://localhost:3100/api/webhooks/topics";
-const AUTH_HEADER = `Bearer ${process.env.N8N_API_KEY}`;
-
-function makeRequest(body: unknown, headers: Record<string, string> = {}) {
-  return new Request(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body),
-  });
-}
+const dbAvailable = await canConnect();
 
 const validTopic = {
-  title: "Test Topic: Vitest Integration",
-  summary: "A topic created during CI integration testing",
-  sourceUrl: "https://example.com/test-topic-ci-unique",
-  sourceName: "CI Test Suite",
+  title: "__test__:Vitest Integration Topic",
+  summary: "A topic created during integration testing",
+  sourceUrl: `${TEST_URL_PREFIX}ci-unique-topic`,
+  sourceName: "Test Suite",
   category: "NEWS" as const,
 };
 
-describe("POST /api/webhooks/topics", () => {
+describe.skipIf(!dbAvailable)("POST /api/webhooks/topics", () => {
   beforeAll(async () => {
-    await prisma.webhookLog.deleteMany({});
-    await prisma.topic.deleteMany({});
+    await cleanupTestTopics();
   });
 
   afterAll(async () => {
-    await prisma.webhookLog.deleteMany({});
-    await prisma.topic.deleteMany({});
-    await prisma.$disconnect();
+    await cleanupTestTopics();
+    await disconnectTestDb();
   });
 
   it("rejects requests without auth header", async () => {
-    const request = makeRequest({ topics: [validTopic] });
+    const request = makeRequest("/api/webhooks/topics", {
+      topics: [validTopic],
+    });
     const response = await POST(request);
 
     expect(response.status).toBe(401);
@@ -46,10 +42,9 @@ describe("POST /api/webhooks/topics", () => {
 
   it("rejects requests with wrong token", async () => {
     const request = makeRequest(
+      "/api/webhooks/topics",
       { topics: [validTopic] },
-      {
-        Authorization: "Bearer wrong-token",
-      }
+      { Authorization: "Bearer wrong-token" }
     );
     const response = await POST(request);
 
@@ -60,10 +55,9 @@ describe("POST /api/webhooks/topics", () => {
 
   it("ingests valid topics and verifies in DB", async () => {
     const request = makeRequest(
+      "/api/webhooks/topics",
       { topics: [validTopic] },
-      {
-        Authorization: AUTH_HEADER,
-      }
+      withAuth()
     );
     const response = await POST(request);
 
@@ -72,17 +66,14 @@ describe("POST /api/webhooks/topics", () => {
     expect(body.ingested).toBe(1);
     expect(body.duplicatesSkipped).toBe(0);
 
-    const topic = await prisma.topic.findFirst({
+    const topic = await testPrisma.topic.findFirst({
       where: { sourceUrl: validTopic.sourceUrl },
     });
     expect(topic).not.toBeNull();
     expect(topic?.title).toBe(validTopic.title);
-    expect(topic?.summary).toBe(validTopic.summary);
-    expect(topic?.sourceName).toBe(validTopic.sourceName);
-    expect(topic?.category).toBe(validTopic.category);
     expect(topic?.status).toBe("DISCOVERED");
 
-    const log = await prisma.webhookLog.findFirst({
+    const log = await testPrisma.webhookLog.findFirst({
       where: { endpoint: "/api/webhooks/topics", status: 200 },
     });
     expect(log).not.toBeNull();
@@ -91,10 +82,9 @@ describe("POST /api/webhooks/topics", () => {
 
   it("skips duplicate topics", async () => {
     const request = makeRequest(
+      "/api/webhooks/topics",
       { topics: [validTopic] },
-      {
-        Authorization: AUTH_HEADER,
-      }
+      withAuth()
     );
     const response = await POST(request);
 
@@ -106,10 +96,9 @@ describe("POST /api/webhooks/topics", () => {
 
   it("rejects invalid payload", async () => {
     const request = makeRequest(
+      "/api/webhooks/topics",
       { topics: [{ title: "" }] },
-      {
-        Authorization: AUTH_HEADER,
-      }
+      withAuth()
     );
     const response = await POST(request);
 

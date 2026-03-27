@@ -80,30 +80,6 @@ export async function getTopicsByStatus(statuses: TopicStatus[], limit = 50) {
   });
 }
 
-export async function getTopicsByStatusWithPosts(
-  statuses: TopicStatus[],
-  limit = 50
-) {
-  return await prisma.topic.findMany({
-    where: { status: { in: statuses } },
-    orderBy: { discoveredAt: "desc" },
-    take: limit,
-    include: { posts: true },
-  });
-}
-
-export async function getTopicsByStatusWithPrompts(
-  statuses: TopicStatus[],
-  limit = 50
-) {
-  return await prisma.topic.findMany({
-    where: { status: { in: statuses } },
-    orderBy: { discoveredAt: "desc" },
-    take: limit,
-    include: { prompts: { orderBy: { createdAt: "desc" } } },
-  });
-}
-
 export async function getTopicWithPrompts(topicId: string) {
   return await prisma.topic.findUnique({
     where: { id: topicId },

@@ -1,8 +1,23 @@
 {
   "name": "allonfire",
+  "description": "Turborepo monorepo powering AI-driven social content automation and an interactive Laura site with photos and games",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
+  "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
   "packageManager": "pnpm@9.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IsaiaScope/allonfire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IsaiaScope/allonfire/issues"
+  },
+  "homepage": "https://github.com/IsaiaScope/allonfire#readme",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -21,6 +36,8 @@
     "docker:test:down": "docker compose -f docker/docker-compose.test.yml down",
     "n8n:import": "sh docker/import-n8n-workflows.sh",
     "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db:push && pnpm db:seed && pnpm n8n:import",
+    "dev:mobile": "pnpm --filter @allonfire/social dev:mobile",
+    "dev:tunnel": "pnpm --filter @allonfire/social dev:tunnel",
     "dev:full": "pnpm dev:setup && pnpm dev",
     "db:seed": "pnpm --filter @allonfire/database db:seed",
     "docker:build:social": "docker build --build-arg APP_NAME=social -f docker/Dockerfile -t allonfire-social .",

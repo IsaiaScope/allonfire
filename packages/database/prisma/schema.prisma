@@ -57,14 +57,13 @@ model Post {
   content        String
   mediaUrl       String?
   mediaType      MediaType?
-  scheduledAt    DateTime?
   publishedAt    DateTime?
   platformPostId String?
   errorMessage   String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  @@index([status, scheduledAt])
+  @@index([status])
 }
 
 // ============ Auth ============
@@ -84,9 +83,10 @@ model User {
   allowedApps   String[]  @default(["all"])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  photos        Photo[]
+  sessions       Session[]
+  accounts       Account[]
+  photos         Photo[]
+  socialAccounts SocialAccount[]
 }
 
 model Session {
@@ -116,6 +116,22 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+}
+
+model SocialAccount {
+  id               String    @id @default(cuid(2))
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         Platform
+  accessToken      String // Encrypted AES-256-GCM
+  refreshToken     String? // Encrypted AES-256-GCM
+  tokenExpiresAt   DateTime?
+  platformUserId   String?
+  platformUsername  String?
+  connectedAt      DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, platform])
 }
 
 model Verification {
@@ -172,7 +188,6 @@ enum ProviderType {
 model Settings {
   id                  String      @id @default("singleton")
   webhookDiscoveryUrl String?
-  webhookPublishUrl   String?
   webhookNotifyUrl    String?
   activeProviderId    String?
   activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id])
@@ -211,12 +226,12 @@ enum PostType {
   MEME
   NEWS
   LEARNING
+  FREEFORM
 }
 
 enum PostStatus {
   DRAFT
   APPROVED
-  SCHEDULED
   PUBLISHED
   FAILED
 }
@@ -224,7 +239,6 @@ enum PostStatus {
 enum Platform {
   LINKEDIN
   TWITTER
-  YOUTUBE
 }
 
 enum MediaType {
