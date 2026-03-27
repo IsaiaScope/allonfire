@@ -1,77 +1,40 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { hashPassword } from "better-auth/crypto";
-import type { Role } from "../generated/prisma";
+import type {
+  Platform,
+  PostStatus,
+  PostType,
+  PromptRating,
+  Role,
+  TopicCategory,
+  TopicStatus,
+} from "../generated/prisma/client";
 import { prisma } from "./index.js";
 import { seedEnv } from "./seed-env.js";
 
 type SeedUser = {
   email: string;
   name: string;
-  role: Role;
+  role: string;
   allowedApps: string[];
 };
 
-const TEST_USERS: SeedUser[] = [
-  // allonfire — full access
-  {
-    email: "allonfire-user@allonfire.com",
-    name: "allonfire-user",
-    role: "USER",
-    allowedApps: ["all"],
-  },
-  {
-    email: "allonfire-viewer@allonfire.com",
-    name: "allonfire-viewer",
-    role: "VIEWER",
-    allowedApps: ["all"],
-  },
-  // social — social app only
-  {
-    email: "social-admin@allonfire.com",
-    name: "social-admin",
-    role: "ADMIN",
-    allowedApps: ["social"],
-  },
-  {
-    email: "social-user@allonfire.com",
-    name: "social-user",
-    role: "USER",
-    allowedApps: ["social"],
-  },
-  {
-    email: "social-viewer@allonfire.com",
-    name: "social-viewer",
-    role: "VIEWER",
-    allowedApps: ["social"],
-  },
-  // laura — laura app only
-  {
-    email: "laura-admin@allonfire.com",
-    name: "laura-admin",
-    role: "ADMIN",
-    allowedApps: ["laura"],
-  },
-  {
-    email: "laura-user@allonfire.com",
-    name: "laura-user",
-    role: "USER",
-    allowedApps: ["laura"],
-  },
-  {
-    email: "laura-viewer@allonfire.com",
-    name: "laura-viewer",
-    role: "VIEWER",
-    allowedApps: ["laura"],
-  },
-];
+const SEED_DATA_DIR = resolve(import.meta.dirname, "../seed-data");
+
+function readSeedFile<T>(filename: string): T {
+  return JSON.parse(readFileSync(resolve(SEED_DATA_DIR, filename), "utf-8"));
+}
 
 async function upsertUser(
   { email, name, role, allowedApps }: SeedUser,
   hashedPassword: string
 ) {
+  const typedRole = role as Role;
   const user = await prisma.user.upsert({
     where: { email },
-    update: { role, allowedApps },
-    create: { email, name, emailVerified: true, role, allowedApps },
+    update: { role: typedRole, allowedApps },
+    create: { email, name, emailVerified: true, role: typedRole, allowedApps },
   });
 
   const existingAccount = await prisma.account.findFirst({
@@ -115,19 +78,138 @@ async function main() {
     adminHash
   );
 
-  // Optionally seed test users
-  if (seedEnv.SEED_TEST_USERS) {
+  if (seedEnv.SEED_MODE === "dev") {
     if (!seedEnv.TEST_PASSWORD) {
-      console.error("TEST_PASSWORD is required when SEED_TEST_USERS=true");
+      console.error("TEST_PASSWORD is required when SEED_MODE=dev");
       process.exit(1);
     }
 
     const testHash = await hashPassword(seedEnv.TEST_PASSWORD);
+    const testUsers = readSeedFile<SeedUser[]>("users.json");
 
-    await Promise.all(TEST_USERS.map((user) => upsertUser(user, testHash)));
+    await Promise.all(testUsers.map((user) => upsertUser(user, testHash)));
 
-    console.log(`\nSeeded ${TEST_USERS.length} test users`);
+    console.log(`\nSeeded ${testUsers.length} test users`);
+
+    await seedMockData();
   }
+}
+
+type TopicJson = {
+  title: string;
+  summary: string;
+  sourceUrl: string;
+  sourceName: string;
+  category: string;
+  status: string;
+  rawData: unknown;
+};
+
+type PromptJson = {
+  topicRef: number;
+  platform: string;
+  contentTemplate: string;
+  postType: string;
+  rating: string | null;
+  ratingNote: string | null;
+};
+
+type PostJson = {
+  topicRef: number | null;
+  type: string;
+  platform: string;
+  status: string;
+  content: string;
+  publishedDaysAgo?: number;
+  publishedHoursAgo?: number;
+  platformPostId?: string;
+  errorMessage?: string;
+};
+
+async function seedMockData() {
+  console.log("\nSeeding mock data...");
+
+  // Clear existing mock data (order matters for FK constraints)
+  await prisma.post.deleteMany();
+  await prisma.prompt.deleteMany();
+  await prisma.topic.deleteMany();
+
+  const topicsJson = readSeedFile<TopicJson[]>("topics.json");
+
+  const topics = await prisma.topic.createManyAndReturn({
+    data: topicsJson.map((topic) => ({
+      title: topic.title,
+      summary: topic.summary,
+      sourceUrl: topic.sourceUrl,
+      sourceName: topic.sourceName,
+      category: topic.category as TopicCategory,
+      status: topic.status as TopicStatus,
+      rawData: topic.rawData as never,
+    })),
+  });
+
+  console.log(`Seeded ${topics.length} topics`);
+
+  // Seed prompts from JSON, resolving topicRef to actual topic IDs
+  const selectedTopics = topics.filter((t) => t.status === "SELECTED");
+  const promptsJson = readSeedFile<PromptJson[]>("prompts.json");
+  const now = new Date();
+
+  const promptsData = promptsJson.flatMap((p) => {
+    const topic = selectedTopics[p.topicRef];
+    if (!topic) {
+      return [];
+    }
+
+    const content = p.contentTemplate
+      .replace("{title}", topic.title)
+      .replace("{summarySlice}", topic.summary.slice(0, 100))
+      .replace("{summarySlice80}", topic.summary.slice(0, 80));
+
+    return [
+      {
+        topicId: topic.id,
+        content,
+        postType: p.postType as PostType,
+        rating: p.rating as PromptRating | null,
+        ratingNote: p.ratingNote,
+        ratedAt: p.rating ? now : null,
+      },
+    ];
+  });
+
+  await prisma.prompt.createMany({ data: promptsData });
+  console.log(`Seeded ${promptsData.length} prompts`);
+
+  // Seed posts from JSON, resolving topicRef
+  const postsJson = readSeedFile<PostJson[]>("posts.json");
+
+  const postsData = postsJson.map((p) => {
+    let publishedAt: Date | undefined;
+    if (p.publishedDaysAgo) {
+      publishedAt = new Date(
+        now.getTime() - p.publishedDaysAgo * 24 * 60 * 60 * 1000
+      );
+    } else if (p.publishedHoursAgo) {
+      publishedAt = new Date(
+        now.getTime() - p.publishedHoursAgo * 60 * 60 * 1000
+      );
+    }
+
+    return {
+      topicId: p.topicRef !== null ? selectedTopics[p.topicRef]?.id : undefined,
+      type: p.type as PostType,
+      platform: p.platform as Platform,
+      status: p.status as PostStatus,
+      content: p.content,
+      publishedAt,
+      platformPostId: p.platformPostId,
+      errorMessage: p.errorMessage,
+    };
+  });
+
+  await prisma.post.createMany({ data: postsData });
+  console.log(`Seeded ${postsData.length} posts`);
 }
 
 main()

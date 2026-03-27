@@ -10,10 +10,7 @@
     "build": "next build",
     "start": "next start",
     "check-types": "tsc --noEmit",
-    "test": "vitest run",
-    "seed": "tsx mock-data/seed.ts",
-    "seed:clear": "tsx mock-data/seed.ts --clear",
-    "seed:export": "tsx mock-data/export.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@allonfire/auth": "workspace:*",
