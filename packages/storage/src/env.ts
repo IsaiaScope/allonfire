@@ -9,5 +9,4 @@ export const env = createEnv({
     MINIO_BUCKET: z.string().min(1),
   },
   runtimeEnv: process.env,
-  skipValidation: process.env.CI === "true",
 });
