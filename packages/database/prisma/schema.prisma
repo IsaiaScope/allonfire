@@ -64,6 +64,8 @@ model Post {
   updatedAt      DateTime    @updatedAt
 
   @@index([status])
+  @@index([topicId])
+  @@index([platform, status])
 }
 
 // ============ Auth ============
@@ -97,6 +99,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Account {
@@ -114,6 +118,8 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model SocialAccount {
