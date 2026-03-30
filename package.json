@@ -25,7 +25,7 @@
     "lint:fix": "ultracite fix",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "pre-commit": "pnpm lint && pnpm check-types && lint-staged --allow-empty",
+    "pre-commit": "pnpm lint && pnpm check-types && pnpm test && lint-staged --allow-empty",
     "commit-msg": "npx --no -- commitlint --edit",
     "prepare": "husky",
     "db:push": "pnpm --filter @allonfire/database db:push",
