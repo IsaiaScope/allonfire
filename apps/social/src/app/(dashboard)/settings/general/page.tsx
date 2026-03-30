@@ -1,4 +1,8 @@
 import { getSettings, prisma } from "@allonfire/database";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "General Settings" };
+
 import {
   Card,
   CardContent,

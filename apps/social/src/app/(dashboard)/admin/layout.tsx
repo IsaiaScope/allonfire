@@ -1,5 +1,4 @@
-import { prisma } from "@allonfire/database";
-import { headers } from "next/headers";
+import { checkAppAccess } from "@allonfire/auth/guard";
 import { redirect } from "next/navigation";
 import { AdminSubNav } from "@/features/admin/components/admin-sub-nav";
 import { auth } from "@/lib/auth";
@@ -9,20 +8,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const { user } = await checkAppAccess(auth, "social");
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  const currentUser = await prisma.user.findUniqueOrThrow({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
-
-  if (currentUser.role !== "ADMIN") {
+  if (user.role !== "ADMIN") {
     redirect("/");
   }
 

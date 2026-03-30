@@ -8,16 +8,38 @@ const fontSans = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
 });
 
 const fontMono = Roboto_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "AllOnFire — Social Content Dashboard",
+  metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3100"),
+  title: {
+    default: "AllOnFire — Social Content Dashboard",
+    template: "%s | AllOnFire",
+  },
   description: "Automated social media content creation and publishing",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "AllOnFire",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+  icons: {
+    icon: [{ url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/apple-icon-180x180.png", sizes: "180x180" }],
+  },
   appleWebApp: {
     capable: true,
     title: "AllOnFire",

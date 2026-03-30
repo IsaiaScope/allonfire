@@ -1,6 +1,9 @@
 import { getTopicStats } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
+import type { Metadata } from "next";
 import { PipelineStats } from "@/features/overview/components/pipeline-stats";
+
+export const metadata: Metadata = { title: "Overview" };
 
 export default async function OverviewPage() {
   const stats = await getTopicStats();

@@ -8,10 +8,13 @@ import {
 } from "@allonfire/ui/components/card";
 import { Separator } from "@allonfire/ui/components/separator";
 import { Shield, UserPlus } from "lucide-react";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AddUserForm } from "@/features/admin/components/add-user-form";
 import { UserList } from "@/features/admin/components/user-list";
 import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = { title: "Users" };
 
 export default async function AdminUsersPage() {
   const [session, users] = await Promise.all([

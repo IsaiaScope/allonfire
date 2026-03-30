@@ -3,7 +3,7 @@
 import { Badge } from "@allonfire/ui/components/badge";
 import { cn } from "@allonfire/ui/lib/utils";
 import { Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { deleteAllSelectedTopicsAction } from "@/features/topics/actions/topics";
 import { DeleteAllDialog } from "@/features/topics/components/delete-all-dialog";
@@ -20,21 +20,25 @@ import { GenerateActions } from "./topic-card-generate-actions";
 
 type GenerateClientProps = {
   initialData: PaginatedTopicResult<TopicWithPrompts>;
+  initialRating: string;
   role: string;
 };
 
-export function GenerateClient({ initialData, role }: GenerateClientProps) {
+export function GenerateClient({
+  initialData,
+  initialRating,
+  role,
+}: GenerateClientProps) {
   const router = useRouter();
-  const [rating, setRating] = useState("");
+  const searchParams = useSearchParams();
+  const [rating, setRating] = useState(searchParams.get("rating") ?? "");
   const [search, setSearch] = useState("");
 
-  const matchesInitialFetch = rating === "" && search === "";
+  const matchesInitialFetch = rating === initialRating && search === "";
 
   const buildSearchParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (rating === "HAS_NOTES") {
-      params.set("hasNotes", "true");
-    } else if (rating) {
+    if (rating) {
       params.set("rating", rating);
     }
     if (search && search.length >= 2) {
@@ -58,6 +62,16 @@ export function GenerateClient({ initialData, role }: GenerateClientProps) {
     initialData,
     matchesInitialFetch,
   });
+
+  const handleRatingChange = useCallback(
+    (value: string) => {
+      setRating(value);
+      router.replace(`/generate${value ? `?rating=${value}` : ""}`, {
+        scroll: false,
+      });
+    },
+    [router]
+  );
 
   const deleteDescription = useMemo(() => {
     const hasNotes = rating === "HAS_NOTES";
@@ -98,7 +112,7 @@ export function GenerateClient({ initialData, role }: GenerateClientProps) {
             title="Delete selected topics?"
           />
         }
-        onRatingChange={setRating}
+        onRatingChange={handleRatingChange}
         onSearchChange={setSearch}
         rating={rating}
         search={search}

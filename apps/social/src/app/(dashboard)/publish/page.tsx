@@ -1,4 +1,8 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Publish" };
+
 import type { Platform } from "@allonfire/database";
 import { getActiveProvider, getConnectedAccounts } from "@allonfire/database";
 import { Send } from "lucide-react";

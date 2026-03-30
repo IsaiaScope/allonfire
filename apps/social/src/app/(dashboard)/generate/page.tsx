@@ -1,4 +1,8 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Generate" };
+
 import { getSelectedTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Sparkles } from "lucide-react";
@@ -7,9 +11,34 @@ import { GenerateClient } from "@/features/generation/components/generate-client
 import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
 import { auth } from "@/lib/auth";
 
-export default async function GeneratePage() {
+const VALID_RATINGS = ["POSITIVE", "NEGATIVE", "HAS_NOTES"] as const;
+
+export default async function GeneratePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rating?: string }>;
+}) {
   const { user } = await checkAppAccess(auth, "social");
-  const initialData = await getSelectedTopicsPaginated();
+  const { rating: rawRating } = await searchParams;
+  const validRating = VALID_RATINGS.includes(
+    rawRating as (typeof VALID_RATINGS)[number]
+  )
+    ? (rawRating as (typeof VALID_RATINGS)[number])
+    : undefined;
+
+  function buildRatingFilter(rating: typeof validRating) {
+    if (rating === "HAS_NOTES") {
+      return { hasNotes: true as const };
+    }
+    if (rating) {
+      return { rating };
+    }
+    return {};
+  }
+
+  const initialData = await getSelectedTopicsPaginated({
+    ...buildRatingFilter(validRating),
+  });
   const totalCount = initialData.totalCount ?? 0;
 
   const totalPrompts = initialData.topics.reduce(
@@ -45,7 +74,11 @@ export default async function GeneratePage() {
           title="No topics selected"
         />
       ) : (
-        <GenerateClient initialData={initialData} role={user.role} />
+        <GenerateClient
+          initialData={initialData}
+          initialRating={validRating ?? ""}
+          role={user.role}
+        />
       )}
     </div>
   );

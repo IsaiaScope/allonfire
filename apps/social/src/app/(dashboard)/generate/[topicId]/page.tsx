@@ -3,8 +3,10 @@ import { getTopicWithPrompts } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { GeneratePromptButton } from "@/features/generation/components/generate-prompt-button";
 import { PromptList } from "@/features/generation/components/prompt-list";
 import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
@@ -14,16 +16,26 @@ import {
 } from "@/features/topics/components/topic-utils";
 import { auth } from "@/lib/auth";
 
+const getCachedTopic = cache(getTopicWithPrompts);
+
 type TopicDetailPageProps = {
   params: Promise<{ topicId: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: TopicDetailPageProps): Promise<Metadata> {
+  const { topicId } = await params;
+  const topic = await getCachedTopic(topicId);
+  return { title: topic?.title ?? "Topic Detail" };
+}
 
 export default async function TopicDetailPage({
   params,
 }: TopicDetailPageProps) {
   const { user } = await checkAppAccess(auth, "social");
   const { topicId } = await params;
-  const topic = await getTopicWithPrompts(topicId);
+  const topic = await getCachedTopic(topicId);
 
   if (!topic) {
     notFound();

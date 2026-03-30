@@ -34,24 +34,20 @@ export async function POST(request: Request) {
       });
     }
 
-    const results: Array<{
-      topicId: string;
-      success: boolean;
-      error?: string;
-    }> = [];
+    const settled = await Promise.allSettled(
+      topicIds.map((id) => generatePromptForTopic(id))
+    );
 
-    for (const id of topicIds) {
-      try {
-        await generatePromptForTopic(id);
-        results.push({ topicId: id, success: true });
-      } catch (error) {
-        results.push({
-          topicId: id,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
+    const results = settled.map((result, i) => ({
+      topicId: topicIds[i],
+      success: result.status === "fulfilled",
+      ...(result.status === "rejected" && {
+        error:
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason),
+      }),
+    }));
 
     const response = {
       generated: results.filter((r) => r.success).length,

@@ -3,10 +3,13 @@ import type { TopicCategory } from "@allonfire/database";
 import { getDiscoveredTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Compass } from "lucide-react";
+import type { Metadata } from "next";
 import { EmptyState } from "@/components/empty-state";
 import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
 import { DiscoverClient } from "@/features/topics/components/discover-client";
 import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = { title: "Discover" };
 
 const VALID_CATEGORIES = [
   "NEWS",
