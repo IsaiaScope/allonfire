@@ -240,19 +240,14 @@ export async function ingestTopics(topics: IngestTopicData[]) {
     return [];
   }
 
-  const results: Topic[] = [];
-  for (const topic of newTopics) {
-    const created = await prisma.topic.create({
-      data: {
-        title: topic.title,
-        summary: topic.summary,
-        sourceUrl: topic.sourceUrl,
-        sourceName: topic.sourceName,
-        category: topic.category,
-        rawData: topic.rawData as never,
-      },
-    });
-    results.push(created);
-  }
-  return results;
+  return prisma.topic.createManyAndReturn({
+    data: newTopics.map((t) => ({
+      title: t.title,
+      summary: t.summary,
+      sourceUrl: t.sourceUrl,
+      sourceName: t.sourceName,
+      category: t.category,
+      rawData: t.rawData as never,
+    })),
+  });
 }

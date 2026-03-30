@@ -8,14 +8,14 @@ import { formatErrorMessage, objectKeys } from "@allonfire/utils";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
-import { requireAuth } from "@/lib/server-auth";
+import { requireUser } from "@/lib/server-auth";
 import { PLATFORM_CONFIG, platformEnum } from "../constants/platforms";
 import type { PublishResultItem } from "../types/publish-types";
 
 export async function elaborateAction(
   content: string
 ): Promise<ActionResult<{ content: string }>> {
-  await requireAuth();
+  await requireUser();
 
   const validated = z.string().min(1).max(10_000).parse(content);
 
@@ -43,7 +43,7 @@ export async function adaptContentAction(
   content: string,
   platforms: Platform[]
 ): Promise<ActionResult<{ adaptations: Record<string, string> }>> {
-  await requireAuth();
+  await requireUser();
 
   const validatedContent = z.string().min(1).max(10_000).parse(content);
   const validatedPlatforms = z.array(platformEnum).min(1).parse(platforms);
@@ -167,7 +167,7 @@ async function publishToPlatform(params: {
 export async function publishAction(
   formData: FormData
 ): Promise<ActionResult<{ results: PublishResultItem[] }>> {
-  const session = await requireAuth();
+  const session = await requireUser();
   const userId = session.user.id;
 
   try {

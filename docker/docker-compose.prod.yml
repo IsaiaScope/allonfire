@@ -15,16 +15,34 @@ services:
       - "traefik.http.routers.social.rule=Host(`social.allonfire.com`)"
       - "traefik.http.services.social.loadbalancer.server.port=3000"
 
-  # Future apps follow the same pattern:
-  # api:
-  #   image: allonfire-api:latest
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3200:3000"
-  #   env_file: ../.env.prod
-  #   networks:
-  #     - allonfire
-  #     - traefik
+  laura:
+    image: allonfire-laura:latest
+    restart: unless-stopped
+    ports:
+      - "3200:3000"
+    env_file: ../.env.prod
+    networks:
+      - allonfire
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.laura.rule=Host(`laura.allonfire.com`)"
+      - "traefik.http.services.laura.loadbalancer.server.port=3000"
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/var/lib/minio/data
+    networks:
+      - allonfire
+
+volumes:
+  minio_data:
 
 networks:
   allonfire:

@@ -8,10 +8,13 @@ import {
 } from "@allonfire/ui/components/card";
 import { Separator } from "@allonfire/ui/components/separator";
 import { Shield, UserPlus } from "lucide-react";
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { AddUserForm } from "@/features/admin/components/add-user-form";
 import { UserList } from "@/features/admin/components/user-list";
 import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = { title: "Users" };
 
 export default async function AdminUsersPage() {
   const [session, users] = await Promise.all([
@@ -20,7 +23,7 @@ export default async function AdminUsersPage() {
   ]);
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -31,7 +34,7 @@ export default async function AdminUsersPage() {
             Create a new account and assign a role.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <AddUserForm />
         </CardContent>
       </Card>
@@ -49,7 +52,7 @@ export default async function AdminUsersPage() {
             access.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           <UserList currentUserId={session?.user.id ?? ""} users={users} />
         </CardContent>
       </Card>

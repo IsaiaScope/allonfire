@@ -7,15 +7,13 @@
     "dev": "next dev --port 3100",
     "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3101 next dev --port 3101 --hostname 0.0.0.0",
     "dev:tunnel": "npx localtunnel --port 3101",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "check-types": "tsc --noEmit",
-    "test": "vitest run",
-    "seed": "tsx mock-data/seed.ts",
-    "seed:clear": "tsx mock-data/seed.ts --clear",
-    "seed:export": "tsx mock-data/export.ts"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/auth": "workspace:*",
     "@allonfire/content-generator": "workspace:*",
     "@allonfire/database": "workspace:*",
     "@allonfire/hooks": "workspace:*",

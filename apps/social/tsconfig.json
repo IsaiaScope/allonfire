@@ -6,7 +6,8 @@
       "@/*": ["./src/*"],
       "@allonfire/hooks/*": ["../../packages/hooks/src/*"],
       "@allonfire/ui/*": ["../../packages/ui/src/*"],
-      "@allonfire/database": ["../../packages/database/src/index.ts"]
+      "@allonfire/database": ["../../packages/database/src/index.ts"],
+      "@allonfire/auth/*": ["../../packages/auth/src/*"]
     },
     "allowJs": true
   },

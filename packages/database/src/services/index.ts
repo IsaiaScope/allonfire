@@ -1,4 +1,21 @@
-// biome-ignore lint/performance/noBarrelFile: service layer entry point — consumers import from @allonfire/database/services
+export type { LeaderboardEntry } from "./game-score.service";
+// biome-ignore lint/performance/noBarrelFile: service layer entry point
+export {
+  getGameStats,
+  getLeaderboard,
+  getUserBestScore,
+  getUserGameStats,
+  submitGameScore,
+} from "./game-score.service";
+export type { PhotoWithUser } from "./photo.service";
+export {
+  createPhoto,
+  deletePhoto,
+  getPhotoCount,
+  getPhotosPaginated,
+  getRandomPhotos,
+  getUserPhotoCount,
+} from "./photo.service";
 export {
   createPrompt,
   deletePrompt,
@@ -40,8 +57,10 @@ export {
   selectTopics,
 } from "./topic.service";
 export {
+  checkUserAppAccess,
   deleteUser,
   getUserById,
   getUsers,
+  updateUserAllowedApps,
 } from "./user.service";
 export { logWebhook } from "./webhook-log.service";

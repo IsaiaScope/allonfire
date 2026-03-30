@@ -1,184 +1,37 @@
-"use client";
+import { LoginForm } from "@allonfire/auth/components/login-form";
+import { checkUserAppAccess } from "@allonfire/database";
+import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
+import { Sparkles } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { checkAppAccessAction } from "@/actions/check-access";
+import { auth } from "@/lib/auth";
 
-import { Button } from "@allonfire/ui/components/button";
-import { Card, CardContent } from "@allonfire/ui/components/card";
-import { Input } from "@allonfire/ui/components/input";
-import { Label } from "@allonfire/ui/components/label";
-import { Wrapper } from "@allonfire/ui/components/wrapper";
-import { ArrowRight, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { authClient } from "@/lib/auth-client";
-
-type LoginFields = {
-  email: string;
-  password: string;
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to AllOnFire Social Content Dashboard",
 };
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { data: session } = authClient.useSession();
-  const [pending, startTransition] = useTransition();
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Redirect already-authenticated users to dashboard
-  useEffect(() => {
-    if (session) {
-      router.replace("/");
+export default async function LoginPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) {
+    const hasAccess = await checkUserAppAccess(session.user.id, "social");
+    if (hasAccess) {
+      redirect("/");
     }
-  }, [session, router]);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFields>();
-
-  function buttonContent() {
-    if (success) {
-      return (
-        <>
-          <Sparkles className="size-5 animate-pulse" />
-          Welcome back
-        </>
-      );
-    }
-    if (pending) {
-      return (
-        <>
-          <Loader2 className="size-5 animate-spin" />
-          Signing in...
-        </>
-      );
-    }
-    return (
-      <>
-        Sign in
-        <ArrowRight className="size-5 transition-transform duration-200 group-hover:translate-x-1" />
-      </>
-    );
-  }
-
-  function onSubmit(data: LoginFields) {
-    setServerError("");
-
-    startTransition(async () => {
-      const result = await authClient.signIn.email({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (result.error) {
-        setServerError(result.error.message ?? "Login failed");
-        return;
-      }
-
-      setSuccess(true);
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      router.push("/");
-    });
   }
 
   return (
-    <Wrapper
-      className="flex flex-1 flex-col items-center justify-center bg-linear-to-br from-background via-background to-primary/5 px-4 py-8 sm:px-6 sm:py-12"
-      tag="main"
-    >
-      <Card className="relative w-full max-w-104 shadow-lg">
-        <div className="absolute top-2.5 right-2.5 z-10">
-          <ThemeToggle />
-        </div>
-        <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-2">
-          <Image
-            alt="AllOnFire Social"
-            className="w-full max-w-64"
-            height={220}
-            priority
-            src="/allonfire-social-horizontal.svg"
-            width={740}
-          />
-          <p className="text-center text-base text-muted-foreground">
-            Sign in to your dashboard
-          </p>
-        </div>
-        <CardContent className="pb-2">
-          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-2">
-              <Label className="text-base" htmlFor="email">
-                Email
-              </Label>
-              <Input
-                autoComplete="username"
-                className="text-base"
-                id="email"
-                placeholder="admin@allonfire.com"
-                type="email"
-                {...register("email", { required: "Email is required" })}
-              />
-              {errors.email && (
-                <p className="text-base text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-base" htmlFor="password">
-                Password
-              </Label>
-              <div className="relative">
-                <Input
-                  autoComplete="current-password"
-                  className="pr-10 text-base"
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  {...register("password", {
-                    required: "Password is required",
-                  })}
-                />
-                <button
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  type="button"
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" />
-                  ) : (
-                    <Eye className="size-4" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-base text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <Button
-              className="group my-4 w-full py-2 text-base shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-110 active:scale-[0.98]"
-              disabled={pending}
-              size="lg"
-              type="submit"
-              variant={success ? "secondary" : "default"}
-            >
-              {buttonContent()}
-            </Button>
-
-            {serverError && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-base text-destructive">
-                {serverError}
-              </p>
-            )}
-          </form>
-        </CardContent>
-      </Card>
-    </Wrapper>
+    <LoginForm
+      appName="social"
+      checkAccess={checkAppAccessAction}
+      emailPlaceholder="social@domain.com"
+      logoAlt="AllOnFire Social"
+      logoSrc="/allonfire-social-horizontal.svg"
+      subtitle="Sign in to your dashboard"
+      successIcon={<Sparkles className="size-5 animate-pulse" />}
+      topRightSlot={<ThemeToggle />}
+    />
   );
 }

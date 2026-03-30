@@ -1,0 +1,19 @@
+{
+  "extends": "../../packages/config/typescript/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@allonfire/hooks/*": ["../../packages/hooks/src/*"],
+      "@allonfire/ui/*": ["../../packages/ui/src/*"],
+      "@allonfire/database": ["../../packages/database/src/index.ts"],
+      "@allonfire/database/*": ["../../packages/database/src/*"],
+      "@allonfire/storage": ["../../packages/storage/src/index.ts"],
+      "@allonfire/storage/*": ["../../packages/storage/src/*"],
+      "@allonfire/auth/*": ["../../packages/auth/src/*"]
+    },
+    "allowJs": true
+  },
+  "include": ["src", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

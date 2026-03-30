@@ -1,5 +1,6 @@
 "use client";
 
+import { authClient } from "@allonfire/auth/client";
 import { Button } from "@allonfire/ui/components/button";
 import { Separator } from "@allonfire/ui/components/separator";
 import {
@@ -13,7 +14,6 @@ import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { authClient } from "@/lib/auth-client";
 import { useSidebarContext } from "../hooks/use-sidebar-context";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";

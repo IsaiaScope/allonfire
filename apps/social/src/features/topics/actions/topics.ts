@@ -9,14 +9,14 @@ import {
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
-import { requireAuth } from "@/lib/server-auth";
+import { requireUser } from "@/lib/server-auth";
 
 const idSchema = z.cuid2();
 
 export async function selectTopicAction(
   topicId: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const id = idSchema.parse(topicId);
   try {
     await selectTopicService(id);
@@ -35,7 +35,7 @@ export async function selectTopicAction(
 export async function deleteTopicAction(
   topicId: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const id = idSchema.parse(topicId);
   try {
     await deleteTopic(id);
@@ -61,7 +61,7 @@ export async function deleteAllSelectedTopicsAction(filters?: {
   hasNotes?: boolean;
   rating?: "POSITIVE" | "NEGATIVE";
 }): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const validated = selectedFiltersSchema.parse(filters ?? {});
   try {
     await deleteSelectedTopics(validated);
@@ -84,7 +84,7 @@ const categorySchema = z
 export async function deleteAllTopicsAction(
   category?: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const validCategory = categorySchema.parse(category || undefined);
   try {
     await deleteAllTopics(validCategory, "AI_PICKED");

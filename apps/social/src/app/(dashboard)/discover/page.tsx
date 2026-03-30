@@ -1,9 +1,15 @@
+import { checkAppAccess } from "@allonfire/auth/guard";
 import type { TopicCategory } from "@allonfire/database";
 import { getDiscoveredTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
 import { Compass } from "lucide-react";
+import type { Metadata } from "next";
 import { EmptyState } from "@/components/empty-state";
+import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
 import { DiscoverClient } from "@/features/topics/components/discover-client";
+import { auth } from "@/lib/auth";
+
+export const metadata: Metadata = { title: "Discover" };
 
 const VALID_CATEGORIES = [
   "NEWS",
@@ -18,6 +24,7 @@ export default async function DiscoverPage({
 }: {
   searchParams: Promise<{ category?: string }>;
 }) {
+  const { user } = await checkAppAccess(auth, "social");
   const { category: rawCategory } = await searchParams;
   const validCategory = VALID_CATEGORIES.includes(
     rawCategory as (typeof VALID_CATEGORIES)[number]
@@ -46,6 +53,8 @@ export default async function DiscoverPage({
         </p>
       </div>
 
+      {user.role === "VIEWER" && <ViewerBanner />}
+
       {showEmptyState ? (
         <EmptyState
           description="n8n will automatically discover trending topics and populate this feed. Check your workflow settings if this stays empty."
@@ -56,6 +65,7 @@ export default async function DiscoverPage({
         <DiscoverClient
           initialCategory={validCategory ?? ""}
           initialData={initialData}
+          role={user.role}
         />
       )}
     </div>

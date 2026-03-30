@@ -56,6 +56,7 @@ describe.skipIf(!dbAvailable)("admin user actions", () => {
       password: "securepass123",
       name: "New User",
       role: "USER",
+      allowedApps: ["all"],
     });
 
     expect(result.success).toBe(true);
@@ -82,6 +83,7 @@ describe.skipIf(!dbAvailable)("admin user actions", () => {
       password: "securepass123",
       name: "First User",
       role: "USER",
+      allowedApps: ["all"],
     });
 
     const result = await createUserAction({
@@ -89,6 +91,7 @@ describe.skipIf(!dbAvailable)("admin user actions", () => {
       password: "securepass456",
       name: "Second User",
       role: "USER",
+      allowedApps: ["all"],
     });
 
     expect(result.success).toBe(false);
@@ -105,6 +108,7 @@ describe.skipIf(!dbAvailable)("admin user actions", () => {
         password: "short",
         name: "",
         role: "USER",
+        allowedApps: ["all"],
       })
     ).rejects.toThrow();
   });

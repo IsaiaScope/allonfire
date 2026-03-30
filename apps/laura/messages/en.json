@@ -1,0 +1,127 @@
+{
+  "Metadata": {
+    "title": "Laura",
+    "description": "Our photo gallery"
+  },
+  "Nav": {
+    "gallery": "Gallery",
+    "upload": "Upload",
+    "settings": "Settings",
+    "games": "Games",
+    "gallerySection": "Gallery",
+    "gamesSection": "Games",
+    "settingsSection": "Settings",
+    "galleryDescription": "Browse all our photos together",
+    "uploadDescription": "Add new photos to the gallery",
+    "gamesDescription": "Fun games to play together",
+    "settingsDescription": "Language, theme, and account",
+    "signOut": "Sign out",
+    "openMenu": "Open menu",
+    "appName": "Laura",
+    "leaderboard": "Leaderboard",
+    "leaderboardDescription": "Rankings and scores",
+    "memory": "Memory Game",
+    "memoryNavDescription": "Match photo pairs"
+  },
+  "Gallery": {
+    "title": "Gallery",
+    "subtitle": "Our photos together",
+    "allLoaded": "All photos loaded"
+  },
+  "GalleryEmpty": {
+    "title": "No photos yet",
+    "subtitle": "Upload your first photos to get started",
+    "uploadButton": "Upload Photos"
+  },
+  "Upload": {
+    "title": "Upload Photos",
+    "subtitle": "Add new photos to the gallery",
+    "dropzone": "Drop photos here or click to browse",
+    "fileTypes": "PNG, JPEG, WebP, or HEIC up to 10MB each",
+    "selectedCount": "{count, plural, =1 {1 photo selected} other {# photos selected}}",
+    "uploadButton": "Upload",
+    "uploading": "Uploading...",
+    "successToast": "{count, plural, =1 {Uploaded 1 photo} other {Uploaded # photos}}",
+    "errorToast": "Upload failed",
+    "remove": "Remove {name}"
+  },
+  "PhotoPreview": {
+    "ariaLabel": "Photo preview",
+    "closeLabel": "Close preview",
+    "fullSizeAlt": "Full size photo"
+  },
+  "Error": {
+    "title": "Something Went Wrong",
+    "description": "An unexpected error occurred. Our team has been notified.",
+    "errorId": "Error ID: {digest}",
+    "retry": "Try Again",
+    "backHome": "Back to Home"
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "description": "This page doesn't exist or has been moved.",
+    "goHome": "Back to Home"
+  },
+  "Auth": {
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "welcome": "Welcome",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "loginFailed": "Login failed",
+    "accessDenied": "You don't have access to this application. Contact an administrator.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "subtitle": "Sign in to our Spinny site"
+  },
+  "Settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Choose the interface language",
+    "italian": "Italiano",
+    "english": "English",
+    "appearance": "Appearance",
+    "appearanceDescription": "Switch between light and dark theme",
+    "userInfo": "Account",
+    "role": "Role",
+    "appAccess": "App access"
+  },
+  "Games": {
+    "title": "Games",
+    "subtitle": "Fun games with our photos",
+    "memoryTitle": "Memory",
+    "memoryDescription": "Match pairs of your photos as fast as you can",
+    "play": "Play",
+    "leaderboardTitle": "Leaderboard",
+    "leaderboardDescription": "See who's the fastest",
+    "viewLeaderboard": "View Leaderboard",
+    "moves": "Moves",
+    "time": "Time",
+    "bestTime": "Best Time",
+    "totalGames": "Total Games",
+    "uniquePlayers": "Players",
+    "avgTime": "Average Time",
+    "rank": "#",
+    "player": "Player",
+    "date": "Date",
+    "noScores": "No scores yet. Be the first to play!",
+    "gameComplete": "Well Done!",
+    "newRecord": "New Record!",
+    "playAgain": "Play Again",
+    "backToGames": "Back to Games",
+    "submitting": "Saving score...",
+    "scoreSubmitted": "Score saved!",
+    "submitError": "Failed to save score",
+    "retry": "Retry",
+    "notEnoughPhotos": "Upload at least 8 photos to play the memory game",
+    "goToUpload": "Upload Photos",
+    "yourStats": "Your Stats",
+    "gamesPlayed": "Games Played",
+    "yourBestTime": "Your Best",
+    "flipCard": "Flip card {index}",
+    "cardMatched": "Card {index}, matched",
+    "cardFaceDown": "Card {index}, face down"
+  }
+}

@@ -64,6 +64,8 @@ model Post {
   updatedAt      DateTime    @updatedAt
 
   @@index([status])
+  @@index([topicId])
+  @@index([platform, status])
 }
 
 // ============ Auth ============
@@ -71,6 +73,7 @@ model Post {
 enum Role {
   ADMIN
   USER
+  VIEWER
 }
 
 model User {
@@ -80,11 +83,14 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   role          Role      @default(USER)
+  allowedApps   String[]  @default(["all"])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   sessions       Session[]
   accounts       Account[]
+  photos         Photo[]
   socialAccounts SocialAccount[]
+  gameScores     GameScore[]
 }
 
 model Session {
@@ -97,6 +103,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Account {
@@ -114,6 +122,8 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model SocialAccount {
@@ -139,6 +149,45 @@ model Verification {
   expiresAt  DateTime
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
+}
+
+// ============ Photos ============
+
+model Photo {
+  id           String   @id @default(cuid(2))
+  url          String
+  thumbnailUrl String
+  width        Int
+  height       Int
+  blurHash     String
+  caption      String?
+  uploadedBy   String
+  user         User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([uploadedBy])
+}
+
+// ============ Games ============
+
+enum GameType {
+  MEMORY
+}
+
+model GameScore {
+  id        String   @id @default(cuid(2))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType  GameType
+  timeMs    Int?
+  score     Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([gameType, timeMs])
+  @@index([gameType, score])
+  @@index([userId, gameType])
 }
 
 // ============ AI Providers ============
@@ -170,7 +219,7 @@ model Settings {
   webhookDiscoveryUrl String?
   webhookNotifyUrl    String?
   activeProviderId    String?
-  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id])
+  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id], onDelete: SetNull)
   updatedAt           DateTime    @updatedAt
 }
 

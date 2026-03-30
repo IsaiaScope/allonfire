@@ -4,12 +4,14 @@ import {
   deleteUser,
   getUsers as getUsersService,
   prisma,
+  type Role,
 } from "@allonfire/database";
 import { hashPassword } from "better-auth/crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
 import { requireAdmin } from "@/lib/server-auth";
+import { VALID_APP_IDS } from "../constants/apps";
 
 export async function getUsersAction() {
   await requireAdmin();
@@ -20,14 +22,16 @@ const createUserSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
   name: z.string().min(1),
-  role: z.enum(["ADMIN", "USER"]),
+  role: z.enum(["ADMIN", "USER", "VIEWER"]),
+  allowedApps: z.array(z.string()).min(1, "At least one app must be selected"),
 });
 
 export async function createUserAction(data: {
   email: string;
   password: string;
   name: string;
-  role: "ADMIN" | "USER";
+  role: Role;
+  allowedApps: string[];
 }): Promise<ActionResult> {
   await requireAdmin();
   const parsed = createUserSchema.parse(data);
@@ -52,6 +56,7 @@ export async function createUserAction(data: {
         name: parsed.name,
         emailVerified: true,
         role: parsed.role,
+        allowedApps: parsed.allowedApps,
       },
     });
 
@@ -107,7 +112,7 @@ export async function deleteUserAction(userId: string): Promise<ActionResult> {
 
 export async function updateUserRoleAction(
   userId: string,
-  role: "ADMIN" | "USER"
+  role: Role
 ): Promise<ActionResult> {
   const session = await requireAdmin();
 
@@ -140,6 +145,38 @@ export async function updateUserRoleAction(
       data: { role },
     });
 
+    revalidatePath("/admin/users");
+    revalidatePath(`/admin/users/${userId}`);
+    return { success: true as const };
+  } catch (error) {
+    return {
+      success: false as const,
+      error:
+        error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+export async function updateUserAllowedAppsAction(
+  userId: string,
+  allowedApps: string[]
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const filtered = allowedApps.filter((app) => VALID_APP_IDS.has(app));
+
+  if (filtered.length === 0) {
+    return {
+      success: false as const,
+      error: "At least one app must be selected",
+    };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { allowedApps: filtered },
+    });
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
     return { success: true as const };

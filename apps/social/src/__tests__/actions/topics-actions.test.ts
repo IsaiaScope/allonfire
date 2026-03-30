@@ -12,6 +12,9 @@ vi.mock("@/lib/server-auth", () => ({
   requireAuth: vi.fn().mockResolvedValue({
     user: { id: "mock-session-user-id" },
   }),
+  requireUser: vi.fn().mockResolvedValue({
+    user: { id: "mock-session-user-id" },
+  }),
 }));
 
 vi.mock("next/cache", () => ({

@@ -48,6 +48,31 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
   📖 <a href="apps/social/">See the full docs</a>
 </p>
 
+<br />
+
+<p align="center">
+  <img src="docs/assets/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
+</p>
+
+<h3 align="center">Photo Gallery</h3>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
+  <img src="https://img.shields.io/badge/next--intl-i18n-007ACC?logoColor=white" alt="next-intl" />
+  <img src="https://img.shields.io/badge/Sharp-image_processing-99CC00?logo=sharp&logoColor=white" alt="Sharp" />
+</p>
+
+<p align="center">
+  Private photo gallery with i18n support, S3/MinIO storage, and blurhash placeholders.
+</p>
+
+<p align="center">
+  📖 <a href="apps/laura/">See the full docs</a>
+</p>
+
 ---
 
 ## 📦 Packages
@@ -59,6 +84,8 @@ Shared libraries consumed by all apps in the monorepo.
 | 🗄️ | **[@allonfire/database](packages/database/)** | Prisma ORM, PostgreSQL services, encrypted token storage |
 | 🤖 | **[@allonfire/content-generator](packages/content-generator/)** | AI content generation (Anthropic, Gemini, Groq, OpenRouter) |
 | 📤 | **[@allonfire/social-publisher](packages/social-publisher/)** | Platform adapters, OAuth flows, image processing |
+| 🔐 | **[@allonfire/auth](packages/auth/)** | Shared BetterAuth config, session guards, login UI |
+| 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
 | 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
 | 🪝 | **[@allonfire/hooks](packages/hooks/)** | Responsive breakpoint hooks |
 | 🔧 | **[@allonfire/utils](packages/utils/)** | Type-safe utility functions |
@@ -79,11 +106,14 @@ Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm wo
 ```
 allonfire/
   apps/
-    social/               Next.js dashboard app
+    social/               Next.js social media dashboard
+    laura/                Next.js photo gallery app
   packages/
+    auth/                 Shared BetterAuth config
     content-generator/    AI content generation
     database/             Prisma ORM + services
     social-publisher/     Platform adapters + OAuth
+    storage/              S3/MinIO uploads + image processing
     ui/                   Shared UI components
     hooks/                React hooks
     utils/                Utility functions

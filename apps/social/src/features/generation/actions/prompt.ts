@@ -9,14 +9,14 @@ import {
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
-import { requireAuth } from "@/lib/server-auth";
+import { requireUser } from "@/lib/server-auth";
 
 const idSchema = z.cuid2();
 
 export async function deletePromptAction(
   promptId: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const id = idSchema.parse(promptId);
   try {
     await deletePrompt(id);
@@ -40,7 +40,7 @@ export async function updateNoteAction(
   promptId: string,
   note: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const parsed = noteSchema.parse({ promptId, note });
   try {
     await updatePromptNote(parsed.promptId, parsed.note || null);
@@ -66,7 +66,7 @@ export async function ratePromptAction(
   rating: PromptRating,
   note?: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const parsed = rateSchema.parse({ promptId, rating, note });
   try {
     await ratePrompt(parsed.promptId, parsed.rating, parsed.note);

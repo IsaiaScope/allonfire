@@ -8,7 +8,7 @@ import {
 } from "@allonfire/database";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireAuth } from "@/lib/server-auth";
+import { requireAdmin } from "@/lib/server-auth";
 
 export type ProviderType =
   | "ANTHROPIC"
@@ -60,7 +60,7 @@ export async function saveProviderAction(data: {
   apiKey?: string;
   model: string;
 }) {
-  await requireAuth();
+  await requireAdmin();
   const parsed = providerSchema.parse(data);
 
   // If a new API key is provided, validate it and save
@@ -109,7 +109,7 @@ export async function saveProviderAction(data: {
 }
 
 export async function setActiveProviderAction(providerId: string) {
-  await requireAuth();
+  await requireAdmin();
   try {
     await setActiveProviderService(providerId);
     revalidatePath("/admin/providers");
@@ -127,7 +127,7 @@ export async function testConnectionAction(
   provider: ProviderType,
   apiKey?: string
 ) {
-  await requireAuth();
+  await requireAdmin();
 
   let key = apiKey;
   if (!key) {
@@ -152,7 +152,7 @@ export async function testConnectionAction(
 }
 
 export async function revealApiKeyAction(provider: ProviderType) {
-  await requireAuth();
+  await requireAdmin();
   try {
     const record = await getProviderWithDecryptedKey(provider);
     if (!record) {
@@ -172,7 +172,7 @@ export async function listModelsAction(
   provider: ProviderType,
   apiKey?: string
 ) {
-  await requireAuth();
+  await requireAdmin();
 
   let key = apiKey;
   if (!key) {
@@ -205,7 +205,7 @@ export async function listModelsAction(
 }
 
 export async function deleteProviderAction(providerId: string) {
-  await requireAuth();
+  await requireAdmin();
 
   try {
     await deleteProviderService(providerId);

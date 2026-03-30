@@ -1,5 +1,8 @@
 import { getProviders, getSettings } from "@allonfire/database";
+import type { Metadata } from "next";
 import { ProvidersHub } from "@/features/admin/components/providers-hub";
+
+export const metadata: Metadata = { title: "AI Providers" };
 
 export default async function AdminProvidersPage() {
   const [providers, settings] = await Promise.all([

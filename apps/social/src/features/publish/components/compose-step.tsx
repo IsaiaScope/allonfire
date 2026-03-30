@@ -15,9 +15,15 @@ type ComposeStepProps = {
   state: PublishWizardState;
   actions: PublishWizardActions;
   onNext: () => void;
+  role?: string;
 };
 
-export function ComposeStep({ state, actions, onNext }: ComposeStepProps) {
+export function ComposeStep({
+  state,
+  actions,
+  onNext,
+  role,
+}: ComposeStepProps) {
   const hasContent =
     state.originalContent.length > 0 || state.imageFiles.length > 0;
 
@@ -44,6 +50,7 @@ export function ComposeStep({ state, actions, onNext }: ComposeStepProps) {
         isElaborating={state.loadingPhase === "elaborating"}
         onContentChange={actions.setContent}
         onElaborate={handleElaborate}
+        role={role}
       />
       <ImageUpload
         imageFiles={state.imageFiles}

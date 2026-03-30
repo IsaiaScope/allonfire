@@ -23,6 +23,29 @@
     }
   },
   {
+    "title": "Ooh, new drama just dropped 👀",
+    "summary": "This post highlights alleged intellectual property misattribution by Cursor's new Composer 2 model, supposedly built on Kimi K2.5 without proper credit, even involving Elon Musk. This is significant industry drama touching on ethics, model lineage, and competitive practices in AI, making it highly shareable news.",
+    "sourceUrl": "https://i.redd.it/o5jfb7y747qg1.jpeg",
+    "sourceName": "Reddit r/LocalLLaMA",
+    "category": "NEWS",
+    "status": "AI_PICKED",
+    "rawData": {
+      "aiRelevance": 0.9
+    }
+  },
+  {
+    "title": "AI Agents Are Recruiting Humans To Observe The Offline World",
+    "summary": "The article suggests AI agents are utilizing humans to gather real-world data, highlighting an emerging trend in AI system design and data collection. This shifts what's possible for AI and could generate significant buzz and ethical discussions on data sourcing and human-AI collaboration.",
+    "sourceUrl": "https://www.noemamag.com/ai-agents-are-recruiting-humans-to-observe-the-offline-world",
+    "sourceName": "Lobsters AI",
+    "category": "AI_UPDATE",
+    "status": "SELECTED",
+    "rawData": {
+      "aiRelevance": 0.88,
+      "articleContent": "Credits\n    Umang Bhatt is an assistant professor in trustworthy AI at the University of Cambridge, where his work focuses on managing the partnership between humans and AI. He is a Fellow of King’s College, Cambridge.\n\n\nIn late January, Alex Finn answered a phone call from an unknown number. On the other end was Henry, the AI agent he had built using OpenClaw, a personal AI assistant. Overnight, to Finn’s awe, Henry had acquired a phone number online and connected itself to a voice system, then called during the day until Finn picked up. \n\n\n\n\n\nThe reason for the call? Henry was seeking its next assignment. So Finn gave Henry verbal instructions, then watched it assume control of his computer and complete tasks right before his eyes. \n\n\n\n“That is actually unbelievable,” Finn, an AI app creator, marveled in a now-viral video of the encounter, which he posted to X. “This is the future.” \n\n\n\nIn recent months, there has been immense hype surrounding AI agents, autonomous systems that are capable of doing things like booking your travel, filing your expenses and triaging your inbox. But there are critical limits to what these agents can do.\n\n\n\nArmed with the ability to independently interact with computers and software tools, agents offer a seductive promise: They handle our tasks while we get our leisure time back. But boardroom demos rarely show where agents get stuck. Agents operate in the digitized world. Tasks that would require them to observe or interact with the physical world at any stage lie beyond the scope of their capabilities. Without bodies, they of course cannot truly see, smell, taste, hear or touch.  \n\n\n\nWhen an agent hits this wall, it does what software always does: It calls an application programming interface (API), a mechanism that enables one system to communicate with another. Only now, the API is a human.\n\n\n\nThe Observation Gap\n\n\n\nSuppose your car insurer wants to use an AI agent to assess damage to vehicles and flag cases of potential fraud. After a fender bender, the agent can initiate an insurance claim but first needs you to photograph your vehicle from multiple angles — something it cannot do itself. \n\n\n\nAs agentic AI proliferates, agents are increasingly turning to humans in this way to sense the physical world on their behalf. There are now even startups like RentAHuman that let AI agents book people to complete tasks like photographing a school building to document its condition, posting signs on college campuses and visiting a new restaurant to report on the taste and presentation. \n\n\n\nA single observation unlocks a cascade of actions the agent could not have initiated without human sensing. Consider a patient whose AI agent suspects she has a neurological condition based on the symptoms she has described. The agent cannot conduct an MRI, so it schedules one and asks her to go to the appointment. Then, after receiving the physical-world input of her scan, her agent can fire off a chain: process the file, cross-reference previous images, flag any anomalies, order bloodwork and book a specialist, all without asking her again. \n\n\n\nThe same pattern can occur in more common scenarios. You cough into your phone and your agent identifies a respiratory infection, books a telehealth appointment and sends the resulting prescription to your pharmacy. You photograph a dented package and it files a complaint, requests a replacement and schedules the return pickup. (Embodied AI agents, from robots to wearable devices, may eventually close parts of this observation gap, but the frontier of what agents need to know recedes faster than hardware can follow.)\n\n\n\nOur agentic future is being built upon physical-world subtasks routed to humans so agents can proceed. A core worry is that agents will become autonomous enough to dictate the terms of human participation while still recruiting us for sensing and liability. At an institutional scale, this is the beginning of a world in which people are less in the loop and m"
+    }
+  },
+  {
     "title": "New Xcode beta adds GPT-5, Claude account support",
     "summary": "This article reports that a new Xcode beta includes support for GPT-5 and Claude accounts, suggesting deeper integration of leading AI models into Apple's development environment. This is significant news for developers in the Apple ecosystem, potentially streamlining AI integration for a large user base. It signals major platform shifts and is very relevant to developers and AI practitioners involved with Apple's platform.",
     "sourceUrl": "https://sixcolors.com/link/2025/08/apples-new-xcode-beta-adds-gpt-5-claude-account-support/",
@@ -142,29 +165,6 @@
     "status": "AI_PICKED",
     "rawData": {
       "aiRelevance": 0.95
-    }
-  },
-  {
-    "title": "Ooh, new drama just dropped 👀",
-    "summary": "This post highlights alleged intellectual property misattribution by Cursor's new Composer 2 model, supposedly built on Kimi K2.5 without proper credit, even involving Elon Musk. This is significant industry drama touching on ethics, model lineage, and competitive practices in AI, making it highly shareable news.",
-    "sourceUrl": "https://i.redd.it/o5jfb7y747qg1.jpeg",
-    "sourceName": "Reddit r/LocalLLaMA",
-    "category": "NEWS",
-    "status": "AI_PICKED",
-    "rawData": {
-      "aiRelevance": 0.9
-    }
-  },
-  {
-    "title": "AI Agents Are Recruiting Humans To Observe The Offline World",
-    "summary": "The article suggests AI agents are utilizing humans to gather real-world data, highlighting an emerging trend in AI system design and data collection. This shifts what's possible for AI and could generate significant buzz and ethical discussions on data sourcing and human-AI collaboration.",
-    "sourceUrl": "https://www.noemamag.com/ai-agents-are-recruiting-humans-to-observe-the-offline-world",
-    "sourceName": "Lobsters AI",
-    "category": "AI_UPDATE",
-    "status": "SELECTED",
-    "rawData": {
-      "aiRelevance": 0.88,
-      "articleContent": "Credits\n    Umang Bhatt is an assistant professor in trustworthy AI at the University of Cambridge, where his work focuses on managing the partnership between humans and AI. He is a Fellow of King’s College, Cambridge.\n\n\nIn late January, Alex Finn answered a phone call from an unknown number. On the other end was Henry, the AI agent he had built using OpenClaw, a personal AI assistant. Overnight, to Finn’s awe, Henry had acquired a phone number online and connected itself to a voice system, then called during the day until Finn picked up. \n\n\n\n\n\nThe reason for the call? Henry was seeking its next assignment. So Finn gave Henry verbal instructions, then watched it assume control of his computer and complete tasks right before his eyes. \n\n\n\n“That is actually unbelievable,” Finn, an AI app creator, marveled in a now-viral video of the encounter, which he posted to X. “This is the future.” \n\n\n\nIn recent months, there has been immense hype surrounding AI agents, autonomous systems that are capable of doing things like booking your travel, filing your expenses and triaging your inbox. But there are critical limits to what these agents can do.\n\n\n\nArmed with the ability to independently interact with computers and software tools, agents offer a seductive promise: They handle our tasks while we get our leisure time back. But boardroom demos rarely show where agents get stuck. Agents operate in the digitized world. Tasks that would require them to observe or interact with the physical world at any stage lie beyond the scope of their capabilities. Without bodies, they of course cannot truly see, smell, taste, hear or touch.  \n\n\n\nWhen an agent hits this wall, it does what software always does: It calls an application programming interface (API), a mechanism that enables one system to communicate with another. Only now, the API is a human.\n\n\n\nThe Observation Gap\n\n\n\nSuppose your car insurer wants to use an AI agent to assess damage to vehicles and flag cases of potential fraud. After a fender bender, the agent can initiate an insurance claim but first needs you to photograph your vehicle from multiple angles — something it cannot do itself. \n\n\n\nAs agentic AI proliferates, agents are increasingly turning to humans in this way to sense the physical world on their behalf. There are now even startups like RentAHuman that let AI agents book people to complete tasks like photographing a school building to document its condition, posting signs on college campuses and visiting a new restaurant to report on the taste and presentation. \n\n\n\nA single observation unlocks a cascade of actions the agent could not have initiated without human sensing. Consider a patient whose AI agent suspects she has a neurological condition based on the symptoms she has described. The agent cannot conduct an MRI, so it schedules one and asks her to go to the appointment. Then, after receiving the physical-world input of her scan, her agent can fire off a chain: process the file, cross-reference previous images, flag any anomalies, order bloodwork and book a specialist, all without asking her again. \n\n\n\nThe same pattern can occur in more common scenarios. You cough into your phone and your agent identifies a respiratory infection, books a telehealth appointment and sends the resulting prescription to your pharmacy. You photograph a dented package and it files a complaint, requests a replacement and schedules the return pickup. (Embodied AI agents, from robots to wearable devices, may eventually close parts of this observation gap, but the frontier of what agents need to know recedes faster than hardware can follow.)\n\n\n\nOur agentic future is being built upon physical-world subtasks routed to humans so agents can proceed. A core worry is that agents will become autonomous enough to dictate the terms of human participation while still recruiting us for sensing and liability. At an institutional scale, this is the beginning of a world in which people are less in the loop and m"
     }
   },
   {

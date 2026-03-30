@@ -17,11 +17,13 @@ const CROSS_INVALIDATE_KEYS = ["generate-topics"] as const;
 type DiscoverClientProps = {
   initialCategory: string;
   initialData: PaginatedTopicResult<Topic>;
+  role: string;
 };
 
 export function DiscoverClient({
   initialCategory,
   initialData,
+  role,
 }: DiscoverClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,6 +100,7 @@ export function DiscoverClient({
                 ? `This will permanently delete all ${totalCount} discovered ${categoryLabel} topics. Topics selected for generation will not be affected.`
                 : `This will permanently delete all ${totalCount} discovered topics. Topics selected for generation will not be affected.`
             }
+            disabled={role === "VIEWER"}
             onConfirm={handleDeleteConfirm}
             onDeleted={invalidateQueries}
             title={
@@ -123,7 +126,11 @@ export function DiscoverClient({
         renderCard={(topic) => (
           <TopicCard
             renderActions={(props) => (
-              <DiscoverActions {...props} onAction={invalidateQueries} />
+              <DiscoverActions
+                {...props}
+                onAction={invalidateQueries}
+                role={role}
+              />
             )}
             topic={topic}
           />

@@ -4,12 +4,12 @@ import { generatePromptForTopic } from "@allonfire/content-generator";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "@/lib/action-result";
-import { requireAuth } from "@/lib/server-auth";
+import { requireUser } from "@/lib/server-auth";
 
 export async function triggerGenerationAction(
   topicId: string
 ): Promise<ActionResult> {
-  await requireAuth();
+  await requireUser();
   const id = z.cuid2().parse(topicId);
 
   try {
