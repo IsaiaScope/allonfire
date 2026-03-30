@@ -17,7 +17,7 @@ export type ProcessedPhoto = {
 };
 
 export async function processPhoto(input: Buffer): Promise<ProcessedPhoto> {
-  const source = sharp(input);
+  const source = sharp(input).rotate();
   const metadata = await source.metadata();
 
   if (!(metadata.width && metadata.height)) {

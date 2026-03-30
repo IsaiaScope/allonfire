@@ -64,6 +64,8 @@ model Post {
   updatedAt      DateTime    @updatedAt
 
   @@index([status])
+  @@index([topicId])
+  @@index([platform, status])
 }
 
 // ============ Auth ============
@@ -88,6 +90,7 @@ model User {
   accounts       Account[]
   photos         Photo[]
   socialAccounts SocialAccount[]
+  gameScores     GameScore[]
 }
 
 model Session {
@@ -100,6 +103,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Account {
@@ -117,6 +122,8 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model SocialAccount {
@@ -160,6 +167,27 @@ model Photo {
 
   @@index([createdAt])
   @@index([uploadedBy])
+}
+
+// ============ Games ============
+
+enum GameType {
+  MEMORY
+}
+
+model GameScore {
+  id        String   @id @default(cuid(2))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType  GameType
+  timeMs    Int?
+  score     Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([gameType, timeMs])
+  @@index([gameType, score])
+  @@index([userId, gameType])
 }
 
 // ============ AI Providers ============

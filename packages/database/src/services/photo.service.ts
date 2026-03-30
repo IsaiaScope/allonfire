@@ -1,7 +1,7 @@
 import type { Photo } from "../../generated/prisma/client";
 import { prisma } from "../index";
 
-const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 200;
 
 export type PhotoWithUser = Photo & {
   user: { name: string | null; image: string | null };
@@ -13,7 +13,7 @@ export async function getPhotosPaginated(
 ): Promise<{ photos: PhotoWithUser[]; nextCursor: string | null }> {
   const photos = await prisma.photo.findMany({
     take: limit + 1,
-    orderBy: { createdAt: "desc" },
+    orderBy: { id: "asc" },
     ...(cursor
       ? {
           cursor: { id: cursor },
@@ -52,4 +52,20 @@ export async function deletePhoto(id: string) {
 
 export async function getPhotoCount() {
   return await prisma.photo.count();
+}
+
+export async function getRandomPhotos(userId: string, count: number) {
+  return await prisma.$queryRaw<
+    { id: string; thumbnailUrl: string; blurHash: string }[]
+  >`
+    SELECT id, "thumbnailUrl", "blurHash"
+    FROM "Photo"
+    WHERE "uploadedBy" = ${userId}
+    ORDER BY RANDOM()
+    LIMIT ${count}
+  `;
+}
+
+export async function getUserPhotoCount(userId: string) {
+  return await prisma.photo.count({ where: { uploadedBy: userId } });
 }

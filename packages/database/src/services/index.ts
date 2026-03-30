@@ -1,10 +1,20 @@
-export type { PhotoWithUser } from "./photo.service";
+export type { LeaderboardEntry } from "./game-score.service";
 // biome-ignore lint/performance/noBarrelFile: service layer entry point
+export {
+  getGameStats,
+  getLeaderboard,
+  getUserBestScore,
+  getUserGameStats,
+  submitGameScore,
+} from "./game-score.service";
+export type { PhotoWithUser } from "./photo.service";
 export {
   createPhoto,
   deletePhoto,
   getPhotoCount,
   getPhotosPaginated,
+  getRandomPhotos,
+  getUserPhotoCount,
 } from "./photo.service";
 export {
   createPrompt,

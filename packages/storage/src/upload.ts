@@ -7,20 +7,19 @@ import {
 import { s3 } from "./client";
 import { env } from "./env";
 
-let bucketVerified = false;
+let bucketPromise: Promise<void> | null = null;
 
-async function ensureBucket(): Promise<void> {
-  if (bucketVerified) {
-    return;
+function ensureBucket(): Promise<void> {
+  if (!bucketPromise) {
+    bucketPromise = (async () => {
+      try {
+        await s3.send(new HeadBucketCommand({ Bucket: env.MINIO_BUCKET }));
+      } catch {
+        await s3.send(new CreateBucketCommand({ Bucket: env.MINIO_BUCKET }));
+      }
+    })();
   }
-
-  try {
-    await s3.send(new HeadBucketCommand({ Bucket: env.MINIO_BUCKET }));
-  } catch {
-    await s3.send(new CreateBucketCommand({ Bucket: env.MINIO_BUCKET }));
-  }
-
-  bucketVerified = true;
+  return bucketPromise;
 }
 
 export async function uploadFile(
@@ -43,7 +42,7 @@ export async function uploadFile(
 }
 
 export function getPublicUrl(key: string): string {
-  return `${env.MINIO_ENDPOINT}/${env.MINIO_BUCKET}/${key}`;
+  return `/storage/${key}`;
 }
 
 export async function deleteFile(key: string): Promise<void> {

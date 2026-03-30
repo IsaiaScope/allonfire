@@ -54,3 +54,6 @@ docs/superpowers/
 .next-mobile
 
 TODO.*
+
+# Laura seed photos (large binary files)
+apps/laura/seed-photos/
