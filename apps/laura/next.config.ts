@@ -32,10 +32,15 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    const endpoint = process.env.MINIO_ENDPOINT;
+    const bucket = process.env.MINIO_BUCKET;
+    if (!(endpoint && bucket)) {
+      return [];
+    }
     return [
       {
         source: "/storage/:path*",
-        destination: `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET}/:path*`,
+        destination: `${endpoint}/${bucket}/:path*`,
       },
     ];
   },
