@@ -9,6 +9,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@allonfire/ui/components/navigation-menu";
+import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
 import { Menu } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -18,28 +19,35 @@ import { MobileNav } from "./mobile-nav";
 import { NavLinkContent } from "./nav-link-content";
 import { isLinkActive, navSections } from "./nav-links";
 
-export function TopBar() {
+type TopBarProps = {
+  name: string | null;
+  email: string;
+};
+
+export function TopBar({ name, email }: TopBarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations("Nav");
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-border border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <Link className="shrink-0" href="/">
+      <header className="sticky top-0 z-40 flex h-15 items-center justify-between border-sidebar-border border-b bg-sidebar px-4 py-3 lg:z-30 lg:h-16 lg:border-border lg:bg-background/95 lg:py-0 lg:backdrop-blur lg:supports-[backdrop-filter]:bg-background/60">
+        <Link href="/">
           <Image
             alt="Laura"
             className="block lg:hidden"
-            height={32}
-            src="/allonfire-laura.svg"
-            width={32}
+            height={36}
+            priority
+            src="/allonfire-laura-horizontal.svg"
+            width={120}
           />
           <Image
             alt="Laura"
             className="hidden lg:block"
-            height={32}
+            height={46}
+            priority
             src="/allonfire-laura-horizontal.svg"
-            width={108}
+            width={156}
           />
         </Link>
 
@@ -51,15 +59,15 @@ export function TopBar() {
                   <section.icon className="mr-1.5 size-4" />
                   {t(section.labelKey)}
                 </NavigationMenuTrigger>
-                <NavigationMenuContent className="backdrop-blur-xl">
-                  <ul className="grid w-[280px] p-1.5">
+                <NavigationMenuContent>
+                  <ul className="grid max-h-[50vh] w-[280px] overflow-y-auto p-0.5">
                     {section.links.map((link) => {
                       const active = isLinkActive(pathname, link.href);
                       return (
                         <li key={link.href}>
                           <NavigationMenuLink asChild>
                             <Link
-                              className="block select-none rounded-sm px-2.5 py-2 no-underline outline-none transition-colors hover:bg-white/5 hover:text-inherit focus:bg-white/5"
+                              className="block select-none rounded-sm px-2 py-1.5 no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                               href={link.href}
                             >
                               <NavLinkContent
@@ -90,10 +98,17 @@ export function TopBar() {
           <span className="sr-only">{t("openMenu")}</span>
         </Button>
 
-        <div className="hidden w-8 lg:block" />
+        <div className="hidden lg:block">
+          <ThemeToggle />
+        </div>
       </header>
 
-      <MobileNav onClose={() => setMobileOpen(false)} open={mobileOpen} />
+      <MobileNav
+        email={email}
+        name={name}
+        onClose={() => setMobileOpen(false)}
+        open={mobileOpen}
+      />
     </>
   );
 }

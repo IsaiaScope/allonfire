@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@allonfire/ui/components/card";
 import { LogOut, Mail, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 const INITIALS_SPLIT = /[\s@]/;
@@ -29,6 +30,7 @@ export function UserInfoCard({
 }: UserInfoCardProps) {
   const t = useTranslations("Settings");
   const tNav = useTranslations("Nav");
+  const router = useRouter();
 
   const initials = (name ?? email)
     .split(INITIALS_SPLIT)
@@ -36,15 +38,20 @@ export function UserInfoCard({
     .map((s) => s[0]?.toUpperCase() ?? "")
     .join("");
 
+  async function handleSignOut() {
+    await authClient.signOut();
+    router.push("/login");
+  }
+
   return (
-    <Card>
+    <Card className="gap-2 py-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <User className="size-4 text-primary" />
           {t("userInfo")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-full bg-muted font-semibold text-muted-foreground text-sm">
             {initials}
@@ -69,14 +76,12 @@ export function UserInfoCard({
           ))}
         </div>
 
-        <Button
-          className="w-full justify-start"
-          onClick={() => authClient.signOut()}
-          variant="ghost"
-        >
-          <LogOut className="size-4" />
-          {tNav("signOut")}
-        </Button>
+        <div className="flex justify-end">
+          <Button onClick={handleSignOut} size="sm" variant="default">
+            <LogOut className="size-4" />
+            {tNav("signOut")}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

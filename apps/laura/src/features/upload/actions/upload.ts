@@ -6,7 +6,13 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+const ACCEPTED_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
 
 type UploadResult =
   | { success: true; count: number }
@@ -30,7 +36,7 @@ export async function uploadPhotosAction(
     if (!ACCEPTED_TYPES.has(file.type)) {
       return {
         success: false,
-        error: `Invalid file type: ${file.name}. Only PNG, JPEG, and WebP are accepted.`,
+        error: `Invalid file type: ${file.name}. Only PNG, JPEG, WebP, and HEIC are accepted.`,
       };
     }
     if (file.size > MAX_FILE_SIZE) {

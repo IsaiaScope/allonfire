@@ -17,7 +17,11 @@
     "settingsDescription": "Lingua, tema e account",
     "signOut": "Esci",
     "openMenu": "Apri menu",
-    "appName": "Laura"
+    "appName": "Laura",
+    "leaderboard": "Classifica",
+    "leaderboardDescription": "Classifiche e punteggi",
+    "memory": "Memory",
+    "memoryNavDescription": "Abbina coppie di foto"
   },
   "Gallery": {
     "title": "Galleria",
@@ -33,7 +37,7 @@
     "title": "Carica foto",
     "subtitle": "Aggiungi nuove foto alla galleria",
     "dropzone": "Trascina qui le foto o clicca per sfogliare",
-    "fileTypes": "PNG, JPEG o WebP fino a 10MB ciascuno",
+    "fileTypes": "PNG, JPEG, WebP o HEIC fino a 10MB ciascuno",
     "selectedCount": "{count, plural, =1 {1 foto selezionata} other {# foto selezionate}}",
     "uploadButton": "Carica",
     "uploading": "Caricamento...",
@@ -48,10 +52,14 @@
   },
   "Error": {
     "title": "Qualcosa è andato storto",
-    "retry": "Riprova"
+    "description": "Si è verificato un errore imprevisto. Il nostro team è stato notificato.",
+    "errorId": "ID Errore: {digest}",
+    "retry": "Riprova",
+    "backHome": "Torna alla home"
   },
   "NotFound": {
     "title": "Pagina non trovata",
+    "description": "Questa pagina non esiste o è stata spostata.",
     "goHome": "Torna alla home"
   },
   "Auth": {
@@ -82,6 +90,38 @@
   },
   "Games": {
     "title": "Giochi",
-    "comingSoon": "I giochi stanno arrivando! Resta sintonizzato."
+    "subtitle": "Giochi divertenti con le nostre foto",
+    "memoryTitle": "Memory",
+    "memoryDescription": "Abbina le coppie di foto il più velocemente possibile",
+    "play": "Gioca",
+    "leaderboardTitle": "Classifica",
+    "leaderboardDescription": "Scopri chi è il più veloce",
+    "viewLeaderboard": "Vedi Classifica",
+    "moves": "Mosse",
+    "time": "Tempo",
+    "bestTime": "Miglior Tempo",
+    "totalGames": "Partite Totali",
+    "uniquePlayers": "Giocatori",
+    "avgTime": "Tempo Medio",
+    "rank": "#",
+    "player": "Giocatore",
+    "date": "Data",
+    "noScores": "Nessun punteggio ancora. Sii il primo a giocare!",
+    "gameComplete": "Ottimo Lavoro!",
+    "newRecord": "Nuovo Record!",
+    "playAgain": "Gioca Ancora",
+    "backToGames": "Torna ai Giochi",
+    "submitting": "Salvataggio punteggio...",
+    "scoreSubmitted": "Punteggio salvato!",
+    "submitError": "Salvataggio punteggio fallito",
+    "retry": "Riprova",
+    "notEnoughPhotos": "Carica almeno 8 foto per giocare a memory",
+    "goToUpload": "Carica Foto",
+    "yourStats": "Le Tue Statistiche",
+    "gamesPlayed": "Partite Giocate",
+    "yourBestTime": "Il Tuo Migliore",
+    "flipCard": "Gira carta {index}",
+    "cardMatched": "Carta {index}, abbinata",
+    "cardFaceDown": "Carta {index}, coperta"
   }
 }

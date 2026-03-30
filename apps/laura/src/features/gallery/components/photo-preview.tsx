@@ -44,7 +44,7 @@ export function PhotoPreview({ photo, onClose }: PhotoPreviewProps) {
     >
       <button
         aria-label={t("closeLabel")}
-        className="absolute top-4 right-4 z-10 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+        className="absolute top-4 right-4 z-10 cursor-pointer rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
         onClick={onClose}
         type="button"
       >

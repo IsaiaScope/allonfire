@@ -10,7 +10,7 @@ type UploadDropzoneProps = {
   disabled?: boolean;
 };
 
-const ACCEPTED_TYPES = "image/png,image/jpeg,image/webp";
+const ACCEPTED_TYPES = "image/png,image/jpeg,image/webp,image/heic,image/heif";
 
 export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);

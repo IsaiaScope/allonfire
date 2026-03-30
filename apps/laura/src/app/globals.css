@@ -1,3 +1,4 @@
-@import "@allonfire/ui/styles/globals.css";
+@import "@allonfire/ui/styles/base.css";
+@import "@allonfire/ui/styles/theme-laura.css";
 @source "../../../../packages/ui/src";
 @source "../../../../packages/auth/src";

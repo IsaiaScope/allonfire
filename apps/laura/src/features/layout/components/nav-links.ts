@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Gamepad2, Images, Settings, Upload } from "lucide-react";
+import { Gamepad2, Images, Settings, Trophy, Upload } from "lucide-react";
 
 export type NavLink = {
   href: string;
@@ -46,6 +46,12 @@ export const navSections: NavSection[] = [
         labelKey: "games",
         descriptionKey: "gamesDescription",
         icon: Gamepad2,
+      },
+      {
+        href: "/games/leaderboard",
+        labelKey: "leaderboard",
+        descriptionKey: "leaderboardDescription",
+        icon: Trophy,
       },
     ],
   },

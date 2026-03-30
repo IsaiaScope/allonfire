@@ -13,7 +13,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
 
   return (
     <button
-      className="mb-3 block w-full break-inside-avoid overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
+      className="mb-3 block w-full cursor-pointer break-inside-avoid overflow-hidden rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
       onClick={onClick}
       type="button"
     >

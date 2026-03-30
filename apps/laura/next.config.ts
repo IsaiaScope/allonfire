@@ -5,6 +5,9 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   output: "standalone",
   experimental: {
     authInterrupts: true,
@@ -15,18 +18,26 @@ const nextConfig: NextConfig = {
     "@allonfire/database",
     "@allonfire/storage",
   ],
-  images: {
-    remotePatterns: [
+  async headers() {
+    return [
       {
-        protocol: "http",
-        hostname: "localhost",
-        port: "9000",
+        source: "/storage/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
       },
+    ];
+  },
+  async rewrites() {
+    return [
       {
-        protocol: "https",
-        hostname: "minio.allonfire.com",
+        source: "/storage/:path*",
+        destination: `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET}/:path*`,
       },
-    ],
+    ];
   },
 };
 

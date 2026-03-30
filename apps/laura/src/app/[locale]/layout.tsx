@@ -1,22 +1,24 @@
 import { Providers } from "@allonfire/auth/components/providers";
 import { Wrapper } from "@allonfire/ui/components/wrapper";
 import type { Metadata, Viewport } from "next";
-import { Poppins, Roboto_Mono } from "next/font/google";
+import { Fira_Code, Oxanium } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
-const fontSans = Poppins({
+const fontSans = Oxanium({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
+  display: "swap",
 });
 
-const fontMono = Roboto_Mono({
+const fontMono = Fira_Code({
   subsets: ["latin"],
   variable: "--font-mono",
+  display: "swap",
 });
 
 type LayoutProps = {
@@ -55,7 +57,7 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
-  themeColor: "#151515",
+  themeColor: "#37302a",
   colorScheme: "dark",
 };
 

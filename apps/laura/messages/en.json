@@ -17,7 +17,11 @@
     "settingsDescription": "Language, theme, and account",
     "signOut": "Sign out",
     "openMenu": "Open menu",
-    "appName": "Laura"
+    "appName": "Laura",
+    "leaderboard": "Leaderboard",
+    "leaderboardDescription": "Rankings and scores",
+    "memory": "Memory Game",
+    "memoryNavDescription": "Match photo pairs"
   },
   "Gallery": {
     "title": "Gallery",
@@ -33,7 +37,7 @@
     "title": "Upload Photos",
     "subtitle": "Add new photos to the gallery",
     "dropzone": "Drop photos here or click to browse",
-    "fileTypes": "PNG, JPEG, or WebP up to 10MB each",
+    "fileTypes": "PNG, JPEG, WebP, or HEIC up to 10MB each",
     "selectedCount": "{count, plural, =1 {1 photo selected} other {# photos selected}}",
     "uploadButton": "Upload",
     "uploading": "Uploading...",
@@ -47,12 +51,16 @@
     "fullSizeAlt": "Full size photo"
   },
   "Error": {
-    "title": "Something went wrong",
-    "retry": "Try again"
+    "title": "Something Went Wrong",
+    "description": "An unexpected error occurred. Our team has been notified.",
+    "errorId": "Error ID: {digest}",
+    "retry": "Try Again",
+    "backHome": "Back to Home"
   },
   "NotFound": {
-    "title": "Page not found",
-    "goHome": "Go home"
+    "title": "Page Not Found",
+    "description": "This page doesn't exist or has been moved.",
+    "goHome": "Back to Home"
   },
   "Auth": {
     "emailLabel": "Email",
@@ -82,6 +90,38 @@
   },
   "Games": {
     "title": "Games",
-    "comingSoon": "Games are coming soon! Stay tuned."
+    "subtitle": "Fun games with our photos",
+    "memoryTitle": "Memory",
+    "memoryDescription": "Match pairs of your photos as fast as you can",
+    "play": "Play",
+    "leaderboardTitle": "Leaderboard",
+    "leaderboardDescription": "See who's the fastest",
+    "viewLeaderboard": "View Leaderboard",
+    "moves": "Moves",
+    "time": "Time",
+    "bestTime": "Best Time",
+    "totalGames": "Total Games",
+    "uniquePlayers": "Players",
+    "avgTime": "Average Time",
+    "rank": "#",
+    "player": "Player",
+    "date": "Date",
+    "noScores": "No scores yet. Be the first to play!",
+    "gameComplete": "Well Done!",
+    "newRecord": "New Record!",
+    "playAgain": "Play Again",
+    "backToGames": "Back to Games",
+    "submitting": "Saving score...",
+    "scoreSubmitted": "Score saved!",
+    "submitError": "Failed to save score",
+    "retry": "Retry",
+    "notEnoughPhotos": "Upload at least 8 photos to play the memory game",
+    "goToUpload": "Upload Photos",
+    "yourStats": "Your Stats",
+    "gamesPlayed": "Games Played",
+    "yourBestTime": "Your Best",
+    "flipCard": "Flip card {index}",
+    "cardMatched": "Card {index}, matched",
+    "cardFaceDown": "Card {index}, face down"
   }
 }
