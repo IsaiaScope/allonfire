@@ -5,6 +5,8 @@ export {
   deletePhoto,
   getPhotoCount,
   getPhotosPaginated,
+  getRandomPhotos,
+  getUserPhotoCount,
 } from "./photo.service";
 export {
   createPrompt,

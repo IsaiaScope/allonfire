@@ -53,3 +53,19 @@ export async function deletePhoto(id: string) {
 export async function getPhotoCount() {
   return await prisma.photo.count();
 }
+
+export async function getRandomPhotos(userId: string, count: number) {
+  return await prisma.$queryRaw<
+    { id: string; thumbnailUrl: string; blurHash: string }[]
+  >`
+    SELECT id, "thumbnailUrl", "blurHash"
+    FROM "Photo"
+    WHERE "uploadedBy" = ${userId}
+    ORDER BY RANDOM()
+    LIMIT ${count}
+  `;
+}
+
+export async function getUserPhotoCount(userId: string) {
+  return await prisma.photo.count({ where: { uploadedBy: userId } });
+}
