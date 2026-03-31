@@ -20,15 +20,15 @@ type LeaderboardEntry = {
   user: { name: string | null; image: string | null };
 };
 
-type LeaderboardTableProps = {
+type QuizLeaderboardTableProps = {
   scores: LeaderboardEntry[];
   currentUserId: string;
 };
 
-export function LeaderboardTable({
+export function QuizLeaderboardTable({
   scores,
   currentUserId,
-}: LeaderboardTableProps) {
+}: QuizLeaderboardTableProps) {
   const t = useTranslations("Games");
 
   if (scores.length === 0) {
@@ -48,8 +48,10 @@ export function LeaderboardTable({
           <tr className="border-b text-left text-muted-foreground">
             <th className="px-2 py-3 font-medium">{t("rank")}</th>
             <th className="px-2 py-3 font-medium">{t("player")}</th>
+            <th className="px-2 py-3 text-right font-medium">
+              {t("quizScore")}
+            </th>
             <th className="px-2 py-3 text-right font-medium">{t("time")}</th>
-            <th className="px-2 py-3 text-right font-medium">{t("moves")}</th>
             <th className="hidden px-2 py-3 text-right font-medium sm:table-cell">
               {t("date")}
             </th>
@@ -85,11 +87,11 @@ export function LeaderboardTable({
                   </span>
                 </div>
               </td>
-              <td className="px-2 py-3 text-right font-mono">
-                {entry.timeMs ? formatTime(entry.timeMs) : "—"}
+              <td className="px-2 py-3 text-right font-mono font-semibold">
+                {entry.score ?? 0}/10
               </td>
               <td className="px-2 py-3 text-right font-mono">
-                {entry.score ?? "—"}
+                {entry.timeMs ? formatTime(entry.timeMs) : "—"}
               </td>
               <td className="hidden px-2 py-3 text-right text-muted-foreground sm:table-cell">
                 {new Date(entry.createdAt).toLocaleDateString()}

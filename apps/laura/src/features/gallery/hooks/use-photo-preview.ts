@@ -5,6 +5,8 @@ import { useCallback, useState } from "react";
 type Photo = {
   id: string;
   url: string;
+  thumbnailUrl: string;
+  blurDataURL: string;
   width: number;
   height: number;
   isFavorite: boolean;

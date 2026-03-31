@@ -12,9 +12,9 @@ import {
 // Heights per column — ensures all columns start at the same position
 const SKELETON_COLUMNS = [
   { id: "col-a", heights: [220, 300, 190, 250, 230] },
-  { id: "col-b", heights: [240, 200, 310, 280, 200] },
+  { id: "col-b", heights: [240, 200, 310, 280, 260] },
   { id: "col-c", heights: [280, 230, 260, 220, 270] },
-  { id: "col-d", heights: [210, 290, 250, 240, 210] },
+  { id: "col-d", heights: [210, 290, 250, 240, 195] },
 ];
 
 const COLUMN_IDS = ["col-0", "col-1", "col-2", "col-3"] as const;

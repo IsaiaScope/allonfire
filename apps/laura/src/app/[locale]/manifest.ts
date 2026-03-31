@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "AllOnFire — Laura",
     short_name: "Laura",
-    description: "Our photo gallery",
+    description: "Our little place for photos and fun",
     id: "/",
     start_url: "/",
     scope: "/",
-    display: "standalone",
+    display: "browser",
     orientation: "portrait-primary",
     background_color: "#37302a",
     theme_color: "#37302a",

@@ -40,11 +40,24 @@ export function PhotoCard({
     [triggerFavorite]
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onClick();
+      }
+    },
+    [onClick]
+  );
+
   return (
-    <button
+    // biome-ignore lint/a11y/useSemanticElements: div+role=button avoids invalid nested <button> with heart toggle
+    <div
       className="group relative block w-full cursor-pointer overflow-hidden rounded-lg transition-all duration-200 hover:shadow-[0_0_12px_color-mix(in_oklch,var(--primary)_25%,transparent)] hover:ring-1 hover:ring-white/10 focus-visible:outline-2 focus-visible:outline-primary"
       onClick={onClick}
-      type="button"
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
     >
       <Image
         alt={photo.caption ?? ""}
@@ -89,6 +102,6 @@ export function PhotoCard({
           )}
         </>
       )}
-    </button>
+    </div>
   );
 }

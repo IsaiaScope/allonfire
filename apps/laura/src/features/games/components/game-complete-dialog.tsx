@@ -87,7 +87,9 @@ export function GameCompleteDialog({
 
           <div className="flex gap-3">
             <Button asChild className="flex-1" variant="outline">
-              <Link href="/games/leaderboard">{t("viewLeaderboard")}</Link>
+              <Link href="/games/memory/leaderboard">
+                {t("viewLeaderboard")}
+              </Link>
             </Button>
             <Button className="flex-1" onClick={onPlayAgain}>
               {t("playAgain")}

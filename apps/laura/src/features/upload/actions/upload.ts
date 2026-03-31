@@ -4,15 +4,7 @@ import { createPhoto } from "@allonfire/database";
 import { processPhoto, uploadFile } from "@allonfire/storage";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-]);
+import { validateImageFile } from "@/lib/file-validation";
 
 type UploadResult =
   | { success: true; count: number }
@@ -33,17 +25,9 @@ export async function uploadPhotosAction(
   }
 
   for (const file of files) {
-    if (!ACCEPTED_TYPES.has(file.type)) {
-      return {
-        success: false,
-        error: `Invalid file type: ${file.name}. Only PNG, JPEG, WebP, and HEIC are accepted.`,
-      };
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return {
-        success: false,
-        error: `File too large: ${file.name}. Maximum size is 10MB.`,
-      };
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      return { success: false, error: validationError };
     }
   }
 
