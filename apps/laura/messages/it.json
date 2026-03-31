@@ -25,7 +25,8 @@
     "memory": "Memory",
     "memoryNavDescription": "Abbina coppie di foto",
     "quiz": "Quiz",
-    "quizNavDescription": "Rispondi alle domande e metti alla prova le tue conoscenze"
+    "quizNavDescription": "Rispondi alle domande e metti alla prova le tue conoscenze",
+    "viewerRestricted": "Accesso in sola lettura"
   },
   "Gallery": {
     "title": "Galleria",
@@ -57,7 +58,10 @@
     "uploading": "Caricamento...",
     "successToast": "{count, plural, =1 {Caricata 1 foto} other {Caricate # foto}}",
     "errorToast": "Caricamento fallito",
-    "remove": "Rimuovi {name}"
+    "remove": "Rimuovi {name}",
+    "viewerTitle": "Accesso in sola lettura",
+    "viewerDescription": "Il tuo account ha accesso in sola lettura. Per caricare foto serve un account utente.",
+    "backToGallery": "Torna alla galleria"
   },
   "PhotoPreview": {
     "ariaLabel": "Anteprima foto",
@@ -75,7 +79,8 @@
     "deleteTitle": "Eliminare questa foto?",
     "deleteDescription": "Questa foto verrà eliminata definitivamente. Questa azione non può essere annullata.",
     "deleteCancel": "Annulla",
-    "deleteConfirm": "Elimina"
+    "deleteConfirm": "Elimina",
+    "viewerRestricted": "Accesso in sola lettura"
   },
   "Error": {
     "title": "Qualcosa è andato storto",
@@ -87,6 +92,17 @@
   "NotFound": {
     "title": "Pagina non trovata",
     "description": "Questa pagina non esiste o è stata spostata.",
+    "goHome": "Torna alla home"
+  },
+  "Forbidden": {
+    "title": "Accesso negato",
+    "description": "Non hai i permessi per accedere a questa pagina.",
+    "goHome": "Torna alla home"
+  },
+  "Unauthorized": {
+    "title": "Autenticazione richiesta",
+    "description": "Accedi per visualizzare questa pagina.",
+    "signIn": "Accedi",
     "goHome": "Torna alla home"
   },
   "Auth": {
@@ -143,6 +159,7 @@
     "scoreSubmitted": "Punteggio salvato!",
     "submitError": "Salvataggio punteggio fallito",
     "retry": "Riprova",
+    "viewerScoreNotice": "Stai giocando come ospite — il punteggio non viene registrato in classifica",
     "notEnoughPhotos": "Carica almeno 6 foto per giocare a memory",
     "goToUpload": "Carica Foto",
     "yourStats": "Le Tue Statistiche",

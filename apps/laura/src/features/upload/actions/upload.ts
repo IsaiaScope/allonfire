@@ -1,8 +1,8 @@
 "use server";
 
+import { checkMutationAccess } from "@allonfire/auth/guard";
 import { createPhoto } from "@allonfire/database";
 import { processPhoto, uploadFile } from "@allonfire/storage";
-import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { validateImageFile } from "@/lib/file-validation";
 
@@ -13,10 +13,11 @@ type UploadResult =
 export async function uploadPhotosAction(
   formData: FormData
 ): Promise<UploadResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return { success: false, error: "Not authenticated" };
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
   }
+  const { session } = access;
 
   const files = formData.getAll("photos") as File[];
 

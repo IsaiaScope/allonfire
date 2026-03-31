@@ -1,15 +1,19 @@
+"use client";
+
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@allonfire/ui/components/avatar";
 import { cn } from "@allonfire/ui/lib/utils";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import {
   getInitials,
   RankBadge,
 } from "@/features/games/components/leaderboard-shared";
 import { formatTime } from "@/features/games/utils/format-time";
+import { leaderboardRow, staggerContainer } from "@/lib/animation-variants";
 
 type LeaderboardEntry = {
   id: string;
@@ -57,14 +61,19 @@ export function QuizLeaderboardTable({
             </th>
           </tr>
         </thead>
-        <tbody>
+        <motion.tbody
+          animate="visible"
+          initial="hidden"
+          variants={staggerContainer}
+        >
           {scores.map((entry, index) => (
-            <tr
+            <motion.tr
               className={cn(
                 "border-b transition-colors",
                 entry.userId === currentUserId && "bg-primary/5"
               )}
               key={entry.id}
+              variants={leaderboardRow}
             >
               <td className="px-2 py-3">
                 <RankBadge rank={index + 1} />
@@ -96,9 +105,9 @@ export function QuizLeaderboardTable({
               <td className="hidden px-2 py-3 text-right text-muted-foreground sm:table-cell">
                 {new Date(entry.createdAt).toLocaleDateString()}
               </td>
-            </tr>
+            </motion.tr>
           ))}
-        </tbody>
+        </motion.tbody>
       </table>
     </div>
   );

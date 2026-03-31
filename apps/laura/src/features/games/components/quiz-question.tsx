@@ -11,8 +11,6 @@ type QuizQuestionProps = {
   disabled: boolean;
 };
 
-const LETTER_LABELS = ["A", "B", "C", "D"];
-
 export function QuizQuestion({
   question,
   selectedAnswerId,
@@ -25,11 +23,11 @@ export function QuizQuestion({
     <div className="space-y-4">
       {/* Question image */}
       {question.imageThumbnailUrl && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
           <Image
             alt=""
             blurDataURL={question.imageBlurDataURL ?? undefined}
-            className="object-cover"
+            className="object-contain"
             fill
             placeholder={question.imageBlurDataURL ? "blur" : "empty"}
             sizes="(max-width: 640px) 100vw, 600px"
@@ -76,12 +74,12 @@ function TextAnswerList({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {answers.map((answer, i) => {
+      {answers.map((answer) => {
         const isSelected = selectedAnswerId === answer.id;
         return (
           <button
             className={cn(
-              "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all",
+              "rounded-xl border px-4 py-3 text-left transition-all",
               isSelected
                 ? "border-primary bg-primary/10 ring-1 ring-primary"
                 : "border-border hover:border-primary/50 hover:bg-muted/50",
@@ -92,17 +90,9 @@ function TextAnswerList({
             onClick={() => onSelectAnswer(answer.id)}
             type="button"
           >
-            <span
-              className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-full font-semibold text-xs",
-                isSelected
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {LETTER_LABELS[i]}
+            <span className="line-clamp-5 text-sm sm:text-base">
+              {answer.text}
             </span>
-            <span className="text-sm sm:text-base">{answer.text}</span>
           </button>
         );
       })}
@@ -123,8 +113,9 @@ function ImageAnswerGrid({
 }) {
   return (
     <div className="grid grid-cols-2 gap-2 sm:gap-3">
-      {answers.map((answer, i) => {
+      {answers.map((answer) => {
         const isSelected = selectedAnswerId === answer.id;
+        const imageSrc = answer.imageThumbnailUrl;
         return (
           <button
             className={cn(
@@ -139,32 +130,32 @@ function ImageAnswerGrid({
             onClick={() => onSelectAnswer(answer.id)}
             type="button"
           >
-            {answer.imageThumbnailUrl && (
-              <div className="relative aspect-square w-full">
-                <Image
-                  alt={answer.text}
-                  blurDataURL={answer.imageBlurDataURL ?? undefined}
-                  className="object-cover"
-                  fill
-                  placeholder={answer.imageBlurDataURL ? "blur" : "empty"}
-                  sizes="(max-width: 640px) 45vw, 250px"
-                  src={answer.imageThumbnailUrl}
-                />
+            {imageSrc ? (
+              <>
+                <div className="relative aspect-[4/3] w-full bg-muted">
+                  <Image
+                    alt={answer.text}
+                    blurDataURL={answer.imageBlurDataURL ?? undefined}
+                    className="object-contain"
+                    fill
+                    placeholder={answer.imageBlurDataURL ? "blur" : "empty"}
+                    sizes="(max-width: 640px) 45vw, 250px"
+                    src={imageSrc}
+                  />
+                </div>
+                <div className="px-3 py-2">
+                  <span className="line-clamp-5 break-all text-sm">
+                    {answer.text}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-1 items-center justify-center p-3">
+                <span className="line-clamp-5 break-all text-center text-sm">
+                  {answer.text}
+                </span>
               </div>
             )}
-            <div className="flex items-center gap-2 px-3 py-2">
-              <span
-                className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full font-bold text-[10px]",
-                  isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {LETTER_LABELS[i]}
-              </span>
-              <span className="text-sm">{answer.text}</span>
-            </div>
           </button>
         );
       })}

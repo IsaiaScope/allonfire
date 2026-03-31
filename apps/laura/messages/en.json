@@ -25,7 +25,8 @@
     "memory": "Memory Game",
     "memoryNavDescription": "Match photo pairs",
     "quiz": "Quiz",
-    "quizNavDescription": "Answer questions and test your knowledge"
+    "quizNavDescription": "Answer questions and test your knowledge",
+    "viewerRestricted": "View-only access"
   },
   "Gallery": {
     "title": "Gallery",
@@ -57,7 +58,10 @@
     "uploading": "Uploading...",
     "successToast": "{count, plural, =1 {Uploaded 1 photo} other {Uploaded # photos}}",
     "errorToast": "Upload failed",
-    "remove": "Remove {name}"
+    "remove": "Remove {name}",
+    "viewerTitle": "View-only access",
+    "viewerDescription": "Your account has viewer access. Uploading photos requires a user account.",
+    "backToGallery": "Back to gallery"
   },
   "PhotoPreview": {
     "ariaLabel": "Photo preview",
@@ -75,7 +79,8 @@
     "deleteTitle": "Delete this photo?",
     "deleteDescription": "This will permanently delete this photo. This action cannot be undone.",
     "deleteCancel": "Cancel",
-    "deleteConfirm": "Delete"
+    "deleteConfirm": "Delete",
+    "viewerRestricted": "View-only access"
   },
   "Error": {
     "title": "Something Went Wrong",
@@ -87,6 +92,17 @@
   "NotFound": {
     "title": "Page Not Found",
     "description": "This page doesn't exist or has been moved.",
+    "goHome": "Back to Home"
+  },
+  "Forbidden": {
+    "title": "Access Forbidden",
+    "description": "You don't have permission to access this page.",
+    "goHome": "Back to Home"
+  },
+  "Unauthorized": {
+    "title": "Authentication Required",
+    "description": "Please sign in to access this page.",
+    "signIn": "Sign In",
     "goHome": "Back to Home"
   },
   "Auth": {
@@ -143,6 +159,7 @@
     "scoreSubmitted": "Score saved!",
     "submitError": "Failed to save score",
     "retry": "Retry",
+    "viewerScoreNotice": "Playing as viewer — score not recorded on leaderboard",
     "notEnoughPhotos": "Upload at least 6 photos to play the memory game",
     "goToUpload": "Upload Photos",
     "yourStats": "Your Stats",

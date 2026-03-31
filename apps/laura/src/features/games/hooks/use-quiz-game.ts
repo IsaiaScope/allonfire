@@ -8,7 +8,12 @@ import {
 } from "@/features/games/actions/quiz";
 
 type GameState = "idle" | "playing" | "complete";
-type SubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitState =
+  | "idle"
+  | "submitting"
+  | "success"
+  | "error"
+  | "viewer-skipped";
 
 export type PlayerAnswer = {
   questionId: string;
@@ -16,7 +21,10 @@ export type PlayerAnswer = {
   isCorrect: boolean;
 };
 
-export function useQuizGame(initialQuestions: QuizQuestionData[]) {
+export function useQuizGame(
+  initialQuestions: QuizQuestionData[],
+  options?: { isViewer?: boolean }
+) {
   const [questions] = useState(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
@@ -26,6 +34,9 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [isNewBest, setIsNewBest] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lastAnswerResult, setLastAnswerResult] = useState<
+    "correct" | "wrong" | null
+  >(null);
 
   const startTimeRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -68,29 +79,8 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
     [gameState, isTransitioning]
   );
 
-  const confirmAnswer = useCallback(() => {
-    if (!(selectedAnswerId && currentQuestion) || isTransitioning) {
-      return;
-    }
-
-    const selectedAnswer = currentQuestion.answers.find(
-      (a) => a.id === selectedAnswerId
-    );
-    if (!selectedAnswer) {
-      return;
-    }
-
-    const answer: PlayerAnswer = {
-      questionId: currentQuestion.id,
-      selectedAnswerId,
-      isCorrect: selectedAnswer.isCorrect,
-    };
-
-    const updatedAnswers = [...playerAnswers, answer];
-    setPlayerAnswers(updatedAnswers);
-
-    // Check if quiz is complete
-    if (currentIndex + 1 >= totalQuestions) {
+  const handleQuizComplete = useCallback(
+    (updatedAnswers: PlayerAnswer[]) => {
       const finalTime = startTimeRef.current
         ? Date.now() - startTimeRef.current
         : 0;
@@ -102,7 +92,11 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
         timerRef.current = null;
       }
 
-      // Submit score
+      if (options?.isViewer) {
+        setSubmitState("viewer-skipped");
+        return;
+      }
+
       const finalCorrectCount = updatedAnswers.filter(
         (a) => a.isCorrect
       ).length;
@@ -123,12 +117,41 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
         .catch(() => {
           setSubmitState("error");
         });
+    },
+    [totalQuestions, options?.isViewer]
+  );
+
+  const confirmAnswer = useCallback(() => {
+    if (!(selectedAnswerId && currentQuestion) || isTransitioning) {
+      return;
+    }
+
+    const selectedAnswer = currentQuestion.answers.find(
+      (a) => a.id === selectedAnswerId
+    );
+    if (!selectedAnswer) {
+      return;
+    }
+
+    const answer: PlayerAnswer = {
+      questionId: currentQuestion.id,
+      selectedAnswerId,
+      isCorrect: selectedAnswer.isCorrect,
+    };
+
+    setLastAnswerResult(selectedAnswer.isCorrect ? "correct" : "wrong");
+
+    const updatedAnswers = [...playerAnswers, answer];
+    setPlayerAnswers(updatedAnswers);
+
+    if (currentIndex + 1 >= totalQuestions) {
+      handleQuizComplete(updatedAnswers);
     } else {
-      // Transition to next question
       setIsTransitioning(true);
       setTimeout(() => {
         setCurrentIndex((i) => i + 1);
         setSelectedAnswerId(null);
+        setLastAnswerResult(null);
         setIsTransitioning(false);
       }, 300);
     }
@@ -139,6 +162,7 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
     totalQuestions,
     playerAnswers,
     isTransitioning,
+    handleQuizComplete,
   ]);
 
   const resetGame = useCallback(async () => {
@@ -160,6 +184,7 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
     setSubmitState("idle");
     setIsNewBest(false);
     setIsTransitioning(false);
+    setLastAnswerResult(null);
     startTimeRef.current = null;
   }, []);
 
@@ -200,8 +225,14 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
           return {
             questionText: question?.text ?? "",
             questionIndex: questions.findIndex((q) => q.id === a.questionId),
+            questionImageUrl: question?.imageThumbnailUrl ?? null,
+            questionBlurDataURL: question?.imageBlurDataURL ?? null,
             selectedAnswerText: selectedAnswer?.text ?? "",
+            selectedAnswerImageUrl: selectedAnswer?.imageThumbnailUrl ?? null,
+            selectedAnswerBlurDataURL: selectedAnswer?.imageBlurDataURL ?? null,
             correctAnswerText: correctAnswer?.text ?? "",
+            correctAnswerImageUrl: correctAnswer?.imageThumbnailUrl ?? null,
+            correctAnswerBlurDataURL: correctAnswer?.imageBlurDataURL ?? null,
           };
         }),
     [playerAnswers, questions]
@@ -218,6 +249,7 @@ export function useQuizGame(initialQuestions: QuizQuestionData[]) {
     submitState,
     isNewBest,
     isTransitioning,
+    lastAnswerResult,
     correctCount,
     mistakes,
     selectAnswer,

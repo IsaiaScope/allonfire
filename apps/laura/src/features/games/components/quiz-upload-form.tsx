@@ -208,13 +208,13 @@ export function QuizUploadForm() {
       <div className="space-y-2">
         <Label>{t("quizUploadImage")}</Label>
         {questionImagePreview ? (
-          <div className="group relative w-fit">
+          <div className="group relative aspect-video w-full max-w-xs overflow-hidden rounded-lg">
             <Image
               alt="Question image"
-              className="rounded-lg"
-              height={200}
+              className="object-contain"
+              fill
+              sizes="300px"
               src={questionImagePreview}
-              width={300}
             />
             <button
               className="absolute top-2 right-2 rounded-full bg-background/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
@@ -360,13 +360,13 @@ function AnswerRow({
 
           {/* Answer image */}
           {answer.imagePreview ? (
-            <div className="group relative w-fit">
+            <div className="group relative aspect-square size-20 overflow-hidden rounded">
               <Image
                 alt={`Answer ${index + 1} image`}
-                className="rounded"
-                height={80}
+                className="object-contain"
+                fill
+                sizes="80px"
                 src={answer.imagePreview}
-                width={120}
               />
               <button
                 className="absolute top-1 right-1 rounded-full bg-background/80 p-0.5 opacity-0 transition-opacity group-hover:opacity-100"

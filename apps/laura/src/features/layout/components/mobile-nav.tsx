@@ -14,6 +14,7 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useIsViewer } from "@/components/user-role-provider";
 import { Link, usePathname } from "@/i18n/navigation";
 import { isLinkActive, navSections } from "./nav-links";
 
@@ -28,6 +29,7 @@ export function MobileNav({ open, onClose, name, email }: MobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("Nav");
+  const isViewer = useIsViewer();
 
   const initials = name
     ? name
@@ -71,6 +73,20 @@ export function MobileNav({ open, onClose, name, email }: MobileNavProps) {
               <div className="px-2">
                 {section.links.map((link) => {
                   const active = isLinkActive(pathname, link.href);
+                  const restricted = isViewer && link.viewerRestricted;
+
+                  if (restricted) {
+                    return (
+                      <div
+                        className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 font-medium text-sm opacity-50"
+                        key={link.href}
+                      >
+                        <link.icon className="size-4 shrink-0" />
+                        {t(link.labelKey)}
+                      </div>
+                    );
+                  }
+
                   return (
                     <Link
                       className={cn(

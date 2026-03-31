@@ -8,6 +8,7 @@
     "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3101 next dev --port 3101 --hostname 0.0.0.0",
     "dev:tunnel": "npx localtunnel --port 3101",
     "build": "next build --webpack",
+    "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "check-types": "tsc --noEmit",
     "test": "vitest run"
@@ -38,6 +39,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/dom": "^10.4.1",

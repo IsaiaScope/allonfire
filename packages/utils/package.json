@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./security-headers": "./src/security-headers.ts"
   },
   "devDependencies": {
     "typescript": "~5.8.2"

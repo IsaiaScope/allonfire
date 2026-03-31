@@ -3,6 +3,10 @@ import { Card, CardContent } from "@allonfire/ui/components/card";
 import { Gamepad2 } from "lucide-react";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  AnimatedPageWrapper,
+  AnimatedSection,
+} from "@/components/animated-page";
 import { getQuizLeaderboardAction } from "@/features/games/actions/quiz";
 import { LeaderboardStats } from "@/features/games/components/leaderboard-stats";
 import { QuizLeaderboardTable } from "@/features/games/components/quiz-leaderboard-table";
@@ -31,40 +35,46 @@ export default async function QuizLeaderboardPage({
 
   return (
     <PageContainer>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-bold text-2xl tracking-tight">
-              {t("quizTitle")}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {t("leaderboardTitle")}
-            </p>
+      <AnimatedPageWrapper>
+        <AnimatedSection>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-bold text-2xl tracking-tight">
+                {t("quizTitle")}
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                {t("leaderboardTitle")}
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/games/quiz">
+                <Gamepad2 className="mr-1 size-4" />
+                {t("play")}
+              </Link>
+            </Button>
           </div>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/games/quiz">
-              <Gamepad2 className="mr-1 size-4" />
-              {t("play")}
-            </Link>
-          </Button>
-        </div>
+        </AnimatedSection>
 
-        <Card className="gap-0 py-2">
-          <CardContent className="px-0">
-            <QuizLeaderboardTable
-              currentUserId={data.currentUserId}
-              scores={data.scores}
-            />
-          </CardContent>
-        </Card>
+        <AnimatedSection>
+          <Card className="gap-0 py-2">
+            <CardContent className="px-0">
+              <QuizLeaderboardTable
+                currentUserId={data.currentUserId}
+                scores={data.scores}
+              />
+            </CardContent>
+          </Card>
+        </AnimatedSection>
 
-        <LeaderboardStats
-          avgTimeMs={data.stats.avgTimeMs}
-          bestTimeMs={data.stats.bestTimeMs}
-          totalGames={data.stats.totalGames}
-          uniquePlayers={data.stats.uniquePlayers}
-        />
-      </div>
+        <AnimatedSection>
+          <LeaderboardStats
+            avgTimeMs={data.stats.avgTimeMs}
+            bestTimeMs={data.stats.bestTimeMs}
+            totalGames={data.stats.totalGames}
+            uniquePlayers={data.stats.uniquePlayers}
+          />
+        </AnimatedSection>
+      </AnimatedPageWrapper>
     </PageContainer>
   );
 }

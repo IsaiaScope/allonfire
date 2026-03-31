@@ -5,6 +5,7 @@ import { Fira_Code, Oxanium } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { MotionProvider } from "@/components/motion-provider";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -80,9 +81,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       >
         <NextIntlClientProvider>
           <Providers>
-            <Wrapper className="flex min-h-0 flex-1 flex-col" tag="div">
-              {children}
-            </Wrapper>
+            <MotionProvider>
+              <Wrapper className="flex min-h-0 flex-1 flex-col" tag="div">
+                {children}
+              </Wrapper>
+            </MotionProvider>
           </Providers>
         </NextIntlClientProvider>
       </body>

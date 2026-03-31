@@ -2,13 +2,26 @@
 
 import { Button } from "@allonfire/ui/components/button";
 import { cn } from "@allonfire/ui/lib/utils";
+import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useIsViewer } from "@/components/user-role-provider";
 import type { QuizQuestionData } from "@/features/games/actions/quiz";
 import { useQuizGame } from "@/features/games/hooks/use-quiz-game";
 import { formatTime } from "@/features/games/utils/format-time";
+import { correctBounce, wrongShake } from "@/lib/animation-variants";
 import { QuizQuestion } from "./quiz-question";
 import { QuizResults } from "./quiz-results";
+
+function answerFeedbackAnimation(result: "correct" | "wrong" | null) {
+  if (result === "correct") {
+    return correctBounce;
+  }
+  if (result === "wrong") {
+    return wrongShake;
+  }
+  return {};
+}
 
 type QuizBoardProps = {
   initialQuestions: QuizQuestionData[];
@@ -16,12 +29,14 @@ type QuizBoardProps = {
 
 export function QuizBoard({ initialQuestions }: QuizBoardProps) {
   const t = useTranslations("Games");
+  const isViewer = useIsViewer();
   const {
     currentQuestion,
     currentIndex,
     totalQuestions,
     selectedAnswerId,
     gameState,
+    lastAnswerResult,
     elapsedMs,
     submitState,
     isNewBest,
@@ -32,7 +47,7 @@ export function QuizBoard({ initialQuestions }: QuizBoardProps) {
     confirmAnswer,
     resetGame,
     retrySubmit,
-  } = useQuizGame(initialQuestions);
+  } = useQuizGame(initialQuestions, { isViewer });
 
   if (gameState === "complete") {
     return (
@@ -56,7 +71,7 @@ export function QuizBoard({ initialQuestions }: QuizBoardProps) {
   const progress = ((currentIndex + 1) / totalQuestions) * 100;
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       {/* Header: progress + timer */}
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground text-sm">
@@ -79,22 +94,27 @@ export function QuizBoard({ initialQuestions }: QuizBoardProps) {
         />
       </div>
 
-      {/* Question area with transition */}
-      <div
-        className={cn(
-          "transition-all duration-200",
-          isTransitioning
-            ? "translate-x-4 opacity-0"
-            : "translate-x-0 opacity-100"
-        )}
+      {/* Question area with transition + answer feedback */}
+      <motion.div
+        animate={answerFeedbackAnimation(lastAnswerResult)}
+        key={`feedback-${currentIndex}-${lastAnswerResult}`}
       >
-        <QuizQuestion
-          disabled={isTransitioning}
-          onSelectAnswer={selectAnswer}
-          question={currentQuestion}
-          selectedAnswerId={selectedAnswerId}
-        />
-      </div>
+        <div
+          className={cn(
+            "transition-all duration-200",
+            isTransitioning
+              ? "translate-x-4 opacity-0"
+              : "translate-x-0 opacity-100"
+          )}
+        >
+          <QuizQuestion
+            disabled={isTransitioning}
+            onSelectAnswer={selectAnswer}
+            question={currentQuestion}
+            selectedAnswerId={selectedAnswerId}
+          />
+        </div>
+      </motion.div>
 
       {/* Confirm button */}
       <Button

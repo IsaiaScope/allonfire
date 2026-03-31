@@ -17,7 +17,7 @@ type GameCompleteDialogProps = {
   open: boolean;
   elapsedMs: number;
   moves: number;
-  submitState: "idle" | "submitting" | "success" | "error";
+  submitState: "idle" | "submitting" | "success" | "error" | "viewer-skipped";
   isNewBest: boolean;
   onPlayAgain: () => void;
   onRetrySubmit: () => void;
@@ -83,6 +83,11 @@ export function GameCompleteDialog({
                 {t("retry")}
               </Button>
             </div>
+          )}
+          {submitState === "viewer-skipped" && (
+            <p className="text-center text-muted-foreground text-sm">
+              {t("viewerScoreNotice")}
+            </p>
           )}
 
           <div className="flex gap-3">

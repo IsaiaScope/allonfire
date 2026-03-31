@@ -16,6 +16,7 @@ export type { PhotoWithUser } from "./photo.service";
 export {
   createPhoto,
   deletePhoto,
+  getAllRandomPhotos,
   getPhotoCount,
   getPhotosPaginated,
   getRandomPhotos,

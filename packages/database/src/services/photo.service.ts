@@ -70,6 +70,21 @@ export async function getRandomPhotos(userId: string, count: number) {
   `;
 }
 
+export async function getAllRandomPhotos(count: number) {
+  return await prisma.$queryRaw<
+    { id: string; thumbnailUrl: string; blurHash: string }[]
+  >`
+    SELECT id, "thumbnailUrl", "blurHash"
+    FROM (
+      SELECT DISTINCT ON ("thumbnailUrl") id, "thumbnailUrl", "blurHash"
+      FROM "Photo"
+      ORDER BY "thumbnailUrl", RANDOM()
+    ) sub
+    ORDER BY RANDOM()
+    LIMIT ${count}
+  `;
+}
+
 export async function getUserPhotoCount(userId: string) {
   const result = await prisma.$queryRaw<[{ count: bigint }]>`
     SELECT COUNT(DISTINCT "thumbnailUrl") as count
