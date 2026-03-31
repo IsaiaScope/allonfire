@@ -11,7 +11,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@allonfire/ui/components/alert-dialog";
-import { Skeleton } from "@allonfire/ui/components/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -38,6 +37,8 @@ type PhotoPreviewProps = {
   photo: {
     id: string;
     url: string;
+    thumbnailUrl: string;
+    blurDataURL: string;
     width: number;
     height: number;
     isFavorite: boolean;
@@ -192,29 +193,38 @@ export function PhotoPreview({
     <div
       aria-label={t("ariaLabel")}
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-2"
       onClick={onClose}
       role="dialog"
     >
       <div className="flex flex-col items-center gap-2 sm:gap-3">
-        {!imageLoaded && (
-          <Skeleton
-            className="max-h-[80vh] max-w-[90vw] rounded-lg"
-            style={{
-              aspectRatio: `${photo.width} / ${photo.height}`,
-              width: `min(90vw, calc(80vh * ${photo.width} / ${photo.height}))`,
-            }}
+        <div
+          className="relative overflow-hidden rounded-lg"
+          style={{
+            aspectRatio: `${photo.width} / ${photo.height}`,
+            width: `min(94vw, calc((90vh - 3.5rem) * ${photo.width} / ${photo.height}))`,
+            maxHeight: "calc(90vh - 3.5rem)",
+          }}
+        >
+          {/* Thumbnail placeholder — renders instantly from browser cache */}
+          <Image
+            alt=""
+            className="h-full w-full object-contain"
+            fill
+            sizes="90vw"
+            src={photo.thumbnailUrl}
           />
-        )}
-        <Image
-          alt={t("fullSizeAlt")}
-          className={`max-h-[80vh] w-auto cursor-pointer rounded-lg object-contain ${imageLoaded ? "" : "invisible absolute"}`}
-          height={photo.height}
-          onLoad={() => setImageLoaded(true)}
-          priority
-          src={photo.url}
-          width={photo.width}
-        />
+          {/* Full-res overlay — crossfades in when loaded */}
+          <Image
+            alt={t("fullSizeAlt")}
+            className={`h-full w-full object-contain transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+            fill
+            onLoad={() => setImageLoaded(true)}
+            priority
+            sizes="90vw"
+            src={photo.url}
+          />
+        </div>
         {/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation prevents backdrop close */}
         {/* biome-ignore lint/a11y/useKeyWithClickEvents: keyboard events handled by global listener */}
         {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: toolbar container only stops event propagation */}

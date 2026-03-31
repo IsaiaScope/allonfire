@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Laura",
-    "description": "Our photo gallery"
+    "description": "Our little place for photos and fun"
   },
   "Nav": {
     "gallery": "Gallery",
@@ -23,7 +23,9 @@
     "leaderboard": "Leaderboard",
     "leaderboardDescription": "Rankings and scores",
     "memory": "Memory Game",
-    "memoryNavDescription": "Match photo pairs"
+    "memoryNavDescription": "Match photo pairs",
+    "quiz": "Quiz",
+    "quizNavDescription": "Answer questions and test your knowledge"
   },
   "Gallery": {
     "title": "Gallery",
@@ -131,7 +133,8 @@
     "rank": "#",
     "player": "Player",
     "date": "Date",
-    "noScores": "No scores yet. Be the first to play!",
+    "noScoresLine1": "No scores yet.",
+    "noScoresLine2": "Play a round and claim the top spot!",
     "gameComplete": "Well Done!",
     "newRecord": "New Record!",
     "playAgain": "Play Again",
@@ -147,6 +150,44 @@
     "yourBestTime": "Your Best",
     "flipCard": "Flip card {index}",
     "cardMatched": "Card {index}, matched",
-    "cardFaceDown": "Card {index}, face down"
+    "cardFaceDown": "Card {index}, face down",
+    "quizTitle": "Quiz",
+    "quizDescription": "Answer questions and test your knowledge",
+    "quizLeaderboardTitle": "Quiz Leaderboard",
+    "quizLeaderboardDescription": "Most correct answers, fastest time",
+    "quizScore": "Score",
+    "quizProgress": "Question {current} of {total}",
+    "quizConfirmAnswer": "Confirm Answer",
+    "quizOf": "of {total}",
+    "quizGreatJob": "Great Job!",
+    "quizGoodTry": "Good Try!",
+    "quizKeepPracticing": "Keep Practicing!",
+    "quizScoreSummary": "You scored {correct} out of {total}",
+    "quizAccuracy": "Accuracy",
+    "personalBest": "Personal Best",
+    "quizShowMistakes": "Show Mistakes ({count})",
+    "quizMistakesTitle": "Your Mistakes ({count} of {total})",
+    "quizQuestionNumber": "Question {number}",
+    "quizYourAnswer": "Your answer",
+    "quizCorrectAnswer": "Correct",
+    "quizNotEnoughLine1": "Not enough questions yet",
+    "quizNotEnoughLine2": "({count} available, need 10).",
+    "quizNotEnoughLine3": "Add more questions to play!",
+    "quizUploadTitle": "Create Question",
+    "quizUploadDescription": "Add a new quiz question with answers",
+    "quizUploadButton": "Add Question",
+    "quizUploadQuestion": "Question",
+    "quizUploadQuestionPlaceholder": "Type your question here...",
+    "quizUploadImage": "Question Image (optional)",
+    "quizUploadAddImage": "Add image",
+    "quizUploadAnswers": "Answers",
+    "quizUploadAnswerPlaceholder": "Answer {number}",
+    "quizUploadAddAnswer": "Add Answer",
+    "quizUploadMarkCorrect": "Mark as correct answer",
+    "quizUploadSubmit": "Create Question",
+    "quizUploadSubmitting": "Creating...",
+    "quizUploadSuccess": "Question created successfully!",
+    "quizUploadErrorNoQuestion": "Please enter a question",
+    "quizUploadErrorEmptyAnswer": "All answers must have text"
   }
 }

@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Laura",
-    "description": "La nostra galleria fotografica"
+    "description": "Il nostro angolino di ricordi e giochi"
   },
   "Nav": {
     "gallery": "Galleria",
@@ -23,7 +23,9 @@
     "leaderboard": "Classifica",
     "leaderboardDescription": "Classifiche e punteggi",
     "memory": "Memory",
-    "memoryNavDescription": "Abbina coppie di foto"
+    "memoryNavDescription": "Abbina coppie di foto",
+    "quiz": "Quiz",
+    "quizNavDescription": "Rispondi alle domande e metti alla prova le tue conoscenze"
   },
   "Gallery": {
     "title": "Galleria",
@@ -131,7 +133,8 @@
     "rank": "#",
     "player": "Giocatore",
     "date": "Data",
-    "noScores": "Nessun punteggio ancora. Sii il primo a giocare!",
+    "noScoresLine1": "Nessun punteggio ancora.",
+    "noScoresLine2": "Gioca una partita e conquista la vetta!",
     "gameComplete": "Ottimo Lavoro!",
     "newRecord": "Nuovo Record!",
     "playAgain": "Gioca Ancora",
@@ -147,6 +150,44 @@
     "yourBestTime": "Il Tuo Migliore",
     "flipCard": "Gira carta {index}",
     "cardMatched": "Carta {index}, abbinata",
-    "cardFaceDown": "Carta {index}, coperta"
+    "cardFaceDown": "Carta {index}, coperta",
+    "quizTitle": "Quiz",
+    "quizDescription": "Rispondi alle domande e metti alla prova le tue conoscenze",
+    "quizLeaderboardTitle": "Classifica Quiz",
+    "quizLeaderboardDescription": "Più risposte corrette, tempo più veloce",
+    "quizScore": "Punteggio",
+    "quizProgress": "Domanda {current} di {total}",
+    "quizConfirmAnswer": "Conferma Risposta",
+    "quizOf": "di {total}",
+    "quizGreatJob": "Ottimo Lavoro!",
+    "quizGoodTry": "Buon Tentativo!",
+    "quizKeepPracticing": "Continua a Esercitarti!",
+    "quizScoreSummary": "Hai risposto correttamente a {correct} su {total}",
+    "quizAccuracy": "Precisione",
+    "personalBest": "Record Personale",
+    "quizShowMistakes": "Mostra Errori ({count})",
+    "quizMistakesTitle": "I Tuoi Errori ({count} di {total})",
+    "quizQuestionNumber": "Domanda {number}",
+    "quizYourAnswer": "La tua risposta",
+    "quizCorrectAnswer": "Corretta",
+    "quizNotEnoughLine1": "Non ci sono abbastanza domande",
+    "quizNotEnoughLine2": "({count} disponibili, servono 10).",
+    "quizNotEnoughLine3": "Aggiungi più domande per giocare!",
+    "quizUploadTitle": "Crea Domanda",
+    "quizUploadDescription": "Aggiungi una nuova domanda quiz con risposte",
+    "quizUploadButton": "Aggiungi Domanda",
+    "quizUploadQuestion": "Domanda",
+    "quizUploadQuestionPlaceholder": "Scrivi la tua domanda qui...",
+    "quizUploadImage": "Immagine Domanda (opzionale)",
+    "quizUploadAddImage": "Aggiungi immagine",
+    "quizUploadAnswers": "Risposte",
+    "quizUploadAnswerPlaceholder": "Risposta {number}",
+    "quizUploadAddAnswer": "Aggiungi Risposta",
+    "quizUploadMarkCorrect": "Segna come risposta corretta",
+    "quizUploadSubmit": "Crea Domanda",
+    "quizUploadSubmitting": "Creazione...",
+    "quizUploadSuccess": "Domanda creata con successo!",
+    "quizUploadErrorNoQuestion": "Inserisci una domanda",
+    "quizUploadErrorEmptyAnswer": "Tutte le risposte devono avere del testo"
   }
 }

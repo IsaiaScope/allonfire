@@ -54,7 +54,7 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
   <img src="docs/assets/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
 </p>
 
-<h3 align="center">Photo Gallery</h3>
+<h3 align="center">Photos & Games</h3>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
@@ -66,7 +66,7 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
 </p>
 
 <p align="center">
-  Private photo gallery with i18n support, S3/MinIO storage, and blurhash placeholders.
+  Private photo gallery and games app with i18n support, S3/MinIO storage, and blurhash placeholders.
 </p>
 
 <p align="center">
@@ -107,7 +107,7 @@ Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm wo
 allonfire/
   apps/
     social/               Next.js social media dashboard
-    laura/                Next.js photo gallery app
+    laura/                Next.js photos & games app
   packages/
     auth/                 Shared BetterAuth config
     content-generator/    AI content generation

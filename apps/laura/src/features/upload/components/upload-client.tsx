@@ -18,14 +18,15 @@ export function UploadClient() {
   const urlsRef = useRef<string[]>([]);
   const t = useTranslations("Upload");
 
+  urlsRef.current = previewUrls;
+
   useEffect(() => {
-    urlsRef.current = previewUrls;
     return () => {
       for (const url of urlsRef.current) {
         URL.revokeObjectURL(url);
       }
     };
-  }, [previewUrls]);
+  }, []);
 
   const addFiles = useCallback((newFiles: File[]) => {
     const newUrls = newFiles.map((f) => URL.createObjectURL(f));
@@ -60,6 +61,9 @@ export function UploadClient() {
 
       if (result.success) {
         toast.success(t("successToast", { count: result.count }));
+        for (const url of previewUrls) {
+          URL.revokeObjectURL(url);
+        }
         setFiles([]);
         setPreviewUrls([]);
         await queryClient.invalidateQueries({ queryKey: ["photos"] });

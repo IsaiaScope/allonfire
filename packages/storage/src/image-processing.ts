@@ -18,15 +18,8 @@ export type ProcessedPhoto = {
 
 export async function processPhoto(input: Buffer): Promise<ProcessedPhoto> {
   const source = sharp(input).rotate();
-  const metadata = await source.metadata();
 
-  if (!(metadata.width && metadata.height)) {
-    throw new Error("Unable to read image dimensions");
-  }
-
-  const { width, height } = metadata;
-
-  const [full, thumbnail] = await Promise.all([
+  const [{ data: full, info }, thumbnail] = await Promise.all([
     source
       .clone()
       .resize({
@@ -36,13 +29,15 @@ export async function processPhoto(input: Buffer): Promise<ProcessedPhoto> {
         withoutEnlargement: true,
       })
       .jpeg({ quality: FULL_QUALITY })
-      .toBuffer(),
+      .toBuffer({ resolveWithObject: true }),
     source
       .clone()
       .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
       .jpeg({ quality: THUMBNAIL_QUALITY })
       .toBuffer(),
   ]);
+
+  const { width, height } = info;
 
   const blurHash = await generateBlurHash(thumbnail);
 

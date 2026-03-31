@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BrainCircuit,
+  CircleHelp,
   Gamepad2,
   Heart,
   Images,
@@ -61,6 +62,12 @@ export const navSections: NavSection[] = [
         labelKey: "memory",
         descriptionKey: "memoryNavDescription",
         icon: BrainCircuit,
+      },
+      {
+        href: "/games/quiz",
+        labelKey: "quiz",
+        descriptionKey: "quizNavDescription",
+        icon: CircleHelp,
       },
     ],
   },

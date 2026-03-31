@@ -37,6 +37,13 @@ export {
   setActiveProvider,
   upsertProvider,
 } from "./provider.service";
+export type { QuizQuestionWithAnswers } from "./quiz.service";
+export {
+  createQuizQuestion,
+  deleteQuizQuestion,
+  getQuizQuestionCount,
+  getRandomQuizQuestions,
+} from "./quiz.service";
 export { getSettings } from "./settings.service";
 export {
   deleteSocialAccount,
