@@ -1,5 +1,6 @@
 "use server";
 
+import { checkMutationAccess } from "@allonfire/auth/guard";
 import type { PhotoWithUser } from "@allonfire/database";
 import {
   deletePhoto,
@@ -9,6 +10,7 @@ import {
   toggleFavorite,
 } from "@allonfire/database";
 import { blurHashToDataURL } from "@allonfire/storage";
+import { auth } from "@/lib/auth";
 
 export type GalleryPhoto = {
   id: string;
@@ -65,10 +67,21 @@ export async function getFavoritesAction(
 
 export async function toggleFavoriteAction(
   photoId: string
-): Promise<{ isFavorite: boolean }> {
+): Promise<{ isFavorite: boolean } | { error: string }> {
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { error: access.reason };
+  }
   return await toggleFavorite(photoId);
 }
 
-export async function deletePhotoAction(photoId: string): Promise<void> {
+export async function deletePhotoAction(
+  photoId: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
+  }
   await deletePhoto(photoId);
+  return { success: true };
 }

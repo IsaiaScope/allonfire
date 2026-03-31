@@ -11,12 +11,14 @@ type PhotoCardProps = {
   photo: GalleryPhoto;
   onClick: () => void;
   onFavoriteToggle?: () => void;
+  disabled?: boolean;
 };
 
 export function PhotoCard({
   photo,
   onClick,
   onFavoriteToggle,
+  disabled,
 }: PhotoCardProps) {
   const aspectRatio = photo.height / photo.width;
   const t = useTranslations("Favorites");
@@ -68,7 +70,7 @@ export function PhotoCard({
         src={photo.thumbnailUrl}
         width={400}
       />
-      {onFavoriteToggle && (
+      {onFavoriteToggle && !disabled && (
         <>
           {photo.isFavorite && (
             <Heart className="absolute top-1.5 right-1.5 h-3.5 w-3.5 fill-red-500/85 text-red-900/50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] group-hover:hidden lg:top-2 lg:right-2 lg:h-5 lg:w-5" />
@@ -101,6 +103,9 @@ export function PhotoCard({
             </span>
           )}
         </>
+      )}
+      {disabled && photo.isFavorite && (
+        <Heart className="absolute top-1.5 right-1.5 h-3.5 w-3.5 fill-red-500/40 text-red-900/25 opacity-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] lg:top-2 lg:right-2 lg:h-5 lg:w-5" />
       )}
     </div>
   );

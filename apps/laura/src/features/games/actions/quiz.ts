@@ -1,12 +1,12 @@
 "use server";
 
+import { checkMutationAccess } from "@allonfire/auth/guard";
 import type { GameType } from "@allonfire/database";
 import {
   createQuizQuestion,
   getQuizQuestionCount,
   getRandomQuizQuestions,
   getUserBestScore,
-  prisma,
   submitGameScore,
 } from "@allonfire/database";
 import {
@@ -98,10 +98,11 @@ export async function submitQuizScoreAction(data: {
   correctCount: number;
   totalQuestions: number;
 }): Promise<SubmitQuizScoreResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not authenticated");
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
   }
+  const { session } = access;
 
   if (data.timeMs <= 0 || data.correctCount < 0) {
     return { success: false, error: "Invalid score data" };
@@ -235,18 +236,11 @@ function validateQuestionForm(formData: FormData): FormValidation {
 export async function createQuestionAction(
   formData: FormData
 ): Promise<CreateQuestionResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return { success: false, error: "Not authenticated" };
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
   }
-
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
-  if (user.role === "VIEWER") {
-    return { success: false, error: "Viewers cannot create questions" };
-  }
+  const { session } = access;
 
   const validation = validateQuestionForm(formData);
   if (!validation.valid) {

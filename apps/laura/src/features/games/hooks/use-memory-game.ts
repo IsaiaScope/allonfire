@@ -15,9 +15,17 @@ type CardState = MemoryCard & {
   isMatched: boolean;
 };
 
-type SubmitState = "idle" | "submitting" | "success" | "error";
+type SubmitState =
+  | "idle"
+  | "submitting"
+  | "success"
+  | "error"
+  | "viewer-skipped";
 
-export function useMemoryGame(initialCards: MemoryCard[]) {
+export function useMemoryGame(
+  initialCards: MemoryCard[],
+  options?: { isViewer?: boolean }
+) {
   const [cards, setCards] = useState<CardState[]>(() =>
     initialCards.map((card, index) => ({
       ...card,
@@ -97,23 +105,27 @@ export function useMemoryGame(initialCards: MemoryCard[]) {
         setElapsedMs(finalTime);
         setGameState("complete");
 
-        setSubmitState("submitting");
-        submitScoreAction({
-          gameType: "MEMORY",
-          timeMs: finalTime,
-          moves: movesRef.current,
-        })
-          .then((result) => {
-            if (result.success) {
-              setSubmitState("success");
-              setIsNewBest(result.isNewBest);
-            } else {
-              setSubmitState("error");
-            }
+        if (options?.isViewer) {
+          setSubmitState("viewer-skipped");
+        } else {
+          setSubmitState("submitting");
+          submitScoreAction({
+            gameType: "MEMORY",
+            timeMs: finalTime,
+            moves: movesRef.current,
           })
-          .catch(() => {
-            setSubmitState("error");
-          });
+            .then((result) => {
+              if (result.success) {
+                setSubmitState("success");
+                setIsNewBest(result.isNewBest);
+              } else {
+                setSubmitState("error");
+              }
+            })
+            .catch(() => {
+              setSubmitState("error");
+            });
+        }
       } else {
         setGameState("playing");
       }
@@ -123,7 +135,7 @@ export function useMemoryGame(initialCards: MemoryCard[]) {
     }, 800);
 
     return () => clearTimeout(timeout);
-  }, [gameState, firstCard, secondCard, cards]);
+  }, [gameState, firstCard, secondCard, cards, options?.isViewer]);
 
   const flipCard = useCallback(
     (index: number) => {

@@ -14,6 +14,7 @@ export type NavLink = {
   labelKey: string;
   descriptionKey: string;
   icon: LucideIcon;
+  viewerRestricted?: boolean;
 };
 
 export type NavSection = {
@@ -44,6 +45,7 @@ export const navSections: NavSection[] = [
         labelKey: "upload",
         descriptionKey: "uploadDescription",
         icon: Upload,
+        viewerRestricted: true,
       },
     ],
   },

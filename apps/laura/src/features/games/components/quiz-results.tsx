@@ -12,13 +12,19 @@ type QuizResultsProps = {
   correctCount: number;
   totalQuestions: number;
   elapsedMs: number;
-  submitState: "idle" | "submitting" | "success" | "error";
+  submitState: "idle" | "submitting" | "success" | "error" | "viewer-skipped";
   isNewBest: boolean;
   mistakes: {
     questionText: string;
     questionIndex: number;
+    questionImageUrl: string | null;
+    questionBlurDataURL: string | null;
     selectedAnswerText: string;
+    selectedAnswerImageUrl: string | null;
+    selectedAnswerBlurDataURL: string | null;
     correctAnswerText: string;
+    correctAnswerImageUrl: string | null;
+    correctAnswerBlurDataURL: string | null;
   }[];
   onPlayAgain: () => void;
   onRetrySubmit: () => void;
@@ -38,8 +44,6 @@ export function QuizResults({
   const [showMistakes, setShowMistakes] = useState(false);
 
   const percentage = Math.round((correctCount / totalQuestions) * 100);
-  // CSS conic gradient: percentage maps to degrees (360 * fraction)
-  const degrees = Math.round((correctCount / totalQuestions) * 360);
 
   if (showMistakes) {
     return (
@@ -52,24 +56,7 @@ export function QuizResults({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6 py-8">
-      {/* Score circle */}
-      <div
-        className="flex size-32 items-center justify-center rounded-full"
-        style={{
-          background: `conic-gradient(hsl(var(--primary)) 0deg ${degrees}deg, hsl(var(--muted)) ${degrees}deg 360deg)`,
-        }}
-      >
-        <div className="flex size-[104px] flex-col items-center justify-center rounded-full bg-background">
-          <span className="font-bold text-3xl text-primary">
-            {correctCount}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {t("quizOf", { total: totalQuestions })}
-          </span>
-        </div>
-      </div>
-
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 py-8">
       {/* Message */}
       <div className="text-center">
         <h2 className="font-bold text-xl">
@@ -86,7 +73,7 @@ export function QuizResults({
       </div>
 
       {/* Stats grid */}
-      <div className="grid w-full grid-cols-2 gap-3">
+      <div className="grid w-full max-w-sm grid-cols-2 gap-3">
         <div className="rounded-xl bg-muted p-4 text-center">
           <p className="font-bold font-mono text-xl">{formatTime(elapsedMs)}</p>
           <p className="text-muted-foreground text-xs">{t("time")}</p>
@@ -128,9 +115,14 @@ export function QuizResults({
           </Button>
         </div>
       )}
+      {submitState === "viewer-skipped" && (
+        <p className="text-center text-muted-foreground text-sm">
+          {t("viewerScoreNotice")}
+        </p>
+      )}
 
       {/* Action buttons */}
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex w-full max-w-sm flex-col gap-2">
         <Button asChild>
           <Link href="/games/quiz/leaderboard">{t("viewLeaderboard")}</Link>
         </Button>

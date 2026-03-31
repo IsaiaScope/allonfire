@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useIsViewer } from "@/components/user-role-provider";
 import type {
   GalleryPage,
   GalleryPhoto,
@@ -29,6 +30,7 @@ export function PhotoGalleryView({
   loadingMessage,
   emptyState,
 }: PhotoGalleryViewProps) {
+  const isViewer = useIsViewer();
   const {
     allPhotos,
     sentinelRef,
@@ -53,6 +55,7 @@ export function PhotoGalleryView({
         keyExtractor={getPhotoKey}
         renderItem={(photo) => (
           <PhotoCard
+            disabled={isViewer}
             onClick={() => openPreview(photo)}
             onFavoriteToggle={() => toggleFavorite(photo.id)}
             photo={photo}
@@ -66,6 +69,7 @@ export function PhotoGalleryView({
 
       {currentPhoto && previewPhoto && (
         <PhotoPreview
+          disabled={isViewer}
           onClose={closePreview}
           onDelete={() => handleDelete(currentPhoto.id)}
           onFavoriteToggle={() => toggleFavorite(currentPhoto.id)}

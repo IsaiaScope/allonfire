@@ -74,6 +74,7 @@ export function UploadPreviewGrid({
               alt={files[previewIndex]?.name ?? "Preview"}
               className="max-h-[80vh] max-w-[min(90vw,800px)] rounded-xl border border-white/10 object-contain shadow-2xl"
               height={600}
+              loading="lazy"
               src={previewUrls[previewIndex]}
               width={600}
             />

@@ -1,7 +1,9 @@
 "use server";
 
+import { checkAppAccess, checkMutationAccess } from "@allonfire/auth/guard";
 import type { GameType } from "@allonfire/database";
 import {
+  getAllRandomPhotos,
   getGameStats,
   getLeaderboard,
   getRandomPhotos,
@@ -26,17 +28,27 @@ export type MemoryPhotosResult =
   | { success: false; error: string; photoCount: number };
 
 export async function getMemoryPhotosAction(): Promise<MemoryPhotosResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not authenticated");
+  const { session, user } = await checkAppAccess(auth, "laura");
+  const isViewer = user.role === "VIEWER";
+
+  if (!isViewer) {
+    const photoCount = await getUserPhotoCount(session.user.id);
+    if (photoCount < 6) {
+      return { success: false, error: "NOT_ENOUGH_PHOTOS", photoCount };
+    }
   }
 
-  const photoCount = await getUserPhotoCount(session.user.id);
-  if (photoCount < 6) {
-    return { success: false, error: "NOT_ENOUGH_PHOTOS", photoCount };
-  }
+  const photos = isViewer
+    ? await getAllRandomPhotos(6)
+    : await getRandomPhotos(session.user.id, 6);
 
-  const photos = await getRandomPhotos(session.user.id, 6);
+  if (photos.length < 6) {
+    return {
+      success: false,
+      error: "NOT_ENOUGH_PHOTOS",
+      photoCount: photos.length,
+    };
+  }
 
   const cards: MemoryCard[] = [];
   for (const photo of photos) {
@@ -80,10 +92,11 @@ export async function submitScoreAction(data: {
   timeMs: number;
   moves: number;
 }): Promise<SubmitScoreResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not authenticated");
+  const access = await checkMutationAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
   }
+  const { session } = access;
 
   if (data.timeMs <= 0 || data.moves <= 0) {
     return { success: false, error: "Invalid score data" };

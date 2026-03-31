@@ -3,6 +3,7 @@
 import { cn } from "@allonfire/ui/lib/utils";
 import { Clock, MousePointerClick, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useIsViewer } from "@/components/user-role-provider";
 import type { MemoryCard as MemoryCardType } from "@/features/games/actions/games";
 import { useMemoryGame } from "@/features/games/hooks/use-memory-game";
 import { useMemoryGridSize } from "@/features/games/hooks/use-memory-grid-size";
@@ -17,6 +18,7 @@ type MemoryBoardProps = {
 
 export function MemoryBoard({ initialCards, bestTimeMs }: MemoryBoardProps) {
   const t = useTranslations("Games");
+  const isViewer = useIsViewer();
   const {
     cards,
     gameState,
@@ -27,7 +29,7 @@ export function MemoryBoard({ initialCards, bestTimeMs }: MemoryBoardProps) {
     flipCard,
     resetGame,
     retrySubmit,
-  } = useMemoryGame(initialCards);
+  } = useMemoryGame(initialCards, { isViewer });
 
   const { ref, gridSize } = useMemoryGridSize();
   const { cols, rows, gap, cardSize, ready } = gridSize;

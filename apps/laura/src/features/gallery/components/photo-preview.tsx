@@ -44,8 +44,9 @@ type PhotoPreviewProps = {
     isFavorite: boolean;
   };
   onClose: () => void;
-  onFavoriteToggle: () => void;
-  onDelete: () => void;
+  onFavoriteToggle?: () => void;
+  onDelete?: () => void;
+  disabled?: boolean;
 };
 
 export function PhotoPreview({
@@ -53,6 +54,7 @@ export function PhotoPreview({
   onClose,
   onFavoriteToggle,
   onDelete,
+  disabled,
 }: PhotoPreviewProps) {
   const t = useTranslations("PhotoPreview");
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -88,6 +90,9 @@ export function PhotoPreview({
   const handleFavoriteClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      if (!onFavoriteToggle) {
+        return;
+      }
       if (!photo.isFavorite) {
         triggerHeartAnimation();
       }
@@ -209,8 +214,10 @@ export function PhotoPreview({
           {/* Thumbnail placeholder — renders instantly from browser cache */}
           <Image
             alt=""
+            blurDataURL={photo.blurDataURL}
             className="h-full w-full object-contain"
             fill
+            placeholder={photo.blurDataURL ? "blur" : "empty"}
             sizes="90vw"
             src={photo.thumbnailUrl}
           />
@@ -241,7 +248,12 @@ export function PhotoPreview({
                       ? t("removeFromFavorites")
                       : t("addToFavorites")
                   }
-                  className="relative cursor-pointer rounded-full p-2 transition-all hover:scale-105 hover:bg-white/5 active:scale-95 sm:p-2.5"
+                  className={`relative rounded-full p-2 transition-all sm:p-2.5 ${
+                    disabled
+                      ? "cursor-not-allowed opacity-40"
+                      : "cursor-pointer hover:scale-105 hover:bg-white/5 active:scale-95"
+                  }`}
+                  disabled={disabled}
                   onClick={handleFavoriteClick}
                   type="button"
                 />
@@ -254,7 +266,7 @@ export function PhotoPreview({
                     : "text-white/80 hover:text-white"
                 }`}
               />
-              {animating && (
+              {!disabled && animating && (
                 <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   <Heart
                     className={`${iconClass} animate-heart-burst fill-red-500/85 text-red-900/50`}
@@ -264,9 +276,11 @@ export function PhotoPreview({
               )}
             </TooltipTrigger>
             <TooltipContent className={tooltipClass} side="top" sideOffset={8}>
-              {photo.isFavorite
-                ? t("removeFromFavorites")
-                : t("addToFavorites")}
+              {disabled && t("viewerRestricted")}
+              {!disabled &&
+                (photo.isFavorite
+                  ? t("removeFromFavorites")
+                  : t("addToFavorites"))}
             </TooltipContent>
           </Tooltip>
 
@@ -340,45 +354,69 @@ export function PhotoPreview({
 
           <div className="mx-1 h-5 w-px bg-white/25 sm:mx-1.5 sm:h-6" />
 
-          <AlertDialog>
+          {disabled ? (
             <Tooltip>
-              <AlertDialogTrigger asChild>
-                <TooltipTrigger
-                  render={
-                    <button
-                      aria-label={t("deleteLabel")}
-                      className="cursor-pointer rounded-full p-2 text-white/60 transition-all hover:scale-105 hover:bg-red-500/10 hover:text-red-400 active:scale-95 sm:p-2.5"
-                      onClick={(e) => e.stopPropagation()}
-                      type="button"
-                    />
-                  }
-                >
-                  <Trash2 className={iconClass} />
-                </TooltipTrigger>
-              </AlertDialogTrigger>
+              <TooltipTrigger
+                render={
+                  <button
+                    aria-label={t("deleteLabel")}
+                    className="cursor-not-allowed rounded-full p-2 text-white/60 opacity-40 sm:p-2.5"
+                    disabled
+                    type="button"
+                  />
+                }
+              >
+                <Trash2 className={iconClass} />
+              </TooltipTrigger>
               <TooltipContent
                 className={tooltipClass}
                 side="bottom"
                 sideOffset={8}
               >
-                {t("deleteLabel")}
+                {t("viewerRestricted")}
               </TooltipContent>
             </Tooltip>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("deleteDescription")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("deleteCancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>
-                  {t("deleteConfirm")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          ) : (
+            <AlertDialog>
+              <Tooltip>
+                <AlertDialogTrigger asChild>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        aria-label={t("deleteLabel")}
+                        className="cursor-pointer rounded-full p-2 text-white/60 transition-all hover:scale-105 hover:bg-red-500/10 hover:text-red-400 active:scale-95 sm:p-2.5"
+                        onClick={(e) => e.stopPropagation()}
+                        type="button"
+                      />
+                    }
+                  >
+                    <Trash2 className={iconClass} />
+                  </TooltipTrigger>
+                </AlertDialogTrigger>
+                <TooltipContent
+                  className={tooltipClass}
+                  side="bottom"
+                  sideOffset={8}
+                >
+                  {t("deleteLabel")}
+                </TooltipContent>
+              </Tooltip>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t("deleteDescription")}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("deleteCancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete}>
+                    {t("deleteConfirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
     </div>
