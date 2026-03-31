@@ -11,6 +11,7 @@ import { getQuizLeaderboardAction } from "@/features/games/actions/quiz";
 import { LeaderboardStats } from "@/features/games/components/leaderboard-stats";
 import { QuizLeaderboardTable } from "@/features/games/components/quiz-leaderboard-table";
 import { PageContainer } from "@/features/layout/components/page-container";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -19,7 +20,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("quizLeaderboardTitle") };
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+  return {
+    title: t("quizLeaderboardTitle"),
+    description: seo("quizLeaderboardDescription"),
+    alternates: getAlternates(locale, "/games/quiz/leaderboard"),
+  };
 }
 
 export default async function QuizLeaderboardPage({

@@ -11,6 +11,7 @@ import { getLeaderboardAction } from "@/features/games/actions/games";
 import { LeaderboardStats } from "@/features/games/components/leaderboard-stats";
 import { LeaderboardTable } from "@/features/games/components/leaderboard-table";
 import { PageContainer } from "@/features/layout/components/page-container";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -19,7 +20,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("leaderboardTitle") };
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+  return {
+    title: t("leaderboardTitle"),
+    description: seo("memoryLeaderboardDescription"),
+    alternates: getAlternates(locale, "/games/memory/leaderboard"),
+  };
 }
 
 export default async function LeaderboardPage({

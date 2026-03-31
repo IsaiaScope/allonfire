@@ -5,8 +5,10 @@ import { Fira_Code, Oxanium } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { JsonLd } from "@/components/json-ld";
 import { MotionProvider } from "@/components/motion-provider";
 import { routing } from "@/i18n/routing";
+import { baseUrl } from "@/lib/seo";
 import "../globals.css";
 
 const fontSans = Oxanium({
@@ -34,10 +36,30 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Metadata" });
+  const seo = await getTranslations({ locale, namespace: "SEO" });
 
   return {
-    title: t("title"),
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: t("title"),
+      template: `%s | ${t("title")}`,
+    },
     description: t("description"),
+    openGraph: {
+      type: "website",
+      locale: locale === "it" ? "it_IT" : "en_US",
+      siteName: seo("siteName"),
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+    alternates: {
+      canonical: locale === "it" ? baseUrl : `${baseUrl}/en`,
+      languages: {
+        it: baseUrl,
+        en: `${baseUrl}/en`,
+      },
+    },
     appleWebApp: {
       capable: true,
       title: "Laura",
@@ -74,11 +96,19 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   setRequestLocale(locale);
 
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+
   return (
     <html lang={locale} suppressHydrationWarning translate="no">
       <body
         className={`${fontSans.variable} ${fontMono.variable} flex h-dvh flex-col overflow-hidden bg-background font-sans antialiased`}
       >
+        <JsonLd
+          baseUrl={baseUrl}
+          description={seo("siteDescription")}
+          locale={locale}
+          siteName={seo("siteName")}
+        />
         <NextIntlClientProvider>
           <Providers>
             <MotionProvider>

@@ -37,13 +37,16 @@ When generating social media posts:
 2. Each prompt type (meme, news, learning) has platform-specific rules
 3. Platform rules are in `packages/content-generator/src/platforms/`
 4. Generate via `pnpm --filter @allonfire/content-generator generate`
-5. Stay within token budget: ~5K-15K tokens per topic × 4 platforms
+5. Stay within token budget: ~5K-15K tokens per topic × 2 platforms
 
 ## Database Schema Quick Reference
 
-Key models: `Topic` (discovered content), `Post` (generated social posts), `User` (admin)
-Key enums: `TopicCategory`, `TopicStatus`, `PostType`, `PostStatus`, `Platform`, `MediaType`
 Schema: `packages/database/prisma/schema.prisma`
+
+- **Auth (shared):** `User`, `Session`, `Account`, `Verification`
+- **Social:** `Topic`, `Prompt`, `Post`, `AiProvider`, `SocialAccount`, `Settings`, `WebhookLog`
+- **Laura:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`
+- **Key enums:** `TopicCategory`, `TopicStatus`, `PostType`, `PostStatus`, `Platform`, `MediaType`, `GameType`, `Role`
 
 ## Social App Structure (`apps/social/src/`)
 
@@ -79,7 +82,7 @@ import { GenerateButton } from "@/features/generation/components/generate-button
 import { GenerateButton } from "@/features/generation";
 ```
 
-Features: `layout/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
+Features: `layout/`, `overview/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
 
 Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
 
@@ -96,7 +99,64 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, 
 - Features → DB: `@allonfire/database`
 - Features → shared: `@/components/<component>`
 
-## Dashboard Routes
+## Laura App Structure (`apps/laura/src/`)
+
+Family photo gallery and games app. Uses next-intl for i18n (Italian + English), Framer Motion for animations, and a viewer role system (`UserRoleProvider` + `checkMutationAccess`).
+
+### Route Layer (`app/[locale]/`)
+
+All routes are nested under `[locale]` for i18n. Dashboard pages are async Server Components.
+
+```
+app/[locale]/(auth)/login/page.tsx
+app/[locale]/(dashboard)/
+├── layout.tsx                          → Dashboard shell (top bar, auth, UserRoleProvider)
+├── page.tsx                            → Photo gallery (main view)
+├── favorites/page.tsx                  → Favorited photos
+├── upload/page.tsx                     → Photo upload (USER/ADMIN only)
+├── settings/page.tsx                   → Language, appearance, user info
+├── games/page.tsx                      → Game hub (memory + quiz cards)
+├── games/memory/page.tsx               → Memory card matching game
+├── games/memory/leaderboard/page.tsx   → Memory leaderboard
+├── games/quiz/page.tsx                 → Quiz game
+├── games/quiz/upload/page.tsx          → Create quiz questions (USER/ADMIN)
+└── games/quiz/leaderboard/page.tsx     → Quiz leaderboard
+```
+
+### Feature Layer (`features/`)
+
+Same conventions as Social — no barrel index files, import directly.
+
+Features: `gallery/`, `games/`, `upload/`, `settings/`, `layout/`
+
+Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
+
+### Shared Layer
+
+- `components/` — `animated-page`, `motion-provider` (LazyMotion), `user-role-provider`
+- `lib/` — `auth.ts`, `animation-variants.ts`, `file-validation.ts`, `seo.ts`
+- `i18n/` — next-intl routing and request config
+
+### Viewer Role System
+
+- Server: `checkMutationAccess(auth)` in `packages/auth/src/guard.ts` guards all write actions
+- Client: `UserRoleProvider` + `useIsViewer()` hook for UI restrictions
+- Viewers can browse gallery and play games but cannot upload, favorite, delete, or submit scores
+
+### Laura Dashboard Routes
+
+- `/` — Photo gallery grid with infinite scroll
+- `/favorites` — Favorited photos
+- `/upload` — Photo upload (blocked for viewers)
+- `/settings` — Language, theme, user info
+- `/games` — Game hub
+- `/games/memory` — Memory card game
+- `/games/memory/leaderboard` — Memory scores
+- `/games/quiz` — Quiz game
+- `/games/quiz/upload` — Create quiz questions
+- `/games/quiz/leaderboard` — Quiz scores
+
+## Social Dashboard Routes
 
 - `/` — Overview with stats
 - `/discover` — Browse discovered topics

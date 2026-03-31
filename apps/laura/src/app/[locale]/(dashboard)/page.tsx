@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getPhotosAction } from "@/features/gallery/actions/gallery";
 import { GalleryClient } from "@/features/gallery/components/gallery-client";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -9,7 +10,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Gallery" });
-  return { title: t("title") };
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+  return {
+    title: t("title"),
+    description: seo("galleryDescription"),
+    alternates: getAlternates(locale, "/"),
+  };
 }
 
 export default async function GalleryPage({

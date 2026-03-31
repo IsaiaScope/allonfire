@@ -17,7 +17,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Settings" });
-  return { title: t("title") };
+  return { title: t("title"), robots: { index: false, follow: false } };
 }
 
 export default async function SettingsPage({
