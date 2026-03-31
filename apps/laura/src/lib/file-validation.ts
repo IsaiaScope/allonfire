@@ -1,4 +1,5 @@
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;
+export const MAX_TOTAL_SIZE = 50 * 1024 * 1024;
 
 export const ACCEPTED_IMAGE_TYPES = new Set([
   "image/png",
@@ -8,12 +9,14 @@ export const ACCEPTED_IMAGE_TYPES = new Set([
   "image/heif",
 ]);
 
+export const ACCEPTED_INPUT_STRING = [...ACCEPTED_IMAGE_TYPES].join(",");
+
 export function validateImageFile(file: File): string | null {
   if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-    return `Invalid file type: ${file.name}. Only PNG, JPEG, WebP, and HEIC are accepted.`;
+    return "invalidType";
   }
   if (file.size > MAX_FILE_SIZE) {
-    return `File too large: ${file.name}. Maximum size is 10MB.`;
+    return "fileTooLarge";
   }
   return null;
 }

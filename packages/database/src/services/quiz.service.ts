@@ -88,6 +88,72 @@ export async function getQuizQuestionCount() {
   return await prisma.quizQuestion.count();
 }
 
+export async function getAllQuizQuestions() {
+  return await prisma.quizQuestion.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      text: true,
+      imageUrl: true,
+      imageThumbnailUrl: true,
+      createdAt: true,
+      _count: { select: { answers: true } },
+    },
+  });
+}
+
+export async function getQuizQuestionById(id: string) {
+  return await prisma.quizQuestion.findUnique({
+    where: { id },
+    include: {
+      answers: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+}
+
+export async function updateQuizQuestion(
+  id: string,
+  data: {
+    text: string;
+    imageUrl?: string | null;
+    imageThumbnailUrl?: string | null;
+    imageBlurHash?: string | null;
+    answers: {
+      text: string;
+      isCorrect: boolean;
+      sortOrder: number;
+      imageUrl?: string;
+      imageThumbnailUrl?: string;
+      imageBlurHash?: string;
+    }[];
+  }
+) {
+  return await prisma.$transaction(async (tx) => {
+    await tx.quizAnswer.deleteMany({ where: { questionId: id } });
+
+    return await tx.quizQuestion.update({
+      where: { id },
+      data: {
+        text: data.text,
+        imageUrl: data.imageUrl,
+        imageThumbnailUrl: data.imageThumbnailUrl,
+        imageBlurHash: data.imageBlurHash,
+        answers: {
+          create: data.answers.map((a) => ({
+            text: a.text,
+            isCorrect: a.isCorrect,
+            sortOrder: a.sortOrder,
+            imageUrl: a.imageUrl,
+            imageThumbnailUrl: a.imageThumbnailUrl,
+            imageBlurHash: a.imageBlurHash,
+          })),
+        },
+      },
+      include: { answers: true },
+    });
+  });
+}
+
 export async function deleteQuizQuestion(id: string) {
   return await prisma.quizQuestion.delete({ where: { id } });
 }

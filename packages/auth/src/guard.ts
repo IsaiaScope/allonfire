@@ -32,23 +32,40 @@ export type MutationAccessResult =
   | { allowed: true; session: Session }
   | { allowed: false; reason: string };
 
-export async function checkMutationAccess(
-  auth: Auth
-): Promise<MutationAccessResult> {
+async function getSessionAndRole(auth: Auth) {
   const session = await auth.api.getSession({ headers: await headers() });
-
   if (!session) {
-    return { allowed: false, reason: "Not authenticated" };
+    return null;
   }
-
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.user.id },
     select: { role: true },
   });
+  return { session, role: user.role };
+}
 
-  if (user.role === "VIEWER") {
-    return { allowed: false, reason: "Viewers have read-only access" };
+export async function checkMutationAccess(
+  auth: Auth
+): Promise<MutationAccessResult> {
+  const result = await getSessionAndRole(auth);
+  if (!result) {
+    return { allowed: false, reason: "notAuthenticated" };
   }
+  if (result.role === "VIEWER") {
+    return { allowed: false, reason: "viewerRestricted" };
+  }
+  return { allowed: true, session: result.session };
+}
 
-  return { allowed: true, session };
+export async function checkAdminAccess(
+  auth: Auth
+): Promise<MutationAccessResult> {
+  const result = await getSessionAndRole(auth);
+  if (!result) {
+    return { allowed: false, reason: "notAuthenticated" };
+  }
+  if (result.role !== "ADMIN") {
+    return { allowed: false, reason: "adminRequired" };
+  }
+  return { allowed: true, session: result.session };
 }

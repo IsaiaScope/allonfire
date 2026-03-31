@@ -9,6 +9,7 @@ import {
 } from "@/features/games/actions/games";
 import { MemoryBoard } from "@/features/games/components/memory-board";
 import { auth } from "@/lib/auth";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -17,7 +18,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("memoryTitle") };
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+  return {
+    title: t("memoryTitle"),
+    description: seo("memoryDescription"),
+    alternates: getAlternates(locale, "/games/memory"),
+  };
 }
 
 export default async function MemoryGamePage({

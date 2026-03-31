@@ -74,15 +74,15 @@ export function QuizResults({
 
       {/* Stats grid */}
       <div className="grid w-full max-w-sm grid-cols-2 gap-3">
-        <div className="rounded-xl bg-muted p-4 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-muted p-4 text-center">
           <p className="font-bold font-mono text-xl">{formatTime(elapsedMs)}</p>
           <p className="text-muted-foreground text-xs">{t("time")}</p>
         </div>
-        <div className="rounded-xl bg-muted p-4 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl bg-muted p-4 text-center">
           {isNewBest ? (
             <>
-              <p className="flex items-center justify-center gap-1 font-bold text-amber-400 text-xl">
-                <Trophy className="size-4" />
+              <p className="flex items-center gap-1.5 font-bold text-amber-400 text-sm">
+                <Trophy className="size-3.5 shrink-0" />
                 {t("newRecord")}
               </p>
               <p className="text-muted-foreground text-xs">

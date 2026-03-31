@@ -4,13 +4,12 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
+import { ACCEPTED_INPUT_STRING } from "@/lib/file-validation";
 
 type UploadDropzoneProps = {
   onFiles: (files: File[]) => void;
   disabled?: boolean;
 };
-
-const ACCEPTED_TYPES = "image/png,image/jpeg,image/webp,image/heic,image/heif";
 
 export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -49,7 +48,7 @@ export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
   return (
     <button
       className={cn(
-        "flex min-h-60 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-border border-dashed p-8 transition-colors",
+        "flex min-h-40 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-border border-dashed p-8 transition-colors",
         isDragging && "border-primary bg-primary/5",
         disabled && "pointer-events-none opacity-50"
       )}
@@ -72,11 +71,15 @@ export function UploadDropzone({ onFiles, disabled }: UploadDropzoneProps) {
         <p className="mt-1 text-muted-foreground text-sm">{t("fileTypes")}</p>
       </div>
       <input
-        accept={ACCEPTED_TYPES}
+        accept={ACCEPTED_INPUT_STRING}
+        aria-hidden="true"
         className="hidden"
+        id="photo-upload"
         multiple
+        name="photo-upload"
         onChange={handleChange}
         ref={inputRef}
+        tabIndex={-1}
         type="file"
       />
     </button>

@@ -409,6 +409,67 @@ const questions: QuestionSeed[] = [
       { text: "Hamburger", isCorrect: false, sortOrder: 2 },
     ],
   },
+
+  // ── STRESS: Extreme tall question image (1:4 ratio) ──
+  {
+    text: "Cosa vedi in questa immagine lunghissima?",
+    imageUrl: IMG("extreme-tall-question", 600, 2400),
+    imageThumbnailUrl: IMG("extreme-tall-question", 600, 2400),
+    answers: [
+      { text: "Una torre", isCorrect: true, sortOrder: 0 },
+      { text: "Un grattacielo", isCorrect: false, sortOrder: 1 },
+      { text: "Una scala", isCorrect: false, sortOrder: 2 },
+    ],
+  },
+
+  // ── STRESS: Extreme tall answer images (1:4 and 1:6 ratios) ──
+  {
+    text: "Quale screenshot del telefono è il nostro?",
+    answers: [
+      {
+        text: "Questo",
+        isCorrect: true,
+        sortOrder: 0,
+        imageUrl: IMG("extreme-tall-answer-1", 400, 1600),
+        imageThumbnailUrl: IMG("extreme-tall-answer-1", 400, 1600),
+      },
+      {
+        text: "Quello",
+        isCorrect: false,
+        sortOrder: 1,
+        imageUrl: IMG("extreme-tall-answer-2", 300, 1800),
+        imageThumbnailUrl: IMG("extreme-tall-answer-2", 300, 1800),
+      },
+      {
+        text: "Nessuno dei due",
+        isCorrect: false,
+        sortOrder: 2,
+      },
+    ],
+  },
+
+  // ── STRESS: Phone screenshot dimensions (1080×3000) question + answers ──
+  {
+    text: "Riconosci questo screenshot del telefono?",
+    imageUrl: IMG("phone-screenshot-q", 1080, 3000),
+    imageThumbnailUrl: IMG("phone-screenshot-q", 1080, 3000),
+    answers: [
+      {
+        text: "Chat di WhatsApp",
+        isCorrect: true,
+        sortOrder: 0,
+        imageUrl: IMG("phone-screenshot-a1", 1080, 3000),
+        imageThumbnailUrl: IMG("phone-screenshot-a1", 1080, 3000),
+      },
+      {
+        text: "Feed di Instagram",
+        isCorrect: false,
+        sortOrder: 1,
+        imageUrl: IMG("phone-screenshot-a2", 1080, 3000),
+        imageThumbnailUrl: IMG("phone-screenshot-a2", 1080, 3000),
+      },
+    ],
+  },
 ];
 
 async function seed() {

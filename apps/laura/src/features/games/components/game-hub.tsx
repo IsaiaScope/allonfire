@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import { BrainCircuit, Gamepad2, PlusCircle, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useIsViewer } from "@/components/user-role-provider";
+import { useIsAdmin } from "@/components/user-role-provider";
 import {
   fadeInUp,
   gameCardVariant,
@@ -24,7 +24,7 @@ const cardTap = { scale: 0.98 };
 
 export function GameHub() {
   const t = useTranslations("Games");
-  const isViewer = useIsViewer();
+  const isAdmin = useIsAdmin();
 
   return (
     <motion.div
@@ -99,24 +99,14 @@ export function GameHub() {
                   {t("leaderboardTitle")}
                 </Link>
               </Button>
-              {isViewer ? (
-                <Button
-                  className="opacity-50 sm:h-9 sm:px-4"
-                  disabled
-                  size="sm"
-                  variant="outline"
-                >
-                  <PlusCircle className="mr-1 size-4" />
-                  {t("quizUploadButton")}
-                </Button>
-              ) : (
+              {isAdmin && (
                 <Button
                   asChild
                   className="sm:h-9 sm:px-4"
                   size="sm"
                   variant="outline"
                 >
-                  <Link href="/games/quiz/upload">
+                  <Link href="/games/quiz/edit">
                     <PlusCircle className="mr-1 size-4" />
                     {t("quizUploadButton")}
                   </Link>

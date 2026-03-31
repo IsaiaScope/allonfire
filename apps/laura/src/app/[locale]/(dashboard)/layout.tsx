@@ -26,7 +26,9 @@ export default async function DashboardLayout({
           data-scroll-container
           tag="main"
         >
-          <div className="flex flex-1 flex-col p-3 md:p-4">{children}</div>
+          <div className="flex flex-1 flex-col px-3 pt-3 pb-6 md:px-4 md:pt-4 md:pb-6">
+            {children}
+          </div>
         </Wrapper>
       </Wrapper>
     </UserRoleProvider>

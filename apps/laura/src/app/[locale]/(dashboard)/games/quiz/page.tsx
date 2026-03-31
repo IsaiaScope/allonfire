@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getQuizQuestionsAction } from "@/features/games/actions/quiz";
 import { QuizBoard } from "@/features/games/components/quiz-board";
 import { auth } from "@/lib/auth";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,7 +15,12 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("quizTitle") };
+  const seo = await getTranslations({ locale, namespace: "SEO" });
+  return {
+    title: t("quizTitle"),
+    description: seo("quizDescription"),
+    alternates: getAlternates(locale, "/games/quiz"),
+  };
 }
 
 export default async function QuizGamePage({

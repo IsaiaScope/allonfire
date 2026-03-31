@@ -42,8 +42,11 @@ export type { QuizQuestionWithAnswers } from "./quiz.service";
 export {
   createQuizQuestion,
   deleteQuizQuestion,
+  getAllQuizQuestions,
+  getQuizQuestionById,
   getQuizQuestionCount,
   getRandomQuizQuestions,
+  updateQuizQuestion,
 } from "./quiz.service";
 export { getSettings } from "./settings.service";
 export {

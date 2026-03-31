@@ -1,19 +1,23 @@
 "use server";
 
-import { checkMutationAccess } from "@allonfire/auth/guard";
+import { checkAdminAccess, checkMutationAccess } from "@allonfire/auth/guard";
 import type { GameType } from "@allonfire/database";
 import {
   createQuizQuestion,
-  getQuizQuestionCount,
+  deleteQuizQuestion,
+  getAllQuizQuestions,
+  getQuizQuestionById,
   getRandomQuizQuestions,
   getUserBestScore,
   submitGameScore,
+  updateQuizQuestion,
 } from "@allonfire/database";
 import {
   blurHashToDataURL,
   processPhoto,
   uploadFile,
 } from "@allonfire/storage";
+import { formatErrorMessage } from "@allonfire/utils";
 import { headers } from "next/headers";
 import {
   getLeaderboardAction,
@@ -53,6 +57,38 @@ export type CreateQuestionResult =
   | { success: true; questionId: string }
   | { success: false; error: string };
 
+export type QuizQuestionListItem = {
+  id: string;
+  text: string;
+  imageUrl: string | null;
+  imageThumbnailUrl: string | null;
+  createdAt: string;
+  answerCount: number;
+};
+
+export type QuizQuestionDetail = {
+  id: string;
+  text: string;
+  imageUrl: string | null;
+  imageThumbnailUrl: string | null;
+  answers: {
+    id: string;
+    text: string;
+    imageUrl: string | null;
+    imageThumbnailUrl: string | null;
+    isCorrect: boolean;
+    sortOrder: number;
+  }[];
+};
+
+export type DeleteQuestionResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export type UpdateQuestionResult =
+  | { success: true }
+  | { success: false; error: string };
+
 // ---- Actions ----
 
 export async function getQuizQuestionsAction(): Promise<QuizQuestionsResult> {
@@ -61,12 +97,14 @@ export async function getQuizQuestionsAction(): Promise<QuizQuestionsResult> {
     throw new Error("Not authenticated");
   }
 
-  const questionCount = await getQuizQuestionCount();
-  if (questionCount < 10) {
-    return { success: false, error: "NOT_ENOUGH_QUESTIONS", questionCount };
-  }
-
   const questions = await getRandomQuizQuestions(10);
+  if (questions.length < 10) {
+    return {
+      success: false,
+      error: "NOT_ENOUGH_QUESTIONS",
+      questionCount: questions.length,
+    };
+  }
 
   return {
     success: true,
@@ -154,6 +192,30 @@ async function processAndUploadImage(
   };
 }
 
+function resolveImageFields(
+  uploadedImage:
+    | { imageUrl: string; imageThumbnailUrl: string; imageBlurHash: string }
+    | undefined,
+  keepExisting: boolean,
+  existingUrl: string | null,
+  existingThumbUrl: string | null
+) {
+  if (uploadedImage) {
+    return {
+      imageUrl: uploadedImage.imageUrl,
+      imageThumbnailUrl: uploadedImage.imageThumbnailUrl,
+      imageBlurHash: uploadedImage.imageBlurHash,
+    };
+  }
+  if (keepExisting && existingUrl) {
+    return {
+      imageUrl: existingUrl,
+      imageThumbnailUrl: existingThumbUrl ?? existingUrl,
+    };
+  }
+  return {};
+}
+
 type ParsedAnswer = {
   text: string;
   isCorrect: boolean;
@@ -236,7 +298,7 @@ function validateQuestionForm(formData: FormData): FormValidation {
 export async function createQuestionAction(
   formData: FormData
 ): Promise<CreateQuestionResult> {
-  const access = await checkMutationAccess(auth);
+  const access = await checkAdminAccess(auth);
   if (!access.allowed) {
     return { success: false, error: access.reason };
   }
@@ -293,8 +355,168 @@ export async function createQuestionAction(
 
     return { success: true, questionId: question.id };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to create question";
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: formatErrorMessage(error, "Failed to create question"),
+    };
+  }
+}
+
+export async function getQuizQuestionsListAction(): Promise<
+  QuizQuestionListItem[]
+> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  const questions = await getAllQuizQuestions();
+  return questions.map((q) => ({
+    id: q.id,
+    text: q.text,
+    imageUrl: q.imageUrl,
+    imageThumbnailUrl: q.imageThumbnailUrl,
+    createdAt: q.createdAt.toISOString(),
+    answerCount: q._count.answers,
+  }));
+}
+
+export async function getQuizQuestionByIdAction(
+  id: string
+): Promise<QuizQuestionDetail | null> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    throw new Error("Not authenticated");
+  }
+
+  const question = await getQuizQuestionById(id);
+  if (!question) {
+    return null;
+  }
+
+  return {
+    id: question.id,
+    text: question.text,
+    imageUrl: question.imageUrl,
+    imageThumbnailUrl: question.imageThumbnailUrl,
+    answers: question.answers.map((a) => ({
+      id: a.id,
+      text: a.text,
+      imageUrl: a.imageUrl,
+      imageThumbnailUrl: a.imageThumbnailUrl,
+      isCorrect: a.isCorrect,
+      sortOrder: a.sortOrder,
+    })),
+  };
+}
+
+export async function updateQuestionAction(
+  id: string,
+  formData: FormData
+): Promise<UpdateQuestionResult> {
+  const access = await checkAdminAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
+  }
+
+  const validation = validateQuestionForm(formData);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  const { text, answers, questionImage: questionImageFile } = validation;
+
+  try {
+    const timestamp = Date.now();
+    const keepExistingImage = formData.get("keepExistingImage") === "true";
+    const qExistingUrl = formData.get("existingImageUrl") as string | null;
+    const qExistingThumb = formData.get("existingThumbUrl") as string | null;
+
+    const [questionImageData, answersData] = await Promise.all([
+      questionImageFile && questionImageFile.size > 0
+        ? processAndUploadImage(
+            questionImageFile,
+            "quiz/questions",
+            `${timestamp}`
+          )
+        : Promise.resolve(undefined),
+      Promise.all(
+        answers.map(async (answer, index) => {
+          const keepAnswerImage =
+            formData.get(`answer-${index}-keepExistingImage`) === "true";
+          const answerExistingUrl = formData.get(
+            `answer-${index}-existingImageUrl`
+          ) as string | null;
+          const answerExistingThumb = formData.get(
+            `answer-${index}-existingThumbUrl`
+          ) as string | null;
+
+          const imageData = answer.image
+            ? await processAndUploadImage(
+                answer.image,
+                "quiz/answers",
+                `${timestamp}-${index}`
+              )
+            : undefined;
+
+          return {
+            text: answer.text,
+            isCorrect: answer.isCorrect,
+            sortOrder: answer.sortOrder,
+            ...resolveImageFields(
+              imageData,
+              keepAnswerImage,
+              answerExistingUrl,
+              answerExistingThumb
+            ),
+          };
+        })
+      ),
+    ]);
+
+    const resolvedQuestionImage = resolveImageFields(
+      questionImageData,
+      keepExistingImage,
+      qExistingUrl,
+      qExistingThumb
+    );
+    const clearImage = !(questionImageData || keepExistingImage);
+
+    await updateQuizQuestion(id, {
+      text,
+      ...resolvedQuestionImage,
+      ...(clearImage && {
+        imageUrl: null,
+        imageThumbnailUrl: null,
+        imageBlurHash: null,
+      }),
+      answers: answersData,
+    });
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: formatErrorMessage(error, "Failed to update question"),
+    };
+  }
+}
+
+export async function deleteQuestionAction(
+  id: string
+): Promise<DeleteQuestionResult> {
+  const access = await checkAdminAccess(auth);
+  if (!access.allowed) {
+    return { success: false, error: access.reason };
+  }
+
+  try {
+    await deleteQuizQuestion(id);
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: formatErrorMessage(error, "Failed to delete question"),
+    };
   }
 }
