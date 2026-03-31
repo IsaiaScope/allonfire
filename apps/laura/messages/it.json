@@ -15,6 +15,8 @@
     "uploadDescription": "Aggiungi nuove foto alla galleria",
     "gamesDescription": "Giochi divertenti da fare insieme",
     "settingsDescription": "Lingua, tema e account",
+    "favorites": "Preferiti",
+    "favoritesDescription": "I tuoi ricordi preferiti",
     "signOut": "Esci",
     "openMenu": "Apri menu",
     "appName": "Laura",
@@ -26,7 +28,17 @@
   "Gallery": {
     "title": "Galleria",
     "subtitle": "Le nostre foto insieme",
-    "allLoaded": "Tutte le foto caricate"
+    "allLoaded": "Tutte le foto caricate",
+    "loadingMemories": "Caricamento ricordi..."
+  },
+  "Favorites": {
+    "title": "Preferiti",
+    "emptyTitle": "Nessun preferito ancora",
+    "emptySubtitle": "Sfoglia la galleria e tocca il cuore sulle foto che ami",
+    "browseGallery": "Sfoglia Galleria",
+    "addToFavorites": "Aggiungi ai preferiti",
+    "removeFromFavorites": "Rimuovi dai preferiti",
+    "loadingMemories": "Caricamento ricordi..."
   },
   "GalleryEmpty": {
     "title": "Nessuna foto",
@@ -48,7 +60,20 @@
   "PhotoPreview": {
     "ariaLabel": "Anteprima foto",
     "closeLabel": "Chiudi anteprima",
-    "fullSizeAlt": "Foto a dimensione intera"
+    "fullSizeAlt": "Foto a dimensione intera",
+    "downloadLabel": "Scarica foto",
+    "addToFavorites": "Aggiungi ai preferiti",
+    "removeFromFavorites": "Rimuovi dai preferiti",
+    "downloadError": "Impossibile scaricare la foto",
+    "copyLabel": "Copia negli appunti",
+    "copySuccess": "Copiato negli appunti",
+    "copyError": "Impossibile copiare",
+    "shareLabel": "Condividi foto",
+    "deleteLabel": "Elimina foto",
+    "deleteTitle": "Eliminare questa foto?",
+    "deleteDescription": "Questa foto verrà eliminata definitivamente. Questa azione non può essere annullata.",
+    "deleteCancel": "Annulla",
+    "deleteConfirm": "Elimina"
   },
   "Error": {
     "title": "Qualcosa è andato storto",
@@ -115,7 +140,7 @@
     "scoreSubmitted": "Punteggio salvato!",
     "submitError": "Salvataggio punteggio fallito",
     "retry": "Riprova",
-    "notEnoughPhotos": "Carica almeno 8 foto per giocare a memory",
+    "notEnoughPhotos": "Carica almeno 6 foto per giocare a memory",
     "goToUpload": "Carica Foto",
     "yourStats": "Le Tue Statistiche",
     "gamesPlayed": "Partite Giocate",

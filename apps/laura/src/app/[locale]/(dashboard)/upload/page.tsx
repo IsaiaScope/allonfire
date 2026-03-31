@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { PageContainer } from "@/features/layout/components/page-container";
 import { UploadClient } from "@/features/upload/components/upload-client";
 
 export async function generateMetadata({
@@ -22,12 +23,14 @@ export default async function UploadPage({
   const t = await getTranslations("Upload");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-bold text-2xl tracking-tight">{t("title")}</h1>
-        <p className="mt-1 text-muted-foreground">{t("subtitle")}</p>
+    <PageContainer>
+      <div className="space-y-6">
+        <div>
+          <h1 className="font-bold text-2xl tracking-tight">{t("title")}</h1>
+          <p className="mt-1 text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <UploadClient />
       </div>
-      <UploadClient />
-    </div>
+    </PageContainer>
   );
 }

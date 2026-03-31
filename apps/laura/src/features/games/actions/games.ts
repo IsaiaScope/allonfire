@@ -32,11 +32,11 @@ export async function getMemoryPhotosAction(): Promise<MemoryPhotosResult> {
   }
 
   const photoCount = await getUserPhotoCount(session.user.id);
-  if (photoCount < 8) {
+  if (photoCount < 6) {
     return { success: false, error: "NOT_ENOUGH_PHOTOS", photoCount };
   }
 
-  const photos = await getRandomPhotos(session.user.id, 8);
+  const photos = await getRandomPhotos(session.user.id, 6);
 
   const cards: MemoryCard[] = [];
   for (const photo of photos) {
@@ -99,7 +99,7 @@ export async function submitScoreAction(data: {
     gameType: data.gameType,
     timeMs: data.timeMs,
     score: data.moves,
-    metadata: { pairs: 8, gridSize: "4x4" },
+    metadata: { pairs: 6, gridSize: "3x4" },
   });
 
   return { success: true, isNewBest };
@@ -124,6 +124,16 @@ export type LeaderboardData = {
   userStats: { totalGames: number };
   userBestTimeMs: number | null;
 };
+
+export async function getBestTimeAction(): Promise<number | null> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return null;
+  }
+
+  const best = await getUserBestScore(session.user.id, "MEMORY");
+  return best?.timeMs ?? null;
+}
 
 export async function getLeaderboardAction(
   gameType: GameType

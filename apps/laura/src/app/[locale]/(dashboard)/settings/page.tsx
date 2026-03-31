@@ -1,5 +1,6 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { PageContainer } from "@/features/layout/components/page-container";
 import { AppearanceCard } from "@/features/settings/components/appearance-card";
 import { LanguageCard } from "@/features/settings/components/language-card";
 import { UserInfoCard } from "@/features/settings/components/user-info-card";
@@ -27,20 +28,22 @@ export default async function SettingsPage({
   const { session, user } = await checkAppAccess(auth, "laura");
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <div>
-        <h1 className="font-bold text-2xl tracking-tight">{t("title")}</h1>
+    <PageContainer>
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div>
+          <h1 className="font-bold text-2xl tracking-tight">{t("title")}</h1>
+        </div>
+        <div className="grid gap-4">
+          <LanguageCard />
+          <AppearanceCard />
+          <UserInfoCard
+            allowedApps={user.allowedApps}
+            email={session.user.email}
+            name={session.user.name}
+            role={user.role}
+          />
+        </div>
       </div>
-      <div className="grid gap-4">
-        <LanguageCard />
-        <AppearanceCard />
-        <UserInfoCard
-          allowedApps={user.allowedApps}
-          email={session.user.email}
-          name={session.user.name}
-          role={user.role}
-        />
-      </div>
-    </div>
+    </PageContainer>
   );
 }

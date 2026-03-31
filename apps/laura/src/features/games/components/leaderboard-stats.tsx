@@ -6,6 +6,7 @@ import {
 } from "@allonfire/ui/components/card";
 import { Clock, Gamepad2, Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { formatTime } from "@/features/games/utils/format-time";
 
 type LeaderboardStatsProps = {
   totalGames: number;
@@ -15,13 +16,6 @@ type LeaderboardStatsProps = {
   userTotalGames: number;
   userBestTimeMs: number | null;
 };
-
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
 
 export function LeaderboardStats({
   totalGames,

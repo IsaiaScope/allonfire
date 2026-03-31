@@ -17,10 +17,14 @@ export default async function DashboardLayout({
   const { session } = await checkAppAccess(auth, "laura");
 
   return (
-    <Wrapper className="flex h-dvh flex-col overflow-hidden" tag="div">
+    <Wrapper className="flex flex-1 flex-col overflow-hidden" tag="div">
       <TopBar email={session.user.email} name={session.user.name} />
-      <Wrapper className="flex-1 overflow-y-auto" tag="main">
-        <div className="mx-auto max-w-6xl p-4 md:p-8">{children}</div>
+      <Wrapper
+        className="scrollbar-hide flex flex-1 flex-col overflow-y-auto"
+        data-scroll-container
+        tag="main"
+      >
+        <div className="flex flex-1 flex-col p-3 md:p-4">{children}</div>
       </Wrapper>
     </Wrapper>
   );

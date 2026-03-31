@@ -3,7 +3,10 @@ import { Button } from "@allonfire/ui/components/button";
 import { Upload } from "lucide-react";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getMemoryPhotosAction } from "@/features/games/actions/games";
+import {
+  getBestTimeAction,
+  getMemoryPhotosAction,
+} from "@/features/games/actions/games";
 import { MemoryBoard } from "@/features/games/components/memory-board";
 import { auth } from "@/lib/auth";
 
@@ -27,7 +30,10 @@ export default async function MemoryGamePage({
   await checkAppAccess(auth, "laura");
 
   const t = await getTranslations("Games");
-  const result = await getMemoryPhotosAction();
+  const [result, bestTimeMs] = await Promise.all([
+    getMemoryPhotosAction(),
+    getBestTimeAction(),
+  ]);
 
   if (!result.success) {
     return (
@@ -44,13 +50,8 @@ export default async function MemoryGamePage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="font-bold text-2xl tracking-tight">
-          {t("memoryTitle")}
-        </h1>
-      </div>
-      <MemoryBoard initialCards={result.cards} />
+    <div className="flex flex-1 flex-col md:justify-center">
+      <MemoryBoard bestTimeMs={bestTimeMs} initialCards={result.cards} />
     </div>
   );
 }

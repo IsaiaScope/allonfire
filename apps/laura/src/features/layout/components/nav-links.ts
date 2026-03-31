@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { Gamepad2, Images, Settings, Trophy, Upload } from "lucide-react";
+import {
+  BrainCircuit,
+  Gamepad2,
+  Heart,
+  Images,
+  Settings,
+  Upload,
+} from "lucide-react";
 
 export type NavLink = {
   href: string;
@@ -14,10 +21,6 @@ export type NavSection = {
   links: NavLink[];
 };
 
-export function isLinkActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
-}
-
 export const navSections: NavSection[] = [
   {
     labelKey: "gallerySection",
@@ -28,6 +31,12 @@ export const navSections: NavSection[] = [
         labelKey: "gallery",
         descriptionKey: "galleryDescription",
         icon: Images,
+      },
+      {
+        href: "/favorites",
+        labelKey: "favorites",
+        descriptionKey: "favoritesDescription",
+        icon: Heart,
       },
       {
         href: "/upload",
@@ -48,10 +57,10 @@ export const navSections: NavSection[] = [
         icon: Gamepad2,
       },
       {
-        href: "/games/leaderboard",
-        labelKey: "leaderboard",
-        descriptionKey: "leaderboardDescription",
-        icon: Trophy,
+        href: "/games/memory",
+        labelKey: "memory",
+        descriptionKey: "memoryNavDescription",
+        icon: BrainCircuit,
       },
     ],
   },
@@ -68,3 +77,24 @@ export const navSections: NavSection[] = [
     ],
   },
 ];
+
+const allHrefs = navSections.flatMap((s) => s.links.map((l) => l.href));
+
+export function isLinkActive(pathname: string, href: string) {
+  if (href === pathname) {
+    return true;
+  }
+  if (href === "/") {
+    return false;
+  }
+  if (!pathname.startsWith(`${href}/`)) {
+    return false;
+  }
+  // Only highlight parent if no child link matches more specifically
+  return !allHrefs.some(
+    (other) =>
+      other !== href &&
+      other.startsWith(`${href}/`) &&
+      pathname.startsWith(other)
+  );
+}

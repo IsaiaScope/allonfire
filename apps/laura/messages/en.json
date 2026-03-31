@@ -15,6 +15,8 @@
     "uploadDescription": "Add new photos to the gallery",
     "gamesDescription": "Fun games to play together",
     "settingsDescription": "Language, theme, and account",
+    "favorites": "Favorites",
+    "favoritesDescription": "Your favorite memories",
     "signOut": "Sign out",
     "openMenu": "Open menu",
     "appName": "Laura",
@@ -26,7 +28,17 @@
   "Gallery": {
     "title": "Gallery",
     "subtitle": "Our photos together",
-    "allLoaded": "All photos loaded"
+    "allLoaded": "All photos loaded",
+    "loadingMemories": "Loading memories..."
+  },
+  "Favorites": {
+    "title": "Favorites",
+    "emptyTitle": "No favorites yet",
+    "emptySubtitle": "Browse the gallery and tap the heart on photos you love",
+    "browseGallery": "Browse Gallery",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "loadingMemories": "Loading memories..."
   },
   "GalleryEmpty": {
     "title": "No photos yet",
@@ -48,7 +60,20 @@
   "PhotoPreview": {
     "ariaLabel": "Photo preview",
     "closeLabel": "Close preview",
-    "fullSizeAlt": "Full size photo"
+    "fullSizeAlt": "Full size photo",
+    "downloadLabel": "Download photo",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "downloadError": "Failed to download photo",
+    "copyLabel": "Copy to clipboard",
+    "copySuccess": "Copied to clipboard",
+    "copyError": "Failed to copy",
+    "shareLabel": "Share photo",
+    "deleteLabel": "Delete photo",
+    "deleteTitle": "Delete this photo?",
+    "deleteDescription": "This will permanently delete this photo. This action cannot be undone.",
+    "deleteCancel": "Cancel",
+    "deleteConfirm": "Delete"
   },
   "Error": {
     "title": "Something Went Wrong",
@@ -115,7 +140,7 @@
     "scoreSubmitted": "Score saved!",
     "submitError": "Failed to save score",
     "retry": "Retry",
-    "notEnoughPhotos": "Upload at least 8 photos to play the memory game",
+    "notEnoughPhotos": "Upload at least 6 photos to play the memory game",
     "goToUpload": "Upload Photos",
     "yourStats": "Your Stats",
     "gamesPlayed": "Games Played",

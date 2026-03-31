@@ -79,6 +79,7 @@
     @apply bg-background text-foreground;
   }
 
+  /* PWA safe area insets — pushes body content inside notch/home indicator zones */
   @supports (padding: env(safe-area-inset-left)) and
     (padding: env(safe-area-inset-right)) {
     :root {
@@ -86,6 +87,13 @@
       --safe-area-inset-right: env(safe-area-inset-right, 0px);
       --safe-area-inset-top: env(safe-area-inset-top, 0px);
       --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    body {
+      padding-top: var(--safe-area-inset-top) !important;
+      padding-right: var(--safe-area-inset-right) !important;
+      padding-bottom: var(--safe-area-inset-bottom) !important;
+      padding-left: var(--safe-area-inset-left) !important;
     }
   }
 

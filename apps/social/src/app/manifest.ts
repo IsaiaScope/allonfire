@@ -5,6 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "AllOnFire — Social Engine",
     short_name: "AllOnFire",
     description: "Automated social media content creation and publishing",
+    id: "/",
     start_url: "/",
     scope: "/",
     display: "standalone",

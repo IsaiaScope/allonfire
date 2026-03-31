@@ -81,7 +81,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
       >
         <NextIntlClientProvider>
           <Providers>
-            <Wrapper className="flex flex-1 flex-col" tag="div">
+            <Wrapper className="flex min-h-0 flex-1 flex-col" tag="div">
               {children}
             </Wrapper>
           </Providers>

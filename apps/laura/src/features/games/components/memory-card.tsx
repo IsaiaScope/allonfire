@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@allonfire/ui/lib/utils";
-import { Heart } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 
@@ -39,7 +38,10 @@ export function MemoryCard({
   return (
     <button
       aria-label={ariaLabel}
-      className="perspective-[1000px] relative aspect-square w-full cursor-pointer"
+      className={cn(
+        "perspective-[1000px] relative size-full cursor-pointer",
+        isMatched && "animate-match-pulse"
+      )}
       disabled={disabled || isMatched}
       onClick={onFlip}
       type="button"
@@ -50,7 +52,7 @@ export function MemoryCard({
           showFace && "transform-[rotateY(180deg)]"
         )}
       >
-        {/* Back face (card back — Stitch-inspired glass design) */}
+        {/* Back face (card back) */}
         <div
           className={cn(
             "backface-hidden absolute inset-0 overflow-hidden rounded-lg",
@@ -58,50 +60,49 @@ export function MemoryCard({
             isMatched && "opacity-60"
           )}
           style={{
-            background:
-              "linear-gradient(135deg, color-mix(in oklch, var(--primary) 40%, transparent) 0%, color-mix(in oklch, var(--background) 80%, transparent) 100%)",
+            backgroundColor: "var(--accent)",
           }}
         >
-          {/* Radial highlight top-left */}
+          {/* Laura logo watermark — light/dark variants */}
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 size-full object-contain dark:hidden"
+            fill
+            sizes="(max-width: 640px) 25vw, (max-width: 1024px) 130px, 170px"
+            src="/memory-card-back-light.png"
+          />
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 hidden size-full object-contain dark:block"
+            fill
+            sizes="(max-width: 640px) 25vw, (max-width: 1024px) 130px, 170px"
+            src="/memory-card-back-dark.png"
+          />
+          {/* Subtle gradient overlay */}
           <div
-            className="absolute inset-0 opacity-30"
+            className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(circle at top left, var(--primary), transparent)",
+                "linear-gradient(135deg, transparent 0%, color-mix(in srgb, var(--accent) 80%, black) 100%)",
             }}
           />
-          {/* Radial highlight bottom-right */}
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              background:
-                "radial-gradient(circle at bottom right, color-mix(in oklch, var(--primary) 60%, transparent), transparent)",
-            }}
-          />
-          {/* Center glow */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <div className="size-1/2 rounded-full bg-white blur-2xl" />
-          </div>
-          {/* Heart icon bottom-right */}
-          <div className="absolute right-2 bottom-2">
-            <Heart className="size-4 fill-white/40 text-white/40" />
-          </div>
         </div>
 
         {/* Front face (photo — visible when flipped) */}
         <div
           className={cn(
-            "backface-hidden transform-[rotateY(180deg)] absolute inset-0 overflow-hidden rounded-lg",
-            isMatched && "ring-2 ring-green-500"
+            "backface-hidden transform-[rotateY(180deg)] absolute inset-0 overflow-hidden rounded-lg bg-muted"
           )}
         >
           <Image
             alt=""
             blurDataURL={blurDataURL}
-            className="size-full object-cover"
+            className="size-full object-contain"
             fill
             placeholder="blur"
-            sizes="(max-width: 640px) 25vw, 150px"
+            sizes="(max-width: 640px) 25vw, (max-width: 1024px) 130px, 170px"
             src={thumbnailUrl}
           />
         </div>

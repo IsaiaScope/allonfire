@@ -2,3 +2,79 @@
 @import "@allonfire/ui/styles/theme-laura.css";
 @source "../../../../packages/ui/src";
 @source "../../../../packages/auth/src";
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes heart-burst {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(1.8);
+    opacity: 0.8;
+  }
+  60% {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes heart-ring {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@utility animate-heart-burst {
+  animation: heart-burst 0.6s ease-out forwards;
+}
+
+@utility animate-heart-ring {
+  opacity: 0;
+  animation: heart-ring 0.5s ease-out 0.05s forwards;
+}
+
+@keyframes match-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--accent);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px 4px var(--accent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility animate-match-pulse {
+  animation: match-pulse 0.4s ease-out;
+}
+
+/* Force tooltip positioner above the z-50 preview dialog.
+   The portal renders as a direct body child (div > div[role=presentation] > div[data-slot=tooltip-content]).
+   The positioner (role=presentation) needs z-index to escape the dialog's stacking context. */
+body > div:has([data-slot="tooltip-content"]) {
+  position: relative;
+  z-index: 200;
+}
+body > div:has([data-slot="tooltip-content"]) [role="presentation"] {
+  z-index: 200 !important;
+}
