@@ -7,6 +7,7 @@
     "dev": "next dev --port 3200",
     "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3201 next dev --port 3201 --hostname 0.0.0.0",
     "build": "next build --webpack",
+    "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "check-types": "tsc --noEmit",
     "seed-photos": "tsx scripts/seed-photos.ts"
@@ -33,6 +34,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

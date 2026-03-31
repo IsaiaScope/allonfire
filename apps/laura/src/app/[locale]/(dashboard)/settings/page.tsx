@@ -1,5 +1,9 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  AnimatedPageWrapper,
+  AnimatedSection,
+} from "@/components/animated-page";
 import { PageContainer } from "@/features/layout/components/page-container";
 import { AppearanceCard } from "@/features/settings/components/appearance-card";
 import { LanguageCard } from "@/features/settings/components/language-card";
@@ -29,21 +33,25 @@ export default async function SettingsPage({
 
   return (
     <PageContainer>
-      <div className="mx-auto max-w-2xl space-y-6">
-        <div>
+      <AnimatedPageWrapper className="mx-auto max-w-2xl space-y-6">
+        <AnimatedSection>
           <h1 className="font-bold text-2xl tracking-tight">{t("title")}</h1>
-        </div>
-        <div className="grid gap-4">
+        </AnimatedSection>
+        <AnimatedSection>
           <LanguageCard />
+        </AnimatedSection>
+        <AnimatedSection>
           <AppearanceCard />
+        </AnimatedSection>
+        <AnimatedSection>
           <UserInfoCard
             allowedApps={user.allowedApps}
             email={session.user.email}
             name={session.user.name}
             role={user.role}
           />
-        </div>
-      </div>
+        </AnimatedSection>
+      </AnimatedPageWrapper>
     </PageContainer>
   );
 }

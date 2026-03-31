@@ -48,7 +48,7 @@ export default async function QuizGamePage({
   }
 
   return (
-    <div className="flex flex-1 flex-col py-4">
+    <div className="flex flex-1 flex-col py-2">
       <QuizBoard initialQuestions={result.questions} />
     </div>
   );

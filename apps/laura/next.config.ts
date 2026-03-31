@@ -1,5 +1,11 @@
+import { securityHeaders } from "@allonfire/utils/security-headers";
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -7,6 +13,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     formats: ["image/avif", "image/webp"],
+    remotePatterns: [{ hostname: "picsum.photos" }],
   },
   output: "standalone",
   experimental: {
@@ -17,9 +24,14 @@ const nextConfig: NextConfig = {
     "@allonfire/ui",
     "@allonfire/database",
     "@allonfire/storage",
+    "@allonfire/utils",
   ],
   async headers() {
     return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
       {
         source: "/storage/:path*",
         headers: [
@@ -46,4 +58,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+export default withBundleAnalyzer(withNextIntl(nextConfig));
