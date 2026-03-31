@@ -50,7 +50,7 @@ export function useMemoryGame(initialCards: MemoryCard[]) {
         if (startTimeRef.current) {
           setElapsedMs(Date.now() - startTimeRef.current);
         }
-      }, 100);
+      }, 1000);
     }
 
     return () => {

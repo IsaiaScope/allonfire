@@ -2,19 +2,16 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@allonfire/ui/components/alert-dialog";
-import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { formatTime } from "@/features/games/utils/format-time";
 
 type GameCompleteDialogProps = {
   open: boolean;
@@ -25,14 +22,6 @@ type GameCompleteDialogProps = {
   onPlayAgain: () => void;
   onRetrySubmit: () => void;
 };
-
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const centiseconds = Math.floor((ms % 1000) / 10);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
-}
 
 export function GameCompleteDialog({
   open,
@@ -47,61 +36,64 @@ export function GameCompleteDialog({
 
   return (
     <AlertDialog open={open}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <Trophy className="size-5 text-yellow-500" />
+          <AlertDialogTitle className="flex items-center gap-2 text-2xl">
+            <Trophy className="size-6 text-amber-400" />
             {t("gameComplete")}
-            {isNewBest && <Badge variant="secondary">{t("newRecord")}</Badge>}
+            {isNewBest && (
+              <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 text-xs">
+                {t("newRecord")}
+              </span>
+            )}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-muted-foreground">
             {t("memoryDescription")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <p className="text-muted-foreground text-xs">{t("time")}</p>
-              <p className="font-bold font-mono text-lg">
+        <div className="mt-6 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="rounded-xl bg-muted p-4 text-center">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider">
+                {t("time")}
+              </p>
+              <p className="mt-1 font-bold font-mono text-2xl">
                 {formatTime(elapsedMs)}
               </p>
             </div>
-            <div className="rounded-lg bg-muted p-3 text-center">
-              <p className="text-muted-foreground text-xs">{t("moves")}</p>
-              <p className="font-bold font-mono text-lg">{moves}</p>
+            <div className="rounded-xl bg-muted p-4 text-center">
+              <p className="text-muted-foreground text-xs uppercase tracking-wider">
+                {t("moves")}
+              </p>
+              <p className="mt-1 font-bold font-mono text-2xl">{moves}</p>
             </div>
           </div>
 
           {submitState === "submitting" && (
-            <p className="flex items-center gap-2 text-muted-foreground text-sm">
+            <p className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
               <Loader2 className="size-4 animate-spin" />
               {t("submitting")}
             </p>
           )}
-          {submitState === "success" && (
-            <p className="text-green-600 text-sm dark:text-green-400">
-              {t("scoreSubmitted")}
-            </p>
-          )}
           {submitState === "error" && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <p className="text-destructive text-sm">{t("submitError")}</p>
               <Button onClick={onRetrySubmit} size="sm" variant="outline">
                 {t("retry")}
               </Button>
             </div>
           )}
-        </div>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel asChild>
-            <Link href="/games/leaderboard">{t("viewLeaderboard")}</Link>
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={onPlayAgain}>
-            {t("playAgain")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
+          <div className="flex gap-3">
+            <Button asChild className="flex-1" variant="outline">
+              <Link href="/games/leaderboard">{t("viewLeaderboard")}</Link>
+            </Button>
+            <Button className="flex-1" onClick={onPlayAgain}>
+              {t("playAgain")}
+            </Button>
+          </div>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );

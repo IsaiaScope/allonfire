@@ -6,6 +6,7 @@ import {
 import { Badge } from "@allonfire/ui/components/badge";
 import { cn } from "@allonfire/ui/lib/utils";
 import { useTranslations } from "next-intl";
+import { formatTime } from "@/features/games/utils/format-time";
 
 type LeaderboardEntry = {
   id: string;
@@ -20,14 +21,6 @@ type LeaderboardTableProps = {
   scores: LeaderboardEntry[];
   currentUserId: string;
 };
-
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const centiseconds = Math.floor((ms % 1000) / 10);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}`;
-}
 
 function getInitials(name: string | null): string {
   if (name) {

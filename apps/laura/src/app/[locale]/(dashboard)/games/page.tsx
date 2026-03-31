@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GameHub } from "@/features/games/components/game-hub";
+import { PageContainer } from "@/features/layout/components/page-container";
 
 export async function generateMetadata({
   params,
@@ -19,5 +20,9 @@ export default async function GamesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <GameHub />;
+  return (
+    <PageContainer>
+      <GameHub />
+    </PageContainer>
+  );
 }
