@@ -24,3 +24,7 @@ export function useUserRole() {
 export function useIsViewer() {
   return useContext(UserRoleContext) === "VIEWER";
 }
+
+export function useIsAdmin() {
+  return useContext(UserRoleContext) === "ADMIN";
+}

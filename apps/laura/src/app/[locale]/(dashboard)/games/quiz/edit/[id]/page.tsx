@@ -1,7 +1,8 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { QuizUploadForm } from "@/features/games/components/quiz-upload-form";
+import { getQuizQuestionByIdAction } from "@/features/games/actions/quiz";
+import { QuizQuestionForm } from "@/features/games/components/quiz-question-form";
 import { auth } from "@/lib/auth";
 
 export async function generateMetadata({
@@ -11,21 +12,28 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("quizUploadTitle") };
+  return {
+    title: t("quizEditUpdateSubmit"),
+    robots: { index: false, follow: false },
+  };
 }
 
-export default async function QuizUploadPage({
+export default async function QuizEditQuestionPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale } = await params;
+  const { locale, id } = await params;
   setRequestLocale(locale);
   const { user } = await checkAppAccess(auth, "laura");
 
-  // Viewers cannot create questions
-  if (user.role === "VIEWER") {
+  if (user.role !== "ADMIN") {
     redirect("/games");
+  }
+
+  const question = await getQuizQuestionByIdAction(id);
+  if (!question) {
+    redirect("/games/quiz/edit");
   }
 
   const t = await getTranslations("Games");
@@ -34,14 +42,14 @@ export default async function QuizUploadPage({
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <div>
         <h1 className="font-bold text-2xl tracking-tight">
-          {t("quizUploadTitle")}
+          {t("quizEditUpdateSubmit")}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {t("quizUploadDescription")}
+          {t("quizEditDescription")}
         </p>
       </div>
 
-      <QuizUploadForm />
+      <QuizQuestionForm initialData={question} />
     </div>
   );
 }

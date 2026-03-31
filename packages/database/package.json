@@ -14,6 +14,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx --env-file=.env src/seed.ts",
+    "db:seed-quiz": "tsx --env-file=.env src/seed-quiz.ts",
     "db:export-topics": "tsx --env-file=.env src/export-topics.ts",
     "db:studio": "prisma studio",
     "test": "vitest run"

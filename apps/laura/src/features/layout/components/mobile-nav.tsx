@@ -14,7 +14,7 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useIsViewer } from "@/components/user-role-provider";
+import { useIsAdmin, useIsViewer } from "@/components/user-role-provider";
 import { Link, usePathname } from "@/i18n/navigation";
 import { isLinkActive, navSections } from "./nav-links";
 
@@ -30,6 +30,7 @@ export function MobileNav({ open, onClose, name, email }: MobileNavProps) {
   const router = useRouter();
   const t = useTranslations("Nav");
   const isViewer = useIsViewer();
+  const isAdmin = useIsAdmin();
 
   const initials = name
     ? name
@@ -73,7 +74,9 @@ export function MobileNav({ open, onClose, name, email }: MobileNavProps) {
               <div className="px-2">
                 {section.links.map((link) => {
                   const active = isLinkActive(pathname, link.href);
-                  const restricted = isViewer && link.viewerRestricted;
+                  const restricted =
+                    (isViewer && link.viewerRestricted) ||
+                    (link.adminOnly && !isAdmin);
 
                   if (restricted) {
                     return (

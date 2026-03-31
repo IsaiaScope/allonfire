@@ -11,7 +11,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useIsViewer } from "@/components/user-role-provider";
+import { useIsAdmin, useIsViewer } from "@/components/user-role-provider";
 import { Link } from "@/i18n/navigation";
 import { NavLinkContent } from "./nav-link-content";
 import { isLinkActive, navSections } from "./nav-links";
@@ -23,6 +23,7 @@ type DesktopNavProps = {
 export default function DesktopNav({ pathname }: DesktopNavProps) {
   const t = useTranslations("Nav");
   const isViewer = useIsViewer();
+  const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -57,7 +58,9 @@ export default function DesktopNav({ pathname }: DesktopNavProps) {
               <ul className="grid max-h-[50vh] w-[280px] overflow-y-auto p-0.5">
                 {section.links.map((link) => {
                   const active = isLinkActive(pathname, link.href);
-                  const restricted = isViewer && link.viewerRestricted;
+                  const restricted =
+                    (isViewer && link.viewerRestricted) ||
+                    (link.adminOnly && !isAdmin);
 
                   if (restricted) {
                     return (

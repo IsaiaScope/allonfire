@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type UploadPreviewGridProps = {
@@ -18,14 +18,77 @@ export function UploadPreviewGrid({
 }: UploadPreviewGridProps) {
   const t = useTranslations("Upload");
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [dimensions, setDimensions] = useState<
+    Record<string, { width: number; height: number }>
+  >({});
+  const queuedRef = useRef<Set<string>>(new Set());
+
+  // Read image dimensions from blob URLs for aspect-ratio-aware preview
+  useEffect(() => {
+    const currentUrls = new Set(previewUrls);
+
+    // Clean up stale entries from removed files
+    for (const url of queuedRef.current) {
+      if (!currentUrls.has(url)) {
+        queuedRef.current.delete(url);
+        setDimensions((prev) => {
+          const { [url]: _, ...rest } = prev;
+          return rest;
+        });
+      }
+    }
+
+    // Queue new URLs for dimension measurement
+    for (const url of previewUrls) {
+      if (queuedRef.current.has(url)) {
+        continue;
+      }
+      queuedRef.current.add(url);
+      const img = new Image();
+      img.onload = () => {
+        setDimensions((prev) => ({
+          ...prev,
+          [url]: { width: img.naturalWidth, height: img.naturalHeight },
+        }));
+      };
+      img.src = url;
+    }
+  }, [previewUrls]);
+
+  // Escape key + scroll lock when preview modal is open
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setPreviewIndex(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (previewIndex === null) {
+      return;
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [previewIndex, handleKeyDown]);
 
   if (files.length === 0) {
     return null;
   }
 
+  const previewUrl =
+    previewIndex !== null ? previewUrls[previewIndex] : undefined;
+  const previewDim = previewUrl ? dimensions[previewUrl] : undefined;
+  const pw = previewDim?.width ?? 1;
+  const ph = previewDim?.height ?? 1;
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3 md:grid-cols-4">
         {files.map((file, index) => (
           <div className="relative" key={previewUrls[index]}>
             <button
@@ -37,7 +100,7 @@ export function UploadPreviewGrid({
               {/* biome-ignore lint/correctness/useImageSize: CSS controls dimensions via aspect-square */}
               <img
                 alt={file.name}
-                className="aspect-square w-full rounded-lg object-cover"
+                className="aspect-square w-full rounded-lg border object-contain"
                 src={previewUrls[index]}
               />
             </button>
@@ -62,23 +125,34 @@ export function UploadPreviewGrid({
       </div>
 
       {previewIndex !== null &&
-        previewUrls[previewIndex] &&
+        previewUrl &&
         createPortal(
-          <button
-            className="fixed inset-0 z-[9999] flex cursor-pointer items-center justify-center border-none bg-black/80 p-4"
+          // biome-ignore lint/a11y/noNoninteractiveElementInteractions: backdrop click-to-close is standard for dialog overlays
+          // biome-ignore lint/a11y/useKeyWithClickEvents: Escape key handled via global useEffect listener
+          <div
+            aria-label={t("preview")}
+            aria-modal="true"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-2"
             onClick={() => setPreviewIndex(null)}
-            type="button"
+            role="dialog"
           >
-            {/* biome-ignore lint/performance/noImgElement: blob URL preview */}
-            <img
-              alt={files[previewIndex]?.name ?? "Preview"}
-              className="max-h-[80vh] max-w-[min(90vw,800px)] rounded-xl border border-white/10 object-contain shadow-2xl"
-              height={600}
-              loading="lazy"
-              src={previewUrls[previewIndex]}
-              width={600}
-            />
-          </button>,
+            <div
+              className="relative overflow-hidden rounded-lg"
+              style={{
+                aspectRatio: `${pw} / ${ph}`,
+                width: `min(94vw, calc((90vh - 3.5rem) * ${pw} / ${ph}))`,
+                maxHeight: "calc(90vh - 3.5rem)",
+              }}
+            >
+              {/* biome-ignore lint/performance/noImgElement: blob URL preview cannot use next/image */}
+              {/* biome-ignore lint/correctness/useImageSize: dimensions set via inline style */}
+              <img
+                alt={files[previewIndex]?.name ?? "Preview"}
+                className="h-full w-full object-contain"
+                src={previewUrl}
+              />
+            </div>
+          </div>,
           document.body
         )}
     </>

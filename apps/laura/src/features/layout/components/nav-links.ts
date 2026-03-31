@@ -5,6 +5,7 @@ import {
   Gamepad2,
   Heart,
   Images,
+  PenSquare,
   Settings,
   Upload,
 } from "lucide-react";
@@ -15,6 +16,7 @@ export type NavLink = {
   descriptionKey: string;
   icon: LucideIcon;
   viewerRestricted?: boolean;
+  adminOnly?: boolean;
 };
 
 export type NavSection = {
@@ -70,6 +72,13 @@ export const navSections: NavSection[] = [
         labelKey: "quiz",
         descriptionKey: "quizNavDescription",
         icon: CircleHelp,
+      },
+      {
+        href: "/games/quiz/edit",
+        labelKey: "quizEdit",
+        descriptionKey: "quizEditNavDescription",
+        icon: PenSquare,
+        adminOnly: true,
       },
     ],
   },
