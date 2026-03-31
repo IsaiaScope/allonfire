@@ -9,7 +9,7 @@ export function GalleryEmpty() {
   const t = useTranslations("GalleryEmpty");
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-20">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 py-20">
       <Images className="size-16 text-muted-foreground/50" />
       <div className="text-center">
         <h2 className="font-semibold text-lg">{t("title")}</h2>

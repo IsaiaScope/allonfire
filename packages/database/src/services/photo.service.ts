@@ -1,7 +1,7 @@
 import type { Photo } from "../../generated/prisma/client";
 import { prisma } from "../index";
 
-const DEFAULT_PAGE_SIZE = 200;
+export const DEFAULT_PAGE_SIZE = 50;
 
 export type PhotoWithUser = Photo & {
   user: { name: string | null; image: string | null };
@@ -59,13 +59,22 @@ export async function getRandomPhotos(userId: string, count: number) {
     { id: string; thumbnailUrl: string; blurHash: string }[]
   >`
     SELECT id, "thumbnailUrl", "blurHash"
-    FROM "Photo"
-    WHERE "uploadedBy" = ${userId}
+    FROM (
+      SELECT DISTINCT ON ("thumbnailUrl") id, "thumbnailUrl", "blurHash"
+      FROM "Photo"
+      WHERE "uploadedBy" = ${userId}
+      ORDER BY "thumbnailUrl", RANDOM()
+    ) sub
     ORDER BY RANDOM()
     LIMIT ${count}
   `;
 }
 
 export async function getUserPhotoCount(userId: string) {
-  return await prisma.photo.count({ where: { uploadedBy: userId } });
+  const result = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(DISTINCT "thumbnailUrl") as count
+    FROM "Photo"
+    WHERE "uploadedBy" = ${userId}
+  `;
+  return Number(result[0]?.count ?? 0);
 }

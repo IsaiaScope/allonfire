@@ -7,6 +7,7 @@ type Photo = {
   url: string;
   width: number;
   height: number;
+  isFavorite: boolean;
 };
 
 export function usePhotoPreview() {
@@ -20,5 +21,5 @@ export function usePhotoPreview() {
     setCurrentPhoto(null);
   }, []);
 
-  return { currentPhoto, openPreview, closePreview, isOpen: !!currentPhoto };
+  return { currentPhoto, openPreview, closePreview };
 }

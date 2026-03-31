@@ -1,5 +1,10 @@
-export type { LeaderboardEntry } from "./game-score.service";
 // biome-ignore lint/performance/noBarrelFile: service layer entry point
+export {
+  getFavoritePhotoIds,
+  getFavoritesPaginated,
+  toggleFavorite,
+} from "./favorite.service";
+export type { LeaderboardEntry } from "./game-score.service";
 export {
   getGameStats,
   getLeaderboard,

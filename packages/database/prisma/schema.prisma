@@ -154,7 +154,7 @@ model Verification {
 // ============ Photos ============
 
 model Photo {
-  id           String   @id @default(cuid(2))
+  id           String    @id @default(cuid(2))
   url          String
   thumbnailUrl String
   width        Int
@@ -162,11 +162,19 @@ model Photo {
   blurHash     String
   caption      String?
   uploadedBy   String
-  user         User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
+  user         User      @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  favorite     Favorite?
+  createdAt    DateTime  @default(now())
 
   @@index([createdAt])
   @@index([uploadedBy])
+}
+
+model Favorite {
+  id        String   @id @default(cuid(2))
+  photoId   String   @unique
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 // ============ Games ============
