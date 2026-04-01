@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 import { checkAppAccessAction } from "@/actions/check-access";
+import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
 export default async function LoginPage({
@@ -45,12 +46,20 @@ export default async function LoginPage({
           accessDenied: t("accessDenied"),
           showPassword: t("showPassword"),
           hidePassword: t("hidePassword"),
+          viewerBannerTitle: t("viewerBannerTitle"),
+          viewerBannerDescription: t("viewerBannerDescription"),
+          useCredentials: t("useCredentials"),
         }}
         logoAlt="AllOnFire Laura"
         logoSrc="/allonfire-laura-horizontal.svg"
         subtitle={t("subtitle")}
         successIcon={<Heart className="size-5 animate-pulse" />}
-        topRightSlot={<ThemeToggle />}
+        themeToggle={<ThemeToggle size="icon-lg" />}
+        viewerCredentials={
+          env.VIEWER_EMAIL && env.VIEWER_PASSWORD
+            ? { email: env.VIEWER_EMAIL, password: env.VIEWER_PASSWORD }
+            : undefined
+        }
       />
     </Suspense>
   );
