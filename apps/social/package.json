@@ -39,6 +39,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@allonfire/config": "workspace:*",
     "@next/bundle-analyzer": "^16.2.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.1",
