@@ -26,7 +26,6 @@ WORKDIR /app
 COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
-ENV SKIP_ENV_VALIDATION=1
 RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 
