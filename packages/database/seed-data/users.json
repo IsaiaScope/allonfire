@@ -24,12 +24,6 @@
     "allowedApps": ["social"]
   },
   {
-    "email": "social-viewer@allonfire.com",
-    "name": "social-viewer",
-    "role": "VIEWER",
-    "allowedApps": ["social"]
-  },
-  {
     "email": "laura-admin@allonfire.com",
     "name": "laura-admin",
     "role": "ADMIN",
@@ -39,12 +33,6 @@
     "email": "laura-user@allonfire.com",
     "name": "laura-user",
     "role": "USER",
-    "allowedApps": ["laura"]
-  },
-  {
-    "email": "laura-viewer@allonfire.com",
-    "name": "laura-viewer",
-    "role": "VIEWER",
     "allowedApps": ["laura"]
   }
 ]

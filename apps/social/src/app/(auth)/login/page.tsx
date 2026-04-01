@@ -5,7 +5,9 @@ import { Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { checkAppAccessAction } from "@/actions/check-access";
+import { env } from "@/env";
 import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -23,15 +25,22 @@ export default async function LoginPage() {
   }
 
   return (
-    <LoginForm
-      appName="social"
-      checkAccess={checkAppAccessAction}
-      emailPlaceholder="social@domain.com"
-      logoAlt="AllOnFire Social"
-      logoSrc="/allonfire-social-horizontal.svg"
-      subtitle="Sign in to your dashboard"
-      successIcon={<Sparkles className="size-5 animate-pulse" />}
-      topRightSlot={<ThemeToggle />}
-    />
+    <Suspense>
+      <LoginForm
+        appName="social"
+        checkAccess={checkAppAccessAction}
+        emailPlaceholder="social@domain.com"
+        logoAlt="AllOnFire Social"
+        logoSrc="/allonfire-social-horizontal.svg"
+        subtitle="Sign in to your dashboard"
+        successIcon={<Sparkles className="size-5 animate-pulse" />}
+        themeToggle={<ThemeToggle size="icon-lg" />}
+        viewerCredentials={
+          env.VIEWER_EMAIL && env.VIEWER_PASSWORD
+            ? { email: env.VIEWER_EMAIL, password: env.VIEWER_PASSWORD }
+            : undefined
+        }
+      />
+    </Suspense>
   );
 }

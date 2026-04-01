@@ -32,6 +32,7 @@
 | 📊 | `/` | Overview with pipeline stats | [overview](src/features/overview/) |
 | 🔍 | `/discover` | Browse and manage discovered topics | [topics](src/features/topics/) |
 | ✨ | `/generate` | Trigger and monitor content generation | [generation](src/features/generation/) |
+| 📝 | `/generate/[topicId]` | Single topic generation detail | [generation](src/features/generation/) |
 | 📤 | `/publish` | Multi-step publishing wizard | [publish](src/features/publish/) |
 | 👥 | `/admin/users` | User management (admin only) | [admin](src/features/admin/) |
 | 🤖 | `/admin/providers` | AI provider configuration | [admin](src/features/admin/) |
@@ -127,6 +128,8 @@ pnpm check-types  # TypeScript check
 | `LINKEDIN_CLIENT_SECRET` | | LinkedIn OAuth client secret |
 | `GOOGLE_CLIENT_ID` | | YouTube OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | | YouTube OAuth client secret |
+| `VIEWER_EMAIL` | | Email for auto-created viewer account |
+| `VIEWER_PASSWORD` | | Password for auto-created viewer account |
 
 ---
 

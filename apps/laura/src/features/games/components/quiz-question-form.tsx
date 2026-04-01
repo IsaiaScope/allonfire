@@ -40,7 +40,8 @@ type AnswerSlot = {
 
 function makeAnswerSlot(overrides?: Partial<AnswerSlot>): AnswerSlot {
   return {
-    id: crypto.randomUUID(),
+    id:
+      globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
     text: "",
     isCorrect: false,
     image: null,
@@ -110,6 +111,7 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
   });
   const [error, setError] = useState<string | null>(null);
   const [showQuestionPreview, setShowQuestionPreview] = useState(false);
+  const [processingImage, setProcessingImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!showQuestionPreview) {
@@ -146,12 +148,17 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        const converted = await convertHeicToJpeg(file);
-        setQuestionImage(converted);
-        const url = URL.createObjectURL(converted);
-        previewUrlsRef.current.add(url);
-        setQuestionImagePreview(url);
-        setExistingQuestionImageUrl(null);
+        setProcessingImage("question");
+        try {
+          const converted = await convertHeicToJpeg(file);
+          setQuestionImage(converted);
+          const url = URL.createObjectURL(converted);
+          previewUrlsRef.current.add(url);
+          setQuestionImagePreview(url);
+          setExistingQuestionImageUrl(null);
+        } finally {
+          setProcessingImage(null);
+        }
       }
       e.target.value = "";
     },
@@ -209,15 +216,20 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
     async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        const converted = await convertHeicToJpeg(file);
-        const url = URL.createObjectURL(converted);
-        previewUrlsRef.current.add(url);
-        updateAnswer(index, {
-          image: converted,
-          imagePreview: url,
-          existingImageUrl: null,
-          existingThumbUrl: null,
-        });
+        setProcessingImage(`answer-${index}`);
+        try {
+          const converted = await convertHeicToJpeg(file);
+          const url = URL.createObjectURL(converted);
+          previewUrlsRef.current.add(url);
+          updateAnswer(index, {
+            image: converted,
+            imagePreview: url,
+            existingImageUrl: null,
+            existingThumbUrl: null,
+          });
+        } finally {
+          setProcessingImage(null);
+        }
       }
       e.target.value = "";
     },
@@ -349,55 +361,63 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
           />
 
           <Label className="text-base">{t("quizUploadImage")}</Label>
-          <div className="relative pt-1 pr-1">
-            {displayedImageSrc ? (
-              <div className="relative max-w-40">
-                <button
-                  className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg border bg-transparent p-0"
-                  onClick={() => setShowQuestionPreview(true)}
-                  type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <div className="relative pt-1 pr-1">
+              {displayedImageSrc && (
+                <div className="relative max-w-40">
+                  <button
+                    className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg border bg-transparent p-0"
+                    onClick={() => setShowQuestionPreview(true)}
+                    type="button"
+                  >
+                    <Image
+                      alt="Question image"
+                      className="object-contain"
+                      fill
+                      sizes="160px"
+                      src={displayedImageSrc}
+                    />
+                  </button>
+                  <button
+                    className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
+                    onClick={removeQuestionImage}
+                    type="button"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              )}
+              {!displayedImageSrc && processingImage === "question" && (
+                <div className="flex aspect-square max-w-40 items-center justify-center rounded-lg border">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {!displayedImageSrc && processingImage !== "question" && (
+                <Button
+                  className="w-1/2 items-center px-3 sm:h-9"
+                  disabled={isPending || processingImage !== null}
+                  onClick={() => questionImageRef.current?.click()}
+                  size="sm"
+                  variant="outline"
                 >
-                  <Image
-                    alt="Question image"
-                    className="object-contain"
-                    fill
-                    sizes="160px"
-                    src={displayedImageSrc}
-                  />
-                </button>
-                <button
-                  className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
-                  onClick={removeQuestionImage}
-                  type="button"
-                >
-                  <X className="size-3" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                className="sm:h-9"
-                disabled={isPending}
-                onClick={() => questionImageRef.current?.click()}
-                size="sm"
-                variant="outline"
-              >
-                <ImagePlus className="size-4 sm:mr-1" />
-                <span className="hidden sm:inline">
-                  {t("quizUploadAddImage")}
-                </span>
-              </Button>
-            )}
-            <input
-              accept={ACCEPTED_INPUT_STRING}
-              aria-hidden="true"
-              className="hidden"
-              id="question-image"
-              name="question-image"
-              onChange={handleQuestionImage}
-              ref={questionImageRef}
-              tabIndex={-1}
-              type="file"
-            />
+                  <ImagePlus className="mr-1 size-4" />
+                  <span className="text-xs sm:text-sm">
+                    {t("quizUploadAddImage")}
+                  </span>
+                </Button>
+              )}
+              <input
+                accept={ACCEPTED_INPUT_STRING}
+                aria-hidden="true"
+                className="hidden"
+                id="question-image"
+                name="question-image"
+                onChange={handleQuestionImage}
+                ref={questionImageRef}
+                tabIndex={-1}
+                type="file"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -441,6 +461,7 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
             onRemoveImage={() => removeAnswerImage(index)}
             onSetCorrect={() => setCorrectAnswer(index)}
             onTextChange={(text) => updateAnswer(index, { text })}
+            processingImage={processingImage}
           />
         ))}
 
@@ -483,6 +504,7 @@ function AnswerRow({
   onRemove,
   onImageChange,
   onRemoveImage,
+  processingImage,
 }: {
   answer: AnswerSlot;
   index: number;
@@ -493,6 +515,7 @@ function AnswerRow({
   onRemove: () => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
+  processingImage: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const t = useTranslations("Games");
@@ -540,7 +563,7 @@ function AnswerRow({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="relative pt-1 pr-1">
-              {displayedImageSrc ? (
+              {displayedImageSrc && (
                 <div className="relative max-w-40">
                   <button
                     className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg border bg-transparent p-0"
@@ -563,16 +586,22 @@ function AnswerRow({
                     <X className="size-3" />
                   </button>
                 </div>
-              ) : (
+              )}
+              {!displayedImageSrc && processingImage === `answer-${index}` && (
+                <div className="flex aspect-square max-w-40 items-center justify-center rounded-lg border">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {!displayedImageSrc && processingImage !== `answer-${index}` && (
                 <Button
-                  className="w-1/2 sm:h-9"
-                  disabled={disabled}
+                  className="w-1/2 items-center px-3 sm:h-9"
+                  disabled={disabled || processingImage !== null}
                   onClick={() => inputRef.current?.click()}
                   size="sm"
                   variant="outline"
                 >
-                  <ImagePlus className="size-4 sm:mr-1" />
-                  <span className="hidden sm:inline">
+                  <ImagePlus className="mr-1 size-4" />
+                  <span className="text-xs sm:text-sm">
                     {t("quizUploadAddImage")}
                   </span>
                 </Button>
@@ -593,7 +622,7 @@ function AnswerRow({
             <div className="flex flex-col items-end justify-end gap-2">
               <Button
                 className={cn(
-                  "w-1/2 sm:h-9",
+                  "w-1/2 items-center px-3 sm:h-9",
                   answer.isCorrect
                     ? "border-green-700 bg-green-700 text-white hover:bg-green-800"
                     : ""
@@ -603,21 +632,21 @@ function AnswerRow({
                 size="sm"
                 variant={answer.isCorrect ? "default" : "outline"}
               >
-                <Check className="size-4 sm:mr-1" />
-                <span className="hidden sm:inline">
+                <Check className="mr-1 size-4" />
+                <span className="text-xs sm:text-sm">
                   {t("quizEditCorrectAnswer")}
                 </span>
               </Button>
               {canRemove && (
                 <Button
-                  className="w-1/2 sm:h-9"
+                  className="w-1/2 items-center px-3 text-destructive sm:h-9"
                   disabled={disabled}
                   onClick={onRemove}
                   size="sm"
                   variant="outline"
                 >
-                  <Trash2 className="size-4 text-destructive sm:mr-1" />
-                  <span className="hidden sm:inline">
+                  <Trash2 className="mr-1 size-4" />
+                  <span className="text-xs sm:text-sm">
                     {t("quizEditDeleteAnswer")}
                   </span>
                 </Button>

@@ -85,17 +85,24 @@ Screenshots always appear as a **2-column grid** — desktop on left, mobile on 
 
 ### Relative Paths
 
-From feature READMEs at `apps/social/src/features/{name}/`:
+From feature READMEs at `apps/{app}/src/features/{name}/`:
 ```
 ../../../../../docs/screenshots/{image}.png    (5 levels up to repo root)
 ```
 
-From app README at `apps/social/`:
+From app README at `apps/{app}/`:
 ```
 ../../docs/screenshots/{image}.png             (2 levels up to repo root)
 ```
 
 **Count carefully** — wrong path depth is the #1 cause of broken images.
+
+### Laura-Specific Conventions
+
+- **Screenshot naming**: `laura-{page}.png` / `mobile-laura-{page}.png` (prefixed to avoid Social collisions)
+- **Port**: Laura runs on `:3200` (Social on `:3100`)
+- **Animations**: Wait 2 seconds after navigation for Framer Motion animations to settle
+- **i18n**: Laura uses next-intl with `it` (Italian) as default locale. Screenshots use `/en` routes for English.
 
 ### Capture Process
 

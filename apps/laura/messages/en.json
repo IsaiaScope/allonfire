@@ -132,7 +132,10 @@
     "accessDenied": "You don't have access to this application. Contact an administrator.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "subtitle": "Sign in to our Spinny site"
+    "subtitle": "Sign in to our Spinny site",
+    "viewerBannerTitle": "Want to try it out?",
+    "viewerBannerDescription": "Use these viewer credentials:",
+    "useCredentials": "Use credentials"
   },
   "Settings": {
     "title": "Settings",

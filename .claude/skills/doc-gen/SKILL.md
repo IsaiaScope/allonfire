@@ -13,7 +13,7 @@ Generate and maintain documentation for the AllOnFire monorepo. Read [references
 
 ## Prerequisites
 
-- Social app running (`pnpm dev`) for screenshot capture
+- Target app running for screenshot capture: Social on `:3100`, Laura on `:3200`
 - Playwright MCP tools available for browser automation
 - Read [references/doc-standards.md](references/doc-standards.md) for visual formatting rules
 - Read [references/doc-map.md](references/doc-map.md) for the full inventory of documentation targets
@@ -73,6 +73,24 @@ These were learned from user feedback and MUST be followed:
 
 ## Workflow
 
+### Phase 0: Consistency Audit (Regression Detection)
+
+Always run this before any generation. Detects drift between docs and code.
+
+1. **Route drift** — Glob all `page.tsx` files under each app's `app/` directory. Compare against routes listed in the app's README. Flag: added routes not in README, removed routes still in README.
+
+2. **Environment variable drift** — Parse `env.ts` files (app-level + package-level `extends`). Compare against env vars table in README. Flag: new vars not documented, removed vars still listed.
+
+3. **Screenshot path validation** — Parse every `<img src="..."` in all READMEs. Verify the referenced file exists on disk. Flag: broken image references.
+
+4. **Feature directory sync** — List actual feature directories under each app's `src/features/`. Compare against documented features in doc-map. Flag: new features without docs, removed features with stale docs.
+
+5. **Package export audit** — Read each package's `src/index.ts` exports. Compare against API Reference table in package README. Flag: new exports not documented, removed exports still listed.
+
+6. **Badge version check** — Parse `package.json` for each app/package. Compare major versions against badge values in README. Flag: version mismatches (e.g., badge says React 18 but package.json has React 19).
+
+**Output:** Status table with pass/warn/fail for each check, grouped by app/package.
+
 ### Phase 1: Audit Existing Documentation
 
 Always run this first, regardless of scope.
@@ -88,8 +106,17 @@ Save to `docs/screenshots/` (NOT `/screenshots/` which is gitignored).
 
 For each page: `browser_resize` → `browser_navigate` → **hide dev tools** (see snippet in doc-standards.md) → `browser_take_screenshot`.
 
+#### Social App (port 3100)
+
 Desktop (1440x900): dashboard, discover, generate, publish-compose, admin-users, admin-providers, settings.
 Mobile (390x844): mobile-dashboard, mobile-discover, mobile-generate, mobile-publish, mobile-admin, mobile-settings.
+
+#### Laura App (port 3200)
+
+Desktop (1440x900): laura-gallery, laura-upload, laura-games, laura-memory, laura-quiz, laura-settings.
+Mobile (390x844): mobile-laura-gallery, mobile-laura-upload, mobile-laura-games, mobile-laura-memory, mobile-laura-quiz, mobile-laura-settings.
+
+**Laura-specific:** Wait for Framer Motion animations to settle (2s delay) before capture. Laura uses Italian locale by default — screenshots show `/en` routes for English.
 
 ### Phase 3: Root README (`scope: root`)
 

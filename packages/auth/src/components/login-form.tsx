@@ -29,6 +29,9 @@ type LoginFormLabels = {
   accessDenied?: string;
   showPassword?: string;
   hidePassword?: string;
+  viewerBannerTitle?: string;
+  viewerBannerDescription?: string;
+  useCredentials?: string;
 };
 
 type LoginFormProps = {
@@ -39,7 +42,8 @@ type LoginFormProps = {
   subtitle: string;
   emailPlaceholder?: string;
   successIcon?: React.ReactNode;
-  topRightSlot?: React.ReactNode;
+  themeToggle?: React.ReactNode;
+  viewerCredentials?: { email: string; password: string };
   labels?: LoginFormLabels;
 };
 
@@ -51,7 +55,8 @@ export function LoginForm({
   subtitle,
   emailPlaceholder = "you@example.com",
   successIcon = <Sparkles className="size-5 animate-pulse" />,
-  topRightSlot,
+  themeToggle,
+  viewerCredentials,
   labels,
 }: LoginFormProps) {
   const router = useRouter();
@@ -72,6 +77,7 @@ export function LoginForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFields>();
 
@@ -137,10 +143,34 @@ export function LoginForm({
       className="flex flex-1 flex-col items-center justify-center bg-linear-to-br from-background via-background to-primary/5 px-4 py-8 sm:px-6 sm:py-12"
       tag="main"
     >
+      {viewerCredentials && (
+        <div className="mb-3 flex w-full max-w-104 items-center gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-xs">
+              {labels?.viewerBannerTitle ?? "Want to try it out?"}
+            </p>
+            <p className="truncate text-muted-foreground text-xs">
+              {viewerCredentials.email}
+            </p>
+            <p className="truncate text-muted-foreground text-xs">
+              {viewerCredentials.password}
+            </p>
+          </div>
+          <Button
+            className="h-7 shrink-0 text-xs"
+            onClick={() => {
+              setValue("email", viewerCredentials.email);
+              setValue("password", viewerCredentials.password);
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {labels?.useCredentials ?? "Use credentials"}
+          </Button>
+        </div>
+      )}
       <Card className="relative w-full max-w-104 shadow-lg">
-        {topRightSlot && (
-          <div className="absolute top-2.5 right-2.5 z-10">{topRightSlot}</div>
-        )}
         <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-2">
           <Image
             alt={logoAlt}
@@ -216,15 +246,18 @@ export function LoginForm({
               )}
             </div>
 
-            <Button
-              className="group my-4 w-full py-2 text-base shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-110 active:scale-[0.98]"
-              disabled={pending}
-              size="lg"
-              type="submit"
-              variant={success ? "secondary" : "default"}
-            >
-              {buttonContent()}
-            </Button>
+            <div className="my-4 flex gap-2">
+              <Button
+                className="group flex-1 py-2 text-base shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-110 active:scale-[0.98]"
+                disabled={pending}
+                size="lg"
+                type="submit"
+                variant={success ? "secondary" : "default"}
+              >
+                {buttonContent()}
+              </Button>
+              {themeToggle}
+            </div>
 
             {serverError && (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-base text-destructive">

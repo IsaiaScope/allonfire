@@ -23,8 +23,12 @@
   |     |-- settings.service      App-wide singleton settings (webhooks, active provider)
   |     |-- social-account.service   OAuth social account storage (encrypted tokens)
   |     |-- stats.service         Dashboard aggregations (topic stats, daily summary)
-  |     |-- user.service          User lookup and management
+  |     |-- user.service          User lookup, management, and app access control
   |     |-- webhook-log.service   Webhook request/response logging
+  |     |-- favorite.service      Photo favorite toggling and paginated retrieval
+  |     |-- game-score.service    Game score submission, leaderboards, and stats
+  |     |-- photo.service         Photo CRUD, pagination, and random selection
+  |     |-- quiz.service          Quiz question/answer CRUD and random selection
   |
   |-- utils/
         |-- encryption            AES-256-GCM encrypt/decrypt helpers
@@ -99,12 +103,56 @@
 | `getUserById(userId)` | Fetch a single user |
 | `getUsers()` | List all users |
 | `deleteUser(userId)` | Delete a user |
+| `checkUserAppAccess(userId, appName)` | Check if a user has access to a specific app |
+| `updateUserAllowedApps(userId, allowedApps)` | Update a user's allowed apps list |
 
 ### Webhook Log Service
 
 | Function | Description |
 |---|---|
 | `logWebhook(data)` | Record a webhook request with payload and response |
+
+### Favorite Service
+
+| Function | Description |
+|---|---|
+| `toggleFavorite(photoId)` | Toggle favorite status on a photo |
+| `getFavoritePhotoIds(photoIds)` | Get set of favorited photo IDs from a list |
+| `getFavoritesPaginated(cursor?, limit?)` | Cursor-paginated favorited photos |
+
+### Game Score Service
+
+| Function | Description |
+|---|---|
+| `submitGameScore(data)` | Submit a game score (userId, gameType, timeMs, score, metadata) |
+| `getLeaderboard(gameType, limit?)` | Top scores per user for a game type (default 25) |
+| `getUserBestScore(userId, gameType)` | Best score for a user in a game type |
+| `getUserGameStats(userId)` | Total games and per-type counts for a user |
+| `getGameStats(gameType)` | Aggregate stats: total games, unique players, avg/best time |
+
+### Photo Service
+
+| Function | Description |
+|---|---|
+| `getPhotosPaginated(cursor?, limit?)` | Cursor-paginated photos with uploader info |
+| `createPhoto(data)` | Create a photo record (url, thumbnailUrl, dimensions, blurHash) |
+| `deletePhoto(id)` | Delete a photo |
+| `getPhotoCount()` | Total photo count |
+| `getRandomPhotos(userId, count)` | Random deduplicated photos for a user |
+| `getAllRandomPhotos(count)` | Random deduplicated photos across all users |
+| `getUserPhotoCount(userId)` | Count of distinct photos uploaded by a user |
+
+### Quiz Service
+
+| Function | Description |
+|---|---|
+| `createQuizQuestion(data)` | Create a question with answers (text, images, correctness) |
+| `getRandomQuizQuestions(count?)` | Random quiz questions with answers (default 10) |
+| `getQuizQuestionCount()` | Total question count |
+| `getAllQuizQuestions()` | All questions ordered by newest, with answer counts |
+| `getQuizQuestionById(id)` | Single question with ordered answers |
+| `updateQuizQuestion(id, data)` | Replace question text/images and all answers (transaction) |
+| `deleteQuizQuestion(id)` | Delete a question and its answers |
 
 ## Key Models
 
@@ -118,6 +166,11 @@
 | `AiProvider` | AI service credentials (encrypted API keys) | `provider`, `apiKey`, `model`, `isVerified` |
 | `Settings` | Singleton app configuration | `webhookDiscoveryUrl`, `webhookNotifyUrl`, `activeProviderId` |
 | `WebhookLog` | Audit trail for webhook calls | `endpoint`, `method`, `payload`, `response`, `status` |
+| `Photo` | Uploaded family photos | `url`, `thumbnailUrl`, `width`, `height`, `blurHash`, `uploadedBy` |
+| `Favorite` | Favorited photos | `photoId` |
+| `GameScore` | Game scores and leaderboard entries | `userId`, `gameType`, `timeMs`, `score`, `metadata` |
+| `QuizQuestion` | Quiz questions with optional images | `text`, `imageUrl`, `createdBy` |
+| `QuizAnswer` | Answers for quiz questions | `questionId`, `text`, `isCorrect`, `sortOrder` |
 
 ### Enums
 
@@ -130,7 +183,8 @@
 | `Platform` | `LINKEDIN`, `TWITTER` |
 | `MediaType` | `IMAGE`, `CAROUSEL`, `VIDEO_SCRIPT` |
 | `ProviderType` | `ANTHROPIC`, `OPENROUTER`, `GOOGLE_GEMINI`, `GROQ` |
-| `Role` | `ADMIN`, `USER` |
+| `Role` | `ADMIN`, `USER`, `VIEWER` |
+| `GameType` | `MEMORY`, `QUIZ` |
 
 ## Directory Structure
 
@@ -142,7 +196,7 @@ packages/database/
     prisma/                 Generated Prisma client (gitignored)
   src/
     index.ts                Public API: prisma client, types, service re-exports
-    env.ts                  Zod-validated DATABASE_URL and ENCRYPTION_KEY
+    env.ts                  Zod-validated DATABASE_URL
     seed.ts                 Database seeding script
     seed-env.ts             Seed-specific environment config
     services/
@@ -153,8 +207,12 @@ packages/database/
       settings.service.ts   Singleton settings
       social-account.service.ts  Social OAuth account storage
       stats.service.ts      Dashboard aggregations
-      user.service.ts       User management
+      user.service.ts       User management and app access control
       webhook-log.service.ts  Webhook audit logging
+      favorite.service.ts   Photo favorite toggling and retrieval
+      game-score.service.ts Game score submission and leaderboards
+      photo.service.ts      Photo CRUD, pagination, random selection
+      quiz.service.ts       Quiz question/answer CRUD
     utils/
       encryption.ts         AES-256-GCM encrypt/decrypt
 ```
@@ -202,8 +260,19 @@ const post = await prisma.post.findUnique({
 | `pnpm db:push` | Push schema changes to the database |
 | `pnpm db:migrate` | Run development migrations |
 | `pnpm db:seed` | Seed the database |
+| `pnpm db:seed-quiz` | Seed quiz questions |
+| `pnpm db:export-topics` | Export topics to file |
 | `pnpm db:studio` | Open Prisma Studio |
 | `pnpm test` | Run tests with Vitest |
+
+## Exports
+
+| Path | Description |
+|---|---|
+| `@allonfire/database` | Prisma client, types, and all service re-exports |
+| `@allonfire/database/env` | Zod-validated environment variables |
+| `@allonfire/database/services` | Service barrel (single entry point) |
+| `@allonfire/database/generated/prisma` | Generated Prisma client and types |
 
 ## Dependencies
 

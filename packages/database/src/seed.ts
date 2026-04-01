@@ -78,6 +78,29 @@ async function main() {
     adminHash
   );
 
+  // Always seed viewer accounts (like admin, available in all modes)
+  const socialViewerHash = await hashPassword(seedEnv.SOCIAL_VIEWER_PASSWORD);
+  await upsertUser(
+    {
+      email: seedEnv.SOCIAL_VIEWER_EMAIL,
+      name: seedEnv.SOCIAL_VIEWER_EMAIL.split("@")[0] ?? "social-viewer",
+      role: "VIEWER",
+      allowedApps: ["social"],
+    },
+    socialViewerHash
+  );
+
+  const lauraViewerHash = await hashPassword(seedEnv.LAURA_VIEWER_PASSWORD);
+  await upsertUser(
+    {
+      email: seedEnv.LAURA_VIEWER_EMAIL,
+      name: seedEnv.LAURA_VIEWER_EMAIL.split("@")[0] ?? "laura-viewer",
+      role: "VIEWER",
+      allowedApps: ["laura"],
+    },
+    lauraViewerHash
+  );
+
   if (seedEnv.SEED_MODE === "dev") {
     if (!seedEnv.TEST_PASSWORD) {
       console.error("TEST_PASSWORD is required when SEED_MODE=dev");
