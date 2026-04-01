@@ -90,7 +90,7 @@ services:
       - "traefik.http.routers.allonfire-minio.rule=Host(`minio.isaiariva.com`)"
       - "traefik.http.routers.allonfire-minio.entrypoints=websecure"
       - "traefik.http.routers.allonfire-minio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.allonfire-minio.middlewares=minio-chain@file"
+      - "traefik.http.routers.allonfire-minio.middlewares=admin-gate@file"
       - "traefik.http.services.allonfire-minio.loadbalancer.server.port=9001"
 
 volumes:
