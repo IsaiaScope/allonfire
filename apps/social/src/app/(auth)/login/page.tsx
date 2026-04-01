@@ -36,8 +36,11 @@ export default async function LoginPage() {
         successIcon={<Sparkles className="size-5 animate-pulse" />}
         themeToggle={<ThemeToggle size="icon-lg" />}
         viewerCredentials={
-          env.VIEWER_EMAIL && env.VIEWER_PASSWORD
-            ? { email: env.VIEWER_EMAIL, password: env.VIEWER_PASSWORD }
+          env.SOCIAL_VIEWER_EMAIL && env.SOCIAL_VIEWER_PASSWORD
+            ? {
+                email: env.SOCIAL_VIEWER_EMAIL,
+                password: env.SOCIAL_VIEWER_PASSWORD,
+              }
             : undefined
         }
       />

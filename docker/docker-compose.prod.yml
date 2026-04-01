@@ -14,8 +14,8 @@ services:
       - BETTER_AUTH_URL=https://social.isaiariva.com
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - N8N_API_KEY=${N8N_API_KEY}
-      - VIEWER_EMAIL=${VIEWER_EMAIL:-}
-      - VIEWER_PASSWORD=${VIEWER_PASSWORD:-}
+      - SOCIAL_VIEWER_EMAIL=${SOCIAL_VIEWER_EMAIL:-}
+      - SOCIAL_VIEWER_PASSWORD=${SOCIAL_VIEWER_PASSWORD:-}
       - NODE_ENV=production
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
@@ -49,8 +49,8 @@ services:
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
       - MINIO_BUCKET=${MINIO_BUCKET}
-      - VIEWER_EMAIL=${VIEWER_EMAIL:-}
-      - VIEWER_PASSWORD=${VIEWER_PASSWORD:-}
+      - LAURA_VIEWER_EMAIL=${LAURA_VIEWER_EMAIL:-}
+      - LAURA_VIEWER_PASSWORD=${LAURA_VIEWER_PASSWORD:-}
       - NODE_ENV=production
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
