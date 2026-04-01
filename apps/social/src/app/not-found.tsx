@@ -4,12 +4,25 @@ import { ArrowLeft, FileQuestion } from "lucide-react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 
-export default async function NotFound() {
+export default function NotFound() {
+  return (
+    <Suspense fallback={<NotFoundShell isAuthenticated={false} />}>
+      <NotFoundContent />
+    </Suspense>
+  );
+}
+
+async function NotFoundContent() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  return <NotFoundShell isAuthenticated={!!session} />;
+}
+
+function NotFoundShell({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <Wrapper
       className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-linear-to-br from-background via-background to-primary/5 px-4 py-12"
@@ -59,7 +72,7 @@ export default async function NotFound() {
                 Back to Dashboard
               </Link>
             </Button>
-            {!session && (
+            {!isAuthenticated && (
               <Button asChild size="lg" variant="ghost">
                 <Link href="/login">Sign In</Link>
               </Button>

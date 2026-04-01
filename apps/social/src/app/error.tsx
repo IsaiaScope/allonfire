@@ -5,8 +5,6 @@ import { Wrapper } from "@allonfire/ui/components/wrapper";
 import { Flame, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
-
 export default function ErrorPage({
   error,
   reset,
@@ -14,10 +12,6 @@ export default function ErrorPage({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
   return (
     <Wrapper
       className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-linear-to-br from-background via-background to-destructive/5 px-4 py-12"

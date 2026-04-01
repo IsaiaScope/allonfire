@@ -223,6 +223,7 @@ export async function publishAction(
     );
 
     revalidatePath("/");
+    revalidatePath("/generate");
 
     return { success: true as const, data: { results } };
   } catch (error) {

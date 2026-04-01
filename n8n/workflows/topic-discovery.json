@@ -643,7 +643,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\nconst d = items[0]?.json || {};\nconst summary = {\n  timestamp: new Date().toISOString(),\n  kept: d.kept || 0,\n  deleted: d.deleted || 0,\n  total: d.total || 0,\n  error: d.error || null,\n  success: !d.error && (d.kept > 0 || d.total === 0)\n};\nreturn [{ json: summary }];"
+        "jsCode": "const items = $input.all();\nlet kept = 0, deleted = 0, total = 0, error = null;\nfor (const item of items) {\n  const d = item.json || {};\n  kept += d.kept || 0;\n  deleted += d.deleted || 0;\n  total += d.total || 0;\n  if (d.error) error = d.error;\n}\nif (total === 0 && !error) return [];\nconst summary = {\n  timestamp: new Date().toISOString(),\n  kept,\n  deleted,\n  total,\n  error,\n  success: !error && kept > 0\n};\nreturn [{ json: summary }];"
       },
       "id": "summary",
       "name": "Execution Summary",
@@ -706,8 +706,8 @@
       "position": [4300, 300],
       "credentials": {
         "telegramApi": {
-          "id": "qQKlpOBmgPQfFbzH",
-          "name": "Bot - Main VPS Alerts"
+          "id": "f86GVmKiePRdOS03",
+          "name": "allonfire_bot"
         }
       }
     },
@@ -726,8 +726,8 @@
       "position": [4300, 500],
       "credentials": {
         "telegramApi": {
-          "id": "qQKlpOBmgPQfFbzH",
-          "name": "Bot - Main VPS Alerts"
+          "id": "f86GVmKiePRdOS03",
+          "name": "allonfire_bot"
         }
       }
     },
@@ -798,7 +798,7 @@
     },
     {
       "parameters": {
-        "content": "## 📲 NOTIFICATIONS\n\nTelegram alerts via Bot - Main VPS Alerts.\n• Success: topic count + prune stats\n• Failure: error message or zero-kept warning",
+        "content": "## 📲 NOTIFICATIONS\n\nTelegram alerts via allonfire_bot.\n• Success: topic count + prune stats\n• Failure: error message or zero-kept warning",
         "width": 500,
         "height": 300,
         "color": 5
