@@ -1,13 +1,6 @@
 const baseUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3200";
 
-export const indexableRoutes = [
-  "/",
-  "/games",
-  "/games/memory",
-  "/games/memory/leaderboard",
-  "/games/quiz",
-  "/games/quiz/leaderboard",
-];
+export const indexableRoutes = ["/login"];
 
 const disallowedRoutes = [
   "/upload",
