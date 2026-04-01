@@ -26,6 +26,16 @@ WORKDIR /app
 COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
+# Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
+# collection. These never reach the runner stage (multi-stage isolation).
+# Real values are injected via Docker Compose environment at runtime.
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    BETTER_AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
+    BETTER_AUTH_URL="http://localhost:3000" \
+    MINIO_ENDPOINT="http://localhost:9000" \
+    MINIO_ACCESS_KEY="build" \
+    MINIO_SECRET_KEY="build-placeholder" \
+    MINIO_BUCKET="build"
 RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 
