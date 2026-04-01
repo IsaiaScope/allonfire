@@ -20,7 +20,7 @@ export async function deletePromptAction(
   const id = idSchema.parse(promptId);
   try {
     await deletePrompt(id);
-    revalidatePath("/generate");
+    revalidatePath("/generate", "layout");
     return { success: true as const };
   } catch (error) {
     return {
@@ -44,7 +44,7 @@ export async function updateNoteAction(
   const parsed = noteSchema.parse({ promptId, note });
   try {
     await updatePromptNote(parsed.promptId, parsed.note || null);
-    revalidatePath("/generate");
+    revalidatePath("/generate", "layout");
     return { success: true as const };
   } catch (error) {
     return {
@@ -70,7 +70,7 @@ export async function ratePromptAction(
   const parsed = rateSchema.parse({ promptId, rating, note });
   try {
     await ratePrompt(parsed.promptId, parsed.rating, parsed.note);
-    revalidatePath("/generate");
+    revalidatePath("/generate", "layout");
     return { success: true as const };
   } catch (error) {
     return {
