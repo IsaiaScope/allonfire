@@ -1,4 +1,3 @@
-import { checkAppAccess } from "@allonfire/auth/guard";
 import { Button } from "@allonfire/ui/components/button";
 import { Upload } from "lucide-react";
 import Link from "next/link";
@@ -8,7 +7,6 @@ import {
   getMemoryPhotosAction,
 } from "@/features/games/actions/games";
 import { MemoryBoard } from "@/features/games/components/memory-board";
-import { auth } from "@/lib/auth";
 import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -33,7 +31,6 @@ export default async function MemoryGamePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await checkAppAccess(auth, "laura");
 
   const t = await getTranslations("Games");
   const [result, bestTimeMs] = await Promise.all([

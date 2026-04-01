@@ -1,4 +1,5 @@
 import { ingestTopics, logWebhook } from "@allonfire/database";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBearerToken } from "@/lib/api-auth";
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
       response,
       status: 200,
     });
+
+    revalidatePath("/discover");
+    revalidatePath("/");
 
     return NextResponse.json(response);
   } catch (error: unknown) {

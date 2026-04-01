@@ -2,7 +2,6 @@
 
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trophy } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { formatTime } from "@/features/games/utils/format-time";
@@ -28,6 +27,7 @@ type QuizResultsProps = {
   }[];
   onPlayAgain: () => void;
   onRetrySubmit: () => void;
+  onViewLeaderboard: () => void;
 };
 
 export function QuizResults({
@@ -39,6 +39,7 @@ export function QuizResults({
   mistakes,
   onPlayAgain,
   onRetrySubmit,
+  onViewLeaderboard,
 }: QuizResultsProps) {
   const t = useTranslations("Games");
   const [showMistakes, setShowMistakes] = useState(false);
@@ -123,9 +124,7 @@ export function QuizResults({
 
       {/* Action buttons */}
       <div className="flex w-full max-w-sm flex-col gap-2">
-        <Button asChild>
-          <Link href="/games/quiz/leaderboard">{t("viewLeaderboard")}</Link>
-        </Button>
+        <Button onClick={onViewLeaderboard}>{t("viewLeaderboard")}</Button>
         {mistakes.length > 0 && (
           <Button onClick={() => setShowMistakes(true)} variant="outline">
             {t("quizShowMistakes", { count: mistakes.length })}

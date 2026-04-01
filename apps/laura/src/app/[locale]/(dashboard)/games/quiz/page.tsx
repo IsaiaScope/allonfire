@@ -1,11 +1,9 @@
-import { checkAppAccess } from "@allonfire/auth/guard";
 import { Button } from "@allonfire/ui/components/button";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getQuizQuestionsAction } from "@/features/games/actions/quiz";
 import { QuizBoard } from "@/features/games/components/quiz-board";
-import { auth } from "@/lib/auth";
 import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -30,7 +28,6 @@ export default async function QuizGamePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  await checkAppAccess(auth, "laura");
 
   const t = await getTranslations("Games");
   const result = await getQuizQuestionsAction();
