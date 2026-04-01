@@ -56,8 +56,11 @@ export default async function LoginPage({
         successIcon={<Heart className="size-5 animate-pulse" />}
         themeToggle={<ThemeToggle size="icon-lg" />}
         viewerCredentials={
-          env.VIEWER_EMAIL && env.VIEWER_PASSWORD
-            ? { email: env.VIEWER_EMAIL, password: env.VIEWER_PASSWORD }
+          env.LAURA_VIEWER_EMAIL && env.LAURA_VIEWER_PASSWORD
+            ? {
+                email: env.LAURA_VIEWER_EMAIL,
+                password: env.LAURA_VIEWER_PASSWORD,
+              }
             : undefined
         }
       />

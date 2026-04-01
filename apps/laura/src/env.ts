@@ -7,8 +7,8 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     ...authEnvSchema,
-    VIEWER_EMAIL: z.email().optional(),
-    VIEWER_PASSWORD: z.string().min(1).optional(),
+    LAURA_VIEWER_EMAIL: z.email().optional(),
+    LAURA_VIEWER_PASSWORD: z.string().min(1).optional(),
   },
   client: {},
   extends: [dbEnv, storageEnv],
