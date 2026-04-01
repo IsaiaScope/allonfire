@@ -45,6 +45,7 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser
 ARG APP_NAME
+ENV APP_NAME=${APP_NAME}
 COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/standalone ./
 COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/static ./apps/${APP_NAME}/.next/static
 COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/public ./apps/${APP_NAME}/public
