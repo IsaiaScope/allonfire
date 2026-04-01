@@ -113,6 +113,7 @@ export async function setActiveProviderAction(providerId: string) {
   try {
     await setActiveProviderService(providerId);
     revalidatePath("/admin/providers");
+    revalidatePath("/publish");
     return { success: true as const };
   } catch (error) {
     return {
@@ -210,6 +211,7 @@ export async function deleteProviderAction(providerId: string) {
   try {
     await deleteProviderService(providerId);
     revalidatePath("/admin/providers");
+    revalidatePath("/publish");
     return { success: true as const };
   } catch (error) {
     return {

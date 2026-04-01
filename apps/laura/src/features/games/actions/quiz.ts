@@ -18,6 +18,7 @@ import {
   uploadFile,
 } from "@allonfire/storage";
 import { formatErrorMessage } from "@allonfire/utils";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import {
   getLeaderboardAction,
@@ -160,6 +161,8 @@ export async function submitQuizScoreAction(data: {
     score: data.correctCount,
     metadata: { questionCount: data.totalQuestions },
   });
+
+  revalidatePath("/games/quiz/leaderboard");
 
   return { success: true, isNewBest };
 }
@@ -353,6 +356,7 @@ export async function createQuestionAction(
       answers: answersData,
     });
 
+    revalidatePath("/games/quiz/edit");
     return { success: true, questionId: question.id };
   } catch (error) {
     return {
@@ -493,6 +497,7 @@ export async function updateQuestionAction(
       answers: answersData,
     });
 
+    revalidatePath("/games/quiz/edit");
     return { success: true };
   } catch (error) {
     return {
@@ -512,6 +517,7 @@ export async function deleteQuestionAction(
 
   try {
     await deleteQuizQuestion(id);
+    revalidatePath("/games/quiz/edit");
     return { success: true };
   } catch (error) {
     return {

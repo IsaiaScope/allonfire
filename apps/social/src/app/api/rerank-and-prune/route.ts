@@ -1,5 +1,6 @@
 import { getActiveProviderClient } from "@allonfire/content-generator";
 import { getDiscoveredTopics, logWebhook, prisma } from "@allonfire/database";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { validateBearerToken } from "@/lib/api-auth";
 import { stripCodeBlock } from "@/lib/parse-ai-response";
@@ -175,6 +176,9 @@ export async function POST(request: Request) {
       },
       status: 200,
     });
+
+    revalidatePath("/discover");
+    revalidatePath("/");
 
     return NextResponse.json({
       kept: keepIds.size,

@@ -2,6 +2,7 @@
 
 import { cn } from "@allonfire/ui/lib/utils";
 import { Clock, MousePointerClick, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useIsViewer } from "@/components/user-role-provider";
 import type { MemoryCard as MemoryCardType } from "@/features/games/actions/games";
@@ -18,6 +19,7 @@ type MemoryBoardProps = {
 
 export function MemoryBoard({ initialCards, bestTimeMs }: MemoryBoardProps) {
   const t = useTranslations("Games");
+  const router = useRouter();
   const isViewer = useIsViewer();
   const {
     cards,
@@ -105,6 +107,10 @@ export function MemoryBoard({ initialCards, bestTimeMs }: MemoryBoardProps) {
         moves={moves}
         onPlayAgain={resetGame}
         onRetrySubmit={retrySubmit}
+        onViewLeaderboard={() => {
+          router.push("/games/memory/leaderboard");
+          router.refresh();
+        }}
         open={gameState === "complete"}
         submitState={submitState}
       />

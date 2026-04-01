@@ -9,7 +9,6 @@ import {
 } from "@allonfire/ui/components/alert-dialog";
 import { Button } from "@allonfire/ui/components/button";
 import { Loader2, Trophy } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { formatTime } from "@/features/games/utils/format-time";
 
@@ -21,6 +20,7 @@ type GameCompleteDialogProps = {
   isNewBest: boolean;
   onPlayAgain: () => void;
   onRetrySubmit: () => void;
+  onViewLeaderboard: () => void;
 };
 
 export function GameCompleteDialog({
@@ -31,6 +31,7 @@ export function GameCompleteDialog({
   isNewBest,
   onPlayAgain,
   onRetrySubmit,
+  onViewLeaderboard,
 }: GameCompleteDialogProps) {
   const t = useTranslations("Games");
 
@@ -91,10 +92,12 @@ export function GameCompleteDialog({
           )}
 
           <div className="flex gap-3">
-            <Button asChild className="flex-1" variant="outline">
-              <Link href="/games/memory/leaderboard">
-                {t("viewLeaderboard")}
-              </Link>
+            <Button
+              className="flex-1"
+              onClick={onViewLeaderboard}
+              variant="outline"
+            >
+              {t("viewLeaderboard")}
             </Button>
             <Button className="flex-1" onClick={onPlayAgain}>
               {t("playAgain")}

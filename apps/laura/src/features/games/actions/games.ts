@@ -12,6 +12,7 @@ import {
   submitGameScore,
 } from "@allonfire/database";
 import { blurHashToDataURL } from "@allonfire/storage";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
@@ -108,6 +109,8 @@ export async function submitScoreAction(data: {
     score: data.moves,
     metadata: { pairs: 6, gridSize: "3x4" },
   });
+
+  revalidatePath("/games/memory/leaderboard");
 
   return { success: true, isNewBest };
 }
