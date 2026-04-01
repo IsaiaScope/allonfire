@@ -44,7 +44,7 @@ export function UserInfoCard({
   }
 
   return (
-    <Card className="gap-2 py-4">
+    <Card className="gap-2 py-4 transition-shadow hover:shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <User className="size-4 text-primary" />

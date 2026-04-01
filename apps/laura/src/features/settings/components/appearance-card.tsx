@@ -14,7 +14,7 @@ export function AppearanceCard() {
   const t = useTranslations("Settings");
 
   return (
-    <Card className="gap-2 py-4">
+    <Card className="gap-2 py-4 transition-shadow hover:shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Sun className="size-4 text-primary" />
