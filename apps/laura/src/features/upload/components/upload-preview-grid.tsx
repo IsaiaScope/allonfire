@@ -1,9 +1,11 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { scaleIn, staggerContainer } from "@/lib/animation-variants";
 
 type UploadPreviewGridProps = {
   files: File[];
@@ -88,41 +90,54 @@ export function UploadPreviewGrid({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3 md:grid-cols-4">
-        {files.map((file, index) => (
-          <div className="relative" key={previewUrls[index]}>
-            <button
-              className="w-full cursor-pointer border-none bg-transparent p-0"
-              onClick={() => setPreviewIndex(index)}
-              type="button"
+      <motion.div
+        animate="visible"
+        className="grid grid-cols-2 gap-3 p-2 sm:grid-cols-3 md:grid-cols-4"
+        initial="hidden"
+        variants={staggerContainer}
+      >
+        <AnimatePresence>
+          {files.map((file, index) => (
+            <motion.div
+              className="relative"
+              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+              key={previewUrls[index]}
+              layout
+              variants={scaleIn}
             >
-              {/* biome-ignore lint/performance/noImgElement: blob URL preview cannot use next/image */}
-              {/* biome-ignore lint/correctness/useImageSize: CSS controls dimensions via aspect-square */}
-              <img
-                alt={file.name}
-                className="aspect-square w-full rounded-lg border object-contain"
-                src={previewUrls[index]}
-              />
-            </button>
-            <button
-              className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
-              onClick={() => {
-                setPreviewIndex(null);
-                onRemove(index);
-              }}
-              type="button"
-            >
-              <X className="size-3" />
-              <span className="sr-only">
-                {t("remove", { name: file.name })}
-              </span>
-            </button>
-            <p className="mt-1 truncate text-muted-foreground text-xs">
-              {file.name}
-            </p>
-          </div>
-        ))}
-      </div>
+              <button
+                className="w-full cursor-pointer border-none bg-transparent p-0"
+                onClick={() => setPreviewIndex(index)}
+                type="button"
+              >
+                {/* biome-ignore lint/performance/noImgElement: blob URL preview cannot use next/image */}
+                {/* biome-ignore lint/correctness/useImageSize: CSS controls dimensions via aspect-square */}
+                <img
+                  alt={file.name}
+                  className="aspect-square w-full rounded-lg border object-contain"
+                  src={previewUrls[index]}
+                />
+              </button>
+              <button
+                className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
+                onClick={() => {
+                  setPreviewIndex(null);
+                  onRemove(index);
+                }}
+                type="button"
+              >
+                <X className="size-3" />
+                <span className="sr-only">
+                  {t("remove", { name: file.name })}
+                </span>
+              </button>
+              <p className="mt-1 truncate text-muted-foreground text-xs">
+                {file.name}
+              </p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
 
       {previewIndex !== null &&
         previewUrl &&

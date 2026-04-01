@@ -13,6 +13,7 @@ import {
 import { Badge } from "@allonfire/ui/components/badge";
 import { Button } from "@allonfire/ui/components/button";
 import { Input } from "@allonfire/ui/components/input";
+import { motion } from "framer-motion";
 import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,11 @@ import { toast } from "sonner";
 import type { QuizQuestionListItem } from "@/features/games/actions/quiz";
 import { deleteQuestionAction } from "@/features/games/actions/quiz";
 import { Link } from "@/i18n/navigation";
+import {
+  fadeInUp,
+  listItemSlide,
+  staggerContainer,
+} from "@/lib/animation-variants";
 
 type QuizQuestionListProps = {
   questions: QuizQuestionListItem[];
@@ -81,28 +87,44 @@ export function QuizQuestionList({ questions }: QuizQuestionListProps) {
       </div>
 
       {questions.length === 0 && (
-        <div className="py-12 text-center">
+        <motion.div
+          animate="visible"
+          className="py-12 text-center"
+          initial="hidden"
+          variants={fadeInUp}
+        >
           <p className="font-medium text-muted-foreground">
             {t("quizEditEmpty")}
           </p>
           <p className="mt-1 text-base text-muted-foreground">
             {t("quizEditEmptyDescription")}
           </p>
-        </div>
+        </motion.div>
       )}
 
       {questions.length > 0 && filtered.length === 0 && (
-        <div className="py-12 text-center">
+        <motion.div
+          animate="visible"
+          className="py-12 text-center"
+          initial="hidden"
+          variants={fadeInUp}
+        >
           <p className="text-muted-foreground">{t("quizEditNoResults")}</p>
-        </div>
+        </motion.div>
       )}
 
       {filtered.length > 0 && (
-        <div className="divide-y rounded-lg border">
+        <motion.div
+          animate="visible"
+          className="divide-y rounded-lg border"
+          initial="hidden"
+          variants={staggerContainer}
+        >
           {filtered.map((question) => (
-            <div
-              className="flex items-center gap-3 px-4 py-3"
+            <motion.div
+              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
               key={question.id}
+              variants={listItemSlide}
             >
               {question.imageThumbnailUrl && (
                 <div className="relative size-12 shrink-0 overflow-hidden rounded">
@@ -149,9 +171,9 @@ export function QuizQuestionList({ questions }: QuizQuestionListProps) {
                   <Trash2 className="size-3.5 text-destructive" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <AlertDialog

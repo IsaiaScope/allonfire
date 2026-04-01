@@ -4,6 +4,7 @@ import { Button } from "@allonfire/ui/components/button";
 import { Card, CardContent } from "@allonfire/ui/components/card";
 import { Label } from "@allonfire/ui/components/label";
 import { cn } from "@allonfire/ui/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
   Check,
@@ -25,6 +26,7 @@ import {
   updateQuestionAction,
 } from "@/features/games/actions/quiz";
 import { Link } from "@/i18n/navigation";
+import { fadeInUp, staggerContainer } from "@/lib/animation-variants";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
 import { ACCEPTED_INPUT_STRING } from "@/lib/file-validation";
 
@@ -336,91 +338,100 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
     : t("quizUploadSubmitting");
 
   return (
-    <div className="space-y-6">
-      <Button asChild size="sm" variant="ghost">
-        <Link href="/games/quiz/edit">
-          <ArrowLeft className="mr-1 size-4" />
-          {t("quizEditBackToList")}
-        </Link>
-      </Button>
+    <motion.div
+      animate="visible"
+      className="space-y-6"
+      initial="hidden"
+      variants={staggerContainer}
+    >
+      <motion.div variants={fadeInUp}>
+        <Button asChild size="sm" variant="ghost">
+          <Link href="/games/quiz/edit">
+            <ArrowLeft className="mr-1 size-4" />
+            {t("quizEditBackToList")}
+          </Link>
+        </Button>
+      </motion.div>
 
-      <Card className="gap-0 py-0">
-        <CardContent className="flex flex-col gap-2 p-2">
-          <Label className="text-base" htmlFor="question-text">
-            {t("quizUploadQuestion")}
-          </Label>
-          <textarea
-            className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isPending}
-            id="question-text"
-            maxLength={500}
-            onChange={(e) => setQuestionText(e.target.value)}
-            placeholder={t("quizUploadQuestionPlaceholder")}
-            rows={3}
-            value={questionText}
-          />
+      <motion.div variants={fadeInUp}>
+        <Card className="gap-0 py-0">
+          <CardContent className="flex flex-col gap-2 p-2">
+            <Label className="text-base" htmlFor="question-text">
+              {t("quizUploadQuestion")}
+            </Label>
+            <textarea
+              className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isPending}
+              id="question-text"
+              maxLength={500}
+              onChange={(e) => setQuestionText(e.target.value)}
+              placeholder={t("quizUploadQuestionPlaceholder")}
+              rows={3}
+              value={questionText}
+            />
 
-          <Label className="text-base">{t("quizUploadImage")}</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="relative pt-1 pr-1">
-              {displayedImageSrc && (
-                <div className="relative max-w-40">
-                  <button
-                    className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg border bg-transparent p-0"
-                    onClick={() => setShowQuestionPreview(true)}
-                    type="button"
+            <Label className="text-base">{t("quizUploadImage")}</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative pt-1 pr-1">
+                {displayedImageSrc && (
+                  <div className="relative max-w-40">
+                    <button
+                      className="relative block aspect-square w-full cursor-pointer overflow-hidden rounded-lg border bg-transparent p-0"
+                      onClick={() => setShowQuestionPreview(true)}
+                      type="button"
+                    >
+                      <Image
+                        alt="Question image"
+                        className="object-contain"
+                        fill
+                        sizes="160px"
+                        src={displayedImageSrc}
+                      />
+                    </button>
+                    <button
+                      className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
+                      onClick={removeQuestionImage}
+                      type="button"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </div>
+                )}
+                {!displayedImageSrc && processingImage === "question" && (
+                  <div className="flex aspect-square max-w-40 items-center justify-center rounded-lg border">
+                    <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                {!displayedImageSrc && processingImage !== "question" && (
+                  <Button
+                    className="w-1/2 items-center px-3 sm:h-9"
+                    disabled={isPending || processingImage !== null}
+                    onClick={() => questionImageRef.current?.click()}
+                    size="sm"
+                    variant="outline"
                   >
-                    <Image
-                      alt="Question image"
-                      className="object-contain"
-                      fill
-                      sizes="160px"
-                      src={displayedImageSrc}
-                    />
-                  </button>
-                  <button
-                    className="absolute -top-2 -right-2 z-10 flex size-5 cursor-pointer items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/80"
-                    onClick={removeQuestionImage}
-                    type="button"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              )}
-              {!displayedImageSrc && processingImage === "question" && (
-                <div className="flex aspect-square max-w-40 items-center justify-center rounded-lg border">
-                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
-                </div>
-              )}
-              {!displayedImageSrc && processingImage !== "question" && (
-                <Button
-                  className="w-1/2 items-center px-3 sm:h-9"
-                  disabled={isPending || processingImage !== null}
-                  onClick={() => questionImageRef.current?.click()}
-                  size="sm"
-                  variant="outline"
-                >
-                  <ImagePlus className="mr-1 size-4" />
-                  <span className="text-xs sm:text-sm">
-                    {t("quizUploadAddImage")}
-                  </span>
-                </Button>
-              )}
-              <input
-                accept={ACCEPTED_INPUT_STRING}
-                aria-hidden="true"
-                className="hidden"
-                id="question-image"
-                name="question-image"
-                onChange={handleQuestionImage}
-                ref={questionImageRef}
-                tabIndex={-1}
-                type="file"
-              />
+                    <ImagePlus className="mr-1 size-4" />
+                    <span className="text-xs sm:text-sm">
+                      {t("quizUploadAddImage")}
+                    </span>
+                  </Button>
+                )}
+                <input
+                  accept={ACCEPTED_INPUT_STRING}
+                  aria-hidden="true"
+                  className="hidden"
+                  id="question-image"
+                  name="question-image"
+                  onChange={handleQuestionImage}
+                  ref={questionImageRef}
+                  tabIndex={-1}
+                  type="file"
+                />
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {showQuestionPreview &&
         displayedImageSrc &&
@@ -445,25 +456,34 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
           document.body
         )}
 
-      <div className="space-y-3">
+      <motion.div className="space-y-3" variants={fadeInUp}>
         <p className="font-medium text-base leading-none">
           {t("quizUploadAnswers")}
         </p>
-        {answers.map((answer, index) => (
-          <AnswerRow
-            answer={answer}
-            canRemove={answers.length > 2}
-            disabled={isPending}
-            index={index}
-            key={answer.id}
-            onImageChange={(e) => handleAnswerImage(index, e)}
-            onRemove={() => removeAnswer(index)}
-            onRemoveImage={() => removeAnswerImage(index)}
-            onSetCorrect={() => setCorrectAnswer(index)}
-            onTextChange={(text) => updateAnswer(index, { text })}
-            processingImage={processingImage}
-          />
-        ))}
+        <AnimatePresence initial={false}>
+          {answers.map((answer, index) => (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
+              initial={{ opacity: 0, y: 8 }}
+              key={answer.id}
+              transition={{ duration: 0.2 }}
+            >
+              <AnswerRow
+                answer={answer}
+                canRemove={answers.length > 2}
+                disabled={isPending}
+                index={index}
+                onImageChange={(e) => handleAnswerImage(index, e)}
+                onRemove={() => removeAnswer(index)}
+                onRemoveImage={() => removeAnswerImage(index)}
+                onSetCorrect={() => setCorrectAnswer(index)}
+                onTextChange={(text) => updateAnswer(index, { text })}
+                processingImage={processingImage}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {answers.length < 4 && (
           <Button
@@ -477,20 +497,22 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
             {t("quizUploadAddAnswer")}
           </Button>
         )}
-      </div>
+      </motion.div>
 
-      {error && <p className="text-base text-destructive">{error}</p>}
+      <motion.div variants={fadeInUp}>
+        {error && <p className="text-base text-destructive">{error}</p>}
 
-      <Button
-        className="w-full"
-        disabled={isPending}
-        onClick={handleSubmit}
-        size="lg"
-      >
-        {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
-        {isPending ? submittingLabel : submitLabel}
-      </Button>
-    </div>
+        <Button
+          className="w-full"
+          disabled={isPending}
+          onClick={handleSubmit}
+          size="lg"
+        >
+          {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
+          {isPending ? submittingLabel : submitLabel}
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -542,7 +564,7 @@ function AnswerRow({
 
   return (
     <>
-      <Card className="gap-0 py-0">
+      <Card className="gap-0 py-0 transition-shadow hover:shadow-sm">
         <CardContent className="flex flex-col gap-2 p-2">
           <textarea
             aria-label={t("quizUploadAnswerPlaceholder", {
