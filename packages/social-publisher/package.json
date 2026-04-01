@@ -1,0 +1,26 @@
+{
+  "name": "@allonfire/social-publisher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapters": "./src/adapters/index.ts",
+    "./oauth": "./src/oauth/index.ts",
+    "./oauth/types": "./src/oauth/types.ts",
+    "./image": "./src/image/index.ts"
+  },
+  "dependencies": {
+    "@allonfire/database": "workspace:*",
+    "@allonfire/utils": "workspace:*",
+    "linkedin-api-client": "^0.3.0",
+    "sharp": "^0.33.0",
+    "twitter-api-v2": "^1.29.0"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.2"
+  }
+}

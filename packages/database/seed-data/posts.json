@@ -1,0 +1,66 @@
+[
+  {
+    "topicRef": 0,
+    "type": "NEWS",
+    "platform": "LINKEDIN",
+    "status": "PUBLISHED",
+    "content": "Exciting developments in AI-powered development tools! Microsoft's new Copilot Workspace represents a paradigm shift in how we build software. #AI #DevTools",
+    "publishedDaysAgo": 2,
+    "platformPostId": "urn:li:share:7654321"
+  },
+  {
+    "topicRef": 1,
+    "type": "NEWS",
+    "platform": "TWITTER",
+    "status": "PUBLISHED",
+    "content": "The State of AI in 2026 report is out and the numbers are staggering.\n\n78% of enterprises now use AI in production.\n\nHere's what caught my eye...",
+    "publishedDaysAgo": 1,
+    "platformPostId": "1234567890"
+  },
+  {
+    "topicRef": 2,
+    "type": "MEME",
+    "platform": "TWITTER",
+    "status": "PUBLISHED",
+    "content": "AI code reviewer: 'Consider using a more descriptive variable name'\n\nMe looking at my variable named 'x': #ProgrammerHumor #AICodeReview",
+    "publishedHoursAgo": 12,
+    "platformPostId": "1234567891"
+  },
+  {
+    "topicRef": null,
+    "type": "FREEFORM",
+    "platform": "LINKEDIN",
+    "status": "DRAFT",
+    "content": "Draft: Working on a comprehensive guide to implementing RAG systems in production. Stay tuned for insights on vector databases, chunking strategies, and evaluation metrics."
+  },
+  {
+    "topicRef": null,
+    "type": "NEWS",
+    "platform": "TWITTER",
+    "status": "DRAFT",
+    "content": "Draft tweet about Codestral 2 launch..."
+  },
+  {
+    "topicRef": null,
+    "type": "LEARNING",
+    "platform": "LINKEDIN",
+    "status": "DRAFT",
+    "content": "Draft: 5 things I learned about fine-tuning LLMs this week..."
+  },
+  {
+    "topicRef": null,
+    "type": "FREEFORM",
+    "platform": "TWITTER",
+    "status": "FAILED",
+    "content": "Failed post attempt: Check out this amazing AI tool...",
+    "errorMessage": "Rate limit exceeded. Please try again in 15 minutes."
+  },
+  {
+    "topicRef": null,
+    "type": "NEWS",
+    "platform": "LINKEDIN",
+    "status": "FAILED",
+    "content": "Failed LinkedIn post about DeepMind's protein folding breakthrough...",
+    "errorMessage": "Authentication token expired. Please reconnect your LinkedIn account."
+  }
+]

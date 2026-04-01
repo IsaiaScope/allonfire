@@ -1,75 +1,84 @@
-import { getTopicsByStatusWithPosts } from "@allonfire/database";
+import { checkAppAccess } from "@allonfire/auth/guard";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Generate" };
+
+import { getSelectedTopicsPaginated } from "@allonfire/database";
 import { Badge } from "@allonfire/ui/components/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@allonfire/ui/components/card";
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
-import { GenerateButton } from "@/components/generate-button";
+import { GenerateClient } from "@/features/generation/components/generate-client";
+import { ViewerBanner } from "@/features/sidebar-layout/components/viewer-banner";
+import { auth } from "@/lib/auth";
 
-export default async function GeneratePage() {
-  const selectedTopics = await getTopicsByStatusWithPosts([
-    "SELECTED",
-    "GENERATING",
-  ]);
+const VALID_RATINGS = ["POSITIVE", "NEGATIVE", "HAS_NOTES"] as const;
+
+export default async function GeneratePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rating?: string }>;
+}) {
+  const { user } = await checkAppAccess(auth, "social");
+  const { rating: rawRating } = await searchParams;
+  const validRating = VALID_RATINGS.includes(
+    rawRating as (typeof VALID_RATINGS)[number]
+  )
+    ? (rawRating as (typeof VALID_RATINGS)[number])
+    : undefined;
+
+  function buildRatingFilter(rating: typeof validRating) {
+    if (rating === "HAS_NOTES") {
+      return { hasNotes: true as const };
+    }
+    if (rating) {
+      return { rating };
+    }
+    return {};
+  }
+
+  const initialData = await getSelectedTopicsPaginated({
+    ...buildRatingFilter(validRating),
+  });
+  const totalCount = initialData.totalCount ?? 0;
+
+  const totalPrompts = initialData.topics.reduce(
+    (sum, t) => sum + t.prompts.length,
+    0
+  );
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-bold text-2xl tracking-tight">Generate</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-bold text-2xl tracking-tight">Generate</h1>
+          {totalCount > 0 && (
+            <Badge variant="secondary">{totalCount} selected</Badge>
+          )}
+          {totalPrompts > 0 && (
+            <Badge className="bg-primary text-primary-foreground">
+              {totalPrompts === 1 ? "1 prompt" : `${totalPrompts} prompts`}
+            </Badge>
+          )}
+        </div>
         <p className="text-muted-foreground text-sm">
-          Selected topics queued for content generation.
+          Selected topics queued for prompt generation.
         </p>
       </div>
 
-      {selectedTopics.length === 0 ? (
+      {user.role === "VIEWER" && <ViewerBanner />}
+
+      {totalCount === 0 ? (
         <EmptyState
-          description="Select topics from the Discover page to queue them for content generation."
+          description="Select topics from the Discover page to queue them for prompt generation."
           icon={Sparkles}
           title="No topics selected"
         />
       ) : (
-        <div className="space-y-3">
-          {selectedTopics.map((topic) => (
-            <Card key={topic.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm">{topic.title}</CardTitle>
-                  <Badge
-                    className={
-                      topic.status === "GENERATING" ? "animate-pulse" : ""
-                    }
-                    variant={
-                      topic.status === "GENERATING" ? "default" : "secondary"
-                    }
-                  >
-                    {topic.status === "GENERATING"
-                      ? "Generating..."
-                      : "Selected"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-muted-foreground text-sm">
-                    <span>{topic.category.replace("_", " ")}</span>
-                    <span className="size-1 rounded-full bg-muted-foreground/30" />
-                    <span>
-                      {topic.posts.length} post
-                      {topic.posts.length !== 1 ? "s" : ""} generated
-                    </span>
-                  </div>
-                  {topic.status === "SELECTED" && (
-                    <GenerateButton topicId={topic.id} />
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <GenerateClient
+          initialData={initialData}
+          initialRating={validRating ?? ""}
+          role={user.role}
+        />
       )}
     </div>
   );

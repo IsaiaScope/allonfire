@@ -1,23 +1,36 @@
 import { prisma } from "../index";
 
-export async function getOverviewStats() {
-  const [topicCount, draftCount, scheduledCount, publishedCount] =
+export async function getTopicStats() {
+  const [topicsByStatus, promptsByRating, totalCount, promptCount, notesCount] =
     await Promise.all([
-      prisma.topic.count({ where: { status: "DISCOVERED" } }),
-      prisma.post.count({ where: { status: "DRAFT" } }),
-      prisma.post.count({ where: { status: "SCHEDULED" } }),
-      prisma.post.count({ where: { status: "PUBLISHED" } }),
+      prisma.topic.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+      prisma.prompt.groupBy({
+        by: ["rating"],
+        _count: true,
+      }),
+      prisma.topic.count(),
+      prisma.prompt.count(),
+      prisma.prompt.count({ where: { ratingNote: { not: null } } }),
     ]);
 
-  return { topicCount, draftCount, scheduledCount, publishedCount };
-}
+  const statusCount = (status: string) =>
+    topicsByStatus.find((g) => g.status === status)?._count ?? 0;
+  const ratingCount = (rating: string) =>
+    promptsByRating.find((g) => g.rating === rating)?._count ?? 0;
 
-export async function getRecentPosts(limit = 5) {
-  return await prisma.post.findMany({
-    orderBy: { createdAt: "desc" },
-    take: limit,
-    include: { topic: true },
-  });
+  return {
+    discoveredCount: statusCount("DISCOVERED"),
+    aiPickedCount: statusCount("AI_PICKED"),
+    selectedCount: statusCount("SELECTED"),
+    totalCount,
+    promptCount,
+    positivePromptCount: ratingCount("POSITIVE"),
+    negativePromptCount: ratingCount("NEGATIVE"),
+    notesCount,
+  };
 }
 
 export async function getDailySummary() {

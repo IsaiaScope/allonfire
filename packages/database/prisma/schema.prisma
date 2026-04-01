@@ -11,7 +11,7 @@ datasource db {
 // ============ Topics ============
 
 model Topic {
-  id           String        @id @default(cuid())
+  id           String        @id @default(cuid(2))
   title        String
   summary      String
   sourceUrl    String
@@ -21,12 +21,34 @@ model Topic {
   rawData      Json?
   discoveredAt DateTime      @default(now())
   posts        Post[]
+  prompts      Prompt[]
+}
+
+// ============ Prompts ============
+
+model Prompt {
+  id         String        @id @default(cuid(2))
+  topicId    String
+  topic      Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  content    String
+  postType   PostType?
+  rating     PromptRating?
+  ratingNote String?
+  ratedAt    DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([topicId])
+}
+
+enum PromptRating {
+  POSITIVE
+  NEGATIVE
 }
 
 // ============ Posts ============
 
 model Post {
-  id             String      @id @default(cuid())
+  id             String      @id @default(cuid(2))
   topicId        String?
   topic          Topic?      @relation(fields: [topicId], references: [id])
   type           PostType
@@ -35,14 +57,15 @@ model Post {
   content        String
   mediaUrl       String?
   mediaType      MediaType?
-  scheduledAt    DateTime?
   publishedAt    DateTime?
   platformPostId String?
   errorMessage   String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  @@index([status, scheduledAt])
+  @@index([status])
+  @@index([topicId])
+  @@index([platform, status])
 }
 
 // ============ Auth ============
@@ -50,23 +73,29 @@ model Post {
 enum Role {
   ADMIN
   USER
+  VIEWER
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String    @id @default(cuid(2))
   email         String    @unique
   name          String?
   emailVerified Boolean   @default(false)
   image         String?
   role          Role      @default(USER)
+  allowedApps   String[]  @default(["all"])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  sessions       Session[]
+  accounts       Account[]
+  photos         Photo[]
+  socialAccounts SocialAccount[]
+  gameScores     GameScore[]
+  quizQuestions  QuizQuestion[]
 }
 
 model Session {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   expiresAt DateTime
   token     String   @unique
   ipAddress String?
@@ -75,10 +104,12 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Account {
-  id                    String    @id @default(cuid())
+  id                    String    @id @default(cuid(2))
   accountId             String
   providerId            String
   userId                String
@@ -92,10 +123,28 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model SocialAccount {
+  id               String    @id @default(cuid(2))
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         Platform
+  accessToken      String // Encrypted AES-256-GCM
+  refreshToken     String? // Encrypted AES-256-GCM
+  tokenExpiresAt   DateTime?
+  platformUserId   String?
+  platformUsername  String?
+  connectedAt      DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, platform])
 }
 
 model Verification {
-  id         String    @id @default(cuid())
+  id         String    @id @default(cuid(2))
   identifier String
   value      String
   expiresAt  DateTime
@@ -103,21 +152,119 @@ model Verification {
   updatedAt  DateTime? @updatedAt
 }
 
+// ============ Photos ============
+
+model Photo {
+  id           String    @id @default(cuid(2))
+  url          String
+  thumbnailUrl String
+  width        Int
+  height       Int
+  blurHash     String
+  caption      String?
+  uploadedBy   String
+  user         User      @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  favorite     Favorite?
+  createdAt    DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([uploadedBy])
+}
+
+model Favorite {
+  id        String   @id @default(cuid(2))
+  photoId   String   @unique
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// ============ Games ============
+
+enum GameType {
+  MEMORY
+  QUIZ
+}
+
+model GameScore {
+  id        String   @id @default(cuid(2))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType  GameType
+  timeMs    Int?
+  score     Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([gameType, timeMs])
+  @@index([gameType, score])
+  @@index([userId, gameType])
+}
+
+// ============ Quiz ============
+
+model QuizQuestion {
+  id                String       @id @default(cuid(2))
+  text              String
+  imageUrl          String?
+  imageThumbnailUrl String?
+  imageBlurHash     String?
+  createdBy         String
+  user              User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  answers           QuizAnswer[]
+  createdAt         DateTime     @default(now())
+
+  @@index([createdBy])
+}
+
+model QuizAnswer {
+  id                String       @id @default(cuid(2))
+  questionId        String
+  question          QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text              String
+  imageUrl          String?
+  imageThumbnailUrl String?
+  imageBlurHash     String?
+  isCorrect         Boolean      @default(false)
+  sortOrder         Int
+}
+
+// ============ AI Providers ============
+
+model AiProvider {
+  id             String       @id @default(cuid(2))
+  provider       ProviderType @unique
+  apiKey         String // Encrypted with AES-256-GCM
+  model          String // e.g., "claude-sonnet-4-20250514"
+  isVerified     Boolean      @default(false)
+  lastVerifiedAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  activeForSettings Settings[] @relation("ActiveProvider")
+}
+
+enum ProviderType {
+  ANTHROPIC
+  OPENROUTER
+  GOOGLE_GEMINI
+  GROQ
+}
+
 // ============ Settings ============
 
 model Settings {
-  id                  String   @id @default("singleton")
+  id                  String      @id @default("singleton")
   webhookDiscoveryUrl String?
-  webhookPublishUrl   String?
   webhookNotifyUrl    String?
-  anthropicApiKey     String?
-  updatedAt           DateTime @updatedAt
+  activeProviderId    String?
+  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id], onDelete: SetNull)
+  updatedAt           DateTime    @updatedAt
 }
 
 // ============ Webhook Logging ============
 
 model WebhookLog {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid(2))
   endpoint  String
   method    String
   payload   Json?
@@ -138,22 +285,20 @@ enum TopicCategory {
 
 enum TopicStatus {
   DISCOVERED
+  AI_PICKED
   SELECTED
-  GENERATING
-  GENERATED
-  ARCHIVED
 }
 
 enum PostType {
   MEME
   NEWS
   LEARNING
+  FREEFORM
 }
 
 enum PostStatus {
   DRAFT
   APPROVED
-  SCHEDULED
   PUBLISHED
   FAILED
 }
@@ -161,8 +306,6 @@ enum PostStatus {
 enum Platform {
   LINKEDIN
   TWITTER
-  YOUTUBE
-  TIKTOK
 }
 
 enum MediaType {

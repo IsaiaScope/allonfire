@@ -1,31 +1,82 @@
-// biome-ignore lint/performance/noBarrelFile: service layer entry point — consumers import from @allonfire/database/services
+// biome-ignore lint/performance/noBarrelFile: service layer entry point
 export {
-  approvePost,
-  getDrafts,
-  getDueScheduledPosts,
-  getPostById,
-  getScheduledPosts,
-  markFailed,
-  markPublished,
-  rejectPost,
-  schedulePost,
-  unschedulePost,
-  updatePostContent,
-} from "./post.service";
-export { getSettings, updateSettings } from "./settings.service";
+  getFavoritePhotoIds,
+  getFavoritesPaginated,
+  toggleFavorite,
+} from "./favorite.service";
+export type { LeaderboardEntry } from "./game-score.service";
+export {
+  getGameStats,
+  getLeaderboard,
+  getUserBestScore,
+  getUserGameStats,
+  submitGameScore,
+} from "./game-score.service";
+export type { PhotoWithUser } from "./photo.service";
+export {
+  createPhoto,
+  deletePhoto,
+  getAllRandomPhotos,
+  getPhotoCount,
+  getPhotosPaginated,
+  getRandomPhotos,
+  getUserPhotoCount,
+} from "./photo.service";
+export {
+  createPrompt,
+  deletePrompt,
+  getPositivePromptsByCategory,
+  getPromptsByTopicId,
+  ratePrompt,
+  updatePromptNote,
+} from "./prompt.service";
+export {
+  deleteProvider,
+  getActiveProvider,
+  getProviders,
+  getProviderWithDecryptedKey,
+  setActiveProvider,
+  upsertProvider,
+} from "./provider.service";
+export type { QuizQuestionWithAnswers } from "./quiz.service";
+export {
+  createQuizQuestion,
+  deleteQuizQuestion,
+  getAllQuizQuestions,
+  getQuizQuestionById,
+  getQuizQuestionCount,
+  getRandomQuizQuestions,
+  updateQuizQuestion,
+} from "./quiz.service";
+export { getSettings } from "./settings.service";
+export {
+  deleteSocialAccount,
+  getConnectedAccounts,
+  getSocialAccount,
+  upsertSocialAccount,
+} from "./social-account.service";
 export {
   getDailySummary,
-  getOverviewStats,
-  getRecentPosts,
+  getTopicStats,
 } from "./stats.service";
 export {
-  archiveTopic,
+  deleteAllTopics,
+  deleteSelectedTopics,
+  deleteTopic,
   getDiscoveredTopics,
+  getDiscoveredTopicsPaginated,
+  getSelectedTopicsPaginated,
   getTopicsByStatus,
-  getTopicsByStatusWithPosts,
+  getTopicWithPrompts,
   ingestTopics,
   selectTopic,
   selectTopics,
 } from "./topic.service";
-export { deleteUser, getUserCount, getUsers } from "./user.service";
+export {
+  checkUserAppAccess,
+  deleteUser,
+  getUserById,
+  getUsers,
+  updateUserAllowedApps,
+} from "./user.service";
 export { logWebhook } from "./webhook-log.service";

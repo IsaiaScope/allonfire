@@ -1,0 +1,48 @@
+{
+  "name": "@allonfire/laura",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3200",
+    "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3201 next dev --port 3201 --hostname 0.0.0.0",
+    "build": "next build --webpack",
+    "analyze": "ANALYZE=true next build --webpack",
+    "start": "next start",
+    "check-types": "tsc --noEmit",
+    "seed-photos": "tsx scripts/seed-photos.ts"
+  },
+  "dependencies": {
+    "@allonfire/auth": "workspace:*",
+    "@allonfire/database": "workspace:*",
+    "@allonfire/hooks": "workspace:*",
+    "@allonfire/storage": "workspace:*",
+    "@allonfire/ui": "workspace:*",
+    "@allonfire/utils": "workspace:*",
+    "@better-auth/prisma-adapter": "^1.5.3",
+    "@t3-oss/env-nextjs": "^0.13.10",
+    "@tanstack/react-query": "^5.62.0",
+    "better-auth": "^1.2.0",
+    "framer-motion": "^12.36.0",
+    "heic2any": "^0.0.4",
+    "lucide-react": "^0.474.0",
+    "next": "^16.1.6",
+    "next-intl": "^4.8.3",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.71.2",
+    "sonner": "^2.0.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.2"
+  }
+}

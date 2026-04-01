@@ -1,20 +1,20 @@
 import {
   getDailySummary,
-  getOverviewStats,
+  getTopicStats,
   logWebhook,
 } from "@allonfire/database";
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }
 
   try {
     const [stats, daily] = await Promise.all([
-      getOverviewStats(),
+      getTopicStats(),
       getDailySummary(),
     ]);
 
@@ -34,6 +34,18 @@ export async function GET(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+
+    try {
+      await logWebhook({
+        endpoint: "/api/webhooks/notify",
+        method: "GET",
+        response: { error: message },
+        status: 500,
+      });
+    } catch {
+      // Best-effort logging — don't mask the original error
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

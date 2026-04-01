@@ -4,32 +4,52 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack --port 3100",
-    "build": "next build",
+    "dev": "next dev --port 3100",
+    "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3101 next dev --port 3101 --hostname 0.0.0.0",
+    "dev:tunnel": "npx localtunnel --port 3101",
+    "build": "next build --webpack",
+    "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/auth": "workspace:*",
     "@allonfire/content-generator": "workspace:*",
     "@allonfire/database": "workspace:*",
+    "@allonfire/hooks": "workspace:*",
+    "@allonfire/social-publisher": "workspace:*",
     "@allonfire/ui": "workspace:*",
+    "@allonfire/utils": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",
+    "@dnd-kit/dom": "^0.3.2",
+    "@dnd-kit/helpers": "^0.3.2",
+    "@dnd-kit/react": "^0.3.2",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-query": "^5.62.0",
     "better-auth": "^1.2.0",
+    "framer-motion": "^12.36.0",
     "lucide-react": "^0.474.0",
-    "next": "^15.3.0",
+    "next": "^16.1.6",
     "next-themes": "^0.4.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.0"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.71.2",
+    "sonner": "^2.0.7",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4.2.1",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^29.0.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.0.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.0"
   }
 }

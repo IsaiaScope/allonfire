@@ -1,11 +1,9 @@
 ## Summary
-<!-- Brief description of changes -->
+<!-- What changed and why. Be specific about the problem or need this addresses. -->
 
-## Type
-- [ ] Feature
-- [ ] Bug fix
-- [ ] Refactor
-- [ ] Chore / CI
+## Technical Details
+<!-- Key implementation decisions, architecture changes, or patterns introduced.
+     Reference specific files/modules when relevant. -->
 
-## Test plan
-<!-- How was this tested? -->
+## Testing
+<!-- How the changes were verified — commands run, edge cases covered, manual checks performed. -->

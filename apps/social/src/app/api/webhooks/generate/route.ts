@@ -1,15 +1,15 @@
-import { generatePostsForTopic } from "@allonfire/content-generator";
+import { generatePromptForTopic } from "@allonfire/content-generator";
 import { getTopicsByStatus, logWebhook } from "@allonfire/database";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { validateApiKey } from "@/lib/api-auth";
+import { validateBearerToken } from "@/lib/api-auth";
 
 const bodySchema = z.object({
-  topicId: z.string().cuid().optional(),
+  topicId: z.cuid2().optional(),
 });
 
 export async function POST(request: Request) {
-  const authError = validateApiKey(request);
+  const authError = validateBearerToken(request);
   if (authError) {
     return authError;
   }
@@ -34,24 +34,20 @@ export async function POST(request: Request) {
       });
     }
 
-    const results: Array<{
-      topicId: string;
-      success: boolean;
-      error?: string;
-    }> = [];
+    const settled = await Promise.allSettled(
+      topicIds.map((id) => generatePromptForTopic(id))
+    );
 
-    for (const id of topicIds) {
-      try {
-        await generatePostsForTopic(id);
-        results.push({ topicId: id, success: true });
-      } catch (error) {
-        results.push({
-          topicId: id,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
+    const results = settled.map((result, i) => ({
+      topicId: topicIds[i],
+      success: result.status === "fulfilled",
+      ...(result.status === "rejected" && {
+        error:
+          result.reason instanceof Error
+            ? result.reason.message
+            : String(result.reason),
+      }),
+    }));
 
     const response = {
       generated: results.filter((r) => r.success).length,
@@ -71,12 +67,16 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
 
-    await logWebhook({
-      endpoint: "/api/webhooks/generate",
-      method: "POST",
-      response: { error: message },
-      status: 400,
-    });
+    try {
+      await logWebhook({
+        endpoint: "/api/webhooks/generate",
+        method: "POST",
+        response: { error: message },
+        status: 400,
+      });
+    } catch {
+      // Best-effort logging — don't mask the original error
+    }
 
     return NextResponse.json({ error: message }, { status: 400 });
   }

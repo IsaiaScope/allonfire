@@ -1,6 +1,16 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "N8N_API_KEY",
+    "MINIO_ENDPOINT",
+    "MINIO_ACCESS_KEY",
+    "MINIO_SECRET_KEY",
+    "MINIO_BUCKET"
+  ],
 
   "tasks": {
     "build": {
@@ -22,7 +32,21 @@
     },
     "test": {
       "dependsOn": ["^test"],
-      "inputs": [".env*"]
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "vitest.config.ts",
+        "vitest.setup.ts",
+        ".env*",
+        "../../packages/database/prisma/schema.prisma"
+      ],
+      "outputs": ["coverage/**"],
+      "env": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "N8N_API_KEY",
+        "ENCRYPTION_KEY"
+      ]
     },
     "db:generate": {
       "cache": false

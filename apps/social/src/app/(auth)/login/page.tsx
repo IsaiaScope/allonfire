@@ -1,93 +1,49 @@
-"use client";
+import { LoginForm } from "@allonfire/auth/components/login-form";
+import { checkUserAppAccess } from "@allonfire/database";
+import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
+import { Sparkles } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { checkAppAccessAction } from "@/actions/check-access";
+import { env } from "@/env";
+import { auth } from "@/lib/auth";
 
-import { Button } from "@allonfire/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@allonfire/ui/components/card";
-import { Input } from "@allonfire/ui/components/input";
-import { Label } from "@allonfire/ui/components/label";
-import { Flame } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to AllOnFire Social Content Dashboard",
+};
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const result = await authClient.signIn.email({
-      email,
-      password,
-    });
-
-    if (result.error) {
-      setError(result.error.message ?? "Login failed");
-      setLoading(false);
-      return;
+export default async function LoginPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (session) {
+    const hasAccess = await checkUserAppAccess(session.user.id, "social");
+    if (hasAccess) {
+      redirect("/");
     }
-
-    router.push("/");
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Flame className="size-6" />
-          </div>
-          <CardTitle className="text-xl tracking-tight">AllOnFire</CardTitle>
-          <CardDescription>Sign in to your dashboard</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@allonfire.com"
-                required
-                type="email"
-                value={email}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-            </div>
-
-            {error && (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-destructive text-sm">
-                {error}
-              </p>
-            )}
-
-            <Button className="w-full" disabled={loading} type="submit">
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <Suspense>
+      <LoginForm
+        appName="social"
+        checkAccess={checkAppAccessAction}
+        emailPlaceholder="social@domain.com"
+        logoAlt="AllOnFire Social"
+        logoSrc="/allonfire-social-horizontal.svg"
+        subtitle="Sign in to your dashboard"
+        successIcon={<Sparkles className="size-5 animate-pulse" />}
+        themeToggle={<ThemeToggle size="icon-lg" />}
+        viewerCredentials={
+          env.SOCIAL_VIEWER_EMAIL && env.SOCIAL_VIEWER_PASSWORD
+            ? {
+                email: env.SOCIAL_VIEWER_EMAIL,
+                password: env.SOCIAL_VIEWER_PASSWORD,
+              }
+            : undefined
+        }
+      />
+    </Suspense>
   );
 }

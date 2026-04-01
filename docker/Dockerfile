@@ -3,6 +3,7 @@ ARG NODE_VERSION=22
 
 # Stage 1: Prune monorepo to only the target app's dependency tree
 FROM node:${NODE_VERSION}-alpine AS pruner
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
 COPY . .
@@ -11,6 +12,7 @@ RUN npx turbo prune @allonfire/${APP_NAME} --docker
 
 # Stage 2: Install dependencies (cached unless package.jsons change)
 FROM node:${NODE_VERSION}-alpine AS deps
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
 COPY --from=pruner /app/out/json/ .
@@ -18,6 +20,7 @@ RUN pnpm install --frozen-lockfile
 
 # Stage 3: Build the app
 FROM node:${NODE_VERSION}-alpine AS builder
+RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
 COPY --from=deps /app/ .

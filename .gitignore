@@ -13,6 +13,13 @@ node_modules
 # Testing
 coverage
 
+# Playwright
+/screenshots/
+!/screenshots/.gitkeep
+test-results/
+playwright-report/
+.playwright-mcp/
+
 # Turbo
 .turbo
 
@@ -21,6 +28,7 @@ coverage
 out/
 build
 dist
+next-env.d.ts
 
 # Prisma
 packages/database/generated/
@@ -37,7 +45,15 @@ yarn-error.log*
 
 # Claude Code
 .claude/*.local.json
+.superpowers/
+docs/superpowers/
 
 # Worktrees
 .worktrees
 *.tsbuildinfo
+.next-mobile
+
+TODO.*
+
+# Laura seed photos (large binary files)
+apps/laura/seed-photos/

@@ -2,23 +2,25 @@ name: allonfire
 
 services:
   postgres:
+    container_name: allonfire-postgres
     image: postgres:16-alpine
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: allonfire
-      POSTGRES_PASSWORD: allonfire_dev
-      POSTGRES_DB: allonfire
+      POSTGRES_USER: ${POSTGRES_USER:-allonfire}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-allonfire}
+      POSTGRES_DB: ${POSTGRES_DB:-allonfire}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U allonfire"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-allonfire}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   adminer:
+    container_name: allonfire-adminer
     image: adminer
     restart: unless-stopped
     ports:
@@ -26,5 +28,58 @@ services:
     depends_on:
       - postgres
 
+  n8n:
+    container_name: allonfire-n8n
+    image: docker.n8n.io/n8nio/n8n:2.10.2
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_SECURE_COOKIE=false
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+      - N8N_TEMPLATES_ENABLED=false
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-allonfire}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-allonfire}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD:-allonfire}
+      - N8N_WEBHOOK_BASE_URL=http://host.docker.internal:3100
+      - N8N_API_KEY=${N8N_API_KEY:-dev-api-key}
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  minio:
+    container_name: allonfire-minio
+    image: minio/minio:latest
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-allonfire}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-allonfire}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
+  n8n_data:
+  minio_data:

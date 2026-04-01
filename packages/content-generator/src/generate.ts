@@ -1,114 +1,80 @@
-import { type Platform, type PostType, prisma } from "@allonfire/database";
-import Anthropic from "@anthropic-ai/sdk";
-import { learningPrompt } from "./prompts/learning.js";
-import { memePrompt } from "./prompts/meme.js";
-import { newsPrompt } from "./prompts/news.js";
+import type { PostType, TopicCategory } from "@allonfire/database";
+import {
+  createPrompt,
+  getPositivePromptsByCategory,
+  prisma,
+} from "@allonfire/database";
+import { extractArticle } from "./extract-article";
+import { metaPrompt } from "./prompts/meta-prompt";
+import { getActiveProviderClient } from "./providers";
 
-const PLATFORMS: Platform[] = ["LINKEDIN", "TWITTER", "YOUTUBE", "TIKTOK"];
+export type TopicInput = {
+  title: string;
+  summary: string;
+  sourceUrl: string;
+  articleContent?: string;
+};
 
-const client = new Anthropic();
+const CATEGORY_TO_POST_TYPE: Partial<Record<TopicCategory, PostType>> = {
+  MEME_WORTHY: "MEME",
+  NEWS: "NEWS",
+  AI_UPDATE: "NEWS",
+  LEARNING: "LEARNING",
+  TOOL_RELEASE: "LEARNING",
+};
 
-function getPrompt(
-  topic: { title: string; summary: string; sourceUrl: string },
-  type: PostType,
-  platform: Platform
-): string {
-  switch (type) {
-    case "MEME":
-      return memePrompt(topic, platform);
-    case "NEWS":
-      return newsPrompt(topic, platform);
-    case "LEARNING":
-      return learningPrompt(topic, platform);
-    default: {
-      const _exhaustive: never = type;
-      throw new Error(`Unknown post type: ${_exhaustive}`);
-    }
-  }
-}
-
-function inferPostType(category: string): PostType {
-  switch (category) {
-    case "MEME_WORTHY":
-      return "MEME";
-    case "LEARNING":
-    case "TOOL_RELEASE":
-      return "LEARNING";
-    default:
-      return "NEWS";
-  }
-}
-
-async function generateForPlatform(
-  topic: {
-    title: string;
-    summary: string;
-    sourceUrl: string;
-    category: string;
-  },
-  platform: Platform
-): Promise<string> {
-  const type = inferPostType(topic.category);
-  const prompt = getPrompt(topic, type, platform);
-
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const block = message.content.at(0);
-  if (!block || block.type !== "text") {
-    throw new Error(`Unexpected response type: ${block?.type ?? "empty"}`);
-  }
-  return block.text;
-}
-
-export async function generatePostsForTopic(topicId: string): Promise<void> {
+export async function generatePromptForTopic(topicId: string): Promise<void> {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
   });
 
-  await prisma.topic.update({
-    where: { id: topicId },
-    data: { status: "GENERATING" },
+  const postType: PostType = CATEGORY_TO_POST_TYPE[topic.category] ?? "NEWS";
+
+  const rawData = (topic.rawData ?? {}) as Record<string, unknown>;
+  const cachedArticle = rawData.articleContent as string | undefined;
+
+  // Fetch provider, extract article, and load few-shot examples in parallel
+  const [provider, articleContent, fewShotExamples] = await Promise.all([
+    getActiveProviderClient(),
+    cachedArticle
+      ? Promise.resolve(cachedArticle)
+      : (async () => {
+          if (!topic.sourceUrl) {
+            return undefined;
+          }
+          const article = await extractArticle(topic.sourceUrl);
+          if (article) {
+            // Cache for future generations
+            await prisma.topic.update({
+              where: { id: topicId },
+              data: {
+                rawData: { ...rawData, articleContent: article.text },
+              },
+            });
+            return article.text;
+          }
+          return undefined;
+        })(),
+    getPositivePromptsByCategory(topic.category, 2).then((prompts) =>
+      prompts.map((p) => ({ title: p.topic.title, content: p.content }))
+    ),
+  ]);
+
+  const prompt = metaPrompt({
+    title: topic.title,
+    summary: topic.summary,
+    sourceUrl: topic.sourceUrl,
+    category: topic.category,
+    postType,
+    articleContent,
+    fewShotExamples,
   });
 
-  const type = inferPostType(topic.category);
-
-  for (const platform of PLATFORMS) {
-    try {
-      const content = await generateForPlatform(topic, platform);
-
-      await prisma.post.create({
-        data: {
-          topicId,
-          type,
-          platform,
-          status: "DRAFT",
-          content,
-        },
-      });
-
-      console.log(`Generated ${platform} post for: ${topic.title}`);
-    } catch (error) {
-      console.error(`Failed to generate ${platform} post:`, error);
-
-      await prisma.post.create({
-        data: {
-          topicId,
-          type,
-          platform,
-          status: "FAILED",
-          content: "",
-          errorMessage: error instanceof Error ? error.message : String(error),
-        },
-      });
-    }
-  }
-
-  await prisma.topic.update({
-    where: { id: topicId },
-    data: { status: "GENERATED" },
+  const response = await provider.client.generate({
+    model: provider.model,
+    maxTokens: 6144,
+    messages: [{ role: "user", content: prompt }],
   });
+
+  await createPrompt(topicId, response.text, postType);
 }

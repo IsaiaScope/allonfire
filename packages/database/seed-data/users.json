@@ -1,0 +1,38 @@
+[
+  {
+    "email": "allonfire-user@allonfire.com",
+    "name": "allonfire-user",
+    "role": "USER",
+    "allowedApps": ["all"]
+  },
+  {
+    "email": "allonfire-viewer@allonfire.com",
+    "name": "allonfire-viewer",
+    "role": "VIEWER",
+    "allowedApps": ["all"]
+  },
+  {
+    "email": "social-admin@allonfire.com",
+    "name": "social-admin",
+    "role": "ADMIN",
+    "allowedApps": ["social"]
+  },
+  {
+    "email": "social-user@allonfire.com",
+    "name": "social-user",
+    "role": "USER",
+    "allowedApps": ["social"]
+  },
+  {
+    "email": "laura-admin@allonfire.com",
+    "name": "laura-admin",
+    "role": "ADMIN",
+    "allowedApps": ["laura"]
+  },
+  {
+    "email": "laura-user@allonfire.com",
+    "name": "laura-user",
+    "role": "USER",
+    "allowedApps": ["laura"]
+  }
+]
