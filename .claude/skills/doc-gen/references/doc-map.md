@@ -37,11 +37,29 @@ Complete inventory of every documentation target in the AllOnFire monorepo.
 | `docs/screenshots/mobile-dashboard.png` | `/` (390x844) | Mobile responsive |
 | `docs/screenshots/mobile-nav.png` | `/` (390x844) | Sheet menu open |
 
+### Laura Screenshot Inventory
+
+| File | Page URL | App | Notes |
+|------|----------|-----|-------|
+| `docs/screenshots/laura-gallery.png` | `/` | Laura (:3200) | Masonry photo grid |
+| `docs/screenshots/mobile-laura-gallery.png` | `/` (390x844) | Laura | Mobile gallery |
+| `docs/screenshots/laura-upload.png` | `/upload` | Laura | Upload dropzone |
+| `docs/screenshots/mobile-laura-upload.png` | `/upload` (390x844) | Laura | Mobile upload |
+| `docs/screenshots/laura-games.png` | `/games` | Laura | Game hub |
+| `docs/screenshots/mobile-laura-games.png` | `/games` (390x844) | Laura | Mobile game hub |
+| `docs/screenshots/laura-memory.png` | `/games/memory` | Laura | Memory board |
+| `docs/screenshots/mobile-laura-memory.png` | `/games/memory` (390x844) | Laura | Mobile memory |
+| `docs/screenshots/laura-quiz.png` | `/games/quiz` | Laura | Quiz question |
+| `docs/screenshots/mobile-laura-quiz.png` | `/games/quiz` (390x844) | Laura | Mobile quiz |
+| `docs/screenshots/laura-settings.png` | `/settings` | Laura | Settings page |
+| `docs/screenshots/mobile-laura-settings.png` | `/settings` (390x844) | Laura | Mobile settings |
+
 ## Apps
 
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
 | `apps/social/README.md` | P0 | App overview, route map table, feature layer, env vars (from `src/env.ts`), auth setup, dev commands |
+| `apps/laura/README.md` | P0 | App overview, route map table, feature gallery, i18n setup, role system, env vars, dev commands |
 
 ## Packages
 
@@ -112,6 +130,18 @@ Complete inventory of every documentation target in the AllOnFire monorepo.
 | `settings/README.md` | Webhook URL configuration, settings sub-nav, form validation |
 | `settings/CLAUDE.md` | How settings connect to n8n webhooks |
 
+## Laura Features (`apps/laura/src/features/`)
+
+### Reference: Use Social's `sidebar-layout/` as template
+
+| Feature | Priority | Content Requirements |
+|---------|----------|---------------------|
+| `gallery/README.md` + `CLAUDE.md` | P1 | Masonry grid, infinite scroll, favorites, photo preview, blurhash placeholders, gallery actions |
+| `games/README.md` + `CLAUDE.md` | P0 | Memory game (card matching, timer, scoring), Quiz game (multiple choice, images, CRUD), leaderboards, game hooks |
+| `upload/README.md` + `CLAUDE.md` | P1 | Drag-drop upload, HEIC conversion, S3/MinIO storage, file validation, upload preview |
+| `settings/README.md` + `CLAUDE.md` | P2 | Language switcher (IT/EN), appearance toggle, user info card, sign out |
+| `layout/README.md` + `CLAUDE.md` | P2 | TopBar, page container, desktop/mobile navigation, UserRoleProvider integration |
+
 ## Memory Files
 
 | File | Status | Notes |
@@ -125,7 +155,7 @@ Complete inventory of every documentation target in the AllOnFire monorepo.
 
 ## Priority Legend
 
-- **P0**: Must have — root README, social app README, database README, publish feature docs
-- **P1**: Should have — architecture guides, remaining package READMEs, complex feature docs
-- **P2**: Nice to have — simple feature docs, deployment guide, simple package READMEs
+- **P0**: Must have — root README, app READMEs (social + laura), database README, publish/games feature docs
+- **P1**: Should have — architecture guides, remaining package READMEs, gallery/upload/admin/topics feature docs
+- **P2**: Nice to have — simple feature docs (settings, layout, overview), deployment guide
 - **P3**: Low priority — config package README

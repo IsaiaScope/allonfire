@@ -100,6 +100,7 @@ All images are output as JPEG after processing. The `fit: "inside"` strategy pre
 | `OAuthConfig`           | Type     | Client ID, secret, and redirect URI            |
 | `TokenResponse`         | Type     | Normalized token response from OAuth exchange  |
 | `ImageSpec`             | Type     | Max dimensions and size for a platform         |
+| `Platform`              | Type     | Platform enum re-exported from `@allonfire/database` |
 
 ## Directory Structure
 

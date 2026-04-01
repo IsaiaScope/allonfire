@@ -82,7 +82,7 @@ import { GenerateButton } from "@/features/generation/components/generate-button
 import { GenerateButton } from "@/features/generation";
 ```
 
-Features: `layout/`, `overview/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
+Features: `sidebar-layout/`, `overview/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
 
 Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
 
@@ -119,8 +119,10 @@ app/[locale]/(dashboard)/
 ├── games/memory/page.tsx               → Memory card matching game
 ├── games/memory/leaderboard/page.tsx   → Memory leaderboard
 ├── games/quiz/page.tsx                 → Quiz game
-├── games/quiz/upload/page.tsx          → Create quiz questions (USER/ADMIN)
-└── games/quiz/leaderboard/page.tsx     → Quiz leaderboard
+├── games/quiz/leaderboard/page.tsx     → Quiz leaderboard
+├── games/quiz/edit/page.tsx            → Quiz questions management (ADMIN)
+├── games/quiz/edit/new/page.tsx        → Create new quiz question (ADMIN)
+└── games/quiz/edit/[id]/page.tsx       → Edit existing quiz question (ADMIN)
 ```
 
 ### Feature Layer (`features/`)
@@ -153,14 +155,17 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 - `/games/memory` — Memory card game
 - `/games/memory/leaderboard` — Memory scores
 - `/games/quiz` — Quiz game
-- `/games/quiz/upload` — Create quiz questions
 - `/games/quiz/leaderboard` — Quiz scores
+- `/games/quiz/edit` — Quiz question management (ADMIN)
+- `/games/quiz/edit/new` — Create new quiz question
+- `/games/quiz/edit/[id]` — Edit existing quiz question
 
 ## Social Dashboard Routes
 
 - `/` — Overview with stats
 - `/discover` — Browse discovered topics
 - `/generate` — Trigger + monitor generation
+- `/generate/[topicId]` — Single topic generation detail
 - `/publish` — Compose and publish social media posts
 - `/settings` — n8n webhook URLs, platform config
 - `/admin` — Admin panel redirect → `/admin/users`

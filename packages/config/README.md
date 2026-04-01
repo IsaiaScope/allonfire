@@ -11,18 +11,28 @@
 ```
 config/
   typescript/
-    tsconfig.base.json     Base config (strict mode, paths, target)
+    base.json              Base config (strict mode, paths, target)
+    nextjs.json            Next.js app config (extends base + JSX, plugins)
+    library.json           Library/package config (extends base + declaration emit)
 ```
 
 ## 🔧 Usage
 
-Each package extends the shared base config:
+Each app or package extends the appropriate preset:
 
 ```json
+// Next.js apps (apps/social, apps/laura)
 {
-  "extends": "@allonfire/config/typescript/tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  }
+  "extends": "@allonfire/config/typescript/nextjs.json"
+}
+
+// Library packages
+{
+  "extends": "@allonfire/config/typescript/library.json"
+}
+
+// Custom (extend base directly)
+{
+  "extends": "@allonfire/config/typescript/base.json"
 }
 ```

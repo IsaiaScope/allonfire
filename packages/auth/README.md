@@ -21,7 +21,7 @@
 | `./server` | `createAuth`, `requireAuth`, `requireUser`, `requireAdmin`, `Auth`, `Session` types |
 | `./client` | `authClient` — BetterAuth React client |
 | `./route` | `createAuthHandler` — Next.js route handler factory |
-| `./guard` | `checkAppAccess` — cached app-level access guard (redirects on failure) |
+| `./guard` | `checkAppAccess` — cached app-level access guard (redirects on failure), `checkMutationAccess(auth: Auth): Promise<MutationAccessResult>` — blocks VIEWER role from mutations, `checkAdminAccess(auth: Auth): Promise<MutationAccessResult>` — restricts to ADMIN only, `MutationAccessResult` type |
 | `./actions/check-access` | Server action for client-side access checks |
 | `./env` | `authEnvSchema` — Zod schema for `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
 | `./components/login-form` | `LoginForm` — email/password login form |
@@ -37,7 +37,7 @@ packages/auth/
     server.ts              createAuth factory + session guards
     client.ts              BetterAuth React client
     route.ts               Next.js route handler export
-    guard.ts               App-level access control (checkAppAccess)
+    guard.ts               App-level access control (checkAppAccess, checkMutationAccess, checkAdminAccess)
     env.ts                 Zod environment schema
     actions/
       check-access.ts      Server action for access checks
