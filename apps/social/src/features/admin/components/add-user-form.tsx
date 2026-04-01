@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@allonfire/ui/components/select";
-import { Loader2, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { parseErrorMessage } from "@/lib/parse-error-message";
@@ -23,6 +23,7 @@ export function AddUserForm() {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<Role>("USER");
+  const [showPassword, setShowPassword] = useState(false);
   const [allowedApps, setAllowedApps] = useState<string[]>(["all"]);
   const mounted = useMounted();
   const formRef = useRef<HTMLFormElement>(null);
@@ -85,15 +86,30 @@ export function AddUserForm() {
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="password">Password</Label>
-        <Input
-          autoComplete="new-password"
-          id="password"
-          minLength={8}
-          name="password"
-          placeholder="Minimum 8 characters"
-          required
-          type="password"
-        />
+        <div className="relative">
+          <Input
+            autoComplete="new-password"
+            className="pr-10"
+            id="password"
+            minLength={8}
+            name="password"
+            placeholder="Minimum 8 characters"
+            required
+            type={showPassword ? "text" : "password"}
+          />
+          <button
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            onClick={() => setShowPassword((prev) => !prev)}
+            tabIndex={-1}
+            type="button"
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" />
+            ) : (
+              <Eye className="size-4" />
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">

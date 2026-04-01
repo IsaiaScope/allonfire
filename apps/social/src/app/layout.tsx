@@ -1,6 +1,7 @@
 import { Wrapper } from "@allonfire/ui/components/wrapper";
 import type { Metadata, Viewport } from "next";
 import { Poppins, Roboto_Mono } from "next/font/google";
+import { AppleSplashLinks } from "@/components/apple-splash-links";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -37,7 +38,11 @@ export const metadata: Metadata = {
     follow: false,
   },
   icons: {
-    icon: [{ url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
     apple: [{ url: "/apple-icon-180x180.png", sizes: "180x180" }],
   },
   appleWebApp: {
@@ -69,6 +74,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <AppleSplashLinks />
+      </head>
       <body
         className={`${fontSans.variable} ${fontMono.variable} flex h-dvh flex-col overflow-hidden bg-background font-sans antialiased`}
       >

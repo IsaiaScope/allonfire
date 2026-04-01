@@ -38,11 +38,11 @@ export function GameCompleteDialog({
     <AlertDialog open={open}>
       <AlertDialogContent className="max-w-sm">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2 text-2xl">
-            <Trophy className="size-6 text-amber-400" />
+          <AlertDialogTitle className="flex items-center gap-2 text-xl">
+            <Trophy className="size-5 shrink-0 text-amber-400" />
             {t("gameComplete")}
             {isNewBest && (
-              <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 text-xs">
+              <span className="ml-auto shrink-0 rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 text-xs">
                 {t("newRecord")}
               </span>
             )}

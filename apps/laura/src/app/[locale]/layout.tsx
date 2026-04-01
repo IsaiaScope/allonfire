@@ -5,6 +5,7 @@ import { Fira_Code, Oxanium } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { AppleSplashLinks } from "@/components/apple-splash-links";
 import { JsonLd } from "@/components/json-ld";
 import { MotionProvider } from "@/components/motion-provider";
 import { routing } from "@/i18n/routing";
@@ -68,6 +69,14 @@ export async function generateMetadata({
     other: {
       "mobile-web-app-capable": "yes",
     },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "32x32" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      ],
+      apple: [{ url: "/apple-icon-180x180.png", sizes: "180x180" }],
+    },
     formatDetection: {
       telephone: false,
     },
@@ -100,6 +109,9 @@ export default async function LocaleLayout({ children, params }: LayoutProps) {
 
   return (
     <html lang={locale} suppressHydrationWarning translate="no">
+      <head>
+        <AppleSplashLinks />
+      </head>
       <body
         className={`${fontSans.variable} ${fontMono.variable} flex h-dvh flex-col overflow-hidden bg-background font-sans antialiased`}
       >

@@ -45,3 +45,23 @@ export const wrongShake = {
   x: [0, -8, 8, -6, 6, -3, 3, 0],
   transition: { duration: 0.4, ease: "easeOut" as const },
 };
+
+// List rows: cascade from the left
+export const listItemSlide = {
+  hidden: { opacity: 0, x: -12 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.25, ease: "easeOut" as const },
+  },
+};
+
+// Upload grid thumbnails: subtle scale pop
+export const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.2, ease: "easeOut" as const },
+  },
+};
