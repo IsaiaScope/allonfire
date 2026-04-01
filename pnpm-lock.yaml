@@ -105,6 +105,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@allonfire/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@next/bundle-analyzer':
         specifier: ^16.2.1
         version: 16.2.1
@@ -202,6 +205,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@allonfire/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@next/bundle-analyzer':
         specifier: ^16.2.1
         version: 16.2.1
