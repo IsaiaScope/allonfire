@@ -15,7 +15,15 @@ export const metadata: Metadata = {
   description: "Sign in to AllOnFire Social Content Dashboard",
 };
 
-export default async function LoginPage() {
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+async function LoginContent() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) {
     const hasAccess = await checkUserAppAccess(session.user.id, "social");
@@ -25,25 +33,23 @@ export default async function LoginPage() {
   }
 
   return (
-    <Suspense>
-      <LoginForm
-        appName="social"
-        checkAccess={checkAppAccessAction}
-        emailPlaceholder="social@domain.com"
-        logoAlt="AllOnFire Social"
-        logoSrc="/allonfire-social-horizontal.svg"
-        subtitle="Sign in to your dashboard"
-        successIcon={<Sparkles className="size-5 animate-pulse" />}
-        themeToggle={<ThemeToggle size="icon-lg" />}
-        viewerCredentials={
-          env.SOCIAL_VIEWER_EMAIL && env.SOCIAL_VIEWER_PASSWORD
-            ? {
-                email: env.SOCIAL_VIEWER_EMAIL,
-                password: env.SOCIAL_VIEWER_PASSWORD,
-              }
-            : undefined
-        }
-      />
-    </Suspense>
+    <LoginForm
+      appName="social"
+      checkAccess={checkAppAccessAction}
+      emailPlaceholder="social@domain.com"
+      logoAlt="AllOnFire Social"
+      logoSrc="/allonfire-social-horizontal.svg"
+      subtitle="Sign in to your dashboard"
+      successIcon={<Sparkles className="size-5 animate-pulse" />}
+      themeToggle={<ThemeToggle size="icon-lg" />}
+      viewerCredentials={
+        env.SOCIAL_VIEWER_EMAIL && env.SOCIAL_VIEWER_PASSWORD
+          ? {
+              email: env.SOCIAL_VIEWER_EMAIL,
+              password: env.SOCIAL_VIEWER_PASSWORD,
+            }
+          : undefined
+      }
+    />
   );
 }

@@ -4,6 +4,7 @@ import { Button } from "@allonfire/ui/components/button";
 import { cn } from "@allonfire/ui/lib/utils";
 import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useIsViewer } from "@/components/user-role-provider";
 import type { QuizQuestionData } from "@/features/games/actions/quiz";
@@ -29,6 +30,7 @@ type QuizBoardProps = {
 
 export function QuizBoard({ initialQuestions }: QuizBoardProps) {
   const t = useTranslations("Games");
+  const router = useRouter();
   const isViewer = useIsViewer();
   const {
     currentQuestion,
@@ -58,6 +60,10 @@ export function QuizBoard({ initialQuestions }: QuizBoardProps) {
         mistakes={mistakes}
         onPlayAgain={resetGame}
         onRetrySubmit={retrySubmit}
+        onViewLeaderboard={() => {
+          router.push("/games/quiz/leaderboard");
+          router.refresh();
+        }}
         submitState={submitState}
         totalQuestions={totalQuestions}
       />
