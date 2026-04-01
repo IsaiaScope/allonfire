@@ -38,5 +38,31 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    shortcuts: [
+      {
+        name: "Gallery",
+        short_name: "Gallery",
+        url: "/",
+        icons: [
+          { src: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+      {
+        name: "Favorites",
+        short_name: "Favorites",
+        url: "/favorites",
+        icons: [
+          { src: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+      {
+        name: "Games",
+        short_name: "Games",
+        url: "/games",
+        icons: [
+          { src: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        ],
+      },
+    ],
   };
 }

@@ -1,6 +1,10 @@
 import { checkAppAccess } from "@allonfire/auth/guard";
 import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  AnimatedPageWrapper,
+  AnimatedSection,
+} from "@/components/animated-page";
 import { getQuizQuestionByIdAction } from "@/features/games/actions/quiz";
 import { QuizQuestionForm } from "@/features/games/components/quiz-question-form";
 import { auth } from "@/lib/auth";
@@ -39,17 +43,17 @@ export default async function QuizEditQuestionPage({
   const t = await getTranslations("Games");
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
-      <div>
+    <AnimatedPageWrapper className="mx-auto w-full max-w-2xl space-y-6">
+      <AnimatedSection>
         <h1 className="font-bold text-2xl tracking-tight">
           {t("quizEditUpdateSubmit")}
         </h1>
         <p className="text-muted-foreground text-sm">
           {t("quizEditDescription")}
         </p>
-      </div>
+      </AnimatedSection>
 
       <QuizQuestionForm initialData={question} />
-    </div>
+    </AnimatedPageWrapper>
   );
 }
