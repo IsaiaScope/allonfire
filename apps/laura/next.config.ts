@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    staleTimes: {
+      dynamic: 30,
+    },
   },
   transpilePackages: [
     "@allonfire/auth",

@@ -28,6 +28,7 @@ export function JsonLd({
     applicationCategory: "EntertainmentApplication",
     operatingSystem: "Any",
     description,
+    featureList: ["Photo Gallery", "Memory Game", "Quiz Game", "Leaderboards"],
     offers: {
       "@type": "Offer",
       price: "0",

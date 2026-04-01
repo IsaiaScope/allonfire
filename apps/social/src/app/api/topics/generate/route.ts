@@ -39,10 +39,5 @@ export async function GET(request: Request) {
     search,
   });
 
-  const response = NextResponse.json(result);
-  response.headers.set(
-    "Cache-Control",
-    "private, max-age=30, stale-while-revalidate=60"
-  );
-  return response;
+  return NextResponse.json(result);
 }
