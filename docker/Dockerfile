@@ -50,6 +50,6 @@ COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/standalon
 COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/.next/static ./apps/${APP_NAME}/.next/static
 COPY --from=builder --chown=appuser:nodejs /app/apps/${APP_NAME}/public ./apps/${APP_NAME}/public
 USER appuser
-ENV PORT=3000 NODE_ENV=production
+ENV PORT=3000 HOSTNAME=0.0.0.0 NODE_ENV=production
 EXPOSE 3000
 CMD ["sh", "-c", "node apps/${APP_NAME}/server.js"]
