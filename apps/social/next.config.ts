@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   experimental: {
     authInterrupts: true,
+    staleTimes: {
+      dynamic: 30,
+    },
   },
   images: {
     formats: ["image/avif", "image/webp"],
