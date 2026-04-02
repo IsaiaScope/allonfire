@@ -7,6 +7,7 @@ export {
 export type { LeaderboardEntry } from "./game-score.service";
 export {
   getGameStats,
+  getGlobalBestScore,
   getLeaderboard,
   getUserBestScore,
   getUserGameStats,

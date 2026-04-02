@@ -4,16 +4,19 @@ import { checkAppAccess, checkMutationAccess } from "@allonfire/auth/guard";
 import type { GameType } from "@allonfire/database";
 import {
   getAllRandomPhotos,
-  getGameStats,
-  getLeaderboard,
+  getGlobalBestScore,
   getPhotoCount,
   getUserBestScore,
   getUserGameStats,
   submitGameScore,
 } from "@allonfire/database";
 import { blurHashToDataURL } from "@allonfire/storage";
-import { revalidatePath } from "next/cache";
+import { updateTag } from "next/cache";
 import { headers } from "next/headers";
+import {
+  getCachedLeaderboardData,
+  LEADERBOARD_CACHE_TAGS,
+} from "@/features/games/actions/leaderboard-cache";
 import { auth } from "@/lib/auth";
 
 export type MemoryCard = {
@@ -97,12 +100,7 @@ export async function submitScoreAction(data: {
     return { success: false, error: "Invalid score data" };
   }
 
-  const existingBest = await getUserBestScore(session.user.id, data.gameType);
-  const isNewBest =
-    !existingBest ||
-    data.moves < (existingBest.score ?? Number.POSITIVE_INFINITY) ||
-    (data.moves === (existingBest.score ?? Number.POSITIVE_INFINITY) &&
-      data.timeMs < (existingBest.timeMs ?? Number.POSITIVE_INFINITY));
+  const globalBest = await getGlobalBestScore(data.gameType);
 
   await submitGameScore({
     userId: session.user.id,
@@ -112,7 +110,13 @@ export async function submitScoreAction(data: {
     metadata: { pairs: 6, gridSize: "3x4" },
   });
 
-  revalidatePath("/games/memory/leaderboard");
+  const isNewBest =
+    !globalBest ||
+    data.moves < (globalBest.score ?? Number.POSITIVE_INFINITY) ||
+    (data.moves === (globalBest.score ?? Number.POSITIVE_INFINITY) &&
+      data.timeMs < (globalBest.timeMs ?? Number.POSITIVE_INFINITY));
+
+  updateTag(LEADERBOARD_CACHE_TAGS.MEMORY);
 
   return { success: true, isNewBest };
 }
@@ -133,18 +137,23 @@ export type LeaderboardData = {
     bestTimeMs: number | null;
   };
   currentUserId: string;
-  userStats: { totalGames: number };
-  userBestTimeMs: number | null;
+  userStats: {
+    totalGames: number;
+    bestTimeMs: number | null;
+    bestScore: number | null;
+  };
 };
 
-export async function getBestTimeAction(): Promise<number | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
+export type GlobalBest = { timeMs: number; score: number };
+
+export async function getGlobalBestAction(
+  gameType: GameType
+): Promise<GlobalBest | null> {
+  const best = await getGlobalBestScore(gameType);
+  if (!best?.timeMs || best.score == null) {
     return null;
   }
-
-  const best = await getUserBestScore(session.user.id, "MEMORY");
-  return best?.timeMs ?? null;
+  return { timeMs: best.timeMs, score: best.score };
 }
 
 export async function getLeaderboardAction(
@@ -155,21 +164,24 @@ export async function getLeaderboardAction(
     throw new Error("Not authenticated");
   }
 
-  const [scores, stats, userStats, userBest] = await Promise.all([
-    getLeaderboard(gameType, 25),
-    getGameStats(gameType),
+  const [cached, userGameStats, userBest] = await Promise.all([
+    getCachedLeaderboardData(gameType),
     getUserGameStats(session.user.id),
     getUserBestScore(session.user.id, gameType),
   ]);
 
+  const userGamesForType =
+    userGameStats.gamesPerType.find((g) => g.gameType === gameType)?._count ??
+    0;
+
   return {
-    scores: scores.map((s) => ({
-      ...s,
-      createdAt: s.createdAt.toISOString(),
-    })),
-    stats,
+    scores: cached.scores,
+    stats: cached.stats,
     currentUserId: session.user.id,
-    userStats: { totalGames: userStats.totalGames },
-    userBestTimeMs: userBest?.timeMs ?? null,
+    userStats: {
+      totalGames: userGamesForType,
+      bestTimeMs: userBest?.timeMs ?? null,
+      bestScore: userBest?.score ?? null,
+    },
   };
 }
