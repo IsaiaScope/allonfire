@@ -175,27 +175,31 @@ export function useMemoryGame(
       timerRef.current = null;
     }
 
-    const result = await getMemoryPhotosAction();
-    if (!result.success) {
-      return;
-    }
+    try {
+      const result = await getMemoryPhotosAction();
+      if (!result.success) {
+        return;
+      }
 
-    setCards(
-      result.cards.map((card, index) => ({
-        ...card,
-        index,
-        isFlipped: false,
-        isMatched: false,
-      }))
-    );
-    setGameState("idle");
-    setFirstCard(null);
-    setSecondCard(null);
-    setMoves(0);
-    setElapsedMs(0);
-    setSubmitState("idle");
-    setIsNewBest(false);
-    startTimeRef.current = null;
+      setCards(
+        result.cards.map((card, index) => ({
+          ...card,
+          index,
+          isFlipped: false,
+          isMatched: false,
+        }))
+      );
+      setGameState("idle");
+      setFirstCard(null);
+      setSecondCard(null);
+      setMoves(0);
+      setElapsedMs(0);
+      setSubmitState("idle");
+      setIsNewBest(false);
+      startTimeRef.current = null;
+    } catch {
+      // Server action failed — preserve current cards and game state
+    }
   }, []);
 
   const retrySubmit = useCallback(() => {

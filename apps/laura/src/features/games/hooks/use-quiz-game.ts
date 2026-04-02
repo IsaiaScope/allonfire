@@ -171,22 +171,26 @@ export function useQuizGame(
       timerRef.current = null;
     }
 
-    const result = await getQuizQuestionsAction();
-    if (!result.success) {
-      return;
-    }
+    try {
+      const result = await getQuizQuestionsAction();
+      if (!result.success) {
+        return;
+      }
 
-    setQuestions(result.questions);
-    setCurrentIndex(0);
-    setSelectedAnswerId(null);
-    setPlayerAnswers([]);
-    setGameState("idle");
-    setElapsedMs(0);
-    setSubmitState("idle");
-    setIsNewBest(false);
-    setIsTransitioning(false);
-    setLastAnswerResult(null);
-    startTimeRef.current = null;
+      setQuestions(result.questions);
+      setCurrentIndex(0);
+      setSelectedAnswerId(null);
+      setPlayerAnswers([]);
+      setGameState("idle");
+      setElapsedMs(0);
+      setSubmitState("idle");
+      setIsNewBest(false);
+      setIsTransitioning(false);
+      setLastAnswerResult(null);
+      startTimeRef.current = null;
+    } catch {
+      // Server action failed — preserve current questions and game state
+    }
   }, []);
 
   const retrySubmit = useCallback(() => {
