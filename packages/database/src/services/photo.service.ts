@@ -1,4 +1,5 @@
 import type { Photo } from "../../generated/prisma/client";
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../index";
 
 export const DEFAULT_PAGE_SIZE = 50;
@@ -54,15 +55,35 @@ export async function getPhotoCount() {
   return await prisma.photo.count();
 }
 
-export async function getRandomPhotos(userId: string, count: number) {
-  return await prisma.$queryRaw<
-    { id: string; thumbnailUrl: string; blurHash: string }[]
-  >`
+type RandomPhoto = { id: string; thumbnailUrl: string; blurHash: string };
+
+// Two-tier dedup: prefix-6 first for visual diversity, fallback to exact blurHash
+async function queryRandomPhotos(
+  count: number,
+  filter: Prisma.Sql = Prisma.empty
+) {
+  const photos = await prisma.$queryRaw<RandomPhoto[]>`
+    SELECT id, "thumbnailUrl", "blurHash"
+    FROM (
+      SELECT DISTINCT ON (LEFT("blurHash", 6)) id, "thumbnailUrl", "blurHash"
+      FROM "Photo"
+      ${filter}
+      ORDER BY LEFT("blurHash", 6), RANDOM()
+    ) sub
+    ORDER BY RANDOM()
+    LIMIT ${count}
+  `;
+
+  if (photos.length >= count) {
+    return photos;
+  }
+
+  return await prisma.$queryRaw<RandomPhoto[]>`
     SELECT id, "thumbnailUrl", "blurHash"
     FROM (
       SELECT DISTINCT ON ("blurHash") id, "thumbnailUrl", "blurHash"
       FROM "Photo"
-      WHERE "uploadedBy" = ${userId}
+      ${filter}
       ORDER BY "blurHash", RANDOM()
     ) sub
     ORDER BY RANDOM()
@@ -70,24 +91,17 @@ export async function getRandomPhotos(userId: string, count: number) {
   `;
 }
 
-export async function getAllRandomPhotos(count: number) {
-  return await prisma.$queryRaw<
-    { id: string; thumbnailUrl: string; blurHash: string }[]
-  >`
-    SELECT id, "thumbnailUrl", "blurHash"
-    FROM (
-      SELECT DISTINCT ON ("blurHash") id, "thumbnailUrl", "blurHash"
-      FROM "Photo"
-      ORDER BY "blurHash", RANDOM()
-    ) sub
-    ORDER BY RANDOM()
-    LIMIT ${count}
-  `;
+export function getRandomPhotos(userId: string, count: number) {
+  return queryRandomPhotos(count, Prisma.sql`WHERE "uploadedBy" = ${userId}`);
+}
+
+export function getAllRandomPhotos(count: number) {
+  return queryRandomPhotos(count);
 }
 
 export async function getUserPhotoCount(userId: string) {
   const result = await prisma.$queryRaw<[{ count: bigint }]>`
-    SELECT COUNT(DISTINCT "blurHash") as count
+    SELECT COUNT(DISTINCT LEFT("blurHash", 6)) as count
     FROM "Photo"
     WHERE "uploadedBy" = ${userId}
   `;

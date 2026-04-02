@@ -1,14 +1,13 @@
 "use server";
 
 import { checkAdminAccess, checkMutationAccess } from "@allonfire/auth/guard";
-import type { GameType } from "@allonfire/database";
 import {
   createQuizQuestion,
   deleteQuizQuestion,
   getAllQuizQuestions,
+  getGlobalBestScore,
   getQuizQuestionById,
   getRandomQuizQuestions,
-  getUserBestScore,
   submitGameScore,
   updateQuizQuestion,
 } from "@allonfire/database";
@@ -18,12 +17,13 @@ import {
   uploadFile,
 } from "@allonfire/storage";
 import { formatErrorMessage } from "@allonfire/utils";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
   getLeaderboardAction,
   type LeaderboardData,
 } from "@/features/games/actions/games";
+import { LEADERBOARD_CACHE_TAGS } from "@/features/games/actions/leaderboard-cache";
 import { auth } from "@/lib/auth";
 import { validateImageFile } from "@/lib/file-validation";
 
@@ -147,22 +147,23 @@ export async function submitQuizScoreAction(data: {
     return { success: false, error: "Invalid score data" };
   }
 
-  const existingBest = await getUserBestScore(session.user.id, "QUIZ");
-  const isNewBest =
-    !existingBest ||
-    data.correctCount > (existingBest.score ?? 0) ||
-    (data.correctCount === (existingBest.score ?? 0) &&
-      data.timeMs < (existingBest.timeMs ?? Number.POSITIVE_INFINITY));
+  const globalBest = await getGlobalBestScore("QUIZ");
 
   await submitGameScore({
     userId: session.user.id,
-    gameType: "QUIZ" as GameType,
+    gameType: "QUIZ",
     timeMs: data.timeMs,
     score: data.correctCount,
     metadata: { questionCount: data.totalQuestions },
   });
 
-  revalidatePath("/games/quiz/leaderboard");
+  const isNewBest =
+    !globalBest ||
+    data.correctCount > (globalBest.score ?? 0) ||
+    (data.correctCount === (globalBest.score ?? 0) &&
+      data.timeMs < (globalBest.timeMs ?? Number.POSITIVE_INFINITY));
+
+  updateTag(LEADERBOARD_CACHE_TAGS.QUIZ);
 
   return { success: true, isNewBest };
 }
