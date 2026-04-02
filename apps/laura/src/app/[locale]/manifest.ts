@@ -2,9 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AllOnFire — Laura",
+    name: "Laura — Isaia & Laura's Photos & Games",
     short_name: "Laura",
-    description: "Our little place for photos and fun",
+    description:
+      "A private space for Isaia and Laura to share photos and play games together",
     id: "/",
     start_url: "/",
     scope: "/",

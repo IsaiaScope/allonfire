@@ -50,9 +50,12 @@ export async function generateMetadata({
       type: "website",
       locale: locale === "it" ? "it_IT" : "en_US",
       siteName: seo("siteName"),
+      url: baseUrl,
+      images: [{ url: `${baseUrl}/opengraph-image`, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
+      images: [`${baseUrl}/opengraph-image`],
     },
     alternates: {
       canonical: locale === "it" ? baseUrl : `${baseUrl}/en`,
