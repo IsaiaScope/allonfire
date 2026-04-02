@@ -3,7 +3,7 @@ import { Upload } from "lucide-react";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import {
-  getBestTimeAction,
+  getGlobalBestAction,
   getMemoryPhotosAction,
 } from "@/features/games/actions/games";
 import { MemoryBoard } from "@/features/games/components/memory-board";
@@ -33,9 +33,9 @@ export default async function MemoryGamePage({
   setRequestLocale(locale);
 
   const t = await getTranslations("Games");
-  const [result, bestTimeMs] = await Promise.all([
+  const [result, globalBest] = await Promise.all([
     getMemoryPhotosAction(),
-    getBestTimeAction(),
+    getGlobalBestAction("MEMORY"),
   ]);
 
   if (!result.success) {
@@ -54,7 +54,7 @@ export default async function MemoryGamePage({
 
   return (
     <div className="flex flex-1 flex-col md:justify-center">
-      <MemoryBoard bestTimeMs={bestTimeMs} initialCards={result.cards} />
+      <MemoryBoard globalBest={globalBest} initialCards={result.cards} />
     </div>
   );
 }

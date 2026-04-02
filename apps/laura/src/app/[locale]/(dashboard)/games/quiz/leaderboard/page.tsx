@@ -78,6 +78,7 @@ export default async function QuizLeaderboardPage({
             bestTimeMs={data.stats.bestTimeMs}
             totalGames={data.stats.totalGames}
             uniquePlayers={data.stats.uniquePlayers}
+            userStats={data.userStats}
           />
         </AnimatedSection>
       </AnimatedPageWrapper>
