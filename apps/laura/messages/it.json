@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Laura",
-    "description": "Il nostro angolino di ricordi e giochi"
+    "description": "Il nostro spazio privato per foto e giochi — solo noi due"
   },
   "Nav": {
     "gallery": "Galleria",
@@ -247,15 +247,15 @@
     "quizDeleteError": "Eliminazione domanda fallita"
   },
   "SEO": {
-    "siteName": "Laura — Foto di Famiglia e Giochi",
-    "siteDescription": "Il nostro angolino di ricordi e giochi",
-    "loginTitle": "Laura — Foto di Famiglia e Giochi",
-    "loginDescription": "Uno spazio privato per la famiglia dove condividere foto, giocare a memory e quiz insieme, e tenere il punteggio in classifica. Accedi per esplorare.",
-    "galleryDescription": "Sfoglia la nostra galleria di foto di famiglia",
-    "gamesHubDescription": "Giochi divertenti con le nostre foto di famiglia",
-    "memoryDescription": "Gioca a memory — abbina le coppie di foto il più velocemente possibile",
+    "siteName": "Laura — Le Foto e i Giochi di Isaia e Laura",
+    "siteDescription": "Il nostro spazio privato per foto e giochi — solo noi due",
+    "loginTitle": "Laura — Le Foto e i Giochi di Isaia e Laura",
+    "loginDescription": "Uno spazio privato per Isaia e Laura dove condividere foto, giocare a memory e quiz insieme, e tenere il punteggio in classifica. Accedi per esplorare.",
+    "galleryDescription": "Sfoglia la nostra galleria — i ricordi di Isaia e Laura insieme",
+    "gamesHubDescription": "Giochi divertenti da fare insieme con le nostre foto",
+    "memoryDescription": "Gioca a memory — abbina le coppie delle nostre foto",
     "memoryLeaderboardDescription": "Classifica memory — scopri chi abbina le foto più velocemente",
-    "quizDescription": "Fai il quiz di famiglia — rispondi alle domande e metti alla prova le tue conoscenze",
+    "quizDescription": "Fai il quiz — rispondi alle domande e metti alla prova le tue conoscenze",
     "quizLeaderboardDescription": "Classifica quiz — più risposte corrette nel minor tempo"
   }
 }

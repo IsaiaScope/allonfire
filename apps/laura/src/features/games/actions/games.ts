@@ -100,7 +100,9 @@ export async function submitScoreAction(data: {
   const existingBest = await getUserBestScore(session.user.id, data.gameType);
   const isNewBest =
     !existingBest ||
-    data.timeMs < (existingBest.timeMs ?? Number.POSITIVE_INFINITY);
+    data.moves < (existingBest.score ?? Number.POSITIVE_INFINITY) ||
+    (data.moves === (existingBest.score ?? Number.POSITIVE_INFINITY) &&
+      data.timeMs < (existingBest.timeMs ?? Number.POSITIVE_INFINITY));
 
   await submitGameScore({
     userId: session.user.id,
