@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Laura — Family Photos & Games";
+export const alt = "Laura — Isaia & Laura's Photos & Games";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -74,7 +74,7 @@ export default function OgImage() {
           letterSpacing: 1,
         }}
       >
-        Family Photos & Games
+        Isaia & Laura's Photos & Games
       </div>
 
       {/* Feature pills */}

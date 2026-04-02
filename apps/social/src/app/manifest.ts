@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AllOnFire — Social Engine",
-    short_name: "AllOnFire",
+    name: "Social — Content Dashboard",
+    short_name: "Social",
     description: "Automated social media content creation and publishing",
     id: "/",
     start_url: "/",
