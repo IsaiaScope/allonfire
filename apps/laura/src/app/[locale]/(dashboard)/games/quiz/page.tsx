@@ -2,6 +2,7 @@ import { Button } from "@allonfire/ui/components/button";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getGlobalBestAction } from "@/features/games/actions/games";
 import { getQuizQuestionsAction } from "@/features/games/actions/quiz";
 import { QuizBoard } from "@/features/games/components/quiz-board";
 import { getAlternates } from "@/lib/seo";
@@ -30,7 +31,10 @@ export default async function QuizGamePage({
   setRequestLocale(locale);
 
   const t = await getTranslations("Games");
-  const result = await getQuizQuestionsAction();
+  const [result, globalBest] = await Promise.all([
+    getQuizQuestionsAction(),
+    getGlobalBestAction("QUIZ"),
+  ]);
 
   if (!result.success) {
     return (
@@ -52,7 +56,7 @@ export default async function QuizGamePage({
 
   return (
     <div className="flex flex-1 flex-col py-2">
-      <QuizBoard initialQuestions={result.questions} />
+      <QuizBoard globalBest={globalBest} initialQuestions={result.questions} />
     </div>
   );
 }

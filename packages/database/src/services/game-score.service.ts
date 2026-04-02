@@ -30,33 +30,36 @@ export async function submitGameScore(data: {
   });
 }
 
+function getScoreOrderBy(gameType: GameType) {
+  return gameType === "QUIZ"
+    ? [{ score: "desc" as const }, { timeMs: "asc" as const }]
+    : [{ score: "asc" as const }, { timeMs: "asc" as const }];
+}
+
 export async function getLeaderboard(
   gameType: GameType,
   limit = 25
 ): Promise<LeaderboardEntry[]> {
-  const orderBy =
-    gameType === "QUIZ"
-      ? [{ score: "desc" as const }, { timeMs: "asc" as const }]
-      : [{ score: "asc" as const }, { timeMs: "asc" as const }];
-
   return await prisma.gameScore.findMany({
     where: { gameType, timeMs: { not: null } },
     distinct: ["userId"],
-    orderBy,
+    orderBy: getScoreOrderBy(gameType),
     take: limit,
     include: { user: { select: { name: true, image: true } } },
   });
 }
 
-export async function getUserBestScore(userId: string, gameType: GameType) {
-  const orderBy =
-    gameType === "QUIZ"
-      ? [{ score: "desc" as const }, { timeMs: "asc" as const }]
-      : [{ score: "asc" as const }, { timeMs: "asc" as const }];
+export async function getGlobalBestScore(gameType: GameType) {
+  return await prisma.gameScore.findFirst({
+    where: { gameType, timeMs: { not: null } },
+    orderBy: getScoreOrderBy(gameType),
+  });
+}
 
+export async function getUserBestScore(userId: string, gameType: GameType) {
   return await prisma.gameScore.findFirst({
     where: { userId, gameType, timeMs: { not: null } },
-    orderBy,
+    orderBy: getScoreOrderBy(gameType),
   });
 }
 

@@ -25,7 +25,7 @@ export function useQuizGame(
   initialQuestions: QuizQuestionData[],
   options?: { isViewer?: boolean }
 ) {
-  const [questions] = useState(initialQuestions);
+  const [questions, setQuestions] = useState(initialQuestions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   const [playerAnswers, setPlayerAnswers] = useState<PlayerAnswer[]>([]);
@@ -176,6 +176,7 @@ export function useQuizGame(
       return;
     }
 
+    setQuestions(result.questions);
     setCurrentIndex(0);
     setSelectedAnswerId(null);
     setPlayerAnswers([]);

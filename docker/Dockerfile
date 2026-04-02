@@ -27,12 +27,13 @@ COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
-# collection. MINIO_ENDPOINT and MINIO_BUCKET must match runtime values because
-# Next.js rewrites are compiled at build time. Other values are placeholders
-# that never reach the runner stage (multi-stage isolation).
+# collection. MINIO_ENDPOINT, MINIO_BUCKET, and BETTER_AUTH_URL must match
+# runtime values because Next.js bakes them into prerendered HTML at build time.
+# Other values are placeholders that never reach the runner stage (multi-stage isolation).
+ARG BETTER_AUTH_URL="http://localhost:3000"
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     BETTER_AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
-    BETTER_AUTH_URL="http://localhost:3000" \
+    BETTER_AUTH_URL=${BETTER_AUTH_URL} \
     MINIO_ENDPOINT="http://minio:9000" \
     MINIO_ACCESS_KEY="build" \
     MINIO_SECRET_KEY="build-placeholder" \
