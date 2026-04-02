@@ -46,6 +46,8 @@ export default async function GeneratePage({
     0
   );
 
+  const showEmptyState = !validRating && totalCount === 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,7 +69,7 @@ export default async function GeneratePage({
 
       {user.role === "VIEWER" && <ViewerBanner />}
 
-      {totalCount === 0 ? (
+      {showEmptyState ? (
         <EmptyState
           description="Select topics from the Discover page to queue them for prompt generation."
           icon={Sparkles}

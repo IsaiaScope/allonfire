@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   experimental: {
     authInterrupts: true,
     staleTimes: {
-      dynamic: 30,
+      dynamic: 300,
     },
   },
   images: {

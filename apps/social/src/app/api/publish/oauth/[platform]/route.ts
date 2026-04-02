@@ -10,6 +10,7 @@ import {
   getLinkedInAuthUrl,
   getTwitterAuthUrl,
 } from "@allonfire/social-publisher/oauth";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { env } from "@/env";
@@ -226,6 +227,9 @@ async function handleCallback(
     platformUserId: profile.id,
     platformUsername: profile.name,
   });
+
+  revalidatePath("/publish");
+  revalidatePath("/settings/general");
 
   const html = `<html><body><script>
 window.opener.postMessage({ type: "oauth-complete", platform: "${dbPlatform}" }, window.location.origin);

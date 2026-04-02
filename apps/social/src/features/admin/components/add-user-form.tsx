@@ -98,7 +98,7 @@ export function AddUserForm() {
             type={showPassword ? "text" : "password"}
           />
           <button
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground"
             onClick={() => setShowPassword((prev) => !prev)}
             tabIndex={-1}
             type="button"
