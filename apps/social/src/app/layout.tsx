@@ -21,17 +21,19 @@ const fontMono = Roboto_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3100"),
   title: {
-    default: "AllOnFire — Social Content Dashboard",
-    template: "%s | AllOnFire",
+    default: "Social — Content Dashboard",
+    template: "%s | Social",
   },
   description: "Automated social media content creation and publishing",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "AllOnFire",
+    siteName: "Social",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: false,
@@ -47,7 +49,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "AllOnFire",
+    title: "Social",
     statusBarStyle: "black-translucent",
   },
   other: {

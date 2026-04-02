@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "AllOnFire — Laura";
+export const alt = "Isaia & Laura — Photos & Games";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -47,12 +47,12 @@ export default function OgImage() {
             padding: "8px 24px",
             borderRadius: 12,
             background: "linear-gradient(90deg, #8B5E3C, #c28232)",
-            fontSize: 28,
-            letterSpacing: 4,
+            fontSize: 24,
+            letterSpacing: 3,
             fontWeight: 400,
           }}
         >
-          FAMILY PHOTOS & GAMES
+          ISAIA & LAURA'S PHOTOS & GAMES
         </div>
       </div>
       <div
@@ -63,7 +63,7 @@ export default function OgImage() {
           marginTop: 32,
         }}
       >
-        Our little place for photos and fun
+        Our private space for photos and games
       </div>
     </div>,
     { ...size }

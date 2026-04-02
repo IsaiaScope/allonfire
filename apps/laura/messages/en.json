@@ -1,7 +1,7 @@
 {
   "Metadata": {
     "title": "Laura",
-    "description": "Our little place for photos and fun"
+    "description": "A private space for Isaia and Laura to share photos and play games together"
   },
   "Nav": {
     "gallery": "Gallery",
@@ -247,15 +247,15 @@
     "quizDeleteError": "Failed to delete question"
   },
   "SEO": {
-    "siteName": "Laura — Family Photos & Games",
-    "siteDescription": "Our little place for photos and fun",
-    "loginTitle": "Laura — Family Photos & Games",
-    "loginDescription": "A private family space for sharing photos, playing memory and quiz games together, and keeping score on the leaderboard. Sign in to explore.",
-    "galleryDescription": "Browse our family photo gallery together",
-    "gamesHubDescription": "Fun games to play with our family photos",
-    "memoryDescription": "Play the memory game — match pairs of family photos",
+    "siteName": "Laura — Isaia & Laura's Photos & Games",
+    "siteDescription": "A private space for Isaia and Laura to share photos and play games together",
+    "loginTitle": "Laura — Isaia & Laura's Photos & Games",
+    "loginDescription": "A private space for Isaia and Laura to share photos, play memory and quiz games together, and keep score on the leaderboard. Sign in to explore.",
+    "galleryDescription": "Browse our photo gallery — Isaia & Laura's memories together",
+    "gamesHubDescription": "Fun games to play together with our photos",
+    "memoryDescription": "Play the memory game — match pairs of our photos",
     "memoryLeaderboardDescription": "Memory game leaderboard — see who matched photos fastest",
-    "quizDescription": "Take the family quiz — test your knowledge with fun questions",
+    "quizDescription": "Take the quiz — test your knowledge with fun questions",
     "quizLeaderboardDescription": "Quiz leaderboard — most correct answers in the shortest time"
   }
 }
