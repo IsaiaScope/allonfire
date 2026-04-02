@@ -7,6 +7,7 @@ export function useGameReset(resetGame: () => Promise<void>) {
   const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
@@ -18,11 +19,13 @@ export function useGameReset(resetGame: () => Promise<void>) {
     if (!mountedRef.current) {
       return;
     }
-    await resetGame();
-    if (!mountedRef.current) {
-      return;
+    try {
+      await resetGame();
+    } finally {
+      if (mountedRef.current) {
+        setIsResetting(false);
+      }
     }
-    setIsResetting(false);
   }, [resetGame]);
 
   return { isResetting, handleReset };
