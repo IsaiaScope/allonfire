@@ -117,7 +117,7 @@ export function QuizBoard({ initialQuestions, globalBest }: QuizBoardProps) {
       {/* Progress bar + content with reset fade */}
       <div
         className={cn(
-          "flex flex-col gap-4 transition-opacity duration-200",
+          "flex flex-col gap-4 transition-opacity duration-100",
           isResetting ? "opacity-0" : "opacity-100"
         )}
       >
