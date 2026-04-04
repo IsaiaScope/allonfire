@@ -90,7 +90,7 @@ export function MemoryBoard({ initialCards, globalBest }: MemoryBoardProps) {
       <div className="min-h-0 flex-1" ref={ref}>
         <div
           className={cn(
-            "h-full transition-opacity duration-200",
+            "h-full transition-opacity duration-100",
             ready && !isResetting ? "opacity-100" : "opacity-0"
           )}
           style={

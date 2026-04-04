@@ -357,7 +357,7 @@ export async function createQuestionAction(
       answers: answersData,
     });
 
-    revalidatePath("/games/quiz/edit");
+    revalidatePath("/games/quiz/edit", "layout");
     return { success: true, questionId: question.id };
   } catch (error) {
     return {
@@ -498,7 +498,7 @@ export async function updateQuestionAction(
       answers: answersData,
     });
 
-    revalidatePath("/games/quiz/edit");
+    revalidatePath("/games/quiz/edit", "layout");
     return { success: true };
   } catch (error) {
     return {
@@ -518,7 +518,7 @@ export async function deleteQuestionAction(
 
   try {
     await deleteQuizQuestion(id);
-    revalidatePath("/games/quiz/edit");
+    revalidatePath("/games/quiz/edit", "layout");
     return { success: true };
   } catch (error) {
     return {
