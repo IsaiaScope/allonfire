@@ -15,7 +15,7 @@ export function useGameReset(resetGame: () => Promise<void>) {
 
   const handleReset = useCallback(async () => {
     setIsResetting(true);
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     if (!mountedRef.current) {
       return;
     }

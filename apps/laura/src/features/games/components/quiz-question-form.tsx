@@ -313,6 +313,16 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
         toast.success(
           isEditMode ? t("quizUpdateSuccess") : t("quizCreateSuccess")
         );
+        if (!isEditMode) {
+          // Reset form state before navigation so the Router Cache
+          // doesn't preserve stale values when re-visiting /new
+          setQuestionText("");
+          setQuestionImage(null);
+          setQuestionImagePreview(null);
+          setExistingQuestionImageUrl(null);
+          setAnswers([makeAnswerSlot({ isCorrect: true }), makeAnswerSlot()]);
+          setError(null);
+        }
         router.push("/games/quiz/edit");
         router.refresh();
       } else {
@@ -439,7 +449,7 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: backdrop click-to-close
           // biome-ignore lint/a11y/useKeyWithClickEvents: Escape handled via useEffect
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-2"
+            className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90 p-2"
             onClick={() => setShowQuestionPreview(false)}
             role="dialog"
           >
