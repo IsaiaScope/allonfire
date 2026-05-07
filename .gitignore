@@ -49,7 +49,6 @@ yarn-error.log*
 # Claude Code
 .claude/*.local.json
 .superpowers/
-docs/superpowers/
 
 # Worktrees
 .worktrees
