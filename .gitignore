@@ -1,3 +1,6 @@
+# Knowledge graph (generated, machine-specific)
+graphify-out/
+
 # Dependencies
 node_modules
 .pnp
@@ -46,7 +49,6 @@ yarn-error.log*
 # Claude Code
 .claude/*.local.json
 .superpowers/
-docs/superpowers/
 
 # Worktrees
 .worktrees
