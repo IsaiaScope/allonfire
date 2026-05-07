@@ -1,3 +1,6 @@
+# Knowledge graph (generated, machine-specific)
+graphify-out/
+
 # Dependencies
 node_modules
 .pnp
