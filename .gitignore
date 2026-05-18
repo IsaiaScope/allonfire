@@ -33,6 +33,9 @@ build
 dist
 next-env.d.ts
 
+# Local model cache
+/models/
+
 # Prisma
 packages/database/generated/
 

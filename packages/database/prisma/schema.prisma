@@ -48,20 +48,20 @@ enum PromptRating {
 // ============ Posts ============
 
 model Post {
-  id             String      @id @default(cuid(2))
+  id             String     @id @default(cuid(2))
   topicId        String?
-  topic          Topic?      @relation(fields: [topicId], references: [id])
+  topic          Topic?     @relation(fields: [topicId], references: [id])
   type           PostType
   platform       Platform
-  status         PostStatus  @default(DRAFT)
+  status         PostStatus @default(DRAFT)
   content        String
   mediaUrl       String?
   mediaType      MediaType?
   publishedAt    DateTime?
   platformPostId String?
   errorMessage   String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@index([status])
   @@index([topicId])
@@ -77,15 +77,15 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid(2))
-  email         String    @unique
-  name          String?
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          Role      @default(USER)
-  allowedApps   String[]  @default(["all"])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String          @id @default(cuid(2))
+  email          String          @unique
+  name           String?
+  emailVerified  Boolean         @default(false)
+  image          String?
+  role           Role            @default(USER)
+  allowedApps    String[]        @default(["all"])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   sessions       Session[]
   accounts       Account[]
   photos         Photo[]
@@ -136,7 +136,7 @@ model SocialAccount {
   refreshToken     String? // Encrypted AES-256-GCM
   tokenExpiresAt   DateTime?
   platformUserId   String?
-  platformUsername  String?
+  platformUsername String?
   connectedAt      DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 

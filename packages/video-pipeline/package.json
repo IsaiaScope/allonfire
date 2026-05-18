@@ -1,0 +1,33 @@
+{
+  "name": "@allonfire/video-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./env": "./src/env.ts"
+  },
+  "bin": {
+    "video-pipeline": "./src/cli/cli.tsx"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check-types": "tsc --noEmit",
+    "video": "tsx --env-file=../../.env src/cli/cli.tsx"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.10",
+    "chalk": "^5.6.2",
+    "commander": "^12.1.0",
+    "ink": "^6.8.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^19.2.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.0"
+  }
+}

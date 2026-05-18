@@ -41,6 +41,7 @@
     "dev:full": "pnpm dev:setup && pnpm dev",
     "db:seed": "pnpm --filter @allonfire/database db:seed",
     "db:export-topics": "pnpm --filter @allonfire/database db:export-topics",
+    "video": "pnpm --filter @allonfire/video-pipeline video",
     "docker:build:social": "docker build --build-arg APP_NAME=social -f docker/Dockerfile -t allonfire-social .",
     "docker:build:laura": "docker build --build-arg APP_NAME=laura -f docker/Dockerfile -t allonfire-laura .",
     "docker:build:all": "pnpm docker:build:social && pnpm docker:build:laura",
