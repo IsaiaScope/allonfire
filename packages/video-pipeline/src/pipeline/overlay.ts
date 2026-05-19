@@ -6,11 +6,7 @@ import { overlayPath, scriptItPath, transcriptPath } from "../lib/paths";
 import { createOverlayVisualEvidence } from "./overlay-watch";
 import type { ProgressCallback } from "./types";
 
-const PROMPT_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "prompts"
-);
+const PROMPT_DIR = join(dirname(fileURLToPath(import.meta.url)), "prompts");
 
 export type GenerateOverlaysResult = {
   usefulVisualEvidence: boolean;

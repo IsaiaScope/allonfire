@@ -694,7 +694,7 @@ function AnswerRow({
           // biome-ignore lint/a11y/noNoninteractiveElementInteractions: backdrop click-to-close is standard for dialog overlays
           // biome-ignore lint/a11y/useKeyWithClickEvents: Escape key handled via useEffect listener
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-2"
+            className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90 p-2"
             onClick={() => setShowPreview(false)}
             role="dialog"
           >

@@ -132,7 +132,7 @@ function ImageAnswerGrid({
           >
             {imageSrc ? (
               <>
-                <div className="relative aspect-[4/3] w-full bg-muted">
+                <div className="relative aspect-4/3 w-full bg-muted">
                   <Image
                     alt={answer.text}
                     blurDataURL={answer.imageBlurDataURL ?? undefined}

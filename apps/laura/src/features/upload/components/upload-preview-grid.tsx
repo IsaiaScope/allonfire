@@ -147,7 +147,7 @@ export function UploadPreviewGrid({
           <div
             aria-label={t("preview")}
             aria-modal="true"
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-2"
+            className="fixed inset-0 z-9999 flex items-center justify-center bg-black/90 p-2"
             onClick={() => setPreviewIndex(null)}
             role="dialog"
           >

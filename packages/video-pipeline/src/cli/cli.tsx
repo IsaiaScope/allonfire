@@ -10,14 +10,13 @@ import { resolveProjectFolder } from "../lib/resolve";
 import { extractYoutubeId } from "../pipeline/download";
 import { DownloadView } from "./commands/download";
 import { InstallView } from "./commands/install";
-import { ListView } from "./commands/list";
+import { MockupsView } from "./commands/mockups";
 import { OverlayView } from "./commands/overlay";
 import { TranscribeView } from "./commands/transcribe";
 import { TranslateView } from "./commands/translate";
 import { UninstallView } from "./commands/uninstall";
 
 const QUALITIES = ["4k", "1080p", "720p"] as const;
-const STATUSES = ["pending", "failed", "done"] as const;
 const WWW_PREFIX_RE = /^www\./;
 
 function parseEnum<T extends string>(allowed: readonly T[]) {
@@ -201,11 +200,24 @@ export function buildCli(): Command {
     );
 
   program
-    .command("list")
-    .option("--status <s>", `(${STATUSES.join("|")})`, parseEnum(STATUSES))
-    .action(async (opts: { status?: (typeof STATUSES)[number] }) => {
-      await mount(<ListView statusFilter={opts.status} />);
-    });
+    .command("mockups [project]")
+    .option("--force", "redo even if mockups exist", false)
+    .option("--overlay <id>", "overlay id from overlay.md")
+    .action(
+      async (
+        project: string | undefined,
+        opts: { force: boolean; overlay?: string }
+      ) => {
+        const folder = resolveProjectFolder(project ?? "", env.VIDEO_WORK_DIR);
+        await mount(
+          <MockupsView
+            folder={folder}
+            force={opts.force}
+            overlayId={opts.overlay}
+          />
+        );
+      }
+    );
 
   return program;
 }

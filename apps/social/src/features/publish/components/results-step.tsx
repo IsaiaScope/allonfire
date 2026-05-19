@@ -76,7 +76,7 @@ export function ResultsStep({ state, onReset }: ResultsStepProps) {
                   {PLATFORM_CONFIG[result.platform]?.label ?? result.platform}
                 </p>
                 {result.error && (
-                  <p className="line-clamp-[10] text-destructive text-xs">
+                  <p className="line-clamp-10 text-destructive text-xs">
                     {result.error}
                   </p>
                 )}

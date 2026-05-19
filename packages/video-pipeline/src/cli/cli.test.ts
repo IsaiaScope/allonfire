@@ -11,7 +11,7 @@ describe("buildCli", () => {
     expect(names).toEqual([
       "download",
       "install",
-      "list",
+      "mockups",
       "overlay",
       "transcribe",
       "translate",
@@ -44,6 +44,14 @@ describe("buildCli", () => {
     const command = program.commands.find((c) => c.name() === "download");
     const title = command?.options.find((o) => o.long === "--title");
     expect(title?.mandatory).toBe(false);
+  });
+
+  it("registers mockups with overlay selection", () => {
+    const program = buildCli();
+    const command = program.commands.find((c) => c.name() === "mockups");
+
+    expect(command?.options.some((o) => o.long === "--overlay")).toBe(true);
+    expect(command?.options.some((o) => o.long === "--force")).toBe(true);
   });
 
   it("adds the shared agent selector to agent-backed commands", () => {

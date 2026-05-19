@@ -41,15 +41,15 @@ function AlertDialogContent({
   return (
     <Dialog.Portal>
       <Dialog.Backdrop
-        className="fixed inset-0 z-50 bg-black/50 transition-opacity data-[closed]:opacity-0 data-[open]:opacity-100"
+        className="fixed inset-0 z-50 bg-black/50 transition-opacity data-closed:opacity-0 data-open:opacity-100"
         data-slot="alert-dialog-backdrop"
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <Dialog.Popup
           className={cn(
             "mx-4 w-full max-w-md rounded-lg border bg-background p-6 shadow-lg transition-all",
-            "data-[open]:fade-in-0 data-[open]:zoom-in-95 data-[open]:animate-in",
-            "data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-[closed]:animate-out",
+            "data-[open]:fade-in-0 data-[open]:zoom-in-95 data-open:animate-in",
+            "data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-closed:animate-out",
             className
           )}
           data-slot="alert-dialog-content"

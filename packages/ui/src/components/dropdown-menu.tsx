@@ -64,7 +64,7 @@ function DropdownMenuContent({
       >
         <Menu.Popup
           className={cn(
-            "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-[open]:fade-in-0 data-[open]:zoom-in-95 z-50 max-h-(--available-height) min-w-[8rem] origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[closed]:animate-out data-[open]:animate-in",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-[open]:fade-in-0 data-[open]:zoom-in-95 z-50 max-h-(--available-height) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-closed:animate-out data-open:animate-in",
             className
           )}
           data-slot="dropdown-menu-content"
@@ -172,7 +172,7 @@ function DropdownMenuLabel({
   return (
     <Menu.GroupLabel
       className={cn(
-        "px-2 py-1.5 font-medium text-sm data-[inset]:pl-8",
+        "px-2 py-1.5 font-medium text-sm data-inset:pl-8",
         className
       )}
       data-inset={inset}
@@ -258,7 +258,7 @@ function DropdownMenuSubContent({
       <Menu.Positioner align={align} side={side} sideOffset={sideOffset}>
         <Menu.Popup
           className={cn(
-            "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-[open]:fade-in-0 data-[open]:zoom-in-95 z-50 min-w-[8rem] origin-(--transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[closed]:animate-out data-[open]:animate-in",
+            "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[closed]:fade-out-0 data-[closed]:zoom-out-95 data-[open]:fade-in-0 data-[open]:zoom-in-95 z-50 min-w-32 origin-(--transform-origin) overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-closed:animate-out data-open:animate-in",
             className
           )}
           data-slot="dropdown-menu-sub-content"

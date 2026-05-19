@@ -53,7 +53,7 @@ async function DashboardShell({
 function DashboardSkeleton() {
   return (
     <Wrapper className="flex flex-1 flex-col overflow-hidden" tag="div">
-      <div className="sticky top-0 z-40 flex h-15 items-center justify-between border-sidebar-border border-b bg-sidebar px-4 py-3 lg:z-30 lg:h-16 lg:border-border lg:bg-background/95 lg:py-0 lg:backdrop-blur lg:supports-[backdrop-filter]:bg-background/60">
+      <div className="sticky top-0 z-40 flex h-15 items-center justify-between border-sidebar-border border-b bg-sidebar px-4 py-3 lg:z-30 lg:h-16 lg:border-border lg:bg-background/95 lg:py-0 lg:backdrop-blur lg:supports-backdrop-filter:bg-background/60">
         <div className="h-9 w-[120px] animate-pulse rounded bg-muted lg:h-[46px] lg:w-[156px]" />
         <div className="hidden lg:flex lg:items-center lg:gap-4">
           <div className="h-9 w-60 animate-pulse rounded bg-muted" />

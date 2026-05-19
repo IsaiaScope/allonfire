@@ -12,11 +12,7 @@ import { isStageDone, readMetadata } from "../lib/metadata";
 import { scriptItPath, transcriptItPath, transcriptPath } from "../lib/paths";
 import type { ProgressCallback } from "./types";
 
-const PROMPT_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "prompts"
-);
+const PROMPT_DIR = join(dirname(fileURLToPath(import.meta.url)), "prompts");
 
 function loadPrompt(name: string): string {
   return readFileSync(join(PROMPT_DIR, `${name}.md`), "utf-8");

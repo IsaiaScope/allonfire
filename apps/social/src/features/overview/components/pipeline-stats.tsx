@@ -162,7 +162,7 @@ export function PipelineStats({ stats }: PipelineStatsProps) {
             transition: { duration: 0.2 },
           }}
         >
-          <Card className="h-full gap-3 border-border/50 bg-gradient-to-br from-chart-5/5 to-chart-5/15 py-4">
+          <Card className="h-full gap-3 border-border/50 bg-linear-to-br from-chart-5/5 to-chart-5/15 py-4">
             <CardHeader className="flex flex-row items-start justify-between pb-0">
               <div>
                 <CardTitle className="font-medium text-muted-foreground text-sm">

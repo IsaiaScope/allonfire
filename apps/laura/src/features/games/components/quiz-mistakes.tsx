@@ -49,7 +49,7 @@ function AnswerCard({
   return (
     <div className={`flex-1 overflow-hidden rounded-lg border ${borderClass}`}>
       {answer.imageUrl && (
-        <div className="relative aspect-[4/3] w-full bg-muted">
+        <div className="relative aspect-4/3 w-full bg-muted">
           <Image
             alt={answer.text}
             blurDataURL={answer.blurDataURL ?? undefined}

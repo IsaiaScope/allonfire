@@ -28,9 +28,6 @@ pnpm video translate 2026-05-13-fsm-spiegata
 
 # 5. Generate overlay library
 pnpm video overlay 2026-05-13-fsm-spiegata
-
-# Browse all projects
-pnpm video list
 ```
 
 ## Project layout

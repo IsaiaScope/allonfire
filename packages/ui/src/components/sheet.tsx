@@ -52,7 +52,7 @@ function SheetClose({
 }
 
 const sheetContentVariants = cva(
-  "fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition-transform duration-300 ease-in-out data-[open]:translate-x-0 data-[open]:translate-y-0",
+  "fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition-transform duration-300 ease-in-out data-open:translate-x-0 data-open:translate-y-0",
   {
     variants: {
       side: {
@@ -79,7 +79,7 @@ function SheetContent({
   return (
     <Dialog.Portal>
       <Dialog.Backdrop
-        className="fixed inset-0 z-50 bg-black/50 transition-opacity data-[closed]:opacity-0 data-[open]:opacity-100"
+        className="fixed inset-0 z-50 bg-black/50 transition-opacity data-closed:opacity-0 data-open:opacity-100"
         data-slot="sheet-backdrop"
       />
       <Dialog.Popup

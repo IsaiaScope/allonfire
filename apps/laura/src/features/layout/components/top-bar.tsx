@@ -32,7 +32,7 @@ export function TopBar({ name, email }: TopBarProps) {
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 flex h-15 items-center justify-between border-sidebar-border border-b bg-sidebar px-4 py-3 lg:z-30 lg:h-16 lg:border-border lg:bg-background/95 lg:py-0 lg:backdrop-blur lg:supports-[backdrop-filter]:bg-background/60",
+          "sticky top-0 z-40 flex h-15 items-center justify-between border-sidebar-border border-b bg-sidebar px-4 py-3 lg:z-30 lg:h-16 lg:border-border lg:bg-background/95 lg:py-0 lg:backdrop-blur lg:supports-backdrop-filter:bg-background/60",
           isGallery && [
             "fixed inset-x-0 border-border transition-transform duration-300 ease-in-out",
             !navbarVisible && "-translate-y-full",

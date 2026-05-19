@@ -190,7 +190,7 @@ export function PhotoPreview({
     "cursor-pointer rounded-full p-2 text-white/80 transition-all hover:scale-105 hover:bg-white/5 hover:text-white active:scale-95 sm:p-2.5";
   const iconClass = "size-5 sm:size-6";
   const tooltipClass =
-    "z-[100] border border-white/10 bg-zinc-900 font-medium text-white shadow-lg [&>div:last-child]:hidden";
+    "z-100 border border-white/10 bg-zinc-900 font-medium text-white shadow-lg [&>div:last-child]:hidden";
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: backdrop click-to-close is standard for dialog overlays

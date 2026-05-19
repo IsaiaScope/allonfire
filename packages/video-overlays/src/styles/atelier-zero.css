@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@source "../**/*.{ts,tsx}";
+
+@theme {
+  --color-az-paper: #efe7d2;
+  --color-az-paper-warm: #ece4cf;
+  --color-az-paper-dark: #ddd2b6;
+  --color-az-bone: #fbf3dd;
+  --color-az-ink: #15140f;
+  --color-az-ink-soft: #2a2620;
+  --color-az-ink-mute: #5a5448;
+  --color-az-ink-faint: #6f6959;
+  --color-az-coral: #d94e3f;
+  --color-az-coral-soft: #f0806f;
+  --color-az-mustard: #bb7d18;
+  --color-az-olive: #53633a;
+  --font-az-sans: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-az-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-az-serif: "Playfair Display", "Times New Roman", serif;
+  --font-az-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+@layer base {
+  .atelier-zero-root {
+    font-family: var(--font-az-body);
+    color: var(--color-az-ink);
+    background-color: var(--color-az-paper);
+  }
+
+  .atelier-zero-root * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  .az-paper-texture {
+    background-image:
+      radial-gradient(
+        circle at 12% 18%,
+        rgba(106, 92, 56, 0.07) 0,
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at 88% 72%,
+        rgba(106, 92, 56, 0.06) 0,
+        transparent 32%
+      ),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0.055 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size:
+      auto,
+      auto,
+      240px 240px;
+  }
+
+  .az-video-grid {
+    background-image:
+      linear-gradient(rgba(21, 20, 15, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(21, 20, 15, 0.08) 1px, transparent 1px);
+    background-size: 52px 52px;
+  }
+
+  .az-showcase-main,
+  .az-showcase-over {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atelier-zero-root[data-orientation="landscape"] .az-showcase-main {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  }
+
+  .atelier-zero-root[data-orientation="landscape"] .az-showcase-over {
+    grid-template-columns: minmax(0, 0.95fr) minmax(280px, 0.45fr);
+  }
+
+  .atelier-zero-root[data-orientation="landscape"] .az-over-video-width {
+    width: min(1180px, 74vw);
+  }
+
+  .az-story-layout {
+    grid-template-columns: minmax(280px, 0.42fr) minmax(0, 1fr);
+  }
+
+  .az-story-preview {
+    min-height: min(56vh, 620px);
+  }
+
+  .atelier-zero-root[data-orientation="portrait"] .az-story-layout {
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atelier-zero-root[data-orientation="portrait"] .az-story-preview {
+    min-height: 820px;
+  }
+
+  .az-atom-stage {
+    padding: 80px;
+  }
+
+  .az-atom-stage[data-orientation="portrait"] {
+    padding: 96px;
+  }
+
+  .az-atom-stage-inner {
+    overflow: hidden;
+  }
+
+  .az-video-shadow {
+    box-shadow:
+      0 34px 76px -42px rgba(21, 20, 15, 0.62),
+      0 0 0 1px rgba(21, 20, 15, 0.14);
+  }
+
+  .az-atom-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 64px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+  }
+
+  .az-atom-stack {
+    display: grid;
+    gap: 64px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+  }
+
+  .az-atom-single {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .az-focus-frame-story {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 72px;
+    align-items: center;
+    justify-items: center;
+    width: 100%;
+    max-width: 1320px;
+  }
+
+  .az-focus-frame-story > [data-size="lg"] {
+    grid-column: 1 / -1;
+  }
+
+  .az-atom-stage[data-orientation="portrait"] .az-atom-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 80px;
+  }
+
+  .az-atom-stage[data-orientation="portrait"] .az-atom-stack {
+    gap: 80px;
+  }
+
+  .az-atom-stage[data-orientation="portrait"] .az-focus-frame-story {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 80px;
+    max-width: 760px;
+  }
+
+  .az-atom-stage[data-orientation="portrait"]
+    .az-focus-frame-story
+    > [data-size="lg"] {
+    grid-column: auto;
+  }
+}

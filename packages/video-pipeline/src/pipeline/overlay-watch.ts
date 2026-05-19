@@ -22,11 +22,7 @@ const VISUAL_EVIDENCE_YES_RE = /useful_visual_evidence:\s*yes/i;
 const LINE_SEPARATOR_RE = /\r?\n/;
 const TRANSCRIPT_TIMESTAMP_LINE_RE = /^\[(\d{2}:\d{2}:\d{2})\]\s+(.+)$/;
 
-const PROMPT_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "prompts"
-);
+const PROMPT_DIR = join(dirname(fileURLToPath(import.meta.url)), "prompts");
 
 const VISUAL_CUES = [
   {
