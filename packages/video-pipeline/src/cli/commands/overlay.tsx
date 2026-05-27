@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { Box, useApp } from "ink";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -10,7 +11,12 @@ import {
   type ProjectMetadata,
   readMetadata,
 } from "../../lib/metadata";
+import { overlayPath } from "../../lib/paths";
 import { generateOverlays } from "../../pipeline/overlay";
+import {
+  createOverlayRenderPackage,
+  hasCompleteOverlayRenderManifest,
+} from "../../pipeline/overlay-render";
 import { Header } from "../components/header";
 import { InfoPanel } from "../components/info-panel";
 import { Pipeline } from "../components/pipeline";
@@ -126,6 +132,7 @@ async function runOverlayStage({
   controls,
   count,
   folder,
+  force,
   meta,
   move,
 }: {
@@ -133,16 +140,24 @@ async function runOverlayStage({
   controls: OverlayFlowControls;
   count?: number;
   folder: string;
+  force: boolean;
   meta: ProjectMetadata;
   move: (step: StageStep) => void;
 }): Promise<void> {
   await withLock(folder, async () => {
     try {
-      const result = await generateOverlays(folder, meta.title, count, {
-        agent,
-        onProgress: handleOverlayProgress({ controls, move }),
-      });
-      controls.setUsefulVisualEvidence(result.usefulVisualEvidence);
+      const shouldGenerateLibrary = force || !existsSync(overlayPath(folder));
+      if (shouldGenerateLibrary) {
+        const result = await generateOverlays(folder, meta.title, count, {
+          agent,
+          onProgress: handleOverlayProgress({ controls, move }),
+        });
+        controls.setUsefulVisualEvidence(result.usefulVisualEvidence);
+      }
+      move("render");
+      controls.setMessage("Rendering 16:9 and 9:16 overlay clips and videos");
+      controls.setPct(96);
+      await createOverlayRenderPackage(folder, meta, { force });
       move("files");
       markStageDone(folder, "overlayed");
     } catch (err) {
@@ -173,7 +188,12 @@ async function runOverlayFlow(
     if (!isStageDone(meta.stages.translated)) {
       throw new Error("Translate stage not complete — run `translate` first");
     }
-    if (isStageDone(meta.stages.overlayed) && !props.force) {
+    const hasOverlayMarkdown = existsSync(overlayPath(props.folder));
+    const hasRenderManifest = hasCompleteOverlayRenderManifest(props.folder);
+    if (hasOverlayMarkdown && hasRenderManifest && !props.force) {
+      if (!isStageDone(meta.stages.overlayed)) {
+        markStageDone(props.folder, "overlayed");
+      }
       controls.setStep("skip");
       controls.setMessage("already overlayed — pass --force to redo");
       return;
@@ -184,12 +204,13 @@ async function runOverlayFlow(
       controls,
       count: props.count,
       folder: props.folder,
+      force: props.force,
       meta,
       move,
     });
     controls.setStep("done");
     controls.setPct(100);
-    controls.setMessage("Overlay library complete");
+    controls.setMessage("Overlay videos complete");
   } catch (err) {
     if (!controls.isCancelled()) {
       controls.setFailedStep(activeStep);

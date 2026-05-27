@@ -6,66 +6,71 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { overlayPath } from "../lib/paths";
 
 const OVERLAY_HEADING_RE = /^##\s+(.+)$/;
-const METADATA_LINE_RE = /^-\s+(kind|moment|purpose):\s*(.+)$/;
+const METADATA_LINE_RE =
+  /^-\s+(kind|moment|purpose|density|motion|sfx|emphasis):\s*(.+)$/;
 const PROJECT_TITLE_RE = /^#\s+Overlay library\s+—\s+/;
 const LINE_SEPARATOR_RE = /\r?\n/;
-const DASHBOARD_TEMPLATE = "dashboard-triage" as const;
-const DEFAULT_DURATION_FRAMES = 180;
+const BOLD_MARKDOWN_RE = /\*\*(.+?)\*\*/;
 const DEFAULT_FPS = 30;
+const DEFAULT_DURATION_SECONDS = 8;
+const RAW_DIR = "raw";
 
 export type OverlayBlock = {
   body: string;
+  density?: string;
+  emphasis?: string;
   id: string;
   kind: string;
   moment: string;
+  motion?: string;
   purpose: string;
+  sfx?: string;
 };
 
-export type DashboardRowTone = "attention" | "working" | "complete";
-
-export type DashboardTriageProps = {
-  footerHints: string[];
-  sections: {
-    label: string;
-    rows: {
-      detail: string;
-      elapsed: string;
-      name: string;
-      tone: DashboardRowTone;
-    }[];
-    tone: DashboardRowTone;
-  }[];
-  statusLine: string;
-  theme: {
-    accent: string;
-    attention: string;
-    complete: string;
-    muted: string;
-    panel: string;
-    surface: string;
-    text: string;
-    working: string;
-  };
-  title: string;
-};
+export type OverlayMockupTemplate =
+  | "callout-card"
+  | "code-card"
+  | "dashboard-triage"
+  | "flow-diagram"
+  | "list-card"
+  | "table-card";
 
 export type OverlayMockupSpec = {
-  durationFrames: number;
+  aspects: { height: number; id: "16x9" | "9x16"; width: number }[];
+  compositionRoot: string;
   fps: number;
-  overlay: {
+  overlays: {
+    body: string;
+    density: "light" | "medium" | "rich";
+    durationSeconds: number;
+    emphasis: string;
     id: string;
     kind: string;
     moment: string;
+    motion: "build" | "compare" | "pulse" | "reveal" | "type-on";
+    placementHint: string;
     purpose: string;
-    template: typeof DASHBOARD_TEMPLATE;
-  };
+    sfx:
+      | "none"
+      | "page-turn"
+      | "paper-tick"
+      | "quiet-pop"
+      | "soft-whoosh"
+      | "ui-click";
+    startSeconds: number;
+    template: OverlayMockupTemplate;
+    title: string;
+  }[];
   projectTitle: string;
-  props: DashboardTriageProps;
-  sourceFolder: string;
+  renderer: "hyperframes";
+  source: {
+    durationSeconds: number;
+    videoPath: string;
+  };
 };
 
 export type CreateMockupsOptions = {
@@ -94,23 +99,40 @@ export function parseOverlayBlocks(markdown: string): OverlayBlock[] {
   const blocks: OverlayBlock[] = [];
   let current: {
     bodyLines: string[];
+    density?: string;
+    emphasis?: string;
     id: string;
     kind?: string;
     moment?: string;
+    motion?: string;
     purpose?: string;
+    sfx?: string;
   } | null = null;
 
   const flush = () => {
     if (!current) {
       return;
     }
-    blocks.push({
+    const block: OverlayBlock = {
       body: current.bodyLines.join("\n").trim(),
       id: current.id,
       kind: current.kind ?? "unknown",
       moment: current.moment ?? "",
       purpose: current.purpose ?? "",
-    });
+    };
+    if (current.density) {
+      block.density = current.density;
+    }
+    if (current.emphasis) {
+      block.emphasis = current.emphasis;
+    }
+    if (current.motion) {
+      block.motion = current.motion;
+    }
+    if (current.sfx) {
+      block.sfx = current.sfx;
+    }
+    blocks.push(block);
   };
 
   for (const line of lines) {
@@ -128,8 +150,16 @@ export function parseOverlayBlocks(markdown: string): OverlayBlock[] {
     }
     const metadata = line.match(METADATA_LINE_RE);
     if (metadata) {
-      current[metadata[1] as "kind" | "moment" | "purpose"] =
-        metadata[2].trim();
+      current[
+        metadata[1] as
+          | "density"
+          | "emphasis"
+          | "kind"
+          | "moment"
+          | "motion"
+          | "purpose"
+          | "sfx"
+      ] = metadata[2].trim();
       continue;
     }
     current.bodyLines.push(line);
@@ -181,105 +211,123 @@ export function selectMockupOverlay(
   return compatible;
 }
 
-export function dashboardTriagePropsFromOverlay(
-  block: OverlayBlock
-): DashboardTriageProps {
-  return {
-    footerHints: [
-      "invio per aprire",
-      "spazio per rispondere",
-      "ctrl+x per eliminare",
-    ],
-    sections: [
-      {
-        label: "Da rispondere",
-        rows: [
-          {
-            detail: "domanda aperta",
-            elapsed: "4m",
-            name: "dark-mode",
-            tone: "attention",
-          },
-          {
-            detail: "conferma richiesta",
-            elapsed: "11m",
-            name: "release-notes",
-            tone: "attention",
-          },
-        ],
-        tone: "attention",
-      },
-      {
-        label: "In corso",
-        rows: [
-          {
-            detail: "analizzando",
-            elapsed: "7m",
-            name: "perf-audit",
-            tone: "working",
-          },
-          {
-            detail: "scrivendo test",
-            elapsed: "2m",
-            name: "payment-migration",
-            tone: "working",
-          },
-        ],
-        tone: "working",
-      },
-      {
-        label: "Completati",
-        rows: [
-          {
-            detail: "→ per tornare",
-            elapsed: "0s",
-            name: "test-coverage",
-            tone: "complete",
-          },
-        ],
-        tone: "complete",
-      },
-    ],
-    statusLine: "2 in attesa · 4 in corso · 1 completato",
-    theme: {
-      accent: "oklch(0.58 0.12 236)",
-      attention: "oklch(0.76 0.15 82)",
-      complete: "oklch(0.64 0.16 150)",
-      muted: "oklch(0.43 0.03 244)",
-      panel: "oklch(0.94 0.01 236)",
-      surface: "oklch(0.97 0.009 238)",
-      text: "oklch(0.24 0.035 246)",
-      working: "oklch(0.56 0.05 248)",
-    },
-    title:
-      block.id === "tre-colonne-dashboard"
-        ? "Claude Code · Agents View"
-        : block.id,
-  };
+function projectOutputFolder(inputFolder: string): string {
+  return basename(inputFolder) === RAW_DIR ? dirname(inputFolder) : inputFolder;
+}
+
+function templateForBlock(block: OverlayBlock): OverlayMockupTemplate {
+  if (block.id === "tre-colonne-dashboard") {
+    return "dashboard-triage";
+  }
+  if (block.kind === "code") {
+    return "code-card";
+  }
+  if (block.kind === "table") {
+    return "table-card";
+  }
+  if (block.kind === "diagram") {
+    return "flow-diagram";
+  }
+  if (block.kind === "list") {
+    return "list-card";
+  }
+  return "callout-card";
+}
+
+function titleFromBlock(block: OverlayBlock): string {
+  return block.id
+    .split("-")
+    .filter(Boolean)
+    .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+    .join(" ");
+}
+
+function emphasisFromBlock(block: OverlayBlock): string {
+  return (
+    block.emphasis?.trim() ||
+    block.body.match(BOLD_MARKDOWN_RE)?.[1]?.trim() ||
+    block.purpose ||
+    titleFromBlock(block)
+  );
+}
+
+function normalizedDensity(value?: string): "light" | "medium" | "rich" {
+  return value === "light" || value === "medium" || value === "rich"
+    ? value
+    : "medium";
+}
+
+function normalizedMotion(
+  value?: string
+): "build" | "compare" | "pulse" | "reveal" | "type-on" {
+  return value === "build" ||
+    value === "compare" ||
+    value === "pulse" ||
+    value === "reveal" ||
+    value === "type-on"
+    ? value
+    : "reveal";
+}
+
+function normalizedSfx(
+  value?: string
+):
+  | "none"
+  | "page-turn"
+  | "paper-tick"
+  | "quiet-pop"
+  | "soft-whoosh"
+  | "ui-click" {
+  return value === "none" ||
+    value === "page-turn" ||
+    value === "paper-tick" ||
+    value === "quiet-pop" ||
+    value === "soft-whoosh" ||
+    value === "ui-click"
+    ? value
+    : "none";
 }
 
 export function buildMockupSpec({
   block,
+  projectFolder,
   projectTitle,
-  sourceFolder,
 }: {
   block: OverlayBlock;
+  projectFolder: string;
   projectTitle: string;
-  sourceFolder: string;
 }): OverlayMockupSpec {
   return {
-    durationFrames: DEFAULT_DURATION_FRAMES,
+    aspects: [
+      { height: 1080, id: "16x9", width: 1920 },
+      { height: 1920, id: "9x16", width: 1080 },
+    ],
+    compositionRoot: join(projectFolder, "overlays", "compositions"),
     fps: DEFAULT_FPS,
-    overlay: {
-      id: block.id,
-      kind: block.kind,
-      moment: block.moment,
-      purpose: block.purpose,
-      template: DASHBOARD_TEMPLATE,
-    },
+    overlays: [
+      {
+        body: block.body,
+        density: normalizedDensity(block.density),
+        durationSeconds: DEFAULT_DURATION_SECONDS,
+        emphasis: emphasisFromBlock(block),
+        id: block.id,
+        kind: block.kind,
+        moment: block.moment,
+        motion: normalizedMotion(block.motion),
+        placementHint: block.moment,
+        purpose: block.purpose,
+        sfx: normalizedSfx(block.sfx),
+        startSeconds: 0,
+        template: templateForBlock(block),
+        title: titleFromBlock(block),
+      },
+    ],
     projectTitle,
-    props: dashboardTriagePropsFromOverlay(block),
-    sourceFolder,
+    renderer: "hyperframes",
+    source: {
+      durationSeconds: DEFAULT_DURATION_SECONDS,
+      videoPath: "",
+    },
   };
 }
 
@@ -315,13 +363,13 @@ function defaultRenderMockups(folder: string): Promise<void> {
       }
       reject(
         new Error(
-          `Remotion mockup render failed (${code}): ${stderr.slice(-500)}`
+          `Hyperframes mockup render failed (${code}): ${stderr.slice(-500)}`
         )
       );
     });
     proc.on("error", (err) =>
       reject(
-        new Error(`Failed to start Remotion mockup render: ${err.message}`)
+        new Error(`Failed to start Hyperframes mockup render: ${err.message}`)
       )
     );
   });
@@ -338,10 +386,11 @@ export async function createOverlayMockups(
     );
   }
 
-  const remotionDir = join(folder, "remotion");
-  const mockupsDir = join(remotionDir, "mockups");
-  const manifestPath = join(remotionDir, "manifest.json");
-  const specPath = join(remotionDir, "overlay-spec.json");
+  const projectFolder = projectOutputFolder(folder);
+  const overlaysDir = join(projectFolder, "overlays");
+  const mockupsDir = join(overlaysDir, "videos");
+  const manifestPath = join(overlaysDir, "manifest.json");
+  const specPath = join(overlaysDir, "overlay-spec.json");
   if (existsSync(manifestPath) && !options.force) {
     const markdown = readFileSync(markdownPath, "utf-8");
     const block = selectMockupOverlay(
@@ -354,15 +403,15 @@ export async function createOverlayMockups(
       skipped: true,
       spec: buildMockupSpec({
         block,
+        projectFolder,
         projectTitle: parseProjectTitle(markdown),
-        sourceFolder: folder,
       }),
       specPath,
     };
   }
 
   if (options.force) {
-    rmSync(remotionDir, { force: true, recursive: true });
+    rmSync(overlaysDir, { force: true, recursive: true });
   }
   mkdirSync(mockupsDir, { recursive: true });
 
@@ -371,12 +420,12 @@ export async function createOverlayMockups(
   const block = selectMockupOverlay(blocks, options.overlayId);
   const spec = buildMockupSpec({
     block,
+    projectFolder,
     projectTitle: parseProjectTitle(markdown),
-    sourceFolder: folder,
   });
 
   writeFileSync(specPath, JSON.stringify(spec, null, 2));
-  await (options.render ?? defaultRenderMockups)(folder);
+  await (options.render ?? defaultRenderMockups)(projectFolder);
 
   return {
     manifestPath,

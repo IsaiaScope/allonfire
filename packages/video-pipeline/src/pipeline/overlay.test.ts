@@ -54,6 +54,10 @@ describe("generateOverlays", () => {
     expect(call.input).toContain("# Transcript");
     expect(call.input).toContain("# Script");
     expect(call.input).not.toContain("# Visual evidence from source video");
+    expect(call.prompt).toContain("video-ready overlay scenes");
+    expect(call.prompt).toContain(
+      "- motion: reveal | build | compare | pulse | type-on"
+    );
     expect(readFileSync(overlayPath(folder), "utf-8")).toContain(
       "## intro-diagram"
     );

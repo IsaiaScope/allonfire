@@ -8,7 +8,7 @@ Overrides Impeccable's default responsive-web instincts. Loaded by `node load-co
 - `<html>` and `<body>` must be **exactly** the target dimensions (1080×1920 portrait OR 1920×1080 landscape), `margin: 0`, `padding: 0`, `overflow: hidden`. No scrollbars at any zoom level.
 - **No `<meta name="viewport">`**. No mobile scaling shims.
 - **No `clamp()`, no `min()`/`max()` in sizing, no `vw`/`vh` units, no `min-width` media queries.** Absolute `px` only.
-- **No JS.** No CSS transitions, no `@keyframes`. Motion is added later in Remotion.
+- **No JS in static mockups.** No CSS transitions, no `@keyframes`. Motion is added later in Hyperframes with a paused GSAP timeline.
 - Wrap content in one root `<div>` with **safe-area padding** of 60–80px on every edge (portrait 60px, landscape 72px default — overridden per prompt).
 - The frame must look complete and balanced as a still image.
 
@@ -18,7 +18,7 @@ Register = `product`. Strategy = **Restrained** with one accent ≤ 10% of surfa
 
 ## 3. Catppuccin Mocha tokens
 
-Hex for HTML mockups, OKLch alongside for later Remotion translation.
+Hex for HTML mockups, OKLch alongside for later Hyperframes translation.
 
 ### Neutrals (surfaces and text)
 
@@ -122,4 +122,4 @@ Line height: `1.0` on display, `1.3` on body. No fluid type.
 - No `:hover`, `:focus`, `:active` states.
 - No fluid type (`clamp`, `vw`, `vh` for sizing).
 - No em dashes (`—` or `--`). Use commas, colons, semicolons, periods, or parentheses.
-- No bouncy/elastic easing language in the mockup (motion lives in Remotion).
+- No bouncy/elastic easing language in the mockup (motion lives in Hyperframes).

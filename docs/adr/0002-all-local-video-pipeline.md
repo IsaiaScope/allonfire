@@ -3,6 +3,7 @@
 - **Status**: Accepted
 - **Date**: 2026-05-12
 - **Deciders**: @isaia
+- **Amended by**: ADR-0004 — Hyperframes overlay renderer
 
 ## Context
 
@@ -22,9 +23,9 @@ Adopt option **3 — all-local, terminal-only** for v1.
 - Transcription: downloaded captions first, then local `whisper.cpp`. No Groq/OpenAI Whisper API and no managed Python ASR stack.
 - VAD: Silero VAD (local, ONNX).
 - LLM passes (Topic Brief, Cut List, Overlay Spec, Highlight selection): **Claude Code CLI headless** (`claude -p`). The Claude API is hit through the user's existing Claude Code installation, not through bespoke API integration in the pipeline.
-- Codegen helpers (Remotion components, FFmpeg filtergraphs): Codex CLI when useful.
-- Diagrams: `mermaid-cli` (Node, headless Chromium for rendering) and the Excalidraw MCP server, both producing SVG.
-- Composition + render: Remotion local CLI render. No Remotion Lambda.
+- Codegen helpers (Hyperframes HTML compositions, FFmpeg filtergraphs): Codex CLI when useful.
+- Diagrams and visual aids: generated as HTML/CSS/SVG inside Hyperframes compositions.
+- Composition + render: Hyperframes local CLI render. No Remotion Lambda.
 - Chroma key + encoding: FFmpeg local binary.
 - Music: external folder `/Volumes/Crucial-4T/video/sound` indexed locally.
 - Publish: YouTube Data API v3 from the local CLI (only network egress outside Claude Code traffic).

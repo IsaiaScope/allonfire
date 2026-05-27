@@ -7,15 +7,15 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
-type BaseAtomProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseComponentProps = React.ComponentProps<"div"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-type MediaProps = BaseAtomProps & {
+type MediaProps = BaseComponentProps & {
   label?: React.ReactNode;
   src?: string;
 };

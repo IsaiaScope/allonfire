@@ -1232,7 +1232,7 @@ function BeforeAfter({ archetype }: { archetype: Archetype }) {
           <ul className="compare-list">
             <li>Transcript-guided scout</li>
             <li>Reusable overlay archetypes</li>
-            <li>Mockup before Remotion</li>
+            <li>Mockup before Hyperframes</li>
           </ul>
         </div>
       </div>
@@ -1387,8 +1387,8 @@ function Gallery() {
           <h1 className="gallery-title">AllOnFire overlay mockups</h1>
           <p className="gallery-copy">
             Reusable HTML prototypes for AI-tool explainer overlays. Review the
-            theme here, then convert approved archetypes into Remotion
-            templates.
+            theme here, then convert approved archetypes into Hyperframes
+            compositions.
           </p>
         </div>
         <div className="toolbar">

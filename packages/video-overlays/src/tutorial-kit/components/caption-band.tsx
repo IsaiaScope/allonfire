@@ -1,7 +1,7 @@
 import type React from "react";
 import { cn } from "../lib/cn";
 import { type OverlayTone, toneBgClass } from "../lib/tones";
-import { PaperPanel } from "../primitives/paper-panel";
+import { PaperPanel } from "./paper-panel";
 
 export type CaptionBandProps = React.ComponentProps<"div"> & {
   emphasis?: string;

@@ -7,10 +7,10 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
 export type FocusRingProps = React.ComponentProps<"div"> & {
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -48,7 +48,7 @@ export function FocusRing({
 
 export type FocusFrameProps = React.ComponentProps<"div"> & {
   label?: string;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -90,7 +90,7 @@ export function FocusFrame({
 
 export type BracketProps = React.ComponentProps<"div"> & {
   orientation?: "left" | "right" | "top" | "bottom";
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -127,7 +127,7 @@ export function Bracket({
 
 export type ArrowProps = React.ComponentProps<"div"> & {
   direction?: "right" | "left" | "up" | "down";
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -179,7 +179,7 @@ function arrowRotationClass(direction: NonNullable<ArrowProps["direction"]>) {
 }
 
 export type ConnectorLineProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   tone?: OverlayTone;
 };
 
@@ -208,7 +208,7 @@ export function ConnectorLine({
 
 export type DotMarkerProps = React.ComponentProps<"div"> & {
   label?: string;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -279,7 +279,7 @@ export function TargetPin({
 }
 
 export type HighlightBarProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   tone?: OverlayTone;
 };
 

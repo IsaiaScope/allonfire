@@ -1,16 +1,17 @@
 # video-overlays prompts
 
-Prompt library for drafting new Remotion overlay templates with the **Impeccable** skill.
+Prompt library for drafting new Hyperframes overlay templates and Open Design review passes.
 
 ## Files
 
 - `PRODUCT.md` — required by the Impeccable loader. Product brief, register, audience, voice, output contract.
 - `DESIGN.md` — required by the Impeccable loader. Catppuccin Mocha tokens, canvas rules, typography, anti-patterns.
 - `_scaffold.md` — blank prompt template. Copy when adding a new template.
-- `_translation-guide.md` — HTML mockup → Remotion `.tsx` + `spec.ts` recipe.
+- `_translation-guide.md` — legacy HTML mockup → Remotion `.tsx` recipe. Do not use for the active Hyperframes renderer.
+- `open-design-hyperframes.md` — optional Open Design handoff for manually drafting or refining a Hyperframes composition.
 - `templates/{name}/prompt-portrait.md` + `prompt-landscape.md` — per-template design briefs (one per orientation).
 - `templates/{name}/invoke-portrait.md` + `invoke-landscape.md` — **paste-ready user messages** for invoking Impeccable in another Claude Code shell.
-- `templates/{name}/notes.md` — props sketch + edge cases for the later Remotion translation.
+- `templates/{name}/notes.md` — props sketch + edge cases for the later Hyperframes composition.
 
 ## Why PRODUCT.md + DESIGN.md sit at this folder root
 
@@ -22,13 +23,13 @@ Impeccable's loader script (`load-context.mjs`) hard-requires PRODUCT.md (will b
 invoke-{orientation}.md  ──> paste into fresh Claude Code shell ──> Impeccable craft ──> mockup-{orientation}.html
                                                                                            │
                                                                                            ▼
-                                                                                  translate via _translation-guide.md
+                                                                                  translate to Hyperframes HTML
                                                                                            │
                                                                                            ▼
-                                                                              {template}-overlay.tsx + spec.ts + root.tsx
+                                                                              overlays/compositions/{id}/{aspect}/index.html
 ```
 
-Each template ships **two invocations** (portrait 1080×1920, landscape 1920×1080). Video overlays are fixed-canvas, not responsive web. The Remotion `.tsx` is then written by hand using a single component plus a `getLayout(width, height)` helper (see `linear-diagram-overlay.tsx` for the canonical pattern).
+Each template ships **two invocations** (portrait 1080×1920, landscape 1920×1080). Video overlays are fixed-canvas, not responsive web. The production renderer emits self-contained Hyperframes projects and renders them through the local Hyperframes CLI.
 
 ## Adding a new template
 

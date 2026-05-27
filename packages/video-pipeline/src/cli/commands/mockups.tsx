@@ -42,9 +42,9 @@ const MockupsStatusPanel: React.FC<{
       <ResultPanel
         details={[
           `Status: ${step === "skip" ? "✓ Already complete" : "✓ Complete"}`,
-          `Spec: ${specPath ?? "remotion/overlay-spec.json"}`,
-          `Mockups: ${outputDir ?? "remotion/mockups"}`,
-          `Manifest: ${manifestPath ?? "remotion/manifest.json"}`,
+          `Spec: ${specPath ?? "overlays/overlay-spec.json"}`,
+          `Mockups: ${outputDir ?? "overlays/videos"}`,
+          `Manifest: ${manifestPath ?? "overlays/manifest.json"}`,
         ]}
         progress={100}
         title={step === "skip" ? "Mockups already complete" : "Mockups ready"}
@@ -56,10 +56,10 @@ const MockupsStatusPanel: React.FC<{
   return (
     <WorkPanel
       busy
-      current="current: remotion mockup · writing overlay spec and rendering template preview"
+      current="current: hyperframes mockup · writing overlay spec and rendering template preview"
       progress={60}
       progressWidth={38}
-      title="Creating Remotion overlay mockups"
+      title="Creating Hyperframes overlay mockups"
     />
   );
 };
@@ -114,10 +114,10 @@ export const MockupsView: React.FC<Props> = ({ folder, force, overlayId }) => {
           `Project: ${folder}`,
           `Overlay: ${overlayId ?? "tre-colonne-dashboard, then first diagram"}`,
           `Run mode: ${force ? "force redo" : "reuse completed mockups"}`,
-          "Template: DashboardTriageOverlay",
-          "Writes: remotion/overlay-spec.json",
-          "Writes: remotion/mockups/dashboard-triage.png",
-          "Writes: remotion/mockups/dashboard-triage.mp4",
+          "Renderer: Hyperframes",
+          "Writes: overlays/overlay-spec.json",
+          "Writes: overlays/videos/16x9/*.mp4",
+          "Writes: overlays/videos/9x16/*.mp4",
         ]}
         title="Mockup package"
       />

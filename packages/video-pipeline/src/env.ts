@@ -28,7 +28,7 @@ export const env = createEnv({
       .default("/Volumes/Crucial-4T/repo/allonfire/models"),
     WHISPER_MODEL: z.string().min(1).default("large-v3"),
     LOCAL_ASR_ENGINE: z.enum(["auto", "whisper-cpp"]).default("auto"),
-    VIDEO_AGENT: z.enum(["auto", "claude", "codex"]).default("auto"),
+    VIDEO_AGENT: z.enum(["auto", "claude", "codex"]).default("codex"),
     TRANSLATE_AGENT: z.enum(["auto", "claude", "codex"]).optional(),
     TRANSCRIPT_REPAIR_AGENT: z
       .enum(["off", "auto", "claude", "codex"])

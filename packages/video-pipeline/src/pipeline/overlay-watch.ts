@@ -295,6 +295,7 @@ export function buildFrameExtractionArgs(
   outputPath: string
 ): string[] {
   return [
+    "-nostdin",
     "-ss",
     time.toFixed(3),
     "-i",

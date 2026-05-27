@@ -1,11 +1,11 @@
 import type React from "react";
 import { cn } from "../lib/cn";
 import { type OverlayTone, toneBorderClass, toneTextClass } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
 export type HeadlineProps = React.ComponentProps<"div"> & {
   align?: "left" | "center";
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -39,8 +39,8 @@ export function Headline({
 }
 
 export type CaptionTextProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -77,7 +77,7 @@ export function CaptionText({
 }
 
 export type MonoLabelProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   tone?: OverlayTone;
 };
 
@@ -110,7 +110,7 @@ export function MonoLabel({
 
 export type NumberBadgeProps = React.ComponentProps<"div"> & {
   label?: string;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
   value: string;
 };

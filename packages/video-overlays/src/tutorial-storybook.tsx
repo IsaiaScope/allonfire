@@ -9,25 +9,17 @@ import {
   BarPair,
   BarValue,
   BeforeAfter,
-  BeforeAfterDiagram,
   Bracket,
-  BranchingDecisionFlow,
   BranchSplit,
   BrowserFrame,
-  CaptionBand,
   CaptionText,
   CauseEffect,
-  ChartCallout,
-  ChartTrendPattern,
-  ChecklistAtom,
+  Checklist,
   ClickPulse,
   CodeBlock,
   CodeLine,
-  CodePlusResult,
-  CodeWindow,
   CommandCard,
   ComparisonMatrix,
-  ComparisonOverlay,
   ConceptCluster,
   ConceptNode,
   ConnectorArrow,
@@ -37,6 +29,7 @@ import {
   CursorMark,
   DecisionFork,
   DecisionNode,
+  DecisionTreeTemplate,
   DefinitionCard,
   DeltaArrow,
   DependencyLine,
@@ -48,6 +41,7 @@ import {
   FloatingNote,
   FlowGroup,
   FlowNode,
+  FlowSequenceTemplate,
   FocusFrame,
   FocusRing,
   FormulaStrip,
@@ -59,17 +53,13 @@ import {
   ImageCard,
   ImageComparison,
   ImageCutout,
-  ImageWithConceptNodes,
   InkCard,
   InkSurface,
   InputNode,
-  InputProcessOutput,
   Keycap,
   Kicker,
-  LinearFlowDiagram,
   LogoNode,
   LoopArrow,
-  LowerThird,
   MaskedImageShape,
   MergePoint,
   MetricTile,
@@ -77,9 +67,7 @@ import {
   MiniBarChart,
   MiniDashboardCard,
   MistakeFixPair,
-  ModelPipeline,
   MonoLabel,
-  NarrationSupportCard,
   NodeBadge,
   NumberBadge,
   OutputNode,
@@ -89,8 +77,8 @@ import {
   PolaroidFrame,
   PrincipleCard,
   PriorityStack,
-  ProblemSolutionResult,
   ProcessNode,
+  ProcessPipelineTemplate,
   ProgressBar,
   ProgressDots,
   ProgressRail,
@@ -102,7 +90,6 @@ import {
   ResultCard,
   ScoreRing,
   ScreenshotFrame,
-  ScreenshotWithAnnotations,
   ShortcutCard,
   SoundCue,
   SparkLine,
@@ -114,13 +101,12 @@ import {
   SuccessPanel,
   SvgIconFrame,
   SystemBoundary,
+  SystemMapTemplate,
   TargetPin,
   TerminalFrame,
-  ThreeStepExplainer,
   TimelineAxis,
-  TimelineExplainer,
   TimelineStep,
-  ToolchainFlow,
+  TimelineTemplate,
   TradeoffScale,
   type TutorialSfxCue,
   ValueChip,
@@ -131,7 +117,7 @@ import {
 } from "./tutorial-kit";
 
 export type TutorialStoryAspect = "16x9" | "9x16";
-export type TutorialStoryCategory = "atom" | "pattern";
+export type TutorialStoryCategory = "component" | "template";
 export type TutorialStoryId = string;
 
 export type TutorialStoryDefinition = {
@@ -145,168 +131,150 @@ export type TutorialStorybookProps = {
   sfxEnabled: boolean;
 };
 
-export const tutorialAtomStories: TutorialStoryDefinition[] = [
-  { category: "atom", id: "kicker", name: "Kicker" },
-  { category: "atom", id: "headline", name: "Headline" },
-  { category: "atom", id: "caption-text", name: "CaptionText" },
-  { category: "atom", id: "mono-label", name: "MonoLabel" },
-  { category: "atom", id: "number-badge", name: "NumberBadge" },
-  { category: "atom", id: "value-chip", name: "ValueChip" },
-  { category: "atom", id: "paper-surface", name: "PaperSurface" },
-  { category: "atom", id: "ink-surface", name: "InkSurface" },
-  { category: "atom", id: "floating-card", name: "FloatingCard" },
-  { category: "atom", id: "accent-rule", name: "AccentRule" },
-  { category: "atom", id: "focus-ring", name: "FocusRing" },
-  { category: "atom", id: "focus-frame", name: "FocusFrame" },
-  { category: "atom", id: "bracket", name: "Bracket" },
-  { category: "atom", id: "arrow", name: "Arrow" },
-  { category: "atom", id: "connector-line", name: "ConnectorLine" },
-  { category: "atom", id: "dot-marker", name: "DotMarker" },
-  { category: "atom", id: "target-pin", name: "TargetPin" },
-  { category: "atom", id: "highlight-bar", name: "HighlightBar" },
-  { category: "atom", id: "cursor-mark", name: "CursorMark" },
-  { category: "atom", id: "click-pulse", name: "ClickPulse" },
-  { category: "atom", id: "keycap", name: "Keycap" },
-  { category: "atom", id: "step-pill", name: "StepPill" },
-  { category: "atom", id: "progress-dots", name: "ProgressDots" },
-  { category: "atom", id: "progress-rail", name: "ProgressRail" },
-  { category: "atom", id: "code-line", name: "CodeLine" },
-  { category: "atom", id: "code-block", name: "CodeBlock" },
-  { category: "atom", id: "sound-cue", name: "SoundCue" },
-  { category: "atom", id: "animated-in-out", name: "AnimatedInOut" },
-  { category: "atom", id: "idea-card", name: "IdeaCard" },
-  { category: "atom", id: "versus-pair", name: "VersusPair" },
-  { category: "atom", id: "before-after", name: "BeforeAfter" },
-  { category: "atom", id: "decision-fork", name: "DecisionFork" },
-  { category: "atom", id: "timeline-step", name: "TimelineStep" },
-  { category: "atom", id: "quote-card", name: "QuoteCard" },
-  { category: "atom", id: "warning-mark", name: "WarningMark" },
-  { category: "atom", id: "formula-strip", name: "FormulaStrip" },
-  { category: "atom", id: "status-stamp", name: "StatusStamp" },
-  { category: "atom", id: "concept-node", name: "ConceptNode" },
-  { category: "atom", id: "flow-node", name: "FlowNode" },
-  { category: "atom", id: "process-node", name: "ProcessNode" },
-  { category: "atom", id: "decision-node", name: "DecisionNode" },
-  { category: "atom", id: "input-node", name: "InputNode" },
-  { category: "atom", id: "output-node", name: "OutputNode" },
-  { category: "atom", id: "connector-arrow", name: "ConnectorArrow" },
-  { category: "atom", id: "connector-elbow", name: "ConnectorElbow" },
-  { category: "atom", id: "connector-curve", name: "ConnectorCurve" },
-  { category: "atom", id: "branch-split", name: "BranchSplit" },
-  { category: "atom", id: "merge-point", name: "MergePoint" },
-  { category: "atom", id: "loop-arrow", name: "LoopArrow" },
-  { category: "atom", id: "dependency-line", name: "DependencyLine" },
-  { category: "atom", id: "node-badge", name: "NodeBadge" },
-  { category: "atom", id: "flow-group", name: "FlowGroup" },
-  { category: "atom", id: "system-boundary", name: "SystemBoundary" },
-  { category: "atom", id: "bar-value", name: "BarValue" },
-  { category: "atom", id: "bar-pair", name: "BarPair" },
-  { category: "atom", id: "mini-bar-chart", name: "MiniBarChart" },
-  { category: "atom", id: "progress-bar", name: "ProgressBar" },
-  { category: "atom", id: "delta-arrow", name: "DeltaArrow" },
-  { category: "atom", id: "metric-tile", name: "MetricTile" },
-  { category: "atom", id: "gauge-arc", name: "GaugeArc" },
-  { category: "atom", id: "dot-plot", name: "DotPlot" },
-  { category: "atom", id: "timeline-axis", name: "TimelineAxis" },
-  { category: "atom", id: "milestone-dot", name: "MilestoneDot" },
-  { category: "atom", id: "spark-line", name: "SparkLine" },
-  { category: "atom", id: "stacked-bar", name: "StackedBar" },
-  { category: "atom", id: "ratio-split", name: "RatioSplit" },
-  { category: "atom", id: "score-ring", name: "ScoreRing" },
-  { category: "atom", id: "definition-card", name: "DefinitionCard" },
-  { category: "atom", id: "cause-effect", name: "CauseEffect" },
-  { category: "atom", id: "tradeoff-scale", name: "TradeoffScale" },
-  { category: "atom", id: "priority-stack", name: "PriorityStack" },
-  { category: "atom", id: "step-stack", name: "StepStack" },
-  { category: "atom", id: "comparison-matrix", name: "ComparisonMatrix" },
-  { category: "atom", id: "checklist-atom", name: "ChecklistAtom" },
-  { category: "atom", id: "do-dont-pair", name: "DoDontPair" },
-  { category: "atom", id: "principle-card", name: "PrincipleCard" },
-  { category: "atom", id: "question-card", name: "QuestionCard" },
-  { category: "atom", id: "answer-reveal", name: "AnswerReveal" },
-  { category: "atom", id: "mistake-fix-pair", name: "MistakeFixPair" },
-  { category: "atom", id: "concept-cluster", name: "ConceptCluster" },
-  { category: "atom", id: "svg-icon-frame", name: "SvgIconFrame" },
-  { category: "atom", id: "logo-node", name: "LogoNode" },
-  { category: "atom", id: "image-card", name: "ImageCard" },
-  { category: "atom", id: "image-cutout", name: "ImageCutout" },
-  { category: "atom", id: "screenshot-frame", name: "ScreenshotFrame" },
-  { category: "atom", id: "browser-frame", name: "BrowserFrame" },
-  { category: "atom", id: "terminal-frame", name: "TerminalFrame" },
-  { category: "atom", id: "device-frame", name: "DeviceFrame" },
-  { category: "atom", id: "vintage-photo-frame", name: "VintagePhotoFrame" },
-  { category: "atom", id: "polaroid-frame", name: "PolaroidFrame" },
-  { category: "atom", id: "stamp-image", name: "StampImage" },
-  { category: "atom", id: "pinned-image", name: "PinnedImage" },
-  { category: "atom", id: "image-comparison", name: "ImageComparison" },
-  { category: "atom", id: "image-callout", name: "ImageCallout" },
-  { category: "atom", id: "masked-image-shape", name: "MaskedImageShape" },
-  { category: "atom", id: "paper-card", name: "PaperCard" },
-  { category: "atom", id: "ink-card", name: "InkCard" },
-  { category: "atom", id: "accent-card", name: "AccentCard" },
-  { category: "atom", id: "floating-note", name: "FloatingNote" },
-  { category: "atom", id: "quote-panel", name: "QuotePanel" },
-  { category: "atom", id: "warning-panel", name: "WarningPanel" },
-  { category: "atom", id: "success-panel", name: "SuccessPanel" },
-  { category: "atom", id: "command-card", name: "CommandCard" },
-  { category: "atom", id: "shortcut-card", name: "ShortcutCard" },
-  { category: "atom", id: "resource-card", name: "ResourceCard" },
-  { category: "atom", id: "result-card", name: "ResultCard" },
-  { category: "atom", id: "mini-dashboard-card", name: "MiniDashboardCard" },
+export const tutorialComponentStories: TutorialStoryDefinition[] = [
+  { category: "component", id: "kicker", name: "Kicker" },
+  { category: "component", id: "headline", name: "Headline" },
+  { category: "component", id: "caption-text", name: "CaptionText" },
+  { category: "component", id: "mono-label", name: "MonoLabel" },
+  { category: "component", id: "number-badge", name: "NumberBadge" },
+  { category: "component", id: "value-chip", name: "ValueChip" },
+  { category: "component", id: "paper-surface", name: "PaperSurface" },
+  { category: "component", id: "ink-surface", name: "InkSurface" },
+  { category: "component", id: "floating-card", name: "FloatingCard" },
+  { category: "component", id: "accent-rule", name: "AccentRule" },
+  { category: "component", id: "focus-ring", name: "FocusRing" },
+  { category: "component", id: "focus-frame", name: "FocusFrame" },
+  { category: "component", id: "bracket", name: "Bracket" },
+  { category: "component", id: "arrow", name: "Arrow" },
+  { category: "component", id: "connector-line", name: "ConnectorLine" },
+  { category: "component", id: "dot-marker", name: "DotMarker" },
+  { category: "component", id: "target-pin", name: "TargetPin" },
+  { category: "component", id: "highlight-bar", name: "HighlightBar" },
+  { category: "component", id: "cursor-mark", name: "CursorMark" },
+  { category: "component", id: "click-pulse", name: "ClickPulse" },
+  { category: "component", id: "keycap", name: "Keycap" },
+  { category: "component", id: "step-pill", name: "StepPill" },
+  { category: "component", id: "progress-dots", name: "ProgressDots" },
+  { category: "component", id: "progress-rail", name: "ProgressRail" },
+  { category: "component", id: "code-line", name: "CodeLine" },
+  { category: "component", id: "code-block", name: "CodeBlock" },
+  { category: "component", id: "sound-cue", name: "SoundCue" },
+  { category: "component", id: "animated-in-out", name: "AnimatedInOut" },
+  { category: "component", id: "idea-card", name: "IdeaCard" },
+  { category: "component", id: "versus-pair", name: "VersusPair" },
+  { category: "component", id: "before-after", name: "BeforeAfter" },
+  { category: "component", id: "decision-fork", name: "DecisionFork" },
+  { category: "component", id: "timeline-step", name: "TimelineStep" },
+  { category: "component", id: "quote-card", name: "QuoteCard" },
+  { category: "component", id: "warning-mark", name: "WarningMark" },
+  { category: "component", id: "formula-strip", name: "FormulaStrip" },
+  { category: "component", id: "status-stamp", name: "StatusStamp" },
+  { category: "component", id: "concept-node", name: "ConceptNode" },
+  { category: "component", id: "flow-node", name: "FlowNode" },
+  { category: "component", id: "process-node", name: "ProcessNode" },
+  { category: "component", id: "decision-node", name: "DecisionNode" },
+  { category: "component", id: "input-node", name: "InputNode" },
+  { category: "component", id: "output-node", name: "OutputNode" },
+  { category: "component", id: "connector-arrow", name: "ConnectorArrow" },
+  { category: "component", id: "connector-elbow", name: "ConnectorElbow" },
+  { category: "component", id: "connector-curve", name: "ConnectorCurve" },
+  { category: "component", id: "branch-split", name: "BranchSplit" },
+  { category: "component", id: "merge-point", name: "MergePoint" },
+  { category: "component", id: "loop-arrow", name: "LoopArrow" },
+  { category: "component", id: "dependency-line", name: "DependencyLine" },
+  { category: "component", id: "node-badge", name: "NodeBadge" },
+  { category: "component", id: "flow-group", name: "FlowGroup" },
+  { category: "component", id: "system-boundary", name: "SystemBoundary" },
+  { category: "component", id: "bar-value", name: "BarValue" },
+  { category: "component", id: "bar-pair", name: "BarPair" },
+  { category: "component", id: "mini-bar-chart", name: "MiniBarChart" },
+  { category: "component", id: "progress-bar", name: "ProgressBar" },
+  { category: "component", id: "delta-arrow", name: "DeltaArrow" },
+  { category: "component", id: "metric-tile", name: "MetricTile" },
+  { category: "component", id: "gauge-arc", name: "GaugeArc" },
+  { category: "component", id: "dot-plot", name: "DotPlot" },
+  { category: "component", id: "timeline-axis", name: "TimelineAxis" },
+  { category: "component", id: "milestone-dot", name: "MilestoneDot" },
+  { category: "component", id: "spark-line", name: "SparkLine" },
+  { category: "component", id: "stacked-bar", name: "StackedBar" },
+  { category: "component", id: "ratio-split", name: "RatioSplit" },
+  { category: "component", id: "score-ring", name: "ScoreRing" },
+  { category: "component", id: "definition-card", name: "DefinitionCard" },
+  { category: "component", id: "cause-effect", name: "CauseEffect" },
+  { category: "component", id: "tradeoff-scale", name: "TradeoffScale" },
+  { category: "component", id: "priority-stack", name: "PriorityStack" },
+  { category: "component", id: "step-stack", name: "StepStack" },
+  { category: "component", id: "comparison-matrix", name: "ComparisonMatrix" },
+  { category: "component", id: "checklist", name: "Checklist" },
+  { category: "component", id: "do-dont-pair", name: "DoDontPair" },
+  { category: "component", id: "principle-card", name: "PrincipleCard" },
+  { category: "component", id: "question-card", name: "QuestionCard" },
+  { category: "component", id: "answer-reveal", name: "AnswerReveal" },
+  { category: "component", id: "mistake-fix-pair", name: "MistakeFixPair" },
+  { category: "component", id: "concept-cluster", name: "ConceptCluster" },
+  { category: "component", id: "svg-icon-frame", name: "SvgIconFrame" },
+  { category: "component", id: "logo-node", name: "LogoNode" },
+  { category: "component", id: "image-card", name: "ImageCard" },
+  { category: "component", id: "image-cutout", name: "ImageCutout" },
+  { category: "component", id: "screenshot-frame", name: "ScreenshotFrame" },
+  { category: "component", id: "browser-frame", name: "BrowserFrame" },
+  { category: "component", id: "terminal-frame", name: "TerminalFrame" },
+  { category: "component", id: "device-frame", name: "DeviceFrame" },
+  {
+    category: "component",
+    id: "vintage-photo-frame",
+    name: "VintagePhotoFrame",
+  },
+  { category: "component", id: "polaroid-frame", name: "PolaroidFrame" },
+  { category: "component", id: "stamp-image", name: "StampImage" },
+  { category: "component", id: "pinned-image", name: "PinnedImage" },
+  { category: "component", id: "image-comparison", name: "ImageComparison" },
+  { category: "component", id: "image-callout", name: "ImageCallout" },
+  { category: "component", id: "masked-image-shape", name: "MaskedImageShape" },
+  { category: "component", id: "paper-card", name: "PaperCard" },
+  { category: "component", id: "ink-card", name: "InkCard" },
+  { category: "component", id: "accent-card", name: "AccentCard" },
+  { category: "component", id: "floating-note", name: "FloatingNote" },
+  { category: "component", id: "quote-panel", name: "QuotePanel" },
+  { category: "component", id: "warning-panel", name: "WarningPanel" },
+  { category: "component", id: "success-panel", name: "SuccessPanel" },
+  { category: "component", id: "command-card", name: "CommandCard" },
+  { category: "component", id: "shortcut-card", name: "ShortcutCard" },
+  { category: "component", id: "resource-card", name: "ResourceCard" },
+  { category: "component", id: "result-card", name: "ResultCard" },
+  {
+    category: "component",
+    id: "mini-dashboard-card",
+    name: "MiniDashboardCard",
+  },
 ];
 
-export const tutorialPatternStories: TutorialStoryDefinition[] = [
-  { category: "pattern", id: "caption-band", name: "CaptionBand" },
-  { category: "pattern", id: "lower-third", name: "LowerThird" },
-  { category: "pattern", id: "code-callout", name: "CodeCallout" },
-  { category: "pattern", id: "linear-flow-diagram", name: "LinearFlowDiagram" },
+export const tutorialTemplateStories: TutorialStoryDefinition[] = [
   {
-    category: "pattern",
-    id: "branching-decision-flow",
-    name: "BranchingDecisionFlow",
+    category: "template",
+    id: "flow-sequence",
+    name: "FlowSequence",
   },
   {
-    category: "pattern",
-    id: "before-after-diagram",
-    name: "BeforeAfterDiagram",
+    category: "template",
+    id: "decision-tree",
+    name: "DecisionTree",
   },
   {
-    category: "pattern",
-    id: "input-process-output",
-    name: "InputProcessOutput",
+    category: "template",
+    id: "process-pipeline",
+    name: "ProcessPipeline",
   },
   {
-    category: "pattern",
-    id: "three-step-explainer",
-    name: "ThreeStepExplainer",
-  },
-  { category: "pattern", id: "toolchain-flow", name: "ToolchainFlow" },
-  { category: "pattern", id: "model-pipeline", name: "ModelPipeline" },
-  {
-    category: "pattern",
-    id: "problem-solution-result",
-    name: "ProblemSolutionResult",
-  },
-  { category: "pattern", id: "chart-callout", name: "ChartCallout" },
-  {
-    category: "pattern",
-    id: "screenshot-with-annotations",
-    name: "ScreenshotWithAnnotations",
+    category: "template",
+    id: "system-map",
+    name: "SystemMap",
   },
   {
-    category: "pattern",
-    id: "image-with-concept-nodes",
-    name: "ImageWithConceptNodes",
+    category: "template",
+    id: "timeline",
+    name: "Timeline",
   },
-  { category: "pattern", id: "timeline-explainer", name: "TimelineExplainer" },
-  { category: "pattern", id: "comparison-overlay", name: "ComparisonOverlay" },
-  { category: "pattern", id: "code-plus-result", name: "CodePlusResult" },
-  {
-    category: "pattern",
-    id: "narration-support-card",
-    name: "NarrationSupportCard",
-  },
-  { category: "pattern", id: "chart-trend-pattern", name: "ChartTrendPattern" },
 ];
 
 export const tutorialStoryAspects: TutorialStoryAspect[] = ["16x9", "9x16"];
@@ -315,7 +283,7 @@ export function tutorialStoryCompositionId(
   story: TutorialStoryDefinition,
   aspect: TutorialStoryAspect
 ) {
-  return `${story.category === "atom" ? story.name : `Pattern-${story.name}`}-${aspect}`;
+  return `${story.name}-${aspect}`;
 }
 
 export const TutorialStorybook: React.FC<TutorialStorybookProps> = ({
@@ -327,12 +295,12 @@ export const TutorialStorybook: React.FC<TutorialStorybookProps> = ({
 
   return (
     <AbsoluteFill
-      className="atelier-zero-root az-paper-texture az-atom-stage"
+      className="atelier-zero-root az-paper-texture az-component-stage"
       data-orientation={portrait ? "portrait" : "landscape"}
     >
       <div
-        className="az-atom-stage-inner grid size-full place-items-center"
-        data-slot="atom-story-stage"
+        className="az-component-stage-inner grid size-full place-items-center"
+        data-slot="component-story-stage"
       >
         <StoryPreview sfxEnabled={sfxEnabled} story={story} />
       </div>
@@ -757,7 +725,7 @@ function StoryPreview({
     return (
       <VariantStack>
         <FormulaStrip items={["input", "model", "answer"]} />
-        <FormulaStrip items={["clip", "atom", "overlay"]} tone="olive" />
+        <FormulaStrip items={["clip", "component", "overlay"]} tone="olive" />
       </VariantStack>
     );
   }
@@ -782,34 +750,7 @@ function StoryPreview({
     );
   }
 
-  if (story === "caption-band") {
-    return (
-      <VariantStack className="w-full">
-        <CaptionBand emphasis="step 01">One idea.</CaptionBand>
-        <CaptionBand emphasis="important">Show the shift.</CaptionBand>
-      </VariantStack>
-    );
-  }
-
-  if (story === "lower-third") {
-    return (
-      <VariantStack>
-        <LowerThird eyebrow="chapter" title="Blocks" />
-        <LowerThird eyebrow="next" title="Compose" tone="olive" />
-      </VariantStack>
-    );
-  }
-
-  return (
-    <VariantStack className="w-full">
-      <CodeWindow
-        command="render"
-        file="overlay.tsx"
-        lines={["read(input)", "focus(point)", "show(result)"]}
-      />
-      <ProgressRail active={2} total={4} />
-    </VariantStack>
-  );
+  return null;
 }
 
 function renderExpandedStory(story: TutorialStoryId) {
@@ -1004,7 +945,7 @@ function renderExpandedStory(story: TutorialStoryId) {
         </VariantGrid>
       );
     case "definition-card":
-      return <DefinitionCard definition="Reusable block" term="atom" />;
+      return <DefinitionCard definition="Reusable block" term="component" />;
     case "cause-effect":
       return <CauseEffect cause="Input" effect="Output" />;
     case "tradeoff-scale":
@@ -1015,8 +956,8 @@ function renderExpandedStory(story: TutorialStoryId) {
       return <StepStack items={["Read", "Focus", "Show"]} />;
     case "comparison-matrix":
       return <ComparisonMatrix />;
-    case "checklist-atom":
-      return <ChecklistAtom />;
+    case "checklist":
+      return <Checklist />;
     case "do-dont-pair":
       return <DoDontPair />;
     case "principle-card":
@@ -1111,38 +1052,16 @@ function renderExpandedStory(story: TutorialStoryId) {
       return <ResultCard />;
     case "mini-dashboard-card":
       return <MiniDashboardCard />;
-    case "linear-flow-diagram":
-      return <LinearFlowDiagram />;
-    case "branching-decision-flow":
-      return <BranchingDecisionFlow />;
-    case "before-after-diagram":
-      return <BeforeAfterDiagram />;
-    case "input-process-output":
-      return <InputProcessOutput />;
-    case "three-step-explainer":
-      return <ThreeStepExplainer />;
-    case "toolchain-flow":
-      return <ToolchainFlow />;
-    case "model-pipeline":
-      return <ModelPipeline />;
-    case "problem-solution-result":
-      return <ProblemSolutionResult />;
-    case "chart-callout":
-      return <ChartCallout />;
-    case "screenshot-with-annotations":
-      return <ScreenshotWithAnnotations />;
-    case "image-with-concept-nodes":
-      return <ImageWithConceptNodes />;
-    case "timeline-explainer":
-      return <TimelineExplainer />;
-    case "comparison-overlay":
-      return <ComparisonOverlay />;
-    case "code-plus-result":
-      return <CodePlusResult />;
-    case "narration-support-card":
-      return <NarrationSupportCard />;
-    case "chart-trend-pattern":
-      return <ChartTrendPattern />;
+    case "flow-sequence":
+      return <FlowSequenceTemplate />;
+    case "decision-tree":
+      return <DecisionTreeTemplate />;
+    case "process-pipeline":
+      return <ProcessPipelineTemplate />;
+    case "system-map":
+      return <SystemMapTemplate />;
+    case "timeline":
+      return <TimelineTemplate />;
     default:
       return null;
   }
@@ -1157,7 +1076,7 @@ function VariantGrid({
 }) {
   return (
     <div
-      className={`az-atom-grid ${className ?? ""}`}
+      className={`az-component-grid ${className ?? ""}`}
       data-slot="story-variant-grid"
     >
       {children}
@@ -1174,7 +1093,7 @@ function VariantStack({
 }) {
   return (
     <div
-      className={`az-atom-stack ${className ?? ""}`}
+      className={`az-component-stack ${className ?? ""}`}
       data-slot="story-variant-stack"
     >
       {children}

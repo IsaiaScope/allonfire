@@ -33,15 +33,25 @@ Whisper-generated word-level timestamped text of the Source Recording. Drives bo
 ### Cut List
 LLM-produced set of `[start, end]` ranges to remove from the Source Recording. Targets: silence/dead points, filler ("um", "uh", "like"), repetitions, mistakes / retakes, off-topic detours.
 
-### Overlay Spec List
-LLM-produced set of `{timestamp, durationMs, engine, type, content, position}` items describing visual aids to render at specific moments.
-- `engine`: `mermaid` (auto-layout structured) | `excalidraw` (freeform hand-drawn) | `text` (pure typography callout) | `code` (syntax-highlighted snippet)
-- `type` (when `engine=mermaid`): `flowchart` | `sequence` | `erd` | `state` | `class`
-- `type` (when `engine=excalidraw`): `concept` | `sketch` | `annotated` | `callout`
-- `position`: `fullscreen` | `side` | `inset` | `lower-third`
+### Overlay Spec
+Structured render plan for Hyperframes overlays. Derived from transcript, Italian script, and visual evidence. Contains validated overlay items with timing, template/component choice, and props.
+
+The human-readable `overlay.md` explains the plan, but `overlay-spec.json` is the render contract.
 
 ### Overlay
 Single visual aid rendered and composited onto the video at a timestamp. Distinct from generic "b-roll" — Overlays are *information-bearing*, tied to what the creator just said.
+
+An Overlay can be rendered as an editable standalone clip and also composited into its own Overlay Video.
+
+### Overlay Clip
+Standalone rendered overlay asset for one Overlay. Kept so the creator can review, replace, or manually edit an individual overlay without regenerating the whole video.
+
+Overlay Clip duration is content-driven: clips can be as long as needed for the idea to be readable and usable inside the edited video. The source-video moment is an editorial anchor, not a hard duration cap.
+
+### Overlay Video
+Project-local standalone video output produced by the `overlay` command for one Overlay. It is generated from the overlay design itself on a neutral AllOnFire stage, not composited over the source video footage.
+
+Generated overlay outputs live beside `raw/`, not inside it: `<project>/overlays/`. The CLI may accept either `<project>` or `<project>/raw`, but it normalizes outputs to the parent project folder.
 
 ### Captions
 Auto-generated burned-in subtitles, derived from the Transcript after Cut List is applied.
@@ -86,11 +96,12 @@ Constrains valid Render Targets:
 | Background | Physical green screen → FFmpeg chroma key |
 | Recording mode | Extempore (no teleprompter), AI handles post-prod cleanup |
 | Render dispatch | Per-job `Render Target` flag: LONG / SHORTS / BOTH |
-| Overlay engine | Remotion composer + Mermaid (structured graphs, auto-layout) + Excalidraw via MCP (freeform sketches, hand-drawn) — both → SVG → Remotion `<Img>` |
+| Overlay engine | Hyperframes HTML + CSS + GSAP compositions rendered locally through the Hyperframes CLI. Open Design may draft or refine compositions manually, but the production CLI does not depend on the Open Design daemon. |
 | Cut detection | Silero VAD + `whisper.cpp` `large-v3` (local) + Claude Code CLI headless LLM pass |
 | Stack philosophy | Full-local terminal tooling, top-star OSS only, no paid SaaS |
 | LLM driver | Claude Code CLI (`claude -p`) for transcript→cut-list, →overlay-spec, →highlights; Codex for codegen helpers |
-| Render compute | Local (Mac/Linux), FFmpeg + Remotion CLI render; no Lambda |
+| Render compute | Local (Mac/Linux), FFmpeg + Hyperframes CLI render; no Lambda |
+| Overlay output | `overlay` produces reusable transparent Overlay Clips and one standalone generated Overlay Video per overlay block under `<project>/overlays/`, while source/input artifacts remain under `<project>/raw/`. Clips remain available for manual edits; per-overlay videos are the immediate review/output artifacts. |
 | Recording modes | Both `LONG_FORM_RAW` and `SHORT_FORM_RAW`; user flags per job |
 | Publish targets (v1) | YouTube only (long + Shorts), single OAuth (YT Data API v3). TT/IG/X = Phase 2 |
 | Orchestration | 6-command CLI (`install`, `download`, `transcribe`, `translate`, `overlay`, `list`) under `@allonfire/video-pipeline`. Stage-per-command, idempotent, filesystem-driven. No FSM, no Prisma. |
@@ -111,7 +122,7 @@ Constrains valid Render Targets:
 | `download` | Fetch source YT video (1080p cap) + EN captions + metadata.json scaffold. | `<yt-url> --title "<IT title>" [--date YYYY-MM-DD] [--quality 4k\|1080p\|720p]` | `video.mp4`, `captions-en.vtt?`, `metadata.json` |
 | `transcribe` | Extract audio via ffmpeg, run whisper.cpp `large-v3`, write verbatim source transcript. Auto-detect source language. | `<project> [--force]` | `transcript.md`, `transcript.json`, updates `metadata.source.language` |
 | `translate` | Pass 1: if source ≠ IT, translate verbatim via Claude Code CLI. Pass 2 (always): rewrite into IT extempore voice. | `<project> [--force]` | `transcript-it.md`, `script-it.md` |
-| `overlay` | Generate overlay library: independent items drawn from source content, prose "moment" anchors, closed kind list. | `<project> [--force] [--count N]` | `overlay.md` |
+| `overlay` | Generate a Hyperframes-backed overlay render package and per-overlay composited videos. | `<project> [--force] [--count N]` | `overlay.md`, `overlays/overlay-spec.json`, `overlays/clips/*`, `overlays/videos/*`, `overlays/manifest.json` |
 | `list` | Filesystem walk of all projects. Table view with stage checkboxes. | `[--status pending\|failed\|done]` | stdout |
 
 ## Open branches (deferred, not blocking v1)

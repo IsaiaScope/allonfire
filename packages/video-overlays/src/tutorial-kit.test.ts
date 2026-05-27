@@ -2,11 +2,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { tutorialSfxCueSchema } from "./spec";
-import {
-  enterProgress,
-  type TutorialSfxCue,
-  tutorialSfxFiles,
-} from "./tutorial-kit";
+import { enterProgress } from "./tutorial-kit/lib/motion";
+import { type TutorialSfxCue, tutorialSfxFiles } from "./tutorial-kit/lib/sfx";
 
 describe("tutorial overlay kit", () => {
   it("keeps the curated SFX pack local and schema-backed", () => {

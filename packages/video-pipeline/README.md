@@ -55,6 +55,8 @@ $VIDEO_WORK_DIR/                                  (default /Volumes/Crucial-4T/v
 | `WHISPER_MODELS_DIR` | `/Volumes/Crucial-4T/repo/allonfire/models` | Whisper.cpp model cache |
 | `WHISPER_MODEL` | `large-v3` | Whisper.cpp model name |
 | `LOCAL_ASR_ENGINE` | `auto` | Local fallback when captions are missing: `auto` or `whisper-cpp` |
+| `VIDEO_AGENT` | `codex` | Default local agent for pipeline stages: `codex`, `claude`, or `auto` |
+| `TRANSLATE_AGENT` | unset | Optional override for `translate`: `codex`, `claude`, or `auto` |
 | `TRANSCRIPT_REPAIR_AGENT` | `auto` | Local agent cleanup for repeated ASR loops: `auto`, `claude`, `codex`, or `off` |
 
 ## Transcription strategy

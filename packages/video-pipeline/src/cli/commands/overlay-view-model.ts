@@ -1,3 +1,4 @@
+import { basename, dirname, join } from "node:path";
 import { env } from "../../env";
 import type { VideoAgentChoice } from "../../lib/agent";
 import type { PipelineStage } from "../components/pipeline";
@@ -17,6 +18,7 @@ export type OverlayStep =
   | "frames"
   | "visual"
   | "library"
+  | "render"
   | "files"
   | "done"
   | "fail"
@@ -123,13 +125,29 @@ const STAGES: StageDefinition<OverlayStageStep>[] = [
     detail: [
       `Agent: ${env.VIDEO_AGENT}`,
       "Input: transcript, script, optional visual evidence",
-      "Output: overlay.md",
+      "Output: video-ready overlay scenes in overlay.md",
     ],
-    summary: "Generate the final Italian overlay library",
+    summary: "Generate the final Italian overlay scene library",
     statusLabels: {
       pending: "Waiting",
       running: "Generating",
       done: "Generated",
+      failed: "Failed",
+    },
+  },
+  {
+    id: "render",
+    label: "Render",
+    detail: [
+      "Writes: overlays/overlay-spec.json",
+      "Renders: overlays/clips/16x9 and 9x16",
+      "Renders: overlays/videos/16x9 and 9x16",
+    ],
+    summary: "Render reusable animated overlay clips and standalone videos",
+    statusLabels: {
+      pending: "Waiting",
+      running: "Rendering",
+      done: "Rendered",
       failed: "Failed",
     },
   },
@@ -139,6 +157,7 @@ const STAGES: StageDefinition<OverlayStageStep>[] = [
     detail: [
       "Writes: overlay.md",
       "Artifacts: .overlay-watch/",
+      "Artifacts: overlays/",
       "Updates: overlayed stage state",
     ],
     summary: "Write overlay outputs and update metadata",
@@ -151,6 +170,12 @@ const STAGES: StageDefinition<OverlayStageStep>[] = [
   },
 ];
 
+function overlayVideosFolder(folder: string): string {
+  return basename(folder) === "raw"
+    ? join(dirname(folder), "overlays", "videos")
+    : join(folder, "overlays", "videos");
+}
+
 export function overlayAgentLabel(agent?: VideoAgentChoice): string {
   return agent ?? env.VIDEO_AGENT;
 }
@@ -160,7 +185,10 @@ export function overlayProgressStep(
   message: string
 ): OverlayStageStep {
   const lower = message.toLowerCase();
-  if (lower.includes("generating overlay") || percent >= 90) {
+  if (lower.includes("rendering") && lower.includes("overlay")) {
+    return "render";
+  }
+  if (lower.includes("generating") && lower.includes("overlay")) {
     return "library";
   }
   if (lower.includes("inspecting sampled frames")) {
@@ -175,6 +203,9 @@ export function overlayProgressStep(
   }
   if (lower.includes("moment scout")) {
     return "moments";
+  }
+  if (percent >= 90) {
+    return "library";
   }
   return "transcript";
 }
@@ -222,7 +253,7 @@ function overlayStageDetail(
     return [
       `Agent: ${overlayAgentLabel(state.agent)}`,
       "Input: transcript, script, optional visual evidence",
-      "Output: overlay.md",
+      "Output: video-ready overlay scenes in overlay.md",
     ];
   }
   return stage.detail;
@@ -273,11 +304,14 @@ export function overlayInfoDetails({
     `Source: ${state.sourceTitle ?? "loading metadata"}`,
     `Agent: ${overlayAgentLabel(state.agent)}`,
     `Run mode: ${force ? "force redo" : "reuse completed overlays"}`,
-    "Strategy: transcript moment scout, sampled frames, overlay library",
+    "Strategy: transcript moment scout, sampled frames, video-ready overlay scenes",
     `Overlay count: ${count ?? "prompt decides"}`,
     "Input: transcript.md",
     "Input: script-it.md",
     "Writes: overlay.md",
+    "Writes: overlays/overlay-spec.json",
+    "Writes: overlays/clips/16x9 and 9x16",
+    "Writes: overlays/videos/16x9 and 9x16",
     "Artifacts: .overlay-watch/",
     `Folder: ${folder}`,
   ];
@@ -288,7 +322,9 @@ export function activeOverlayMessage(step: OverlayStep): string | undefined {
 }
 
 export function shouldShowOverlayProgress(step: OverlayStep): boolean {
-  return ["moments", "frames", "visual", "library", "files"].includes(step);
+  return ["moments", "frames", "visual", "library", "render", "files"].includes(
+    step
+  );
 }
 
 export function overlaySuccessDetails(
@@ -298,8 +334,11 @@ export function overlaySuccessDetails(
   return [
     `Status: ${completeLabel(state.step)}`,
     "Output: ✓ overlay.md",
+    "Output: ✓ overlays/overlay-spec.json",
+    "Output: ✓ overlays/clips/16x9 + 9x16",
+    "Output: ✓ overlays/videos/16x9 + 9x16",
     "Artifacts: ✓ .overlay-watch/",
     `Visual evidence: ${visualEvidenceResultLabel(state)}`,
-    `Next: review "${folder}/overlay.md"`,
+    `Next: review "${overlayVideosFolder(folder)}"`,
   ];
 }

@@ -80,22 +80,70 @@ export const tutorialSfxCueSchema = z.enum([
   "page-turn",
 ]);
 
-export const tutorialShowcasePropsSchema = z.object({
-  activeStep: z.number().int().min(0).max(3),
-  caption: z.string(),
-  code: z.object({
-    command: z.string(),
-    file: z.string(),
-    lines: z.array(z.string()).min(2).max(6),
-  }),
-  kicker: z.string(),
-  lowerThird: z.object({
-    eyebrow: z.string(),
-    title: z.string(),
-  }),
-  mode: z.enum(["fullscreen", "over-video"]),
-  sfxEnabled: z.boolean(),
+export const generatedOverlaySfxSchema = z.union([
+  tutorialSfxCueSchema,
+  z.literal("none"),
+]);
+
+export const generatedOverlayAspectSchema = z.enum(["16x9", "9x16"]);
+
+export const generatedOverlayDensitySchema = z.enum([
+  "light",
+  "medium",
+  "rich",
+]);
+
+export const generatedOverlayMotionSchema = z.enum([
+  "reveal",
+  "build",
+  "compare",
+  "pulse",
+  "type-on",
+]);
+
+export const generatedOverlayAspectConfigSchema = z.object({
+  height: z.number().int().positive(),
+  id: generatedOverlayAspectSchema,
+  width: z.number().int().positive(),
+});
+
+export const generatedOverlayTemplateSchema = z.enum([
+  "callout-card",
+  "code-card",
+  "dashboard-triage",
+  "flow-diagram",
+  "list-card",
+  "table-card",
+]);
+
+export const generatedOverlayItemSchema = z.object({
+  body: z.string(),
+  density: generatedOverlayDensitySchema,
+  durationSeconds: z.number().positive(),
+  emphasis: z.string(),
+  id: z.string(),
+  kind: z.string(),
+  moment: z.string(),
+  motion: generatedOverlayMotionSchema,
+  placementHint: z.string(),
+  purpose: z.string(),
+  sfx: generatedOverlaySfxSchema,
+  startSeconds: z.number().nonnegative(),
+  template: generatedOverlayTemplateSchema,
   title: z.string(),
+});
+
+export const generatedOverlayPackageSchema = z.object({
+  aspects: z.array(generatedOverlayAspectConfigSchema).min(1),
+  compositionRoot: z.string(),
+  fps: z.number().int().positive(),
+  overlays: z.array(generatedOverlayItemSchema),
+  projectTitle: z.string(),
+  renderer: z.literal("hyperframes"),
+  source: z.object({
+    durationSeconds: z.number().positive(),
+    videoPath: z.string(),
+  }),
 });
 
 export const dashboardOverlaySpecSchema = z.object({
@@ -128,25 +176,9 @@ export const linearDiagramOverlaySpecSchema = z.object({
   sourceFolder: z.string(),
 });
 
-export const tutorialShowcaseOverlaySpecSchema = z.object({
-  durationFrames: z.number().int().positive(),
-  fps: z.number().int().positive(),
-  overlay: z.object({
-    id: z.string(),
-    kind: z.string(),
-    moment: z.string(),
-    purpose: z.string(),
-    template: z.literal("tutorial-showcase"),
-  }),
-  projectTitle: z.string(),
-  props: tutorialShowcasePropsSchema,
-  sourceFolder: z.string(),
-});
-
 export const overlaySpecSchema = z.union([
   dashboardOverlaySpecSchema,
   linearDiagramOverlaySpecSchema,
-  tutorialShowcaseOverlaySpecSchema,
 ]);
 
 export type DashboardTriageProps = z.infer<typeof dashboardTriagePropsSchema>;
@@ -154,6 +186,22 @@ export type DashboardSection = z.infer<typeof dashboardSectionSchema>;
 export type DashboardRow = z.infer<typeof dashboardRowSchema>;
 export type LinearDiagramProps = z.infer<typeof linearDiagramPropsSchema>;
 export type LinearDiagramStep = z.infer<typeof linearDiagramStepSchema>;
-export type TutorialShowcaseProps = z.infer<typeof tutorialShowcasePropsSchema>;
 export type TutorialSfxCue = z.infer<typeof tutorialSfxCueSchema>;
+export type GeneratedOverlayAspect = z.infer<
+  typeof generatedOverlayAspectSchema
+>;
+export type GeneratedOverlayAspectConfig = z.infer<
+  typeof generatedOverlayAspectConfigSchema
+>;
+export type GeneratedOverlayDensity = z.infer<
+  typeof generatedOverlayDensitySchema
+>;
+export type GeneratedOverlayItem = z.infer<typeof generatedOverlayItemSchema>;
+export type GeneratedOverlayMotion = z.infer<
+  typeof generatedOverlayMotionSchema
+>;
+export type GeneratedOverlaySfx = z.infer<typeof generatedOverlaySfxSchema>;
+export type GeneratedOverlayPackage = z.infer<
+  typeof generatedOverlayPackageSchema
+>;
 export type OverlaySpec = z.infer<typeof overlaySpecSchema>;

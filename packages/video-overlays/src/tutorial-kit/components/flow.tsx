@@ -6,21 +6,21 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
-type BaseAtomProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseComponentProps = React.ComponentProps<"div"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-type BaseSvgAtomProps = React.ComponentProps<"svg"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseSvgComponentProps = React.ComponentProps<"svg"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-export type FlowNodeProps = BaseAtomProps & {
+export type FlowNodeProps = BaseComponentProps & {
   label: React.ReactNode;
   meta?: React.ReactNode;
 };
@@ -87,7 +87,7 @@ export function ProcessNode({
   );
 }
 
-export type DecisionNodeProps = BaseAtomProps & {
+export type DecisionNodeProps = BaseComponentProps & {
   label: React.ReactNode;
 };
 
@@ -140,7 +140,7 @@ export function OutputNode(props: FlowNodeProps) {
   return <FlowNode tone="olive" {...props} data-slot="output-node" />;
 }
 
-export type ConnectorArrowProps = BaseAtomProps & {
+export type ConnectorArrowProps = BaseComponentProps & {
   direction?: "right" | "left" | "up" | "down";
 };
 
@@ -177,7 +177,7 @@ export function ConnectorArrow({
   );
 }
 
-export type ConnectorElbowProps = BaseAtomProps & {
+export type ConnectorElbowProps = BaseComponentProps & {
   direction?: "down-right" | "down-left" | "up-right" | "up-left";
 };
 
@@ -214,7 +214,7 @@ export function ConnectorElbow({
   );
 }
 
-export type ConnectorCurveProps = BaseSvgAtomProps;
+export type ConnectorCurveProps = BaseSvgComponentProps;
 
 export function ConnectorCurve({
   className,
@@ -256,7 +256,7 @@ export function ConnectorCurve({
   );
 }
 
-export type BranchSplitProps = BaseAtomProps & {
+export type BranchSplitProps = BaseComponentProps & {
   labels?: [React.ReactNode, React.ReactNode, React.ReactNode?];
 };
 
@@ -301,7 +301,7 @@ export function BranchSplit({
   );
 }
 
-export type MergePointProps = BaseAtomProps & {
+export type MergePointProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -328,7 +328,7 @@ export function MergePoint({
   );
 }
 
-export type LoopArrowProps = BaseAtomProps & {
+export type LoopArrowProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -385,7 +385,7 @@ export function LoopArrow({
   );
 }
 
-export type DependencyLineProps = BaseAtomProps;
+export type DependencyLineProps = BaseComponentProps;
 
 export function DependencyLine({
   className,
@@ -410,7 +410,7 @@ export function DependencyLine({
   );
 }
 
-export type NodeBadgeProps = BaseAtomProps & {
+export type NodeBadgeProps = BaseComponentProps & {
   children: React.ReactNode;
 };
 
@@ -427,7 +427,7 @@ export function NodeBadge({
   );
 }
 
-export type FlowGroupProps = BaseAtomProps & {
+export type FlowGroupProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -457,7 +457,7 @@ export function FlowGroup({
   );
 }
 
-export type SystemBoundaryProps = BaseAtomProps & {
+export type SystemBoundaryProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -530,7 +530,7 @@ function Meta({
   );
 }
 
-function densityClass(density: AtomDensity) {
+function densityClass(density: ComponentDensity) {
   if (density === "compact") {
     return "p-8";
   }
@@ -540,7 +540,7 @@ function densityClass(density: AtomDensity) {
   return "p-10";
 }
 
-function textSize(size: AtomSize) {
+function textSize(size: ComponentSize) {
   if (size === "sm") {
     return "text-4xl";
   }
@@ -553,7 +553,7 @@ function textSize(size: AtomSize) {
   return "text-6xl";
 }
 
-function widthSize(size: AtomSize) {
+function widthSize(size: ComponentSize) {
   if (size === "sm") {
     return "w-64";
   }
@@ -585,8 +585,8 @@ function connectorArrowRotationClass(
 }
 
 function connectorStrokeWidth(
-  density: AtomDensity,
-  widths: Record<AtomDensity, number>
+  density: ComponentDensity,
+  widths: Record<ComponentDensity, number>
 ) {
   return widths[density];
 }
@@ -603,12 +603,12 @@ function branchTone(index: number): OverlayTone {
   return "olive";
 }
 
-function lineHeight(density: AtomDensity) {
+function lineHeight(density: ComponentDensity) {
   if (density === "compact") {
-    return "h-3";
+    return "h-2";
   }
   if (density === "spacious") {
-    return "h-7";
+    return "h-4";
   }
-  return "h-5";
+  return "h-3";
 }

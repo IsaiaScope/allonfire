@@ -1,12 +1,11 @@
 import type React from "react";
 import { cn } from "../lib/cn";
 import type { OverlayTone } from "../lib/tones";
-import { MetaStrip } from "../primitives/meta-strip";
-import { PaperPanel } from "../primitives/paper-panel";
-import type { AtomDensity } from "./types";
+import { PaperPanel } from "./paper-panel";
+import type { ComponentDensity } from "./types";
 
 export type PaperSurfaceProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   variant?: "solid" | "translucent";
 };
 
@@ -37,7 +36,7 @@ export function PaperSurface({
 }
 
 export type InkSurfaceProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
 };
 
 export function InkSurface({
@@ -65,7 +64,7 @@ export function InkSurface({
 }
 
 export type FloatingCardProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   tone?: OverlayTone;
 };
 
@@ -91,13 +90,4 @@ export function FloatingCard({
       {children}
     </div>
   );
-}
-
-export type MetadataStripProps = React.ComponentProps<"div"> & {
-  left: React.ReactNode;
-  right: React.ReactNode;
-};
-
-export function MetadataStrip(props: MetadataStripProps) {
-  return <MetaStrip data-slot="metadata-strip" {...props} />;
 }

@@ -6,15 +6,15 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
-type BaseAtomProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseComponentProps = React.ComponentProps<"div"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-export type PaperCardProps = BaseAtomProps & {
+export type PaperCardProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -270,7 +270,7 @@ export function ResultCard({
   );
 }
 
-export type MiniDashboardCardProps = BaseAtomProps & {
+export type MiniDashboardCardProps = BaseComponentProps & {
   items?: React.ReactNode[];
 };
 
@@ -351,7 +351,7 @@ function Content({ children }: { children: React.ReactNode }) {
   );
 }
 
-function pad(density: AtomDensity) {
+function pad(density: ComponentDensity) {
   if (density === "compact") {
     return "p-8";
   }

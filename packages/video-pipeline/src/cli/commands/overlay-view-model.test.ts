@@ -5,6 +5,7 @@ import {
   overlayPipelineStages,
   overlayProgressStep,
   overlayStageState,
+  overlaySuccessDetails,
 } from "./overlay-view-model";
 
 const baseState: OverlayViewState = {
@@ -37,6 +38,13 @@ describe("overlay view model", () => {
     expect(overlayProgressStep(90, "Generating overlay library")).toBe(
       "library"
     );
+    expect(overlayProgressStep(96, "Rendering overlay clips")).toBe("render");
+    expect(
+      overlayProgressStep(
+        96,
+        "Rendering 16:9 and 9:16 overlay clips and videos"
+      )
+    ).toBe("render");
   });
 
   it("marks earlier stages done, active stage running, and later stages pending", () => {
@@ -73,13 +81,36 @@ describe("overlay view model", () => {
       "Source: Source Title",
       "Agent: claude",
       "Run mode: force redo",
-      "Strategy: transcript moment scout, sampled frames, overlay library",
+      "Strategy: transcript moment scout, sampled frames, video-ready overlay scenes",
       "Overlay count: 5",
       "Input: transcript.md",
       "Input: script-it.md",
       "Writes: overlay.md",
+      "Writes: overlays/overlay-spec.json",
+      "Writes: overlays/clips/16x9 and 9x16",
+      "Writes: overlays/videos/16x9 and 9x16",
       "Artifacts: .overlay-watch/",
       "Folder: /work/project/raw",
     ]);
+  });
+
+  it("does not point users to a single final overlay video", () => {
+    const details = overlayInfoDetails({
+      count: 5,
+      folder: "/work/project/raw",
+      force: true,
+      state: baseState,
+    });
+    const successDetails = overlaySuccessDetails("/work/project/raw", {
+      ...baseState,
+      step: "done",
+    });
+
+    expect(details.join("\n")).not.toContain("final-overlay.mp4");
+    expect(successDetails.join("\n")).not.toContain("final-overlay.mp4");
+    expect(successDetails).toContain("Output: ✓ overlays/videos/16x9 + 9x16");
+    expect(successDetails).toContain(
+      'Next: review "/work/project/overlays/videos"'
+    );
   });
 });

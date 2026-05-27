@@ -6,15 +6,15 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
-type BaseAtomProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseComponentProps = React.ComponentProps<"div"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-export type DefinitionCardProps = BaseAtomProps & {
+export type DefinitionCardProps = BaseComponentProps & {
   definition: React.ReactNode;
   term: React.ReactNode;
 };
@@ -48,7 +48,7 @@ export function DefinitionCard({
   );
 }
 
-export type CauseEffectProps = BaseAtomProps & {
+export type CauseEffectProps = BaseComponentProps & {
   cause: React.ReactNode;
   effect: React.ReactNode;
 };
@@ -80,7 +80,7 @@ export function CauseEffect({
   );
 }
 
-export type TradeoffScaleProps = BaseAtomProps & {
+export type TradeoffScaleProps = BaseComponentProps & {
   left: React.ReactNode;
   right: React.ReactNode;
 };
@@ -113,7 +113,7 @@ export function TradeoffScale({
   );
 }
 
-export type PriorityStackProps = BaseAtomProps & {
+export type PriorityStackProps = BaseComponentProps & {
   items?: React.ReactNode[];
 };
 
@@ -153,7 +153,7 @@ export function StepStack(props: StepStackProps) {
   return <PriorityStack {...props} data-slot="step-stack" />;
 }
 
-export type ComparisonMatrixProps = BaseAtomProps & {
+export type ComparisonMatrixProps = BaseComponentProps & {
   cells?: React.ReactNode[];
 };
 
@@ -189,20 +189,20 @@ export function ComparisonMatrix({
   );
 }
 
-export type ChecklistAtomProps = BaseAtomProps & {
+export type ChecklistProps = BaseComponentProps & {
   items?: React.ReactNode[];
 };
 
-export function ChecklistAtom({
+export function Checklist({
   className,
   items = ["Pick", "Build", "Check"],
   tone = "olive",
   ...props
-}: ChecklistAtomProps) {
+}: ChecklistProps) {
   return (
     <Panel
       className={cn("w-full max-w-3xl", className)}
-      data-slot="checklist-atom"
+      data-slot="checklist"
       tone={tone}
       {...props}
     >
@@ -228,7 +228,7 @@ export function ChecklistAtom({
   );
 }
 
-export type DoDontPairProps = BaseAtomProps & {
+export type DoDontPairProps = BaseComponentProps & {
   doLabel?: React.ReactNode;
   dontLabel?: React.ReactNode;
 };
@@ -255,7 +255,7 @@ export function DoDontPair({
   );
 }
 
-export type PrincipleCardProps = BaseAtomProps & {
+export type PrincipleCardProps = BaseComponentProps & {
   children: React.ReactNode;
 };
 
@@ -297,7 +297,7 @@ export function QuestionCard({
   );
 }
 
-export type AnswerRevealProps = BaseAtomProps & {
+export type AnswerRevealProps = BaseComponentProps & {
   answer: React.ReactNode;
   question: React.ReactNode;
 };
@@ -325,7 +325,7 @@ export function AnswerReveal({
   );
 }
 
-export type MistakeFixPairProps = BaseAtomProps & {
+export type MistakeFixPairProps = BaseComponentProps & {
   fix?: React.ReactNode;
   mistake?: React.ReactNode;
 };
@@ -352,7 +352,7 @@ export function MistakeFixPair({
   );
 }
 
-export type ConceptClusterProps = BaseAtomProps & {
+export type ConceptClusterProps = BaseComponentProps & {
   center?: React.ReactNode;
   nodes?: React.ReactNode[];
 };

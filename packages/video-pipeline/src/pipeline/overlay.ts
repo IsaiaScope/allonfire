@@ -45,7 +45,7 @@ export async function generateOverlays(
     visualEvidence +
     `# Italian script (what creator will say)\n\n${script}\n`;
 
-  options.onProgress?.(90, "Generating overlay library");
+  options.onProgress?.(90, "Generating video-ready overlay scenes");
   const result = await runVideoAgent({
     agent: options.agent,
     errorLabel: "overlay generation",

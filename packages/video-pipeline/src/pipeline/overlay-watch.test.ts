@@ -102,6 +102,7 @@ describe("overlay frame extraction", () => {
     expect(
       buildFrameExtractionArgs("/tmp/video.mp4", 12.345, "/tmp/out.jpg")
     ).toEqual([
+      "-nostdin",
       "-ss",
       "12.345",
       "-i",

@@ -1,36 +1,78 @@
 import { describe, expect, it } from "vitest";
-import { getDashboardTriageLayout } from "./dashboard-triage-overlay";
-import { getLinearDiagramLayout } from "./linear-diagram-overlay";
-import {
-  DASHBOARD_TRIAGE_LANDSCAPE_ID,
-  DASHBOARD_TRIAGE_PORTRAIT_ID,
-  DEFAULT_LINEAR_DIAGRAM_SPEC,
-  DEFAULT_SPEC,
-  DEFAULT_TUTORIAL_SHOWCASE_SPEC,
-  LINEAR_DIAGRAM_LANDSCAPE_ID,
-  LINEAR_DIAGRAM_PORTRAIT_ID,
-  TUTORIAL_SHOWCASE_FULLSCREEN_LANDSCAPE_ID,
-  TUTORIAL_SHOWCASE_FULLSCREEN_PORTRAIT_ID,
-  TUTORIAL_SHOWCASE_OVER_VIDEO_LANDSCAPE_ID,
-  TUTORIAL_SHOWCASE_OVER_VIDEO_PORTRAIT_ID,
-} from "./root";
 import {
   dashboardOverlaySpecSchema,
+  generatedOverlayPackageSchema,
   linearDiagramOverlaySpecSchema,
-  tutorialShowcaseOverlaySpecSchema,
 } from "./spec";
-import {
-  tutorialAtomStories,
-  tutorialPatternStories,
-  tutorialStoryAspects,
-  tutorialStoryCompositionId,
-} from "./tutorial-storybook";
-
-const REMOTION_COMPOSITION_ID_PATTERN = /^[A-Za-z0-9-]+$/;
 
 describe("overlay spec", () => {
   it("accepts the default dashboard triage template props", () => {
-    const spec = dashboardOverlaySpecSchema.parse(DEFAULT_SPEC);
+    const spec = dashboardOverlaySpecSchema.parse({
+      durationFrames: 180,
+      fps: 30,
+      overlay: {
+        id: "tre-colonne-dashboard",
+        kind: "diagram",
+        moment: "Dashboard overview",
+        purpose: "Show session triage structure",
+        template: "dashboard-triage",
+      },
+      projectTitle: "Claude Code Just Got a Dashboard",
+      props: {
+        footerHints: ["invio per aprire"],
+        sections: [
+          {
+            label: "Da rispondere",
+            rows: [
+              {
+                detail: "domanda aperta",
+                elapsed: "4m",
+                name: "dark-mode",
+                tone: "attention",
+              },
+            ],
+            tone: "attention",
+          },
+          {
+            label: "In corso",
+            rows: [
+              {
+                detail: "analizzando",
+                elapsed: "7m",
+                name: "perf-audit",
+                tone: "working",
+              },
+            ],
+            tone: "working",
+          },
+          {
+            label: "Completati",
+            rows: [
+              {
+                detail: "finito",
+                elapsed: "0s",
+                name: "test-coverage",
+                tone: "complete",
+              },
+            ],
+            tone: "complete",
+          },
+        ],
+        statusLine: "2 in attesa · 4 in corso · 1 completato",
+        theme: {
+          accent: "oklch(0.58 0.12 236)",
+          attention: "oklch(0.76 0.15 82)",
+          complete: "oklch(0.64 0.16 150)",
+          muted: "oklch(0.43 0.03 244)",
+          panel: "oklch(0.94 0.01 236)",
+          surface: "oklch(0.97 0.009 238)",
+          text: "oklch(0.24 0.035 246)",
+          working: "oklch(0.56 0.05 248)",
+        },
+        title: "Claude Code · Agents View",
+      },
+      sourceFolder: "",
+    });
 
     expect(spec.overlay.template).toBe("dashboard-triage");
     expect(spec.props.sections.map((section) => section.label)).toEqual([
@@ -41,9 +83,59 @@ describe("overlay spec", () => {
   });
 
   it("accepts the default linear diagram template props", () => {
-    const spec = linearDiagramOverlaySpecSchema.parse(
-      DEFAULT_LINEAR_DIAGRAM_SPEC
-    );
+    const spec = linearDiagramOverlaySpecSchema.parse({
+      durationFrames: 180,
+      fps: 30,
+      overlay: {
+        id: "timeline-processo-ai",
+        kind: "diagram",
+        moment: "Explain the AI workflow sequence",
+        purpose: "Show a process or timeline with one active technical step",
+        template: "linear-diagram",
+      },
+      projectTitle: "AllOnFire Linear Diagram",
+      props: {
+        activeIndex: 2,
+        eyebrow: "ai tool chain",
+        orientation: "auto",
+        placement: "center",
+        steps: [
+          {
+            label: "ChatGPT",
+            status: "complete",
+          },
+          {
+            label: "Claude Code",
+            status: "complete",
+          },
+          {
+            label: "Codex",
+            status: "active",
+          },
+          {
+            label: "Anthropic",
+            status: "queued",
+          },
+          {
+            label: "Render",
+            status: "queued",
+          },
+        ],
+        theme: {
+          accent: "oklch(0.69 0.19 48)",
+          complete: "oklch(0.7 0.14 153)",
+          info: "oklch(0.72 0.12 205)",
+          line: "oklch(0.48 0.024 226 / 0.52)",
+          muted: "oklch(0.71 0.023 82)",
+          panel: "oklch(0.27 0.021 228)",
+          surface: "oklch(0.17 0.018 238)",
+          text: "oklch(0.92 0.018 78)",
+          warning: "oklch(0.76 0.13 82)",
+        },
+        title: "AI tools in sequence",
+      },
+      sourceFolder: "",
+    });
 
     expect(spec.overlay.template).toBe("linear-diagram");
     expect(spec.props.steps.map((step) => step.label)).toEqual([
@@ -55,95 +147,91 @@ describe("overlay spec", () => {
     ]);
   });
 
-  it("accepts the default tutorial showcase template props", () => {
-    const spec = tutorialShowcaseOverlaySpecSchema.parse(
-      DEFAULT_TUTORIAL_SHOWCASE_SPEC
-    );
+  it("accepts generated overlay render packages", () => {
+    const spec = generatedOverlayPackageSchema.parse({
+      aspects: [{ height: 1080, id: "16x9", width: 1920 }],
+      compositionRoot: "/tmp/project/overlays/compositions",
+      fps: 30,
+      overlays: [
+        {
+          body: "**Hello**",
+          density: "medium",
+          durationSeconds: 10,
+          emphasis: "Hello",
+          id: "hello",
+          kind: "callout",
+          moment: "opening",
+          motion: "reveal",
+          placementHint: "opening",
+          purpose: "orient the viewer",
+          sfx: "soft-whoosh",
+          startSeconds: 12,
+          template: "callout-card",
+          title: "Hello",
+        },
+      ],
+      projectTitle: "Project",
+      renderer: "hyperframes",
+      source: {
+        durationSeconds: 120,
+        videoPath: "/tmp/source.mp4",
+      },
+    });
 
-    expect(spec.overlay.template).toBe("tutorial-showcase");
-    expect(spec.props.mode).toBe("fullscreen");
-    expect(spec.props.code.lines).toHaveLength(3);
+    expect(spec.overlays[0].template).toBe("callout-card");
+    expect(spec.aspects[0].id).toBe("16x9");
+    expect(spec.compositionRoot).toBe("/tmp/project/overlays/compositions");
+    expect(spec.renderer).toBe("hyperframes");
   });
 
-  it("registers stable landscape and portrait composition ids", () => {
-    expect(DASHBOARD_TRIAGE_LANDSCAPE_ID).toBe("DashboardTriageOverlay16x9");
-    expect(DASHBOARD_TRIAGE_PORTRAIT_ID).toBe("DashboardTriageOverlay9x16");
-    expect(LINEAR_DIAGRAM_LANDSCAPE_ID).toBe("LinearDiagramOverlay16x9");
-    expect(LINEAR_DIAGRAM_PORTRAIT_ID).toBe("LinearDiagramOverlay9x16");
-    expect(TUTORIAL_SHOWCASE_FULLSCREEN_LANDSCAPE_ID).toBe(
-      "TutorialShowcaseFullscreen16x9"
-    );
-    expect(TUTORIAL_SHOWCASE_FULLSCREEN_PORTRAIT_ID).toBe(
-      "TutorialShowcaseFullscreen9x16"
-    );
-    expect(TUTORIAL_SHOWCASE_OVER_VIDEO_LANDSCAPE_ID).toBe(
-      "TutorialShowcaseOverVideo16x9"
-    );
-    expect(TUTORIAL_SHOWCASE_OVER_VIDEO_PORTRAIT_ID).toBe(
-      "TutorialShowcaseOverVideo9x16"
-    );
+  it("rejects generated overlay packages for unknown renderers", () => {
+    expect(() =>
+      generatedOverlayPackageSchema.parse({
+        aspects: [{ height: 1080, id: "16x9", width: 1920 }],
+        compositionRoot: "/tmp/project/overlays/compositions",
+        fps: 30,
+        overlays: [],
+        projectTitle: "Project",
+        renderer: "remotion",
+        source: {
+          durationSeconds: 120,
+          videoPath: "/tmp/source.mp4",
+        },
+      })
+    ).toThrow();
   });
 
-  it("registers tutorial kit stories only for 16:9 and 9:16", () => {
-    expect(tutorialStoryAspects).toEqual(["16x9", "9x16"]);
-    const atomIds = tutorialAtomStories.map((story) => story.id);
-    expect(atomIds).toContain("headline");
-    expect(atomIds).toContain("flow-node");
-    expect(atomIds).toContain("mini-bar-chart");
-    expect(atomIds).toContain("vintage-photo-frame");
-    expect(atomIds).toContain("paper-card");
-    expect(atomIds).not.toContain("metadata-strip");
-    expect(atomIds).not.toContain("side-rail");
-    expect(tutorialPatternStories.map((story) => story.id)).toContain(
-      "caption-band"
-    );
-    expect(tutorialPatternStories.map((story) => story.id)).toContain(
-      "linear-flow-diagram"
-    );
-    expect(tutorialStoryCompositionId(tutorialAtomStories[1], "16x9")).toBe(
-      "Headline-16x9"
-    );
-    expect(tutorialStoryCompositionId(tutorialPatternStories[0], "9x16")).toBe(
-      "Pattern-CaptionBand-9x16"
-    );
-    for (const story of [...tutorialAtomStories, ...tutorialPatternStories]) {
-      for (const aspect of tutorialStoryAspects) {
-        expect(tutorialStoryCompositionId(story, aspect)).toMatch(
-          REMOTION_COMPOSITION_ID_PATTERN
-        );
-      }
-    }
-  });
-
-  it("derives a portrait-safe layout from the Remotion video config", () => {
-    const landscape = getDashboardTriageLayout(1920, 1080);
-    const portrait = getDashboardTriageLayout(1080, 1920);
-
-    expect(landscape.portrait).toBe(false);
-    expect(portrait.portrait).toBe(true);
-    expect(portrait.shellWidth).toBeLessThanOrEqual(1080);
-    expect(portrait.shellHeight).toBeLessThanOrEqual(1920);
-    expect(portrait.rowGridTemplateColumns).not.toBe(
-      landscape.rowGridTemplateColumns
-    );
-  });
-
-  it("derives orientation-aware linear diagram layouts", () => {
-    const landscape = getLinearDiagramLayout(1920, 1080, "horizontal");
-    const portrait = getLinearDiagramLayout(1080, 1920, "auto");
-
-    expect(landscape.isVertical).toBe(false);
-    expect(landscape.isImpact).toBe(true);
-    expect(landscape.isZigzag).toBe(false);
-    expect(landscape.shellWidth).toBeGreaterThanOrEqual(1600);
-    expect(landscape.shellHeight).toBeGreaterThanOrEqual(840);
-    expect(landscape.assetHeight).toBeGreaterThanOrEqual(400);
-    expect(portrait.isVertical).toBe(true);
-    expect(portrait.isImpact).toBe(true);
-    expect(portrait.isZigzag).toBe(false);
-    expect(portrait.shellWidth).toBeLessThanOrEqual(1080);
-    expect(portrait.shellHeight).toBeLessThanOrEqual(1920);
-    expect(portrait.shellWidth).toBeGreaterThanOrEqual(900);
-    expect(portrait.assetHeight).toBeGreaterThanOrEqual(480);
+  it("rejects unknown generated overlay sound cues", () => {
+    expect(() =>
+      generatedOverlayPackageSchema.parse({
+        aspects: [{ height: 1080, id: "16x9", width: 1920 }],
+        compositionRoot: "/tmp/project/overlays/compositions",
+        fps: 30,
+        overlays: [
+          {
+            body: "**Hello**",
+            density: "medium",
+            durationSeconds: 10,
+            emphasis: "Hello",
+            id: "hello",
+            kind: "callout",
+            moment: "opening",
+            motion: "reveal",
+            placementHint: "opening",
+            purpose: "orient the viewer",
+            sfx: "big-hit",
+            startSeconds: 12,
+            template: "callout-card",
+            title: "Hello",
+          },
+        ],
+        projectTitle: "Project",
+        renderer: "hyperframes",
+        source: {
+          durationSeconds: 120,
+          videoPath: "/tmp/source.mp4",
+        },
+      })
+    ).toThrow();
   });
 });

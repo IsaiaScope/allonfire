@@ -1,8 +1,8 @@
 import type React from "react";
 import { cn } from "../lib/cn";
 import type { OverlayTone } from "../lib/tones";
-import { Kicker } from "../primitives/kicker";
-import { PaperPanel } from "../primitives/paper-panel";
+import { Kicker } from "./kicker";
+import { PaperPanel } from "./paper-panel";
 
 export type LowerThirdProps = React.ComponentProps<"div"> & {
   eyebrow: string;

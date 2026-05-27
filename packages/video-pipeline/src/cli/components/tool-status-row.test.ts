@@ -37,6 +37,10 @@ describe("tool status row helpers", () => {
       key: "Output",
       value: "video.mp4",
     });
+    expect(formatToolStatusDetail("renders: overlays/clips/")).toEqual({
+      key: "Renders",
+      value: "overlays/clips/",
+    });
     expect(formatToolStatusDetail("checking PATH")).toEqual({
       value: "Checking PATH",
     });

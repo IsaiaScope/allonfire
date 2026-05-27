@@ -2,7 +2,7 @@ import type React from "react";
 import { interpolate, spring, useCurrentFrame } from "remotion";
 import { cn } from "../lib/cn";
 import { type OverlayTone, toneBgClass, toneTextClass } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
 export type CursorMarkProps = React.ComponentProps<"div"> & {
   label?: string;
@@ -37,7 +37,7 @@ export function CursorMark({
 }
 
 export type ClickPulseProps = React.ComponentProps<"div"> & {
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -74,7 +74,7 @@ export function ClickPulse({
 }
 
 export type KeycapProps = React.ComponentProps<"div"> & {
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -230,7 +230,7 @@ export function CodeLine({
 }
 
 export type CodeBlockProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   file?: string;
   lines: string[];
 };

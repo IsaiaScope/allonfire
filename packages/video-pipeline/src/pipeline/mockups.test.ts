@@ -78,6 +78,34 @@ describe("overlay mockups", () => {
     ]);
   });
 
+  it("parses richer overlay render metadata when present", () => {
+    expect(
+      parseOverlayBlocks(`## richer-scene
+- kind: callout
+- moment: opening
+- purpose: explain
+- density: rich
+- motion: pulse
+- sfx: quiet-pop
+- emphasis: punto chiave
+
+Body.
+`)
+    ).toEqual([
+      {
+        body: "Body.",
+        density: "rich",
+        emphasis: "punto chiave",
+        id: "richer-scene",
+        kind: "callout",
+        moment: "opening",
+        motion: "pulse",
+        purpose: "explain",
+        sfx: "quiet-pop",
+      },
+    ]);
+  });
+
   it("prefers the dashboard triage overlay", () => {
     const selected = selectMockupOverlay(parseOverlayBlocks(OVERLAY_MD));
 
@@ -102,7 +130,7 @@ describe("overlay mockups", () => {
   it("writes overlay-spec.json and calls the renderer", async () => {
     const render = vi.fn((target: string) => {
       writeFileSync(
-        join(target, "remotion", "manifest.json"),
+        join(target, "overlays", "manifest.json"),
         JSON.stringify({ ok: true })
       );
       return Promise.resolve();
@@ -112,26 +140,29 @@ describe("overlay mockups", () => {
 
     expect(render).toHaveBeenCalledWith(folder);
     expect(result.skipped).toBe(false);
-    expect(existsSync(join(folder, "remotion", "overlay-spec.json"))).toBe(
+    expect(existsSync(join(folder, "overlays", "overlay-spec.json"))).toBe(
       true
     );
     expect(
       JSON.parse(
-        readFileSync(join(folder, "remotion", "overlay-spec.json"), "utf-8")
+        readFileSync(join(folder, "overlays", "overlay-spec.json"), "utf-8")
       )
     ).toMatchObject({
-      overlay: {
-        id: "tre-colonne-dashboard",
-        template: "dashboard-triage",
-      },
+      overlays: [
+        {
+          id: "tre-colonne-dashboard",
+          template: "dashboard-triage",
+        },
+      ],
       projectTitle: "Test Project",
+      renderer: "hyperframes",
     });
   });
 
   it("skips existing artifacts unless forced", async () => {
-    mkdirSync(join(folder, "remotion"), { recursive: true });
+    mkdirSync(join(folder, "overlays"), { recursive: true });
     writeFileSync(
-      join(folder, "remotion", "manifest.json"),
+      join(folder, "overlays", "manifest.json"),
       JSON.stringify({ ok: true })
     );
     const render = vi.fn();

@@ -94,15 +94,15 @@
     min-height: 820px;
   }
 
-  .az-atom-stage {
+  .az-component-stage {
     padding: 80px;
   }
 
-  .az-atom-stage[data-orientation="portrait"] {
+  .az-component-stage[data-orientation="portrait"] {
     padding: 96px;
   }
 
-  .az-atom-stage-inner {
+  .az-component-stage-inner {
     overflow: hidden;
   }
 
@@ -112,7 +112,7 @@
       0 0 0 1px rgba(21, 20, 15, 0.14);
   }
 
-  .az-atom-grid {
+  .az-component-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 64px;
@@ -121,7 +121,7 @@
     width: 100%;
   }
 
-  .az-atom-stack {
+  .az-component-stack {
     display: grid;
     gap: 64px;
     align-items: center;
@@ -129,7 +129,7 @@
     width: 100%;
   }
 
-  .az-atom-single {
+  .az-component-single {
     display: grid;
     place-items: center;
     width: 100%;
@@ -150,22 +150,22 @@
     grid-column: 1 / -1;
   }
 
-  .az-atom-stage[data-orientation="portrait"] .az-atom-grid {
+  .az-component-stage[data-orientation="portrait"] .az-component-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 80px;
   }
 
-  .az-atom-stage[data-orientation="portrait"] .az-atom-stack {
+  .az-component-stage[data-orientation="portrait"] .az-component-stack {
     gap: 80px;
   }
 
-  .az-atom-stage[data-orientation="portrait"] .az-focus-frame-story {
+  .az-component-stage[data-orientation="portrait"] .az-focus-frame-story {
     grid-template-columns: minmax(0, 1fr);
     gap: 80px;
     max-width: 760px;
   }
 
-  .az-atom-stage[data-orientation="portrait"]
+  .az-component-stage[data-orientation="portrait"]
     .az-focus-frame-story
     > [data-size="lg"] {
     grid-column: auto;

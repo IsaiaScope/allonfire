@@ -1,6 +1,6 @@
 import type React from "react";
 import { cn } from "../lib/cn";
-import { PaperPanel } from "../primitives/paper-panel";
+import { PaperPanel } from "./paper-panel";
 
 export type CodeWindowProps = React.ComponentProps<"div"> & {
   command: string;

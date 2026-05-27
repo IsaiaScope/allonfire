@@ -1,12 +1,12 @@
 import type React from "react";
 import { cn } from "../lib/cn";
 import { type OverlayTone, toneBorderClass, toneTextClass } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
 export type IdeaCardProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   kicker?: string;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -62,10 +62,10 @@ export function IdeaCard({
 }
 
 export type VersusPairProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   left: React.ReactNode;
   right: React.ReactNode;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -123,9 +123,9 @@ export function VersusPair({
 export type BeforeAfterProps = React.ComponentProps<"div"> & {
   after: React.ReactNode;
   before: React.ReactNode;
-  density?: AtomDensity;
+  density?: ComponentDensity;
   orientation?: "horizontal" | "vertical";
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -166,11 +166,11 @@ export function BeforeAfter({
 }
 
 export type DecisionForkProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   left: React.ReactNode;
   prompt: React.ReactNode;
   right: React.ReactNode;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -220,10 +220,10 @@ export function DecisionFork({
 }
 
 export type TimelineStepProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   label: React.ReactNode;
   meta?: React.ReactNode;
-  size?: AtomSize;
+  size?: ComponentSize;
   step: string;
   tone?: OverlayTone;
 };
@@ -245,9 +245,10 @@ export function TimelineStep({
         density === "compact" && "gap-6 p-8",
         density === "normal" && "gap-10 p-10",
         density === "spacious" && "gap-12 p-12",
-        size === "sm" && "grid-cols-[8rem_1fr]",
-        size === "md" && "grid-cols-[10rem_1fr]",
-        (size === "lg" || size === "xl") && "grid-cols-[12rem_1fr]",
+        size === "sm" && "grid-cols-[12.5rem_1fr]",
+        size === "md" && "grid-cols-[14.75rem_1fr]",
+        size === "lg" && "grid-cols-[17.25rem_1fr]",
+        size === "xl" && "grid-cols-[19.75rem_1fr]",
         className
       )}
       data-density={density}
@@ -288,8 +289,8 @@ export function TimelineStep({
 
 export type QuoteCardProps = React.ComponentProps<"div"> & {
   attribution?: React.ReactNode;
-  density?: AtomDensity;
-  size?: AtomSize;
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -342,9 +343,9 @@ export function QuoteCard({
 }
 
 export type WarningMarkProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   label?: React.ReactNode;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -390,9 +391,9 @@ export function WarningMark({
 }
 
 export type FormulaStripProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   items: React.ReactNode[];
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -449,8 +450,8 @@ export function FormulaStrip({
 }
 
 export type StatusStampProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -484,10 +485,10 @@ export function StatusStamp({
 }
 
 export type ConceptNodeProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
+  density?: ComponentDensity;
   label: React.ReactNode;
   meta?: React.ReactNode;
-  size?: AtomSize;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
@@ -544,9 +545,9 @@ function ComparePanel({
   tone,
 }: {
   children: React.ReactNode;
-  density: AtomDensity;
+  density: ComponentDensity;
   label: string;
-  size: AtomSize;
+  size: ComponentSize;
   tone: OverlayTone;
 }) {
   return (
@@ -585,8 +586,8 @@ function Choice({
   tone,
 }: {
   children: React.ReactNode;
-  density: AtomDensity;
-  size: AtomSize;
+  density: ComponentDensity;
+  size: ComponentSize;
   tone: OverlayTone;
 }) {
   return (
@@ -605,7 +606,7 @@ function Choice({
   );
 }
 
-function conceptTextSizeClass(size: AtomSize) {
+function conceptTextSizeClass(size: ComponentSize) {
   if (size === "sm") {
     return "text-5xl";
   }

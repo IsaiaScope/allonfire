@@ -6,21 +6,21 @@ import {
   toneBorderClass,
   toneTextClass,
 } from "../lib/tones";
-import type { AtomDensity, AtomSize } from "./types";
+import type { ComponentDensity, ComponentSize } from "./types";
 
-type BaseAtomProps = React.ComponentProps<"div"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseComponentProps = React.ComponentProps<"div"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-type BaseSvgAtomProps = React.ComponentProps<"svg"> & {
-  density?: AtomDensity;
-  size?: AtomSize;
+type BaseSvgComponentProps = React.ComponentProps<"svg"> & {
+  density?: ComponentDensity;
+  size?: ComponentSize;
   tone?: OverlayTone;
 };
 
-export type BarValueProps = BaseAtomProps & {
+export type BarValueProps = BaseComponentProps & {
   label?: React.ReactNode;
   value?: number;
 };
@@ -49,7 +49,7 @@ export function BarValue({
   );
 }
 
-export type BarPairProps = BaseAtomProps & {
+export type BarPairProps = BaseComponentProps & {
   left?: number;
   right?: number;
 };
@@ -73,7 +73,7 @@ export function BarPair({
   );
 }
 
-export type MiniBarChartProps = BaseAtomProps & {
+export type MiniBarChartProps = BaseComponentProps & {
   values?: number[];
 };
 
@@ -123,7 +123,7 @@ export function ProgressBar(props: ProgressBarProps) {
   );
 }
 
-export type DeltaArrowProps = BaseAtomProps & {
+export type DeltaArrowProps = BaseComponentProps & {
   direction?: "up" | "down";
   label?: React.ReactNode;
 };
@@ -168,7 +168,7 @@ export function DeltaArrow({
   );
 }
 
-export type MetricTileProps = BaseAtomProps & {
+export type MetricTileProps = BaseComponentProps & {
   label?: React.ReactNode;
   value: React.ReactNode;
 };
@@ -206,7 +206,7 @@ export function MetricTile({
   );
 }
 
-export type GaugeArcProps = BaseSvgAtomProps & {
+export type GaugeArcProps = BaseSvgComponentProps & {
   value?: number;
 };
 
@@ -257,7 +257,7 @@ export function GaugeArc({
   );
 }
 
-export type DotPlotProps = BaseAtomProps & {
+export type DotPlotProps = BaseComponentProps & {
   values?: number[];
 };
 
@@ -290,7 +290,7 @@ export function DotPlot({
   );
 }
 
-export type TimelineAxisProps = BaseAtomProps & {
+export type TimelineAxisProps = BaseComponentProps & {
   vertical?: boolean;
 };
 
@@ -321,7 +321,7 @@ export function TimelineAxis({
   );
 }
 
-export type MilestoneDotProps = BaseAtomProps & {
+export type MilestoneDotProps = BaseComponentProps & {
   label?: React.ReactNode;
 };
 
@@ -348,7 +348,7 @@ export function MilestoneDot({
   );
 }
 
-export type SparkLineProps = Omit<BaseSvgAtomProps, "values"> & {
+export type SparkLineProps = Omit<BaseSvgComponentProps, "values"> & {
   values?: number[];
 };
 
@@ -386,7 +386,7 @@ export function SparkLine({
   );
 }
 
-export type StackedBarProps = BaseAtomProps & {
+export type StackedBarProps = BaseComponentProps & {
   values?: [number, number, number];
 };
 
@@ -411,7 +411,7 @@ export function StackedBar({
   );
 }
 
-export type RatioSplitProps = BaseAtomProps & {
+export type RatioSplitProps = BaseComponentProps & {
   left?: number;
 };
 
@@ -445,7 +445,7 @@ export function RatioSplit({
   );
 }
 
-export type ScoreRingProps = BaseAtomProps & {
+export type ScoreRingProps = BaseComponentProps & {
   value?: number;
 };
 

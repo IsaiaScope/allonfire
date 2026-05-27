@@ -1,6 +1,6 @@
 # `public/` — reliable SVG injection library
 
-Remotion's static asset folder for this package. Every SVG here is a stable, reusable graphic that templates can inject into a frame.
+Static asset folder for Hyperframes overlay compositions. Every SVG here is a stable, reusable graphic that templates can inject into a frame.
 
 ## Folder convention
 
@@ -15,7 +15,7 @@ public/
 ## How templates reference these
 
 - **In a still HTML mockup** (`mockup-*.html`): SVGs are inlined verbatim so the file stays self-contained. The inline copy must be **visually identical** to a sibling SVG file in `public/`. If a decorative motif used in a mockup doesn't yet have a `public/decorations/*.svg` counterpart, add it.
-- **In the Remotion `.tsx`**: reference by `staticFile('decorations/numeral-01.svg')`, `staticFile('brand-marks/anthropic.svg')`, etc. Animate via `<img>` swap, `<object>` mounting, or by inlining the SVG markup and animating its `<g data-anim="...">` slots.
+- **In a Hyperframes composition**: copy the asset into the composition's local `assets/` folder or inline the SVG markup when it needs timeline animation.
 
 ## Naming
 

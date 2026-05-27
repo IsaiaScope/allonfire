@@ -1,31 +1,39 @@
 import type React from "react";
 import { Composition, Folder } from "remotion";
+import { z } from "zod";
+import { DashboardTriageOverlay } from "./dashboard-triage-overlay";
+import { GeneratedOverlayClip } from "./generated-overlay";
+import { LinearDiagramOverlay } from "./linear-diagram-overlay";
+import type { OverlaySpec } from "./spec";
 import {
-  type OverlaySpec,
-  tutorialShowcaseOverlaySpecSchema,
-  tutorialShowcasePropsSchema,
+  dashboardTriagePropsSchema,
+  generatedOverlayItemSchema,
+  linearDiagramPropsSchema,
 } from "./spec";
-import { TutorialShowcaseOverlay } from "./tutorial-showcase-overlay";
 import {
   TutorialStorybook,
-  tutorialAtomStories,
-  tutorialPatternStories,
+  tutorialComponentStories,
   tutorialStoryAspects,
   tutorialStoryCompositionId,
+  tutorialTemplateStories,
 } from "./tutorial-storybook";
 
 export const DASHBOARD_TRIAGE_LANDSCAPE_ID = "DashboardTriageOverlay16x9";
 export const DASHBOARD_TRIAGE_PORTRAIT_ID = "DashboardTriageOverlay9x16";
 export const LINEAR_DIAGRAM_LANDSCAPE_ID = "LinearDiagramOverlay16x9";
 export const LINEAR_DIAGRAM_PORTRAIT_ID = "LinearDiagramOverlay9x16";
-export const TUTORIAL_SHOWCASE_FULLSCREEN_LANDSCAPE_ID =
-  "TutorialShowcaseFullscreen16x9";
-export const TUTORIAL_SHOWCASE_FULLSCREEN_PORTRAIT_ID =
-  "TutorialShowcaseFullscreen9x16";
-export const TUTORIAL_SHOWCASE_OVER_VIDEO_LANDSCAPE_ID =
-  "TutorialShowcaseOverVideo16x9";
-export const TUTORIAL_SHOWCASE_OVER_VIDEO_PORTRAIT_ID =
-  "TutorialShowcaseOverVideo9x16";
+export const GENERATED_OVERLAY_CLIP_LANDSCAPE_ID = "GeneratedOverlayClip16x9";
+export const GENERATED_OVERLAY_CLIP_PORTRAIT_ID = "GeneratedOverlayClip9x16";
+const generatedOverlayClipPropsSchema = z.object({
+  background: z.enum(["stage", "transparent"]).optional(),
+  item: generatedOverlayItemSchema,
+});
+
+export function generatedOverlayCompositionId(aspect: "16x9" | "9x16") {
+  return aspect === "16x9"
+    ? GENERATED_OVERLAY_CLIP_LANDSCAPE_ID
+    : GENERATED_OVERLAY_CLIP_PORTRAIT_ID;
+}
 
 export const DEFAULT_SPEC: OverlaySpec = {
   durationFrames: 180,
@@ -182,129 +190,136 @@ export const DEFAULT_LINEAR_DIAGRAM_SPEC: OverlaySpec = {
   sourceFolder: "",
 };
 
-export const DEFAULT_TUTORIAL_SHOWCASE_SPEC: OverlaySpec = {
-  durationFrames: 180,
-  fps: 30,
-  overlay: {
-    id: "atelier-zero-tutorial-kit",
-    kind: "tutorial",
-    moment: "Demonstrate reusable tutorial overlay blocks",
-    purpose: "Show the v1 Atelier Zero tutorial overlay primitives",
-    template: "tutorial-showcase",
-  },
-  projectTitle: "Atelier Zero Tutorial Overlay Kit",
-  props: {
-    activeStep: 1,
-    caption: "One idea.",
-    code: {
-      command: "render",
-      file: "overlay.tsx",
-      lines: ["read(input)", "focus(point)", "show(result)"],
-    },
-    kicker: "focus",
-    lowerThird: {
-      eyebrow: "chapter",
-      title: "Blocks",
-    },
-    mode: "fullscreen",
-    sfxEnabled: true,
-    title: "One clear signal.",
-  },
-  sourceFolder: "",
-};
-
-function tutorialPropsForMode(mode: "fullscreen" | "over-video") {
-  const spec = tutorialShowcaseOverlaySpecSchema.parse(
-    DEFAULT_TUTORIAL_SHOWCASE_SPEC
-  );
-
-  return {
-    ...spec.props,
-    mode,
-  };
-}
-
 export const RemotionRoot: React.FC = () => {
-  const tutorialFullscreenProps = tutorialPropsForMode("fullscreen");
-  const tutorialOverVideoProps = tutorialPropsForMode("over-video");
-
   return (
     <>
-      <Folder name="Basic-Components">
-        <Folder name="Atoms">
-          {tutorialAtomStories.flatMap((story) =>
-            tutorialStoryAspects.map((aspect) => (
-              <Composition
-                component={TutorialStorybook}
-                defaultProps={{ sfxEnabled: true, story: story.id }}
-                durationInFrames={180}
-                fps={30}
-                height={aspect === "16x9" ? 1080 : 1920}
-                id={tutorialStoryCompositionId(story, aspect)}
-                key={tutorialStoryCompositionId(story, aspect)}
-                width={aspect === "16x9" ? 1920 : 1080}
-              />
-            ))
-          )}
-        </Folder>
-        <Folder name="Patterns">
-          {tutorialPatternStories.flatMap((story) =>
-            tutorialStoryAspects.map((aspect) => (
-              <Composition
-                component={TutorialStorybook}
-                defaultProps={{ sfxEnabled: false, story: story.id }}
-                durationInFrames={180}
-                fps={30}
-                height={aspect === "16x9" ? 1080 : 1920}
-                id={tutorialStoryCompositionId(story, aspect)}
-                key={tutorialStoryCompositionId(story, aspect)}
-                width={aspect === "16x9" ? 1920 : 1080}
-              />
-            ))
-          )}
-        </Folder>
+      <Folder name="Generated">
+        <Composition
+          component={GeneratedOverlayClip}
+          defaultProps={{
+            item: {
+              body: "**Overlay**",
+              density: "medium",
+              durationSeconds: 10,
+              emphasis: "Sample emphasis",
+              id: "sample",
+              kind: "callout",
+              moment: "Sample moment",
+              motion: "reveal",
+              placementHint: "Sample moment",
+              purpose: "Preview a generated overlay",
+              sfx: "soft-whoosh",
+              startSeconds: 0,
+              template: "callout-card",
+              title: "Sample Overlay",
+            },
+          }}
+          durationInFrames={300}
+          fps={30}
+          height={1080}
+          id={GENERATED_OVERLAY_CLIP_LANDSCAPE_ID}
+          schema={generatedOverlayClipPropsSchema}
+          width={1920}
+        />
+        <Composition
+          component={GeneratedOverlayClip}
+          defaultProps={{
+            item: {
+              body: "**Overlay**",
+              density: "medium",
+              durationSeconds: 10,
+              emphasis: "Sample emphasis",
+              id: "sample",
+              kind: "callout",
+              moment: "Sample moment",
+              motion: "reveal",
+              placementHint: "Sample moment",
+              purpose: "Preview a generated overlay",
+              sfx: "soft-whoosh",
+              startSeconds: 0,
+              template: "callout-card",
+              title: "Sample Overlay",
+            },
+          }}
+          durationInFrames={300}
+          fps={30}
+          height={1920}
+          id={GENERATED_OVERLAY_CLIP_PORTRAIT_ID}
+          schema={generatedOverlayClipPropsSchema}
+          width={1080}
+        />
+        <Composition
+          component={DashboardTriageOverlay}
+          defaultProps={DEFAULT_SPEC.props}
+          durationInFrames={DEFAULT_SPEC.durationFrames}
+          fps={DEFAULT_SPEC.fps}
+          height={1080}
+          id={DASHBOARD_TRIAGE_LANDSCAPE_ID}
+          schema={dashboardTriagePropsSchema}
+          width={1920}
+        />
+        <Composition
+          component={DashboardTriageOverlay}
+          defaultProps={DEFAULT_SPEC.props}
+          durationInFrames={DEFAULT_SPEC.durationFrames}
+          fps={DEFAULT_SPEC.fps}
+          height={1920}
+          id={DASHBOARD_TRIAGE_PORTRAIT_ID}
+          schema={dashboardTriagePropsSchema}
+          width={1080}
+        />
+        <Composition
+          component={LinearDiagramOverlay}
+          defaultProps={DEFAULT_LINEAR_DIAGRAM_SPEC.props}
+          durationInFrames={DEFAULT_LINEAR_DIAGRAM_SPEC.durationFrames}
+          fps={DEFAULT_LINEAR_DIAGRAM_SPEC.fps}
+          height={1080}
+          id={LINEAR_DIAGRAM_LANDSCAPE_ID}
+          schema={linearDiagramPropsSchema}
+          width={1920}
+        />
+        <Composition
+          component={LinearDiagramOverlay}
+          defaultProps={DEFAULT_LINEAR_DIAGRAM_SPEC.props}
+          durationInFrames={DEFAULT_LINEAR_DIAGRAM_SPEC.durationFrames}
+          fps={DEFAULT_LINEAR_DIAGRAM_SPEC.fps}
+          height={1920}
+          id={LINEAR_DIAGRAM_PORTRAIT_ID}
+          schema={linearDiagramPropsSchema}
+          width={1080}
+        />
       </Folder>
-      <Folder name="Tutorial-Showcase">
-        <Composition
-          component={TutorialShowcaseOverlay}
-          defaultProps={tutorialFullscreenProps}
-          durationInFrames={180}
-          fps={30}
-          height={1080}
-          id={TUTORIAL_SHOWCASE_FULLSCREEN_LANDSCAPE_ID}
-          schema={tutorialShowcasePropsSchema}
-          width={1920}
-        />
-        <Composition
-          component={TutorialShowcaseOverlay}
-          defaultProps={tutorialFullscreenProps}
-          durationInFrames={180}
-          fps={30}
-          height={1920}
-          id={TUTORIAL_SHOWCASE_FULLSCREEN_PORTRAIT_ID}
-          schema={tutorialShowcasePropsSchema}
-          width={1080}
-        />
-        <Composition
-          component={TutorialShowcaseOverlay}
-          defaultProps={tutorialOverVideoProps}
-          durationInFrames={180}
-          fps={30}
-          height={1080}
-          id={TUTORIAL_SHOWCASE_OVER_VIDEO_LANDSCAPE_ID}
-          schema={tutorialShowcasePropsSchema}
-          width={1920}
-        />
-        <Composition
-          component={TutorialShowcaseOverlay}
-          defaultProps={tutorialOverVideoProps}
-          durationInFrames={180}
-          fps={30}
-          height={1920}
-          id={TUTORIAL_SHOWCASE_OVER_VIDEO_PORTRAIT_ID}
-          schema={tutorialShowcasePropsSchema}
-          width={1080}
-        />
+      <Folder name="Components">
+        {tutorialComponentStories.flatMap((story) =>
+          tutorialStoryAspects.map((aspect) => (
+            <Composition
+              component={TutorialStorybook}
+              defaultProps={{ sfxEnabled: true, story: story.id }}
+              durationInFrames={180}
+              fps={30}
+              height={aspect === "16x9" ? 1080 : 1920}
+              id={tutorialStoryCompositionId(story, aspect)}
+              key={tutorialStoryCompositionId(story, aspect)}
+              width={aspect === "16x9" ? 1920 : 1080}
+            />
+          ))
+        )}
+      </Folder>
+      <Folder name="Templates">
+        {tutorialTemplateStories.flatMap((story) =>
+          tutorialStoryAspects.map((aspect) => (
+            <Composition
+              component={TutorialStorybook}
+              defaultProps={{ sfxEnabled: false, story: story.id }}
+              durationInFrames={180}
+              fps={30}
+              height={aspect === "16x9" ? 1080 : 1920}
+              id={tutorialStoryCompositionId(story, aspect)}
+              key={tutorialStoryCompositionId(story, aspect)}
+              width={aspect === "16x9" ? 1920 : 1080}
+            />
+          ))
+        )}
       </Folder>
     </>
   );

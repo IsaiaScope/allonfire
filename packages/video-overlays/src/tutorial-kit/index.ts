@@ -1,4 +1,13 @@
-// biome-ignore lint/performance/noBarrelFile: Public package surface intentionally re-exports all tutorial kit atoms and patterns.
+// biome-ignore-all lint/performance/noBarrelFile: Public package surface intentionally re-exports the tutorial kit components and templates.
+
+export {
+  AccentRule,
+  type AccentRuleProps,
+} from "./components/accent-rule";
+export {
+  AnimatedInOut,
+  type AnimatedInOutProps,
+} from "./components/animated-in-out";
 export {
   Arrow,
   type ArrowProps,
@@ -16,7 +25,12 @@ export {
   type HighlightBarProps,
   TargetPin,
   type TargetPinProps,
-} from "./atoms/annotation";
+} from "./components/annotation";
+export {
+  CalloutLabel,
+  type CalloutLabelProps,
+} from "./components/callout-label";
+export { CaptionBand, type CaptionBandProps } from "./components/caption-band";
 export {
   AccentCard,
   CommandCard,
@@ -37,7 +51,7 @@ export {
   type ShortcutCardProps,
   SuccessPanel,
   WarningPanel,
-} from "./atoms/cards";
+} from "./components/cards";
 export {
   BarPair,
   type BarPairProps,
@@ -67,7 +81,8 @@ export {
   type StackedBarProps,
   TimelineAxis,
   type TimelineAxisProps,
-} from "./atoms/charts";
+} from "./components/charts";
+export { CodeWindow, type CodeWindowProps } from "./components/code-window";
 export {
   BeforeAfter,
   type BeforeAfterProps,
@@ -89,14 +104,19 @@ export {
   type VersusPairProps,
   WarningMark,
   type WarningMarkProps,
-} from "./atoms/concept";
+} from "./components/concept";
+export { CursorCue, type CursorCueProps } from "./components/cursor-cue";
+export {
+  DisplayText,
+  type DisplayTextProps,
+} from "./components/display-text";
 export {
   AnswerReveal,
   type AnswerRevealProps,
   CauseEffect,
   type CauseEffectProps,
-  ChecklistAtom,
-  type ChecklistAtomProps,
+  Checklist,
+  type ChecklistProps,
   ComparisonMatrix,
   type ComparisonMatrixProps,
   ConceptCluster,
@@ -117,7 +137,7 @@ export {
   type StepStackProps,
   TradeoffScale,
   type TradeoffScaleProps,
-} from "./atoms/explanation";
+} from "./components/explanation";
 export {
   BranchSplit,
   type BranchSplitProps,
@@ -147,7 +167,9 @@ export {
   type ProcessNodeProps,
   SystemBoundary,
   type SystemBoundaryProps,
-} from "./atoms/flow";
+} from "./components/flow";
+export { Kicker, type KickerProps } from "./components/kicker";
+export { LowerThird, type LowerThirdProps } from "./components/lower-third";
 export {
   BrowserFrame,
   type BrowserFrameProps,
@@ -179,17 +201,26 @@ export {
   type TerminalFrameProps,
   VintagePhotoFrame,
   type VintagePhotoFrameProps,
-} from "./atoms/media";
+} from "./components/media";
+export { PaperPanel, type PaperPanelProps } from "./components/paper-panel";
+export {
+  ProgressRail,
+  type ProgressRailProps,
+} from "./components/progress-rail";
+export { SoundCue, type SoundCueProps } from "./components/sound-cue";
+export { StatChip, type StatChipProps } from "./components/stat-chip";
 export {
   FloatingCard,
   type FloatingCardProps,
   InkSurface,
   type InkSurfaceProps,
-  MetadataStrip,
-  type MetadataStripProps,
   PaperSurface,
   type PaperSurfaceProps,
-} from "./atoms/surface";
+} from "./components/surface";
+export {
+  TargetHighlight,
+  type TargetHighlightProps,
+} from "./components/target-highlight";
 export {
   CaptionText,
   type CaptionTextProps,
@@ -201,7 +232,7 @@ export {
   type NumberBadgeProps,
   ValueChip,
   type ValueChipProps,
-} from "./atoms/text";
+} from "./components/text";
 export {
   ClickPulse,
   type ClickPulseProps,
@@ -217,19 +248,8 @@ export {
   type ProgressDotsProps,
   StepPill,
   type StepPillProps,
-} from "./atoms/tutorial";
-export type { AtomDensity, AtomSize } from "./atoms/types";
-export { CalloutLabel, type CalloutLabelProps } from "./blocks/callout-label";
-export { CaptionBand, type CaptionBandProps } from "./blocks/caption-band";
-export { CodeWindow, type CodeWindowProps } from "./blocks/code-window";
-export { CursorCue, type CursorCueProps } from "./blocks/cursor-cue";
-export { LowerThird, type LowerThirdProps } from "./blocks/lower-third";
-export { ProgressRail, type ProgressRailProps } from "./blocks/progress-rail";
-export { StatChip, type StatChipProps } from "./blocks/stat-chip";
-export {
-  TargetHighlight,
-  type TargetHighlightProps,
-} from "./blocks/target-highlight";
+} from "./components/tutorial";
+export type { ComponentDensity, ComponentSize } from "./components/types";
 export { cn } from "./lib/cn";
 export { enterProgress, exitProgress, UI_EASE } from "./lib/motion";
 export { type TutorialSfxCue, tutorialSfxFiles } from "./lib/sfx";
@@ -241,42 +261,20 @@ export {
   toneTextClass,
 } from "./lib/tones";
 export {
-  BeforeAfterDiagram,
-  BranchingDecisionFlow,
-  ChartCallout,
-  ChartTrendPattern,
-  CodePlusResult,
-  ComparisonOverlay,
-  ImageWithConceptNodes,
-  InputProcessOutput,
-  LinearFlowDiagram,
-  ModelPipeline,
-  NarrationSupportCard,
-  ProblemSolutionResult,
-  ScreenshotWithAnnotations,
-  ThreeStepExplainer,
-  TimelineExplainer,
-  ToolchainFlow,
-  type TutorialPatternProps,
-} from "./patterns/diagram-patterns";
-export {
-  AccentRule,
-  type AccentRuleProps,
-} from "./primitives/accent-rule";
-export {
-  AnimatedInOut,
-  type AnimatedInOutProps,
-} from "./primitives/animated-in-out";
-export {
-  DisplayText,
-  type DisplayTextProps,
-} from "./primitives/display-text";
-export { Kicker, type KickerProps } from "./primitives/kicker";
-export { MetaStrip, type MetaStripProps } from "./primitives/meta-strip";
-export {
-  OverlayStage,
-  type OverlayStageProps,
-} from "./primitives/overlay-stage";
-export { PaperPanel, type PaperPanelProps } from "./primitives/paper-panel";
-export { SideRail, type SideRailProps } from "./primitives/side-rail";
-export { SoundCue, type SoundCueProps } from "./primitives/sound-cue";
+  DecisionTreeTemplate,
+  type DecisionTreeTemplateProps,
+  FlowSequenceTemplate,
+  type FlowSequenceTemplateProps,
+  ProcessPipelineTemplate,
+  type ProcessPipelineTemplateProps,
+  SystemMapTemplate,
+  type SystemMapTemplateProps,
+  TemplateGrid,
+  TemplateRow,
+  TemplateStack,
+  TemplateStage,
+  type TemplateStageProps,
+  TimelineTemplate,
+  type TimelineTemplateProps,
+  type TutorialTemplateProps,
+} from "./templates/diagram-templates";

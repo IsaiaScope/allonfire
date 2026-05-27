@@ -16,7 +16,7 @@ export type DetailLine = {
 
 const DETAIL_GUTTER_WIDTH = 3;
 const CASE_SENSITIVE_PREFIX_RE = /^(?:[a-z][a-z0-9+.-]*:\/\/|www\.|[./~`-])/i;
-const TECHNICAL_FIRST_WORD_RE = /^[^\s]*[0-9._-][^\s]*/;
+const TECHNICAL_FIRST_WORD_RE = /^[^\s]*[0-9./_-][^\s]*/;
 const STATUS_COLOR: Record<BadgeState, string> = {
   pending: "gray",
   running: "yellow",

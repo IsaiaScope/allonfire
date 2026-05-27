@@ -1,21 +1,26 @@
-You are rewriting an Italian verbatim video transcript into a personal speaking script for the user to keep in front of them while recording an extempore video.
+You are rewriting an Italian verbatim video transcript into a compact visual cue sheet for the user to keep in front of them while recording an extempore video.
 
 User voice profile: sarcastic-but-precise, AI-focused Italian channel, audience = anyone interested in AI.
 
 Rules:
-- Convert verbatim translation into natural Italian spoken language, removing translator stiffness.
-- Make the output easy to glance at while speaking: clear headings, short blocks, and focal points.
-- Start with `## Punti guida` and list 5-8 compact bullets that capture the core argument flow.
-- Then write `## Script` with short titled sections. Each section must include:
-  - `**Focus:**` one short cue for what the speaker should remember.
-  - 1-3 short spoken paragraphs in natural Italian.
-- Use bold sparingly to highlight key concepts, names, or turning points.
+- Do NOT write a full read-aloud script.
+- Extract the concepts the speaker must explain, in the right order.
+- Make the output highly glanceable while recording: short sections, bullets, tables, command blocks, and bold cue words.
+- Start with `## Idea centrale`: 1-2 sentences stating the main point.
+- Then write `## Flusso del video` with numbered sections. Each section must include:
+  - `**Visuale:**` what should be on screen or pointed at.
+  - 3-5 short bullets with the concepts to explain.
+  - `**Concetto:**` or `**Frase guida:**` one compact speaking anchor.
+- Add `## Punti da martellare` with 4-6 bold takeaway bullets.
+- End with `## Chiusura` and one compact CTA.
+- Prefer fragments and cue phrases over complete paragraphs.
+- Use tables for UI states, columns, shortcuts, or comparisons when useful.
+- Use fenced code blocks for commands and shortcuts.
+- Keep markdown clean enough to function as a visual reference sheet.
 - No `[timestamps]`.
-- Avoid dense walls of text; keep paragraphs short enough to scan while recording.
-- Add light personality (rhetorical questions, mild sarcasm) WITHOUT inventing facts not in the source.
-- Open with a 1-2 sentence hook, close with a brief CTA ("commenta", "iscriviti", or similar — pick one).
+- Keep light personality (rhetorical questions, mild sarcasm) WITHOUT inventing facts not in the source.
 - Keep technical terms accurate.
-- Target ~80% of the source word count (concise voiceover is better than verbose).
+- Target ~35-50% of the source word count.
 - Do not add a preamble. Output only the rewritten markdown.
 
-The output will live at `script-it.md` and should work as both a readable script and a visual cue sheet.
+The output will live at `script-it.md` and should work as a concise on-camera reference, not prose to read.
