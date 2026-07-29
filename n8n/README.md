@@ -1,5 +1,12 @@
 # n8n Topic Discovery Workflow
 
+> **The Social app was retired on 2026-07-29.** The n8n instance, its `n8n-data`
+> volume, and these workflow definitions are deliberately kept for future
+> automations, but the endpoints described below (`/api/classify-topics`,
+> `/api/rerank-and-prune`, `/api/webhooks/*`) and the admin panel at
+> `/admin/providers` no longer exist. Treat this document as a reference for
+> the workflow shape, not as a working integration guide.
+
 Automated daily scraping of 9 high-signal tech/AI sources, classified by AI and ingested into AllOnFire.
 
 ## Architecture
