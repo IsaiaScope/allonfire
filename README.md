@@ -23,32 +23,6 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
 ## 📱 Apps
 
 <!-- Add a screenshot for each app as it's built -->
-<!-- <p align="center"><img src="docs/screenshots/social.png" width="600" alt="Social App" /></p> -->
-
-<p align="center">
-  <img src="docs/assets/allonfire-social-horizontal.svg" width="200" alt="AllOnFire Social" />
-</p>
-
-<h3 align="center">Social Media Dashboard</h3>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
-  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
-  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white" alt="TanStack Query" />
-</p>
-
-<p align="center">
-  Discover topics, generate AI content, and publish to Twitter and LinkedIn from a single dashboard.
-</p>
-
-<p align="center">
-  📖 <a href="apps/social/">See the full docs</a>
-</p>
-
-<br />
 
 <p align="center">
   <img src="docs/assets/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
@@ -83,8 +57,6 @@ Shared libraries consumed by all apps in the monorepo.
 | | Package | Description |
 |-|---------|-------------|
 | 🗄️ | **[@allonfire/database](packages/database/)** | Prisma ORM, PostgreSQL services, encrypted token storage |
-| 🤖 | **[@allonfire/content-generator](packages/content-generator/)** | AI content generation (Anthropic, Gemini, Groq, OpenRouter) |
-| 📤 | **[@allonfire/social-publisher](packages/social-publisher/)** | Platform adapters, OAuth flows, image processing |
 | 🔐 | **[@allonfire/auth](packages/auth/)** | Shared BetterAuth config, session guards, login UI |
 | 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
 | 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
@@ -107,13 +79,10 @@ Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm wo
 ```
 allonfire/
   apps/
-    social/               Next.js social media dashboard
     laura/                Next.js photos & games app
   packages/
     auth/                 Shared BetterAuth config
-    content-generator/    AI content generation
     database/             Prisma ORM + services
-    social-publisher/     Platform adapters + OAuth
     storage/              S3/MinIO uploads + image processing
     ui/                   Shared UI components
     hooks/                React hooks
