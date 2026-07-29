@@ -1,39 +1,6 @@
 name: allonfire
 
 services:
-  social:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        APP_NAME: social
-        BETTER_AUTH_URL: https://social.isaiariva.com
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=https://social.isaiariva.com
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - N8N_API_KEY=${N8N_API_KEY}
-      - SOCIAL_VIEWER_EMAIL=${SOCIAL_VIEWER_EMAIL:-}
-      - SOCIAL_VIEWER_PASSWORD=${SOCIAL_VIEWER_PASSWORD:-}
-      - NODE_ENV=production
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - allonfire
-      - dokploy-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.allonfire-social.rule=Host(`social.isaiariva.com`)"
-      - "traefik.http.routers.allonfire-social.entrypoints=websecure"
-      - "traefik.http.routers.allonfire-social.tls.certresolver=letsencrypt"
-      - "traefik.http.services.allonfire-social.loadbalancer.server.port=3000"
-
   laura:
     build:
       context: ..

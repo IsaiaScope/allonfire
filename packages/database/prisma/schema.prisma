@@ -8,66 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============ Topics ============
-
-model Topic {
-  id           String        @id @default(cuid(2))
-  title        String
-  summary      String
-  sourceUrl    String
-  sourceName   String
-  category     TopicCategory
-  status       TopicStatus   @default(DISCOVERED)
-  rawData      Json?
-  discoveredAt DateTime      @default(now())
-  posts        Post[]
-  prompts      Prompt[]
-}
-
-// ============ Prompts ============
-
-model Prompt {
-  id         String        @id @default(cuid(2))
-  topicId    String
-  topic      Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  content    String
-  postType   PostType?
-  rating     PromptRating?
-  ratingNote String?
-  ratedAt    DateTime?
-  createdAt  DateTime      @default(now())
-
-  @@index([topicId])
-}
-
-enum PromptRating {
-  POSITIVE
-  NEGATIVE
-}
-
-// ============ Posts ============
-
-model Post {
-  id             String      @id @default(cuid(2))
-  topicId        String?
-  topic          Topic?      @relation(fields: [topicId], references: [id])
-  type           PostType
-  platform       Platform
-  status         PostStatus  @default(DRAFT)
-  content        String
-  mediaUrl       String?
-  mediaType      MediaType?
-  publishedAt    DateTime?
-  platformPostId String?
-  errorMessage   String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  @@index([status])
-  @@index([topicId])
-  @@index([platform, status])
-}
-
 // ============ Auth ============
 
 enum Role {
@@ -89,7 +29,6 @@ model User {
   sessions       Session[]
   accounts       Account[]
   photos         Photo[]
-  socialAccounts SocialAccount[]
   gameScores     GameScore[]
   quizQuestions  QuizQuestion[]
 }
@@ -125,22 +64,6 @@ model Account {
   updatedAt             DateTime  @updatedAt
 
   @@index([userId])
-}
-
-model SocialAccount {
-  id               String    @id @default(cuid(2))
-  userId           String
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  platform         Platform
-  accessToken      String // Encrypted AES-256-GCM
-  refreshToken     String? // Encrypted AES-256-GCM
-  tokenExpiresAt   DateTime?
-  platformUserId   String?
-  platformUsername  String?
-  connectedAt      DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  @@unique([userId, platform])
 }
 
 model Verification {
@@ -226,90 +149,4 @@ model QuizAnswer {
   imageBlurHash     String?
   isCorrect         Boolean      @default(false)
   sortOrder         Int
-}
-
-// ============ AI Providers ============
-
-model AiProvider {
-  id             String       @id @default(cuid(2))
-  provider       ProviderType @unique
-  apiKey         String // Encrypted with AES-256-GCM
-  model          String // e.g., "claude-sonnet-4-20250514"
-  isVerified     Boolean      @default(false)
-  lastVerifiedAt DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  activeForSettings Settings[] @relation("ActiveProvider")
-}
-
-enum ProviderType {
-  ANTHROPIC
-  OPENROUTER
-  GOOGLE_GEMINI
-  GROQ
-}
-
-// ============ Settings ============
-
-model Settings {
-  id                  String      @id @default("singleton")
-  webhookDiscoveryUrl String?
-  webhookNotifyUrl    String?
-  activeProviderId    String?
-  activeProvider      AiProvider? @relation("ActiveProvider", fields: [activeProviderId], references: [id], onDelete: SetNull)
-  updatedAt           DateTime    @updatedAt
-}
-
-// ============ Webhook Logging ============
-
-model WebhookLog {
-  id        String   @id @default(cuid(2))
-  endpoint  String
-  method    String
-  payload   Json?
-  response  Json?
-  status    Int
-  createdAt DateTime @default(now())
-}
-
-// ============ Enums ============
-
-enum TopicCategory {
-  NEWS
-  MEME_WORTHY
-  LEARNING
-  TOOL_RELEASE
-  AI_UPDATE
-}
-
-enum TopicStatus {
-  DISCOVERED
-  AI_PICKED
-  SELECTED
-}
-
-enum PostType {
-  MEME
-  NEWS
-  LEARNING
-  FREEFORM
-}
-
-enum PostStatus {
-  DRAFT
-  APPROVED
-  PUBLISHED
-  FAILED
-}
-
-enum Platform {
-  LINKEDIN
-  TWITTER
-}
-
-enum MediaType {
-  IMAGE
-  CAROUSEL
-  VIDEO_SCRIPT
 }
