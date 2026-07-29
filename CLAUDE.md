@@ -29,75 +29,13 @@ Always use Context7 MCP tools when generating code involving:
 - Next.js, React, Prisma, BetterAuth, shadcn/ui, TanStack Query, Zustand
 - Resolve library ID first, then query docs
 
-## Content Generation Workflow
-
-When generating social media posts:
-
-1. Check `packages/content-generator/src/prompts/` for existing templates
-2. Each prompt type (meme, news, learning) has platform-specific rules
-3. Platform rules are in `packages/content-generator/src/platforms/`
-4. Generate via `pnpm --filter @allonfire/content-generator generate`
-5. Stay within token budget: ~5K-15K tokens per topic × 2 platforms
-
 ## Database Schema Quick Reference
 
 Schema: `packages/database/prisma/schema.prisma`
 
 - **Auth (shared):** `User`, `Session`, `Account`, `Verification`
-- **Social:** `Topic`, `Prompt`, `Post`, `AiProvider`, `SocialAccount`, `Settings`, `WebhookLog`
 - **Laura:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`
-- **Key enums:** `TopicCategory`, `TopicStatus`, `PostType`, `PostStatus`, `Platform`, `MediaType`, `GameType`, `Role`
-
-## Social App Structure (`apps/social/src/`)
-
-### Route Layer (`app/`)
-
-Pages contain **full component code** — no barrel re-exports. All dashboard pages are async Server Components.
-
-```
-app/(dashboard)/
-├── layout.tsx              → Dashboard shell (sidebar, auth). Imports from @/features/layout/
-├── page.tsx                → Overview stats (standalone, no feature imports)
-├── discover/page.tsx       → Topic discovery. Imports from @/features/topics/
-├── generate/page.tsx       → Generation queue. Imports from @/features/generation/
-├── publish/page.tsx        → Social media publishing wizard. Imports from @/features/publish/
-├── admin/layout.tsx        → Admin panel shell (auth guard, submenu). Imports from @/features/admin/
-├── admin/page.tsx          → Redirect to /admin/users
-├── admin/users/page.tsx    → User management. Imports from @/features/admin/
-├── admin/users/[id]/page.tsx → User detail. Imports from @/features/admin/
-├── admin/providers/page.tsx → AI providers. Imports from @/features/admin/
-├── settings/layout.tsx     → Settings nav. Imports from @/features/settings/
-├── settings/page.tsx       → Redirect to /settings/general
-└── settings/general/page.tsx    → Webhooks. Imports from @/features/settings/
-```
-
-### Feature Layer (`features/`)
-
-Domain-specific components, server actions, hooks, and constants. **No barrel index files** — import directly:
-
-```ts
-// Correct
-import { GenerateButton } from "@/features/generation/components/generate-button";
-// Wrong — no index.ts barrels
-import { GenerateButton } from "@/features/generation";
-```
-
-Features: `sidebar-layout/`, `overview/`, `topics/`, `generation/`, `publish/`, `settings/`, `admin/` (includes user management + AI providers)
-
-Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`, `constants/`
-
-### Shared Layer
-
-- `components/` — Cross-cutting: `empty-state`, `providers`, `theme-provider`, `theme-toggle`
-- `lib/` — `auth.ts` (BetterAuth config), `auth-client.ts`, `api-auth.ts` (webhook key validation)
-- `env.ts` — Zod-validated environment variables
-
-### Import Rules
-
-- Pages → features: `@/features/<domain>/components/<component>`
-- Features → UI: `@allonfire/ui/components/<component>`
-- Features → DB: `@allonfire/database`
-- Features → shared: `@/components/<component>`
+- **Key enums:** `GameType`, `Role`
 
 ## Laura App Structure (`apps/laura/src/`)
 
@@ -127,7 +65,7 @@ app/[locale]/(dashboard)/
 
 ### Feature Layer (`features/`)
 
-Same conventions as Social — no barrel index files, import directly.
+No barrel index files — import directly.
 
 Features: `gallery/`, `games/`, `upload/`, `settings/`, `layout/`
 
@@ -160,22 +98,9 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 - `/games/quiz/edit/new` — Create new quiz question
 - `/games/quiz/edit/[id]` — Edit existing quiz question
 
-## Social Dashboard Routes
-
-- `/` — Overview with stats
-- `/discover` — Browse discovered topics
-- `/generate` — Trigger + monitor generation
-- `/generate/[topicId]` — Single topic generation detail
-- `/publish` — Compose and publish social media posts
-- `/settings` — n8n webhook URLs, platform config
-- `/admin` — Admin panel redirect → `/admin/users`
-- `/admin/users` — User management (admin only)
-- `/admin/providers` — AI provider management (admin only)
-
 ## Deployment
 
 - VPS: Hetzner CAX11 at 188.245.174.30 (ssh main-vps)
 - Orchestrator: Dokploy
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
-

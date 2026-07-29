@@ -8,9 +8,7 @@ export const seedEnv = createEnv({
     ADMIN_EMAIL: z.email(),
     ADMIN_PASSWORD: z.string().min(8),
     ADMIN_NAME: z.string().min(1).optional(),
-    // Required: viewer accounts seeded alongside admin
-    SOCIAL_VIEWER_EMAIL: z.email(),
-    SOCIAL_VIEWER_PASSWORD: z.string().min(8),
+    // Required: Laura viewer account seeded alongside admin
     LAURA_VIEWER_EMAIL: z.email(),
     LAURA_VIEWER_PASSWORD: z.string().min(8),
     // "prod" (default) = admin only, "dev" = admin + test users + mock data

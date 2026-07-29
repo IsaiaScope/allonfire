@@ -18,23 +18,6 @@ services:
       timeout: 5s
       retries: 5
 
-  social:
-    image: allonfire-social
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        APP_NAME: social
-    ports:
-      - "3100:3000"
-    environment:
-      DATABASE_URL: postgresql://allonfire:allonfire_dev@postgres:5432/allonfire
-      BETTER_AUTH_SECRET: dev-secret-change-in-production
-      BETTER_AUTH_URL: http://localhost:3100
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   # When adding a new app, copy this block:
   # newapp:
   #   image: allonfire-newapp
