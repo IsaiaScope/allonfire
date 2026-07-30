@@ -46,7 +46,7 @@
 Components are imported directly by file path -- there are no barrel `index.ts` files.
 
 ```tsx
-// From a feature component in apps/social
+// From a feature component in apps/laura
 import { Button } from "@allonfire/ui/components/button";
 import { Card, CardHeader, CardContent } from "@allonfire/ui/components/card";
 import { Badge } from "@allonfire/ui/components/badge";

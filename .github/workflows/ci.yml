@@ -52,8 +52,6 @@ jobs:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
       BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
       BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      N8N_API_KEY: ${{ secrets.N8N_API_KEY }}
-      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
