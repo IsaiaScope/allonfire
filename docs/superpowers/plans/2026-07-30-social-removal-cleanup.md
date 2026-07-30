@@ -4,6 +4,8 @@
 
 **Goal:** Remove every remaining artefact of the deleted social app from the allonfire monorepo and the `main` Hetzner VPS, so no file, image, or document describes a system that no longer exists.
 
+**Status:** implemented @ 2026-07-30T12:15:54Z — committed on `chore/social-cleanup`. Track A done; Track B done; two VPS UI steps and Track C outstanding (see log).
+
 **Architecture:** Three independent tracks. Track A is pure operations — filesystem and Docker deletions, nothing committed. Track B is a single documentation PR on `chore/social-cleanup`. Track C is credential revocation the user performs by hand in third-party consoles. Tracks may run in any order, except that Track A should precede Track B's verification so a stale `apps/social/.env` cannot show up in a grep.
 
 **Tech Stack:** Turborepo, pnpm, Next.js 16, Prisma 7, BetterAuth, Docker Compose, Dokploy, n8n, Traefik, PostgreSQL 16.
@@ -68,7 +70,7 @@
 - Consumes: nothing
 - Produces: a workspace with no orphan directories. Task 9's verification depends on this.
 
-- [ ] **Step 1: Confirm every target is untracked before deleting anything**
+- [x] **Step 1: Confirm every target is untracked before deleting anything**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -79,7 +81,7 @@ done
 
 Expected: `tracked_files=0` for all five. **If any line shows a non-zero count, stop and report it** — that directory still has tracked content and this plan's premise is wrong for it.
 
-- [ ] **Step 2: Confirm no surviving package depends on the packages being deleted**
+- [x] **Step 2: Confirm no surviving package depends on the packages being deleted**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -91,7 +93,7 @@ echo "exit=$?"
 
 Expected: no output, `exit=1`. **If any match appears, stop** — something live still imports a package slated for deletion.
 
-- [ ] **Step 3: Record the reclaimed size for the final report**
+- [x] **Step 3: Record the reclaimed size for the final report**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -100,14 +102,14 @@ du -sh apps/social packages/social-publisher packages/content-generator packages
 
 Expected: roughly `6.0G`, `22M`, `25M`, `624M`, `38M`. Note the total (~6.7 GB).
 
-- [ ] **Step 4: Delete the five directories**
+- [x] **Step 4: Delete the five directories**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
 rm -rf apps/social packages/social-publisher packages/content-generator packages/video-overlays packages/video-pipeline
 ```
 
-- [ ] **Step 5: Verify they are gone and git is unaffected**
+- [x] **Step 5: Verify they are gone and git is unaffected**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -119,7 +121,7 @@ git status --porcelain | grep -v '\._' ; echo "(git clean above this line)"
 
 Expected: five `gone:` lines, and no git output other than the trailing marker.
 
-- [ ] **Step 6: Resync the workspace and confirm the build is unharmed**
+- [x] **Step 6: Resync the workspace and confirm the build is unharmed**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -142,7 +144,7 @@ Nothing is committed in this task.
 - Consumes: nothing
 - Produces: a VPS with no social image, no dangling images, and an empty build cache. Task 9 verifies this.
 
-- [ ] **Step 1: Confirm you are on the right box**
+- [x] **Step 1: Confirm you are on the right box**
 
 ```bash
 ssh main-vps 'hostname'
@@ -150,7 +152,7 @@ ssh main-vps 'hostname'
 
 Expected: exactly `main`. **Anything else: stop immediately and run nothing further.** Hetzner reuses IPs, so a stale roster can point at a stranger's machine.
 
-- [ ] **Step 2: Record the baseline**
+- [x] **Step 2: Record the baseline**
 
 ```bash
 ssh main-vps 'docker system df; echo "--- social images ---"; docker images --format "{{.Repository}}:{{.Tag}} {{.Size}}" | grep -i social; echo "--- social containers ---"; docker ps -a --format "{{.Names}}" | grep -i social; echo "(none above = good)"'
@@ -158,7 +160,7 @@ ssh main-vps 'docker system df; echo "--- social images ---"; docker images --fo
 
 Expected: `applications-allonfire-nrnhaj-social:latest` listed under images, **no** social containers, build cache ~4.5 GB reclaimable.
 
-- [ ] **Step 3: Remove the orphan social image**
+- [x] **Step 3: Remove the orphan social image**
 
 ```bash
 ssh main-vps 'docker image rm applications-allonfire-nrnhaj-social:latest'
@@ -166,7 +168,7 @@ ssh main-vps 'docker image rm applications-allonfire-nrnhaj-social:latest'
 
 Expected: `Untagged:` / `Deleted:` lines. If it reports the image is in use by a container, **stop** — Step 2 said there was no such container, so something has changed.
 
-- [ ] **Step 4: Prune dangling images and build cache**
+- [x] **Step 4: Prune dangling images and build cache**
 
 ```bash
 ssh main-vps 'docker image prune -f && docker builder prune -f'
@@ -174,7 +176,7 @@ ssh main-vps 'docker image prune -f && docker builder prune -f'
 
 Expected: reclaimed totals printed, roughly 519 MB then 4.5 GB.
 
-- [ ] **Step 5: Verify the reclaim and that Laura is untouched**
+- [x] **Step 5: Verify the reclaim and that Laura is untouched**
 
 ```bash
 ssh main-vps 'docker system df; echo "--- social images ---"; docker images --format "{{.Repository}}:{{.Tag}}" | grep -i social; echo "(no social image above = good)"; echo "--- laura ---"; docker ps --format "{{.Names}}\t{{.Status}}" | grep laura'
@@ -193,7 +195,7 @@ Expected: no social image; `Build Cache` and dangling images at 0 B; the Laura c
 - Consumes: nothing
 - Produces: a VPS n8n instance with three workflows and a compose environment with no `SOCIAL_VIEWER_*` keys.
 
-- [ ] **Step 1: Record the current workflow state**
+- [x] **Step 1: Record the current workflow state**
 
 ```bash
 PG=$(ssh main-vps 'docker ps --format "{{.Names}}" | grep postgres')
@@ -234,7 +236,7 @@ AllOnFire — Topic Discovery|f
 Backup Notification|t
 ```
 
-- [ ] **Step 4: Record which env keys exist, by name only**
+- [x] **Step 4: Record which env keys exist, by name only**
 
 ```bash
 ssh main-vps 'grep -oE "^[A-Za-z_][A-Za-z0-9_]*" /etc/dokploy/compose/applications-allonfire-nrnhaj/code/docker/.env | sort'
@@ -276,7 +278,7 @@ Expected: `0` then `2`; the Laura container healthy; HTTP `200`/`3xx`.
 - Consumes: nothing
 - Produces: branch `chore/social-cleanup`, from which Tasks 5–8 continue.
 
-- [ ] **Step 1: Create the branch**
+- [x] **Step 1: Create the branch**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -284,7 +286,7 @@ git checkout dev && git pull --ff-only
 git checkout -b chore/social-cleanup
 ```
 
-- [ ] **Step 2: Prove the 13 screenshots are unreferenced, using anchored matching**
+- [x] **Step 2: Prove the 13 screenshots are unreferenced, using anchored matching**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -300,7 +302,7 @@ Expected: `refs_outside_docmap=0` on all 13.
 
 The `(^|[/"'(])` prefix is essential. A bare substring search for `settings.png` also matches `laura-settings.png` and `mobile-laura-settings.png`, which would wrongly make an orphan look live.
 
-- [ ] **Step 3: Prove `publishing.json` is an empty stub and unreferenced**
+- [x] **Step 3: Prove `publishing.json` is an empty stub and unreferenced**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -311,7 +313,7 @@ echo "(no files above = unreferenced)"
 
 Expected: `0` node-type occurrences, and no referencing files.
 
-- [ ] **Step 4: Delete them**
+- [x] **Step 4: Delete them**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -325,7 +327,7 @@ git rm docs/screenshots/admin-providers.png docs/screenshots/admin-users.png \
 git rm n8n/workflows/publishing.json
 ```
 
-- [ ] **Step 5: Verify only Laura screenshots remain, and all are live**
+- [x] **Step 5: Verify only Laura screenshots remain, and all are live**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -340,7 +342,7 @@ echo "(no ORPHAN lines = good)"
 
 Expected: `remaining: 12`, and no `ORPHAN` lines.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -360,7 +362,7 @@ git -c core.checkStat=minimal commit -m "chore(docs): delete orphaned social scr
 
 **Why a rewrite and not an edit:** 7 of the 12 API-reference sections document services that no longer exist. `Key Models` lists mostly-deleted models. Editing around that leaves a document whose shape still implies the old system.
 
-- [ ] **Step 1: Establish ground truth for services and models**
+- [x] **Step 1: Establish ground truth for services and models**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -373,7 +375,7 @@ Expected services: `favorite.service.ts`, `game-score.service.ts`, `photo.servic
 
 Expected models: `User`, `Session`, `Account`, `Verification`, `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`. Expected enums: `Role`, `GameType`.
 
-- [ ] **Step 2: Delete the seven dead API-reference sections**
+- [x] **Step 2: Delete the seven dead API-reference sections**
 
 Remove these headings and their bodies entirely:
 
@@ -391,7 +393,7 @@ Keep, in this order: `### User Service`, `### Favorite Service`, `### Game Score
 
 Line numbers shift as you delete. Work bottom-up (Webhook Log first, Topic last) so earlier numbers stay valid.
 
-- [ ] **Step 3: Replace the `## Key Models` table**
+- [x] **Step 3: Replace the `## Key Models` table**
 
 Replace the existing table body (which lists `Topic`, `Prompt`, `Post`, `SocialAccount`, `AiProvider`, `Settings`) with:
 
@@ -409,7 +411,7 @@ Replace the existing table body (which lists `Topic`, `Prompt`, `Post`, `SocialA
 | `QuizAnswer` | Submitted quiz answers | `questionId`, `userId`, `answer` |
 ```
 
-- [ ] **Step 4: Fix the `## Service Layer` tree and `## Directory Structure`**
+- [x] **Step 4: Fix the `## Service Layer` tree and `## Directory Structure`**
 
 In the `## Service Layer` tree, delete the lines for `provider.service`, `settings.service`, `social-account.service`, and `stats.service` (the social-account line is at 24 before edits).
 
@@ -417,11 +419,11 @@ In `## Directory Structure`, delete the matching `provider.service.ts`, `setting
 
 Both listings must end up naming exactly: `favorite.service`, `game-score.service`, `photo.service`, `quiz.service`, `user.service`.
 
-- [ ] **Step 5: Update `### Enums`**
+- [x] **Step 5: Update `### Enums`**
 
 The enums section must list only `Role` and `GameType`. Delete any other enum (for example a `Platform` or `PostStatus` entry) if present.
 
-- [ ] **Step 6: Verify no dead name survives**
+- [x] **Step 6: Verify no dead name survives**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -431,7 +433,7 @@ echo "exit=$?"
 
 Expected: no output, `exit=1`.
 
-- [ ] **Step 7: Verify every documented service really exists**
+- [x] **Step 7: Verify every documented service really exists**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -443,7 +445,7 @@ grep -oE '^### [A-Za-z ]+Service' packages/database/README.md
 
 Expected: five `ok:` lines, and exactly five `### ... Service` headings matching them.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -466,7 +468,7 @@ git -c core.checkStat=minimal commit -m "docs(database): document only the servi
 
 These are illustrations of APIs that still exist. Only the example's subject app is stale, so change the subject and nothing else.
 
-- [ ] **Step 1: `packages/auth/README.md` — change the app key**
+- [x] **Step 1: `packages/auth/README.md` — change the app key**
 
 Replace:
 
@@ -480,7 +482,7 @@ with:
   await checkAppAccess(auth, "laura");
 ```
 
-- [ ] **Step 2: `packages/ui/README.md` — change the comment's app**
+- [x] **Step 2: `packages/ui/README.md` — change the comment's app**
 
 Replace:
 
@@ -494,7 +496,7 @@ with:
 // From a feature component in apps/laura
 ```
 
-- [ ] **Step 3: `packages/config/README.md` — drop the deleted app from the list**
+- [x] **Step 3: `packages/config/README.md` — drop the deleted app from the list**
 
 Replace:
 
@@ -508,7 +510,7 @@ with:
 // Next.js apps (apps/laura)
 ```
 
-- [ ] **Step 4: Confirm `checkAppAccess` actually accepts `"laura"`**
+- [x] **Step 4: Confirm `checkAppAccess` actually accepts `"laura"`**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -518,7 +520,7 @@ grep -rn 'checkAppAccess(' apps/laura/src | head -5
 
 Expected: the function exists in `packages/auth/src/guard.ts`, and Laura's own call sites show the argument form the example now uses. **If Laura passes something other than a bare `"laura"` string, match Laura's real call instead** — the example must mirror working code.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -550,7 +552,7 @@ git -c core.checkStat=minimal commit -m "docs(packages): point README examples a
 
 **Do not touch** the node named `Collect Social Items` (`workflow-explained.md:26`, and its Phase 2 description around line 228). "Social" there means social *media* sources — Hacker News, Reddit, YouTube — not the deleted social *app*. That node still exists in the workflow.
 
-- [ ] **Step 1: Add a parked banner to `n8n/README.md`**
+- [x] **Step 1: Add a parked banner to `n8n/README.md`**
 
 Immediately after the `# n8n Topic Discovery Workflow` heading on line 1, insert:
 
@@ -562,7 +564,7 @@ Immediately after the `# n8n Topic Discovery Workflow` heading on line 1, insert
 > Reactivating it requires repointing the classification call first.
 ```
 
-- [ ] **Step 2: Mark the dead references in `n8n/README.md`**
+- [x] **Step 2: Mark the dead references in `n8n/README.md`**
 
 Find each reference and annotate rather than delete, so a future reader can see what the integration used to be:
 
@@ -574,11 +576,11 @@ Find each reference and annotate rather than delete, so a future reader can see 
 | 94 | `apps/social/src/lib/api-auth.ts` | Append: `(deleted with the social app)` |
 | 98 | `apps/social/src/proxy.ts` | Append: `(deleted with the social app)` |
 
-- [ ] **Step 3: Add the same banner to `n8n/workflow-explained.md`**
+- [x] **Step 3: Add the same banner to `n8n/workflow-explained.md`**
 
 After the `# Topic Discovery Workflow — How It Works` heading on line 1, insert the identical parked banner from Step 1.
 
-- [ ] **Step 4: Annotate `workflow-explained.md`'s three dead spots**
+- [x] **Step 4: Annotate `workflow-explained.md`'s three dead spots**
 
 | Around line | Section | Change |
 |---|---|---|
@@ -586,7 +588,7 @@ After the `# Topic Discovery Workflow — How It Works` heading on line 1, inser
 | 257 | Social app classification logic | Note the logic lived in the deleted app |
 | 523 | Troubleshooting referencing `apps/social/.env` | Replace with the n8n container's own environment, since `apps/social/.env` no longer exists |
 
-- [ ] **Step 5: Verify only intended `social` references remain**
+- [x] **Step 5: Verify only intended `social` references remain**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -595,7 +597,7 @@ grep -niE 'social' n8n/README.md n8n/workflow-explained.md n8n/n8n-guide.md
 
 Expected: every remaining hit is either the `Collect Social Items` node name, or an annotation explicitly stating the reference is dead. **No hit may describe the social app as though it still exists.** Read each line and confirm.
 
-- [ ] **Step 6: Verify the doc matches the live workflow**
+- [x] **Step 6: Verify the doc matches the live workflow**
 
 ```bash
 PG=$(ssh main-vps 'docker ps --format "{{.Names}}" | grep postgres')
@@ -604,7 +606,7 @@ ssh main-vps "docker exec $PG psql -U dokploy -d n8n -Atc \"SELECT name, active,
 
 Expected: `AllOnFire — Topic Discovery|f|57` — inactive, 57 nodes, matching the banner's claim. If the node count differs, correct the banner to the real number.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -628,7 +630,7 @@ git -c core.checkStat=minimal commit -m "docs(n8n): mark topic discovery parked 
 - Consumes: branch from Task 4
 - Produces: the final commit of the PR.
 
-- [ ] **Step 1: `SKILL.md` — drop the social app from the screenshot workflow**
+- [x] **Step 1: `SKILL.md` — drop the social app from the screenshot workflow**
 
 At line ~16, replace the prerequisite naming two apps:
 
@@ -646,7 +648,7 @@ At line ~143, replace `consuming files in apps/social/ for usage examples` with 
 
 Delete the whole `#### Social App (port 3100)` subsection at ~line 109 and its desktop/mobile screenshot list.
 
-- [ ] **Step 2: `doc-map.md` — delete the social screenshot inventory**
+- [x] **Step 2: `doc-map.md` — delete the social screenshot inventory**
 
 Delete every row naming a deleted screenshot: `dashboard`, `discover`, `generate`, `publish-compose`, `publish-platforms`, `publish-preview`, `admin-users`, `admin-providers`, `settings`, `mobile-dashboard`, `mobile-nav`, `mobile-admin`, `mobile-discover`, `mobile-generate`, `mobile-publish`, `mobile-settings`.
 
@@ -656,7 +658,7 @@ Keep the entire `### Laura Screenshot Inventory` section.
 
 Also delete the `apps/social/README.md` row (~line 61), the `content-generator` and `social-publisher` rows (~lines 69–70), and the `apps/social/src/features/` structure reference (~line 82) and `content-generator` integration example (~line 110).
 
-- [ ] **Step 3: `doc-standards.md` — keep the naming rule, drop its obsolete rationale**
+- [x] **Step 3: `doc-standards.md` — keep the naming rule, drop its obsolete rationale**
 
 At ~line 102, replace:
 
@@ -679,7 +681,7 @@ At ~lines 141–143, the generic naming template shows unprefixed `docs/screensh
 
 This is where the convention already lived. Recording it here rather than in `CLAUDE.md` keeps one home for it.
 
-- [ ] **Step 4: `CLAUDE.md` — remove the dangling pointer**
+- [x] **Step 4: `CLAUDE.md` — remove the dangling pointer**
 
 Delete line 3 in its entirety:
 
@@ -691,7 +693,7 @@ The sentence has two clauses. Only the `AGENTS.md` pointer is dangling — if yo
 
 `AGENTS.md` does not exist — added in `7bac3f5`, deleted in `6a355c7`. Do not recreate it; writing a conventions document is separate work.
 
-- [ ] **Step 5: `.claude/settings.local.json` — prune stale permissions**
+- [x] **Step 5: `.claude/settings.local.json` — prune stale permissions**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -709,7 +711,7 @@ Expected: `valid JSON`.
 
 Note: `.gitignore` contains `.claude/*.local.json`, so this file may be untracked. If `git status` does not show it, edit it anyway for local hygiene and simply do not stage it.
 
-- [ ] **Step 6: Verify the whole tree**
+- [x] **Step 6: Verify the whole tree**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -721,7 +723,7 @@ echo "exit=$? (1 = clean)"
 
 Expected: no output, `exit=1`. Hits under `docs/superpowers/` are excluded on purpose — the dated specs and plans are historical records.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -746,7 +748,7 @@ Do not open the PR yet — Task 9 gates it.
 - Consumes: all prior tasks
 - Produces: a verified PR ready for review.
 
-- [ ] **Step 1: Criteria 1–3 — orphan directories gone, build green**
+- [x] **Step 1: Criteria 1–3 — orphan directories gone, build green**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -758,7 +760,7 @@ pnpm install && pnpm build && pnpm check-types && pnpm test
 
 Expected: five `ok gone:` lines; install, build, type-check, and tests all pass.
 
-- [ ] **Step 2: Criterion 4 — keyword sweep**
+- [x] **Step 2: Criterion 4 — keyword sweep**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -768,7 +770,7 @@ grep -ril social --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.ne
 
 Expected only: the two `docs/superpowers/specs/2026-07-29-*` and `2026-04-*` files, `docs/superpowers/plans/2026-07-29-remove-social-allonfire.md`, this plan, and the deliberately-annotated `n8n/README.md` and `n8n/workflow-explained.md`. Anything else is a miss.
 
-- [ ] **Step 3: Criterion 5 — no orphaned screenshot, anchored matching**
+- [x] **Step 3: Criterion 5 — no orphaned screenshot, anchored matching**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -782,7 +784,7 @@ echo "(no FAIL lines = pass)"
 
 Expected: no `FAIL` lines. This criterion, not Step 2's, is what catches dead assets — no social screenshot filename contains the word "social", so a keyword grep passes while dead images remain.
 
-- [ ] **Step 4: Criterion 6 — n8n workflow files**
+- [x] **Step 4: Criterion 6 — n8n workflow files**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -793,7 +795,7 @@ grep -c 'Status: parked' n8n/README.md n8n/workflow-explained.md
 
 Expected: `ok` on both files, and `1` parked-banner occurrence in each doc.
 
-- [ ] **Step 5: Criterion 7 — VPS Docker state**
+- [x] **Step 5: Criterion 7 — VPS Docker state**
 
 ```bash
 ssh main-vps 'docker system df; echo "--- social ---"; docker images --format "{{.Repository}}" | grep -i social; echo "(nothing above = pass)"'
@@ -811,7 +813,7 @@ ssh main-vps "docker exec $PG psql -U dokploy -d n8n -Atc \"SELECT name, active 
 
 Expected: Laura returns `200` or `3xx`. Exactly three workflows: `AllOnFire — Notifications|t`, `AllOnFire — Topic Discovery|f`, `Backup Notification|t`. `My workflow` absent.
 
-- [ ] **Step 7: Criterion 9 — no dangling path in `CLAUDE.md`**
+- [x] **Step 7: Criterion 9 — no dangling path in `CLAUDE.md`**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -822,7 +824,7 @@ Expected: `0`.
 
 Do not extend this to every path in `CLAUDE.md` — most apparent misses are relative paths inside code-fence directory trees and resolve correctly in context. `AGENTS.md` was the only genuine top-level dangling reference.
 
-- [ ] **Step 8: Open the PR**
+- [x] **Step 8: Open the PR**
 
 ```bash
 cd /Volumes/Crucial-4T/repo/allonfire
@@ -875,3 +877,28 @@ Not automatable and not delegable. Deleting `apps/social/.env` in Task 1 removed
 The `monorepoonfire` Dokploy application: package `monorepoonfire` v2.0.0, serving `www.isaiariva.com` on port 3075, with its own 7.9 MB `monorepoonfire` Postgres database, a dedicated Traefik dynamic config at `/etc/dokploy/traefik/dynamic/monorepoonfire-vdfssdfvasv-ss81s5.yml`, and one exited replica. Its `apps/` and `packages/` directories are empty.
 
 It predates allonfire and is unrelated to the social removal. Recorded here so it is not lost. Any future removal must account for `www.isaiariva.com` carrying live traffic.
+
+
+## Implementation Log
+- Implemented: 2026-07-30T12:15:54Z
+- Workspace: named branch — `chore/social-cleanup` (branched from `dev`)
+- Committed: yes — 6 cleanup commits, pushed; PR opened against `dev`
+
+### Divergences from the plan
+- **Task 1 Step 2** false positive: matches were inside `apps/social/.next/standalone/`, a build artefact within the directory being deleted. Re-ran scoped to surviving code — clean.
+- **Task 2 Step 3** no-op: `applications-allonfire-nrnhaj-social:latest` was already absent and build cache already 0 B (likely a Dokploy redeploy reclaimed it). `docker image prune -f` reclaimed 0 B. The three `<none>` images are Swarm-digest-pulled and container-referenced, so not reclaimable — `-a` would have deleted Dokploy's own control plane.
+- **Task 4 Step 2** false positive: the plan file itself names all 13 screenshots, so the check can never reach 0. Re-ran excluding `docs/superpowers/` — clean.
+- **Task 5 Step 3** table was wrong: the plan's prescribed field names (`Favorite.userId`, `QuizQuestion.question`/`correctAnswer`, `QuizAnswer.userId`/`answer`, `Photo.uploadedById`) do not exist in `schema.prisma`. Used the real schema instead. Also rewrote the `## Usage` and `## Scripts` sections, which the plan did not name but which referenced deleted functions and a nonexistent `db:export-topics` script.
+- **Task 7 Step 1**: `n8n/README.md` already had a retirement banner; merged the parked status into it rather than stacking a second blockquote. Annotated 14 dead references, not the plan's 5.
+- **Task 8 Step 2**: `doc-map.md` needed a full rewrite — the plan named 5 rows, but a ~50-line `## Features (apps/social/src/features/)` block documented six deleted features.
+- **Extra commit** `chore(cleanup)`: criterion 4 surfaced three leftovers absent from the task list — `packages/ui/src/styles/theme-social.css` (still imported by the shadcn CSS target), `SOCIAL_VIEWER_*` in `packages/database/.env.example`, and `social-admin`/`social-user` in `seed-data/users.json`.
+
+### Outstanding
+- **Task 3 Step 2** — delete `My workflow` in the n8n UI (still present).
+- **Task 3 Step 5** — remove `SOCIAL_VIEWER_EMAIL` / `SOCIAL_VIEWER_PASSWORD` via the Dokploy UI (still 2 entries).
+- **Track C** — revoke the Twitter/X, LinkedIn and Google OAuth credentials. Note these also persist in age-encrypted S3 backups until tiered retention expires, so provider-side revocation is the only effective remediation.
+
+### Noted, out of scope
+- `n8n/README.md` documents image `docker.n8n.io/n8nio/n8n:2.10.2`; the VPS runs `2.26.3`. Unrelated to social removal.
+- `/etc/dokploy/applications/` is 54 MB of `monorepoonfire`, ~86% of each daily backup. Out of scope by decision.
+- `packages/database/src/utils/encryption.ts` is unused outside its own test (it served the social app's encrypted credentials). Left in place; removing code was not in scope.
