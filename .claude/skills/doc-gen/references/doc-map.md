@@ -2,42 +2,37 @@
 
 Complete inventory of every documentation target in the AllOnFire monorepo.
 
+> The Social app was removed on 2026-07-29. Laura is the only app. Anything the
+> social app owned — the `publish/`, `admin/`, `generation/`, `topics/`,
+> `overview/` and `settings/` features, its screenshots, and the
+> `content-generator` / `social-publisher` packages — is gone and is no longer
+> listed here.
+
 ## Root Level
 
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
 | `README.md` | P0 | Badges, screenshot grid, "What is AllOnFire?", architecture ASCII, quick start table, scripts, tech stack, packages table, doc links |
-| `CLAUDE.md` | — | EXISTS. Social app structure, routes, features, import rules, deployment. Keep current. |
+| `CLAUDE.md` | — | EXISTS. Laura app structure, routes, features, import rules, deployment. Keep current. |
 | `.claude/CLAUDE.md` | — | EXISTS. Ultracite/Biome code standards. Stable. |
 
 ## Docs Directory
 
+None of the numbered guides below exist yet — they are targets, not records.
+
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
-| `docs/screenshots/` | P1 | Directory for committed screenshots (see screenshot inventory below) |
+| `docs/screenshots/` | P1 | EXISTS. Directory for committed screenshots (see inventory below) |
 | `docs/00-overview.md` | P1 | Project goals, high-level description, links to all docs |
-| `docs/01-architecture.md` | P1 | System architecture diagrams, data flow (discovery, generation, publishing, OAuth), package dependency graph |
-| `docs/02-database.md` | P2 | Prisma schema reference, ER diagram (Mermaid), service layer API table, encryption details |
+| `docs/01-architecture.md` | P1 | System architecture diagrams, data flow (auth, photo upload, gallery pagination, games/leaderboards), package dependency graph |
+| `docs/02-database.md` | P2 | Prisma schema reference, ER diagram (Mermaid), service layer API table |
 | `docs/03-deployment.md` | P2 | Hetzner VPS, Dokploy, Docker, Traefik SSL, environment variables |
 | `docs/04-development.md` | P1 | Local setup, prerequisites, env vars, Docker dev stack, testing, linting |
 
-### Screenshot Inventory
-
-| File | Page URL | Notes |
-|------|----------|-------|
-| `docs/screenshots/dashboard.png` | `/` | Overview with stats |
-| `docs/screenshots/discover.png` | `/discover` | Topic discovery list |
-| `docs/screenshots/generate.png` | `/generate` | Generation queue |
-| `docs/screenshots/publish-compose.png` | `/publish` | Wizard step 1: compose |
-| `docs/screenshots/publish-platforms.png` | `/publish` | Wizard step 2: platforms |
-| `docs/screenshots/publish-preview.png` | `/publish` | Wizard step 3: preview |
-| `docs/screenshots/admin-users.png` | `/admin/users` | User management |
-| `docs/screenshots/admin-providers.png` | `/admin/providers` | AI provider config |
-| `docs/screenshots/settings.png` | `/settings/general` | Webhook config |
-| `docs/screenshots/mobile-dashboard.png` | `/` (390x844) | Mobile responsive |
-| `docs/screenshots/mobile-nav.png` | `/` (390x844) | Sheet menu open |
-
 ### Laura Screenshot Inventory
+
+Every screenshot uses the `laura-` / `mobile-laura-` prefix. An unprefixed PNG in
+`docs/screenshots/` is legacy social-app output and should be deleted, not reused.
 
 | File | Page URL | App | Notes |
 |------|----------|-----|-------|
@@ -58,104 +53,58 @@ Complete inventory of every documentation target in the AllOnFire monorepo.
 
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
-| `apps/social/README.md` | P0 | App overview, route map table, feature layer, env vars (from `src/env.ts`), auth setup, dev commands |
-| `apps/laura/README.md` | P0 | App overview, route map table, feature gallery, i18n setup, role system, env vars, dev commands |
+| `apps/laura/README.md` | P0 | EXISTS. App overview, route map table, feature gallery, i18n setup, role system, env vars, dev commands |
 
 ## Packages
 
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
-| `packages/database/README.md` | P0 | Schema overview (models table), service API (exported functions), encryption (AES-256-GCM), enums, seed/migration commands |
-| `packages/content-generator/README.md` | P1 | Prompt system (meta-prompt, type prompts), platform rules, provider adapters, CLI, token budget |
-| `packages/social-publisher/README.md` | P1 | Platform adapters (LinkedIn, Twitter), OAuth flow, image processing (resize specs), publish types |
-| `packages/ui/README.md` | P1 | Component inventory table, shadcn/ui setup, globals.css, cn utility, usage patterns |
-| `packages/hooks/README.md` | P2 | Breakpoint constants, useBreakpoint, useMounted, usage in sidebar-layout |
-| `packages/utils/README.md` | P2 | Utility functions: objectKeys, objectEntries, formatErrorMessage |
-| `packages/config/README.md` | P3 | TypeScript config presets |
+| `packages/database/README.md` | P0 | EXISTS. Schema overview (models table), service API (exported functions), enums, seed/migration commands |
+| `packages/auth/README.md` | P1 | EXISTS. BetterAuth setup, app-access guard (`checkAppAccess`), mutation guard, session helpers |
+| `packages/storage/README.md` | P1 | EXISTS. S3/MinIO client, upload helpers, bucket config |
+| `packages/ui/README.md` | P1 | EXISTS. Component inventory table, shadcn/ui setup, globals.css, cn utility, usage patterns |
+| `packages/hooks/README.md` | P2 | EXISTS. Breakpoint constants, useBreakpoint, useMounted |
+| `packages/utils/README.md` | P2 | EXISTS. Utility functions: objectKeys, objectEntries, formatErrorMessage |
+| `packages/config/README.md` | P3 | EXISTS. TypeScript config presets |
 
 ## n8n
 
 | File | Priority | Notes |
 |------|----------|-------|
-| `n8n/README.md` | — | EXISTS. Comprehensive. Keep current. |
-
-## Features (`apps/social/src/features/`)
-
-### Reference Feature (fully documented)
-
-| File | Notes |
-|------|-------|
-| `sidebar-layout/README.md` | EXISTS. Use as template for all other features. |
-| `sidebar-layout/CLAUDE.md` | EXISTS. Use as template for all other features. |
-
-### publish (P0 — most complex)
-
-| File | Content Requirements |
-|------|---------------------|
-| `publish/README.md` | Multi-step wizard architecture, step descriptions (compose, platforms, preview, confirm, results), state management (`usePublishWizard` with `loadingPhase`), OAuth connection flow, image upload with drag-to-reorder, content adaptation pipeline, shared platform constants |
-| `publish/CLAUDE.md` | File responsibilities for: 10 components, 1 hook, 2 actions, 1 constants file, 1 types file. Wizard state machine. OAuth popup handling. How to add a new platform. How to add a wizard step. Gotchas: token refresh, image limits, `biome-ignore` on img elements |
-
-### admin (P1)
-
-| File | Content Requirements |
-|------|---------------------|
-| `admin/README.md` | User CRUD + AI provider management, sub-nav routing (`/admin/users`, `/admin/providers`), role-based guard, provider verification, API key encryption |
-| `admin/CLAUDE.md` | File responsibilities: admin-sub-nav, add-user-form, user-list, user-detail, provider-card, provider-config-panel, providers-hub, provider-icons. Actions: providers.ts, users.ts |
-
-### generation (P1)
-
-| File | Content Requirements |
-|------|---------------------|
-| `generation/README.md` | Generation trigger, queue monitoring, topic-to-post pipeline |
-| `generation/CLAUDE.md` | File responsibilities: generate-button. Action: generate.ts. How it calls content-generator |
-
-### topics (P1)
-
-| File | Content Requirements |
-|------|---------------------|
-| `topics/README.md` | Topic discovery display, filtering, selection, archive flow, status lifecycle |
-| `topics/CLAUDE.md` | File responsibilities: topic-actions, topic list components. How topics flow from n8n webhook to UI |
-
-### overview (P2)
-
-| File | Content Requirements |
-|------|---------------------|
-| `overview/README.md` | Dashboard stats display, pipeline-stats component, data sources |
-| `overview/CLAUDE.md` | Standalone feature, no cross-feature deps |
-
-### settings (P2)
-
-| File | Content Requirements |
-|------|---------------------|
-| `settings/README.md` | Webhook URL configuration, settings sub-nav, form validation |
-| `settings/CLAUDE.md` | How settings connect to n8n webhooks |
+| `n8n/README.md` | — | EXISTS. Topic Discovery workflow, marked parked. Keep current. |
+| `n8n/workflow-explained.md` | — | EXISTS. Node-by-node walkthrough, marked parked. |
+| `n8n/n8n-guide.md` | — | EXISTS. Source rationale. |
 
 ## Laura Features (`apps/laura/src/features/`)
 
-### Reference: Use Social's `sidebar-layout/` as template
+All five features have both a `README.md` and a `CLAUDE.md`. Use any existing pair
+as the template for new features.
 
 | Feature | Priority | Content Requirements |
 |---------|----------|---------------------|
-| `gallery/README.md` + `CLAUDE.md` | P1 | Masonry grid, infinite scroll, favorites, photo preview, blurhash placeholders, gallery actions |
-| `games/README.md` + `CLAUDE.md` | P0 | Memory game (card matching, timer, scoring), Quiz game (multiple choice, images, CRUD), leaderboards, game hooks |
-| `upload/README.md` + `CLAUDE.md` | P1 | Drag-drop upload, HEIC conversion, S3/MinIO storage, file validation, upload preview |
-| `settings/README.md` + `CLAUDE.md` | P2 | Language switcher (IT/EN), appearance toggle, user info card, sign out |
-| `layout/README.md` + `CLAUDE.md` | P2 | TopBar, page container, desktop/mobile navigation, UserRoleProvider integration |
+| `gallery/README.md` + `CLAUDE.md` | P1 | EXISTS. Masonry grid, infinite scroll, favorites, photo preview, blurhash placeholders, gallery actions |
+| `games/README.md` + `CLAUDE.md` | P0 | EXISTS. Memory game (card matching, timer, scoring), Quiz game (multiple choice, images, CRUD), leaderboards, game hooks |
+| `upload/README.md` + `CLAUDE.md` | P1 | EXISTS. Drag-drop upload, HEIC conversion, S3/MinIO storage, file validation, upload preview |
+| `settings/README.md` + `CLAUDE.md` | P2 | EXISTS. Language switcher (IT/EN), appearance toggle, user info card, sign out |
+| `layout/README.md` + `CLAUDE.md` | P2 | EXISTS. TopBar, page container, desktop/mobile navigation, UserRoleProvider integration |
 
 ## Memory Files
 
-| File | Status | Notes |
-|------|--------|-------|
-| `MEMORY.md` | EXISTS | Index file — update when adding new memories |
-| `project_structure.md` | STALE | References old feature names — update to reflect admin/, publish/ |
-| `feedback_*.md` (6 files) | EXISTS | Stable preferences |
-| `reference_gh_account.md` | EXISTS | GitHub account |
-| `project_prompt_generation.md` | EXISTS | Prompt workflow |
-| `project_documentation.md` | MISSING | Add: where docs live, doc-gen standards, screenshot conventions |
+These live in the user's global Claude memory directory, not in this repo, so
+doc-gen cannot read or verify them. Statuses below are unverified from here.
+
+| File | Notes |
+|------|-------|
+| `MEMORY.md` | Index file — update when adding new memories |
+| `project_structure.md` | Assume stale: it described the removed social features. Should reflect Laura's `gallery`/`games`/`upload`/`settings`/`layout` |
+| `feedback_*.md` | Stable preferences |
+| `reference_gh_account.md` | GitHub account |
+| `project_prompt_generation.md` | Prompt workflow — was social-app oriented; re-check relevance |
+| `project_documentation.md` | Candidate: where docs live, doc-gen standards, screenshot conventions |
 
 ## Priority Legend
 
-- **P0**: Must have — root README, app READMEs (social + laura), database README, publish/games feature docs
-- **P1**: Should have — architecture guides, remaining package READMEs, gallery/upload/admin/topics feature docs
-- **P2**: Nice to have — simple feature docs (settings, layout, overview), deployment guide
+- **P0**: Must have — root README, `apps/laura/README.md`, database README, games feature docs
+- **P1**: Should have — architecture guides, remaining package READMEs, gallery/upload feature docs
+- **P2**: Nice to have — simple feature docs (settings, layout), deployment guide
 - **P3**: Low priority — config package README
