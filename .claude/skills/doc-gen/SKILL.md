@@ -13,7 +13,7 @@ Generate and maintain documentation for the AllOnFire monorepo. Read [references
 
 ## Prerequisites
 
-- Target app running for screenshot capture: Social on `:3100`, Laura on `:3200`
+- Target app running for screenshot capture: Laura on `:3200`
 - Playwright MCP tools available for browser automation
 - Read [references/doc-standards.md](references/doc-standards.md) for visual formatting rules
 - Read [references/doc-map.md](references/doc-map.md) for the full inventory of documentation targets
@@ -106,11 +106,6 @@ Save to `docs/screenshots/` (NOT `/screenshots/` which is gitignored).
 
 For each page: `browser_resize` → `browser_navigate` → **hide dev tools** (see snippet in doc-standards.md) → `browser_take_screenshot`.
 
-#### Social App (port 3100)
-
-Desktop (1440x900): dashboard, discover, generate, publish-compose, admin-users, admin-providers, settings.
-Mobile (390x844): mobile-dashboard, mobile-discover, mobile-generate, mobile-publish, mobile-admin, mobile-settings.
-
 #### Laura App (port 3200)
 
 Desktop (1440x900): laura-gallery, laura-upload, laura-games, laura-memory, laura-quiz, laura-settings.
@@ -140,7 +135,7 @@ Follow the structure in [references/doc-standards.md](references/doc-standards.m
 
 Use the template in [references/doc-standards.md](references/doc-standards.md) Section 8.
 
-Read the package's `src/index.ts` to discover the API surface. Read consuming files in `apps/social/` for usage examples.
+Read the package's `src/index.ts` to discover the API surface. Read consuming files in `apps/laura/` for usage examples.
 
 ### Phase 5: Feature Documentation (`scope: features`)
 
