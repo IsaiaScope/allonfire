@@ -89,7 +89,7 @@ import { checkAppAccess } from "@allonfire/auth/guard";
 import { auth } from "@/lib/auth";
 
 export default async function DashboardLayout({ children }) {
-  await checkAppAccess(auth, "social");
+  await checkAppAccess(auth, "laura");
   return <>{children}</>;
 }
 ```
