@@ -1,5 +1,14 @@
 # Topic Discovery Workflow — How It Works
 
+> **Status: parked.** This workflow is present but inactive. Phase 4 posts to
+> `/api/classify-topics`, an endpoint the deleted social app served and no
+> surviving app provides. The workflow is retained because its 57 nodes of
+> collection and ranking logic stay valuable if content automation returns.
+> Reactivating it requires repointing the classification call first.
+>
+> Note: the `Collect Social Items` node refers to social *media* sources
+> (Product Hunt, Reddit, YouTube) — not the deleted social *app*. It still exists.
+
 Visual map of every node in `workflows/topic-discovery.json`, what it does, and why.
 
 ---
@@ -249,12 +258,12 @@ This is layer 1 of 2 deduplication. Layer 2 happens at the database level — th
 | Node | Type | What it does |
 |------|------|-------------|
 | **Batch for Classify (groups of 50)** | Code | Groups items into batches of 50 for the classify API. Each batch is sent as a JSON array of topic objects |
-| **POST to Classify API** | HTTP Request | POST to `{{ $env.N8N_WEBHOOK_BASE_URL }}/api/classify-topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. The social app handles AI classification server-side (prompt, AI provider call, relevance ≥ 0.85 filtering). 30-second timeout per request |
+| **POST to Classify API** | HTTP Request | POST to `{{ $env.N8N_WEBHOOK_BASE_URL }}/api/classify-topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. The social app handles AI classification server-side (prompt, AI provider call, relevance ≥ 0.85 filtering). 30-second timeout per request **Dead** — no surviving app serves `/api/classify-topics`; this is why the workflow is parked. |
 | **Unpack Classified Topics** | Code | Unpacks the classify API responses. Each response contains a `classified` array of topics that passed the relevance threshold. Returns `[{ _empty: true }]` sentinel if a batch returned zero classified items |
 
 **Why batch by 50?** The classify API accepts up to 100 items per request. Batches of 50 balance throughput with reliability — smaller batches mean fewer items lost if a single request fails.
 
-**Why server-side classification?** Classification logic (AI prompt, relevance threshold, category validation) lives in the social app's `/api/classify-topics` endpoint. The AI provider API key is stored encrypted in the database and retrieved at runtime via `getActiveProviderClient()` — n8n never touches AI credentials. This means n8n only needs 2 env vars and AI providers can be hot-swapped via the admin panel without touching n8n config.
+**Why server-side classification?** Classification logic (AI prompt, relevance threshold, category validation) lives in the social app's `/api/classify-topics` endpoint. The AI provider API key is stored encrypted in the database and retrieved at runtime via `getActiveProviderClient()` — n8n never touches AI credentials. This means n8n only needs 2 env vars and AI providers can be hot-swapped via the admin panel without touching n8n config. **This logic lived in the deleted social app; the endpoint no longer exists.**
 
 ---
 
@@ -274,7 +283,7 @@ This is layer 1 of 2 deduplication. Layer 2 happens at the database level — th
 | Node | Type | What it does |
 |------|------|-------------|
 | **Build Webhook Payload (groups of 20)** | Code | Groups the reranked topics into batches of 20 for the webhook payload. The webhook expects `{ topics: [...] }`. With 5-10 topics from the reranker, this is typically a single batch |
-| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.N8N_WEBHOOK_BASE_URL }}/api/webhooks/topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows |
+| **POST to AllOnFire Webhook** | HTTP Request | `POST {{ $env.N8N_WEBHOOK_BASE_URL }}/api/webhooks/topics` with `Bearer {{ $env.N8N_API_KEY }}` auth. 15-second timeout. The social app's endpoint validates the key, runs Zod schema validation, deduplicates against existing database records, and creates new Topic rows **Dead** — the endpoint was deleted with the social app. |
 
 **Webhook response:**
 ```json
@@ -321,7 +330,7 @@ Handles **expected operational failures** — a source API is down, a batch time
 | **Classification fallback** | If the classify API returns an error, the batch is skipped (continueOnFail) — other batches still deliver |
 | **Relevance filter** | The classify API filters items below the relevance threshold server-side — only high-quality items are returned |
 | **Database dedup** | `ingestTopics()` checks `sourceUrl` uniqueness — same URL won't create duplicate Topic rows across runs |
-| **Webhook logging** | Every POST is logged to the `WebhookLog` table with status, payload size, and response |
+| **Webhook logging** | Every POST was logged to the `WebhookLog` table with status, payload size, and response. **The `WebhookLog` model was deleted with the social app — delivery status is now only in the n8n execution log.** |
 | **Execution Summary** | Aggregates rerank results (`kept`/`deleted`/`total`) and routes through a Check Errors IF node |
 | **Check Errors → Telegram** | IF node evaluates success conditions and routes to either Telegram Success or Telegram Failure notification with detailed HTML messages |
 
@@ -410,8 +419,8 @@ Set these in the n8n service environment (Dokploy panel):
 
 | Variable | Used by | Purpose |
 |----------|---------|---------|
-| `N8N_WEBHOOK_BASE_URL` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Base URL of the social app (e.g., `https://social.allonfire.com`) |
-| `N8N_API_KEY` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Matches the `N8N_API_KEY` env var in the social app |
+| `N8N_WEBHOOK_BASE_URL` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Base URL of the social app (e.g., `https://social.allonfire.com`) **Dead** — the social app was deleted. |
+| `N8N_API_KEY` | POST to Classify API, POST to Rerank API, POST to AllOnFire Webhook | Matches the `N8N_API_KEY` env var in the social app **Dead on the app side** — the key now only matters for the notification webhook. |
 
 ---
 
@@ -445,8 +454,8 @@ Set these in the n8n service environment (Dokploy panel):
 ### Prerequisites
 
 - Docker running
-- The AllOnFire social app running locally on port 3100 (`pnpm dev --filter @allonfire/social`)
-- `N8N_API_KEY` set in the social app's `.env` file
+- ~~The AllOnFire social app running locally on port 3100 (`pnpm dev --filter @allonfire/social`)~~ — **no longer possible; the social app was deleted**
+- ~~`N8N_API_KEY` set in the social app's `.env` file~~ — **set it in the n8n container's own environment instead**
 
 ### 1. Start n8n locally
 
@@ -455,7 +464,7 @@ cd docker
 docker compose -f docker-compose.dev.yml up n8n -d
 ```
 
-This starts n8n at `http://localhost:5678` backed by the same local PostgreSQL used by the social app.
+This starts n8n at `http://localhost:5678` backed by the same local PostgreSQL used by the social app. **The social app was deleted; only the n8n schema remains in that database.**
 
 On first visit, n8n will ask you to create an owner account — use any email/password for local dev.
 
@@ -468,7 +477,7 @@ On first visit, n8n will ask you to create an owner account — use any email/pa
 
 ### 3. Set the N8N_API_KEY
 
-The local n8n defaults to `dev-api-key` for `N8N_API_KEY`. Make sure your social app's `.env` has the same value:
+The local n8n defaults to `dev-api-key` for `N8N_API_KEY`. Make sure your social app's `.env` has the same value: **The social app was deleted — set this only on the n8n side.**
 
 ```
 N8N_API_KEY=dev-api-key
@@ -506,20 +515,20 @@ Click **Test Workflow** in the n8n UI. Watch the execution — each node shows i
      │
      ▼
   Your Mac (:3100)
-  └── Next.js social app
+  └── Next.js social app (deleted)
 ```
 
 - **n8n -> PostgreSQL**: Uses Docker's internal DNS (`postgres` hostname resolves to the postgres container)
-- **n8n -> Social app**: Uses `host.docker.internal:3100` — Docker's special DNS that resolves to your Mac's localhost, where the Next.js dev server runs
+- **n8n -> Social app**: Used `host.docker.internal:3100` — Docker's special DNS that resolves to your Mac's localhost. **The social app was deleted; nothing listens on port 3100.**
 - **Browser -> n8n**: `localhost:5678` via port mapping
 
 ### Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| n8n can't reach the social app | Make sure the social app is running on port 3100. On Linux, `host.docker.internal` may not work — use `172.17.0.1` instead |
-| Classification returns errors | Check that the social app is running and `N8N_API_KEY` matches. Click the "POST to Classify API" node to see the raw response |
-| Webhook returns 401 | `N8N_API_KEY` mismatch between n8n env and social app `.env` |
-| Webhook returns 500 "API key not configured" | Add `N8N_API_KEY=dev-api-key` to `apps/social/.env` |
+| n8n can't reach the social app | No longer applicable — the social app was deleted. Phase 4 and the topic webhook have no target until the classification call is repointed |
+| Classification returns errors | Expected while parked: `/api/classify-topics` has no server. Click the "POST to Classify API" node to see the raw connection failure |
+| Webhook returns 401 | `N8N_API_KEY` mismatch. The app side is gone; the key now only matters for the notification webhook |
+| Webhook returns 500 "API key not configured" | Set `N8N_API_KEY` in the n8n container's own environment (Dokploy -> n8n service -> Environment). `apps/social/.env` no longer exists |
 | Reddit returns 429 | Reddit rate-limits unauthenticated requests. The workflow runs once daily so this is rare — if testing repeatedly, wait 60 seconds between runs |
 | n8n won't start | Check `docker logs allonfire-n8n-1` — usually a PostgreSQL connection issue. Make sure postgres is healthy first |
