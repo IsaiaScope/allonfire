@@ -21,7 +21,7 @@ config/
 Each app or package extends the appropriate preset:
 
 ```json
-// Next.js apps (apps/social, apps/laura)
+// Next.js apps (apps/laura)
 {
   "extends": "@allonfire/config/typescript/nextjs.json"
 }

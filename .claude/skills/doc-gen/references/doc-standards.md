@@ -99,14 +99,17 @@ From app README at `apps/{app}/`:
 
 ### Laura-Specific Conventions
 
-- **Screenshot naming**: `laura-{page}.png` / `mobile-laura-{page}.png` (prefixed to avoid Social collisions)
-- **Port**: Laura runs on `:3200` (Social on `:3100`)
+- **Screenshot naming**: `laura-{page}.png` / `mobile-laura-{page}.png`. The
+  `laura-` prefix is retained deliberately: unprefixed screenshots belonged to
+  the removed social app, so the prefix marks an asset as live. An unprefixed
+  PNG in `docs/screenshots/` is legacy and should be deleted, not reused.
+- **Port**: Laura runs on `:3200`
 - **Animations**: Wait 2 seconds after navigation for Framer Motion animations to settle
 - **i18n**: Laura uses next-intl with `it` (Italian) as default locale. Screenshots use `/en` routes for English.
 
 ### Capture Process
 
-1. Ensure app is running: `pnpm dev` (port 3100)
+1. Ensure app is running: `pnpm dev` (port 3200)
 2. **Hide Next.js dev tools** before every screenshot:
    ```js
    // Run via browser_evaluate after each page navigation
@@ -138,9 +141,9 @@ From app README at `apps/{app}/`:
 ### File Naming
 
 ```
-docs/screenshots/{page-name}.png          — Default state
-docs/screenshots/{page-name}-{state}.png  — Specific state
-docs/screenshots/mobile-{page-name}.png   — Mobile viewport
+docs/screenshots/laura-{page-name}.png          — Default state
+docs/screenshots/laura-{page-name}-{state}.png  — Specific state
+docs/screenshots/mobile-laura-{page-name}.png   — Mobile viewport
 ```
 
 ## 4. Badges
@@ -196,7 +199,7 @@ Each row in packages/infrastructure tables gets an emoji:
 
 ```markdown
 | 🗄️ | **@allonfire/database** | ... |
-| 🤖 | **@allonfire/content-generator** | ... |
+| 🎨 | **@allonfire/ui** | ... |
 ```
 
 ## 6. Diagram Standards
@@ -212,7 +215,7 @@ Use plain `──>`, `+--`, `|` only.
 ```
 allonfire/
   apps/
-    social/               Next.js dashboard app
+    laura/                Next.js photo gallery + games app
   packages/
     database/             Prisma ORM + services
 ```

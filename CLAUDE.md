@@ -1,7 +1,5 @@
 # AllOnFire — Claude Code Rules
 
-Read AGENTS.md first for universal conventions. This file adds Claude Code-specific guidance.
-
 ## Server-Side Rendering First
 
 Default to Server Components. Only add `"use client"` when the component actually needs:
