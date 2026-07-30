@@ -127,7 +127,9 @@ Single PR on `chore/social-cleanup`.
 
 **Rewrite, do not delete**, the two n8n documents. Two workflows are genuinely still running on the VPS, so these files retain a live subject; they need their scope narrowed to `Notifications` and `Backup Notification` and their social sections removed. Deleting them would trade one wrong document for zero documents.
 
-**Rewrite examples** in the four package READMEs to reference `laura` instead of `apps/social`. The examples illustrate real APIs that still exist — only the subject app is stale.
+**Rewrite examples** in `packages/auth/README.md`, `packages/ui/README.md`, and `packages/config/README.md` to reference `laura` instead of `apps/social`. These illustrate real APIs that still exist — only the subject app is stale, so change the subject and nothing else.
+
+**Rewrite `packages/database/README.md` wholesale.** This is larger than an example fix: 7 of its 12 API-reference sections document services that no longer exist (`Topic`, `Prompt`, `Provider`, `Settings`, `Social Account`, `Stats`, `Webhook Log`), and its `Key Models` table lists `Topic`, `Prompt`, `Post`, `SocialAccount`, `AiProvider`, `Settings`. The package's real surface is five services — `favorite`, `game-score`, `photo`, `quiz`, `user` — and nine models plus the `Role` and `GameType` enums. Editing around a document that is roughly 60% wrong leaves a shape that still implies the old system.
 
 **Strip entries** from the two `doc-gen` reference files and from `.claude/settings.local.json`.
 
@@ -137,7 +139,9 @@ Single PR on `chore/social-cleanup`.
 
 **Delete one sentence** from `CLAUDE.md:3` — the `AGENTS.md` pointer. Do not recreate `AGENTS.md`; writing a universal-conventions document is new work and belongs in its own spec.
 
-**Record the screenshot naming convention** in `CLAUDE.md`, where repo conventions already live: assets prefixed `laura-` belong to Laura, unprefixed assets are legacy social. This is the convention whose absence made `settings.png` look live. It goes in `CLAUDE.md` rather than a new `CONTEXT.md` — one naming rule does not justify a new top-level document, and `CLAUDE.md` is where a reader would look.
+**Correct the screenshot naming convention where it already lives.** `doc-standards.md:102` already records the rule — "`laura-{page}.png` / `mobile-laura-{page}.png` (prefixed to avoid Social collisions)" — so it was documented, just buried in a skill reference, and its stated rationale is now obsolete. Keep the rule, replace the rationale: the `laura-` prefix now marks an asset as live, and an unprefixed PNG in `docs/screenshots/` is legacy social residue to be deleted rather than reused. Fix it there rather than duplicating it into `CLAUDE.md` or a new `CONTEXT.md` — one home per convention.
+
+The generic template at `doc-standards.md:141-143` still shows unprefixed `docs/screenshots/{page-name}.png` and must be updated to the prefixed form, or it contradicts the rule twenty lines above it.
 
 **Leave alone**: `docs/superpowers/specs/2026-04-*`. Those are dated historical specs and were accurate when written. Rewriting history in a spec archive destroys its value.
 
