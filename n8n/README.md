@@ -112,7 +112,7 @@ The AI provider API key is managed through the admin panel at `/admin/providers`
 
 | Property | Value |
 |----------|-------|
-| Image | `docker.n8n.io/n8nio/n8n:2.10.2` |
+| Image | `docker.n8n.io/n8nio/n8n:2.26.3` |
 | Domain | `n8n.isaiariva.com` (HTTPS via Let's Encrypt) |
 | Port | 5678 |
 | Database | PostgreSQL on shared `dokploy-postgres` |

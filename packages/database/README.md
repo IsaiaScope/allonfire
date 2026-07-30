@@ -22,9 +22,6 @@
   |     |-- game-score.service    Game score submission, leaderboards, and stats
   |     |-- photo.service         Photo CRUD, pagination, and random selection
   |     |-- quiz.service          Quiz question/answer CRUD and random selection
-  |
-  |-- utils/
-        |-- encryption            AES-256-GCM helpers (not re-exported from the package root)
 ```
 
 ## API Reference
@@ -124,9 +121,6 @@ packages/database/
       game-score.service.ts Game score submission and leaderboards
       photo.service.ts      Photo CRUD, pagination, random selection
       quiz.service.ts       Quiz question/answer CRUD
-    utils/
-      encryption.ts         AES-256-GCM encrypt/decrypt
-      encryption.test.ts    Encryption round-trip tests
 ```
 
 ## Usage
