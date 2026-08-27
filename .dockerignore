@@ -13,5 +13,4 @@ node_modules
 docker
 dist
 coverage
-n8n/
 screenshots/

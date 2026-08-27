@@ -69,7 +69,6 @@ Shared libraries consumed by all apps in the monorepo.
 <p>
   <img src="https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/n8n-2.10-EA4B71?logo=n8n&logoColor=white" alt="n8n" />
   <img src="https://img.shields.io/badge/GitHub_Actions-CI-2088FF?logo=githubactions&logoColor=white" alt="GitHub Actions" />
   <img src="https://img.shields.io/badge/Husky-hooks-000?logo=git&logoColor=white" alt="Husky" />
 </p>
@@ -89,7 +88,6 @@ allonfire/
     utils/                Utility functions
     config/               TypeScript config
   docker/                 Docker Compose + Dockerfile
-  n8n/                    Workflow automation
   docs/                   Project documentation
   .github/                CI/CD workflows
 ```
@@ -104,7 +102,6 @@ Production deployment stack powering all apps and services.
 | 🚀 | **Orchestrator** | Dokploy |
 | 🐘 | **Database** | PostgreSQL 16 |
 | 🔒 | **Proxy** | Traefik + Let's Encrypt SSL |
-| ⚡ | **Automation** | n8n (self-hosted) |
 | 🔄 | **CI** | GitHub Actions |
 
 ---
