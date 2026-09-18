@@ -1,0 +1,206 @@
+import type { Context } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { getReasonPhrase } from "http-status-codes";
+import {
+  CONTENT_TYPE,
+  type ErrorStatus,
+  HTTP_HEADER,
+  HTTP_STATUS,
+  type HttpStatus,
+} from "../../../shared/constants/http";
+import {
+  BODY_LIMIT_BYTES,
+  MS_PER_SECOND,
+  REQUEST_TIMEOUT_MS,
+} from "../../../shared/constants/limits";
+import {
+  CONTEXT_VAR,
+  LOG_MESSAGE,
+  SEPARATOR,
+} from "../../../shared/constants/runtime";
+import type { Locale } from "../../i18n/constants/locales";
+import { localeOf } from "../../i18n/middleware/locale-resolver";
+import { translate } from "../../i18n/translate";
+import { logger } from "../../logger/logger";
+import {
+  ERROR_CODE,
+  ERROR_TYPE,
+  type ErrorCode,
+  STATUS_TO_ERROR_CODE,
+  UNKNOWN_REQUEST_ID,
+} from "../constants/error-codes";
+import type { ErrorDetail, ProblemDetails } from "../constants/problem-details";
+
+// Re-exported so callers import the error contract from the middleware that
+// produces it, without reaching into constants/ themselves.
+export type { ErrorCode } from "../constants/error-codes";
+export type {
+  ErrorDetail,
+  ProblemDetails,
+} from "../constants/problem-details";
+
+const isErrorStatus = (status: number): status is ErrorStatus =>
+  status in STATUS_TO_ERROR_CODE;
+
+export function codeForStatus(status: number): ErrorCode {
+  return isErrorStatus(status)
+    ? STATUS_TO_ERROR_CODE[status]
+    : ERROR_CODE.INTERNAL_ERROR;
+}
+
+/**
+ * Renders a code with the values this layer can supply.
+ *
+ * `onError` sees whatever status Hono's middleware threw, so it has to cover
+ * every code — including the parameterized ones. The values come from the same
+ * constants the middleware was configured with, so the message cannot claim a
+ * limit the server does not enforce. The switch is exhaustive: a new code with
+ * values fails to compile here until it is handled.
+ */
+export function fallbackMessage(code: ErrorCode, locale: Locale): string {
+  switch (code) {
+    case ERROR_CODE.VALIDATION_FAILED:
+      return translate(code, locale, { count: 0 });
+    case ERROR_CODE.RATE_LIMITED:
+      return translate(code, locale, { seconds: 0 });
+    case ERROR_CODE.TIMEOUT:
+      return translate(code, locale, {
+        seconds: REQUEST_TIMEOUT_MS / MS_PER_SECOND,
+      });
+    case ERROR_CODE.PAYLOAD_TOO_LARGE:
+      return translate(code, locale, { limit: BODY_LIMIT_BYTES });
+    default:
+      return translate(code, locale);
+  }
+}
+
+function requestIdOf(context: Context): string {
+  return context.get(CONTEXT_VAR.REQUEST_ID) ?? UNKNOWN_REQUEST_ID;
+}
+
+/**
+ * Builds an RFC 9457 problem document.
+ *
+ * `title` is the status's registered reason phrase rather than a string we
+ * maintain: the RFC wants it invariant across occurrences, which is exactly
+ * what a reason phrase is. Everything that varies — and everything localised —
+ * is `detail`.
+ */
+export function problem(
+  context: Context,
+  code: ErrorCode,
+  status: ErrorStatus,
+  detail: string,
+  errors?: ErrorDetail[]
+): ProblemDetails {
+  return {
+    type: ERROR_TYPE[code],
+    title: getReasonPhrase(status),
+    status,
+    detail,
+    instance: context.req.path,
+    requestId: requestIdOf(context),
+    code,
+    ...(errors ? { errors } : {}),
+  };
+}
+
+/** RFC 9457 documents carry their own media type, not `application/json`. */
+const PROBLEM_HEADERS = {
+  [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.PROBLEM_JSON,
+} as const;
+
+export function onError(err: Error, context: Context): Response {
+  const requestId = requestIdOf(context);
+
+  if (err instanceof HTTPException) {
+    // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than
+    // this API emits. `codeForStatus` narrows it; the cast only re-states for
+    // `context.json` what `isErrorStatus` already proved.
+    const status = err.status as HttpStatus;
+    const code = codeForStatus(status);
+    // An explicit message on the exception is caller-supplied and already in
+    // whatever language the caller chose, so it wins. Hono's own middleware
+    // throws with an empty message, which is where the catalogue takes over.
+    const detail = err.message || fallbackMessage(code, localeOf(context));
+    return context.json(
+      problem(context, code, status as ErrorStatus, detail),
+      status,
+      PROBLEM_HEADERS
+    );
+  }
+
+  logger.error({ err, requestId }, LOG_MESSAGE.UNHANDLED_ERROR);
+
+  return context.json(
+    problem(
+      context,
+      ERROR_CODE.INTERNAL_ERROR,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      translate(ERROR_CODE.INTERNAL_ERROR, localeOf(context))
+    ),
+    HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    PROBLEM_HEADERS
+  );
+}
+
+export function notFound(context: Context): Response {
+  return context.json(
+    problem(
+      context,
+      ERROR_CODE.NOT_FOUND,
+      HTTP_STATUS.NOT_FOUND,
+      translate(ERROR_CODE.NOT_FOUND, localeOf(context))
+    ),
+    HTTP_STATUS.NOT_FOUND,
+    PROBLEM_HEADERS
+  );
+}
+
+/**
+ * Matches `Hook` from `@hono/standard-validator`: on failure `error` is the
+ * Standard Schema issue array itself, not a wrapper object.
+ */
+type StandardIssue = {
+  readonly message: string;
+  readonly path?: readonly (PropertyKey | { readonly key: PropertyKey })[];
+};
+
+type ValidationResult =
+  | { success: true }
+  | { success: false; error?: readonly StandardIssue[] };
+
+function issuePath(issue: StandardIssue): string {
+  return (issue.path ?? [])
+    .map((segment) =>
+      typeof segment === "object" && segment !== null && "key" in segment
+        ? String(segment.key)
+        : String(segment)
+    )
+    .join(SEPARATOR.PATH);
+}
+
+export function validationHook(result: ValidationResult, context: Context) {
+  if (result.success) {
+    return;
+  }
+
+  const details: ErrorDetail[] = (result.error ?? []).map((issue) => ({
+    path: issuePath(issue),
+    message: issue.message,
+  }));
+
+  return context.json(
+    problem(
+      context,
+      ERROR_CODE.VALIDATION_FAILED,
+      HTTP_STATUS.BAD_REQUEST,
+      translate(ERROR_CODE.VALIDATION_FAILED, localeOf(context), {
+        count: details.length,
+      }),
+      details
+    ),
+    HTTP_STATUS.BAD_REQUEST,
+    PROBLEM_HEADERS
+  );
+}

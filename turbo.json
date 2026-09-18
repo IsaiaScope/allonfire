@@ -5,13 +5,17 @@
     "DATABASE_URL",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
-    "N8N_API_KEY",
     "MINIO_ENDPOINT",
     "MINIO_ACCESS_KEY",
     "MINIO_SECRET_KEY",
-    "MINIO_BUCKET"
+    "MINIO_BUCKET",
+    "REDIS_URL",
+    "PORT",
+    "LOG_LEVEL",
+    "CORS_ORIGINS",
+    "TRUSTED_PROXY_HOPS",
+    "ENABLE_DOCS"
   ],
-
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
@@ -30,6 +34,10 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "i18n:check": {
+      "inputs": ["src/i18n/messages/**"],
+      "outputs": []
+    },
     "test": {
       "dependsOn": ["^test"],
       "inputs": [
@@ -41,12 +49,7 @@
         "../../packages/database/prisma/schema.prisma"
       ],
       "outputs": ["coverage/**"],
-      "env": [
-        "DATABASE_URL",
-        "BETTER_AUTH_SECRET",
-        "N8N_API_KEY",
-        "ENCRYPTION_KEY"
-      ]
+      "env": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
     },
     "db:generate": {
       "cache": false
