@@ -1,7 +1,7 @@
 {
   "name": "allonfire",
   "description": "Turborepo monorepo powering an interactive Laura site with photos and games",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "license": "MIT",
   "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
