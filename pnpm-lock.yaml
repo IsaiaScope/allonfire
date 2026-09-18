@@ -96,9 +96,6 @@ importers:
       '@allonfire/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@formatjs/icu-messageformat-parser':
-        specifier: ^3.5.17
-        version: 3.5.17
       '@lingual/i18n-check':
         specifier: ^0.9.5
         version: 0.9.5
