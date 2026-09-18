@@ -1,0 +1,11 @@
+{
+  "BAD_REQUEST": "Richiesta non valida",
+  "VALIDATION_FAILED": "{count, plural, one {# campo non valido} other {# campi non validi}}",
+  "UNAUTHORIZED": "Autenticazione richiesta",
+  "FORBIDDEN": "Non consentito",
+  "NOT_FOUND": "Non trovato",
+  "RATE_LIMITED": "Troppe richieste. Riprova tra {seconds, plural, one {# secondo} other {# secondi}}",
+  "TIMEOUT": "Richiesta scaduta dopo {seconds, number} s",
+  "PAYLOAD_TOO_LARGE": "Contenuto troppo grande. Massimo {limit, number} byte",
+  "INTERNAL_ERROR": "Errore interno del server"
+}

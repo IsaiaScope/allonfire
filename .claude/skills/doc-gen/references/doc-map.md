@@ -67,14 +67,6 @@ Every screenshot uses the `laura-` / `mobile-laura-` prefix. An unprefixed PNG i
 | `packages/utils/README.md` | P2 | EXISTS. Utility functions: objectKeys, objectEntries, formatErrorMessage |
 | `packages/config/README.md` | P3 | EXISTS. TypeScript config presets |
 
-## n8n
-
-| File | Priority | Notes |
-|------|----------|-------|
-| `n8n/README.md` | — | EXISTS. Topic Discovery workflow, marked parked. Keep current. |
-| `n8n/workflow-explained.md` | — | EXISTS. Node-by-node walkthrough, marked parked. |
-| `n8n/n8n-guide.md` | — | EXISTS. Source rationale. |
-
 ## Laura Features (`apps/laura/src/features/`)
 
 All five features have both a `README.md` and a `CLAUDE.md`. Use any existing pair

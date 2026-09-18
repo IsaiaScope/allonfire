@@ -165,7 +165,7 @@ https://img.shields.io/badge/{label}-{value}-{color}?logo={logo}&logoColor=white
 | **App README** | Same as app section in root |
 | **Feature README** | Feature-specific libraries: dnd-kit, TanStack Query, Framer Motion, etc. |
 | **Package README** | Package-specific tech: Prisma, Sharp, Twitter API, etc. |
-| **Project Structure section** | Infra tech: Docker, PostgreSQL, n8n, GitHub Actions, Husky |
+| **Project Structure section** | Infra tech: Docker, PostgreSQL, Redis, GitHub Actions, Husky |
 
 ### Always use HTML `<img>`, never markdown `![]()`
 
@@ -252,7 +252,6 @@ The root README is a **generic monorepo overview** that grows over time.
 ### What NOT to include
 
 - Quick Start / Scripts tables (put in app README)
-- n8n-specific sections (put in n8n/README.md)
 - Tagline under the title
 - Detailed route maps (put in app README)
 - Sensitive details (machine types, IPs, SSH info)
