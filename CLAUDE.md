@@ -27,6 +27,21 @@ Always use Context7 MCP tools when generating code involving:
 - Next.js, React, Prisma, BetterAuth, shadcn/ui, TanStack Query, Zustand
 - Resolve library ID first, then query docs
 
+## Object Helpers (`@allonfire/utils/object`)
+
+Never call `Object.keys` / `values` / `entries` / `fromEntries` directly. Use
+`objectKeys`, `objectValues`, `objectEntries`, `objectFromEntries` — the
+standard versions are typed loosely (a value may carry properties its type does
+not declare) and each call site was ending in an `as` to recover the literal
+type. `objectFromEntries` is the one that matters: `Object.fromEntries` returns
+`{ [k: string]: V }`, so `as Record<Union, V>` at the call site is unchecked and
+compiles against entries covering none of the union.
+
+The type-level counterparts live in the same file and mean the same thing one
+level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
+`readonly [...] as const` tuple (`ValueOf` on a tuple would also pick up
+`length`, `map` and the rest of the array prototype).
+
 ## Database Schema Quick Reference
 
 Schema: `packages/database/prisma/schema.prisma`
@@ -96,9 +111,110 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 - `/games/quiz/edit/new` — Create new quiz question
 - `/games/quiz/edit/[id]` — Edit existing quiz question
 
+## API App Structure (`apps/api/src/`)
+
+The HTTP backend serving every app. Hono on Node, port 3300. No auth and no
+domain endpoints yet — see `apps/api/README.md`.
+
+```
+apps/api/
+└── src/
+    ├── index.ts          boot: serve(), signals, shutdown
+    ├── app.ts            createApp(deps) — middleware chain, exports AppType
+    ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
+    ├── features/         one folder per topic, each owning constants/,
+    │   │                 middleware/ and tests/ where it needs them
+    │   ├── docs/         constants/{openapi,routes}, docs
+    │   ├── environment/  environment — zod env schema, validated at import
+    │   ├── errors/       constants/{error-codes,problem-details},
+    │   │                 middleware/error-handler
+    │   ├── health/       constants/{routes,statuses}, route
+    │   ├── i18n/         constants/locales, middleware/locale-resolver,
+    │   │                 translate, translation-values, translations/*.json
+    │   ├── logger/       logger
+    │   ├── rate-limit/   constants/limits, middleware/rate-limiter
+    │   └── redis/        redis
+    └── shared/           anything more than one feature reads
+        └── constants/    http, limits, routes, runtime — no logic
+```
+
+A constant belongs in `features/<topic>/constants/` unless more than one
+feature reads it. `HTTP_STATUS`, `CONTEXT_VAR` and the mount prefixes are
+shared, so they stay in `shared/constants/`; `ERROR_CODE`, `LOCALE`,
+`INFRA_ROUTE` and the rate-limit tunables belong to the feature that owns them.
+Tests live in the feature's `tests/`; only `app`, `client` and `shutdown` keep
+root-level tests, because they exercise the whole chain.
+
+**Folder names are plural when the folder holds several things of one kind**
+(`features/`, `constants/`, `tests/`, `translations/`) and singular when it
+names one concept (`i18n/`, `health/`, `rate-limit/`). `middleware/` is the
+exception: it is a mass noun — Hono, Express and Koa all use it for one or
+many, and `middlewares/` reads wrong.
+
+- **Errors are RFC 9457 problem documents** (`application/problem+json`):
+  `type` (stable `/errors/<kebab-code>`, derived from `ERROR_CODE`), `title`
+  (the status's reason phrase, invariant per the RFC), `status`, `detail` (the
+  localised message — the only member i18n touches), `instance` (the path),
+  plus `requestId`, `code` and `errors` as extension members. Build them with
+  `problem(c, code, status, detail, errors?)` in `middleware/errors.ts`; never
+  hand-assemble one.
+- **`HTTP_STATUS` stays numeric literals**, not `StatusCodes` from
+  `http-status-codes`. An enum member is its own type, not `404`, which breaks
+  `ERROR_STATUS` as a key of Hono's response map and collapses every error arm
+  of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
+- **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
+  client types silently collapse. Guarded by `src/client.test-d.ts`.
+- **Domain routes mount under `/v1`**; `/health` and `/ready` stay unversioned.
+- **`createApp(deps)` takes its dependencies** (rate-limit store, health
+  checkers) so tests never open a socket.
+- **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`. Full list in
+  `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
+  `apps/api/vitest.setup.ts`.
+- **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
+  (reserved). Eviction is `volatile-lru`; never TTL a session key.
+- **Locales and the catalogue live in `constants/i18n.ts`** — one file to
+  maintain. `LOCALE` is the source; `Locale`, `SUPPORTED_LOCALES` and
+  `DEFAULT_LOCALE` derive from it, `CATALOGUE` uses computed `[LOCALE.X]` keys
+  so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
+  locale has no messages. `Translations` is `typeof EN`, derived rather than
+  `Record<MessageKey, string>`, so a target locale missing a key fails too.
+- **The catalogue is not an error catalogue.** `TranslationKey` is
+  `keyof typeof en.json`, so any localised string belongs there — a subject
+  line, a notification body, a PDF heading. Errors are simply the keys that
+  exist today. The dependency runs errors -> messages: `ERROR_CODE` carries
+  `satisfies Record<string, TranslationKey>`, so a code without a message fails at
+  that declaration.
+- **Translations are JSON** (`src/features/i18n/translations/*.json`) so a translation platform
+  can read them. One file per *language* — `en.json` serves `en-US` and
+  `en-GB`.
+- **`src/features/i18n/translation-values.ts` is hand-written**, one line per message key,
+  saying what that message interpolates. Keep it in step with the ICU strings by
+  hand — nothing checks it. It is not optional: omit a value and
+  `IntlMessageFormat` throws into `translate`'s catch, serving the user the raw
+  ICU source in the wrong language. Add a generator if the list outgrows eyes.
+- **`pnpm i18n:check` runs in CI** — `@lingual/i18n-check` compares every locale
+  against `en`: missing keys, and ICU arguments a translation dropped, which
+  render without throwing so nothing else catches them. Known gap: a leftover
+  key present in a target locale but not in `en` is not reported. That is dead
+  weight, not wrong output.
+
 ## Deployment
 
 - VPS: Hetzner CAX11 at 188.245.174.30 (ssh main-vps)
 - Orchestrator: Dokploy
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `IsaiaScope/allonfire`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, label strings unchanged. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

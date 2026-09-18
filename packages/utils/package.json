@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    "./object": "./src/object.ts",
+    "./error": "./src/error.ts",
     "./security-headers": "./src/security-headers.ts"
   },
   "devDependencies": {

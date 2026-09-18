@@ -16,7 +16,7 @@ import {
   processPhoto,
   uploadFile,
 } from "@allonfire/storage";
-import { formatErrorMessage } from "@allonfire/utils";
+import { formatErrorMessage } from "@allonfire/utils/error";
 import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
