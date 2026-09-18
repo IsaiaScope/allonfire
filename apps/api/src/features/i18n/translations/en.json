@@ -1,0 +1,11 @@
+{
+  "BAD_REQUEST": "Bad request",
+  "VALIDATION_FAILED": "{count, plural, one {# field failed validation} other {# fields failed validation}}",
+  "UNAUTHORIZED": "Authentication required",
+  "FORBIDDEN": "Not allowed",
+  "NOT_FOUND": "Not found",
+  "RATE_LIMITED": "Too many requests. Retry in {seconds, plural, one {# second} other {# seconds}}",
+  "TIMEOUT": "Request timed out after {seconds, number} s",
+  "PAYLOAD_TOO_LARGE": "Payload too large. Maximum {limit, number} bytes",
+  "INTERNAL_ERROR": "Internal server error"
+}

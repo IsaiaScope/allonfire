@@ -19,6 +19,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    container_name: allonfire-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory-policy volatile-lru
+      --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   adminer:
     container_name: allonfire-adminer
     image: adminer

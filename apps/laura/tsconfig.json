@@ -10,7 +10,8 @@
       "@allonfire/database/*": ["../../packages/database/src/*"],
       "@allonfire/storage": ["../../packages/storage/src/index.ts"],
       "@allonfire/storage/*": ["../../packages/storage/src/*"],
-      "@allonfire/auth/*": ["../../packages/auth/src/*"]
+      "@allonfire/auth/*": ["../../packages/auth/src/*"],
+      "@allonfire/utils/*": ["../../packages/utils/src/*"]
     },
     "allowJs": true
   },
