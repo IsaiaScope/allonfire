@@ -7,8 +7,8 @@ import { HTTP_STATUS } from "../../../shared/constants/http";
  * and `readyBodySchema` below are the response shapes the routes must satisfy.
  */
 export const READY_STATUS = {
-  OK: "ok",
   DEGRADED: "degraded",
+  OK: "ok",
   UNAVAILABLE: "unavailable",
 } as const;
 
@@ -25,16 +25,16 @@ export type CheckStatus = z.infer<typeof checkStatusSchema>;
 
 export const healthBodySchema = z.object({
   status: z.literal(READY_STATUS.OK),
-  version: z.string(),
   uptime: z.number(),
+  version: z.string(),
 });
 
 export const readyBodySchema = z.object({
-  status: readyStatusSchema,
   checks: z.object({
     database: checkStatusSchema,
     redis: checkStatusSchema,
   }),
+  status: readyStatusSchema,
 });
 
 export type HealthBody = z.infer<typeof healthBodySchema>;
@@ -42,17 +42,17 @@ export type ReadyBody = z.infer<typeof readyBodySchema>;
 
 /** Postgres is required; Redis failing open must not pull a healthy container. */
 export const READY_STATUS_CODE = {
-  READY: HTTP_STATUS.OK,
   NOT_READY: HTTP_STATUS.SERVICE_UNAVAILABLE,
+  READY: HTTP_STATUS.OK,
 } as const;
 
 export const PROBE_DESCRIPTION = {
-  HEALTH_SUMMARY: "Liveness probe",
-  HEALTH_DESCRIPTION: "Touches no dependencies. Reports the running build.",
   HEALTH_200: "Process is alive",
-  READY_SUMMARY: "Readiness probe",
-  READY_DESCRIPTION:
-    "Pings Postgres and Redis. 503 only when Postgres is unreachable.",
+  HEALTH_DESCRIPTION: "Touches no dependencies. Reports the running build.",
+  HEALTH_SUMMARY: "Liveness probe",
   READY_200: "Ready, possibly degraded",
   READY_503: "Postgres unreachable",
+  READY_DESCRIPTION:
+    "Pings Postgres and Redis. 503 only when Postgres is unreachable.",
+  READY_SUMMARY: "Readiness probe",
 } as const;

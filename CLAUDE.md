@@ -120,30 +120,52 @@ domain endpoints yet — see `apps/api/README.md`.
 apps/api/
 └── src/
     ├── index.ts          boot: serve(), signals, shutdown
-    ├── app.ts            createApp(deps) — middleware chain, exports AppType
+    ├── app.ts            createApp(deps) — middleware order + route mounts only
+    ├── client.ts         AppType, ApiType, ErrorCode, ProblemDetails — the
+    │                     "./client" export; types only, no runtime code
     ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
-    ├── features/         one folder per topic, each owning constants/,
-    │   │                 middleware/ and tests/ where it needs them
-    │   ├── docs/         constants/{openapi,routes}, docs
+    ├── routes/           one folder per resource, mounted by app.ts; owns its
+    │   │                 constants/, utils/ and tests/
+    │   ├── docs/         index, handlers, constants/{openapi,routes},
+    │   │                 utils/enabled (isDocsEnabled) — /openapi.json, /reference
+    │   └── health/       index, routes, handlers, constants/statuses,
+    │                     utils/status (HealthDeps, status mapping) — /health, /ready
+    ├── features/         one folder per cross-cutting topic (no endpoints),
+    │   │                 each owning constants/, middleware/ and tests/
     │   ├── environment/  environment — zod env schema, validated at import
     │   ├── errors/       constants/{error-codes,problem-details},
     │   │                 middleware/error-handler
-    │   ├── health/       constants/{routes,statuses}, route
     │   ├── i18n/         constants/locales, middleware/locale-resolver,
     │   │                 translate, translation-values, translations/*.json
-    │   ├── logger/       logger
+    │   ├── logger/       logger, middleware/request-logger
     │   ├── rate-limit/   constants/limits, middleware/rate-limiter
-    │   └── redis/        redis
-    └── shared/           anything more than one feature reads
-        └── constants/    http, limits, routes, runtime — no logic
+    │   ├── redis/        redis
+    │   └── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
+    │                     + corrections), resource, telemetry — OTel SDK
+    └── shared/           anything more than one feature reads, or no feature owns
+        ├── constants/    http, limits, routes, runtime — no logic
+        ├── middleware/   cors, security-headers
+        ├── types/        bindings (AppBindings)
+        └── utils/        outage (outageLatch), probe (isProbe)
 ```
 
 A constant belongs in `features/<topic>/constants/` unless more than one
 feature reads it. `HTTP_STATUS`, `CONTEXT_VAR` and the mount prefixes are
-shared, so they stay in `shared/constants/`; `ERROR_CODE`, `LOCALE`,
-`INFRA_ROUTE` and the rate-limit tunables belong to the feature that owns them.
-Tests live in the feature's `tests/`; only `app`, `client` and `shutdown` keep
-root-level tests, because they exercise the whole chain.
+shared, so they stay in `shared/constants/`. `INFRA_ROUTE` is
+shared too: the health routes serve it, and telemetry, the request logger and
+the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
+`LOCALE` and the rate-limit tunables belong to the feature that owns them.
+Tests live beside what they test: the feature's or route's `tests/`, or
+`shared/<kind>/tests/` for shared helpers. Only `app`, `client` and
+`shutdown` keep root-level tests, because they exercise the whole chain.
+
+**Route modules** are self-contained folders under `routes/<name>/`:
+`index.ts` builds the chained sub-app, `routes.ts` holds the `describeRoute`
+specs, `handlers.ts` the handlers, plus `constants/`, `utils/` and `tests/` as
+needed. File names carry no `<name>.` prefix; the folder already says it. Named
+exports only, no `import * as`. `index.ts` assembles a router; it is not a
+barrel. A handler for a path with params (`/:id`) goes through
+`createFactory<AppBindings>().createHandlers(...)` so the params stay inferred.
 
 **Folder names are plural when the folder holds several things of one kind**
 (`features/`, `constants/`, `tests/`, `translations/`) and singular when it
@@ -155,16 +177,18 @@ many, and `middlewares/` reads wrong.
   `type` (stable `/errors/<kebab-code>`, derived from `ERROR_CODE`), `title`
   (the status's reason phrase, invariant per the RFC), `status`, `detail` (the
   localised message — the only member i18n touches), `instance` (the path),
-  plus `requestId`, `code` and `errors` as extension members. Build them with
-  `problem(c, code, status, detail, errors?)` in `middleware/errors.ts`; never
-  hand-assemble one.
+  plus `requestId`, `code` and `errors` as extension members. Send them with
+  `problemResponse(c, { code, status, detail, errors? })` in
+  `features/errors/middleware/error-handler.ts`, which also sets the media
+  type; never hand-assemble one.
 - **`HTTP_STATUS` stays numeric literals**, not `StatusCodes` from
   `http-status-codes`. An enum member is its own type, not `404`, which breaks
   `ERROR_STATUS` as a key of Hono's response map and collapses every error arm
   of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
-- **Domain routes mount under `/v1`**; `/health` and `/ready` stay unversioned.
+- **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
+  never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
 - **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`. Full list in
@@ -172,7 +196,7 @@ many, and `middlewares/` reads wrong.
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
   (reserved). Eviction is `volatile-lru`; never TTL a session key.
-- **Locales and the catalogue live in `constants/i18n.ts`** — one file to
+- **Locales and the catalogue live in `features/i18n/constants/locales.ts`** — one file to
   maintain. `LOCALE` is the source; `Locale`, `SUPPORTED_LOCALES` and
   `DEFAULT_LOCALE` derive from it, `CATALOGUE` uses computed `[LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
@@ -200,7 +224,8 @@ many, and `middlewares/` reads wrong.
 
 ## Deployment
 
-- VPS: Hetzner CAX11 at 188.245.174.30 (ssh main-vps)
+- VPS: Hetzner, 4 vCPU / 8 GB RAM, no swap, at 188.245.174.30 (ssh main-vps)
+- Observability: self-hosted OpenObserve + Umami (Local only so far) — see `docs/adr/0006-self-hosted-observability.md`
 - Orchestrator: Dokploy
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL

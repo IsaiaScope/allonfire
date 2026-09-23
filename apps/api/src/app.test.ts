@@ -1,93 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { type AppDeps, createApp } from "./app";
-import type { ProblemDetails } from "./features/errors/middleware/error-handler";
+import {
+  fallbackMessage,
+  type ProblemDetails,
+} from "./features/errors/middleware/error-handler";
 import {
   CATALOGUE,
   DEFAULT_LOCALE,
   LOCALE,
 } from "./features/i18n/constants/locales";
 import { createLogger } from "./features/logger/logger";
-
-type HealthBody = { status: string; version: string; uptime: number };
-type ReadyBody = {
-  status: string;
-  checks: { database: string; redis: string };
-};
+import { REQUEST_TIMEOUT_MS } from "./shared/constants/limits";
+import { API_VERSION_PREFIX } from "./shared/constants/routes";
 
 function deps(overrides: Partial<AppDeps> = {}): AppDeps {
   const hits = new Map<string, number>();
   return {
+    checkDatabase: async () => true,
+    checkRedis: async () => true,
     store: {
+      decrement: () => Promise.resolve(),
       increment: (key: string) => {
         const totalHits = (hits.get(key) ?? 0) + 1;
         hits.set(key, totalHits);
         return Promise.resolve({
-          totalHits,
           resetTime: new Date(Date.now() + 60_000),
+          totalHits,
         });
       },
-      decrement: () => Promise.resolve(),
       resetKey: () => Promise.resolve(),
     },
-    checkDatabase: async () => true,
-    checkRedis: async () => true,
     ...overrides,
   };
 }
 
-describe("GET /health", () => {
-  it("returns status, version and uptime without touching dependencies", async () => {
-    const app = createApp(
-      deps({
-        checkDatabase: () => {
-          throw new Error("must not be called");
-        },
-      })
-    );
-
-    const res = await app.request("/health");
-    expect(res.status).toBe(200);
-
-    const body = (await res.json()) as HealthBody;
-    expect(body.status).toBe("ok");
-    expect(typeof body.version).toBe("string");
-    expect(typeof body.uptime).toBe("number");
-  });
-});
-
-describe("GET /ready", () => {
-  it("returns 200 when both dependencies are healthy", async () => {
-    const res = await createApp(deps()).request("/ready");
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({
-      status: "ok",
-      checks: { database: "ok", redis: "ok" },
-    });
-  });
-
-  it("returns 503 when Postgres is down", async () => {
-    const app = createApp(deps({ checkDatabase: async () => false }));
-    const res = await app.request("/ready");
-
-    expect(res.status).toBe(503);
-    const body = (await res.json()) as ReadyBody;
-    expect(body.checks.database).toBe("unreachable");
-  });
-
-  it("stays 200 when only Redis is down", async () => {
-    const app = createApp(deps({ checkRedis: async () => false }));
-    const res = await app.request("/ready");
-
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as ReadyBody;
-    expect(body.status).toBe("degraded");
-    expect(body.checks.redis).toBe("unreachable");
-  });
-});
-
 describe("probe exemption", () => {
   it("never rate-limits /health or /ready", async () => {
-    const store = deps().store;
+    const { store } = deps();
     let increments = 0;
     const counting: AppDeps["store"] = {
       ...store,
@@ -114,6 +63,52 @@ describe("unmatched routes", () => {
 });
 
 describe("RFC 9457 problem documents", () => {
+  it("answers a thrown non-Error with a problem document, not plain text", async () => {
+    const app = createApp(deps())
+      .get("/throws-string", () => {
+        const thrown: unknown = "not an Error";
+        throw thrown;
+      })
+      .get("/rejects-object", () => Promise.reject({ reason: "not an Error" }));
+
+    const responses = await Promise.all(
+      ["/throws-string", "/rejects-object"].map((path) => app.request(path))
+    );
+    for (const res of responses) {
+      expect(res.status).toBe(500);
+      expect(res.headers.get("content-type")).toContain(
+        "application/problem+json"
+      );
+    }
+    const bodies = await Promise.all(
+      responses.map((res) => res.json() as Promise<ProblemDetails>)
+    );
+    expect(bodies.map((body) => body.code)).toEqual([
+      "INTERNAL_ERROR",
+      "INTERNAL_ERROR",
+    ]);
+  });
+
+  it("answers a request past the timeout with a localised 503 TIMEOUT problem", async () => {
+    vi.useFakeTimers();
+    const app = createApp(deps()).get(
+      "/slow",
+      () => new Promise(() => undefined)
+    );
+
+    const pending = app.request("/slow", {
+      headers: { "accept-language": LOCALE.IT_IT },
+    });
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    const res = await pending;
+    vi.useRealTimers();
+
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as ProblemDetails;
+    expect(body.code).toBe("TIMEOUT");
+    expect(body.detail).toBe(fallbackMessage("TIMEOUT", LOCALE.IT_IT));
+  });
+
   it("serves the problem media type, not application/json", async () => {
     const res = await createApp(deps()).request("/nothing-here");
     expect(res.headers.get("content-type")).toContain(
@@ -126,11 +121,11 @@ describe("RFC 9457 problem documents", () => {
     const body = (await res.json()) as ProblemDetails;
 
     expect(body).toMatchObject({
-      type: "/errors/not-found",
-      title: "Not Found",
-      status: 404,
-      instance: "/nothing-here",
       code: "NOT_FOUND",
+      instance: "/nothing-here",
+      status: 404,
+      title: "Not Found",
+      type: "/errors/not-found",
     });
     expect(body.detail).toBeTruthy();
     expect(body.requestId).toBeTruthy();
@@ -141,22 +136,23 @@ describe("RFC 9457 problem documents", () => {
     const en = (await (
       await app.request("/nothing-here")
     ).json()) as ProblemDetails;
-    const it = (await (
+    const italian = (await (
       await app.request("/nothing-here", {
         headers: { "Accept-Language": "it" },
       })
     ).json()) as ProblemDetails;
 
     // RFC 9457 §3.1.2: title should not change from occurrence to occurrence.
-    expect(en.title).toBe(it.title);
-    expect(en.type).toBe(it.type);
-    expect(en.detail).not.toBe(it.detail);
+    expect(en.title).toBe(italian.title);
+    expect(en.type).toBe(italian.type);
+    expect(en.detail).not.toBe(italian.detail);
   });
 
   it("reports the path the problem occurred on", async () => {
-    const res = await createApp(deps()).request("/v1/definitely-missing");
+    const path = `${API_VERSION_PREFIX}/definitely-missing`;
+    const res = await createApp(deps()).request(path);
     const body = (await res.json()) as ProblemDetails;
-    expect(body.instance).toBe("/v1/definitely-missing");
+    expect(body.instance).toBe(path);
   });
 });
 
@@ -202,13 +198,39 @@ describe("probe logging", () => {
   });
 });
 
+describe("request log headers", () => {
+  it("logs only allowlisted request headers", async () => {
+    const lines: string[] = [];
+    const app = createApp({
+      ...deps(),
+      logger: createLogger({
+        destination: { write: (chunk: string) => lines.push(chunk) },
+      }),
+    });
+
+    await app.request("/openapi.json", {
+      headers: {
+        "accept-language": "it",
+        traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
+        "user-agent": "curl/8",
+        "x-forwarded-for": "203.0.113.7",
+      },
+    });
+
+    const [entry] = lines.map(
+      (line) => JSON.parse(line) as { req?: { headers?: object } }
+    );
+    expect(entry?.req?.headers).toEqual({ "accept-language": "it" });
+  });
+});
+
 describe("documentation routes", () => {
   it("serves a spec describing the probes", async () => {
     const res = await createApp(deps()).request("/openapi.json");
     expect(res.status).toBe(200);
 
     const spec = (await res.json()) as {
-      paths: Record<string, { get: { summary: string } }>;
+      paths: { "/health"?: { get: { summary: string } } };
     };
     expect(spec.paths["/health"]).toBeDefined();
     expect(spec.paths["/health"]?.get.summary).toBe("Liveness probe");
@@ -265,8 +287,8 @@ describe("error message localization", () => {
 
   it("keeps the code stable across locales", async () => {
     const en = await notFoundIn();
-    const it = await notFoundIn({ "Accept-Language": "it" });
-    expect(en.code).toBe(it.code);
-    expect(en.detail).not.toBe(it.detail);
+    const italian = await notFoundIn({ "Accept-Language": "it" });
+    expect(en.code).toBe(italian.code);
+    expect(en.detail).not.toBe(italian.detail);
   });
 });

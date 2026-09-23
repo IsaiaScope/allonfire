@@ -6,39 +6,54 @@ import { logger } from "./features/logger/logger";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { createRedis } from "./features/redis/redis";
 import {
+  shutdownTelemetry,
+  startTelemetry,
+} from "./features/telemetry/telemetry";
+import {
   CLEAN_EXIT_CODE,
   FORCED_EXIT_CODE,
   LOG_MESSAGE,
   REDIS_PING_REPLY,
   SHUTDOWN_SIGNAL,
 } from "./shared/constants/runtime";
-import { createShutdown } from "./shutdown";
+import { createCrashHandler, createShutdown } from "./shutdown";
+
+// Before createApp: @hono/otel binds its meter when the app is built, and the
+// global MeterProvider, unlike the tracer, has no proxy that attaches later.
+startTelemetry();
 
 const redis = createRedis(env.REDIS_URL);
 
 const app = createApp({
-  store: createRedisStore(redis, env.RATE_LIMIT_WINDOW_MS),
   checkDatabase: async () => {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   },
   checkRedis: async () => (await redis.ping()) === REDIS_PING_REPLY,
+  store: createRedisStore(redis, env.RATE_LIMIT_WINDOW_MS),
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
-  logger.info({ port: info.port, env: env.NODE_ENV }, LOG_MESSAGE.LISTENING)
+  logger.info({ env: env.NODE_ENV, port: info.port }, LOG_MESSAGE.LISTENING)
 );
 
 const shutdown = createShutdown({
+  closeDatabase: () => prisma.$disconnect(),
+  closeRedis: async () => {
+    await redis.quit();
+  },
   closeServer: () =>
     new Promise<void>((resolve, reject) =>
       server.close((err) => (err ? reject(err) : resolve()))
     ),
-  closeRedis: async () => {
-    await redis.quit();
-  },
-  closeDatabase: () => prisma.$disconnect(),
+  flushTelemetry: shutdownTelemetry,
 });
+
+const crash = createCrashHandler({
+  exit: (code) => process.exit(code),
+  flushTelemetry: shutdownTelemetry,
+});
+process.on("uncaughtException", crash);
 
 let shuttingDown = false;
 

@@ -18,16 +18,15 @@ import { z } from "zod";
  * are not going to move.
  */
 export const HTTP_STATUS = {
-  OK: 200,
   BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
   FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  REQUEST_TIMEOUT: 408,
-  PAYLOAD_TOO_LARGE: 413,
-  TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
+  NOT_FOUND: 404,
+  OK: 200,
+  PAYLOAD_TOO_LARGE: 413,
   SERVICE_UNAVAILABLE: 503,
+  TOO_MANY_REQUESTS: 429,
+  UNAUTHORIZED: 401,
 } as const;
 
 export const httpStatusSchema = z.union(
@@ -42,10 +41,10 @@ export const ERROR_STATUS = [
   HTTP_STATUS.UNAUTHORIZED,
   HTTP_STATUS.FORBIDDEN,
   HTTP_STATUS.NOT_FOUND,
-  HTTP_STATUS.REQUEST_TIMEOUT,
   HTTP_STATUS.PAYLOAD_TOO_LARGE,
   HTTP_STATUS.TOO_MANY_REQUESTS,
   HTTP_STATUS.INTERNAL_SERVER_ERROR,
+  HTTP_STATUS.SERVICE_UNAVAILABLE,
 ] as const;
 
 export type ErrorStatus = ElementOf<typeof ERROR_STATUS>;
@@ -60,11 +59,11 @@ export const CONTENT_TYPE = {
 } as const;
 
 export const HTTP_HEADER = {
+  /** How the frontend passes its language key; absent means English. */
+  ACCEPT_LANGUAGE: "accept-language",
   CONTENT_TYPE: "Content-Type",
   RETRY_AFTER: "Retry-After",
   X_FORWARDED_FOR: "x-forwarded-for",
-  /** How the frontend passes its language key; absent means English. */
-  ACCEPT_LANGUAGE: "accept-language",
 } as const;
 
 export type HttpHeader = ValueOf<typeof HTTP_HEADER>;

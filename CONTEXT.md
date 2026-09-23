@@ -23,3 +23,26 @@ _Avoid_: guest, demo user, read-only user
 The list on a User naming which Apps they may enter. The value `all` grants
 every App.
 _Avoid_: permissions, entitlements
+
+### Environments
+
+**Local**:
+The stack running on a developer machine: `docker-compose.dev.yml` services
+plus the Apps and API running on the host.
+_Avoid_: dev environment — `dev` is an integration branch, not a place anything
+runs.
+
+**Production**:
+The VPS. The only deployed environment; the `test` and `prod` branches are
+promotion gates, not environments.
+_Avoid_: prod server, staging — no staging exists.
+
+### Data about usage
+
+**Telemetry**:
+Traces, logs and metrics describing how the API behaves.
+_Avoid_: monitoring, APM
+
+**Analytics**:
+Events describing what people do in an App.
+_Avoid_: tracking, telemetry
