@@ -15,14 +15,14 @@ export const NODE_ENV = {
 export const nodeEnvSchema = z.enum(NODE_ENV);
 export type NodeEnv = z.infer<typeof nodeEnvSchema>;
 
-/** Mirrors pino's levels. Ordered loudest to quietest. */
+/** Mirrors pino's levels: fatal, error, warn, info, debug, trace, loudest first. */
 export const LOG_LEVEL = {
-  FATAL: "fatal",
-  ERROR: "error",
-  WARN: "warn",
-  INFO: "info",
   DEBUG: "debug",
+  ERROR: "error",
+  FATAL: "fatal",
+  INFO: "info",
   TRACE: "trace",
+  WARN: "warn",
 } as const;
 
 export const logLevelSchema = z.enum(LOG_LEVEL);
@@ -43,15 +43,34 @@ export const REDACT_PATHS = [
 
 export const REDACT_CENSOR = "[Redacted]";
 
+/**
+ * The only request headers the request log records. An allowlist, not a
+ * denylist: request lines ship to OpenObserve, and a header added later should
+ * have to earn its place.
+ */
+export const LOGGED_REQUEST_HEADERS = [
+  "accept-language",
+  "content-length",
+  "content-type",
+] as const;
+
 /** Log messages emitted outside a request, where there is no requestId. */
 export const LOG_MESSAGE = {
+  CRASHED: "uncaught error, exiting",
+  DRAIN_TIMEOUT: "drain timed out, closing dependencies anyway",
   LISTENING: "api listening",
-  UNHANDLED_ERROR: "unhandled error",
-  SHUTTING_DOWN: "shutting down",
+  NON_ERROR_THROWN: "a non-Error value was thrown",
+  RATE_LIMIT_STORE_DOWN: "rate limit store unreachable, failing open",
+  RATE_LIMIT_STORE_RECOVERED: "rate limit store recovered",
+  REDIS_DOWN: "redis unreachable",
+  REDIS_RECOVERED: "redis reconnected",
+  SECOND_SIGNAL: "second signal, exiting immediately",
   SHUTDOWN_COMPLETE: "shutdown complete",
   SHUTDOWN_STEP_FAILED: "shutdown step failed",
-  SECOND_SIGNAL: "second signal, exiting immediately",
-  DRAIN_TIMEOUT: "drain timed out, closing dependencies anyway",
+  SHUTTING_DOWN: "shutting down",
+  TELEMETRY_FLUSH_ABANDONED:
+    "telemetry flush failed or timed out, spans dropped",
+  UNHANDLED_ERROR: "unhandled error",
 } as const;
 
 export const SHUTDOWN_SIGNAL = ["SIGTERM", "SIGINT"] as const;
@@ -62,9 +81,10 @@ export type ShutdownSignal = ElementOf<typeof SHUTDOWN_SIGNAL>;
  * step added here without a matching close call fails to compile.
  */
 export const SHUTDOWN_STEP = {
-  SERVER: "server",
-  REDIS: "redis",
   DATABASE: "database",
+  REDIS: "redis",
+  SERVER: "server",
+  TELEMETRY: "telemetry",
 } as const;
 
 export const shutdownStepSchema = z.enum(SHUTDOWN_STEP);
@@ -76,18 +96,20 @@ export type ShutdownStep = z.infer<typeof shutdownStepSchema>;
  * cannot name different things.
  */
 export const CONTEXT_VAR = {
-  REQUEST_ID: "requestId",
-  LOGGER: "logger",
   LOCALE: "locale",
+  LOGGER: "logger",
+  REQUEST_ID: "requestId",
 } as const;
 
 /** `ENABLE_DOCS` arrives as a string; these are the two accepted spellings. */
-export const BOOLEAN_ENV = { TRUE: "true", FALSE: "false" } as const;
+export const BOOLEAN_ENV = { FALSE: "false", TRUE: "true" } as const;
 export const booleanEnvSchema = z.enum(BOOLEAN_ENV);
 
 export const SEPARATOR = {
   /** Comma-delimited header values and comma-delimited env lists. */
   LIST: ",",
+  /** Splits `key=value` in a key/value env list such as OTLP headers. */
+  PAIR: "=",
   /** Joins a zod issue path into `a.b.c`. */
   PATH: ".",
 } as const;
@@ -95,10 +117,12 @@ export const SEPARATOR = {
 /** Exit code after a second signal arrives mid-drain. */
 export const FORCED_EXIT_CODE = 1;
 export const CLEAN_EXIT_CODE = 0;
+/** Exit code after an uncaught error; the orchestrator restarts the container. */
+export const CRASH_EXIT_CODE = 1;
 
 export const REDIS_EVENT = {
-  READY: "ready",
   ERROR: "error",
+  READY: "ready",
 } as const;
 
 export const REDIS_STATUS_READY = "ready";

@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
 import {
@@ -86,21 +86,26 @@ function requestIdOf(context: Context): string {
  * what a reason phrase is. Everything that varies — and everything localised —
  * is `detail`.
  */
-export function problem(
+/** What varies between one problem document and the next. */
+export type Problem = {
+  code: ErrorCode;
+  status: ErrorStatus;
+  detail: string;
+  errors?: ErrorDetail[];
+};
+
+function problem(
   context: Context,
-  code: ErrorCode,
-  status: ErrorStatus,
-  detail: string,
-  errors?: ErrorDetail[]
+  { code, status, detail, errors }: Problem
 ): ProblemDetails {
   return {
-    type: ERROR_TYPE[code],
-    title: getReasonPhrase(status),
-    status,
+    code,
     detail,
     instance: context.req.path,
     requestId: requestIdOf(context),
-    code,
+    status,
+    title: getReasonPhrase(status),
+    type: ERROR_TYPE[code],
     ...(errors ? { errors } : {}),
   };
 }
@@ -109,6 +114,32 @@ export function problem(
 const PROBLEM_HEADERS = {
   [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.PROBLEM_JSON,
 } as const;
+
+/**
+ * The finished error response: the problem document, its status, and the
+ * problem media type. Every error the API sends goes through here, so no
+ * caller has to know the headers or keep `status` and the body in step.
+ */
+export const problemResponse = (context: Context, fields: Problem): Response =>
+  context.json(problem(context, fields), fields.status, PROBLEM_HEADERS);
+
+/**
+ * Hono hands only `Error` instances to `onError`; anything else thrown
+ * (`throw "x"`, a promise rejected with a plain object) escapes the app and the
+ * server answers with a bare-text 500. Registered first, this wraps such a
+ * value in an `Error` so the next layer out routes it to `onError` like any
+ * other failure. The original value stays on `cause` for the log.
+ */
+export const normalizeThrown =
+  (): MiddlewareHandler => async (_context, next) => {
+    try {
+      await next();
+    } catch (err) {
+      throw err instanceof Error
+        ? err
+        : new Error(LOG_MESSAGE.NON_ERROR_THROWN, { cause: err });
+    }
+  };
 
 export function onError(err: Error, context: Context): Response {
   const requestId = requestIdOf(context);
@@ -123,38 +154,31 @@ export function onError(err: Error, context: Context): Response {
     // whatever language the caller chose, so it wins. Hono's own middleware
     // throws with an empty message, which is where the catalogue takes over.
     const detail = err.message || fallbackMessage(code, localeOf(context));
-    return context.json(
-      problem(context, code, status as ErrorStatus, detail),
-      status,
-      PROBLEM_HEADERS
-    );
+    return problemResponse(context, {
+      code,
+      detail,
+      status: status as ErrorStatus,
+    });
   }
 
-  logger.error({ err, requestId }, LOG_MESSAGE.UNHANDLED_ERROR);
+  // pino's `err` serializer drops a `cause` that is not an Error, which is
+  // exactly what `normalizeThrown` stores: log the thrown value beside it.
+  const thrown = err.cause instanceof Error ? undefined : err.cause;
+  logger.error({ err, requestId, thrown }, LOG_MESSAGE.UNHANDLED_ERROR);
 
-  return context.json(
-    problem(
-      context,
-      ERROR_CODE.INTERNAL_ERROR,
-      HTTP_STATUS.INTERNAL_SERVER_ERROR,
-      translate(ERROR_CODE.INTERNAL_ERROR, localeOf(context))
-    ),
-    HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    PROBLEM_HEADERS
-  );
+  return problemResponse(context, {
+    code: ERROR_CODE.INTERNAL_ERROR,
+    detail: translate(ERROR_CODE.INTERNAL_ERROR, localeOf(context)),
+    status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+  });
 }
 
 export function notFound(context: Context): Response {
-  return context.json(
-    problem(
-      context,
-      ERROR_CODE.NOT_FOUND,
-      HTTP_STATUS.NOT_FOUND,
-      translate(ERROR_CODE.NOT_FOUND, localeOf(context))
-    ),
-    HTTP_STATUS.NOT_FOUND,
-    PROBLEM_HEADERS
-  );
+  return problemResponse(context, {
+    code: ERROR_CODE.NOT_FOUND,
+    detail: translate(ERROR_CODE.NOT_FOUND, localeOf(context)),
+    status: HTTP_STATUS.NOT_FOUND,
+  });
 }
 
 /**
@@ -186,21 +210,16 @@ export function validationHook(result: ValidationResult, context: Context) {
   }
 
   const details: ErrorDetail[] = (result.error ?? []).map((issue) => ({
-    path: issuePath(issue),
     message: issue.message,
+    path: issuePath(issue),
   }));
 
-  return context.json(
-    problem(
-      context,
-      ERROR_CODE.VALIDATION_FAILED,
-      HTTP_STATUS.BAD_REQUEST,
-      translate(ERROR_CODE.VALIDATION_FAILED, localeOf(context), {
-        count: details.length,
-      }),
-      details
-    ),
-    HTTP_STATUS.BAD_REQUEST,
-    PROBLEM_HEADERS
-  );
+  return problemResponse(context, {
+    code: ERROR_CODE.VALIDATION_FAILED,
+    detail: translate(ERROR_CODE.VALIDATION_FAILED, localeOf(context), {
+      count: details.length,
+    }),
+    errors: details,
+    status: HTTP_STATUS.BAD_REQUEST,
+  });
 }

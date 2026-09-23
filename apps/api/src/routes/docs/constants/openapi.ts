@@ -8,6 +8,6 @@ export const openApiTagSchema = z.enum(OPENAPI_TAG);
 export type OpenApiTag = z.infer<typeof openApiTagSchema>;
 
 export const OPENAPI_DOC = {
-  TITLE: "AllOnFire API",
   DESCRIPTION: "Backend for AllOnFire apps.",
+  TITLE: "AllOnFire API",
 } as const;

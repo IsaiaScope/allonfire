@@ -63,6 +63,105 @@ services:
       timeout: 5s
       retries: 5
 
+  # Telemetry backend. Stores on the named volume below; Production stores on
+  # MinIO instead (see docs/adr/0006-self-hosted-observability.md).
+  openobserve:
+    container_name: allonfire-openobserve
+    image: openobserve/openobserve:v1.0.3
+    restart: unless-stopped
+    # Localhost only: the API runs on the host, nothing else needs it.
+    ports:
+      - "127.0.0.1:5080:5080"
+    environment:
+      # Not allonfire / allonfire like the rest of Local: OpenObserve refuses to
+      # boot unless the user is an email and the password has upper, lower,
+      # digit and symbol, and nothing turns that check off.
+      ZO_ROOT_USER_EMAIL: allonfire@allonfire.local
+      ZO_ROOT_USER_PASSWORD: Allonfire#1
+      ZO_DATA_DIR: /data
+      ZO_COMPACT_DATA_RETENTION_DAYS: "7"
+      # On by default, reporting usage to the vendor; ADR 0006 keeps all
+      # telemetry on our own machines.
+      ZO_TELEMETRY: "false"
+    volumes:
+      - openobserve_data:/data
+    # The image is distroless (no shell, no curl), so the check is the binary
+    # itself: `node status` queries the running server over HTTP.
+    healthcheck:
+      test: ["CMD", "/openobserve", "node", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: creates the umami database if it is missing. An initdb.d script
+  # would not work — it only runs against an empty data directory, and
+  # postgres_data already exists on every machine that has run docker:up.
+  # The wait loop covers a fresh volume: postgres reports healthy over its unix
+  # socket while initdb's temporary server still refuses TCP.
+  umami-db-init:
+    container_name: allonfire-umami-db-init
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-allonfire}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-allonfire}
+      PGDATABASE: ${POSTGRES_DB:-allonfire}
+    command: >
+      sh -c "for i in $$(seq 30); do psql -c 'SELECT 1' >/dev/null 2>&1 && break; sleep 1; done;
+      psql -tAc \"SELECT 1 FROM pg_database WHERE datname = 'umami'\" | grep -q 1
+      || psql -c 'CREATE DATABASE umami'"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Analytics. Idle until a frontend embeds its script.
+  umami:
+    container_name: allonfire-umami
+    image: ghcr.io/umami-software/umami:3.4.0
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:3100:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-allonfire}:${POSTGRES_PASSWORD:-allonfire}@postgres:5432/umami
+      APP_SECRET: allonfire-local-umami-secret
+      # Umami otherwise calls out: a telemetry pixel, update checks, and website
+      # icons from DuckDuckGo. PRIVATE_MODE disables every external call.
+      DISABLE_TELEMETRY: "1"
+      DISABLE_UPDATES: "1"
+      PRIVATE_MODE: "1"
+    depends_on:
+      umami-db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: Umami's first-run login is hardcoded (admin / umami) with no env
+  # override, so this renames it to allonfire / allonfire once Umami's migrations
+  # have created the table. A no-op once `admin` is gone. The hash is bcrypt of
+  # "allonfire"; `$$` is compose's escape for a literal `$`.
+  umami-user-init:
+    container_name: allonfire-umami-user-init
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-allonfire}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-allonfire}
+      PGDATABASE: umami
+    command:
+      - psql
+      - -c
+      - UPDATE "user" SET username = 'allonfire', password = '$$2b$$10$$OD8Bk590E9I.hUMZye66O.CqXIpgD5lIUjwEj8gw9yedvYx9LFd02' WHERE username = 'admin'
+    depends_on:
+      umami:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   minio_data:
+  openobserve_data:
