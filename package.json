@@ -1,6 +1,6 @@
 {
   "name": "allonfire",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Turborepo monorepo powering an interactive Laura site with photos and games",
   "homepage": "https://github.com/IsaiaScope/allonfire#readme",
