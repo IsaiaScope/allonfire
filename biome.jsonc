@@ -3,18 +3,79 @@
   "extends": [
     "ultracite/biome/core",
     "ultracite/biome/react",
-    "ultracite/biome/next"
+    "ultracite/biome/next",
+    "ultracite/biome/vitest",
+    // Project + types domains: module graph and type inference (cycles,
+    // undeclared deps, deprecated imports). Scans the whole repo on every run.
+    "ultracite/biome/type-aware"
   ],
+  "vcs": {
+    // `biome check --changed` diffs against this; the repo's base is dev.
+    "defaultBranch": "dev"
+  },
   "linter": {
     "rules": {
+      "complexity": {
+        "noExcessiveLinesPerFunction": {
+          "level": "error",
+          "options": { "maxLines": 100, "skipBlankLines": true }
+        },
+        "noImplicitCoercions": "error",
+        "useMaxParams": "error"
+      },
+      "correctness": {
+        // Bundler resolution: TS imports carry no extension.
+        "useImportExtensions": "off",
+        // False positives on pnpm-linked packages resolved through `exports`
+        // (hono/*, pino). tsc already fails on a bad import.
+        "noUnresolvedImports": "off"
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "useAwaitThenable": "error",
+        "useExhaustiveSwitchCases": "error"
+      },
+      "performance": {
+        "noReExportAll": "error"
+      },
       "style": {
+        "noExcessiveLinesPerFile": "error",
+        // Env is read once, in the validated env module of each package.
+        "noProcessEnv": "error",
         "useConsistentTypeDefinitions": {
           "level": "error",
-          "options": {
-            "style": "type"
-          }
+          "options": { "style": "type" }
+        }
+      },
+      "suspicious": {
+        "noConsole": { "level": "error", "options": { "allow": ["error"] } },
+        "noUndeclaredEnvVars": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      // The places allowed to touch process.env, print, and run long.
+      "includes": [
+        "**/env.ts",
+        "**/environment.ts",
+        "**/seed*.ts",
+        "**/scripts/**",
+        "**/*.config.ts",
+        "**/vitest.setup.ts",
+        "**/*.test.ts",
+        "**/*.test.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": "off",
+            "noProcessEnv": "off"
+          },
+          "suspicious": { "noConsole": "off" }
         }
       }
     }
-  }
+  ]
 }

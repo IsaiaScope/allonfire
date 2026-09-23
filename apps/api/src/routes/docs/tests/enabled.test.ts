@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isDocsEnabled } from "../docs";
+import { isDocsEnabled } from "../utils/enabled";
 
 describe("isDocsEnabled", () => {
   it("is on in development regardless of the flag", () => {

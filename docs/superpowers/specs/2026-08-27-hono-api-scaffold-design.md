@@ -515,7 +515,7 @@ Redis db indexes.
 | `AppError` class | first domain error needing a code the status cannot express |
 | Sliding-window rate limiting | boundary bursts observed in logs |
 | Explicit Postgres `connection_limit` | connection timeouts observed under load |
-| Sentry / OpenTelemetry / Prometheus | a failure pino cannot explain |
+| Sentry / OpenTelemetry / Prometheus | resolved: OpenTelemetry to OpenObserve, see `2026-09-23-backend-platform-tooling-design.md` |
 | Queues (BullMQ) | first background job |
 | CSRF middleware | arrives with cookie auth |
 
