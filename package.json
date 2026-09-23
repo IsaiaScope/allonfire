@@ -1,23 +1,18 @@
 {
   "name": "allonfire",
-  "description": "Turborepo monorepo powering an interactive Laura site with photos and games",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
-  "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
-  "packageManager": "pnpm@9.1.1",
+  "description": "Turborepo monorepo powering an interactive Laura site with photos and games",
+  "homepage": "https://github.com/IsaiaScope/allonfire#readme",
+  "bugs": {
+    "url": "https://github.com/IsaiaScope/allonfire/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/IsaiaScope/allonfire.git"
   },
-  "bugs": {
-    "url": "https://github.com/IsaiaScope/allonfire/issues"
-  },
-  "homepage": "https://github.com/IsaiaScope/allonfire#readme",
-  "engines": {
-    "node": ">=22.0.0",
-    "pnpm": ">=9.0.0"
-  },
+  "license": "MIT",
+  "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
   "scripts": {
     "build": "turbo run build",
     "check": "ultracite check",
@@ -36,8 +31,6 @@
     "docker:prod:down": "docker compose -f docker/docker-compose.prod.yml down",
     "docker:prod:logs": "docker compose -f docker/docker-compose.prod.yml logs -f",
     "docker:prod:up": "docker compose -f docker/docker-compose.prod.yml up -d",
-    "docker:test": "docker compose -f docker/docker-compose.test.yml up --build",
-    "docker:test:down": "docker compose -f docker/docker-compose.test.yml down",
     "docker:up": "docker compose -f docker/docker-compose.dev.yml up -d",
     "fix": "ultracite fix",
     "i18n:check": "turbo run i18n:check",
@@ -46,18 +39,6 @@
     "pre-commit": "lint-staged --allow-empty",
     "prepare": "husky",
     "test": "turbo run test"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.4.0",
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "@types/node": "^22.13.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.0.0",
-    "turbo": "^2.5.3",
-    "typescript": "~5.8.2",
-    "ultracite": "7.2.4",
-    "vitest": "^4.1.0"
   },
   "commitlint": {
     "extends": [
@@ -79,12 +60,26 @@
     }
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "biome check --write"
-    ],
-    "*.json": [
-      "biome format --write"
+    "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}": [
+      "biome check --write --no-errors-on-unmatched --error-on-warnings --files-ignore-unknown=true"
     ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/node": "^22.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "turbo": "^2.5.3",
+    "typescript": "~5.8.2",
+    "ultracite": "7.12.0",
+    "vitest": "^4.1.0"
+  },
+  "packageManager": "pnpm@9.1.1",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
   },
   "volta": {
     "node": "22.14.0"

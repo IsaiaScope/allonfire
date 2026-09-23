@@ -11,18 +11,18 @@
   },
   "scripts": {
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
     "db:seed": "tsx --env-file=.env src/seed.ts",
     "db:seed-quiz": "tsx --env-file=.env src/seed-quiz.ts",
     "db:studio": "prisma studio",
     "test": "vitest run"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "^6.19.3",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",
-    "prisma": "^6.19.0",
+    "prisma": "^6.19.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
