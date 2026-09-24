@@ -96,7 +96,18 @@ export async function submitQuizScoreAction(data: {
   }
   const { session } = access;
 
-  if (data.timeMs <= 0 || data.correctCount < 0) {
+  // Client-sent numbers: NaN slips past plain comparisons, a fraction makes
+  // Prisma throw on the Int column, and a count above the total would top the
+  // leaderboard for good.
+  const isValidScore =
+    Number.isSafeInteger(data.timeMs) &&
+    data.timeMs > 0 &&
+    Number.isSafeInteger(data.totalQuestions) &&
+    data.totalQuestions > 0 &&
+    Number.isSafeInteger(data.correctCount) &&
+    data.correctCount >= 0 &&
+    data.correctCount <= data.totalQuestions;
+  if (!isValidScore) {
     return { error: "Invalid score data", success: false };
   }
 

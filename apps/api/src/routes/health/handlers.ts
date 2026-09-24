@@ -1,12 +1,14 @@
 import type { Context } from "hono";
 import pkg from "../../../package.json" with { type: "json" };
 import {
+  CHECK_STATUS,
   type HealthBody,
   READY_STATUS,
   READY_STATUS_CODE,
-  type ReadyBody,
+  type ReadyServingBody,
+  type ReadyUnavailableBody,
 } from "./constants/statuses";
-import { checkStatus, type HealthDeps, readyStatus } from "./utils/status";
+import { checkStatus, type HealthDeps } from "./utils/status";
 
 // `as const satisfies`, never a bare annotation: `satisfies` checks the shape
 // against the schema while keeping the literal/readonly inference that
@@ -28,18 +30,19 @@ export const readyHandler = (deps: HealthDeps) => async (context: Context) => {
     deps.checkRedis().catch(() => false),
   ]);
 
-  const body = {
-    checks: {
-      database: checkStatus(database),
-      redis: checkStatus(redis),
-    },
-    status: readyStatus(database, redis),
-  } as const satisfies ReadyBody;
-
   // Postgres is required; Redis failing open must not remove a container
   // that is still serving traffic correctly.
-  return context.json(
-    body,
-    database ? READY_STATUS_CODE.READY : READY_STATUS_CODE.NOT_READY
-  );
+  if (!database) {
+    const body = {
+      checks: { database: CHECK_STATUS.UNREACHABLE, redis: checkStatus(redis) },
+      status: READY_STATUS.UNAVAILABLE,
+    } as const satisfies ReadyUnavailableBody;
+    return context.json(body, READY_STATUS_CODE.NOT_READY);
+  }
+
+  const body = {
+    checks: { database: CHECK_STATUS.OK, redis: checkStatus(redis) },
+    status: redis ? READY_STATUS.OK : READY_STATUS.DEGRADED,
+  } as const satisfies ReadyServingBody;
+  return context.json(body, READY_STATUS_CODE.READY);
 };

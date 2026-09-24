@@ -7,6 +7,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Vercel Remote Cache, shared with local runs (`turbo login` + `turbo link`).
+# Without the secret, turbo runs uncached and still passes.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 jobs:
   lint-types:
     runs-on: ubuntu-latest
@@ -20,8 +26,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
@@ -82,8 +86,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
@@ -117,8 +119,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client

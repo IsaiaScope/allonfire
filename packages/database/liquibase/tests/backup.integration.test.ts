@@ -1,5 +1,5 @@
+// @module-tag integration
 import { execFileSync } from "node:child_process";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   dropDatabase,
   liquibase,
@@ -15,7 +15,7 @@ const KEEP = 2;
 const DUMP_NAME = /^allonfire-\d{8}T\d{15}Z\.dump$/;
 
 function docker(...args: string[]): string {
-  return execFileSync("docker", args, { encoding: "utf8" });
+  return execFileSync("docker", args, { encoding: "utf8", stdio: "pipe" });
 }
 
 /** File names in the backup volume, sorted. */
@@ -51,14 +51,18 @@ describe("backup", () => {
   it(
     "keeps only the newest dumps",
     () => {
+      // Each run's new dump is the one name the volume did not hold before.
+      const written: string[] = [];
       for (let run = 0; run <= KEEP; run += 1) {
+        const before = new Set(backups());
         backup(url);
+        written.push(...backups().filter((file) => !before.has(file)));
       }
       const files = backups();
-      expect(files).toHaveLength(KEEP);
       for (const file of files) {
         expect(file).toMatch(DUMP_NAME);
       }
+      expect(files).toEqual(written.slice(-KEEP));
     },
     DOCKER_TIMEOUT
   );

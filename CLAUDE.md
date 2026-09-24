@@ -160,8 +160,16 @@ shared too: the health routes serve it, and telemetry, the request logger and
 the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
 `LOCALE` and the rate-limit tunables belong to the feature that owns them.
 Tests live beside what they test: the feature's or route's `tests/`, or
-`shared/<kind>/tests/` for shared helpers. Only `app`, `client` and
-`shutdown` keep root-level tests, because they exercise the whole chain.
+`shared/<kind>/tests/` for shared helpers. A feature checked through the whole
+middleware chain still lives in its own `tests/` and builds the app with
+`createApp(appDeps())` (`shared/tests/app-deps.ts`). Only `client` and
+`shutdown` keep root-level tests.
+Vitest runs with globals (no `from "vitest"` import). Every test file's first
+line is `// @module-tag unit` or `// @module-tag integration`; a file with
+neither fails. Integration tests need a running service (database, cache,
+queue, external API) and are named
+`*.integration.test.ts`. Type tests (`*.test-d.ts`) take no tag: `tsc`
+checks them and nothing executes. Browser tests are Playwright's, under the app's `e2e/`.
 
 **Route modules** are self-contained folders under `routes/<name>/`:
 `index.ts` builds the chained sub-app, `routes.ts` holds the `describeRoute`
@@ -189,6 +197,11 @@ many, and `middlewares/` reads wrong.
   `http-status-codes`. An enum member is its own type, not `404`, which breaks
   `ERROR_STATUS` as a key of Hono's response map and collapses every error arm
   of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
+- **Every documented body comes from its zod schema**: `content: { [CONTENT_TYPE.JSON]:
+  { schema: resolver(bodySchema) } }` in `describeRoute`, the same schema the
+  handler `satisfies`. Errors reference `#/components/responses/Problem`
+  (`ProblemDetails`, registered once in `routes/docs/handlers.ts`). Never
+  `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
 - **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+// @module-tag unit
 import { captureLog } from "../../../features/logger/tests/capture";
 import { outageLatch } from "../outage";
 

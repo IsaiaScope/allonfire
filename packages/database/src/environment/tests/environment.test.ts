@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-
+// @module-tag unit
 const DATABASE_URL = "postgresql://app:secret@db:5432/allonfire";
 
 async function loadEnv(nodeEnv: string | undefined) {

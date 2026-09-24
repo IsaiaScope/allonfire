@@ -21,8 +21,8 @@
     "db:seed": "tsx --env-file=.env src/seed/seed.ts",
     "db:seed-quiz": "tsx --env-file=.env src/seed/seed-quiz.ts",
     "db:status": "bash scripts/liquibase.sh status --verbose",
-    "db:studio": "prisma studio",
     "db:update": "bash scripts/liquibase.sh update",
+    "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",
     "test": "vitest run"
   },
   "dependencies": {
@@ -34,11 +34,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@allonfire/config": "workspace:*",
     "tsx": "^4.19.0",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.0"
-  },
-  "prisma": {
-    "schema": "prisma/schema"
+    "vitest": "^4.1.11"
   }
 }

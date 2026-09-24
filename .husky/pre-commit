@@ -1,1 +1,1 @@
-pnpm pre-commit
+pnpm exec lint-staged --allow-empty

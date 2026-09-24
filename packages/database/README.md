@@ -85,7 +85,7 @@ fails a `.prisma` edit that has no changeset.
 | `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
 | `pnpm db:drift` | Compare the database with the Prisma schema |
 | `pnpm db:seed` / `db:seed-quiz` | Seed users and mock data / quiz questions (data in `src/seed/mock/`) |
-| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5555 (`pnpm dev` starts it too) |
 | `pnpm test` | Unit tests, plus `*.integration.test.ts` against Docker and the dev Postgres (`pnpm docker:up`). Tests live in a `tests/` folder beside what they test |
 
 Liquibase needs Java, so it only runs in Docker: every `db:*` Liquibase script

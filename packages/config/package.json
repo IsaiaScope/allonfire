@@ -1,5 +1,23 @@
 {
   "name": "@allonfire/config",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tests/playwright": "./tests/playwright.config.ts",
+    "./tests/vitest": "./tests/vitest.config.ts",
+    "./typescript/*": "./typescript/*"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.63.0",
+    "vitest": "^4.1.11"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  }
 }

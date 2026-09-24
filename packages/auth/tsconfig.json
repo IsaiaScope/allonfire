@@ -4,8 +4,9 @@
     "paths": {
       "@allonfire/ui/*": ["../../packages/ui/src/*"],
       "@allonfire/database": ["../../packages/database/src/index.ts"]
-    }
+    },
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"],
+  "include": ["src", "vitest.config.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,12 +1,13 @@
 import type { ElementOf } from "@allonfire/utils/object";
 import { z } from "zod";
 
-/** Mirrors pino's levels: fatal, error, warn, info, debug, trace, loudest first. */
+/** Mirrors pino's levels: fatal, error, warn, info, debug, trace, plus `silent` (logs nothing; the tests' default). */
 export const LOG_LEVEL = {
   DEBUG: "debug",
   ERROR: "error",
   FATAL: "fatal",
   INFO: "info",
+  SILENT: "silent",
   TRACE: "trace",
   WARN: "warn",
 } as const;

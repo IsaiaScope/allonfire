@@ -1,6 +1,6 @@
+// @module-tag unit
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
-import { describe, expect, it } from "vitest";
 import {
   onError,
   type ProblemDetails,
@@ -12,29 +12,7 @@ import {
   failOpen,
   type RateLimitStore,
 } from "../middleware/rate-limiter";
-
-/** Like the Redis store, the window's reset time is set by its first hit. */
-function stubStore(
-  windowMs = 60_000
-): RateLimitStore & { hits: Map<string, number> } {
-  const hits = new Map<string, number>();
-  return {
-    decrement: () => Promise.resolve(),
-    hits,
-    increment: (key: string) => {
-      const totalHits = (hits.get(key) ?? 0) + 1;
-      hits.set(key, totalHits);
-      return Promise.resolve({
-        resetTime: new Date(Date.now() + windowMs),
-        totalHits,
-      });
-    },
-    resetKey: (key: string) => {
-      hits.delete(key);
-      return Promise.resolve();
-    },
-  };
-}
+import { memoryStore } from "./memory-store";
 
 function appWith(
   store: RateLimitStore,
@@ -54,7 +32,7 @@ const forwarded = (ip: string) => ({ headers: { "x-forwarded-for": ip } });
 
 describe("rate limiter keying", () => {
   it("gives distinct forwarded clients distinct buckets", async () => {
-    const store = stubStore();
+    const store = memoryStore();
     const app = appWith(store, 1);
 
     // One trusted proxy in front appends the client address and forwards a
@@ -67,7 +45,7 @@ describe("rate limiter keying", () => {
   });
 
   it("ignores a client-supplied entry left of the trusted hop", async () => {
-    const store = stubStore();
+    const store = memoryStore();
     const app = appWith(store, 1);
 
     // A client that sets its own X-Forwarded-For cannot pick its bucket: the
@@ -81,7 +59,7 @@ describe("rate limiter keying", () => {
   });
 
   it("ignores forwarded headers when no proxy is trusted", async () => {
-    const store = stubStore();
+    const store = memoryStore();
     const app = appWith(store, 0);
 
     await app.request("/ping", forwarded("1.1.1.1"));
@@ -93,7 +71,7 @@ describe("rate limiter keying", () => {
 
 describe("rate limited response", () => {
   it("returns a 429 envelope with Retry-After and RateLimit headers", async () => {
-    const app = appWith(stubStore(), 1, 1);
+    const app = appWith(memoryStore(), 1, 1);
 
     await app.request("/ping", forwarded("3.3.3.3"));
     const res = await app.request("/ping", forwarded("3.3.3.3"));
@@ -109,7 +87,7 @@ describe("rate limited response", () => {
 
   it("interpolates the real retry window into the message", async () => {
     // 5s window -> the message must name 5 seconds, matching Retry-After.
-    const app = appWith(stubStore(5000), 1, 1, 5000);
+    const app = appWith(memoryStore(5000), 1, 1, 5000);
 
     await app.request("/ping", forwarded("4.4.4.4"));
     const res = await app.request("/ping", forwarded("4.4.4.4"));
@@ -122,13 +100,12 @@ describe("rate limited response", () => {
   it("tells the client the time left in the window, not the whole window", async () => {
     // 60s window, but the store says it resets in 5s.
     const store: RateLimitStore = {
-      decrement: () => Promise.resolve(),
+      ...memoryStore(),
       increment: () =>
         Promise.resolve({
           resetTime: new Date(Date.now() + 5000),
           totalHits: 2,
         }),
-      resetKey: () => Promise.resolve(),
     };
     const res = await appWith(store, 1, 1, 60_000).request(
       "/ping",
@@ -143,7 +120,7 @@ describe("rate limited response", () => {
   });
 
   it("renders the message in the requested locale", async () => {
-    const app = appWith(stubStore(5000), 1, 1, 5000);
+    const app = appWith(memoryStore(5000), 1, 1, 5000);
     const req = (ip: string) => {
       const init = forwarded(ip);
       return {
@@ -176,7 +153,7 @@ describe("store outage", () => {
     const { lines, logger } = captureLog();
     // Redis per call: down, down, back, down again.
     const reachable = [false, false, true, false];
-    const healthy = stubStore();
+    const healthy = memoryStore();
     const store = failOpen(
       {
         ...healthy,

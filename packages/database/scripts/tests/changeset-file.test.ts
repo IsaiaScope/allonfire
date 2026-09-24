@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+// @module-tag unit
 import {
   buildChangeset,
   CHANGESET_NAME,
@@ -44,6 +44,12 @@ describe("nextChangesetNumber", () => {
         "0003-x.sql",
       ])
     ).toBe("0004");
+  });
+
+  it("counts a hand-named changeset, so no two share a number", () => {
+    expect(nextChangesetNumber(["0000-a.sql", "0002-Add_Index.sql"])).toBe(
+      "0003"
+    );
   });
 });
 

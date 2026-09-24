@@ -1,6 +1,6 @@
 "use server";
 
-import { checkMutationAccess } from "@allonfire/auth/guard";
+import { checkAppAccess, checkMutationAccess } from "@allonfire/auth/guard";
 import {
   getFavoritePhotoIds,
   getFavoritesPaginated,
@@ -48,6 +48,7 @@ function mapPhoto(photo: PhotoWithUser, isFavorite: boolean): GalleryPhoto {
 }
 
 export async function getPhotosAction(cursor?: string): Promise<GalleryPage> {
+  await checkAppAccess(auth, "laura");
   const result = await getPhotosPaginated(cursor);
   const favoriteIds = await getFavoritePhotoIds(result.photos.map((p) => p.id));
 
@@ -60,6 +61,7 @@ export async function getPhotosAction(cursor?: string): Promise<GalleryPage> {
 export async function getFavoritesAction(
   cursor?: string
 ): Promise<GalleryPage> {
+  await checkAppAccess(auth, "laura");
   const result = await getFavoritesPaginated(cursor);
   return {
     nextCursor: result.nextCursor,

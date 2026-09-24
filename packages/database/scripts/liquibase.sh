@@ -9,11 +9,11 @@ set -Eeuo pipefail
 package_dir="$(cd "$(dirname "$0")/.." && pwd)"
 repo_root="$(cd "$package_dir/../.." && pwd)"
 
+# Read .env the way Node and Prisma do, not with `source`: bash would expand a
+# `$` in the password and read an unquoted `&` as a background job.
 if [[ -z "${DATABASE_URL:-}" && -f "$package_dir/.env" ]]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "$package_dir/.env"
-  set +a
+  DATABASE_URL="$(node --env-file="$package_dir/.env" \
+    --print 'process.env.DATABASE_URL ?? ""')"
 fi
 : "${DATABASE_URL:?DATABASE_URL is not set}"
 

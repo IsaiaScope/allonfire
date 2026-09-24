@@ -1,11 +1,31 @@
-import { describeRoute } from "hono-openapi";
+import { describeRoute, resolver } from "hono-openapi";
+import { CONTENT_TYPE } from "../../shared/constants/http";
 import { OPENAPI_TAG } from "../docs/constants/openapi";
-import { PROBE_DESCRIPTION, READY_STATUS_CODE } from "./constants/statuses";
+import {
+  healthBodySchema,
+  PROBE_DESCRIPTION,
+  READY_STATUS_CODE,
+  readyServingBodySchema,
+  readyUnavailableBodySchema,
+} from "./constants/statuses";
+
+// The same schemas the handlers `satisfies`, so the documented body cannot
+// drift from the served one.
+const healthBody = {
+  [CONTENT_TYPE.JSON]: { schema: resolver(healthBodySchema) },
+};
+const readyServingBody = {
+  [CONTENT_TYPE.JSON]: { schema: resolver(readyServingBodySchema) },
+};
+const readyUnavailableBody = {
+  [CONTENT_TYPE.JSON]: { schema: resolver(readyUnavailableBodySchema) },
+};
 
 export const healthRoute = describeRoute({
   description: PROBE_DESCRIPTION.HEALTH_DESCRIPTION,
   responses: {
     [READY_STATUS_CODE.READY]: {
+      content: healthBody,
       description: PROBE_DESCRIPTION.HEALTH_200,
     },
   },
@@ -17,9 +37,11 @@ export const readyRoute = describeRoute({
   description: PROBE_DESCRIPTION.READY_DESCRIPTION,
   responses: {
     [READY_STATUS_CODE.READY]: {
+      content: readyServingBody,
       description: PROBE_DESCRIPTION.READY_200,
     },
     [READY_STATUS_CODE.NOT_READY]: {
+      content: readyUnavailableBody,
       description: PROBE_DESCRIPTION.READY_503,
     },
   },

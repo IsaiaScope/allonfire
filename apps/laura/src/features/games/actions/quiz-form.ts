@@ -77,7 +77,7 @@ export function validateQuestionForm(formData: FormData): FormValidation {
   }
 
   const answerCount = Number(formData.get("answerCount"));
-  if (answerCount < 2 || answerCount > 4) {
+  if (!Number.isInteger(answerCount) || answerCount < 2 || answerCount > 4) {
     return { error: "Must have 2-4 answers", valid: false };
   }
 

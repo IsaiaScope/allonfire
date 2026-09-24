@@ -1,8 +1,8 @@
+// @module-tag unit
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { validator } from "hono-openapi";
-import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   notFound,
@@ -65,7 +65,7 @@ describe("validationHook", () => {
       "/echo",
       validator(
         "json",
-        z.object({ email: z.email(), age: z.number() }),
+        z.object({ age: z.number(), email: z.email() }),
         validationHook
       ),
       (context) => context.json(context.req.valid("json"))
@@ -74,9 +74,9 @@ describe("validationHook", () => {
 
   it("returns 400 with field paths and no schema dump", async () => {
     const res = await app.request("/echo", {
-      method: "POST",
+      body: JSON.stringify({ age: "old", email: "nope" }),
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "nope", age: "old" }),
+      method: "POST",
     });
 
     expect(res.status).toBe(400);

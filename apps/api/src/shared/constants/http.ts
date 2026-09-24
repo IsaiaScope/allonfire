@@ -55,6 +55,7 @@ export type ErrorStatus = ElementOf<typeof ERROR_STATUS>;
  * not recognise it.
  */
 export const CONTENT_TYPE = {
+  JSON: "application/json",
   PROBLEM_JSON: "application/problem+json",
 } as const;
 

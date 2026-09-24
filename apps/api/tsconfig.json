@@ -5,7 +5,8 @@
       "@/*": ["./src/*"],
       "@allonfire/database": ["../../packages/database/src/index.ts"],
       "@allonfire/utils/*": ["../../packages/utils/src/*"]
-    }
+    },
+    "types": ["node", "vitest/globals"]
   },
   "include": ["src", "vitest.config.ts", "vitest.setup.ts"],
   "exclude": ["node_modules"]

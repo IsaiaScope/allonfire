@@ -1,7 +1,8 @@
 export const CHANGESET_AUTHOR = "isaia";
 export const CHANGESET_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
-const CHANGESET_FILE = /^\d{4}-[a-z0-9-]+\.sql$/;
+// Any numbered `.sql`, hand-named ones included, so none shares a number.
+const CHANGESET_FILE = /^\d{4}-.+\.sql$/;
 const NUMBER_LENGTH = 4;
 const SQL_COMMENT = "--";
 

@@ -1,6 +1,8 @@
+// @module-tag unit
 import { execFileSync, spawnSync } from "node:child_process";
-import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 const SCRIPT = resolve(import.meta.dirname, "../database-url.sh");
 const TRAILING_NEWLINE = /\n$/;
@@ -148,5 +150,40 @@ describe("libpq_url", () => {
     const result = call("libpq_url", "mysql://app:hunter2@db/allonfire");
     expect(result.status).not.toBe(0);
     expect(result.stdout + result.stderr).not.toContain("hunter2");
+  });
+});
+
+describe("query parameters", () => {
+  it("gives Prisma's sslcert, the server's CA, to libpq as sslrootcert", () => {
+    const url =
+      "postgresql://app:secret@db/allonfire?sslmode=verify-full&sslcert=ca.pem";
+    expect(run("libpq_url", url)).toBe(
+      "postgresql://app@db/allonfire?sslmode=verify-full&sslrootcert=ca.pem"
+    );
+    expect(run("jdbc_url", url)).toBe(
+      "jdbc:postgresql://db/allonfire?sslmode=verify-full&sslrootcert=ca.pem"
+    );
+  });
+
+  it("keeps glob characters literal, whatever files sit in the directory", () => {
+    const dir = mkdtempSync(join(tmpdir(), "database-url-"));
+    writeFileSync(join(dir, "application_name=a"), "");
+    try {
+      const out = execFileSync(
+        "bash",
+        [
+          "-c",
+          `source "${SCRIPT}"; jdbc_url "$1"`,
+          "jdbc_url",
+          "postgresql://app:secret@db/allonfire?application_name=[a]",
+        ],
+        { cwd: dir, encoding: "utf8" }
+      );
+      expect(out.replace(TRAILING_NEWLINE, "")).toBe(
+        "jdbc:postgresql://db/allonfire?application_name=[a]"
+      );
+    } finally {
+      rmSync(dir, { force: true, recursive: true });
+    }
   });
 });

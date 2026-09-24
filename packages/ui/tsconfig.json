@@ -6,7 +6,8 @@
     "noEmit": true,
     "paths": {
       "@allonfire/ui/*": ["./src/*"]
-    }
+    },
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "vitest.config.ts"]
 }

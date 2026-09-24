@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+// @module-tag integration
 import { prisma } from "../../client";
 import {
   getAllRandomPhotos,

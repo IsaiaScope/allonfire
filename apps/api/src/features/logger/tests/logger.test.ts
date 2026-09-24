@@ -1,38 +1,24 @@
-import { describe, expect, it } from "vitest";
-import { createLogger } from "../logger";
-
-function captureLines() {
-  const lines: string[] = [];
-  return {
-    lines,
-    stream: {
-      write: (chunk: string) => {
-        lines.push(chunk);
-      },
-    },
-  };
-}
+// @module-tag unit
+import { captureLog } from "./capture";
 
 describe("createLogger", () => {
   it("redacts the authorization header", () => {
-    const { lines, stream } = captureLines();
-    const logger = createLogger({ destination: stream });
+    const { lines, logger } = captureLog();
 
     logger.info(
       { req: { headers: { authorization: "Bearer secret-token" } } },
       "req"
     );
 
-    expect(lines.join("")).not.toContain("secret-token");
-    expect(lines.join("")).toContain("[Redacted]");
+    expect(JSON.stringify(lines)).not.toContain("secret-token");
+    expect(JSON.stringify(lines)).toContain("[Redacted]");
   });
 
   it("redacts nested password fields", () => {
-    const { lines, stream } = captureLines();
-    const logger = createLogger({ destination: stream });
+    const { lines, logger } = captureLog();
 
     logger.info({ body: { password: "hunter2" } }, "login");
 
-    expect(lines.join("")).not.toContain("hunter2");
+    expect(JSON.stringify(lines)).not.toContain("hunter2");
   });
 });

@@ -59,11 +59,26 @@
       // ponytail: Laura's React components carry lint debt from before the
       // rules were tightened; the linter skips them until the Laura redesign.
       // Formatting still applies.
-      "includes": [
-        "apps/laura/**",
-        "packages/auth/src/components/login-form.tsx"
-      ],
+      "includes": ["apps/laura/**"],
       "linter": { "enabled": false }
+    },
+    {
+      // vitest runs with `globals: true` (packages/config/tests/vitest.config.ts).
+      "includes": ["**/*.test.ts", "**/*.test-d.ts", "**/tests/**"],
+      "javascript": {
+        "globals": [
+          "afterAll",
+          "afterEach",
+          "beforeAll",
+          "beforeEach",
+          "describe",
+          "expect",
+          "expectTypeOf",
+          "it",
+          "test",
+          "vi"
+        ]
+      }
     },
     {
       // The places allowed to touch process.env, print, and run long.

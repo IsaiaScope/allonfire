@@ -15,9 +15,7 @@
   "author": "Isaia Riva <40738274+IsaiaScope@users.noreply.github.com>",
   "scripts": {
     "build": "turbo run build",
-    "check": "ultracite check",
     "check-types": "turbo run check-types",
-    "commit-msg": "npx --no -- commitlint --edit",
     "db:changeset": "pnpm --filter @allonfire/database db:changeset",
     "db:drift": "pnpm --filter @allonfire/database db:drift",
     "db:generate": "pnpm --filter @allonfire/database db:generate",
@@ -25,24 +23,21 @@
     "db:seed": "pnpm --filter @allonfire/database db:seed",
     "db:status": "pnpm --filter @allonfire/database db:status",
     "db:update": "pnpm --filter @allonfire/database db:update",
-    "dev": "turbo run dev",
-    "dev:full": "pnpm dev:setup && pnpm dev",
+    "dev": "turbo run dev test //#test:ui --ui=tui",
     "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db:update && pnpm db:seed",
-    "docker:build:all": "pnpm docker:build:laura",
     "docker:build:laura": "docker build --build-arg APP_NAME=laura -f docker/Dockerfile -t allonfire-laura .",
-    "docker:deploy:laura": "pnpm docker:build:laura && docker compose -f docker/docker-compose.prod.yml up -d laura",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
-    "docker:prod:down": "docker compose -f docker/docker-compose.prod.yml down",
-    "docker:prod:logs": "docker compose -f docker/docker-compose.prod.yml logs -f",
-    "docker:prod:up": "docker compose -f docker/docker-compose.prod.yml up -d",
     "docker:up": "docker compose -f docker/docker-compose.dev.yml up -d",
-    "fix": "ultracite fix",
     "i18n:check": "turbo run i18n:check",
     "lint": "ultracite check",
     "lint:fix": "ultracite fix",
-    "pre-commit": "lint-staged --allow-empty",
     "prepare": "husky",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "turbo run test:e2e",
+    "test:integration": "vitest run --tags-filter=integration",
+    "test:ui": "vitest --ui --watch --standalone --coverage --open=false",
+    "test:unit": "vitest run --tags-filter=unit"
   },
   "commitlint": {
     "extends": [
@@ -73,12 +68,14 @@
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@types/node": "^22.13.0",
+    "@vitest/coverage-v8": "~4.1.0",
+    "@vitest/ui": "~4.1.11",
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
-    "turbo": "^2.5.3",
+    "turbo": "^2.11.3",
     "typescript": "~6.0.3",
     "ultracite": "7.12.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.11"
   },
   "packageManager": "pnpm@9.1.1",
   "engines": {

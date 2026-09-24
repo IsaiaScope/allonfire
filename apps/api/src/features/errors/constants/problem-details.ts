@@ -2,8 +2,8 @@ import { z } from "zod";
 import { errorCodeSchema } from "./error-codes";
 
 export const errorDetailSchema = z.object({
-  path: z.string(),
   message: z.string(),
+  path: z.string(),
 });
 
 /**
@@ -25,16 +25,20 @@ export const errorDetailSchema = z.object({
  * rather than `details` because `detail` singular is already a standard member
  * and the two would read as the same thing.
  */
-export const problemDetailsSchema = z.object({
-  type: z.string(),
-  title: z.string(),
-  status: z.number(),
-  detail: z.string(),
-  instance: z.string(),
-  requestId: z.string(),
-  code: errorCodeSchema,
-  errors: z.array(errorDetailSchema).optional(),
-});
+export const problemDetailsSchema = z
+  .object({
+    code: errorCodeSchema,
+    detail: z.string(),
+    errors: z.array(errorDetailSchema).optional(),
+    instance: z.string(),
+    requestId: z.string(),
+    status: z.number(),
+    title: z.string(),
+    type: z.string(),
+  })
+  // One named schema in the OpenAPI document, referenced by every error
+  // response rather than inlined into each.
+  .meta({ ref: "ProblemDetails" });
 
 export type ErrorDetail = z.infer<typeof errorDetailSchema>;
 export type ProblemDetails = z.infer<typeof problemDetailsSchema>;

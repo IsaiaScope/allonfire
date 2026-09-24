@@ -35,11 +35,17 @@ _percent_decode() {
 # gone, and a secret pg_dump's command line would show. Empty when nothing is
 # left.
 _query_suffix() {
-  local params="" pair
-  for pair in ${1//&/ }; do
+  local params="" pair pairs=()
+  # `read -a`, not an unquoted expansion: a `*`, `?` or `[` in a value would
+  # otherwise glob against the working directory.
+  [[ -n "$1" ]] && IFS='&' read -r -a pairs <<<"$1"
+  for pair in ${pairs[@]+"${pairs[@]}"}; do
     case "${pair%%=*}" in
       schema | connection_limit | pool_timeout | socket_timeout | pgbouncer | \
         statement_cache_size | sslidentity | sslpassword | sslaccept) ;;
+      # Prisma's sslcert is the server's CA; libpq and pgJDBC read sslcert as
+      # the client certificate and take the CA as sslrootcert.
+      sslcert) params+="${params:+&}sslrootcert=${pair#*=}" ;;
       *) params+="${params:+&}${pair}" ;;
     esac
   done

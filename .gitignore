@@ -59,3 +59,5 @@ TODO.*
 
 # Laura seed photos (large binary files)
 apps/laura/seed-photos/
+# Local dev logins, never committed
+/CREDENTIALS.md

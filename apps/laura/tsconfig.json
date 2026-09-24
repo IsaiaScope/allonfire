@@ -18,7 +18,9 @@
     "scripts",
     "next.config.ts",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "e2e",
+    "playwright.config.ts"
   ],
   "exclude": ["node_modules"]
 }

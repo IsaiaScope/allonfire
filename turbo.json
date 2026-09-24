@@ -19,44 +19,39 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [".env*"]
+      "env": ["ANALYZE", "NEXT_DIST_DIR", "MINIO_ENDPOINT", "MINIO_BUCKET"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "lint:fix": {
-      "dependsOn": ["^lint:fix"]
-    },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "i18n:check": {
-      "inputs": ["src/i18n/messages/**"],
-      "outputs": []
+      "inputs": ["src/features/i18n/translations/**"]
     },
     "test": {
-      "dependsOn": ["^test"],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "vitest.config.ts",
-        "vitest.setup.ts",
-        ".env*",
-        "scripts/**",
-        "changelog/**",
-        "liquibase/**",
-        "../../packages/database/prisma/schema/**",
-        "../../packages/database/changelog/**"
-      ],
-      "outputs": ["coverage/**"],
-      "env": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "db:generate": {
       "cache": false
+    },
+    "transit": {
+      "dependsOn": ["^transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": ["transit"]
+    },
+    "//#test:ui": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

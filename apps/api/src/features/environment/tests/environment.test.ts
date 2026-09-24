@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+// @module-tag unit
 import { parseEnv } from "../environment";
 
 const valid = {

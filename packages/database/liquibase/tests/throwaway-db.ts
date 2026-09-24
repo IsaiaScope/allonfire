@@ -43,7 +43,9 @@ export function migrateImage(
   extraEnv: readonly string[],
   ...args: string[]
 ): string {
-  // env(1) sets these for the child and inherits everything else.
+  // env(1) sets these for the child and inherits everything else. `stdio:
+  // "pipe"` keeps Liquibase's stderr out of the test output; a failure still
+  // carries it in the thrown error.
   return execFileSync(
     "env",
     [
@@ -53,7 +55,7 @@ export function migrateImage(
       "scripts/liquibase.sh",
       ...args,
     ],
-    { cwd: PACKAGE_DIR, encoding: "utf8" }
+    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
   );
 }
 
@@ -67,7 +69,7 @@ export function executeFile(url: string, file: string): void {
   execFileSync(
     "pnpm",
     ["exec", "prisma", "db", "execute", "--file", file, "--url", url],
-    { cwd: PACKAGE_DIR, encoding: "utf8" }
+    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
   );
 }
 

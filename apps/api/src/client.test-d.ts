@@ -1,5 +1,4 @@
 import { hc } from "hono/client";
-import { describe, expectTypeOf, it } from "vitest";
 import type { ApiType, AppType, ErrorCode, ProblemDetails } from "./client";
 
 describe("client contract", () => {

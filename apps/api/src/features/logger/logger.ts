@@ -3,7 +3,11 @@ import { trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };
 import { TELEMETRY_FLUSH_TIMEOUT_MS } from "../../shared/constants/limits";
-import { REDACT_CENSOR, REDACT_PATHS } from "../../shared/constants/runtime";
+import {
+  type LogLevel,
+  REDACT_CENSOR,
+  REDACT_PATHS,
+} from "../../shared/constants/runtime";
 import { env } from "../environment/environment";
 import { OTLP_PATH } from "../telemetry/constants/telemetry";
 import {
@@ -65,9 +69,11 @@ const traceContext = () => {
 
 export function createLogger(opts?: {
   destination?: DestinationStream;
+  /** Overrides `LOG_LEVEL`; tests that read the lines back pass `debug`. */
+  level?: LogLevel;
 }): Logger {
   const options = {
-    level: env.LOG_LEVEL,
+    level: opts?.level ?? env.LOG_LEVEL,
     mixin: traceContext,
     redact: { censor: REDACT_CENSOR, paths: [...REDACT_PATHS] },
   };

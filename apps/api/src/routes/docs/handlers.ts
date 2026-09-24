@@ -1,11 +1,13 @@
 import { Scalar } from "@scalar/hono-api-reference";
 import type { Hono, MiddlewareHandler } from "hono";
-import { openAPIRouteHandler } from "hono-openapi";
+import { openAPIRouteHandler, resolver } from "hono-openapi";
 import pkg from "../../../package.json" with { type: "json" };
 import { env } from "../../features/environment/environment";
+import { problemDetailsSchema } from "../../features/errors/constants/problem-details";
 import { notFound } from "../../features/errors/middleware/error-handler";
+import { CONTENT_TYPE } from "../../shared/constants/http";
 import type { AppBindings } from "../../shared/types/bindings";
-import { OPENAPI_DOC } from "./constants/openapi";
+import { OPENAPI_DOC, OPENAPI_RESPONSE } from "./constants/openapi";
 import { DOCS_ROUTE } from "./constants/routes";
 import { isDocsEnabled } from "./utils/enabled";
 
@@ -28,6 +30,20 @@ export const specHandler = (app: Hono<AppBindings>) =>
   whenEnabled(
     openAPIRouteHandler(app, {
       documentation: {
+        components: {
+          // Every error the API sends; a route documents one with
+          // `$ref: "#/components/responses/Problem"`.
+          responses: {
+            [OPENAPI_RESPONSE.PROBLEM]: {
+              content: {
+                [CONTENT_TYPE.PROBLEM_JSON]: {
+                  schema: resolver(problemDetailsSchema),
+                },
+              },
+              description: OPENAPI_DOC.PROBLEM_DESCRIPTION,
+            },
+          },
+        },
         info: {
           description: OPENAPI_DOC.DESCRIPTION,
           title: OPENAPI_DOC.TITLE,

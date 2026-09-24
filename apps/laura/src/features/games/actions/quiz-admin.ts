@@ -11,7 +11,6 @@ import {
 } from "@allonfire/database/laura/quiz";
 import { formatErrorMessage } from "@allonfire/utils/error";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import {
   processAndUploadImage,
   validateQuestionForm,
@@ -121,9 +120,9 @@ export async function createQuestionAction(
 export async function getQuizQuestionsListAction(): Promise<
   QuizQuestionListItem[]
 > {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not authenticated");
+  const access = await checkAdminAccess(auth);
+  if (!access.allowed) {
+    throw new Error(access.reason);
   }
 
   const questions = await getAllQuizQuestions();
@@ -140,9 +139,9 @@ export async function getQuizQuestionsListAction(): Promise<
 export async function getQuizQuestionByIdAction(
   id: string
 ): Promise<QuizQuestionDetail | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    throw new Error("Not authenticated");
+  const access = await checkAdminAccess(auth);
+  if (!access.allowed) {
+    throw new Error(access.reason);
   }
 
   const question = await getQuizQuestionById(id);

@@ -14,6 +14,9 @@ config/
     base.json              Base config: strictest checks, ESM, bundler resolution, no emit
     node.json              Node code (extends base + Node types, ES2022 lib, no emit)
     nextjs.json            Next.js app config (extends base + DOM lib, JSX, plugin, Node types)
+  tests/
+    vitest.config.ts       Shared vitest options: globals, auto-restored mocks/env, v8 coverage, tags
+    playwright.config.ts   Shared Playwright options (CI retries, forbidOnly, trace, `./e2e`)
 ```
 
 ## 🔧 Usage
@@ -36,6 +39,52 @@ Each app or package extends the appropriate preset:
   "extends": "@allonfire/config/typescript/base.json"
 }
 ```
+
+## Test presets
+
+A package merges its own options on top of the shared ones:
+
+```ts
+// vitest.config.ts
+import { vitestConfig } from "@allonfire/config/tests/vitest";
+import { defineConfig, mergeConfig } from "vitest/config";
+
+export default mergeConfig(vitestConfig, defineConfig({ test: { setupFiles: ["./vitest.setup.ts"] } }));
+
+// playwright.config.ts: defineConfig merges every argument, `use` included
+import { playwrightConfig } from "@allonfire/config/tests/playwright";
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig(playwrightConfig, { use: { baseURL: "http://localhost:3200" } });
+```
+
+What the vitest preset gives every package:
+
+| Option | Effect |
+|---|---|
+| `globals` | `describe`, `it`, `expect`, `vi` need no import; list `vitest/globals` in the package tsconfig `types` |
+| `restoreMocks`, `unstubEnvs`, `unstubGlobals` | every `vi.spyOn`, `vi.stubEnv`, `vi.stubGlobal` is undone before the next test |
+| `tags` | every test file starts with `// @module-tag unit` (needs nothing running) or `// @module-tag integration` (needs a running service: database, cache, queue, external API; 30s timeout); `vitest.setup.ts` fails a file with neither. Type tests (`*.test-d.ts`) take no tag: `tsc` checks them, nothing executes, so every run includes them. Browser tests are Playwright's |
+| `silent: "passed-only"` | console output from passing tests is hidden; a failing test prints its console output |
+| `passWithNoTests` | a package with no tests yet still passes |
+| `coverage` | v8, off until `--coverage` |
+
+Root scripts run every package as one vitest run (`vitest.config.ts` lists
+them as projects):
+
+| Script | Runs |
+|---|---|
+| `pnpm test` | each package through turbo, cached |
+| `pnpm test:unit` | tests tagged `unit`: no Docker needed |
+| `pnpm test:integration` | tests tagged `integration` |
+| `pnpm test:coverage` | everything, one merged report in `coverage/` |
+| `pnpm test:ui` | the Vitest UI with coverage on :51204. It runs nothing at start (`--standalone`), only what a save touches; press Run all in the UI for the full suite |
+| `pnpm dev` | runs `test` through turbo (unchanged packages come from cache, a change re-runs that package) next to the apps and the UI |
+| `pnpm test:e2e` | Playwright, through turbo |
+
+The package must list `@allonfire/config` as a dev dependency. Turbo's cache
+key follows declared dependencies, so a change here re-runs its tests and type
+checks.
 
 ## Node Types
 

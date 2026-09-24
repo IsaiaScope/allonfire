@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+// @module-tag integration
 import { awaitReady, createRedis } from "../../redis/redis";
 import { createRedisStore } from "../middleware/rate-limiter";
 

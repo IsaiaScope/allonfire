@@ -3,17 +3,16 @@ import { HTTP_STATUS } from "../../../shared/constants/http";
 
 /**
  * The readiness vocabulary is a client contract — orchestrators branch on
- * these strings — so it is a zod enum, not a bare union. `healthBodySchema`
- * and `readyBodySchema` below are the response shapes the routes must satisfy.
+ * these strings. `healthBodySchema` and the two ready body schemas below are
+ * the response shapes the routes must satisfy, one per status code, so the
+ * OpenAPI document never pairs `degraded` with a 503 or `unavailable` with a
+ * 200.
  */
 export const READY_STATUS = {
   DEGRADED: "degraded",
   OK: "ok",
   UNAVAILABLE: "unavailable",
 } as const;
-
-export const readyStatusSchema = z.enum(READY_STATUS);
-export type ReadyStatus = z.infer<typeof readyStatusSchema>;
 
 export const CHECK_STATUS = {
   OK: "ok",
@@ -29,16 +28,27 @@ export const healthBodySchema = z.object({
   version: z.string(),
 });
 
-export const readyBodySchema = z.object({
+/** 200: Postgres answers; Redis down only degrades. */
+export const readyServingBodySchema = z.object({
   checks: z.object({
-    database: checkStatusSchema,
+    database: z.literal(CHECK_STATUS.OK),
     redis: checkStatusSchema,
   }),
-  status: readyStatusSchema,
+  status: z.enum([READY_STATUS.DEGRADED, READY_STATUS.OK]),
+});
+
+/** 503: Postgres is unreachable, whatever Redis says. */
+export const readyUnavailableBodySchema = z.object({
+  checks: z.object({
+    database: z.literal(CHECK_STATUS.UNREACHABLE),
+    redis: checkStatusSchema,
+  }),
+  status: z.literal(READY_STATUS.UNAVAILABLE),
 });
 
 export type HealthBody = z.infer<typeof healthBodySchema>;
-export type ReadyBody = z.infer<typeof readyBodySchema>;
+export type ReadyServingBody = z.infer<typeof readyServingBodySchema>;
+export type ReadyUnavailableBody = z.infer<typeof readyUnavailableBodySchema>;
 
 /** Postgres is required; Redis failing open must not pull a healthy container. */
 export const READY_STATUS_CODE = {

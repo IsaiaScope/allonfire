@@ -1,5 +1,5 @@
+// @module-tag unit
 import { EventEmitter } from "node:events";
-import { describe, expect, it } from "vitest";
 import { REDIS_EVENT } from "../../../shared/constants/runtime";
 import { captureLog } from "../../logger/tests/capture";
 import { watchRedis } from "../redis";
