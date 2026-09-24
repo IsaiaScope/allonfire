@@ -12,8 +12,17 @@ _Avoid_: site, project, product
 
 **API**:
 The standalone HTTP backend that serves every App.
-_Avoid_: server, backend, service — "server" already means the Better Auth
-instance (`packages/auth/src/server.ts`) and Next's Server Components.
+_Avoid_: server, backend, service — "server" also means Next's Server
+Components.
+
+**Auth module**:
+The shared package that owns signing in, Sessions and the access rules. Any
+backend mounts it; the API is the only one that does today.
+_Avoid_: auth service, auth server
+
+**Session**:
+Proof that a User signed in, held by the API. A browser carries it as a cookie.
+_Avoid_: token, login
 
 **Viewer**:
 A User whose Role allows browsing and playing but no mutations.

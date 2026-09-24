@@ -21,3 +21,6 @@ Within a project's own Redis, numbered database indexes separate concerns of the
 same app (rate limits, cache, sessions). Eviction policy remains global even
 across those indexes, so the API runs `volatile-lru` and only sets TTLs on keys
 that are safe to lose — making durable keys structurally un-evictable.
+
+Sessions did not end up in Redis: ADR 0009 keeps them in Postgres, and the
+sessions index stays reserved.
