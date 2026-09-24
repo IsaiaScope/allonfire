@@ -4,11 +4,20 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./object": "./src/object.ts",
+    "./constants/node-env": "./src/constants/node-env.ts",
+    "./environment": "./src/environment/environment.ts",
     "./error": "./src/error.ts",
+    "./object": "./src/object.ts",
     "./security-headers": "./src/security-headers.ts"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.10",
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
-    "typescript": "~5.8.2"
+    "typescript": "~6.0.3"
   }
 }

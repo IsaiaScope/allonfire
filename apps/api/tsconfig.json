@@ -1,15 +1,12 @@
 {
-  "extends": "../../packages/config/typescript/base.json",
+  "extends": "../../packages/config/typescript/node.json",
   "compilerOptions": {
-    "lib": ["ES2022"],
-    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"],
       "@allonfire/database": ["../../packages/database/src/index.ts"],
-      "@allonfire/database/*": ["../../packages/database/src/*"],
       "@allonfire/utils/*": ["../../packages/utils/src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vitest.config.ts", "vitest.setup.ts"],
   "exclude": ["node_modules"]
 }

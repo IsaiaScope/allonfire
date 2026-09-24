@@ -26,7 +26,6 @@
 | `./env` | `authEnvSchema` — Zod schema for `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
 | `./components/login-form` | `LoginForm` — email/password login form |
 | `./components/theme-provider` | `ThemeProvider` — next-themes wrapper |
-| `./components/sonner` | `Sonner` — toast notification provider |
 | `./components/providers` | `Providers` — combined provider wrapper |
 
 ## 📁 Directory Structure
@@ -44,7 +43,6 @@ packages/auth/
     components/
       login-form.tsx       Email/password login form
       theme-provider.tsx   Theme provider wrapper
-      sonner.tsx           Toast notifications
       providers.tsx        Combined providers
   package.json
   tsconfig.json

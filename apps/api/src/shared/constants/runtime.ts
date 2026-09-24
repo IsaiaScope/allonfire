@@ -1,20 +1,6 @@
 import type { ElementOf } from "@allonfire/utils/object";
 import { z } from "zod";
 
-/**
- * `NODE_ENV` was compared against bare literals in three files (env schema,
- * logger transport, docs gate). One enum here means a typo is a type error
- * instead of a branch that never fires.
- */
-export const NODE_ENV = {
-  DEVELOPMENT: "development",
-  PRODUCTION: "production",
-  TEST: "test",
-} as const;
-
-export const nodeEnvSchema = z.enum(NODE_ENV);
-export type NodeEnv = z.infer<typeof nodeEnvSchema>;
-
 /** Mirrors pino's levels: fatal, error, warn, info, debug, trace, loudest first. */
 export const LOG_LEVEL = {
   DEBUG: "debug",

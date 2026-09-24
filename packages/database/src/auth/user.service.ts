@@ -1,30 +1,30 @@
-import { prisma } from "../index";
+import { prisma } from "../client";
 
 export async function getUserById(userId: string) {
   return await prisma.user.findUnique({
-    where: { id: userId },
     select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
       allowedApps: true,
       createdAt: true,
+      email: true,
+      id: true,
+      name: true,
+      role: true,
     },
+    where: { id: userId },
   });
 }
 
 export async function getUsers() {
   return await prisma.user.findMany({
+    orderBy: { createdAt: "asc" },
     select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
       allowedApps: true,
       createdAt: true,
+      email: true,
+      id: true,
+      name: true,
+      role: true,
     },
-    orderBy: { createdAt: "asc" },
   });
 }
 
@@ -39,8 +39,8 @@ export async function checkUserAppAccess(
   appName: string
 ): Promise<boolean> {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
     select: { allowedApps: true },
+    where: { id: userId },
   });
   if (!user) {
     return false;
@@ -53,7 +53,7 @@ export async function updateUserAllowedApps(
   allowedApps: string[]
 ) {
   return await prisma.user.update({
-    where: { id: userId },
     data: { allowedApps },
+    where: { id: userId },
   });
 }

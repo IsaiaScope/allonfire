@@ -1,0 +1,75 @@
+// The user base every App shares (ADR 0007). Better Auth owns these tables.
+// User lists Laura's models only because Prisma requires back-relations.
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+
+  @@schema("auth")
+}
+
+model User {
+  id            String         @id @default(cuid(2))
+  email         String         @unique
+  name          String?
+  emailVerified Boolean        @default(false)
+  image         String?
+  role          Role           @default(USER)
+  allowedApps   String[]       @default(["all"])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  photos        Photo[]
+  gameScores    GameScore[]
+  quizQuestions QuizQuestion[]
+
+  @@schema("auth")
+}
+
+model Session {
+  id        String   @id @default(cuid(2))
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model Account {
+  id                    String    @id @default(cuid(2))
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model Verification {
+  id         String    @id @default(cuid(2))
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@schema("auth")
+}

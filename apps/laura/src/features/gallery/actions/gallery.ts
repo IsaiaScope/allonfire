@@ -1,14 +1,16 @@
 "use server";
 
 import { checkMutationAccess } from "@allonfire/auth/guard";
-import type { PhotoWithUser } from "@allonfire/database";
 import {
-  deletePhoto,
   getFavoritePhotoIds,
   getFavoritesPaginated,
-  getPhotosPaginated,
   toggleFavorite,
-} from "@allonfire/database";
+} from "@allonfire/database/laura/favorite";
+import {
+  deletePhoto,
+  getPhotosPaginated,
+  type PhotoWithUser,
+} from "@allonfire/database/laura/photo";
 import { blurHashToDataURL } from "@allonfire/storage";
 import { auth } from "@/lib/auth";
 
@@ -32,16 +34,16 @@ export type GalleryPage = {
 
 function mapPhoto(photo: PhotoWithUser, isFavorite: boolean): GalleryPhoto {
   return {
-    id: photo.id,
-    url: photo.url,
-    thumbnailUrl: photo.thumbnailUrl,
-    width: photo.width,
-    height: photo.height,
     blurDataURL: blurHashToDataURL(photo.blurHash),
     caption: photo.caption,
     createdAt: photo.createdAt.toISOString(),
+    height: photo.height,
+    id: photo.id,
     isFavorite,
+    thumbnailUrl: photo.thumbnailUrl,
+    url: photo.url,
     user: photo.user,
+    width: photo.width,
   };
 }
 
@@ -50,8 +52,8 @@ export async function getPhotosAction(cursor?: string): Promise<GalleryPage> {
   const favoriteIds = await getFavoritePhotoIds(result.photos.map((p) => p.id));
 
   return {
-    photos: result.photos.map((p) => mapPhoto(p, favoriteIds.has(p.id))),
     nextCursor: result.nextCursor,
+    photos: result.photos.map((p) => mapPhoto(p, favoriteIds.has(p.id))),
   };
 }
 
@@ -60,8 +62,8 @@ export async function getFavoritesAction(
 ): Promise<GalleryPage> {
   const result = await getFavoritesPaginated(cursor);
   return {
-    photos: result.photos.map((photo) => mapPhoto(photo, true)),
     nextCursor: result.nextCursor,
+    photos: result.photos.map((photo) => mapPhoto(photo, true)),
   };
 }
 
@@ -80,7 +82,7 @@ export async function deletePhotoAction(
 ): Promise<{ success: true } | { success: false; error: string }> {
   const access = await checkMutationAccess(auth);
   if (!access.allowed) {
-    return { success: false, error: access.reason };
+    return { error: access.reason, success: false };
   }
   await deletePhoto(photoId);
   return { success: true };

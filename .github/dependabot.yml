@@ -1,0 +1,12 @@
+# Keeps the digest-pinned base image of the db-migrate image current: a pin
+# nobody bumps stops receiving security fixes.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /packages/database/liquibase
+    schedule:
+      interval: weekly
+    target-branch: dev
+    commit-message:
+      prefix: chore
+      include: scope

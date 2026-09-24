@@ -261,7 +261,7 @@ describe("documentation routes", () => {
 describe("error message localization", () => {
   const notFoundIn = async (headers?: Record<string, string>) => {
     const app = createApp(deps());
-    const res = await app.request("/nothing-here", { headers });
+    const res = await app.request("/nothing-here", headers ? { headers } : {});
     return (await res.json()) as ProblemDetails;
   };
 

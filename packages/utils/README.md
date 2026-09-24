@@ -1,7 +1,7 @@
 <h1 align="center">@allonfire/utils</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
 </p>
 
 <p align="center">Type-safe utility functions and security headers shared across all packages.</p>
@@ -13,6 +13,21 @@
 | `objectKeys(obj)` | Function | Type-safe `Object.keys()` — returns `(keyof T & string)[]` |
 | `objectEntries(obj)` | Function | Type-safe `Object.entries()` — returns `[keyof T & string, T[keyof T]][]` |
 | `formatErrorMessage(error, fallback)` | Function | Extracts message from `Error` instances, returns fallback for unknown errors |
+
+### `./environment`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `env` | Validated env | `NODE_ENV` read from `process.env`, default `development`. Extend it: `createEnv({ extends: [env], ... })` |
+| `runtimeEnvSchema` | Zod shape | The same schema, to spread into `server` when an env is built from a record rather than `process.env` |
+
+### `./constants/node-env`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `NODE_ENV` | `as const` object | `DEVELOPMENT`, `PRODUCTION`, `TEST`: compare against these, not bare strings |
+| `nodeEnvSchema` | Zod enum | Validates `NODE_ENV` |
+| `NodeEnv` | Type | `"development" \| "production" \| "test"` |
 
 ### `./security-headers`
 

@@ -1,79 +1,4 @@
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// ============ Auth ============
-
-enum Role {
-  ADMIN
-  USER
-  VIEWER
-}
-
-model User {
-  id            String    @id @default(cuid(2))
-  email         String    @unique
-  name          String?
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          Role      @default(USER)
-  allowedApps   String[]  @default(["all"])
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions       Session[]
-  accounts       Account[]
-  photos         Photo[]
-  gameScores     GameScore[]
-  quizQuestions  QuizQuestion[]
-}
-
-model Session {
-  id        String   @id @default(cuid(2))
-  expiresAt DateTime
-  token     String   @unique
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model Account {
-  id                    String    @id @default(cuid(2))
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@index([userId])
-}
-
-model Verification {
-  id         String    @id @default(cuid(2))
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
-}
+// Laura's App schema (ADR 0007).
 
 // ============ Photos ============
 
@@ -92,6 +17,7 @@ model Photo {
 
   @@index([createdAt])
   @@index([uploadedBy])
+  @@schema("laura")
 }
 
 model Favorite {
@@ -99,6 +25,8 @@ model Favorite {
   photoId   String   @unique
   photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@schema("laura")
 }
 
 // ============ Games ============
@@ -106,6 +34,8 @@ model Favorite {
 enum GameType {
   MEMORY
   QUIZ
+
+  @@schema("laura")
 }
 
 model GameScore {
@@ -121,6 +51,7 @@ model GameScore {
   @@index([gameType, timeMs])
   @@index([gameType, score])
   @@index([userId, gameType])
+  @@schema("laura")
 }
 
 // ============ Quiz ============
@@ -137,6 +68,7 @@ model QuizQuestion {
   createdAt         DateTime     @default(now())
 
   @@index([createdBy])
+  @@schema("laura")
 }
 
 model QuizAnswer {
@@ -149,4 +81,6 @@ model QuizAnswer {
   imageBlurHash     String?
   isCorrect         Boolean      @default(false)
   sortOrder         Int
+
+  @@schema("laura")
 }

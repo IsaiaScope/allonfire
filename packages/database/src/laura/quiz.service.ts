@@ -1,4 +1,4 @@
-import { prisma } from "../index";
+import { prisma } from "../client";
 
 export type QuizQuestionWithAnswers = {
   id: string;
@@ -20,35 +20,35 @@ export type QuizQuestionWithAnswers = {
 export async function createQuizQuestion(data: {
   text: string;
   createdBy: string;
-  imageUrl?: string;
-  imageThumbnailUrl?: string;
-  imageBlurHash?: string;
+  imageUrl?: string | undefined;
+  imageThumbnailUrl?: string | undefined;
+  imageBlurHash?: string | undefined;
   answers: {
     text: string;
     isCorrect: boolean;
     sortOrder: number;
-    imageUrl?: string;
-    imageThumbnailUrl?: string;
-    imageBlurHash?: string;
+    imageUrl?: string | undefined;
+    imageThumbnailUrl?: string | undefined;
+    imageBlurHash?: string | undefined;
   }[];
 }) {
   return await prisma.quizQuestion.create({
     data: {
-      text: data.text,
-      createdBy: data.createdBy,
-      imageUrl: data.imageUrl,
-      imageThumbnailUrl: data.imageThumbnailUrl,
-      imageBlurHash: data.imageBlurHash,
       answers: {
         create: data.answers.map((a) => ({
-          text: a.text,
+          imageBlurHash: a.imageBlurHash ?? null,
+          imageThumbnailUrl: a.imageThumbnailUrl ?? null,
+          imageUrl: a.imageUrl ?? null,
           isCorrect: a.isCorrect,
           sortOrder: a.sortOrder,
-          imageUrl: a.imageUrl,
-          imageThumbnailUrl: a.imageThumbnailUrl,
-          imageBlurHash: a.imageBlurHash,
+          text: a.text,
         })),
       },
+      createdBy: data.createdBy,
+      imageBlurHash: data.imageBlurHash ?? null,
+      imageThumbnailUrl: data.imageThumbnailUrl ?? null,
+      imageUrl: data.imageUrl ?? null,
+      text: data.text,
     },
     include: { answers: true },
   });
@@ -58,20 +58,20 @@ export async function getRandomQuizQuestions(
   count = 10
 ): Promise<QuizQuestionWithAnswers[]> {
   const randomIds = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT id FROM "QuizQuestion" ORDER BY RANDOM() LIMIT ${count}
+    SELECT id FROM laura."QuizQuestion" ORDER BY RANDOM() LIMIT ${count}
   `;
 
   const questions = await prisma.quizQuestion.findMany({
-    where: { id: { in: randomIds.map((r) => r.id) } },
     include: {
       answers: {
         orderBy: { sortOrder: "asc" },
       },
     },
+    where: { id: { in: randomIds.map((r) => r.id) } },
   });
 
   // Shuffle the questions order (since findMany returns in id order)
-  for (let i = questions.length - 1; i > 0; i--) {
+  for (let i = questions.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     const temp = questions[i];
     const swap = questions[j];
@@ -92,24 +92,30 @@ export async function getAllQuizQuestions() {
   return await prisma.quizQuestion.findMany({
     orderBy: { createdAt: "desc" },
     select: {
-      id: true,
-      text: true,
-      imageUrl: true,
-      imageThumbnailUrl: true,
-      createdAt: true,
       _count: { select: { answers: true } },
+      createdAt: true,
+      id: true,
+      imageThumbnailUrl: true,
+      imageUrl: true,
+      text: true,
     },
   });
 }
 
 export async function getQuizQuestionById(id: string) {
   return await prisma.quizQuestion.findUnique({
-    where: { id },
     include: {
       answers: { orderBy: { sortOrder: "asc" } },
     },
+    where: { id },
   });
 }
+
+const NO_IMAGE = {
+  imageBlurHash: null,
+  imageThumbnailUrl: null,
+  imageUrl: null,
+};
 
 export async function updateQuizQuestion(
   id: string,
@@ -122,34 +128,47 @@ export async function updateQuizQuestion(
       text: string;
       isCorrect: boolean;
       sortOrder: number;
-      imageUrl?: string;
-      imageThumbnailUrl?: string;
-      imageBlurHash?: string;
+      imageUrl?: string | undefined;
+      imageThumbnailUrl?: string | undefined;
+      imageBlurHash?: string | undefined;
+      /** Keep the image this question already stores at that URL. */
+      keepImageUrl?: string | undefined;
     }[];
   }
 ) {
+  // An image field left out stays as it is; only the keys present are written.
+  const { answers, ...fields } = data;
   return await prisma.$transaction(async (tx) => {
+    // Answers are recreated, so a kept image is copied from its stored row. A
+    // URL this question does not hold matches nothing and is not written.
+    const stored = await tx.quizAnswer.findMany({
+      select: { imageBlurHash: true, imageThumbnailUrl: true, imageUrl: true },
+      where: { imageUrl: { not: null }, questionId: id },
+    });
+    const storedByUrl = new Map(stored.map((image) => [image.imageUrl, image]));
+
     await tx.quizAnswer.deleteMany({ where: { questionId: id } });
 
     return await tx.quizQuestion.update({
-      where: { id },
       data: {
-        text: data.text,
-        imageUrl: data.imageUrl,
-        imageThumbnailUrl: data.imageThumbnailUrl,
-        imageBlurHash: data.imageBlurHash,
+        ...fields,
         answers: {
-          create: data.answers.map((a) => ({
-            text: a.text,
+          create: answers.map((a) => ({
+            ...(a.imageUrl
+              ? {
+                  imageBlurHash: a.imageBlurHash ?? null,
+                  imageThumbnailUrl: a.imageThumbnailUrl ?? null,
+                  imageUrl: a.imageUrl,
+                }
+              : (storedByUrl.get(a.keepImageUrl ?? null) ?? NO_IMAGE)),
             isCorrect: a.isCorrect,
             sortOrder: a.sortOrder,
-            imageUrl: a.imageUrl,
-            imageThumbnailUrl: a.imageThumbnailUrl,
-            imageBlurHash: a.imageBlurHash,
+            text: a.text,
           })),
         },
       },
       include: { answers: true },
+      where: { id },
     });
   });
 }

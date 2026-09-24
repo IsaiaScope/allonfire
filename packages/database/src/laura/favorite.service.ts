@@ -1,4 +1,4 @@
-import { prisma } from "../index";
+import { prisma } from "../client";
 import { DEFAULT_PAGE_SIZE, type PhotoWithUser } from "./photo.service";
 
 export async function toggleFavorite(
@@ -19,8 +19,8 @@ export async function getFavoritePhotoIds(
   photoIds: string[]
 ): Promise<Set<string>> {
   const favorites = await prisma.favorite.findMany({
-    where: { photoId: { in: photoIds } },
     select: { photoId: true },
+    where: { photoId: { in: photoIds } },
   });
 
   return new Set(favorites.map((f) => f.photoId));
@@ -31,8 +31,8 @@ export async function getFavoritesPaginated(
   limit = DEFAULT_PAGE_SIZE
 ): Promise<{ photos: PhotoWithUser[]; nextCursor: string | null }> {
   const favorites = await prisma.favorite.findMany({
-    take: limit + 1,
     orderBy: { createdAt: "desc" },
+    take: limit + 1,
     ...(cursor
       ? {
           cursor: { id: cursor },
@@ -41,7 +41,7 @@ export async function getFavoritesPaginated(
       : {}),
     include: {
       photo: {
-        include: { user: { select: { name: true, image: true } } },
+        include: { user: { select: { image: true, name: true } } },
       },
     },
   });
@@ -52,7 +52,7 @@ export async function getFavoritesPaginated(
   }
 
   return {
-    photos: favorites.map((f) => f.photo),
     nextCursor: hasMore ? (favorites.at(-1)?.id ?? null) : null,
+    photos: favorites.map((f) => f.photo),
   };
 }

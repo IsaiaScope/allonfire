@@ -32,6 +32,13 @@ jobs:
         run: pnpm lint
       - name: i18n placeholders and generated types
         run: pnpm turbo run i18n:check
+      # ShellCheck ships on GitHub's Ubuntu runners.
+      - name: Shell scripts
+        run: shellcheck -x packages/database/liquibase/*.sh packages/database/scripts/*.sh
+      # The Dockerfile's `check=error=true` turns every build-check warning into
+      # a failure.
+      - name: Migrate image build checks
+        run: docker build --check -f packages/database/liquibase/Dockerfile .
 
   test:
     runs-on: ubuntu-latest
@@ -81,8 +88,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
-      - name: Push schema to database
-        run: pnpm db:push
+      - name: Apply the changelog
+        run: pnpm db:update
+      - name: Changelog matches the Prisma schema
+        run: pnpm db:drift
       - name: Run tests
         run: pnpm turbo run test
 

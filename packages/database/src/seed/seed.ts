@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { hashPassword } from "better-auth/crypto";
-import type { Role } from "../generated/prisma/client";
-import { prisma } from "./index.js";
-import { seedEnv } from "./seed-env.js";
+import type { Role } from "../../generated/prisma/client";
+import { prisma } from "../client";
+import { seedEnv } from "../environment/seed-environment";
 
 type SeedUser = {
   email: string;
@@ -12,10 +12,10 @@ type SeedUser = {
   allowedApps: string[];
 };
 
-const SEED_DATA_DIR = resolve(import.meta.dirname, "../seed-data");
+const MOCK_DIR = resolve(import.meta.dirname, "mock");
 
 function readSeedFile<T>(filename: string): T {
-  return JSON.parse(readFileSync(resolve(SEED_DATA_DIR, filename), "utf-8"));
+  return JSON.parse(readFileSync(resolve(MOCK_DIR, filename), "utf-8"));
 }
 
 async function upsertUser(
@@ -24,27 +24,27 @@ async function upsertUser(
 ) {
   const typedRole = role as Role;
   const user = await prisma.user.upsert({
+    create: { allowedApps, email, emailVerified: true, name, role: typedRole },
+    update: { allowedApps, role: typedRole },
     where: { email },
-    update: { role: typedRole, allowedApps },
-    create: { email, name, emailVerified: true, role: typedRole, allowedApps },
   });
 
   const existingAccount = await prisma.account.findFirst({
-    where: { userId: user.id, providerId: "credential" },
+    where: { providerId: "credential", userId: user.id },
   });
 
   if (existingAccount) {
     await prisma.account.update({
-      where: { id: existingAccount.id },
       data: { password: hashedPassword },
+      where: { id: existingAccount.id },
     });
   } else {
     await prisma.account.create({
       data: {
         accountId: user.id,
+        password: hashedPassword,
         providerId: "credential",
         userId: user.id,
-        password: hashedPassword,
       },
     });
   }
@@ -62,10 +62,10 @@ async function main() {
 
   await upsertUser(
     {
+      allowedApps: ["all"],
       email: seedEnv.ADMIN_EMAIL,
       name: adminName,
       role: "ADMIN",
-      allowedApps: ["all"],
     },
     adminHash
   );
@@ -74,10 +74,10 @@ async function main() {
   const lauraViewerHash = await hashPassword(seedEnv.LAURA_VIEWER_PASSWORD);
   await upsertUser(
     {
+      allowedApps: ["laura"],
       email: seedEnv.LAURA_VIEWER_EMAIL,
       name: seedEnv.LAURA_VIEWER_EMAIL.split("@")[0] ?? "laura-viewer",
       role: "VIEWER",
-      allowedApps: ["laura"],
     },
     lauraViewerHash
   );

@@ -1,7 +1,4 @@
 {
-  "extends": "../config/typescript/base.json",
-  "compilerOptions": {
-    "noEmit": true
-  },
+  "extends": "../config/typescript/node.json",
   "include": ["src"]
 }

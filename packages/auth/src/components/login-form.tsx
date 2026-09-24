@@ -43,7 +43,7 @@ type LoginFormProps = {
   emailPlaceholder?: string;
   successIcon?: React.ReactNode;
   themeToggle?: React.ReactNode;
-  viewerCredentials?: { email: string; password: string };
+  viewerCredentials?: { email: string; password: string } | undefined;
   labels?: LoginFormLabels;
 };
 

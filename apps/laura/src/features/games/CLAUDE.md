@@ -11,7 +11,9 @@
 | File | Purpose |
 |------|---------|
 | `actions/games.ts` | Server actions: fetch memory photos (Fisher-Yates shuffle), submit memory score, get best time, get leaderboard data. Exports `MemoryCard`, `LeaderboardData` types. |
-| `actions/quiz.ts` | Server actions: fetch quiz questions, submit quiz score, quiz CRUD (create/update/delete questions), list all questions, get question by ID. Image processing and upload for questions/answers. Exports `QuizQuestionData`, `QuizQuestionListItem`, `QuizQuestionDetail` types. |
+| `actions/quiz.ts` | Server actions for play: fetch quiz questions, submit quiz score, quiz leaderboard. Exports `QuizQuestionData`. |
+| `actions/quiz-admin.ts` | Server actions for question management (ADMIN): create, update, delete, list all, get by ID. Exports `QuizQuestionListItem`, `QuizQuestionDetail`. |
+| `actions/quiz-form.ts` | Plain server helpers for `quiz-admin.ts`, kept out of `"use server"` so they are not callable actions: `validateQuestionForm` (answers parsed by the private `parseAnswer`), `processAndUploadImage`. |
 | `hooks/use-memory-game.ts` | Client hook: card flip state machine (idle/playing/checking/complete), match detection, timer, move counter, auto-submit score, reset with new photos, retry submit. |
 | `hooks/use-quiz-game.ts` | Client hook: quiz state machine (idle/playing/complete), answer selection/confirmation, question progression with transitions, timer, auto-submit score, mistake tracking with `useMemo`. Exports `PlayerAnswer` type. |
 | `hooks/use-memory-grid-size.ts` | Client hook: responsive grid calculation via `ResizeObserver`. Returns `ref`, `cols`, `rows`, `gap`, `cardSize`, `ready`. Mobile 3x4 / tablet+ 4x3 at 640px breakpoint. |
@@ -35,7 +37,7 @@
 
 ### 1. Add a new game type
 
-1. Add the game type to the `GameType` enum in the Prisma schema (`packages/database/prisma/schema.prisma`)
+1. Add the game type to the `GameType` enum in `packages/database/prisma/schema/laura.prisma`, then `pnpm db:changeset <name>` (see `packages/database/README.md`)
 2. Create a new server action file in `actions/` for game-specific logic (photo/question fetching, score submission)
 3. Create a game state hook in `hooks/` following the pattern of `use-memory-game.ts` or `use-quiz-game.ts`
 4. Create game components in `components/`
@@ -53,10 +55,10 @@
 
 ### 3. Add a new quiz question field
 
-1. Update the Prisma schema for `QuizQuestion` or `QuizAnswer`
-2. Update the types in `actions/quiz.ts` (`QuizQuestionData`, `QuizQuestionDetail`, `QuizQuestionListItem`)
-3. Update `validateQuestionForm()` and `parseAnswer()` in `actions/quiz.ts`
-4. Update `createQuestionAction()` and `updateQuestionAction()` in `actions/quiz.ts`
+1. Update `QuizQuestion` or `QuizAnswer` in `packages/database/prisma/schema/laura.prisma`, then `pnpm db:changeset <name>`
+2. Update the types: `QuizQuestionData` in `actions/quiz.ts`, `QuizQuestionDetail` and `QuizQuestionListItem` in `actions/quiz-admin.ts`
+3. Update `validateQuestionForm()` and `parseAnswer()` in `actions/quiz-form.ts`
+4. Update `createQuestionAction()` and `updateQuestionAction()` in `actions/quiz-admin.ts`
 5. Update the form UI in `quiz-question-form.tsx` (and `serializeAnswerToFormData` if answer-level)
 6. Update display components if the field is shown during gameplay
 
@@ -68,7 +70,7 @@
 
 ### 5. Add image support to a component
 
-1. Process images via `processAndUploadImage()` in `actions/quiz.ts` (reuse or extract to shared util)
+1. Process images via `processAndUploadImage()` in `actions/quiz-form.ts` (reuse or extract to shared util)
 2. Use `@allonfire/storage` for `processPhoto` + `uploadFile` + `blurHashToDataURL`
 3. Use `convertHeicToJpeg` from `@/lib/convert-heic` for client-side HEIC handling
 4. Use `validateImageFile` from `@/lib/file-validation` for validation
@@ -90,7 +92,7 @@
 
 - **Quiz CRUD admin-only:** All quiz create/update/delete actions use `checkAdminAccess`, which is stricter than `checkMutationAccess`. The game hub shows the edit link only when `useIsAdmin()` returns true.
 
-- **FormData serialization for quiz CRUD:** The form uses `FormData` (not JSON) because it includes `File` objects for image uploads. Answer fields are indexed (`answer-0-text`, `answer-0-correct`, etc.). Edit mode adds `keepExistingImage` and `existingImageUrl` fields per answer for image retention logic.
+- **FormData serialization for quiz CRUD:** The form uses `FormData` (not JSON) because it includes `File` objects for image uploads. Answer fields are indexed (`answer-0-text`, `answer-0-correct`, etc.). Edit mode adds `keepExistingImage` for the question and `answer-N-existingImageUrl` per kept answer image; `updateQuizQuestion` copies a kept image (blur hash included) from the stored answer at that URL, and writes none for a URL the question does not hold.
 
 - **Image preview portals:** `quiz-question-form.tsx` uses `createPortal(overlay, document.body)` for fullscreen image previews. Escape key closes the overlay via a `useEffect` listener. Body scroll is locked while the preview is open.
 
@@ -104,7 +106,10 @@
 
 | Package | Why |
 |---------|-----|
-| `@allonfire/database` | All DB queries: photos, scores, leaderboard, quiz questions CRUD |
+| `@allonfire/database/laura/photo` | Random photos and photo count for the memory board |
+| `@allonfire/database/laura/game-score` | Score submission, best scores, leaderboard, stats |
+| `@allonfire/database/laura/quiz` | Quiz questions CRUD and random selection |
+| `@allonfire/database` | `GameType` type |
 | `@allonfire/auth/guard` | `checkAppAccess`, `checkMutationAccess`, `checkAdminAccess` for server action authorization |
 | `@allonfire/storage` | `blurHashToDataURL`, `processPhoto`, `uploadFile` for image handling |
 | `@allonfire/utils` | `formatErrorMessage` for error normalization in quiz CRUD |

@@ -44,11 +44,15 @@ level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 
 ## Database Schema Quick Reference
 
-Schema: `packages/database/prisma/schema.prisma`
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `laura.prisma`).
+Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
-- **Auth (shared):** `User`, `Session`, `Account`, `Verification`
-- **Laura:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`
-- **Key enums:** `GameType`, `Role`
+- **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enum `Role`
+- **`laura` schema:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType`
+- Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
+- Services import per file: `@allonfire/database/laura/photo`, `@allonfire/database/auth/user`; the root exports only `prisma` and generated types.
+- Raw SQL names the schema: `laura."Photo"`.
+- Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
 ## Laura App Structure (`apps/laura/src/`)
 

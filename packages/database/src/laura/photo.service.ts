@@ -1,6 +1,6 @@
 import type { Photo } from "../../generated/prisma/client";
 import { Prisma } from "../../generated/prisma/client";
-import { prisma } from "../index";
+import { prisma } from "../client";
 
 export const DEFAULT_PAGE_SIZE = 50;
 
@@ -13,15 +13,15 @@ export async function getPhotosPaginated(
   limit = DEFAULT_PAGE_SIZE
 ): Promise<{ photos: PhotoWithUser[]; nextCursor: string | null }> {
   const photos = await prisma.photo.findMany({
-    take: limit + 1,
     orderBy: { id: "asc" },
+    take: limit + 1,
     ...(cursor
       ? {
           cursor: { id: cursor },
           skip: 1,
         }
       : {}),
-    include: { user: { select: { name: true, image: true } } },
+    include: { user: { select: { image: true, name: true } } },
   });
 
   const hasMore = photos.length > limit;
@@ -30,8 +30,8 @@ export async function getPhotosPaginated(
   }
 
   return {
-    photos,
     nextCursor: hasMore ? (photos.at(-1)?.id ?? null) : null,
+    photos,
   };
 }
 
@@ -66,7 +66,7 @@ async function queryRandomPhotos(
     SELECT id, "thumbnailUrl", "blurHash"
     FROM (
       SELECT DISTINCT ON (LEFT("blurHash", 6)) id, "thumbnailUrl", "blurHash"
-      FROM "Photo"
+      FROM laura."Photo"
       ${filter}
       ORDER BY LEFT("blurHash", 6), RANDOM()
     ) sub
@@ -82,7 +82,7 @@ async function queryRandomPhotos(
     SELECT id, "thumbnailUrl", "blurHash"
     FROM (
       SELECT DISTINCT ON ("blurHash") id, "thumbnailUrl", "blurHash"
-      FROM "Photo"
+      FROM laura."Photo"
       ${filter}
       ORDER BY "blurHash", RANDOM()
     ) sub
@@ -102,7 +102,7 @@ export function getAllRandomPhotos(count: number) {
 export async function getUserPhotoCount(userId: string) {
   const result = await prisma.$queryRaw<[{ count: bigint }]>`
     SELECT COUNT(DISTINCT LEFT("blurHash", 6)) as count
-    FROM "Photo"
+    FROM laura."Photo"
     WHERE "uploadedBy" = ${userId}
   `;
   return Number(result[0]?.count ?? 0);

@@ -24,6 +24,12 @@ The list on a User naming which Apps they may enter. The value `all` grants
 every App.
 _Avoid_: permissions, entitlements
 
+**App schema**:
+The Postgres schema holding one App's tables, named after the App (`laura`).
+`auth` is the one schema no App owns: it holds the user base every App shares.
+_Avoid_: "schema" alone — it also means the Prisma schema files and zod
+schemas; namespace
+
 ### Environments
 
 **Local**:

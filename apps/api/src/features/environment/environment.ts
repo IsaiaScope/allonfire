@@ -1,3 +1,5 @@
+import { databaseEnvSchema } from "@allonfire/database/env";
+import { runtimeEnvSchema } from "@allonfire/utils/environment";
 import { objectFromEntries } from "@allonfire/utils/object";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
@@ -7,8 +9,6 @@ import {
   booleanEnvSchema,
   LOG_LEVEL,
   logLevelSchema,
-  NODE_ENV,
-  nodeEnvSchema,
   SEPARATOR,
 } from "../../shared/constants/runtime";
 import {
@@ -41,18 +41,18 @@ export function parseEnv(raw: Record<string, string | undefined>) {
     emptyStringAsUndefined: true,
     runtimeEnv: raw,
     server: {
+      ...runtimeEnvSchema,
+      ...databaseEnvSchema,
       CORS_ORIGINS: z.string().transform((value) =>
         value
           .split(SEPARATOR.LIST)
           .map((origin) => origin.trim())
           .filter(Boolean)
       ),
-      DATABASE_URL: z.url(),
       ENABLE_DOCS: booleanEnvSchema
         .default(BOOLEAN_ENV.FALSE)
         .transform((value) => value === BOOLEAN_ENV.TRUE),
       LOG_LEVEL: logLevelSchema.default(LOG_LEVEL.INFO),
-      NODE_ENV: nodeEnvSchema.default(NODE_ENV.DEVELOPMENT),
       // Unset switches telemetry off. Named after the OTel spec so the
       // collector docs apply unchanged; app code reads them from here.
       OTEL_EXPORTER_OTLP_ENDPOINT: z

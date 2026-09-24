@@ -8,11 +8,14 @@
     "./use-mounted": "./src/use-mounted.ts",
     "./breakpoints": "./src/breakpoints.ts"
   },
-  "peerDependencies": {
-    "react": "^19.0.0"
+  "scripts": {
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "typescript": "~5.8.2"
+    "typescript": "~6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   }
 }

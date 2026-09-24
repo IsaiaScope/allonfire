@@ -67,7 +67,7 @@
 |---------|-----|
 | `@tanstack/react-query` | `useQueryClient` to invalidate `["photos"]` after successful upload |
 | `@allonfire/ui` | Button, Progress components and `cn` utility |
-| `@allonfire/database` | `createPhoto` for database record creation |
+| `@allonfire/database/laura/photo` | `createPhoto` for database record creation |
 | `@allonfire/storage` | `processPhoto` (resize + thumbnail + blurhash), `uploadFile` (S3/MinIO) |
 | `@allonfire/auth` | `checkMutationAccess` for viewer role guard on upload action |
 | `next-intl` | `useTranslations` for i18n strings |

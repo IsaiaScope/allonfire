@@ -1,4 +1,4 @@
-import { checkUserAppAccess } from "@allonfire/database";
+import { checkUserAppAccess } from "@allonfire/database/auth/user";
 import { headers } from "next/headers";
 import type { Auth } from "../server";
 

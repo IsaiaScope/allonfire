@@ -1,7 +1,7 @@
 "use server";
 
 import { checkMutationAccess } from "@allonfire/auth/guard";
-import { createPhoto } from "@allonfire/database";
+import { createPhoto } from "@allonfire/database/laura/photo";
 import { processPhoto, uploadFile } from "@allonfire/storage";
 import { auth } from "@/lib/auth";
 import { validateImageFile } from "@/lib/file-validation";
@@ -13,18 +13,18 @@ export async function uploadPhotoAction(
 ): Promise<UploadResult> {
   const access = await checkMutationAccess(auth);
   if (!access.allowed) {
-    return { success: false, error: access.reason };
+    return { error: access.reason, success: false };
   }
   const { session } = access;
 
   const file = formData.get("photo") as File | null;
   if (!file) {
-    return { success: false, error: "noFile" };
+    return { error: "noFile", success: false };
   }
 
   const validationError = validateImageFile(file);
   if (validationError) {
-    return { success: false, error: validationError };
+    return { error: validationError, success: false };
   }
 
   try {
@@ -43,16 +43,16 @@ export async function uploadPhotoAction(
     ]);
 
     await createPhoto({
-      url: fullUrl,
-      thumbnailUrl: thumbUrl,
-      width: processed.width,
-      height: processed.height,
       blurHash: processed.blurHash,
+      height: processed.height,
+      thumbnailUrl: thumbUrl,
       uploadedBy: session.user.id,
+      url: fullUrl,
+      width: processed.width,
     });
 
     return { success: true };
   } catch {
-    return { success: false, error: "uploadFailed" };
+    return { error: "uploadFailed", success: false };
   }
 }

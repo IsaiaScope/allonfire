@@ -1,5 +1,6 @@
 "use client";
 
+import { Toaster } from "@allonfire/ui/components/sonner";
 import { TooltipProvider } from "@allonfire/ui/components/tooltip";
 import {
   QueryClient,
@@ -7,16 +8,15 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { useState } from "react";
-import { Toaster } from "./sonner";
 import { ThemeProvider } from "./theme-provider";
 
 const DEFAULT_QUERY_CONFIG: QueryClientConfig = {
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
       gcTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
       retry: (failureCount) => failureCount < 3,
+      staleTime: 60 * 1000,
     },
   },
 };

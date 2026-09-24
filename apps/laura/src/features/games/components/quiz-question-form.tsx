@@ -20,11 +20,11 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
-import type { QuizQuestionDetail } from "@/features/games/actions/quiz";
+import type { QuizQuestionDetail } from "@/features/games/actions/quiz-admin";
 import {
   createQuestionAction,
   updateQuestionAction,
-} from "@/features/games/actions/quiz";
+} from "@/features/games/actions/quiz-admin";
 import { Link } from "@/i18n/navigation";
 import { fadeInUp, staggerContainer } from "@/lib/animation-variants";
 import { convertHeicToJpeg } from "@/lib/convert-heic";
@@ -37,19 +37,17 @@ type AnswerSlot = {
   image: File | null;
   imagePreview: string | null;
   existingImageUrl: string | null;
-  existingThumbUrl: string | null;
 };
 
 function makeAnswerSlot(overrides?: Partial<AnswerSlot>): AnswerSlot {
   return {
+    existingImageUrl: null,
     id:
       globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
-    text: "",
-    isCorrect: false,
     image: null,
     imagePreview: null,
-    existingImageUrl: null,
-    existingThumbUrl: null,
+    isCorrect: false,
+    text: "",
     ...overrides,
   };
 }
@@ -65,17 +63,8 @@ function serializeAnswerToFormData(
   if (answer.image) {
     formData.set(`answer-${index}-image`, answer.image);
   }
-  if (includeExisting) {
-    formData.set(
-      `answer-${index}-keepExistingImage`,
-      String(!!answer.existingImageUrl)
-    );
-    if (answer.existingImageUrl) {
-      formData.set(`answer-${index}-existingImageUrl`, answer.existingImageUrl);
-    }
-    if (answer.existingThumbUrl) {
-      formData.set(`answer-${index}-existingThumbUrl`, answer.existingThumbUrl);
-    }
+  if (includeExisting && answer.existingImageUrl) {
+    formData.set(`answer-${index}-existingImageUrl`, answer.existingImageUrl);
   }
 }
 
@@ -86,7 +75,7 @@ type QuizQuestionFormProps = {
 export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
   const t = useTranslations("Games");
   const router = useRouter();
-  const isEditMode = !!initialData;
+  const isEditMode = Boolean(initialData);
   const [isPending, startTransition] = useTransition();
 
   const [questionText, setQuestionText] = useState(initialData?.text ?? "");
@@ -97,15 +86,13 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
   const [existingQuestionImageUrl, setExistingQuestionImageUrl] = useState<
     string | null
   >(initialData?.imageUrl ?? null);
-  const existingQuestionThumbUrl = initialData?.imageThumbnailUrl ?? null;
   const [answers, setAnswers] = useState<AnswerSlot[]>(() => {
     if (initialData?.answers.length) {
       return initialData.answers.map((a) =>
         makeAnswerSlot({
-          text: a.text,
-          isCorrect: a.isCorrect,
           existingImageUrl: a.imageUrl,
-          existingThumbUrl: a.imageThumbnailUrl,
+          isCorrect: a.isCorrect,
+          text: a.text,
         })
       );
     }
@@ -224,10 +211,9 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
           const url = URL.createObjectURL(converted);
           previewUrlsRef.current.add(url);
           updateAnswer(index, {
+            existingImageUrl: null,
             image: converted,
             imagePreview: url,
-            existingImageUrl: null,
-            existingThumbUrl: null,
           });
         } finally {
           setProcessingImage(null);
@@ -245,10 +231,9 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
         URL.revokeObjectURL(preview);
       }
       updateAnswer(index, {
+        existingImageUrl: null,
         image: null,
         imagePreview: null,
-        existingImageUrl: null,
-        existingThumbUrl: null,
       });
     },
     [answers, updateAnswer]
@@ -264,13 +249,10 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
     }
 
     if (isEditMode) {
-      formData.set("keepExistingImage", String(!!existingQuestionImageUrl));
-      if (existingQuestionImageUrl) {
-        formData.set("existingImageUrl", existingQuestionImageUrl);
-      }
-      if (existingQuestionThumbUrl) {
-        formData.set("existingThumbUrl", existingQuestionThumbUrl);
-      }
+      formData.set(
+        "keepExistingImage",
+        String(Boolean(existingQuestionImageUrl))
+      );
     }
 
     for (const [i, answer] of answers.entries()) {
@@ -283,7 +265,6 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
     answers,
     questionImage,
     existingQuestionImageUrl,
-    existingQuestionThumbUrl,
     isEditMode,
   ]);
 
@@ -474,7 +455,7 @@ export function QuizQuestionForm({ initialData }: QuizQuestionFormProps) {
           {answers.map((answer, index) => (
             <motion.div
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
+              exit={{ opacity: 0, transition: { duration: 0.15 }, y: -8 }}
               initial={{ opacity: 0, y: 8 }}
               key={answer.id}
               transition={{ duration: 0.2 }}

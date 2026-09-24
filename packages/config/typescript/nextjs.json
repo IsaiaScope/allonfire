@@ -3,10 +3,12 @@
   "extends": "./base.json",
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "jsx": "preserve",
-    "noEmit": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "types": ["node"]
   }
 }

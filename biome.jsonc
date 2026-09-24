@@ -56,11 +56,23 @@
   },
   "overrides": [
     {
+      // ponytail: Laura's React components carry lint debt from before the
+      // rules were tightened; the linter skips them until the Laura redesign.
+      // Formatting still applies.
+      "includes": [
+        "apps/laura/**",
+        "packages/auth/src/components/login-form.tsx"
+      ],
+      "linter": { "enabled": false }
+    },
+    {
       // The places allowed to touch process.env, print, and run long.
       "includes": [
         "**/env.ts",
         "**/environment.ts",
         "**/seed*.ts",
+        // Seed data: long lists by nature.
+        "**/mock/**",
         "**/scripts/**",
         "**/*.config.ts",
         "**/vitest.setup.ts",

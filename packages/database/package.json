@@ -5,20 +5,28 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./services": "./src/services/index.ts",
-    "./generated/prisma": "./generated/prisma/index.ts"
+    "./env": "./src/environment/environment.ts",
+    "./auth/user": "./src/auth/user.service.ts",
+    "./laura/photo": "./src/laura/photo.service.ts",
+    "./laura/favorite": "./src/laura/favorite.service.ts",
+    "./laura/game-score": "./src/laura/game-score.service.ts",
+    "./laura/quiz": "./src/laura/quiz.service.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:changeset": "tsx --env-file=.env scripts/changeset.ts",
+    "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "tsx --env-file=.env src/seed.ts",
-    "db:seed-quiz": "tsx --env-file=.env src/seed-quiz.ts",
+    "db:rollback": "bash scripts/liquibase.sh rollback",
+    "db:seed": "tsx --env-file=.env src/seed/seed.ts",
+    "db:seed-quiz": "tsx --env-file=.env src/seed/seed-quiz.ts",
+    "db:status": "bash scripts/liquibase.sh status --verbose",
     "db:studio": "prisma studio",
+    "db:update": "bash scripts/liquibase.sh update",
     "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/utils": "workspace:*",
     "@prisma/client": "^6.19.3",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",
@@ -27,7 +35,10 @@
   },
   "devDependencies": {
     "tsx": "^4.19.0",
-    "typescript": "~5.8.2",
+    "typescript": "~6.0.3",
     "vitest": "^4.1.0"
+  },
+  "prisma": {
+    "schema": "prisma/schema"
   }
 }

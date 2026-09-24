@@ -46,15 +46,16 @@
         "vitest.config.ts",
         "vitest.setup.ts",
         ".env*",
-        "../../packages/database/prisma/schema.prisma"
+        "scripts/**",
+        "changelog/**",
+        "liquibase/**",
+        "../../packages/database/prisma/schema/**",
+        "../../packages/database/changelog/**"
       ],
       "outputs": ["coverage/**"],
       "env": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
     },
     "db:generate": {
-      "cache": false
-    },
-    "db:push": {
       "cache": false
     }
   }
