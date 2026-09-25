@@ -17,10 +17,19 @@ export default mergeConfig(
       // Coverage is decided here, not per project.
       // `.ts` only: a `.tsx` no test loads reaches the v8 remapper untransformed
       // and fails to parse. Add `tsx` once a React component has a test.
-      coverage: { include: ["{apps,packages}/*/src/**/*.ts"] },
-      // `auth-old` is the untracked Next-bound package kept for reference; it
-      // still names itself `@allonfire/auth`; pnpm-workspace.yaml excludes it too.
-      projects: ["{apps,packages}/*/vitest.config.ts", "!packages/auth-old/**"],
+      // Paused Laura and the `._*` AppleDouble twins exFAT writes are out too.
+      coverage: {
+        exclude: ["**/._*", "apps/laura/**"],
+        include: ["{apps,packages}/*/src/**/*.ts"],
+      },
+      // `auth-old` and `ui-old` are untracked packages kept for reference, and
+      // Laura is paused (ADR 0010); pnpm-workspace.yaml excludes all three too.
+      projects: [
+        "{apps,packages}/*/vitest.config.ts",
+        "!packages/auth-old/**",
+        "!packages/ui-old/**",
+        "!apps/laura/**",
+      ],
     },
   })
 );

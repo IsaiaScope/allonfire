@@ -12,5 +12,8 @@ export const playwrightConfig = defineConfig({
   reporter: isCi ? "github" : "list",
   retries: isCi ? 2 : 0,
   testDir: "./e2e",
+  // macOS writes `._name` AppleDouble twins on non-APFS volumes, and
+  // Playwright would load `._smoke.spec.ts` as a test file.
+  testIgnore: "**/._*",
   use: { trace: "on-first-retry" },
 });

@@ -29,7 +29,7 @@ is green across the workspace.
 | Auth | Out of scope — ADR 0009 (auth in the API) is not merged yet |
 | shadcn primitives | Base UI (`--base base`, preset `base-nova`) |
 | shadcn components | All (`shadcn add --all`) |
-| App imports | AOF components only; Biome `noRestrictedImports` rejects `@allonfire/shadcn*` under `apps/**` |
+| App imports | AOF components only; Biome `noRestrictedImports` rejects `@allonfire/shadcn*` everywhere but `packages/ui` |
 | Themes | In `@allonfire/ui`: `styles/base.css` shared + `styles/theme-<app>.css` per App |
 | Locales | `en` (default) and `it`, `localePrefix: "as-needed"` — `/` English, `/it` Italian |
 | Add-ons | cacheComponents, React Compiler, typedRoutes, nuqs, TanStack Query devtools |
@@ -74,7 +74,7 @@ here was checked at >1M weekly downloads (lowest: @t3-oss/env-nextjs ~2.2M).
 - `src/styles/base.css` imports `@allonfire/shadcn/styles/globals.css` and holds
   the shared base layer. `src/styles/theme-back-office.css` is the Back office
   Theme — base-nova defaults for now; impeccable reshapes it later.
-- First AOF component: `src/components/button.tsx`, a thin wrapper over the
+- First AOF component: `AOFButton` in `src/components/aof-button.tsx`, a thin wrapper over the
   shadcn `Button` (same props, re-exported variants). It proves the
   shadcn → ui → App chain and is where the first customisation will land.
 - `vitest.config.ts` from the shared preset; one test: the AOF `Button` renders

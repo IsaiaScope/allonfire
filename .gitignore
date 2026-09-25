@@ -64,3 +64,4 @@ apps/laura/seed-photos/
 
 # Old Next-bound auth package, kept locally as reference until Laura's refactor
 /packages/auth-old/
+/packages/ui-old/

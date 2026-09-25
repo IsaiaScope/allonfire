@@ -1,0 +1,4 @@
+/* biome-ignore-all lint/suspicious/noEmptySource: placeholder the impeccable design pass fills */
+/* The Back office Theme. Empty on purpose: the Back office uses shadcn's
+   base-nova tokens until the impeccable design pass overrides them here, in
+   `:root` and `.dark`. */

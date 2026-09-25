@@ -50,6 +50,9 @@ export const vitestConfig = defineConfig({
         timeout: 30_000,
       },
     ],
+    // Type tests (`*.test-d.ts`) collect files on their own list, so the
+    // AppleDouble twins need excluding there too.
+    typecheck: { exclude: [...configDefaults.typecheck.exclude, "**/._*"] },
     unstubEnvs: true,
     unstubGlobals: true,
   },

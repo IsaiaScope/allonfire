@@ -6,8 +6,8 @@ re-applying every edit blind. The Design system is now two packages:
 `@allonfire/shadcn`, written only by the shadcn CLI (Base UI primitives, every
 registry component) and never edited by hand, and `@allonfire/ui`, which holds
 AOF components composed from it plus one Theme per App. Apps import AOF
-components only; a Biome rule rejects `@allonfire/shadcn` imports under `apps/`,
-so a customisation always has a named home and a shadcn update is a clean diff.
+components only; a Biome rule rejects `@allonfire/shadcn` imports everywhere
+but `packages/ui`, so a customisation always has a named home and a shadcn update is a clean diff.
 
 ## Considered Options
 

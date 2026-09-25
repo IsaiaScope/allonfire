@@ -19,7 +19,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["ANALYZE", "NEXT_DIST_DIR", "MINIO_ENDPOINT", "MINIO_BUCKET"],
+      "env": [
+        "ANALYZE",
+        "NEXT_DIST_DIR",
+        "MINIO_ENDPOINT",
+        "MINIO_BUCKET",
+        "NEXT_PUBLIC_API_URL"
+      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },

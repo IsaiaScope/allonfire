@@ -1,0 +1,18 @@
+{
+  "Metadata": {
+    "title": "Back office"
+  },
+  "Home": {
+    "title": "Back office",
+    "description": "Ancora niente qui.",
+    "action": "Inizia"
+  },
+  "NotFound": {
+    "title": "Pagina non trovata",
+    "back": "Torna all'inizio"
+  },
+  "Error": {
+    "title": "Qualcosa è andato storto",
+    "retry": "Riprova"
+  }
+}

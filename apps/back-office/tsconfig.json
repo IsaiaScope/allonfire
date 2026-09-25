@@ -1,0 +1,24 @@
+{
+  "extends": "../../packages/config/typescript/nextjs.json",
+  "compilerOptions": {
+    // shadcn components ship as .tsx source, so TypeScript checks them under
+    // every consumer's config: the two strict flags the generated code breaks
+    // (calendar.tsx, scroll-area.tsx on shadcn 4.21) are off here too (ADR 0010).
+    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src",
+    "e2e",
+    "next.config.ts",
+    "next-env.d.ts",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

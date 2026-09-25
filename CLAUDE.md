@@ -274,3 +274,21 @@ The five canonical roles, label strings unchanged. See `docs/agents/triage-label
 ### Domain docs
 
 Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Framework skills
+
+Pinned in `skills-lock.json`, restored with `npx skills experimental_install`:
+
+- Vercel: `vercel-react-best-practices`, `vercel-composition-patterns`, `web-design-guidelines`, `vercel-react-view-transitions`, `writing-guidelines`.
+- Next.js: `next-dev-loop`, `next-cache-components-adoption`, `next-cache-components-optimizer`, `next-partial-prefetching-adoption`, `next-partial-prefetching-optimizer`.
+- shadcn: `shadcn`, `migrate-radix-to-base`.
+
+MCP servers in `.mcp.json`: `shadcn` (browse and add registry components) and `next-devtools` (errors, routes and logs from a running `next dev`).
+
+### Design system
+
+`packages/shadcn` is written only by the shadcn CLI: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there. Never edit it by hand. Customisation lives in AOF components in `packages/ui`, and Apps and other packages import only those (Biome rejects `@allonfire/shadcn` anywhere else). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
+
+### exFAT volume
+
+The repo lives on an exFAT drive, where macOS writes a `._<name>` sidecar next to every file it touches. Turbopack's file cache stays on: a Next app's `dev` and `build` scripts delete `._*` under `.next` before starting, since Turbopack fails to open a cache folder holding them (laura still turns its dev cache off until it is migrated). The the vitest and Playwright presets ignore `**/._*`; a new tool that scans directories needs the same exclusion.
