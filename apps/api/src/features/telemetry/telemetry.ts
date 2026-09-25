@@ -25,7 +25,7 @@ import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import type { Logger } from "pino";
-import { env } from "../environment/environment";
+import { env } from "../../environment/environment";
 import { logger as defaultLogger } from "../logger/logger";
 import { OTLP_PATH, PRISMA_STARTUP_SPANS } from "./constants/telemetry";
 import { otlpExporterOptions, telemetryResourceAttributes } from "./resource";

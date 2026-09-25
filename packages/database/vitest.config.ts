@@ -1,12 +1,13 @@
-import { defineConfig } from "vitest/config";
+import { vitestConfig } from "@allonfire/config/tests/vitest";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-export default defineConfig({
-  test: {
-    environment: "node",
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
-    passWithNoTests: true,
-    setupFiles: ["./vitest.setup.ts"],
-    fileParallelism: false,
-  },
-});
+export default mergeConfig(
+  vitestConfig,
+  defineConfig({
+    test: {
+      fileParallelism: false,
+      hookTimeout: 30_000,
+      setupFiles: ["./vitest.setup.ts"],
+    },
+  })
+);

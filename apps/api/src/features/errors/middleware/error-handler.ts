@@ -1,23 +1,22 @@
+import {
+  CONTENT_TYPE,
+  HTTP_HEADER,
+  HTTP_STATUS,
+} from "@allonfire/utils/constants/http";
+import { SEPARATOR } from "@allonfire/utils/constants/separators";
+import { MS_PER_SECOND } from "@allonfire/utils/constants/units";
 import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
 import {
-  CONTENT_TYPE,
   type ErrorStatus,
-  HTTP_HEADER,
-  HTTP_STATUS,
-  type HttpStatus,
+  errorStatusSchema,
 } from "../../../shared/constants/http";
 import {
   BODY_LIMIT_BYTES,
-  MS_PER_SECOND,
   REQUEST_TIMEOUT_MS,
 } from "../../../shared/constants/limits";
-import {
-  CONTEXT_VAR,
-  LOG_MESSAGE,
-  SEPARATOR,
-} from "../../../shared/constants/runtime";
+import { CONTEXT_VAR, LOG_MESSAGE } from "../../../shared/constants/runtime";
 import type { Locale } from "../../i18n/constants/locales";
 import { localeOf } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
@@ -40,13 +39,12 @@ export type {
 } from "../constants/problem-details";
 
 const isErrorStatus = (status: number): status is ErrorStatus =>
-  status in STATUS_TO_ERROR_CODE;
+  errorStatusSchema.safeParse(status).success;
 
-export function codeForStatus(status: number): ErrorCode {
-  return isErrorStatus(status)
-    ? STATUS_TO_ERROR_CODE[status]
-    : ERROR_CODE.INTERNAL_ERROR;
-}
+/** Generic, so a literal status gives its exact code: `codeForStatus(404)` is `"NOT_FOUND"`. */
+export const codeForStatus = <S extends ErrorStatus>(
+  status: S
+): (typeof STATUS_TO_ERROR_CODE)[S] => STATUS_TO_ERROR_CODE[status];
 
 /**
  * Renders a code with the values this layer can supply.
@@ -144,11 +142,11 @@ export const normalizeThrown =
 export function onError(err: Error, context: Context): Response {
   const requestId = requestIdOf(context);
 
-  if (err instanceof HTTPException) {
-    // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than
-    // this API emits. `codeForStatus` narrows it; the cast only re-states for
-    // `context.json` what `isErrorStatus` already proved.
-    const status = err.status as HttpStatus;
+  // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than this
+  // API documents. One it does not (a 418) is a bug: it falls through to the
+  // unhandled path, gets logged and answers 500.
+  if (err instanceof HTTPException && isErrorStatus(err.status)) {
+    const { status } = err;
     const code = codeForStatus(status);
     // An explicit message on the exception is caller-supplied and already in
     // whatever language the caller chose, so it wins. Hono's own middleware
@@ -157,7 +155,7 @@ export function onError(err: Error, context: Context): Response {
     return problemResponse(context, {
       code,
       detail,
-      status: status as ErrorStatus,
+      status,
     });
   }
 
@@ -187,7 +185,9 @@ export function notFound(context: Context): Response {
  */
 type StandardIssue = {
   readonly message: string;
-  readonly path?: readonly (PropertyKey | { readonly key: PropertyKey })[];
+  readonly path?:
+    | readonly (PropertyKey | { readonly key: PropertyKey })[]
+    | undefined;
 };
 
 type ValidationResult =

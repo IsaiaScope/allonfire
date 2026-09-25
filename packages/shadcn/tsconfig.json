@@ -1,0 +1,19 @@
+{
+  "extends": "../config/typescript/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    // Vendor code, never edited (ADR 0010). The generated components break
+    // these two strict flags (calendar.tsx, scroll-area.tsx on shadcn 4.21).
+    // TypeScript checks the .tsx source under each importer's config, so every
+    // consumer (packages/ui, apps/back-office) relaxes them too;
+    // packages/ui's shadcn-compat test fails if one stops.
+    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": false,
+    "paths": {
+      "@allonfire/shadcn/*": ["./src/*"]
+    },
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "scripts", "vitest.config.ts"]
+}

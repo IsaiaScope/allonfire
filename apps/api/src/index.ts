@@ -1,7 +1,8 @@
 import { prisma } from "@allonfire/database";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
-import { env } from "./features/environment/environment";
+import { env } from "./environment/environment";
+import { auth } from "./features/auth/auth";
 import { logger } from "./features/logger/logger";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { createRedis } from "./features/redis/redis";
@@ -25,12 +26,13 @@ startTelemetry();
 const redis = createRedis(env.REDIS_URL);
 
 const app = createApp({
+  auth,
   checkDatabase: async () => {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   },
   checkRedis: async () => (await redis.ping()) === REDIS_PING_REPLY,
-  store: createRedisStore(redis, env.RATE_LIMIT_WINDOW_MS),
+  store: createRedisStore(redis),
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>

@@ -59,3 +59,9 @@ TODO.*
 
 # Laura seed photos (large binary files)
 apps/laura/seed-photos/
+# Local dev logins, never committed
+/CREDENTIALS.md
+
+# Old Next-bound auth package, kept locally as reference until Laura's refactor
+/packages/auth-old/
+/packages/ui-old/

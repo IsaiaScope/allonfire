@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+// @module-tag unit
 import { isDocsEnabled } from "../utils/enabled";
 
 describe("isDocsEnabled", () => {

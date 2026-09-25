@@ -1,4 +1,3 @@
-import { objectValues } from "@allonfire/utils/object";
 import { z } from "zod";
 import EN from "../translations/en.json" with { type: "json" };
 import IT from "../translations/it.json" with { type: "json" };
@@ -8,22 +7,31 @@ import IT from "../translations/it.json" with { type: "json" };
  * never a locale here — `Accept-Language: it` resolves to a regional variant
  * before anything is rendered.
  *
- * Which variant a bare tag lands on is decided by CLDR likely-subtags inside
- * `@formatjs/intl-localematcher`, not by the order of this object: `it`
- * maximizes to `it-Latn-IT`, so it picks `it-IT`.
+ * Key order means nothing here (Biome sorts it); the order the matcher sees is
+ * `SUPPORTED_LOCALES`.
  */
 export const LOCALE = {
-  EN_US: "en-US",
   EN_GB: "en-GB",
-  IT_IT: "it-IT",
+  EN_US: "en-US",
   IT_CH: "it-CH",
+  IT_IT: "it-IT",
 } as const;
 
 export const localeSchema = z.enum(LOCALE);
 export type Locale = z.infer<typeof localeSchema>;
 
-/** `match()` needs a mutable array of candidates, in no particular order. */
-export const SUPPORTED_LOCALES: Locale[] = objectValues(LOCALE);
+/**
+ * Every locale, in preference order. The order is a decision, not an accident:
+ * CLDR likely-subtags settle a bare `it` (to `it-IT`), but a region CLDR does
+ * not know, such as `it-XX`, ties every Italian variant and `match()` takes the
+ * first one listed. So the language's main variant comes first.
+ */
+export const SUPPORTED_LOCALES = [
+  LOCALE.EN_US,
+  LOCALE.EN_GB,
+  LOCALE.IT_IT,
+  LOCALE.IT_CH,
+] as const satisfies readonly Locale[];
 
 /** Where an absent, malformed or unsupported `Accept-Language` lands. */
 export const DEFAULT_LOCALE: Locale = LOCALE.EN_US;

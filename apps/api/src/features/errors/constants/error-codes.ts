@@ -1,6 +1,10 @@
-import { objectFromEntries, objectValues } from "@allonfire/utils/object";
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import {
+  objectFromEntries,
+  objectValues,
+} from "@allonfire/utils/helpers/object";
 import { z } from "zod";
-import { type ErrorStatus, HTTP_STATUS } from "../../../shared/constants/http";
+import type { ErrorStatus } from "../../../shared/constants/http";
 import type { TranslationKey } from "../../i18n/constants/locales";
 
 /**
@@ -30,11 +34,14 @@ export const errorCodeSchema = z.enum(ERROR_CODE);
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
 /**
- * `Record<ErrorStatus, ErrorCode>` rather than `Record<number, …>`: adding a
- * status to `ERROR_STATUS` without mapping it here fails to compile, which is
- * the whole reason the lookup is total and needs no fallback of its own.
+ * `satisfies Record<ErrorStatus, ErrorCode>`, not an annotation: the annotation
+ * widened every lookup to the whole `ErrorCode` union, `satisfies` keeps
+ * `STATUS_TO_ERROR_CODE[404]` typed as `"NOT_FOUND"`. Keyed by `ErrorStatus`
+ * rather than `number`: adding a status to `ERROR_STATUS` without mapping it
+ * here fails to compile, which is the whole reason the lookup is total and
+ * needs no fallback of its own.
  */
-export const STATUS_TO_ERROR_CODE: Record<ErrorStatus, ErrorCode> = {
+export const STATUS_TO_ERROR_CODE = {
   [HTTP_STATUS.BAD_REQUEST]: ERROR_CODE.BAD_REQUEST,
   [HTTP_STATUS.UNAUTHORIZED]: ERROR_CODE.UNAUTHORIZED,
   [HTTP_STATUS.FORBIDDEN]: ERROR_CODE.FORBIDDEN,
@@ -44,7 +51,7 @@ export const STATUS_TO_ERROR_CODE: Record<ErrorStatus, ErrorCode> = {
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: ERROR_CODE.INTERNAL_ERROR,
   // The only 503 the API throws is its own request timeout.
   [HTTP_STATUS.SERVICE_UNAVAILABLE]: ERROR_CODE.TIMEOUT,
-};
+} as const satisfies Record<ErrorStatus, ErrorCode>;
 
 /**
  * The stable identifier for each problem type, per RFC 9457 §3.1.1.

@@ -1,41 +1,10 @@
-import {
-  type ElementOf,
-  objectValues,
-  type ValueOf,
-} from "@allonfire/utils/object";
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
 import { z } from "zod";
 
 /**
- * Every status this API returns. Values are what `context.json()` receives, so the
- * type below is what narrows those call sites — a status not listed here is a
- * compile error, not a runtime surprise.
- *
- * Deliberately numeric literals rather than `StatusCodes` from
- * `http-status-codes`. An enum member is its own type, not the literal `404`,
- * so `ERROR_STATUS` stops keying Hono's response map and every error arm of
- * `hc<AppType>` collapses to `never` — which `client.test-d.ts` catches. The
- * library is still used, for `getReasonPhrase`; the numbers are the spec's and
- * are not going to move.
+ * The statuses this API answers with a problem document. Drives the error arms
+ * of `hc<AppType>`, and `STATUS_TO_ERROR_CODE` must map every one of them.
  */
-export const HTTP_STATUS = {
-  BAD_REQUEST: 400,
-  FORBIDDEN: 403,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_FOUND: 404,
-  OK: 200,
-  PAYLOAD_TOO_LARGE: 413,
-  SERVICE_UNAVAILABLE: 503,
-  TOO_MANY_REQUESTS: 429,
-  UNAUTHORIZED: 401,
-} as const;
-
-export const httpStatusSchema = z.union(
-  objectValues(HTTP_STATUS).map((status) => z.literal(status))
-);
-
-export type HttpStatus = ValueOf<typeof HTTP_STATUS>;
-
-/** The subset that carries an error envelope. Drives `ErrorBody` mapping. */
 export const ERROR_STATUS = [
   HTTP_STATUS.BAD_REQUEST,
   HTTP_STATUS.UNAUTHORIZED,
@@ -47,23 +16,5 @@ export const ERROR_STATUS = [
   HTTP_STATUS.SERVICE_UNAVAILABLE,
 ] as const;
 
-export type ErrorStatus = ElementOf<typeof ERROR_STATUS>;
-
-/**
- * RFC 9457 requires its own media type; a problem document served as plain
- * `application/json` is not one, and a client keying off the content type will
- * not recognise it.
- */
-export const CONTENT_TYPE = {
-  PROBLEM_JSON: "application/problem+json",
-} as const;
-
-export const HTTP_HEADER = {
-  /** How the frontend passes its language key; absent means English. */
-  ACCEPT_LANGUAGE: "accept-language",
-  CONTENT_TYPE: "Content-Type",
-  RETRY_AFTER: "Retry-After",
-  X_FORWARDED_FOR: "x-forwarded-for",
-} as const;
-
-export type HttpHeader = ValueOf<typeof HTTP_HEADER>;
+export const errorStatusSchema = z.literal(ERROR_STATUS);
+export type ErrorStatus = z.infer<typeof errorStatusSchema>;

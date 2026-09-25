@@ -1,47 +1,5 @@
-import type { ElementOf } from "@allonfire/utils/object";
+import { HTTP_HEADER } from "@allonfire/utils/constants/http";
 import { z } from "zod";
-
-/**
- * `NODE_ENV` was compared against bare literals in three files (env schema,
- * logger transport, docs gate). One enum here means a typo is a type error
- * instead of a branch that never fires.
- */
-export const NODE_ENV = {
-  DEVELOPMENT: "development",
-  PRODUCTION: "production",
-  TEST: "test",
-} as const;
-
-export const nodeEnvSchema = z.enum(NODE_ENV);
-export type NodeEnv = z.infer<typeof nodeEnvSchema>;
-
-/** Mirrors pino's levels: fatal, error, warn, info, debug, trace, loudest first. */
-export const LOG_LEVEL = {
-  DEBUG: "debug",
-  ERROR: "error",
-  FATAL: "fatal",
-  INFO: "info",
-  TRACE: "trace",
-  WARN: "warn",
-} as const;
-
-export const logLevelSchema = z.enum(LOG_LEVEL);
-export type LogLevel = z.infer<typeof logLevelSchema>;
-
-/**
- * Paths pino scrubs before anything reaches a transport. Add to this list, not
- * to a call site — a redaction applied at one log statement is one that the
- * next statement forgets.
- */
-export const REDACT_PATHS = [
-  "req.headers.authorization",
-  "req.headers.cookie",
-  'res.headers["set-cookie"]',
-  "*.password",
-  "*.token",
-] as const;
-
-export const REDACT_CENSOR = "[Redacted]";
 
 /**
  * The only request headers the request log records. An allowlist, not a
@@ -49,9 +7,9 @@ export const REDACT_CENSOR = "[Redacted]";
  * have to earn its place.
  */
 export const LOGGED_REQUEST_HEADERS = [
-  "accept-language",
-  "content-length",
-  "content-type",
+  HTTP_HEADER.ACCEPT_LANGUAGE,
+  HTTP_HEADER.CONTENT_LENGTH,
+  HTTP_HEADER.CONTENT_TYPE,
 ] as const;
 
 /** Log messages emitted outside a request, where there is no requestId. */
@@ -74,7 +32,6 @@ export const LOG_MESSAGE = {
 } as const;
 
 export const SHUTDOWN_SIGNAL = ["SIGTERM", "SIGINT"] as const;
-export type ShutdownSignal = ElementOf<typeof SHUTDOWN_SIGNAL>;
 
 /**
  * Names reported in the shutdown log line. Typed rather than `string[]` so a
@@ -102,18 +59,6 @@ export const CONTEXT_VAR = {
 } as const;
 
 /** `ENABLE_DOCS` arrives as a string; these are the two accepted spellings. */
-export const BOOLEAN_ENV = { FALSE: "false", TRUE: "true" } as const;
-export const booleanEnvSchema = z.enum(BOOLEAN_ENV);
-
-export const SEPARATOR = {
-  /** Comma-delimited header values and comma-delimited env lists. */
-  LIST: ",",
-  /** Splits `key=value` in a key/value env list such as OTLP headers. */
-  PAIR: "=",
-  /** Joins a zod issue path into `a.b.c`. */
-  PATH: ".",
-} as const;
-
 /** Exit code after a second signal arrives mid-drain. */
 export const FORCED_EXIT_CODE = 1;
 export const CLEAN_EXIT_CODE = 0;

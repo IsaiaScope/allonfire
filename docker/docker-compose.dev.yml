@@ -93,13 +93,13 @@ services:
       timeout: 5s
       retries: 5
 
-  # One-shot: creates the umami database if it is missing. An initdb.d script
+  # One-shot: creates the umami and n8n databases if missing. An initdb.d script
   # would not work — it only runs against an empty data directory, and
   # postgres_data already exists on every machine that has run docker:up.
   # The wait loop covers a fresh volume: postgres reports healthy over its unix
   # socket while initdb's temporary server still refuses TCP.
-  umami-db-init:
-    container_name: allonfire-umami-db-init
+  app-db-init:
+    container_name: allonfire-app-db-init
     image: postgres:16-alpine
     restart: "no"
     environment:
@@ -109,8 +109,9 @@ services:
       PGDATABASE: ${POSTGRES_DB:-allonfire}
     command: >
       sh -c "for i in $$(seq 30); do psql -c 'SELECT 1' >/dev/null 2>&1 && break; sleep 1; done;
-      psql -tAc \"SELECT 1 FROM pg_database WHERE datname = 'umami'\" | grep -q 1
-      || psql -c 'CREATE DATABASE umami'"
+      for db in umami n8n; do
+      psql -tAc \"SELECT 1 FROM pg_database WHERE datname = '$$db'\" | grep -q 1
+      || psql -c \"CREATE DATABASE $$db\" || exit 1; done"
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,7 +133,7 @@ services:
       DISABLE_UPDATES: "1"
       PRIVATE_MODE: "1"
     depends_on:
-      umami-db-init:
+      app-db-init:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://localhost:3000/api/heartbeat"]
@@ -161,7 +162,41 @@ services:
       umami:
         condition: service_healthy
 
+  # Workflow automation, pinned to the VPS's version. On first open n8n asks
+  # to create the owner account. Secure cookies are off: localhost is plain HTTP.
+  # The credentials encryption key lives in n8n_data/config, created on first
+  # start; losing the volume makes stored credentials unreadable.
+  n8n:
+    container_name: allonfire-n8n
+    image: docker.n8n.io/n8nio/n8n:2.26.3
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: ${POSTGRES_USER:-allonfire}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-allonfire}
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_TEMPLATES_ENABLED: "false"
+      GENERIC_TIMEZONE: Europe/Rome
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      app-db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
+  n8n_data:
   postgres_data:
   minio_data:
   openobserve_data:

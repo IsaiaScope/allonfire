@@ -1,9 +1,14 @@
+import { sessionLoader } from "@allonfire/auth/features/session/middleware/session-loader";
+import { authRoutes } from "@allonfire/auth/routes/auth";
+import type { AuthLike } from "@allonfire/auth/shared/types/auth";
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { timeout } from "hono/timeout";
 import type { Logger } from "pino";
+import { authRateLimit } from "./features/auth/middleware/auth-rate-limit";
 import {
   normalizeThrown,
   notFound,
@@ -12,14 +17,14 @@ import {
 import { localeResolver } from "./features/i18n/middleware/locale-resolver";
 import { requestLogger } from "./features/logger/middleware/request-logger";
 import {
+  failOpen,
   type RateLimitStore,
   rateLimit,
 } from "./features/rate-limit/middleware/rate-limiter";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
-import { docsRoutes } from "./routes/docs";
-import { healthRoutes } from "./routes/health";
+import { docsRoutes } from "./routes/docs/index";
+import { healthRoutes } from "./routes/health/index";
 import type { HealthDeps } from "./routes/health/utils/status";
-import { HTTP_STATUS } from "./shared/constants/http";
 import {
   BODY_LIMIT_BYTES,
   REQUEST_TIMEOUT_MS,
@@ -30,13 +35,18 @@ import { securityHeaders } from "./shared/middleware/security-headers";
 import type { AppBindings } from "./shared/types/bindings";
 
 export type AppDeps = HealthDeps & {
+  /** Every limiter's counters; each limiter brings its own window and key prefix. */
   store: RateLimitStore;
+  auth: AuthLike;
   /** Optional so tests can capture log output. Defaults to the shared logger. */
   logger?: Logger;
 };
 
 /** Middleware order is the contract; each piece lives in its feature. */
 export const createApp = (deps: AppDeps) => {
+  // Wrapped once, so one Redis outage is one latch and one log line, however
+  // many limiters share the store.
+  const store = failOpen(deps.store, deps.logger);
   const app = new Hono<AppBindings>()
     // Outermost, so every layer inside it can throw anything and still reach
     // `onError`.
@@ -60,11 +70,17 @@ export const createApp = (deps: AppDeps) => {
         () => new HTTPException(HTTP_STATUS.SERVICE_UNAVAILABLE)
       )
     )
-    .use(rateLimit(deps.store))
-    .route(ROOT_PATH, healthRoutes(deps));
+    .use(rateLimit(store))
+    .use(authRateLimit(deps.auth, store))
+    // Before the Session read: probes never need one, and Better Auth reads
+    // its own, so loading it here as well would read it twice.
+    .route(ROOT_PATH, healthRoutes(deps))
+    .route(ROOT_PATH, authRoutes(deps.auth))
+    // After the limiters, so a flood of requests never reaches the Session read.
+    .use(sessionLoader(deps.auth));
 
   return app
-    .route(ROOT_PATH, docsRoutes(app))
+    .route(ROOT_PATH, docsRoutes(app, deps.auth))
     .onError(onError)
     .notFound(notFound);
 };

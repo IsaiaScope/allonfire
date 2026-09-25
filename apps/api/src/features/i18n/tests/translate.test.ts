@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+// @module-tag unit
 import { ERROR_CODE } from "../../errors/constants/error-codes";
 import { CATALOGUE, LOCALE, SUPPORTED_LOCALES } from "../constants/locales";
 import { translate } from "../translate";

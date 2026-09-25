@@ -1,6 +1,50 @@
 name: allonfire
 
+# The db-migrate image (packages/database/liquibase), shared by the two
+# one-shot services that run before the Apps on every deploy (ADR 0008).
+# Confined: read-only root filesystem, no Linux capabilities, no privilege
+# escalation, a scratch /tmp for the JVM, and only the network that reaches
+# dokploy-postgres.
+x-db-job: &db-job
+  build:
+    context: ..
+    dockerfile: packages/database/liquibase/Dockerfile
+  image: allonfire-db-migrate
+  restart: "no"
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  environment:
+    - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+  networks:
+    - dokploy-network
+
 services:
+  # First: a verified custom-format dump of allonfire, newest 14 kept. Same
+  # disk as the database: this serves rollback, not disaster recovery.
+  db-backup:
+    <<: *db-job
+    command: ["backup"]
+    volumes:
+      - db_backups:/backups
+
+  # Then: apply the changelog (validated first), tag the release. The Apps
+  # start only if this exits 0.
+  db-migrate:
+    <<: *db-job
+    command: ["deploy"]
+    # A stop mid-deploy waits for the running changeset instead of killing it
+    # and leaving the changelog lock behind.
+    stop_grace_period: 5m
+    depends_on:
+      db-backup:
+        condition: service_completed_successfully
+
   laura:
     build:
       context: ..
@@ -9,6 +53,9 @@ services:
         APP_NAME: laura
         BETTER_AUTH_URL: https://laura.isaiariva.com
     restart: unless-stopped
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
@@ -65,6 +112,8 @@ volumes:
   minio_data:
     external: true
     name: allonfire-minio-data
+  db_backups:
+    name: allonfire-db-backups
 
 networks:
   allonfire:

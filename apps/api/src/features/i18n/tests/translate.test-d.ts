@@ -1,4 +1,3 @@
-import { describe, expectTypeOf, it } from "vitest";
 import { ERROR_CODE } from "../../errors/constants/error-codes";
 import { LOCALE } from "../constants/locales";
 import { translate } from "../translate";

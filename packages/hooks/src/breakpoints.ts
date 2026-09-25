@@ -3,11 +3,11 @@
  * Use these with `useMediaQuery` or import from `@allonfire/hooks/breakpoints`.
  */
 export const BREAKPOINTS = {
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
   "2xl": 1536,
+  lg: 1024,
+  md: 768,
+  sm: 640,
+  xl: 1280,
 } as const;
 
 export type BreakpointKey = keyof typeof BREAKPOINTS;

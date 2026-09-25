@@ -4,6 +4,7 @@ import { Button } from "@allonfire/ui/components/button";
 import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { blurPlaceholder } from "@/lib/blur-placeholder";
 
 type MistakeAnswer = {
   text: string;
@@ -52,10 +53,9 @@ function AnswerCard({
         <div className="relative aspect-[4/3] w-full bg-muted">
           <Image
             alt={answer.text}
-            blurDataURL={answer.blurDataURL ?? undefined}
             className="object-contain"
             fill
-            placeholder={answer.blurDataURL ? "blur" : "empty"}
+            {...blurPlaceholder(answer.blurDataURL)}
             sizes="(max-width: 640px) 40vw, 200px"
             src={answer.imageUrl}
           />
@@ -105,10 +105,9 @@ export function QuizMistakes({
               <div className="relative mb-2 aspect-video w-full overflow-hidden rounded-lg bg-muted">
                 <Image
                   alt=""
-                  blurDataURL={mistake.questionBlurDataURL ?? undefined}
                   className="object-contain"
                   fill
-                  placeholder={mistake.questionBlurDataURL ? "blur" : "empty"}
+                  {...blurPlaceholder(mistake.questionBlurDataURL)}
                   sizes="(max-width: 640px) 100vw, 500px"
                   src={mistake.questionImageUrl}
                 />
@@ -118,18 +117,18 @@ export function QuizMistakes({
             <div className="flex gap-2">
               <AnswerCard
                 answer={{
-                  text: mistake.selectedAnswerText,
-                  imageUrl: mistake.selectedAnswerImageUrl,
                   blurDataURL: mistake.selectedAnswerBlurDataURL,
+                  imageUrl: mistake.selectedAnswerImageUrl,
+                  text: mistake.selectedAnswerText,
                 }}
                 label={t("quizYourAnswer")}
                 variant="wrong"
               />
               <AnswerCard
                 answer={{
-                  text: mistake.correctAnswerText,
-                  imageUrl: mistake.correctAnswerImageUrl,
                   blurDataURL: mistake.correctAnswerBlurDataURL,
+                  imageUrl: mistake.correctAnswerImageUrl,
+                  text: mistake.correctAnswerText,
                 }}
                 label={t("quizCorrectAnswer")}
                 variant="correct"

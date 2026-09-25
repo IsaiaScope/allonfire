@@ -1,8 +1,12 @@
 {
-  "extends": "../config/typescript/library.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "."
-  },
-  "include": ["src", "generated"]
+  "extends": "../config/typescript/node.json",
+  "include": [
+    "src",
+    "generated",
+    "scripts",
+    "liquibase",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "prisma.config.ts"
+  ]
 }

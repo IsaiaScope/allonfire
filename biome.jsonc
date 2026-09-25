@@ -13,6 +13,13 @@
     // `biome check --changed` diffs against this; the repo's base is dev.
     "defaultBranch": "dev"
   },
+  "files": {
+    // Written only by the shadcn CLI (ADR 0010): formatting it would turn every
+    // CLI update into a diff against our own edits. Laura is paused until it
+    // moves to the new Design system (ADR 0010), out of lint like it is out of
+    // the workspace, turbo and vitest.
+    "includes": ["!packages/shadcn/src", "!apps/laura"]
+  },
   "linter": {
     "rules": {
       "complexity": {
@@ -56,11 +63,38 @@
   },
   "overrides": [
     {
+      // ponytail: Laura's React components carry lint debt from before the
+      // rules were tightened; the linter skips them until the Laura redesign.
+      // Formatting still applies.
+      "includes": ["apps/laura/**"],
+      "linter": { "enabled": false }
+    },
+    {
+      // vitest runs with `globals: true` (packages/config/tests/vitest.config.ts).
+      "includes": ["**/*.test.ts", "**/*.test-d.ts", "**/tests/**"],
+      "javascript": {
+        "globals": [
+          "afterAll",
+          "afterEach",
+          "beforeAll",
+          "beforeEach",
+          "describe",
+          "expect",
+          "expectTypeOf",
+          "it",
+          "test",
+          "vi"
+        ]
+      }
+    },
+    {
       // The places allowed to touch process.env, print, and run long.
       "includes": [
         "**/env.ts",
         "**/environment.ts",
         "**/seed*.ts",
+        // Seed data: long lists by nature.
+        "**/mock/**",
         "**/scripts/**",
         "**/*.config.ts",
         "**/vitest.setup.ts",
@@ -74,6 +108,28 @@
             "noProcessEnv": "off"
           },
           "suspicious": { "noConsole": "off" }
+        }
+      }
+    },
+    {
+      // Apps and packages reach the Design system through AOF components only
+      // (ADR 0010). `packages/ui` is the one place that wraps shadcn.
+      "includes": ["apps/**", "packages/**", "!packages/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@allonfire/shadcn", "@allonfire/shadcn/**"],
+                    "message": "Import the AOF component from @allonfire/ui instead; add one there if it does not exist yet."
+                  }
+                ]
+              }
+            }
+          }
         }
       }
     }

@@ -1,9 +1,10 @@
-import { objectEntries, objectKeys } from "@allonfire/utils/object";
-import { describe, expect, it } from "vitest";
+// @module-tag unit
+import { objectEntries, objectKeys } from "@allonfire/utils/helpers/object";
 import {
   CATALOGUE,
   DEFAULT_LOCALE,
   LOCALE,
+  type Locale,
   SUPPORTED_LOCALES,
 } from "../constants/locales";
 import { resolveLocale } from "../middleware/locale-resolver";
@@ -94,9 +95,10 @@ describe("error catalogue", () => {
   });
 
   it("gives every locale the same set of codes", () => {
-    const expected = objectKeys(CATALOGUE[DEFAULT_LOCALE]).sort();
+    const sortedCodes = (locale: Locale) =>
+      objectKeys(CATALOGUE[locale]).sort((a, b) => a.localeCompare(b));
     for (const locale of SUPPORTED_LOCALES) {
-      expect(objectKeys(CATALOGUE[locale]).sort()).toEqual(expected);
+      expect(sortedCodes(locale)).toEqual(sortedCodes(DEFAULT_LOCALE));
     }
   });
 

@@ -1,0 +1,26 @@
+[
+  {
+    "email": "allonfire-user@allonfire.com",
+    "name": "allonfire-user",
+    "role": "USER",
+    "allowedApps": ["ALL"]
+  },
+  {
+    "email": "allonfire-viewer@allonfire.com",
+    "name": "allonfire-viewer",
+    "role": "VIEWER",
+    "allowedApps": ["ALL"]
+  },
+  {
+    "email": "laura-admin@allonfire.com",
+    "name": "laura-admin",
+    "role": "ADMIN",
+    "allowedApps": ["LAURA"]
+  },
+  {
+    "email": "laura-user@allonfire.com",
+    "name": "laura-user",
+    "role": "USER",
+    "allowedApps": ["LAURA"]
+  }
+]

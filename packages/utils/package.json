@@ -4,11 +4,29 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./object": "./src/object.ts",
-    "./error": "./src/error.ts",
-    "./security-headers": "./src/security-headers.ts"
+    "./constants/env": "./src/constants/env.ts",
+    "./constants/http": "./src/constants/http.ts",
+    "./constants/logger": "./src/constants/logger.ts",
+    "./constants/node-env": "./src/constants/node-env.ts",
+    "./constants/patterns": "./src/constants/patterns.ts",
+    "./constants/security-headers": "./src/constants/security-headers.ts",
+    "./constants/separators": "./src/constants/separators.ts",
+    "./constants/units": "./src/constants/units.ts",
+    "./environment/environment": "./src/environment/environment.ts",
+    "./helpers/error": "./src/helpers/error.ts",
+    "./helpers/object": "./src/helpers/object.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.10",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "typescript": "~5.8.2"
+    "@allonfire/config": "workspace:*",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

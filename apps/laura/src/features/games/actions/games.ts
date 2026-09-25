@@ -3,13 +3,15 @@
 import { checkAppAccess, checkMutationAccess } from "@allonfire/auth/guard";
 import type { GameType } from "@allonfire/database";
 import {
-  getAllRandomPhotos,
   getGlobalBestScore,
-  getPhotoCount,
   getUserBestScore,
   getUserGameStats,
   submitGameScore,
-} from "@allonfire/database";
+} from "@allonfire/database/features/laura/game-score.service";
+import {
+  getAllRandomPhotos,
+  getPhotoCount,
+} from "@allonfire/database/features/laura/photo.service";
 import { blurHashToDataURL } from "@allonfire/storage";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
@@ -35,16 +37,16 @@ export async function getMemoryPhotosAction(): Promise<MemoryPhotosResult> {
 
   const photoCount = await getPhotoCount();
   if (photoCount < 6) {
-    return { success: false, error: "NOT_ENOUGH_PHOTOS", photoCount };
+    return { error: "NOT_ENOUGH_PHOTOS", photoCount, success: false };
   }
 
   const photos = await getAllRandomPhotos(6);
 
   if (photos.length < 6) {
     return {
-      success: false,
       error: "NOT_ENOUGH_PHOTOS",
       photoCount: photos.length,
+      success: false,
     };
   }
 
@@ -53,22 +55,22 @@ export async function getMemoryPhotosAction(): Promise<MemoryPhotosResult> {
     const blurDataURL = blurHashToDataURL(photo.blurHash);
     cards.push(
       {
+        blurDataURL,
         cardId: `${photo.id}-a`,
         photoId: photo.id,
         thumbnailUrl: photo.thumbnailUrl,
-        blurDataURL,
       },
       {
+        blurDataURL,
         cardId: `${photo.id}-b`,
         photoId: photo.id,
         thumbnailUrl: photo.thumbnailUrl,
-        blurDataURL,
       }
     );
   }
 
   // Fisher-Yates shuffle
-  for (let i = cards.length - 1; i > 0; i--) {
+  for (let i = cards.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     const temp = cards[i];
     const swap = cards[j];
@@ -78,7 +80,7 @@ export async function getMemoryPhotosAction(): Promise<MemoryPhotosResult> {
     }
   }
 
-  return { success: true, cards };
+  return { cards, success: true };
 }
 
 export type SubmitScoreResult =
@@ -92,22 +94,22 @@ export async function submitScoreAction(data: {
 }): Promise<SubmitScoreResult> {
   const access = await checkMutationAccess(auth);
   if (!access.allowed) {
-    return { success: false, error: access.reason };
+    return { error: access.reason, success: false };
   }
   const { session } = access;
 
   if (data.timeMs <= 0 || data.moves <= 0) {
-    return { success: false, error: "Invalid score data" };
+    return { error: "Invalid score data", success: false };
   }
 
   const globalBest = await getGlobalBestScore(data.gameType);
 
   await submitGameScore({
-    userId: session.user.id,
     gameType: data.gameType,
-    timeMs: data.timeMs,
+    metadata: { gridSize: "3x4", pairs: 6 },
     score: data.moves,
-    metadata: { pairs: 6, gridSize: "3x4" },
+    timeMs: data.timeMs,
+    userId: session.user.id,
   });
 
   const isNewBest =
@@ -118,7 +120,7 @@ export async function submitScoreAction(data: {
 
   updateTag(LEADERBOARD_CACHE_TAGS.MEMORY);
 
-  return { success: true, isNewBest };
+  return { isNewBest, success: true };
 }
 
 export type LeaderboardData = {
@@ -150,10 +152,10 @@ export async function getGlobalBestAction(
   gameType: GameType
 ): Promise<GlobalBest | null> {
   const best = await getGlobalBestScore(gameType);
-  if (!best?.timeMs || best.score == null) {
+  if (!best?.timeMs || best.score === null) {
     return null;
   }
-  return { timeMs: best.timeMs, score: best.score };
+  return { score: best.score, timeMs: best.timeMs };
 }
 
 export async function getLeaderboardAction(
@@ -175,13 +177,13 @@ export async function getLeaderboardAction(
     0;
 
   return {
+    currentUserId: session.user.id,
     scores: cached.scores,
     stats: cached.stats,
-    currentUserId: session.user.id,
     userStats: {
-      totalGames: userGamesForType,
-      bestTimeMs: userBest?.timeMs ?? null,
       bestScore: userBest?.score ?? null,
+      bestTimeMs: userBest?.timeMs ?? null,
+      totalGames: userGamesForType,
     },
   };
 }

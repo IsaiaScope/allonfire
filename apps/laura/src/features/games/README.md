@@ -202,7 +202,7 @@ import { getQuizLeaderboardAction } from "@/features/games/actions/quiz";
 // Quiz CRUD (games/quiz/edit/page.tsx, games/quiz/edit/[id]/page.tsx)
 import { QuizQuestionList } from "@/features/games/components/quiz-question-list";
 import { QuizQuestionForm } from "@/features/games/components/quiz-question-form";
-import { getQuizQuestionsListAction, getQuizQuestionByIdAction } from "@/features/games/actions/quiz";
+import { getQuizQuestionsListAction, getQuizQuestionByIdAction } from "@/features/games/actions/quiz-admin";
 ```
 
 No barrel `index.ts` files -- always import directly from the specific file.

@@ -7,6 +7,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Vercel Remote Cache, shared with local runs (`turbo login` + `turbo link`).
+# Without the secret, turbo runs uncached and still passes.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 jobs:
   lint-types:
     runs-on: ubuntu-latest
@@ -20,8 +26,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
@@ -32,6 +36,13 @@ jobs:
         run: pnpm lint
       - name: i18n placeholders and generated types
         run: pnpm turbo run i18n:check
+      # ShellCheck ships on GitHub's Ubuntu runners.
+      - name: Shell scripts
+        run: shellcheck -x packages/database/liquibase/*.sh packages/database/scripts/*.sh
+      # The Dockerfile's `check=error=true` turns every build-check warning into
+      # a failure.
+      - name: Migrate image build checks
+        run: docker build --check -f packages/database/liquibase/Dockerfile .
 
   test:
     runs-on: ubuntu-latest
@@ -75,14 +86,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
-      - name: Push schema to database
-        run: pnpm db:push
+      - name: Apply the changelog
+        run: pnpm db:update
+      - name: Changelog matches the Prisma schema
+        run: pnpm db:drift
       - name: Run tests
         run: pnpm turbo run test
 
@@ -108,8 +119,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client

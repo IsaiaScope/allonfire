@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+// @module-tag unit
 import { captureLog } from "./features/logger/tests/capture";
 import { TELEMETRY_FLUSH_TIMEOUT_MS } from "./shared/constants/limits";
 import { createCrashHandler, createShutdown } from "./shutdown";

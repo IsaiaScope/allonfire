@@ -1,5 +1,5 @@
+// @module-tag unit
 import { testClient } from "hono/testing";
-import { describe, expect, it } from "vitest";
 import { healthRoutes } from "..";
 import type { HealthDeps } from "../utils/status";
 

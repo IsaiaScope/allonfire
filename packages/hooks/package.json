@@ -8,11 +8,17 @@
     "./use-mounted": "./src/use-mounted.ts",
     "./breakpoints": "./src/breakpoints.ts"
   },
-  "peerDependencies": {
-    "react": "^19.0.0"
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@allonfire/config": "workspace:*",
     "@types/react": "^19.0.0",
-    "typescript": "~5.8.2"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   }
 }

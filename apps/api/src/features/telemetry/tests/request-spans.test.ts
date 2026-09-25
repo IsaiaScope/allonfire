@@ -1,3 +1,4 @@
+// @module-tag unit
 import { context, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import {
@@ -13,7 +14,6 @@ import {
 } from "@opentelemetry/sdk-trace";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { requestSpans } from "../middleware/request-spans";
 
 const spans = new InMemorySpanExporter();

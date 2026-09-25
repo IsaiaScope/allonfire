@@ -1,6 +1,6 @@
-import type { ValueOf } from "@allonfire/utils/object";
+import type { ValueOf } from "@allonfire/utils/helpers/object";
 import pkg from "../../../package.json" with { type: "json" };
-import { env } from "../environment/environment";
+import { env } from "../../environment/environment";
 import { type OTLP_PATH, RESOURCE_ATTRIBUTE } from "./constants/telemetry";
 
 /**

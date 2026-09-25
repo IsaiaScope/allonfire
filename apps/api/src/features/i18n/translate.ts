@@ -17,14 +17,14 @@ const VARIADIC = { strategy: strategies.variadic };
  * instance, so N messages x M locales makes N x M copies. Measured 92 ms -> 20 ms.
  */
 const INTL: Formatters = {
-  getNumberFormat: memoize(
-    (locales?: string | string[], options?: Intl.NumberFormatOptions) =>
-      new Intl.NumberFormat(locales, options),
-    VARIADIC
-  ),
   getDateTimeFormat: memoize(
     (locales?: string | string[], options?: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat(locales, options),
+    VARIADIC
+  ),
+  getNumberFormat: memoize(
+    (locales?: string | string[], options?: Intl.NumberFormatOptions) =>
+      new Intl.NumberFormat(locales, options),
     VARIADIC
   ),
   getPluralRules: memoize(
@@ -71,7 +71,10 @@ export function translate<K extends TranslationKey>(
     : [TranslationValues[K]]
 ): string {
   try {
-    return formatterFor(key, locale).format(values) as string;
+    // `never`: the catalogue has no rich-text tags, so no part is anything but
+    // a string. Parts only come back as an array when a tag splits the message.
+    const parts = formatterFor(key, locale).format<never>(values);
+    return typeof parts === "string" ? parts : parts.join("");
   } catch {
     return CATALOGUE[DEFAULT_LOCALE][key];
   }

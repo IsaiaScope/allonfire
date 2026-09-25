@@ -1,16 +1,13 @@
+import { BYTES_PER_MIB } from "@allonfire/utils/constants/units";
+
 /**
  * Operational tunables that are not env-configurable. Anything a deployment
  * needs to vary belongs in `src/env.ts` instead — these are the numbers that
  * are the same everywhere the process runs.
  */
 
-const BYTES_PER_KIB = 1024;
-const KIB_PER_MIB = 1024;
-
 /** Request body ceiling. Larger bodies get 413 before a handler sees them. */
-export const BODY_LIMIT_BYTES = BYTES_PER_KIB * KIB_PER_MIB;
-
-export const MS_PER_SECOND = 1000;
+export const BODY_LIMIT_BYTES = BYTES_PER_MIB;
 
 export const REQUEST_TIMEOUT_MS = 30_000;
 

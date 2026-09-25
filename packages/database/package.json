@@ -5,20 +5,29 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./services": "./src/services/index.ts",
-    "./generated/prisma": "./generated/prisma/index.ts"
+    "./enums": "./generated/prisma/enums.ts",
+    "./environment/environment": "./src/environment/environment.ts",
+    "./features/auth/user.service": "./src/features/auth/user.service.ts",
+    "./features/laura/favorite.service": "./src/features/laura/favorite.service.ts",
+    "./features/laura/game-score.service": "./src/features/laura/game-score.service.ts",
+    "./features/laura/photo.service": "./src/features/laura/photo.service.ts",
+    "./features/laura/quiz.service": "./src/features/laura/quiz.service.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:changeset": "tsx --env-file=.env scripts/changeset.ts",
+    "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "tsx --env-file=.env src/seed.ts",
-    "db:seed-quiz": "tsx --env-file=.env src/seed-quiz.ts",
-    "db:studio": "prisma studio",
+    "db:rollback": "bash scripts/liquibase.sh rollback",
+    "db:seed": "tsx --env-file=.env src/features/seed/seed.ts",
+    "db:seed-quiz": "tsx --env-file=.env src/features/seed/seed-quiz.ts",
+    "db:status": "bash scripts/liquibase.sh status --verbose",
+    "db:update": "bash scripts/liquibase.sh update",
+    "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",
     "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/utils": "workspace:*",
     "@prisma/client": "^6.19.3",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",
@@ -26,8 +35,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@allonfire/config": "workspace:*",
     "tsx": "^4.19.0",
-    "typescript": "~5.8.2",
-    "vitest": "^4.1.0"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

@@ -1,13 +1,10 @@
+import { REDACT_CENSOR, REDACT_PATHS } from "@allonfire/utils/constants/logger";
+import { NODE_ENV } from "@allonfire/utils/constants/node-env";
 import { trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };
+import { env } from "../../environment/environment";
 import { TELEMETRY_FLUSH_TIMEOUT_MS } from "../../shared/constants/limits";
-import {
-  NODE_ENV,
-  REDACT_CENSOR,
-  REDACT_PATHS,
-} from "../../shared/constants/runtime";
-import { env } from "../environment/environment";
 import { OTLP_PATH } from "../telemetry/constants/telemetry";
 import {
   otlpExporterOptions,
