@@ -15,8 +15,10 @@
   },
   "files": {
     // Written only by the shadcn CLI (ADR 0010): formatting it would turn every
-    // CLI update into a diff against our own edits.
-    "includes": ["!packages/shadcn/src"]
+    // CLI update into a diff against our own edits. Laura is paused until it
+    // moves to the new Design system (ADR 0010), out of lint like it is out of
+    // the workspace, turbo and vitest.
+    "includes": ["!packages/shadcn/src", "!apps/laura"]
   },
   "linter": {
     "rules": {
