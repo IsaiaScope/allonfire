@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/environment/environment.ts",
+    "./enums": "./generated/prisma/enums.ts",
     "./auth/user": "./src/auth/user.service.ts",
     "./laura/photo": "./src/laura/photo.service.ts",
     "./laura/favorite": "./src/laura/favorite.service.ts",

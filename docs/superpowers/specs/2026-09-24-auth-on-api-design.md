@@ -23,7 +23,7 @@ fail from this change until the frontend refactor rewrites them.
 | Sign-up | `disableSignUp: true` | No sign-up UI exists; the seed hashes passwords itself. Open sign-up on a public API lets anyone in |
 | Role, allowed apps | `user.additionalFields`, `input: false` | They ride in the session and the cookie cache; guards need no extra query |
 | Rate limiting | Better Auth's limiter off; API's global limiter plus a stricter Redis bucket on `POST /v1/auth/sign-in/email`: 10 attempts / 15 min, keyed by client IP only | One mechanism; Better Auth's default store is per-process memory and ignores `TRUSTED_PROXY_HOPS` |
-| Guard names | `requireSession`, `requireMutation`, `requireAdmin`, `requireApp` — not a generic `requireRole` | The Viewer rule is written once, in `canMutate`; matches Laura's `checkMutationAccess` / `checkAdminAccess` |
+| Guard names | `requireSession`, `requireMutation`, `requireAdmin`, `requireApp` — not a generic `requireRole` | The Viewer rule is written once, in `canMutate`; matches Laura's `checkMutationAccess` / `checkAdminAccess`. **Superseded 2026-09-25:** `requireRole(min)` over `ROLE_RANK` (steps of 100) replaced `requireMutation` / `requireAdmin`, so a Role added later slots between two ranks |
 | Guard errors | Guards throw `HTTPException(401 \| 403)` | The host renders it; the API's `onError` already turns it into an RFC 9457 problem with a localised detail |
 | Better Auth's own errors | Left in Better Auth's JSON shape | Its client parses that shape |
 | Web topology (proxy vs subdomain) | Deferred to the frontend refactor | Config is env-driven; no `crossSubDomainCookies` now |

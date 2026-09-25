@@ -1,11 +1,13 @@
+import { HTTP_HEADER, HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { SEPARATOR } from "@allonfire/utils/constants/separators";
+import { MS_PER_SECOND } from "@allonfire/utils/constants/units";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { Context, MiddlewareHandler } from "hono";
-import { rateLimiter } from "hono-rate-limiter";
+import { type ClientRateLimitInfo, rateLimiter } from "hono-rate-limiter";
 import type { Redis } from "ioredis";
 import type { Logger } from "pino";
-import { HTTP_HEADER, HTTP_STATUS } from "../../../shared/constants/http";
-import { MS_PER_SECOND } from "../../../shared/constants/limits";
-import { LOG_MESSAGE, SEPARATOR } from "../../../shared/constants/runtime";
+import { z } from "zod";
+import { LOG_MESSAGE } from "../../../shared/constants/runtime";
 import { outageLatch } from "../../../shared/utils/outage";
 import { isProbe } from "../../../shared/utils/probe";
 import { env } from "../../environment/environment";
@@ -18,16 +20,19 @@ import { localeOf } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
 import { logger as defaultLogger } from "../../logger/logger";
 import {
-  RATE_LIMIT_COMMAND,
   RATE_LIMIT_HEADER_SPEC,
   RATE_LIMIT_INFO,
   rateLimitKey,
 } from "../constants/limits";
 
+/**
+ * The library's own `Store` contract, narrowed to the calls it makes on ours,
+ * except that `increment` is told the window. One store then serves every
+ * limiter: each passes its own window, so a counter's TTL can never disagree
+ * with the limiter reading it.
+ */
 export type RateLimitStore = {
-  increment: (
-    key: string
-  ) => Promise<{ totalHits: number; resetTime: Date | undefined }>;
+  increment: (key: string, windowMs: number) => Promise<ClientRateLimitInfo>;
   decrement: (key: string) => Promise<void>;
   resetKey: (key: string) => Promise<void>;
 };
@@ -37,45 +42,31 @@ export type RateLimitStore = {
 // in the logs.
 const INCREMENT_SCRIPT = `
 local count = redis.call('INCR', KEYS[1])
-if count == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
-return count
+-- Any key without a TTL gets one, not only a first hit: a DECR on an expired
+-- key leaves a counter that would otherwise never expire.
+if redis.call('PTTL', KEYS[1]) < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+return {count, redis.call('PTTL', KEYS[1])}
 `;
 
-/**
- * `defineCommand` adds a method to the client at runtime that its published
- * types know nothing about. Declaring the shape once here is what lets the
- * call below type-check instead of carrying a `@ts-expect-error`.
- */
-type RedisWithRateLimit = Redis & {
-  [RATE_LIMIT_COMMAND]: (key: string, windowMs: string) => Promise<number>;
-};
+/** `EVAL` replies `unknown`; the script returns the counter and its TTL in ms. */
+const incrementReplySchema = z.tuple([z.number().int(), z.number().int()]);
 
-export function createRedisStore(
-  redis: Redis,
-  windowMs: number
-): RateLimitStore {
-  redis.defineCommand(RATE_LIMIT_COMMAND, {
-    lua: INCREMENT_SCRIPT,
-    numberOfKeys: 1,
-  });
-
-  const client = redis as RedisWithRateLimit;
-
+export function createRedisStore(redis: Redis): RateLimitStore {
   return {
     async decrement(key) {
       await redis.decr(rateLimitKey(key));
     },
-    async increment(key) {
+    async increment(key, windowMs) {
       const namespaced = rateLimitKey(key);
-      const totalHits = await client[RATE_LIMIT_COMMAND](
-        namespaced,
-        String(windowMs)
+      // ponytail: plain EVAL resends the ~100-byte script each call; switch to
+      // EVALSHA if Redis bandwidth ever matters.
+      const [totalHits, ttl] = incrementReplySchema.parse(
+        await redis.eval(INCREMENT_SCRIPT, 1, namespaced, String(windowMs))
       );
-      const ttl = await redis.pttl(namespaced);
-      return {
-        resetTime: ttl > 0 ? new Date(Date.now() + ttl) : undefined,
-        totalHits,
-      };
+      // No TTL means no window to report; the key is left out, not undefined.
+      return ttl > 0
+        ? { resetTime: new Date(Date.now() + ttl), totalHits }
+        : { totalHits };
     },
     async resetKey(key) {
       await redis.del(rateLimitKey(key));
@@ -113,7 +104,7 @@ function remoteAddress(context: Context): string | undefined {
 }
 
 /** A store that can't count reports zero hits, so the limiter lets the request through. */
-const UNCOUNTED = { resetTime: undefined, totalHits: 0 };
+const UNCOUNTED: ClientRateLimitInfo = { totalHits: 0 };
 
 /**
  * The limiter fails open: a Redis blip must not turn a working API into a
@@ -142,7 +133,8 @@ export function failOpen(
 
   return {
     decrement: (key) => guard(() => store.decrement(key), undefined),
-    increment: (key) => guard(() => store.increment(key), UNCOUNTED),
+    increment: (key, windowMs) =>
+      guard(() => store.increment(key, windowMs), UNCOUNTED),
     resetKey: (key) => guard(() => store.resetKey(key), undefined),
   };
 }
@@ -152,8 +144,14 @@ export function createRateLimiter(opts: {
   windowMs: number;
   limit: number;
   trustedHops: number;
+  /** Separates this limiter's counters from another sharing the store's namespace. */
+  keyPrefix?: string;
 }): MiddlewareHandler {
-  const store = failOpen(opts.store);
+  // The library calls `increment(key)`; this limiter's window goes in here.
+  const store = {
+    ...opts.store,
+    increment: (key: string) => opts.store.increment(key, opts.windowMs),
+  };
   return rateLimiter({
     handler: (context) => {
       // The time left in the window, which is what the library already put in
@@ -174,11 +172,12 @@ export function createRateLimiter(opts: {
         status: HTTP_STATUS.TOO_MANY_REQUESTS,
       });
     },
-    keyGenerator: (context) => clientKey(context, opts.trustedHops),
+    keyGenerator: (context) =>
+      `${opts.keyPrefix ?? ""}${clientKey(context, opts.trustedHops)}`,
     limit: opts.limit,
     requestPropertyName: RATE_LIMIT_INFO,
     standardHeaders: RATE_LIMIT_HEADER_SPEC,
-    store: store as never,
+    store,
     windowMs: opts.windowMs,
   });
 }

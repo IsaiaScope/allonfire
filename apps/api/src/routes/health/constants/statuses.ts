@@ -1,5 +1,5 @@
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
 import { z } from "zod";
-import { HTTP_STATUS } from "../../../shared/constants/http";
 
 /**
  * The readiness vocabulary is a client contract — orchestrators branch on

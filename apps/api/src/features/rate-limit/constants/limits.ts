@@ -1,11 +1,8 @@
 /** Namespace for rate-limit counters. Redis db 0 — see `docs/adr/0002`. */
 export const RATE_LIMIT_KEY_PREFIX = "ratelimit:";
 
-export const rateLimitKey = (clientKey: string): string =>
-  `${RATE_LIMIT_KEY_PREFIX}${clientKey}`;
-
-/** Name the INCR+PEXPIRE Lua script is registered under via `defineCommand`. */
-export const RATE_LIMIT_COMMAND = "rateLimitIncrement";
+export const rateLimitKey = (clientKey: string) =>
+  `${RATE_LIMIT_KEY_PREFIX}${clientKey}` as const;
 
 /** `hono-rate-limiter`'s header spec; draft-6 is the IETF standard set. */
 export const RATE_LIMIT_HEADER_SPEC = "draft-6";

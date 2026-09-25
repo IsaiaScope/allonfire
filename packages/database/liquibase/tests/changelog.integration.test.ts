@@ -1,7 +1,8 @@
 // @module-tag integration
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { PrismaClient } from "../../generated/prisma/client";
+import { CHANGESET_FILE } from "../../scripts/changeset-file";
 import {
   clientFor,
   dropDatabase,
@@ -28,6 +29,12 @@ const ALL_TABLES = [...AUTH_TABLES, ...LAURA_TABLES].sort();
 
 const BASELINE = resolve(PACKAGE_DIR, "changelog/changesets/0000-baseline.sql");
 const EXISTING_USER = "existing-user";
+
+/** Every changeset above the baseline, so the rollback test survives new ones. */
+const CHANGESETS_AFTER_BASELINE =
+  readdirSync(resolve(PACKAGE_DIR, "changelog/changesets")).filter((file) =>
+    CHANGESET_FILE.test(file)
+  ).length - 1;
 
 describe("changelog on an empty database", () => {
   const database = "allonfire_changelog_fresh";
@@ -122,7 +129,7 @@ describe("rolling back the schema move", () => {
   it(
     "puts every table back in public and drops the App schemas",
     async () => {
-      liquibase(url, "rollback-count", "--count=1");
+      liquibase(url, "rollback-count", `--count=${CHANGESETS_AFTER_BASELINE}`);
       expect(await tablesIn(client, "public")).toEqual(ALL_TABLES);
       const schemas = await client.$queryRaw<{ schema_name: string }[]>`
         SELECT schema_name FROM information_schema.schemata

@@ -1,11 +1,9 @@
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { LOG_LEVEL } from "@allonfire/utils/constants/logger";
 import { objectFromEntries } from "@allonfire/utils/object";
 import { pinoLogger } from "hono-pino";
 import type { Logger } from "pino";
-import { HTTP_STATUS } from "../../../shared/constants/http";
-import {
-  LOG_LEVEL,
-  LOGGED_REQUEST_HEADERS,
-} from "../../../shared/constants/runtime";
+import { LOGGED_REQUEST_HEADERS } from "../../../shared/constants/runtime";
 import { isProbe } from "../../../shared/utils/probe";
 import { logger as defaultLogger } from "../logger";
 

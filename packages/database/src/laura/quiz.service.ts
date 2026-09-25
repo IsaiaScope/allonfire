@@ -17,6 +17,19 @@ export type QuizQuestionWithAnswers = {
   }[];
 };
 
+type ImageFields = {
+  imageUrl?: string | undefined;
+  imageThumbnailUrl?: string | undefined;
+  imageBlurHash?: string | undefined;
+};
+
+/** The three image columns a question or an answer stores, null when absent. */
+const imageColumns = (image: ImageFields) => ({
+  imageBlurHash: image.imageBlurHash ?? null,
+  imageThumbnailUrl: image.imageThumbnailUrl ?? null,
+  imageUrl: image.imageUrl ?? null,
+});
+
 export async function createQuizQuestion(data: {
   text: string;
   createdBy: string;
@@ -36,18 +49,14 @@ export async function createQuizQuestion(data: {
     data: {
       answers: {
         create: data.answers.map((a) => ({
-          imageBlurHash: a.imageBlurHash ?? null,
-          imageThumbnailUrl: a.imageThumbnailUrl ?? null,
-          imageUrl: a.imageUrl ?? null,
+          ...imageColumns(a),
           isCorrect: a.isCorrect,
           sortOrder: a.sortOrder,
           text: a.text,
         })),
       },
       createdBy: data.createdBy,
-      imageBlurHash: data.imageBlurHash ?? null,
-      imageThumbnailUrl: data.imageThumbnailUrl ?? null,
-      imageUrl: data.imageUrl ?? null,
+      ...imageColumns(data),
       text: data.text,
     },
     include: { answers: true },
@@ -111,11 +120,7 @@ export async function getQuizQuestionById(id: string) {
   });
 }
 
-const NO_IMAGE = {
-  imageBlurHash: null,
-  imageThumbnailUrl: null,
-  imageUrl: null,
-};
+const NO_IMAGE = imageColumns({});
 
 export async function updateQuizQuestion(
   id: string,
@@ -155,11 +160,7 @@ export async function updateQuizQuestion(
         answers: {
           create: answers.map((a) => ({
             ...(a.imageUrl
-              ? {
-                  imageBlurHash: a.imageBlurHash ?? null,
-                  imageThumbnailUrl: a.imageThumbnailUrl ?? null,
-                  imageUrl: a.imageUrl,
-                }
+              ? imageColumns(a)
               : (storedByUrl.get(a.keepImageUrl ?? null) ?? NO_IMAGE)),
             isCorrect: a.isCorrect,
             sortOrder: a.sortOrder,

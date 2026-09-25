@@ -4,11 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./constants/env": "./src/constants/env.ts",
+    "./constants/http": "./src/constants/http.ts",
+    "./constants/logger": "./src/constants/logger.ts",
     "./constants/node-env": "./src/constants/node-env.ts",
+    "./constants/patterns": "./src/constants/patterns.ts",
+    "./constants/security-headers": "./src/constants/security-headers.ts",
+    "./constants/separators": "./src/constants/separators.ts",
+    "./constants/units": "./src/constants/units.ts",
     "./environment": "./src/environment/environment.ts",
     "./error": "./src/error.ts",
-    "./object": "./src/object.ts",
-    "./security-headers": "./src/security-headers.ts"
+    "./object": "./src/object.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

@@ -8,8 +8,5 @@
     "vitest.config.ts",
     "vitest.setup.ts",
     "prisma.config.ts"
-  ],
-  "compilerOptions": {
-    "types": ["node", "vitest/globals"]
-  }
+  ]
 }

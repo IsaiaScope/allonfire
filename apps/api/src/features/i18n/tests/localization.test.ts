@@ -1,14 +1,15 @@
 // @module-tag unit
+
 import { createApp } from "../../../app";
 import { appDeps } from "../../../shared/tests/app-deps";
-import type { ProblemDetails } from "../../errors/middleware/error-handler";
+import { problemOf } from "../../errors/tests/problem-of";
 import { CATALOGUE, DEFAULT_LOCALE, LOCALE } from "../constants/locales";
 
 describe("error message localization", () => {
   const notFoundIn = async (headers?: Record<string, string>) => {
     const app = createApp(appDeps());
     const res = await app.request("/nothing-here", headers ? { headers } : {});
-    return (await res.json()) as ProblemDetails;
+    return await problemOf(res);
   };
 
   it("falls back to English when no language is passed", async () => {

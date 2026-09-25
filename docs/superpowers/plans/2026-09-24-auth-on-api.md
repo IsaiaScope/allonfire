@@ -4,6 +4,8 @@
 
 **Goal:** Better Auth runs in `apps/api` under `/v1/auth/*`, built as a rebuilt `packages/auth` Auth module that any Hono backend can mount, with guards, a sign-in rate limit, and its endpoints merged into `/openapi.json`.
 
+**Status:** implemented (uncommitted) @ 2026-09-25T08:00:37Z
+
 **Architecture:** `packages/auth` owns the Better Auth config, role and app constants, pure access predicates, an OpenAPI fragment builder, and a Hono adapter (routes, session loader, guards that throw `HTTPException`). Everything the adapter touches goes through a narrow `AuthLike` port, so tests pass a stub. `apps/api` only wires it: env, the instance, a stricter Redis-backed sign-in bucket, middleware order, and the docs merge.
 
 **Tech Stack:** Better Auth 1.5 (`openAPI` plugin, Prisma adapter), Hono 4, hono-openapi `generateSpecs`, Vitest 4 (globals), zod 4, Prisma 6.
@@ -107,7 +109,7 @@ apps/api/src/
 **Interfaces:**
 - Produces: an empty `packages/auth` path and a workspace with no second `@allonfire/auth`.
 
-- [ ] **Step 1: Move and untrack**
+- [x] **Step 1: Move and untrack**
 
 The old package now carries a `vitest.config.ts` and a `test` script from the shared-Vitest work; they move with it. `git rm --cached` also drops the staged-but-uncommitted `vitest.config.ts` from the index.
 
@@ -116,7 +118,7 @@ git mv packages/auth packages/auth-old
 git rm -r --cached --quiet packages/auth-old
 ```
 
-- [ ] **Step 2: Ignore it**
+- [x] **Step 2: Ignore it**
 
 Append to `.gitignore`:
 
@@ -126,7 +128,7 @@ Append to `.gitignore`:
 /packages/auth-old/
 ```
 
-- [ ] **Step 3: Exclude it from the workspace**
+- [x] **Step 3: Exclude it from the workspace**
 
 `pnpm-workspace.yaml`:
 
@@ -137,12 +139,12 @@ packages:
   - "!packages/auth-old"
 ```
 
-- [ ] **Step 4: Check Biome ignores it**
+- [x] **Step 4: Check Biome ignores it**
 
 Run: `pnpm dlx @biomejs/biome check packages/auth-old 2>&1 | tail -3`
 Expected: no files processed / ignored. If Biome lints it, add `"!packages/auth-old"` to the `files.includes` array in `biome.jsonc` (create `"files": { "includes": ["**", "!packages/auth-old"] }` if absent) and re-run.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `git status --short packages/auth packages/auth-old` — expected only `D  packages/auth/...` lines (the staged `vitest.config.ts` simply disappears from the index).
 Run: `ls packages/auth-old/src/server.ts` — expected: file exists.
@@ -160,7 +162,7 @@ Run: `ls packages/auth-old/src/server.ts` — expected: file exists.
 **Interfaces:**
 - Produces: `APP`, `ALL_APPS`, `type App`, `ROLE`, `AUTH_PATH = "/auth"`, `SIGN_IN_EMAIL_PATH = "/sign-in/email"`, `OPENAPI_SCHEMA_PATH = "/open-api/generate-schema"`, `SECRET_MIN_LENGTH = 32`, `COOKIE_CACHE_MAX_AGE_S = 300`, `AUTH_HTTP_STATUS = { UNAUTHORIZED: 401, FORBIDDEN: 403 }`, `AUTH_METHODS = ["GET","POST"]`, `AUTH_OPENAPI_TAG = "Auth"`, `canMutate(role: Role): boolean`, `isAdmin(role: Role): boolean`, `canEnterApp(allowedApps: readonly string[], app: App): boolean`.
 
-- [ ] **Step 1: Package files**
+- [x] **Step 1: Package files**
 
 `packages/auth/package.json`:
 
@@ -257,7 +259,7 @@ process.env.DATABASE_URL ??=
 Run: `pnpm install`
 Expected: succeeds; `pnpm ls -r --depth -1 | grep @allonfire/auth` shows one entry at `packages/auth`.
 
-- [ ] **Step 2: Constants**
+- [x] **Step 2: Constants**
 
 `src/constants/apps.ts`:
 
@@ -331,7 +333,7 @@ export const AUTH_METHODS = ["GET", "POST"] as const;
 export const AUTH_OPENAPI_TAG = "Auth";
 ```
 
-- [ ] **Step 3: Write the failing access test**
+- [x] **Step 3: Write the failing access test**
 
 `src/access/tests/access.test.ts`:
 
@@ -367,12 +369,12 @@ describe("canEnterApp", () => {
 });
 ```
 
-- [ ] **Step 4: Run it to see it fail**
+- [x] **Step 4: Run it to see it fail**
 
 Run: `pnpm --filter @allonfire/auth test`
 Expected: FAIL, cannot resolve `../access`.
 
-- [ ] **Step 5: Implement**
+- [x] **Step 5: Implement**
 
 `src/access/access.ts`:
 
@@ -390,7 +392,7 @@ export const canEnterApp = (allowedApps: readonly string[], app: App): boolean =
   allowedApps.includes(ALL_APPS) || allowedApps.includes(app);
 ```
 
-- [ ] **Step 6: Run to pass**
+- [x] **Step 6: Run to pass**
 
 Run: `pnpm --filter @allonfire/auth test && pnpm --filter @allonfire/auth check-types`
 Expected: PASS, no type errors.
@@ -417,7 +419,7 @@ Expected: PASS, no type errors.
   - `type CreateAuthOptions = { secret: string; baseURL: string; basePath: string; trustedOrigins: string[] }`
   - `createAuth(options: CreateAuthOptions)`, `type Auth`, `toAuthLike(auth: Auth): AuthLike`
 
-- [ ] **Step 1: Types and env schema**
+- [x] **Step 1: Types and env schema**
 
 `src/types/auth.ts`:
 
@@ -475,7 +477,7 @@ export const authEnvSchema = {
 };
 ```
 
-- [ ] **Step 2: Write the failing server test (the spike facts live here)**
+- [x] **Step 2: Write the failing server test (the spike facts live here)**
 
 `src/server/tests/auth.test.ts`:
 
@@ -526,12 +528,12 @@ describe("createAuth", () => {
 
 Add at the top: `import { objectKeys } from "@allonfire/utils/object";`
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `pnpm --filter @allonfire/auth test src/server`
 Expected: FAIL, cannot resolve `../auth`.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 `src/server/auth.ts`:
 
@@ -597,7 +599,7 @@ export const toAuthLike = (auth: Auth): AuthLike => ({
 });
 ```
 
-- [ ] **Step 5: Run to pass, and settle the spike facts**
+- [x] **Step 5: Run to pass, and settle the spike facts**
 
 Run: `pnpm --filter @allonfire/auth test src/server && pnpm --filter @allonfire/auth check-types`
 Expected: PASS.
@@ -632,7 +634,7 @@ and change the type test to `expectTypeOf(...).toEqualTypeOf<string>()` with a c
 - Consumes: `AuthLike`, `OpenApiFragment`, `AUTH_OPENAPI_TAG`.
 - Produces: `authOpenApi(auth: AuthLike, basePath: string): Promise<OpenApiFragment>`; `stubAuth(overrides?: Partial<AuthLike>): AuthLike`; `sessionFor(user?: Partial<AuthSession["user"]>): AuthSession`.
 
-- [ ] **Step 1: Test helper**
+- [x] **Step 1: Test helper**
 
 `src/testing/stub-auth.ts`:
 
@@ -669,7 +671,7 @@ export function stubAuth(overrides: Partial<AuthLike> = {}): AuthLike {
 }
 ```
 
-- [ ] **Step 2: Failing test**
+- [x] **Step 2: Failing test**
 
 `src/openapi/tests/openapi.test.ts`:
 
@@ -720,12 +722,12 @@ describe("authOpenApi", () => {
 });
 ```
 
-- [ ] **Step 3: Run to fail**
+- [x] **Step 3: Run to fail**
 
 Run: `pnpm --filter @allonfire/auth test src/openapi`
 Expected: FAIL, cannot resolve `../openapi`.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 `src/openapi/openapi.ts`:
 
@@ -762,7 +764,7 @@ export async function authOpenApi(
 }
 ```
 
-- [ ] **Step 5: Run to pass**
+- [x] **Step 5: Run to pass**
 
 Run: `pnpm --filter @allonfire/auth test && pnpm --filter @allonfire/auth check-types`
 Expected: PASS.
@@ -782,7 +784,7 @@ Expected: PASS.
 - Consumes: `AuthLike`, `AuthSession`, `canMutate`, `isAdmin`, `canEnterApp`, `App`, `AUTH_HTTP_STATUS`, `AUTH_METHODS`, `stubAuth`, `sessionFor`.
 - Produces: `AUTH_VAR = { SESSION: "session" }`; `type AuthVariables = { session: AuthSession | null }`; `type AuthEnv = { Variables: AuthVariables }`; `authRoutes(auth: AuthLike)` (chained `Hono`); `sessionLoader(auth: AuthLike): MiddlewareHandler<AuthEnv>`; `requireSession()`, `requireMutation()`, `requireAdmin()`, `requireApp(app: App)` — each `MiddlewareHandler<AuthEnv>`.
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 `src/hono/tests/routes.test.ts`:
 
@@ -902,12 +904,12 @@ describe("sessionLoader", () => {
 });
 ```
 
-- [ ] **Step 2: Run to fail**
+- [x] **Step 2: Run to fail**
 
 Run: `pnpm --filter @allonfire/auth test src/hono`
 Expected: FAIL, cannot resolve the middleware modules.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `src/hono/constants/variables.ts`:
 
@@ -1034,7 +1036,7 @@ export const requireApp = (app: App) =>
   guard(({ user }) => canEnterApp(user.allowedApps, app));
 ```
 
-- [ ] **Step 4: Run to pass**
+- [x] **Step 4: Run to pass**
 
 Run: `pnpm --filter @allonfire/auth test && pnpm --filter @allonfire/auth check-types`
 Expected: PASS.
@@ -1056,7 +1058,7 @@ Expected: PASS.
 - Consumes: `authEnvSchema`, `createAuth`, `toAuthLike`, `AUTH_PATH`, `AuthVariables`.
 - Produces: `env.BETTER_AUTH_SECRET`, `env.BETTER_AUTH_URL`; `AUTH_BASE_PATH = "/v1/auth"`; `HTTP_METHOD = { GET: "GET", POST: "POST" }`; `auth: AuthLike` from `features/auth/auth.ts`; `createRateLimiter({ ..., keyPrefix?: string })`.
 
-- [ ] **Step 1: Failing test for the key prefix**
+- [x] **Step 1: Failing test for the key prefix**
 
 Append to `apps/api/src/features/rate-limit/tests/rate-limiter.test.ts` (already tagged `unit`; uses `memoryStore`, which the file already imports from `./memory-store`):
 
@@ -1083,12 +1085,12 @@ describe("createRateLimiter keyPrefix", () => {
 
 (`unknown` is `UNKNOWN_REQUEST_ID`, what `clientKey` returns when `app.request()` has no socket.)
 
-- [ ] **Step 2: Run to fail**
+- [x] **Step 2: Run to fail**
 
 Run: `pnpm --filter @allonfire/api test src/features/rate-limit/tests/rate-limiter.test.ts`
 Expected: FAIL — type error on `keyPrefix` / key is `unknown`.
 
-- [ ] **Step 3: Implement the prefix**
+- [x] **Step 3: Implement the prefix**
 
 In `createRateLimiter`'s options type add:
 
@@ -1106,7 +1108,7 @@ and replace its `keyGenerator` with:
 
 Run the test again. Expected: PASS.
 
-- [ ] **Step 4: Env, constants, bindings, instance**
+- [x] **Step 4: Env, constants, bindings, instance**
 
 `environment.ts`: add `import { authEnvSchema } from "@allonfire/auth/environment";` and spread it beside `databaseEnvSchema` in `server`:
 
@@ -1192,7 +1194,7 @@ export const auth = toAuthLike(
 );
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `pnpm install && pnpm --filter @allonfire/api test && pnpm --filter @allonfire/api check-types`
 Expected: PASS. Add the two variables to your local `apps/api/.env` or `dev` will refuse to boot.
@@ -1211,7 +1213,7 @@ Expected: PASS. Add the two variables to your local `apps/api/.env` or `dev` wil
 - Consumes: `memoryStore(windowMs?)` from `features/rate-limit/tests/memory-store.ts`, `createRateLimiter`, `RateLimitStore`, `AUTH_BASE_PATH`, `HTTP_METHOD`, `SIGN_IN_EMAIL_PATH`, `sessionLoader`, `authRoutes`, `stubAuth`, `sessionFor`, `requireSession`, `requireMutation`.
 - Produces: `SIGN_IN_LIMIT = { MAX: 10, WINDOW_MS: 900_000, KEY_PREFIX: "sign-in:" }`; `SIGN_IN_ROUTE`; `signInLimit(store: RateLimitStore): MiddlewareHandler<AppBindings>`; `AppDeps` gains `auth: AuthLike` and `signInStore: RateLimitStore`; `appDeps()` supplies both.
 
-- [ ] **Step 1: Test deps**
+- [x] **Step 1: Test deps**
 
 `shared/tests/app-deps.ts` — keep `memoryStore` (`features/rate-limit/tests/memory-store.ts`), add the two new deps:
 
@@ -1240,7 +1242,7 @@ export function appDeps(overrides: Partial<AppDeps> = {}): AppDeps {
 
 `features/auth/constants/limits.ts` (below, Step 4) must exist before this compiles; write it first if the type-check runs between steps.
 
-- [ ] **Step 2: Failing tests**
+- [x] **Step 2: Failing tests**
 
 `features/auth/tests/sign-in-limit.test.ts`:
 
@@ -1372,12 +1374,12 @@ describe("guards through the API", () => {
 });
 ```
 
-- [ ] **Step 3: Run to fail**
+- [x] **Step 3: Run to fail**
 
 Run: `pnpm --filter @allonfire/api test src/features/auth`
 Expected: FAIL — missing `constants/limits`, `middleware/sign-in-limit`, and `createApp` rejects the new deps.
 
-- [ ] **Step 4: Implement the bucket**
+- [x] **Step 4: Implement the bucket**
 
 `features/auth/constants/limits.ts`:
 
@@ -1436,7 +1438,7 @@ export const signInLimit = (
 };
 ```
 
-- [ ] **Step 5: Wire `createApp`**
+- [x] **Step 5: Wire `createApp`**
 
 `app.ts` — imports:
 
@@ -1506,7 +1508,7 @@ const app = createApp({
 });
 ```
 
-- [ ] **Step 6: Run to pass**
+- [x] **Step 6: Run to pass**
 
 Run: `pnpm --filter @allonfire/api test && pnpm --filter @allonfire/api check-types`
 Expected: PASS, including `src/client.test-d.ts` (routes still chained).
@@ -1524,7 +1526,7 @@ Expected: PASS, including `src/client.test-d.ts` (routes still chained).
 - Consumes: `authOpenApi`, `OpenApiFragment`, `AuthLike`, `AUTH_BASE_PATH`, `stubAuth`.
 - Produces: `mergeOpenApi<T extends MergeableDocument>(base: T, fragment: OpenApiFragment): T`; `specHandler(app, auth)`.
 
-- [ ] **Step 1: Failing merge test**
+- [x] **Step 1: Failing merge test**
 
 `routes/docs/tests/merge.test.ts`:
 
@@ -1570,12 +1572,12 @@ describe("mergeOpenApi", () => {
 });
 ```
 
-- [ ] **Step 2: Run to fail**
+- [x] **Step 2: Run to fail**
 
 Run: `pnpm --filter @allonfire/api test src/routes/docs/tests/merge.test.ts`
 Expected: FAIL, cannot resolve `../utils/merge`.
 
-- [ ] **Step 3: Implement the merge**
+- [x] **Step 3: Implement the merge**
 
 `routes/docs/utils/merge.ts`:
 
@@ -1620,7 +1622,7 @@ export const mergeOpenApi = <T extends MergeableDocument>(
 
 If `objectEntries` ends up unused, drop it from the import. Run the test. Expected: PASS.
 
-- [ ] **Step 4: Failing spec test through `createApp`**
+- [x] **Step 4: Failing spec test through `createApp`**
 
 Add to the imports at the top of `routes/docs/tests/spec.test.ts` (below its `// @module-tag unit` line — Biome rejects imports after code):
 
@@ -1658,7 +1660,7 @@ describe("GET /openapi.json with the Auth module", () => {
 Run: `pnpm --filter @allonfire/api test src/routes/docs`
 Expected: FAIL — `/v1/auth/sign-in/email` missing.
 
-- [ ] **Step 5: Switch the spec handler**
+- [x] **Step 5: Switch the spec handler**
 
 `routes/docs/handlers.ts` — replace the `openAPIRouteHandler` import with `generateSpecs`, and `specHandler` with the block below. `DOCUMENTATION` is the `documentation` object the current `openAPIRouteHandler(app, { documentation: … })` call passes, moved out unchanged; if that object has gained fields since this plan was written, carry them over as they are:
 
@@ -1722,7 +1724,7 @@ with a comment naming the interface as the reason.
 
 If `/v1/auth/*` shows up in the generated spec, pass `exclude: [\`${AUTH_BASE_PATH}/*\`]` to `generateSpecs`.
 
-- [ ] **Step 6: Run to pass**
+- [x] **Step 6: Run to pass**
 
 Run: `pnpm --filter @allonfire/api test && pnpm --filter @allonfire/api check-types`
 Expected: PASS, including the existing `routes/docs/tests/routes.test.ts` gating tests.
@@ -1737,7 +1739,7 @@ Expected: PASS, including the existing `routes/docs/tests/routes.test.ts` gating
 **Interfaces:**
 - Consumes: `auth` from `features/auth/auth.ts`, `createApp`, `appDeps`, `requireMutation`, `APP`, `ROLE`.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```ts
 // @module-tag integration
@@ -1832,7 +1834,7 @@ describe("sign-in against Postgres", () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `pnpm docker:up && pnpm --filter @allonfire/database db:update && pnpm --filter @allonfire/api test src/features/auth/tests/sign-in.integration.test.ts`
 Expected: PASS. If sign-in answers 403 with an origin error, check `CORS_ORIGINS` in `vitest.setup.ts` equals `ORIGIN`.
@@ -1845,7 +1847,7 @@ Expected: PASS. If sign-in answers 403 with an origin error, check `CORS_ORIGINS
 - Create: `packages/auth/README.md`
 - Modify: `apps/api/README.md`, `CLAUDE.md`
 
-- [ ] **Step 1: `packages/auth/README.md`**
+- [x] **Step 1: `packages/auth/README.md`**
 
 Centered header and HTML badges like the other package READMEs (Better Auth 1.5, Hono 4, Prisma, Zod 4). Sections:
 - What it is: the Auth module — Better Auth config, roles and Apps, access predicates, a Hono adapter, the OpenAPI fragment. No Next, no React yet; the frontend refactor adds `./client`.
@@ -1863,14 +1865,14 @@ new Hono()
   .post("/v1/things", requireMutation(), handler);
 ```
 
-- [ ] **Step 2: `apps/api/README.md`**
+- [x] **Step 2: `apps/api/README.md`**
 
 - Intro: replace "no auth yet" with "auth via the Auth module (`packages/auth`) under `/v1/auth`".
 - Environment: add `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` to the required list.
 - New `## Auth` section: mount point; guards (`requireSession`, `requireMutation`, `requireAdmin`, `requireApp`) throw and `onError` renders problems; sign-in bucket 10 / 15 min per IP, fails open; Sessions in Postgres, Redis db 2 still reserved (ADR 0009); Better Auth's endpoints appear in `/reference` under the `Auth` tag.
 - Redis table: index 0 row notes it also holds `ratelimit:sign-in:*`.
 
-- [ ] **Step 3: `CLAUDE.md`**
+- [x] **Step 3: `CLAUDE.md`**
 
 - API App Structure: "No auth and no domain endpoints yet" becomes "No domain endpoints yet; auth is the Auth module (`packages/auth`) mounted at `/v1/auth`".
 - Tree: add `features/auth/  auth (instance), constants/limits, middleware/sign-in-limit`, and `routes/docs/utils/merge`.
@@ -1878,7 +1880,7 @@ new Hono()
 - New bullet: "**Auth guards** come from `@allonfire/auth/hono/middleware/*` and throw `HTTPException`; never build a 401/403 by hand."
 - Viewer Role System: `checkMutationAccess` now lives in `packages/auth-old` (local only) until Laura's refactor; the API uses `requireMutation`.
 
-- [ ] **Step 4: Full verification**
+- [x] **Step 4: Full verification**
 
 Run:
 
@@ -1898,7 +1900,7 @@ pnpm test:unit
 
 Expected: all PASS; no test fails for a missing `// @module-tag`. `pnpm check-types` repo-wide fails only in `@allonfire/laura`, and Laura's Playwright `e2e/login.spec.ts` fails too (it signs in through the old package). Both are accepted and fixed by the frontend refactor; CI does not run e2e.
 
-- [ ] **Step 5: Format touched files only**
+- [x] **Step 5: Format touched files only**
 
 ```bash
 pnpm dlx @biomejs/biome check --write packages/auth apps/api/src apps/api/vitest.setup.ts pnpm-workspace.yaml
@@ -1906,7 +1908,7 @@ pnpm dlx @biomejs/biome check --write packages/auth apps/api/src apps/api/vitest
 
 Expected: no remaining errors. Never add a `biome-ignore`; fix the code or ask.
 
-- [ ] **Step 6: Smoke the real server**
+- [x] **Step 6: Smoke the real server**
 
 With `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` in `apps/api/.env`:
 
@@ -1916,3 +1918,8 @@ curl -s localhost:3300/v1/auth/get-session        # null
 curl -s localhost:3300/openapi.json | grep -c '/v1/auth/'   # > 0
 curl -s -o /dev/null -w '%{http_code}\n' localhost:3300/v1/auth/open-api/generate-schema  # 404
 ```
+
+## Implementation Log
+- Implemented: 2026-09-25T08:00:37Z
+- Workspace: current-branch — feat/database-schemas-liquibase
+- Committed: no — awaiting user review

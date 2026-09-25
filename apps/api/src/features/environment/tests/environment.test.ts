@@ -2,6 +2,8 @@
 import { parseEnv } from "../environment";
 
 const valid = {
+  BETTER_AUTH_SECRET: "test-secret-at-least-thirty-two-characters",
+  BETTER_AUTH_URL: "http://localhost:3300",
   CORS_ORIGINS: "http://localhost:3200",
   DATABASE_URL: "postgresql://u:p@localhost:5432/db",
   REDIS_URL: "redis://localhost:6379/0",
@@ -14,6 +16,22 @@ describe("parseEnv", () => {
     expect(env.LOG_LEVEL).toBe("info");
     expect(env.TRUSTED_PROXY_HOPS).toBe(0);
     expect(env.ENABLE_DOCS).toBe(false);
+    expect(env.AUTH_RATE_LIMIT_MAX).toBe(10);
+    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(900_000);
+    expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth:");
+  });
+
+  it("reads the auth bucket from env", () => {
+    const env = parseEnv({
+      ...valid,
+      AUTH_RATE_LIMIT_KEY_PREFIX: "auth-v2:",
+      AUTH_RATE_LIMIT_MAX: "5",
+      AUTH_RATE_LIMIT_WINDOW_MS: "60000",
+    });
+    expect(env.AUTH_RATE_LIMIT_MAX).toBe(5);
+    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(60_000);
+    expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth-v2:");
+    expect(() => parseEnv({ ...valid, AUTH_RATE_LIMIT_MAX: "0" })).toThrow();
   });
 
   it("splits CORS_ORIGINS into a trimmed array", () => {

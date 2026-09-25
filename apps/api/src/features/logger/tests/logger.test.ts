@@ -17,7 +17,7 @@ describe("createLogger", () => {
   it("redacts nested password fields", () => {
     const { lines, logger } = captureLog();
 
-    logger.info({ body: { password: "hunter2" } }, "login");
+    logger.info({ body: { password: "hunter2" } }, "sign-in");
 
     expect(JSON.stringify(lines)).not.toContain("hunter2");
   });

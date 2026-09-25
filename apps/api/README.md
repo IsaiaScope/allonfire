@@ -1,7 +1,7 @@
 # @allonfire/api
 
-The HTTP backend for the AllOnFire apps. Hono on Node, no auth yet, no domain
-endpoints yet.
+The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
+(`packages/auth`) under `/v1/auth`, no domain endpoints yet.
 
 ## Running it
 
@@ -18,8 +18,31 @@ they get their values from `vitest.setup.ts`.
 
 ## Environment
 
-Every variable is documented in `.env.example`. `DATABASE_URL`, `REDIS_URL` and
-`CORS_ORIGINS` are required — the process exits at boot if any is missing.
+Every variable is documented in `.env.example`. `DATABASE_URL`, `REDIS_URL`,
+`CORS_ORIGINS`, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` are required — the
+process exits at boot if any is missing.
+
+## Auth
+
+Better Auth runs inside the API, built from the Auth module (`packages/auth`)
+and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
+`createApp` loads the Session once per request, after the rate limiters.
+
+- **Guards** — `requireSession`, `requireRole(min)` and `requireApp`
+  (mounted once per App) from `@allonfire/auth/hono/middleware/*`. They throw
+  `HTTPException(401 | 403)` and `onError` renders the localised problem
+  document. A failing Session lookup is a 500, never anonymous.
+- **Auth bucket** — the routes where Better Auth checks a password,
+  `POST /v1/auth/sign-in/email` and `POST /v1/auth/change-password`, share one
+  limit on top of the global one: `AUTH_RATE_LIMIT_MAX` attempts per
+  `AUTH_RATE_LIMIT_WINDOW_MS` per client IP (default 10 per 15 minutes). Like
+  the global limiter it fails open when Redis is down.
+- **Sessions live in Postgres**, read through Better Auth's five-minute cookie
+  cache, so a Role change or a revoked Session reaches the guards up to five
+  minutes late. Redis db 2 stays reserved; see ADR 0009.
+- **Docs** — Better Auth's endpoints appear in `/openapi.json` and `/reference`
+  under the `Auth` tag. The plugin's own schema route and reference page are off.
+- **Sign-up is disabled.** Users come from the seed.
 
 ## Writing routes
 
@@ -59,7 +82,7 @@ One project-scoped instance, split by database index:
 
 | index | contents | expiry |
 |---|---|---|
-| 0 | rate-limit counters | always |
+| 0 | rate-limit counters, incl. `ratelimit:auth:*` | always |
 | 1 | cache (reserved, unused) | always |
 | 2 | sessions (reserved, unused) | never |
 

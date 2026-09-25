@@ -1,3 +1,4 @@
+import { AllowedApp } from "../../generated/prisma/client";
 import { prisma } from "../client";
 
 export async function getUserById(userId: string) {
@@ -36,7 +37,7 @@ export async function deleteUser(userId: string) {
 
 export async function checkUserAppAccess(
   userId: string,
-  appName: string
+  appName: AllowedApp
 ): Promise<boolean> {
   const user = await prisma.user.findUnique({
     select: { allowedApps: true },
@@ -45,12 +46,15 @@ export async function checkUserAppAccess(
   if (!user) {
     return false;
   }
-  return user.allowedApps.includes("all") || user.allowedApps.includes(appName);
+  return (
+    user.allowedApps.includes(AllowedApp.ALL) ||
+    user.allowedApps.includes(appName)
+  );
 }
 
 export async function updateUserAllowedApps(
   userId: string,
-  allowedApps: string[]
+  allowedApps: AllowedApp[]
 ) {
   return await prisma.user.update({
     data: { allowedApps },

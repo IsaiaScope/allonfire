@@ -10,7 +10,7 @@ Sessions stay in Postgres, read through Better Auth's five-minute cookie cache,
 although ADR 0002 reserved Redis db 2 for them. Better Auth writes each session
 key with a TTL equal to its expiry, and the instance runs `volatile-lru`, so
 under memory pressure those keys are exactly the ones Redis evicts — a silent
-logout with nothing in the logs. With a handful of Users the Postgres read is
+sign-out with nothing in the logs. With a handful of Users the Postgres read is
 not worth that risk.
 
 ## Consequences

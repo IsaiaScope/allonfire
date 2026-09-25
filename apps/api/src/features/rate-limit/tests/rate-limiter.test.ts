@@ -1,10 +1,9 @@
 // @module-tag unit
+
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
-import {
-  onError,
-  type ProblemDetails,
-} from "../../errors/middleware/error-handler";
+import { onError } from "../../errors/middleware/error-handler";
+import { problemOf } from "../../errors/tests/problem-of";
 import { localeResolver } from "../../i18n/middleware/locale-resolver";
 import { captureLog } from "../../logger/tests/capture";
 import {
@@ -80,19 +79,19 @@ describe("rate limited response", () => {
     expect(res.headers.get("retry-after")).toBeTruthy();
     expect(res.headers.get("ratelimit-limit")).toBe("1");
 
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
     expect(body.code).toBe("RATE_LIMITED");
     expect(body.requestId).toBeTruthy();
   });
 
   it("interpolates the real retry window into the message", async () => {
     // 5s window -> the message must name 5 seconds, matching Retry-After.
-    const app = appWith(memoryStore(5000), 1, 1, 5000);
+    const app = appWith(memoryStore(), 1, 1, 5000);
 
     await app.request("/ping", forwarded("4.4.4.4"));
     const res = await app.request("/ping", forwarded("4.4.4.4"));
 
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
     expect(body.detail).toContain("5 seconds");
     expect(res.headers.get("retry-after")).toBe("5");
   });
@@ -114,13 +113,11 @@ describe("rate limited response", () => {
 
     expect(res.status).toBe(429);
     expect(res.headers.get("retry-after")).toBe("5");
-    expect(((await res.json()) as ProblemDetails).detail).toContain(
-      "5 seconds"
-    );
+    expect((await problemOf(res)).detail).toContain("5 seconds");
   });
 
   it("renders the message in the requested locale", async () => {
-    const app = appWith(memoryStore(5000), 1, 1, 5000);
+    const app = appWith(memoryStore(), 1, 1, 5000);
     const req = (ip: string) => {
       const init = forwarded(ip);
       return {
@@ -132,7 +129,7 @@ describe("rate limited response", () => {
     await app.request("/ping", req("5.5.5.5"));
     const res = await app.request("/ping", req("5.5.5.5"));
 
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
     expect(body.code).toBe("RATE_LIMITED");
     expect(body.detail).toContain("Riprova tra 5 secondi");
   });
@@ -145,7 +142,7 @@ const unreachable = (): RateLimitStore => {
 
 describe("store outage", () => {
   it("lets requests through when the store is unreachable", async () => {
-    const res = await appWith(unreachable(), 0).request("/ping");
+    const res = await appWith(failOpen(unreachable()), 0).request("/ping");
     expect(res.status).toBe(200);
   });
 
@@ -157,23 +154,79 @@ describe("store outage", () => {
     const store = failOpen(
       {
         ...healthy,
-        increment: (key) =>
+        increment: (key, windowMs) =>
           reachable.shift()
-            ? healthy.increment(key)
-            : unreachable().increment(key),
+            ? healthy.increment(key, windowMs)
+            : unreachable().increment(key, windowMs),
       },
       logger
     );
 
-    await store.increment("a");
-    await store.increment("a");
-    await store.increment("a");
-    await store.increment("a");
+    await store.increment("a", 60_000);
+    await store.increment("a", 60_000);
+    await store.increment("a", 60_000);
+    await store.increment("a", 60_000);
 
     expect(lines.map((line) => line.msg)).toEqual([
       "rate limit store unreachable, failing open",
       "rate limit store recovered",
       "rate limit store unreachable, failing open",
     ]);
+  });
+});
+
+describe("createRateLimiter keyPrefix", () => {
+  it("counts under its own namespace", async () => {
+    const store = memoryStore();
+    const app = new Hono()
+      .use(
+        createRateLimiter({
+          keyPrefix: "sign-in:",
+          limit: 10,
+          store,
+          trustedHops: 0,
+          windowMs: 60_000,
+        })
+      )
+      .get("/", (context) => context.text("ok"));
+
+    await app.request("/");
+
+    expect([...store.hits.keys()]).toEqual(["sign-in:unknown"]);
+  });
+});
+
+describe("one store behind several limiters", () => {
+  it("counts each limiter against its own window", async () => {
+    const windows = new Map<string, number>();
+    const store = memoryStore();
+    const spy: RateLimitStore = {
+      ...store,
+      increment: (key, windowMs) => {
+        windows.set(key, windowMs);
+        return store.increment(key, windowMs);
+      },
+    };
+    const limiter = (keyPrefix: string, windowMs: number) =>
+      createRateLimiter({
+        keyPrefix,
+        limit: 10,
+        store: spy,
+        trustedHops: 0,
+        windowMs,
+      });
+    const app = new Hono()
+      .use(limiter("", 60_000))
+      .use(limiter("sign-in:", 900_000))
+      .get("/", (context) => context.text("ok"));
+
+    await app.request("/");
+
+    expect(windows).toEqual(
+      new Map([
+        ["unknown", 60_000],
+        ["sign-in:unknown", 900_000],
+      ])
+    );
   });
 });

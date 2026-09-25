@@ -18,7 +18,9 @@ export default mergeConfig(
       // `.ts` only: a `.tsx` no test loads reaches the v8 remapper untransformed
       // and fails to parse. Add `tsx` once a React component has a test.
       coverage: { include: ["{apps,packages}/*/src/**/*.ts"] },
-      projects: ["{apps,packages}/*/vitest.config.ts"],
+      // `auth-old` is the untracked Next-bound package kept for reference; it
+      // still names itself `@allonfire/auth`; pnpm-workspace.yaml excludes it too.
+      projects: ["{apps,packages}/*/vitest.config.ts", "!packages/auth-old/**"],
     },
   })
 );

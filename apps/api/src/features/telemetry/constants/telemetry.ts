@@ -19,9 +19,6 @@ export const OTLP_PATH = {
   TRACES: `${OTLP_VERSION}/traces`,
 } as const;
 
-/** Stripped from the endpoint so appending an `OTLP_PATH` never yields `//v1`. */
-export const TRAILING_SLASHES = /\/+$/;
-
 /** OTLP over HTTP only: a gRPC or bare `host:port` endpoint is a typo here. */
 export const OTLP_PROTOCOL_PATTERN = /^https?$/;
 

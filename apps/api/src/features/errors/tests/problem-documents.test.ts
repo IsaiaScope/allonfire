@@ -1,19 +1,18 @@
 // @module-tag unit
+
 import { createApp } from "../../../app";
 import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
 import { API_VERSION_PREFIX } from "../../../shared/constants/routes";
 import { appDeps } from "../../../shared/tests/app-deps";
 import { LOCALE } from "../../i18n/constants/locales";
-import {
-  fallbackMessage,
-  type ProblemDetails,
-} from "../middleware/error-handler";
+import { fallbackMessage } from "../middleware/error-handler";
+import { problemOf } from "./problem-of";
 
 describe("unmatched routes", () => {
   it("returns the NOT_FOUND envelope", async () => {
     const res = await createApp(appDeps()).request("/nothing-here");
     expect(res.status).toBe(404);
-    expect(((await res.json()) as ProblemDetails).code).toBe("NOT_FOUND");
+    expect((await problemOf(res)).code).toBe("NOT_FOUND");
   });
 });
 
@@ -35,9 +34,7 @@ describe("RFC 9457 problem documents", () => {
         "application/problem+json"
       );
     }
-    const bodies = await Promise.all(
-      responses.map((res) => res.json() as Promise<ProblemDetails>)
-    );
+    const bodies = await Promise.all(responses.map((res) => problemOf(res)));
     expect(bodies.map((body) => body.code)).toEqual([
       "INTERNAL_ERROR",
       "INTERNAL_ERROR",
@@ -59,7 +56,7 @@ describe("RFC 9457 problem documents", () => {
     vi.useRealTimers();
 
     expect(res.status).toBe(503);
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
     expect(body.code).toBe("TIMEOUT");
     expect(body.detail).toBe(fallbackMessage("TIMEOUT", LOCALE.IT_IT));
   });
@@ -73,7 +70,7 @@ describe("RFC 9457 problem documents", () => {
 
   it("carries every member the RFC requires, plus our extensions", async () => {
     const res = await createApp(appDeps()).request("/nothing-here");
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
 
     expect(body).toMatchObject({
       code: "NOT_FOUND",
@@ -88,14 +85,12 @@ describe("RFC 9457 problem documents", () => {
 
   it("keeps `title` invariant across locales while `detail` localises", async () => {
     const app = createApp(appDeps());
-    const en = (await (
-      await app.request("/nothing-here")
-    ).json()) as ProblemDetails;
-    const italian = (await (
+    const en = await problemOf(await app.request("/nothing-here"));
+    const italian = await problemOf(
       await app.request("/nothing-here", {
         headers: { "Accept-Language": "it" },
       })
-    ).json()) as ProblemDetails;
+    );
 
     // RFC 9457 §3.1.2: title should not change from occurrence to occurrence.
     expect(en.title).toBe(italian.title);
@@ -106,7 +101,7 @@ describe("RFC 9457 problem documents", () => {
   it("reports the path the problem occurred on", async () => {
     const path = `${API_VERSION_PREFIX}/definitely-missing`;
     const res = await createApp(appDeps()).request(path);
-    const body = (await res.json()) as ProblemDetails;
+    const body = await problemOf(res);
     expect(body.instance).toBe(path);
   });
 });

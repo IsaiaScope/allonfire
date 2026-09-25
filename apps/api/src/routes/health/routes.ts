@@ -1,5 +1,5 @@
+import { CONTENT_TYPE } from "@allonfire/utils/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
-import { CONTENT_TYPE } from "../../shared/constants/http";
 import { OPENAPI_TAG } from "../docs/constants/openapi";
 import {
   healthBodySchema,

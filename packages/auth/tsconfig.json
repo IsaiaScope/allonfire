@@ -1,12 +1,11 @@
 {
-  "extends": "../../packages/config/typescript/nextjs.json",
+  "extends": "../config/typescript/node.json",
   "compilerOptions": {
     "paths": {
-      "@allonfire/ui/*": ["../../packages/ui/src/*"],
-      "@allonfire/database": ["../../packages/database/src/index.ts"]
-    },
-    "types": ["node", "vitest/globals"]
+      "@allonfire/database": ["../database/src/index.ts"],
+      "@allonfire/utils/*": ["../utils/src/*"]
+    }
   },
-  "include": ["src", "vitest.config.ts"],
+  "include": ["src", "vitest.config.ts", "vitest.setup.ts"],
   "exclude": ["node_modules"]
 }

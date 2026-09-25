@@ -1,18 +1,24 @@
 {
   "name": "@allonfire/auth",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./server": "./src/server.ts",
-    "./client": "./src/client.ts",
-    "./route": "./src/route.ts",
-    "./guard": "./src/guard.ts",
-    "./actions/check-access": "./src/actions/check-access.ts",
-    "./env": "./src/env.ts",
-    "./components/login-form": "./src/components/login-form.tsx",
-    "./components/theme-provider": "./src/components/theme-provider.tsx",
-    "./components/providers": "./src/components/providers.tsx"
+    "./access": "./src/access/access.ts",
+    "./constants/limits": "./src/constants/limits.ts",
+    "./constants/paths": "./src/constants/paths.ts",
+    "./environment": "./src/environment/environment.ts",
+    "./hono/middleware/auth-limit": "./src/hono/middleware/auth-limit.ts",
+    "./hono/middleware/require-app": "./src/hono/middleware/require-app.ts",
+    "./hono/middleware/require-role": "./src/hono/middleware/require-role.ts",
+    "./hono/middleware/require-session": "./src/hono/middleware/require-session.ts",
+    "./hono/middleware/session-loader": "./src/hono/middleware/session-loader.ts",
+    "./hono/routes": "./src/hono/routes/auth-routes.ts",
+    "./hono/types": "./src/hono/types/variables.ts",
+    "./openapi": "./src/openapi/openapi.ts",
+    "./server": "./src/server/auth.ts",
+    "./testing": "./src/testing/stub-auth.ts",
+    "./types": "./src/types/auth.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -20,23 +26,18 @@
   },
   "dependencies": {
     "@allonfire/database": "workspace:*",
-    "@allonfire/ui": "workspace:*",
+    "@allonfire/utils": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",
-    "@tanstack/react-query": "^5.62.0",
-    "better-auth": "^1.2.0",
-    "lucide-react": "^0.474.0",
-    "next": "^16.1.6",
-    "next-themes": "^0.4.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hook-form": "^7.71.2",
-    "sonner": "^2.0.7",
+    "better-auth": "^1.5.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@allonfire/config": "workspace:*",
-    "@types/react": "^19.2.14",
+    "hono": "^4.9.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "hono": "^4.9.0"
   }
 }

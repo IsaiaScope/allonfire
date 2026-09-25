@@ -3,6 +3,6 @@
   "extends": "./base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   }
 }

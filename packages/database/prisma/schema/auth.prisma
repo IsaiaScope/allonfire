@@ -9,6 +9,15 @@ enum Role {
   @@schema("auth")
 }
 
+/// One entry of a User's Allowed apps: an App, or ALL for every App.
+/// Upper-case in code like Role; stored as the App names themselves.
+enum AllowedApp {
+  ALL   @map("all")
+  LAURA @map("laura")
+
+  @@schema("auth")
+}
+
 model User {
   id            String         @id @default(cuid(2))
   email         String         @unique
@@ -16,7 +25,7 @@ model User {
   emailVerified Boolean        @default(false)
   image         String?
   role          Role           @default(USER)
-  allowedApps   String[]       @default(["all"])
+  allowedApps   AllowedApp[]   @default([ALL])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   sessions      Session[]

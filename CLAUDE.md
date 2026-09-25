@@ -47,10 +47,10 @@ level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `laura.prisma`).
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
-- **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enum `Role`
+- **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
 - **`laura` schema:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/laura/photo`, `@allonfire/database/auth/user`; the root exports only `prisma` and generated types.
+- Services import per file: `@allonfire/database/laura/photo`, `@allonfire/database/auth/user`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
 - Raw SQL names the schema: `laura."Photo"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -96,7 +96,7 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 
 ### Viewer Role System
 
-- Server: `checkMutationAccess(auth)` in `packages/auth/src/guard.ts` guards all write actions
+- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API uses `requireRole(Role.USER)`
 - Client: `UserRoleProvider` + `useIsViewer()` hook for UI restrictions
 - Viewers can browse gallery and play games but cannot upload, favorite, delete, or submit scores
 
@@ -117,8 +117,9 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 
 ## API App Structure (`apps/api/src/`)
 
-The HTTP backend serving every app. Hono on Node, port 3300. No auth and no
-domain endpoints yet — see `apps/api/README.md`.
+The HTTP backend serving every app. Hono on Node, port 3300. No domain
+endpoints yet; auth is the Auth module (`packages/auth`) mounted at `/v1/auth`
+— see `apps/api/README.md`.
 
 ```
 apps/api/
@@ -131,11 +132,14 @@ apps/api/
     ├── routes/           one folder per resource, mounted by app.ts; owns its
     │   │                 constants/, utils/ and tests/
     │   ├── docs/         index, handlers, constants/{openapi,routes},
-    │   │                 utils/enabled (isDocsEnabled) — /openapi.json, /reference
+    │   │                 utils/enabled (isDocsEnabled), utils/merge
+    │   │                 (mergeOpenApi) — /openapi.json, /reference
     │   └── health/       index, routes, handlers, constants/statuses,
     │                     utils/status (HealthDeps, status mapping) — /health, /ready
     ├── features/         one folder per cross-cutting topic (no endpoints),
     │   │                 each owning constants/, middleware/ and tests/
+    │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
+    │   │                 API's limiter wrapped in the module's authLimit)
     │   ├── environment/  environment — zod env schema, validated at import
     │   ├── errors/       constants/{error-codes,problem-details},
     │   │                 middleware/error-handler
@@ -154,8 +158,15 @@ apps/api/
 ```
 
 A constant belongs in `features/<topic>/constants/` unless more than one
-feature reads it. `HTTP_STATUS`, `CONTEXT_VAR` and the mount prefixes are
-shared, so they stay in `shared/constants/`. `INFRA_ROUTE` is
+feature reads it. `CONTEXT_VAR` and the mount prefixes are
+shared, so they stay in `shared/constants/`. Anything not API-specific —
+`HTTP_STATUS`, `HTTP_METHOD`, `HTTP_HEADER`, `CONTENT_TYPE`, `LOG_LEVEL`, the
+redaction list, `BOOLEAN_ENV`, `SEPARATOR`, `TRAILING_SLASHES`, time and size units, `SECURITY_HEADERS` — lives in
+`@allonfire/utils/constants/*`; only `ERROR_STATUS` stays in the API's
+`shared/constants/http.ts`. A constant's type always comes from zod:
+`export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
+`export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
+Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `INFRA_ROUTE` is
 shared too: the health routes serve it, and telemetry, the request logger and
 the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
 `LOCALE` and the rate-limit tunables belong to the feature that owns them.
@@ -206,9 +217,12 @@ many, and `middlewares/` reads wrong.
   client types silently collapse. Guarded by `src/client.test-d.ts`.
 - **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
+- **Auth guards** come from `@allonfire/auth/hono/middleware/*` and throw
+  `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
-- **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`. Full list in
+- **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`,
+  `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Full list in
   `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions

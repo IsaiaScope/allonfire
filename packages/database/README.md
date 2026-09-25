@@ -19,7 +19,7 @@ database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
 
 | Schema | Owner | Holds |
 |---|---|---|
-| `auth` | the user base every App shares (Better Auth) | `User`, `Session`, `Account`, `Verification`, enum `Role` |
+| `auth` | the user base every App shares (Better Auth) | `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp` |
 | `laura` | Laura | `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType` |
 | `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
 
@@ -37,6 +37,7 @@ back-relations, which is why `User` in `auth.prisma` lists Laura's models.
 | `@allonfire/database/laura/favorite` | `toggleFavorite`, `getFavoritePhotoIds`, `getFavoritesPaginated` |
 | `@allonfire/database/laura/game-score` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
 | `@allonfire/database/laura/quiz` | `createQuizQuestion`, `getRandomQuizQuestions`, `getQuizQuestionCount`, `getAllQuizQuestions`, `getQuizQuestionById`, `updateQuizQuestion`, `deleteQuizQuestion`, type `QuizQuestionWithAnswers` |
+| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `AllowedApp`, `GameType`) with no client attached |
 | `@allonfire/database/env` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 
 One subpath per service file, no barrel. Raw SQL names the schema:

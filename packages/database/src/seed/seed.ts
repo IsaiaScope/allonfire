@@ -1,31 +1,30 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { hashPassword } from "better-auth/crypto";
-import type { Role } from "../../generated/prisma/client";
+import type { z } from "zod";
+import { AllowedApp, Role } from "../../generated/prisma/client";
 import { prisma } from "../client";
 import { seedEnv } from "../environment/seed-environment";
-
-type SeedUser = {
-  email: string;
-  name: string;
-  role: string;
-  allowedApps: string[];
-};
+import { type SeedUser, seedUsersSchema } from "./seed-user";
 
 const MOCK_DIR = resolve(import.meta.dirname, "mock");
 
-function readSeedFile<T>(filename: string): T {
-  return JSON.parse(readFileSync(resolve(MOCK_DIR, filename), "utf-8"));
+function readSeedFile<S extends z.ZodType>(
+  filename: string,
+  schema: S
+): z.infer<S> {
+  return schema.parse(
+    JSON.parse(readFileSync(resolve(MOCK_DIR, filename), "utf-8"))
+  );
 }
 
 async function upsertUser(
   { email, name, role, allowedApps }: SeedUser,
   hashedPassword: string
 ) {
-  const typedRole = role as Role;
   const user = await prisma.user.upsert({
-    create: { allowedApps, email, emailVerified: true, name, role: typedRole },
-    update: { allowedApps, role: typedRole },
+    create: { allowedApps, email, emailVerified: true, name, role },
+    update: { allowedApps, role },
     where: { email },
   });
 
@@ -62,10 +61,10 @@ async function main() {
 
   await upsertUser(
     {
-      allowedApps: ["all"],
+      allowedApps: [AllowedApp.ALL],
       email: seedEnv.ADMIN_EMAIL,
       name: adminName,
-      role: "ADMIN",
+      role: Role.ADMIN,
     },
     adminHash
   );
@@ -74,10 +73,10 @@ async function main() {
   const lauraViewerHash = await hashPassword(seedEnv.LAURA_VIEWER_PASSWORD);
   await upsertUser(
     {
-      allowedApps: ["laura"],
+      allowedApps: [AllowedApp.LAURA],
       email: seedEnv.LAURA_VIEWER_EMAIL,
       name: seedEnv.LAURA_VIEWER_EMAIL.split("@")[0] ?? "laura-viewer",
-      role: "VIEWER",
+      role: Role.VIEWER,
     },
     lauraViewerHash
   );
@@ -89,7 +88,7 @@ async function main() {
     }
 
     const testHash = await hashPassword(seedEnv.TEST_PASSWORD);
-    const testUsers = readSeedFile<SeedUser[]>("users.json");
+    const testUsers = readSeedFile("users.json", seedUsersSchema);
 
     await Promise.all(testUsers.map((user) => upsertUser(user, testHash)));
 

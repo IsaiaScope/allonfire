@@ -1,105 +1,116 @@
 <h1 align="center">@allonfire/auth</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
+  <img src="https://img.shields.io/badge/BetterAuth-1.5-8B5CF6?logoColor=white" alt="BetterAuth" />
+  <img src="https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=white" alt="Hono" />
   <img src="https://img.shields.io/badge/Prisma-adapter-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/Zod-4-3068B7?logo=zod&logoColor=white" alt="Zod" />
 </p>
 
-<p align="center">
-  Shared authentication for the AllOnFire monorepo. Factory-configured BetterAuth instance, role-based session guards (admin/user/viewer), reusable login form, and app-level access control.
-</p>
+<p align="center">The Auth module: signing in, Sessions and the access rules, mountable by any Hono backend.</p>
 
----
+## What it is
 
-## 📦 API Reference
+Better Auth's configuration, the Roles and Apps a User can hold, pure access
+predicates, a Hono adapter (routes, Session loader, guards) and the OpenAPI
+fragment a host merges into its own document. The API is the only backend that
+mounts it today.
 
-| Export Path | What it provides |
-|-------------|-----------------|
-| `./server` | `createAuth`, `requireAuth`, `requireUser`, `requireAdmin`, `Auth`, `Session` types |
-| `./client` | `authClient` — BetterAuth React client |
-| `./route` | `createAuthHandler` — Next.js route handler factory |
-| `./guard` | `checkAppAccess` — cached app-level access guard (redirects on failure), `checkMutationAccess(auth: Auth): Promise<MutationAccessResult>` — blocks VIEWER role from mutations, `checkAdminAccess(auth: Auth): Promise<MutationAccessResult>` — restricts to ADMIN only, `MutationAccessResult` type |
-| `./actions/check-access` | Server action for client-side access checks |
-| `./env` | `authEnvSchema` — Zod schema for `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` |
-| `./components/login-form` | `LoginForm` — email/password login form |
-| `./components/theme-provider` | `ThemeProvider` — next-themes wrapper |
-| `./components/providers` | `Providers` — combined provider wrapper |
+No Next and no React yet: the frontend refactor adds a `./client` export. The
+old Next-bound package lives in `packages/auth-old`, untracked, until then.
 
-## 📁 Directory Structure
+Everything the adapter touches goes through the `AuthLike` port
+(`basePath`, `handler`, `getSession`, `openApi`), so a test passes `stubAuth()` instead of a
+real instance.
+
+## Exports
+
+Roles and Allowed apps are the Prisma enums, imported from
+`@allonfire/database/enums` (`Role.VIEWER`, `AllowedApp.LAURA`); this package
+keeps no copy of them. HTTP statuses and methods come from
+`@allonfire/utils/constants/http`.
+
+| Export | Contents |
+|--------|----------|
+| `./access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
+| `./constants/roles` | `ROLE_RANK` — each Role's rank, in steps of 100 |
+| `./constants/limits` | The auth bucket defaults (10 attempts / 15 min, `auth:` key prefix), the secret and cookie-cache limits |
+| `./constants/paths` | `AUTH_PATH`, `SIGN_IN_EMAIL_PATH`, `CHANGE_PASSWORD_PATH`, `LIMITED_AUTH_PATHS`, `OPENAPI_SCHEMA_PATH` |
+| `./environment` | `authEnvSchema` (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
+| `./hono/middleware/require-app` | `requireApp(app)` — 403 unless the User's Allowed apps include it or `ALL`; mount it once per App |
+| `./hono/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer) |
+| `./hono/middleware/require-session` | `requireSession()` — 401 when anonymous |
+| `./hono/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
+| `./hono/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
+| `./hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
+| `./hono/types` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
+| `./openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
+| `./server` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
+| `./testing` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` |
+| `./types` | `App`, `AuthSession`, `AuthLike`, `OpenApiDocument`, `OpenApiFragment` |
+
+## Directory structure
 
 ```
-packages/auth/
-  src/
-    server.ts              createAuth factory + session guards
-    client.ts              BetterAuth React client
-    route.ts               Next.js route handler export
-    guard.ts               App-level access control (checkAppAccess, checkMutationAccess, checkAdminAccess)
-    env.ts                 Zod environment schema
-    actions/
-      check-access.ts      Server action for access checks
-    components/
-      login-form.tsx       Email/password login form
-      theme-provider.tsx   Theme provider wrapper
-      providers.tsx        Combined providers
-  package.json
-  tsconfig.json
+src/
+  constants/     paths, limits, roles (ROLE_RANK), http (AUTH_METHODS), openapi
+  types/         auth (AuthSession, AuthLike, OpenApiDocument, OpenApiFragment)
+  environment/   environment (authEnvSchema)
+  access/        access (hasRole, canEnterApp, allowedAppsFrom, roleFrom), tests/
+  server/        auth (createAuth, toAuthLike), tests/
+  openapi/       openapi (authOpenApi), tests/
+  testing/       stub-auth (stubAuth, sessionFor)
+  hono/
+    constants/   variables (AUTH_VAR)
+    types/       variables (AuthVariables, AuthEnv, SignedInEnv)
+    routes/      auth-routes
+    utils/       guard
+    middleware/  session-loader, auth-limit, require-session,
+                 require-role, require-app
+    tests/       routes, middleware, guards (type test)
 ```
 
-## 🔧 Usage
-
-### Creating an auth instance in an app
+## Mounting it in a Hono backend
 
 ```ts
-import { createAuth } from "@allonfire/auth/server";
-import { env } from "@/env";
+const auth = toAuthLike(
+  createAuth({ basePath: "/v1/auth", baseURL, secret, trustedOrigins })
+);
 
-export const auth = createAuth(env);
+new Hono()
+  // Before the loader: Better Auth reads its own Session on its routes.
+  .route("/", authRoutes(auth))
+  .use(sessionLoader(auth))
+  .post("/v1/things", requireRole(Role.USER), handler)
+  .route("/v1/laura", new Hono().use(requireApp(AllowedApp.LAURA)).get(...));
 ```
 
-### Role-based guards in server actions
+The `AuthLike` port carries the `basePath` given to `createAuth`, so the
+routes, the sign-in matcher and the OpenAPI paths all read it from there and
+nothing else can drift from it. Guards
+throw `HTTPException(401 | 403)`; the host's `onError` renders the response.
+A Role check names the lowest Role allowed, never a list: Roles are ranked
+(`ROLE_RANK`), and a Role added later slots between two ranks. Every guard
+types the Session as present for the handlers chained after it, so
+`c.get("session")` needs no null check there.
+Better Auth's own rate limiter is off. The host brings its own limiter, built
+with the `AUTH_RATE_LIMIT_*` env values, and wraps it in `authLimit(auth, limiter)`: the
+module decides which requests count (every route that checks a password,
+`LIMITED_AUTH_PATHS`), the host owns the store,
+the proxy hop count and the 429 body. Sign-up is disabled: Users come from the seed.
 
-```ts
-import { requireUser, requireAdmin } from "@allonfire/auth/server";
-import { auth } from "@/lib/auth";
+## Trade-off
 
-// Blocks VIEWER role — only USER and ADMIN can mutate
-export async function uploadPhoto(data: FormData) {
-  "use server";
-  const session = await requireUser(auth);
-  // ...
-}
+Sessions live in Postgres behind Better Auth's five-minute cookie cache. A
+change to a User's Role or Allowed apps, or a revoked Session, reaches the
+guards up to five minutes late. See
+[ADR 0009](../../docs/adr/0009-auth-runs-in-the-api-sessions-in-postgres.md).
 
-// Only ADMIN can access
-export async function deleteUser(userId: string) {
-  "use server";
-  await requireAdmin(auth);
-  // ...
-}
+## Tests
+
+```bash
+pnpm --filter @allonfire/auth test
+pnpm --filter @allonfire/auth check-types
 ```
 
-### App-level access control in layouts
-
-```ts
-import { checkAppAccess } from "@allonfire/auth/guard";
-import { auth } from "@/lib/auth";
-
-export default async function DashboardLayout({ children }) {
-  await checkAppAccess(auth, "laura");
-  return <>{children}</>;
-}
-```
-
-## 📦 Dependencies
-
-| Package | Why |
-|---------|-----|
-| `better-auth` | Core authentication library |
-| `@better-auth/prisma-adapter` | Database adapter for Prisma |
-| `@allonfire/database` | Prisma client for user queries |
-| `@allonfire/ui` | Shared UI components for login form |
-| `next-themes` | Theme management |
-| `react-hook-form` | Form state for login form |
-| `zod` | Environment variable validation |
+Every test is `unit`: the Prisma client never connects unless a query runs.

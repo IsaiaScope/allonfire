@@ -23,7 +23,7 @@
     "db:seed": "pnpm --filter @allonfire/database db:seed",
     "db:status": "pnpm --filter @allonfire/database db:status",
     "db:update": "pnpm --filter @allonfire/database db:update",
-    "dev": "turbo run dev test //#test:ui --ui=tui",
+    "dev": "pnpm docker:up && turbo run dev test //#test:ui --continue --ui=tui",
     "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db:update && pnpm db:seed",
     "docker:build:laura": "docker build --build-arg APP_NAME=laura -f docker/Dockerfile -t allonfire-laura .",
     "docker:down": "docker compose -f docker/docker-compose.dev.yml down",

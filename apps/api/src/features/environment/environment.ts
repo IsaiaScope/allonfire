@@ -1,16 +1,14 @@
+import { authEnvSchema } from "@allonfire/auth/environment";
 import { databaseEnvSchema } from "@allonfire/database/env";
+import { BOOLEAN_ENV, booleanEnvSchema } from "@allonfire/utils/constants/env";
+import { LOG_LEVEL, logLevelSchema } from "@allonfire/utils/constants/logger";
+import { TRAILING_SLASHES } from "@allonfire/utils/constants/patterns";
+import { SEPARATOR } from "@allonfire/utils/constants/separators";
 import { runtimeEnvSchema } from "@allonfire/utils/environment";
 import { objectFromEntries } from "@allonfire/utils/object";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 import { DEFAULT_PORT } from "../../shared/constants/limits";
-import {
-  BOOLEAN_ENV,
-  booleanEnvSchema,
-  LOG_LEVEL,
-  logLevelSchema,
-  SEPARATOR,
-} from "../../shared/constants/runtime";
 import {
   DEFAULT_RATE_LIMIT_MAX,
   DEFAULT_RATE_LIMIT_WINDOW_MS,
@@ -21,7 +19,6 @@ import {
   OTLP_HEADERS_MALFORMED_ESCAPE,
   OTLP_HEADERS_PATTERN,
   OTLP_PROTOCOL_PATTERN,
-  TRAILING_SLASHES,
 } from "../telemetry/constants/telemetry";
 
 /** `a=1,b=x%20y` to `{ a: "1", b: "x y" }`, splitting each pair at its first `=`. */
@@ -43,6 +40,7 @@ export function parseEnv(raw: Record<string, string | undefined>) {
     server: {
       ...runtimeEnvSchema,
       ...databaseEnvSchema,
+      ...authEnvSchema,
       CORS_ORIGINS: z.string().transform((value) =>
         value
           .split(SEPARATOR.LIST)

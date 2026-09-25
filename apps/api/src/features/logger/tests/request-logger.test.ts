@@ -1,7 +1,7 @@
 // @module-tag unit
 import { createApp } from "../../../app";
 import { appDeps } from "../../../shared/tests/app-deps";
-import { captureLog } from "./capture";
+import { captureLog, infoLevel } from "./capture";
 
 describe("probe logging", () => {
   it("does not emit an info line for /health", async () => {
@@ -10,7 +10,7 @@ describe("probe logging", () => {
 
     await app.request("/health");
 
-    const infoLines = lines.filter((entry) => entry.level >= 30);
+    const infoLines = lines.filter((entry) => entry.level >= infoLevel(logger));
 
     expect(infoLines).toHaveLength(0);
   });
@@ -21,7 +21,7 @@ describe("probe logging", () => {
 
     await app.request("/nothing-here");
 
-    const infoLines = lines.filter((entry) => entry.level >= 30);
+    const infoLines = lines.filter((entry) => entry.level >= infoLevel(logger));
 
     expect(infoLines.length).toBeGreaterThan(0);
   });

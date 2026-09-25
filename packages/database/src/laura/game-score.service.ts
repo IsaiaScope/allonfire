@@ -1,4 +1,4 @@
-import type { GameType } from "../../generated/prisma/client";
+import type { GameType, Prisma } from "../../generated/prisma/client";
 import { prisma } from "../client";
 
 export type LeaderboardEntry = {
@@ -15,14 +15,15 @@ export async function submitGameScore(data: {
   gameType: GameType;
   timeMs?: number | undefined;
   score?: number | undefined;
-  metadata?: Record<string, unknown> | undefined;
+  /** What the game reports beside the score; Prisma's own JSON input type. */
+  metadata?: Prisma.InputJsonObject | undefined;
 }) {
   return await prisma.gameScore.create({
     data: {
       gameType: data.gameType,
       // Json? columns take Prisma.DbNull rather than null, so absent metadata is left out.
       ...(data.metadata && {
-        metadata: data.metadata as Record<string, string | number>,
+        metadata: data.metadata,
       }),
       score: data.score ?? null,
       timeMs: data.timeMs ?? null,
