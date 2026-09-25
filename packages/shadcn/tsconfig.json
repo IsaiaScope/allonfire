@@ -13,7 +13,7 @@
     "paths": {
       "@allonfire/shadcn/*": ["./src/*"]
     },
-    "types": ["node"]
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "scripts", "vitest.config.ts"]
 }

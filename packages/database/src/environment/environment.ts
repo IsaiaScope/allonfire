@@ -1,4 +1,4 @@
-import { env as runtimeEnv } from "@allonfire/utils/environment";
+import { env as runtimeEnv } from "@allonfire/utils/environment/environment";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 

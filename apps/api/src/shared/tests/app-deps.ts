@@ -1,5 +1,5 @@
-import { stubAuth } from "@allonfire/auth/testing";
-import type { AuthLike } from "@allonfire/auth/types";
+import { stubAuth } from "@allonfire/auth/shared/tests/stub-auth";
+import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import type { AppDeps } from "../../app";
 import { memoryStore } from "../../features/rate-limit/tests/memory-store";
 import { AUTH_BASE_PATH } from "../constants/routes";

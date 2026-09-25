@@ -75,8 +75,8 @@
 |---------|-----|
 | `@tanstack/react-query` | `useInfiniteQuery` for pagination, `useMutation` for optimistic favorite toggle, `useQueryClient` for cache manipulation |
 | `@allonfire/ui` | Button, Skeleton, AlertDialog, Tooltip components and `cn` utility |
-| `@allonfire/database/laura/photo` | `getPhotosPaginated`, `deletePhoto`, `PhotoWithUser` type |
-| `@allonfire/database/laura/favorite` | `getFavoritesPaginated`, `toggleFavorite`, `getFavoritePhotoIds` |
+| `@allonfire/database/features/laura/photo.service` | `getPhotosPaginated`, `deletePhoto`, `PhotoWithUser` type |
+| `@allonfire/database/features/laura/favorite.service` | `getFavoritesPaginated`, `toggleFavorite`, `getFavoritePhotoIds` |
 | `@allonfire/storage` | `blurHashToDataURL` for converting stored blurhash to data URL |
 | `@allonfire/auth` | `checkMutationAccess` for viewer role guard on write actions |
 | `next/image` | Optimized image rendering with blur placeholders |

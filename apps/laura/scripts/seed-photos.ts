@@ -1,7 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { prisma } from "@allonfire/database";
-import { createPhoto, getPhotoCount } from "@allonfire/database/laura/photo";
+import {
+  createPhoto,
+  getPhotoCount,
+} from "@allonfire/database/features/laura/photo.service";
 import { processPhoto, uploadFile } from "@allonfire/storage";
 
 const SEED_DIR = join(import.meta.dirname, "../seed-photos");

@@ -5,13 +5,13 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/environment/environment.ts",
     "./enums": "./generated/prisma/enums.ts",
-    "./auth/user": "./src/auth/user.service.ts",
-    "./laura/photo": "./src/laura/photo.service.ts",
-    "./laura/favorite": "./src/laura/favorite.service.ts",
-    "./laura/game-score": "./src/laura/game-score.service.ts",
-    "./laura/quiz": "./src/laura/quiz.service.ts"
+    "./environment/environment": "./src/environment/environment.ts",
+    "./features/auth/user.service": "./src/features/auth/user.service.ts",
+    "./features/laura/favorite.service": "./src/features/laura/favorite.service.ts",
+    "./features/laura/game-score.service": "./src/features/laura/game-score.service.ts",
+    "./features/laura/photo.service": "./src/features/laura/photo.service.ts",
+    "./features/laura/quiz.service": "./src/features/laura/quiz.service.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -19,8 +19,8 @@
     "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
     "db:generate": "prisma generate",
     "db:rollback": "bash scripts/liquibase.sh rollback",
-    "db:seed": "tsx --env-file=.env src/seed/seed.ts",
-    "db:seed-quiz": "tsx --env-file=.env src/seed/seed-quiz.ts",
+    "db:seed": "tsx --env-file=.env src/features/seed/seed.ts",
+    "db:seed-quiz": "tsx --env-file=.env src/features/seed/seed-quiz.ts",
     "db:status": "bash scripts/liquibase.sh status --verbose",
     "db:update": "bash scripts/liquibase.sh update",
     "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",

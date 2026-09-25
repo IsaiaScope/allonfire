@@ -1,4 +1,4 @@
-import type { AuthLike } from "@allonfire/auth/types";
+import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { Hono } from "hono";
 import type { AppBindings } from "../../shared/types/bindings";
 import { DOCS_ROUTE } from "./constants/routes";

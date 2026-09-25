@@ -5,8 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./image-processing": "./src/image-processing.ts"
+    "./environment/environment": "./src/environment/environment.ts",
+    "./features/image/image-processing": "./src/features/image/image-processing.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

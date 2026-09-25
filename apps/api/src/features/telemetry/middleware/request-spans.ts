@@ -4,8 +4,8 @@ import { context as otelContext, trace } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
 import type { MiddlewareHandler } from "hono";
 import pkg from "../../../../package.json" with { type: "json" };
+import { env } from "../../../environment/environment";
 import { isProbe } from "../../../shared/utils/probe";
-import { env } from "../../environment/environment";
 import { URL_ATTRIBUTE } from "../constants/telemetry";
 
 /**

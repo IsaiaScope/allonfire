@@ -29,7 +29,7 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 `createApp` loads the Session once per request, after the rate limiters.
 
 - **Guards** — `requireSession`, `requireRole(min)` and `requireApp`
-  (mounted once per App) from `@allonfire/auth/hono/middleware/*`. They throw
+  (mounted once per App) from `@allonfire/auth/features/guards/middleware/*`. They throw
   `HTTPException(401 | 403)` and `onError` renders the localised problem
   document. A failing Session lookup is a 500, never anonymous.
 - **Auth bucket** — the routes where Better Auth checks a password,

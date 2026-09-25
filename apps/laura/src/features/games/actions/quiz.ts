@@ -4,8 +4,8 @@ import { checkMutationAccess } from "@allonfire/auth/guard";
 import {
   getGlobalBestScore,
   submitGameScore,
-} from "@allonfire/database/laura/game-score";
-import { getRandomQuizQuestions } from "@allonfire/database/laura/quiz";
+} from "@allonfire/database/features/laura/game-score.service";
+import { getRandomQuizQuestions } from "@allonfire/database/features/laura/quiz.service";
 import { blurHashToDataURL } from "@allonfire/storage";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";

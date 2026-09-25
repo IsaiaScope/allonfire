@@ -1,5 +1,5 @@
 import { LoginForm } from "@allonfire/auth/components/login-form";
-import { checkUserAppAccess } from "@allonfire/database/auth/user";
+import { checkUserAppAccess } from "@allonfire/database/features/auth/user.service";
 import { ThemeToggle } from "@allonfire/ui/components/theme-toggle";
 import { Heart } from "lucide-react";
 import type { Metadata } from "next";

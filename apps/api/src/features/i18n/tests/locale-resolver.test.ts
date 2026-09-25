@@ -1,5 +1,5 @@
 // @module-tag unit
-import { objectEntries, objectKeys } from "@allonfire/utils/object";
+import { objectEntries, objectKeys } from "@allonfire/utils/helpers/object";
 import {
   CATALOGUE,
   DEFAULT_LOCALE,

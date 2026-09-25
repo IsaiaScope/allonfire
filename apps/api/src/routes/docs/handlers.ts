@@ -1,11 +1,11 @@
-import { authOpenApi } from "@allonfire/auth/openapi";
-import type { AuthLike } from "@allonfire/auth/types";
+import { authOpenApi } from "@allonfire/auth/features/openapi/openapi";
+import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { CONTENT_TYPE } from "@allonfire/utils/constants/http";
 import { Scalar } from "@scalar/hono-api-reference";
 import type { Hono, MiddlewareHandler } from "hono";
 import { generateSpecs, resolver } from "hono-openapi";
 import pkg from "../../../package.json" with { type: "json" };
-import { env } from "../../features/environment/environment";
+import { env } from "../../environment/environment";
 import { problemDetailsSchema } from "../../features/errors/constants/problem-details";
 import { notFound } from "../../features/errors/middleware/error-handler";
 import type { AppBindings } from "../../shared/types/bindings";

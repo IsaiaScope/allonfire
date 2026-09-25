@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createApp } from "../../../app";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import type { AppBindings } from "../../../shared/types/bindings";
-import { healthRoutes } from "../../health";
+import { healthRoutes } from "../../health/index";
 import { docsRoutes } from "..";
 
 /** Only what these tests read; `looseObject` keeps the rest for `toMatchObject`. */

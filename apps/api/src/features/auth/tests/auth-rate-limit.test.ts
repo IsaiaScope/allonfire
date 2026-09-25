@@ -2,12 +2,12 @@
 import {
   CHANGE_PASSWORD_PATH,
   SIGN_IN_EMAIL_PATH,
-} from "@allonfire/auth/constants/paths";
+} from "@allonfire/auth/shared/constants/paths";
 import { HTTP_HEADER } from "@allonfire/utils/constants/http";
 import { createApp } from "../../../app";
+import { env } from "../../../environment/environment";
 import { AUTH_BASE_PATH } from "../../../shared/constants/routes";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
-import { env } from "../../environment/environment";
 import { memoryStore } from "../../rate-limit/tests/memory-store";
 
 const SIGN_IN_ROUTE = `${AUTH_BASE_PATH}${SIGN_IN_EMAIL_PATH}`;

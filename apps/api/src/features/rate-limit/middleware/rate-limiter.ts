@@ -7,10 +7,10 @@ import { type ClientRateLimitInfo, rateLimiter } from "hono-rate-limiter";
 import type { Redis } from "ioredis";
 import type { Logger } from "pino";
 import { z } from "zod";
+import { env } from "../../../environment/environment";
 import { LOG_MESSAGE } from "../../../shared/constants/runtime";
 import { outageLatch } from "../../../shared/utils/outage";
 import { isProbe } from "../../../shared/utils/probe";
-import { env } from "../../environment/environment";
 import {
   ERROR_CODE,
   UNKNOWN_REQUEST_ID,

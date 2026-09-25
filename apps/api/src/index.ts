@@ -1,8 +1,8 @@
 import { prisma } from "@allonfire/database";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
+import { env } from "./environment/environment";
 import { auth } from "./features/auth/auth";
-import { env } from "./features/environment/environment";
 import { logger } from "./features/logger/logger";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { createRedis } from "./features/redis/redis";

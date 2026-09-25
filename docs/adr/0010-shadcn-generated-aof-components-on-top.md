@@ -29,3 +29,9 @@ but `packages/ui`, so a customisation always has a named home and a shadcn updat
   (`docker:build:laura`, `docker-compose.prod.yml`) does not work until then.
 - Wrapping a shadcn component with no changes is expected, not waste: it is the
   place the next customisation lands.
+- "Generated" means the CLI followed by `pnpm canonicalize`
+  (`packages/shadcn/scripts/canonicalize.ts`), which rewrites every Tailwind
+  class to its canonical spelling using Tailwind's own scanner and
+  `canonicalizeCandidates` against the package's theme. It is deterministic and
+  idempotent, so the package is still never edited by hand, and an update
+  stays a clean diff as long as both steps run.

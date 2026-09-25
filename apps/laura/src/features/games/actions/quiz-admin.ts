@@ -8,8 +8,8 @@ import {
   getAllQuizQuestions,
   getQuizQuestionById,
   updateQuizQuestion,
-} from "@allonfire/database/laura/quiz";
-import { formatErrorMessage } from "@allonfire/utils/error";
+} from "@allonfire/database/features/laura/quiz.service";
+import { formatErrorMessage } from "@allonfire/utils/helpers/error";
 import { revalidatePath } from "next/cache";
 import {
   processAndUploadImage,

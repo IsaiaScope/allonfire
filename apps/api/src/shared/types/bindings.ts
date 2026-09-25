@@ -1,4 +1,4 @@
-import type { AuthVariables } from "@allonfire/auth/hono/types";
+import type { AuthVariables } from "@allonfire/auth/shared/types/variables";
 import type { PinoLogger } from "hono-pino";
 import type { Locale } from "../../features/i18n/constants/locales";
 import type { CONTEXT_VAR } from "../constants/runtime";

@@ -7,11 +7,11 @@ import {
   getUserBestScore,
   getUserGameStats,
   submitGameScore,
-} from "@allonfire/database/laura/game-score";
+} from "@allonfire/database/features/laura/game-score.service";
 import {
   getAllRandomPhotos,
   getPhotoCount,
-} from "@allonfire/database/laura/photo";
+} from "@allonfire/database/features/laura/photo.service";
 import { blurHashToDataURL } from "@allonfire/storage";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";

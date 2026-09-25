@@ -32,19 +32,19 @@ back-relations, which is why `User` in `auth.prisma` lists Laura's models.
 | Import | Content |
 |---|---|
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/auth/user` | `getUserById`, `getUsers`, `deleteUser`, `checkUserAppAccess`, `updateUserAllowedApps` |
-| `@allonfire/database/laura/photo` | `getPhotosPaginated`, `createPhoto`, `deletePhoto`, `getPhotoCount`, `getRandomPhotos`, `getAllRandomPhotos`, `getUserPhotoCount`, type `PhotoWithUser` |
-| `@allonfire/database/laura/favorite` | `toggleFavorite`, `getFavoritePhotoIds`, `getFavoritesPaginated` |
-| `@allonfire/database/laura/game-score` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
-| `@allonfire/database/laura/quiz` | `createQuizQuestion`, `getRandomQuizQuestions`, `getQuizQuestionCount`, `getAllQuizQuestions`, `getQuizQuestionById`, `updateQuizQuestion`, `deleteQuizQuestion`, type `QuizQuestionWithAnswers` |
+| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `checkUserAppAccess`, `updateUserAllowedApps` |
+| `@allonfire/database/features/laura/photo.service` | `getPhotosPaginated`, `createPhoto`, `deletePhoto`, `getPhotoCount`, `getRandomPhotos`, `getAllRandomPhotos`, `getUserPhotoCount`, type `PhotoWithUser` |
+| `@allonfire/database/features/laura/favorite.service` | `toggleFavorite`, `getFavoritePhotoIds`, `getFavoritesPaginated` |
+| `@allonfire/database/features/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
+| `@allonfire/database/features/laura/quiz.service` | `createQuizQuestion`, `getRandomQuizQuestions`, `getQuizQuestionCount`, `getAllQuizQuestions`, `getQuizQuestionById`, `updateQuizQuestion`, `deleteQuizQuestion`, type `QuizQuestionWithAnswers` |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `AllowedApp`, `GameType`) with no client attached |
-| `@allonfire/database/env` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
+| `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
 `FROM laura."Photo"`, never `FROM "Photo"`.
 
 ```ts
-import { getLeaderboard } from "@allonfire/database/laura/game-score";
+import { getLeaderboard } from "@allonfire/database/features/laura/game-score.service";
 
 const leaderboard = await getLeaderboard("MEMORY", 25);
 ```
@@ -85,7 +85,7 @@ fails a `.prisma` edit that has no changeset.
 | `pnpm db:rollback --tag=<tag>` | Roll back every changeset after a tag |
 | `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
 | `pnpm db:drift` | Compare the database with the Prisma schema |
-| `pnpm db:seed` / `db:seed-quiz` | Seed users and mock data / quiz questions (data in `src/seed/mock/`) |
+| `pnpm db:seed` / `db:seed-quiz` | Seed users and mock data / quiz questions (data in `src/features/seed/mock/`) |
 | `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5555 (`pnpm dev` starts it too) |
 | `pnpm test` | Unit tests, plus `*.integration.test.ts` against Docker and the dev Postgres (`pnpm docker:up`). Tests live in a `tests/` folder beside what they test |
 
@@ -176,14 +176,15 @@ packages/database/
     changeset-file.ts       changeset naming and formatting
     tests/
   src/
-    client.ts               Prisma singleton
-    index.ts                prisma + generated types
+    index.ts                prisma + generated types (the root export)
     environment/            environment.ts (package), seed-environment.ts
                             (seed scripts), tests/
-    auth/                   auth services
-    laura/                  Laura services, tests/ (raw SQL against the DB)
-    seed/                   seed.ts, seed-quiz.ts
-      mock/                 users.json, quiz-questions.ts
+    features/
+      prisma/               client.ts (Prisma singleton)
+      auth/                 auth services
+      laura/                Laura services, tests/ (raw SQL against the DB)
+      seed/                 seed.ts, seed-quiz.ts, seed-user.ts, tests/
+        mock/               users.json, quiz-questions.ts
 ```
 
 ## Dependencies

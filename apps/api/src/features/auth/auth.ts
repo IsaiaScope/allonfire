@@ -1,6 +1,6 @@
-import { createAuth, toAuthLike } from "@allonfire/auth/server";
+import { createAuth, toAuthLike } from "@allonfire/auth/features/server/auth";
+import { env } from "../../environment/environment";
 import { AUTH_BASE_PATH } from "../../shared/constants/routes";
-import { env } from "../environment/environment";
 
 /** Built once at import. Tests never import this; they pass a stub to `createApp`. */
 export const auth = toAuthLike(

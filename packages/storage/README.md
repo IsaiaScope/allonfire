@@ -18,8 +18,8 @@
 | Export Path | What it provides |
 |-------------|-----------------|
 | `.` | `uploadFile`, `deleteFile`, `getPublicUrl`, `s3` client, `processPhoto`, `ProcessedPhoto` type, `blurHashToDataURL` |
-| `./image-processing` | `processPhoto`, `ProcessedPhoto` — direct import |
-| `./env` | `env` — validated `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` |
+| `./features/image/image-processing` | `processPhoto`, `ProcessedPhoto` — direct import |
+| `./environment/environment` | `env` — validated `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET` |
 
 ## 📁 Directory Structure
 
@@ -27,11 +27,14 @@
 packages/storage/
   src/
     index.ts               Package entry point (re-exports)
-    client.ts              S3 client configuration
-    upload.ts              uploadFile, deleteFile, getPublicUrl
-    image-processing.ts    processPhoto with Sharp (resize, thumbnail, blurhash)
-    blurhash-to-data-url.ts  Convert blurhash to data URL for placeholders
-    env.ts                 Zod-validated environment variables
+    environment/
+      environment.ts       Zod-validated environment variables
+    features/
+      s3/client.ts         S3 client configuration
+      upload/upload.ts     uploadFile, deleteFile, getPublicUrl
+      image/
+        image-processing.ts      processPhoto with Sharp (resize, thumbnail, blurhash)
+        blurhash-to-data-url.ts  Convert blurhash to data URL for placeholders
   package.json
   tsconfig.json
 ```

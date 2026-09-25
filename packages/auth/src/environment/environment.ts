@@ -4,7 +4,7 @@ import {
   DEFAULT_AUTH_RATE_LIMIT_MAX,
   DEFAULT_AUTH_RATE_LIMIT_WINDOW_MS,
   SECRET_MIN_LENGTH,
-} from "../constants/limits";
+} from "../shared/constants/limits";
 
 /** Spread into a host's env `server` block. */
 export const authEnvSchema = {

@@ -27,7 +27,7 @@ Always use Context7 MCP tools when generating code involving:
 - Next.js, React, Prisma, BetterAuth, shadcn/ui, TanStack Query, Zustand
 - Resolve library ID first, then query docs
 
-## Object Helpers (`@allonfire/utils/object`)
+## Object Helpers (`@allonfire/utils/helpers/object`)
 
 Never call `Object.keys` / `values` / `entries` / `fromEntries` directly. Use
 `objectKeys`, `objectValues`, `objectEntries`, `objectFromEntries` — the
@@ -50,7 +50,7 @@ Changelog: `packages/database/changelog/changesets/` — Liquibase owns every ch
 - **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
 - **`laura` schema:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/laura/photo`, `@allonfire/database/auth/user`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
+- Services import per file: `@allonfire/database/features/laura/photo.service`, `@allonfire/database/features/auth/user.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
 - Raw SQL names the schema: `laura."Photo"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -115,6 +115,33 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 - `/games/quiz/edit/new` — Create new quiz question
 - `/games/quiz/edit/[id]` — Edit existing quiz question
 
+## Package Layout (every Node package and `apps/api`)
+
+One layout everywhere, so a file's place answers "who reads it?":
+
+```
+src/
+  environment/       the zod env schema, validated at import
+  routes/<name>/     only when the package serves HTTP: index (the router),
+                     constants/, utils/, tests/
+  features/<topic>/  one concept each, with the kinds it needs: constants/,
+                     middleware/, types/, utils/, tests/
+  shared/            what more than one feature reads, by kind: constants/,
+                     middleware/, types/, utils/, tests/ (test helpers other
+                     packages import, e.g. `stubAuth`)
+  index.ts           only a package's root export, never a barrel inside it
+```
+
+Every folder is optional. A package with no features needs no `shared/`
+either: `packages/utils` is just `environment/`, `constants/` and `helpers/`
+(plus `types/` if it ever holds types alone).
+Export keys mirror the file path without `src/` and `.ts`, one line per file:
+`"./features/guards/middleware/require-role": "./src/features/guards/middleware/require-role.ts"`.
+`routes/<name>/index.ts` exports as `./routes/<name>`. Generated code keeps its
+own key (`@allonfire/database/enums`). `packages/shadcn`, `packages/ui` and
+`packages/hooks` are exempt: they follow shadcn's `components/` and `lib/` so
+`shadcn add` works.
+
 ## API App Structure (`apps/api/src/`)
 
 The HTTP backend serving every app. Hono on Node, port 3300. No domain
@@ -129,6 +156,7 @@ apps/api/
     ├── client.ts         AppType, ApiType, ErrorCode, ProblemDetails — the
     │                     "./client" export; types only, no runtime code
     ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
+    ├── environment/      environment — zod env schema, validated at import
     ├── routes/           one folder per resource, mounted by app.ts; owns its
     │   │                 constants/, utils/ and tests/
     │   ├── docs/         index, handlers, constants/{openapi,routes},
@@ -140,7 +168,6 @@ apps/api/
     │   │                 each owning constants/, middleware/ and tests/
     │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
     │   │                 API's limiter wrapped in the module's authLimit)
-    │   ├── environment/  environment — zod env schema, validated at import
     │   ├── errors/       constants/{error-codes,problem-details},
     │   │                 middleware/error-handler
     │   ├── i18n/         constants/locales, middleware/locale-resolver,
@@ -217,7 +244,7 @@ many, and `middlewares/` reads wrong.
   client types silently collapse. Guarded by `src/client.test-d.ts`.
 - **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
-- **Auth guards** come from `@allonfire/auth/hono/middleware/*` and throw
+- **Auth guards** come from `@allonfire/auth/features/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
@@ -228,8 +255,11 @@ many, and `middlewares/` reads wrong.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
   (reserved). Eviction is `volatile-lru`; never TTL a session key.
 - **Locales and the catalogue live in `features/i18n/constants/locales.ts`** — one file to
-  maintain. `LOCALE` is the source; `Locale`, `SUPPORTED_LOCALES` and
-  `DEFAULT_LOCALE` derive from it, `CATALOGUE` uses computed `[LOCALE.X]` keys
+  maintain. `LOCALE` is the source; `Locale` and `DEFAULT_LOCALE` derive from
+  it. Its key order means nothing (Biome sorts it): `SUPPORTED_LOCALES` is the
+  explicit preference order `match()` sees, main variant of each language first,
+  and `tests/locales.test-d.ts` fails if a locale is missing from it.
+  `CATALOGUE` uses computed `[LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
   locale has no messages. `Translations` is `typeof EN`, derived rather than
   `Record<MessageKey, string>`, so a target locale missing a key fails too.
@@ -287,7 +317,7 @@ MCP servers in `.mcp.json`: `shadcn` (browse and add registry components) and `n
 
 ### Design system
 
-`packages/shadcn` is written only by the shadcn CLI: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there. Never edit it by hand. Customisation lives in AOF components in `packages/ui`, and Apps and other packages import only those (Biome rejects `@allonfire/shadcn` anywhere else). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
+`packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. Customisation lives in AOF components in `packages/ui`, and Apps and other packages import only those (Biome rejects `@allonfire/shadcn` anywhere else). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
 
 ### exFAT volume
 

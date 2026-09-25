@@ -13,13 +13,15 @@ Every constant follows one pattern: an `as const` object is the source,
 `z.infer` of that schema — never a hand-written union, never `ValueOf`.
 Number values work too (`z.enum(HTTP_STATUS)`).
 
+### `./helpers/object` and `./helpers/error`
+
 | Export | Type | Description |
 |--------|------|-------------|
 | `objectKeys(obj)` | Function | Type-safe `Object.keys()` — returns `(keyof T & string)[]` |
 | `objectEntries(obj)` | Function | Type-safe `Object.entries()` — returns `[keyof T & string, T[keyof T]][]` |
 | `formatErrorMessage(error, fallback)` | Function | Extracts message from `Error` instances, returns fallback for unknown errors |
 
-### `./environment`
+### `./environment/environment`
 
 | Export | Type | Description |
 |--------|------|-------------|
@@ -84,7 +86,8 @@ Number values work too (`z.enum(HTTP_STATUS)`).
 ## 🔧 Usage
 
 ```ts
-import { objectKeys, formatErrorMessage } from "@allonfire/utils";
+import { formatErrorMessage } from "@allonfire/utils/helpers/error";
+import { objectKeys } from "@allonfire/utils/helpers/object";
 
 // Type-safe iteration
 const config = { TWITTER: "...", LINKEDIN: "..." };

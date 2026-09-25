@@ -5,12 +5,12 @@ import {
   getFavoritePhotoIds,
   getFavoritesPaginated,
   toggleFavorite,
-} from "@allonfire/database/laura/favorite";
+} from "@allonfire/database/features/laura/favorite.service";
 import {
   deletePhoto,
   getPhotosPaginated,
   type PhotoWithUser,
-} from "@allonfire/database/laura/photo";
+} from "@allonfire/database/features/laura/photo.service";
 import { blurHashToDataURL } from "@allonfire/storage";
 import { auth } from "@/lib/auth";
 

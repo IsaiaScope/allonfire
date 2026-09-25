@@ -1,7 +1,7 @@
 "use server";
 
 import { checkMutationAccess } from "@allonfire/auth/guard";
-import { createPhoto } from "@allonfire/database/laura/photo";
+import { createPhoto } from "@allonfire/database/features/laura/photo.service";
 import { processPhoto, uploadFile } from "@allonfire/storage";
 import { auth } from "@/lib/auth";
 import { validateImageFile } from "@/lib/file-validation";

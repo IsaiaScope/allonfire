@@ -1,6 +1,6 @@
 // @module-tag integration
 
-import { requireRole } from "@allonfire/auth/hono/middleware/require-role";
+import { requireRole } from "@allonfire/auth/features/guards/middleware/require-role";
 import { prisma } from "@allonfire/database";
 import { AllowedApp, Role } from "@allonfire/database/enums";
 import { hashPassword } from "better-auth/crypto";

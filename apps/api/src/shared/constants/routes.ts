@@ -1,5 +1,5 @@
-import { AUTH_PATH } from "@allonfire/auth/constants/paths";
-import { objectValues } from "@allonfire/utils/object";
+import { AUTH_PATH } from "@allonfire/auth/shared/constants/paths";
+import { objectValues } from "@allonfire/utils/helpers/object";
 
 /** Where sub-routers mount onto the base app. */
 export const ROOT_PATH = "/";

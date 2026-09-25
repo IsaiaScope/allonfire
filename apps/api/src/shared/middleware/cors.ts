@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import { cors } from "hono/cors";
-import { env } from "../../features/environment/environment";
+import { env } from "../../environment/environment";
 
 export const corsPolicy = (): MiddlewareHandler =>
   cors({

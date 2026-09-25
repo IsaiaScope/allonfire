@@ -1,6 +1,6 @@
-import { sessionLoader } from "@allonfire/auth/hono/middleware/session-loader";
-import { authRoutes } from "@allonfire/auth/hono/routes";
-import type { AuthLike } from "@allonfire/auth/types";
+import { sessionLoader } from "@allonfire/auth/features/session/middleware/session-loader";
+import { authRoutes } from "@allonfire/auth/routes/auth";
+import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { HTTP_STATUS } from "@allonfire/utils/constants/http";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -22,8 +22,8 @@ import {
   rateLimit,
 } from "./features/rate-limit/middleware/rate-limiter";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
-import { docsRoutes } from "./routes/docs";
-import { healthRoutes } from "./routes/health";
+import { docsRoutes } from "./routes/docs/index";
+import { healthRoutes } from "./routes/health/index";
 import type { HealthDeps } from "./routes/health/utils/status";
 import {
   BODY_LIMIT_BYTES,

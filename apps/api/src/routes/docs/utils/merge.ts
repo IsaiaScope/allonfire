@@ -1,5 +1,5 @@
-import type { OpenApiFragment } from "@allonfire/auth/types";
-import { objectFromEntries, objectKeys } from "@allonfire/utils/object";
+import type { OpenApiFragment } from "@allonfire/auth/shared/types/auth";
+import { objectFromEntries, objectKeys } from "@allonfire/utils/helpers/object";
 
 type ComponentGroups = Record<string, Record<string, unknown>>;
 

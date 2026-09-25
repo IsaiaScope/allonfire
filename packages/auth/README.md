@@ -32,42 +32,44 @@ keeps no copy of them. HTTP statuses and methods come from
 
 | Export | Contents |
 |--------|----------|
-| `./access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
-| `./constants/roles` | `ROLE_RANK` — each Role's rank, in steps of 100 |
-| `./constants/limits` | The auth bucket defaults (10 attempts / 15 min, `auth:` key prefix), the secret and cookie-cache limits |
-| `./constants/paths` | `AUTH_PATH`, `SIGN_IN_EMAIL_PATH`, `CHANGE_PASSWORD_PATH`, `LIMITED_AUTH_PATHS`, `OPENAPI_SCHEMA_PATH` |
-| `./environment` | `authEnvSchema` (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
-| `./hono/middleware/require-app` | `requireApp(app)` — 403 unless the User's Allowed apps include it or `ALL`; mount it once per App |
-| `./hono/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer) |
-| `./hono/middleware/require-session` | `requireSession()` — 401 when anonymous |
-| `./hono/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
-| `./hono/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
-| `./hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
-| `./hono/types` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
-| `./openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
-| `./server` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
-| `./testing` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` |
-| `./types` | `App`, `AuthSession`, `AuthLike`, `OpenApiDocument`, `OpenApiFragment` |
+| `./environment/environment` | `authEnvSchema` (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
+| `./features/access/access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
+| `./features/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User's Allowed apps include it or `ALL`; mount it once per App |
+| `./features/guards/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer); ranks are `ROLE_RANK`, in steps of 100 |
+| `./features/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
+| `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
+| `./features/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
+| `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
+| `./features/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
+| `./routes/auth` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
+| `./shared/constants/limits` | The auth bucket defaults (10 attempts / 15 min, `auth:` key prefix), the secret and cookie-cache limits |
+| `./shared/constants/paths` | `AUTH_PATH`, `SIGN_IN_EMAIL_PATH`, `CHANGE_PASSWORD_PATH`, `LIMITED_AUTH_PATHS`, `OPENAPI_SCHEMA_PATH` |
+| `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` |
+| `./shared/types/auth` | `App`, `AuthSession`, `AuthLike`, `OpenApiDocument`, `OpenApiFragment` |
+| `./shared/types/variables` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
 
 ## Directory structure
 
+The repo's package layout (`CLAUDE.md`, Package Layout):
+
 ```
 src/
-  constants/     paths, limits, roles (ROLE_RANK), http (AUTH_METHODS), openapi
-  types/         auth (AuthSession, AuthLike, OpenApiDocument, OpenApiFragment)
   environment/   environment (authEnvSchema)
-  access/        access (hasRole, canEnterApp, allowedAppsFrom, roleFrom), tests/
-  server/        auth (createAuth, toAuthLike), tests/
-  openapi/       openapi (authOpenApi), tests/
-  testing/       stub-auth (stubAuth, sessionFor)
-  hono/
-    constants/   variables (AUTH_VAR)
-    types/       variables (AuthVariables, AuthEnv, SignedInEnv)
-    routes/      auth-routes
-    utils/       guard
-    middleware/  session-loader, auth-limit, require-session,
-                 require-role, require-app
-    tests/       routes, middleware, guards (type test)
+  routes/
+    auth/        index (authRoutes), constants/http (AUTH_METHODS), tests/
+  features/
+    access/      access (hasRole, canEnterApp, allowedAppsFrom, roleFrom),
+                 constants/roles (ROLE_RANK), tests/
+    guards/      middleware/{require-session,require-role,require-app},
+                 utils/guard, tests/ (incl. a type test)
+    openapi/     openapi (authOpenApi), constants/openapi, tests/
+    rate-limit/  middleware/auth-limit, tests/
+    server/      auth (createAuth, toAuthLike), tests/
+    session/     middleware/session-loader, tests/
+  shared/
+    constants/   paths, limits, variables (AUTH_VAR)
+    types/       auth (AuthSession, AuthLike, OpenApi*), variables (AuthEnv, SignedInEnv)
+    tests/       stub-auth (stubAuth, sessionFor)
 ```
 
 ## Mounting it in a Hono backend
