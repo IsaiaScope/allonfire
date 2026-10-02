@@ -18,7 +18,7 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Fetch data in Server Components (pages, layouts), pass as props to client components
 - Use Server Actions for mutations — keep form logic in client components but action definitions server-side
 - Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
-- Providers (`ThemeProvider`, `QueryClientProvider`) must be client — wrap them in a single `Providers` component
+- Providers must be client: an App composes the AOF providers from `@allonfire/utils/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
 
 ## Context7 Usage
 
@@ -26,6 +26,17 @@ Always use Context7 MCP tools when generating code involving:
 
 - Next.js, React, Prisma, BetterAuth, shadcn/ui, TanStack Query, Zustand
 - Resolve library ID first, then query docs
+
+For Next.js, read the docs that ship with the installed version first:
+`packages/utils/node_modules/next/dist/docs/` (`01-app`, `02-pages`,
+`03-architecture`, `index.md`). They match the exact `next` in the lockfile,
+so they never describe an option this version lacks. Use Context7 when they
+do not cover the question.
+
+Before implementing anything in Next.js, React or shadcn, check the Framework
+skills (see Agent skills) for a guide that covers it and follow it: `shadcn` for
+components, `vercel-react-best-practices` and `vercel-composition-patterns` for
+React, the `next-*` skills for caching, prefetching and the dev loop.
 
 ## Object Helpers (`@allonfire/utils/helpers/object`)
 
@@ -44,14 +55,15 @@ level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 
 ## Database Schema Quick Reference
 
-Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `laura.prisma`).
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, `laura.prisma`).
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
 - **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
-- **`laura` schema:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType`
+- **`image` schema (shared):** `Image`, the Images every App shows (ADR 0013)
+- **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/laura/photo.service`, `@allonfire/database/features/auth/user.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
-- Raw SQL names the schema: `laura."Photo"`.
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
+- Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
 ## Laura App Structure (`apps/laura/src/`)
@@ -132,15 +144,34 @@ src/
   index.ts           only a package's root export, never a barrel inside it
 ```
 
+A package never imports an App (`@allonfire/api`, `@allonfire/back-office`,
+`@allonfire/laura`, or a path into `apps/`); Biome's `noRestrictedImports`
+enforces it. A package is a module any host can mount: the Auth module knows
+`/auth`, never the `/v1` the API mounts it under, and a Next App is told the
+full address (`API_AUTH_URL`).
+
 Every folder is optional. A package with no features needs no `shared/`
-either: `packages/utils` is just `environment/`, `constants/` and `helpers/`
+either: `packages/utils` is `environment/`, `constants/`, `helpers/` and
+`next/`, the App scaffolding by topic (`config/`, `i18n/`, `query/`,
+`providers/`; ADR 0012)
 (plus `types/` if it ever holds types alone).
+Env var names start with their owner: a package's with the package name
+(`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_MODE`, `AUTH_SECRET`), the
+API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
+another service carries that service's name (`API_URL` in the Back office). A
+name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
+`OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
 `"./features/guards/middleware/require-role": "./src/features/guards/middleware/require-role.ts"`.
 `routes/<name>/index.ts` exports as `./routes/<name>`. Generated code keeps its
-own key (`@allonfire/database/enums`). `packages/shadcn`, `packages/ui` and
-`packages/hooks` are exempt: they follow shadcn's `components/` and `lib/` so
-`shadcn add` works.
+own key (`@allonfire/database/enums`). A package that serves HTTP for any host
+(the Auth and Image modules) exports its router from `routes/<name>/index.ts`,
+takes its dependencies as arguments, and throws `CodedError` from
+`@allonfire/utils/helpers/coded-error` instead of building responses (ADR 0015).
+`packages/shadcn`, `packages/ui`,
+`packages/hooks` and `packages/design` are exempt: the first three follow
+shadcn's `components/` and `lib/` so `shadcn add` works; `packages/design`
+holds Designs and Apps (ADR 0011).
 
 ## API App Structure (`apps/api/src/`)
 
@@ -158,7 +189,8 @@ apps/api/
     ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
     ├── environment/      environment — zod env schema, validated at import
     ├── routes/           one folder per resource, mounted by app.ts; owns its
-    │   │                 constants/, utils/ and tests/
+    │   │                 constants/, utils/ and tests/; the Image module
+    │   │                 mounts from @allonfire/storage (ADR 0015)
     │   ├── docs/         index, handlers, constants/{openapi,routes},
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
@@ -248,17 +280,19 @@ many, and `middlewares/` reads wrong.
   `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
-- **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`,
-  `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Full list in
+- **Required env:** `DATABASE_URL`, `API_REDIS_URL`, `API_CORS_ORIGINS`,
+  `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
+  `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`. Full list in
   `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
   (reserved). Eviction is `volatile-lru`; never TTL a session key.
-- **Locales and the catalogue live in `features/i18n/constants/locales.ts`** — one file to
-  maintain. `LOCALE` is the source; `Locale` and `DEFAULT_LOCALE` derive from
-  it. Its key order means nothing (Biome sorts it): `SUPPORTED_LOCALES` is the
-  explicit preference order `match()` sees, main variant of each language first,
-  and `tests/locales.test-d.ts` fails if a locale is missing from it.
+- **`LOCALE` lives in `@allonfire/utils/constants/locales`**, shared with the
+  Apps (ADR 0012), which route by its derived `Language`. `SUPPORTED_LOCALES`
+  there is the explicit preference order `match()` sees, main variant of each
+  language first; `src/constants/tests/locales.test-d.ts` fails if a locale is
+  missing from it or a language from `LANGUAGES`. The API's
+  `features/i18n/constants/locales.ts` keeps `DEFAULT_LOCALE` and the catalogue.
   `CATALOGUE` uses computed `[LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
   locale has no messages. `Translations` is `typeof EN`, derived rather than
@@ -290,6 +324,7 @@ many, and `middlewares/` reads wrong.
 - Orchestrator: Dokploy
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
+- Back office build needs `STORAGE_ENDPOINT` (Docker build arg, CI secret); it is baked into the `/storage/images` rewrite.
 
 ## Agent skills
 
@@ -312,12 +347,16 @@ Pinned in `skills-lock.json`, restored with `npx skills experimental_install`:
 - Vercel: `vercel-react-best-practices`, `vercel-composition-patterns`, `web-design-guidelines`, `vercel-react-view-transitions`, `writing-guidelines`.
 - Next.js: `next-dev-loop`, `next-cache-components-adoption`, `next-cache-components-optimizer`, `next-partial-prefetching-adoption`, `next-partial-prefetching-optimizer`.
 - shadcn: `shadcn`, `migrate-radix-to-base`.
+- impeccable: installed with `npx impeccable install --providers=claude --scope=project`, not in `skills-lock.json`; its engine binary is gitignored and downloaded on first run. Reach it only through `/aof-design`.
+- Repo's own: `aof-design` (every page, ADR 0011 and 0014) and `aof-documentation` (READMEs, docs, screenshots).
 
 MCP servers in `.mcp.json`: `shadcn` (browse and add registry components) and `next-devtools` (errors, routes and logs from a running `next dev`).
 
 ### Design system
 
-`packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. Customisation lives in AOF components in `packages/ui`, and Apps and other packages import only those (Biome rejects `@allonfire/shadcn` anywhere else). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
+`packages/design` holds what Apps share visually and no real components (ADR 0011, ADR 0014): the Designs (`src/designs/<name>/`: `DESIGN.md`, `DESIGN.json`, `theme.css`, fonts), each App's `PRODUCT.md` and stylesheet (`src/apps/<app>/`), prototypes under review (`src/apps/<app>/prototypes/`), and impeccable's state. Pages and their components are built in the App, under `apps/<app>/src/features/<topic>/components/`, using next-intl directly. Build or edit any page with `/aof-design` (prototype or direct), never plain `/impeccable`. An App imports only `@allonfire/design/apps/<app>/styles.css` from it. `pnpm design:sync` copies a Design into the Apps wearing it; CI runs `--check`.
+
+`packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. AOF components live in `packages/ui`, the only package that imports `@allonfire/shadcn` (Biome enforces it). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
 
 ### exFAT volume
 

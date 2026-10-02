@@ -1,6 +1,7 @@
-/* The Design system every App starts from: shadcn's generated tokens and base
-   layer, plus where Tailwind looks for classes across the workspace. Each App
-   imports this, then its own Theme. */
+/* The base every App starts from: shadcn's generated tokens and base layer,
+   plus where Tailwind looks for classes in ui and shadcn. An App reaches it
+   through its stylesheet in @allonfire/design, which adds the Design's
+   tokens on top (ADR 0011). */
 @import "@allonfire/shadcn/styles/globals.css";
 
 @source "../../../shadcn/src";

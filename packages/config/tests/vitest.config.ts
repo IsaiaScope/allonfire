@@ -33,7 +33,7 @@ export const vitestConfig = defineConfig({
     // Console output from passing tests is noise: many assert on failure
     // paths that log on purpose. A failing test still prints its console
     // output; pino writes to stdout directly, so apps/api silences it with
-    // LOG_LEVEL instead.
+    // API_LOG_LEVEL instead.
     silent: "passed-only",
     // Every file starts with `// @module-tag unit` or `// @module-tag
     // integration`; vitest.setup.ts fails a test that has neither.

@@ -13,6 +13,16 @@ Every constant follows one pattern: an `as const` object is the source,
 `z.infer` of that schema — never a hand-written union, never `ValueOf`.
 Number values work too (`z.enum(HTTP_STATUS)`).
 
+### `./helpers/coded-error`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `CodedError` | Class | What a shared HTTP module throws (ADR 0015): `status`, `code`, ICU `values`, field `errors`; each host's `onError` renders it |
+| `CodedErrorDetail` | Type | `{ message, path }`, one field that failed validation |
+| `validationError(code, issues)` | Function | Standard Schema issues as a 400 `CodedError` under the host's validation `code`, paths joined with `.` |
+| `invalidHook(code)` | Function | A validator hook (`sValidator`, hono-openapi) that throws `validationError` on a failed parse |
+| `StandardIssue` | Type | The part of a Standard Schema issue those read |
+
 ### `./helpers/object` and `./helpers/error`
 
 | Export | Type | Description |
@@ -82,6 +92,50 @@ Number values work too (`z.enum(HTTP_STATUS)`).
 | `NODE_ENV` | `as const` object | `DEVELOPMENT`, `PRODUCTION`, `TEST`: compare against these, not bare strings |
 | `nodeEnvSchema` | Zod enum | Validates `NODE_ENV` |
 | `NodeEnv` | Type | `"development" \| "production" \| "test"` |
+
+### `./constants/locales`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `LOCALE` | `as const` object | `EN_GB`, `EN_US`, `IT_CH`, `IT_IT`: full BCP 47 tags, shared by the API and the Apps (ADR 0012) |
+| `localeSchema` | Zod enum | Validates a `Locale` |
+| `Locale` | Type | `"en-GB" \| "en-US" \| "it-CH" \| "it-IT"` |
+| `SUPPORTED_LOCALES` | `readonly Locale[]` | Preference order the API's matcher sees, main variant of each language first |
+| `Language` | Type | Derived from `Locale`: `"en" \| "it"`, what an App's URL carries |
+| `LANGUAGES` | `readonly Language[]` | Every language; a type test fails if one is missing |
+
+### App scaffolding (`./next/*`)
+
+The wiring every Next App composes, one piece per file (ADR 0012). React, Next
+and the provider libraries are optional peer dependencies: the API never
+imports these.
+
+| Export | Wraps | Notes |
+|--------|-------|-------|
+| `./next/providers/aof-query-client-provider` | `QueryClientProvider` | client from `AOFGetQueryClient`; `staleTime` prop |
+| `./next/providers/aof-react-query-devtools` | `ReactQueryDevtools` | lazy; `enabled` from the App's env (development); inside the Query provider |
+| `./next/providers/aof-theme-provider` | next-themes `ThemeProvider` | `class`, `system`; every prop overrides |
+| `./next/providers/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
+| `./next/query/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
+| `./next/i18n/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged |
+| `./next/i18n/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
+| `./next/api/forwarded-for` | — | `forwardedFor(headers)`, the visitor's `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies and address for a call to the API |
+| `./next/i18n/aof-define-routing` | `defineRouting` | `LANGUAGES`, `as-needed`, default `en`; the App overrides the default and other options |
+| `./next/i18n/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing |
+| `./next/i18n/shared-translations` | — | `Common` namespace every App gets, merged under its own translations; an App never defines `Common` |
+| `./next/config/aof-create-next-config` | `NextConfig` | base config, security headers, next-intl plugin |
+
+An App composes the providers in its `[locale]/layout.tsx` and drops any it does
+not need:
+
+```tsx
+<AOFQueryClientProvider>
+  <AOFThemeProvider>
+    <AOFNuqsAdapter>{children}</AOFNuqsAdapter>
+  </AOFThemeProvider>
+  <AOFReactQueryDevtools enabled={env.NODE_ENV === NODE_ENV.DEVELOPMENT} />
+</AOFQueryClientProvider>
+```
 
 ## 🔧 Usage
 

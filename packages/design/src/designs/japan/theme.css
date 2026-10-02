@@ -1,0 +1,177 @@
+/* Japan: Tokyo station wayfinding (see DESIGN.md beside this file).
+   Overrides shadcn's tokens after ui's base layer. Day is `:root`, night is
+   `.dark`, which next-themes puts on <html> from the OS or the visitor's
+   toggle; each sets `color-scheme` so native controls, scrollbars and
+   autofill follow. Station furniture that is night by day too (a board, a
+   sign band) scopes `.dark` on itself. Every text pair is AA in both, checked
+   by tests/theme.test.ts. Neither ground is pure white or pure black; by day
+   cards sit white on the grey ground. */
+
+/* Atkinson Hyperlegible Next, self-hosted (OFL,
+   fonts/OFL-AtkinsonHyperlegibleNext.txt): a signage face built so no two
+   characters read alike, which station codes, emails and IDs need. Latin
+   covers English and Italian. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("./fonts/atkinson-hyperlegible-next-latin.woff2") format("woff2");
+}
+
+/* DotGothic16 (OFL) for the LED departure board, subset to printable ASCII,
+   Latin-1, all kana and the few kanji the pages print; a new kanji needs a
+   new subset (fonts/README.md). */
+@font-face {
+  font-family: "DotGothic16";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/dotgothic16-subset.woff2") format("woff2");
+}
+
+:root {
+  --font-sans:
+    "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --background: #f6f7f8;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #006fb3;
+  --primary-foreground: #ffffff;
+  --secondary: #e7eaee;
+  --secondary-foreground: #1a1a1a;
+  --muted: #e7eaee;
+  --muted-foreground: #5c6570;
+  --accent: #e7eaee;
+  --accent-foreground: #1a1a1a;
+  --destructive: #c8102e;
+  --border: #d9dde2;
+  --input: #c9ced5;
+  --ring: #006fb3;
+  --radius: 0.25rem;
+
+  /* One colour per App (the Line Rule): bands, badges and route markers only,
+     never text on the ground. */
+  --line-back-office: #00a650;
+  --line-laura: #f39700;
+
+  /* Station furniture, the same by day and night (declared once, so `.dark`
+     inherits them): the LED departure board, the yellow tactile paving. */
+  --led: #ffb21a;
+  --led-dim: #6b4a0a;
+  --led-panel: #0d0d0d;
+  --tactile: #f2c200;
+  /* Seal vermilion (朱肉), the ink of a hanko. */
+  --hanko: #e04a32;
+
+  --chart-1: #006fb3;
+  --chart-2: #00a650;
+  --chart-3: #f39700;
+  --chart-4: #5c6570;
+  --chart-5: #1a1a1a;
+
+  --sidebar: #eef0f2;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #006fb3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e7eaee;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #d9dde2;
+  --sidebar-ring: #006fb3;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #16191d;
+  --foreground: #eef0f2;
+  --card: #1c2025;
+  --card-foreground: #eef0f2;
+  --popover: #1c2025;
+  --popover-foreground: #eef0f2;
+  /* Lighter blue at night so links read on the dark ground; text on it goes
+     dark to keep AA. */
+  --primary: #3a9ee0;
+  --primary-foreground: #16191d;
+  --secondary: #242a31;
+  --secondary-foreground: #eef0f2;
+  --muted: #242a31;
+  --muted-foreground: #9aa3ad;
+  --accent: #242a31;
+  --accent-foreground: #eef0f2;
+  --destructive: #f0605a;
+  --border: #2c323a;
+  --input: #3a414a;
+  --ring: #3a9ee0;
+
+  --sidebar: #1c2025;
+  --sidebar-foreground: #eef0f2;
+  --sidebar-primary: #3a9ee0;
+  --sidebar-primary-foreground: #16191d;
+  --sidebar-accent: #242a31;
+  --sidebar-accent-foreground: #eef0f2;
+  --sidebar-border: #2c323a;
+  --sidebar-ring: #3a9ee0;
+  color-scheme: dark;
+}
+
+/* The parts no component draws still wear the Design. */
+::selection {
+  color: var(--primary-foreground);
+  background-color: var(--primary);
+}
+
+:where(input, textarea) {
+  caret-color: var(--primary);
+}
+
+@theme inline {
+  --color-line-back-office: var(--line-back-office);
+  --color-line-laura: var(--line-laura);
+  --color-led: var(--led);
+  --color-led-dim: var(--led-dim);
+  --color-led-panel: var(--led-panel);
+  --color-tactile: var(--tactile);
+  --color-hanko: var(--hanko);
+  --font-led: "DotGothic16", ui-monospace, monospace;
+  /* A seal pressed onto the card once it has landed. */
+  --animate-stamp: stamp 360ms 500ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+
+  /* A board's notice running right to left, one copy after the other. */
+  --animate-marquee: marquee 24s linear infinite;
+
+  @keyframes stamp {
+    from {
+      opacity: 0;
+      scale: 1.8;
+    }
+    to {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* An LED board's unlit cells, and the raised dots of tactile paving: dot
+   grids belong to the material, so they are utilities, not decoration.
+   Named `pattern-*`, not `bg-*`: tailwind-merge (inside `cn`) would read a
+   `bg-*` it does not know as a background colour and drop it beside the
+   element's real one. */
+@utility pattern-led-grid {
+  background-image: radial-gradient(var(--led-dim) 0.75px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+@utility pattern-tactile-dots {
+  background-image: radial-gradient(rgb(0 0 0 / 0.22) 2px, transparent 2.5px);
+  background-position: 5px 5px;
+  background-size: 10px 10px;
+}

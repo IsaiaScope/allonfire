@@ -1,14 +1,14 @@
 import { HTTP_HEADER } from "@allonfire/utils/constants/http";
+import {
+  type Locale,
+  localeSchema,
+  SUPPORTED_LOCALES,
+} from "@allonfire/utils/constants/locales";
 import { match } from "@formatjs/intl-localematcher";
 import type { Context, MiddlewareHandler } from "hono";
 import Negotiator from "negotiator";
 import { CONTEXT_VAR } from "../../../shared/constants/runtime";
-import {
-  DEFAULT_LOCALE,
-  type Locale,
-  localeSchema,
-  SUPPORTED_LOCALES,
-} from "../constants/locales";
+import { DEFAULT_LOCALE } from "../constants/locales";
 
 /**
  * Resolves the response locale from `Accept-Language`. Negotiator orders the

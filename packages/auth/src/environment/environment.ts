@@ -8,6 +8,12 @@ import {
 
 /** Spread into a host's env `server` block. */
 export const authEnvSchema = {
+  /**
+   * The parent domain the Session cookies are set for (`.isaiariva.com`), so
+   * the browser sends them to the API from every App on it. Unset locally:
+   * `localhost` cookies already reach every port.
+   */
+  AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   AUTH_RATE_LIMIT_KEY_PREFIX: z
     .string()
     .min(1)
@@ -22,6 +28,6 @@ export const authEnvSchema = {
     .int()
     .positive()
     .default(DEFAULT_AUTH_RATE_LIMIT_WINDOW_MS),
-  BETTER_AUTH_SECRET: z.string().min(SECRET_MIN_LENGTH),
-  BETTER_AUTH_URL: z.url(),
+  AUTH_SECRET: z.string().min(SECRET_MIN_LENGTH),
+  AUTH_URL: z.url(),
 };

@@ -1,0 +1,21 @@
+// Images every App shows, managed in the Back office (ADR 0013).
+
+model Image {
+  id          String     @id @default(cuid(2))
+  /// The App that shows it; ALL means every App.
+  app         AllowedApp
+  /// `<uuid>.webp` in the image bucket; carries no App, so a move is a row update.
+  key         String     @unique
+  width       Int
+  height      Int
+  bytes       Int
+  blurDataUrl String
+  /// One alt per Language, `{ en, it }`; shape checked by imageAltSchema.
+  alt         Json
+  uploadedBy  String?
+  user        User?      @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  createdAt   DateTime   @default(now())
+
+  @@index([app, createdAt])
+  @@schema("image")
+}

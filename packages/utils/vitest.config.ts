@@ -1,5 +1,13 @@
 import { vitestConfig } from "@allonfire/config/tests/vitest";
-import { defineConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
 
-// No package-specific options yet; add them with mergeConfig as in apps/api.
-export default defineConfig(vitestConfig);
+export default mergeConfig(
+  vitestConfig,
+  defineConfig({
+    test: {
+      // next-intl imports `next/navigation` without an extension, which only a
+      // bundler resolves: let Vite process it instead of Node.
+      server: { deps: { inline: ["next-intl"] } },
+    },
+  })
+);

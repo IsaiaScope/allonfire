@@ -1,5 +1,6 @@
 import { authEnvSchema } from "@allonfire/auth/environment/environment";
 import { databaseEnvSchema } from "@allonfire/database/environment/environment";
+import { storageEnvSchema } from "@allonfire/storage/environment/environment";
 import { BOOLEAN_ENV, booleanEnvSchema } from "@allonfire/utils/constants/env";
 import { LOG_LEVEL, logLevelSchema } from "@allonfire/utils/constants/logger";
 import { TRAILING_SLASHES } from "@allonfire/utils/constants/patterns";
@@ -41,16 +42,33 @@ export function parseEnv(raw: Record<string, string | undefined>) {
       ...runtimeEnvSchema,
       ...databaseEnvSchema,
       ...authEnvSchema,
-      CORS_ORIGINS: z.string().transform((value) =>
+      ...storageEnvSchema,
+      API_CORS_ORIGINS: z.string().transform((value) =>
         value
           .split(SEPARATOR.LIST)
           .map((origin) => origin.trim())
           .filter(Boolean)
       ),
-      ENABLE_DOCS: booleanEnvSchema
+      API_ENABLE_DOCS: booleanEnvSchema
         .default(BOOLEAN_ENV.FALSE)
         .transform((value) => value === BOOLEAN_ENV.TRUE),
-      LOG_LEVEL: logLevelSchema.default(LOG_LEVEL.INFO),
+      API_LOG_LEVEL: logLevelSchema.default(LOG_LEVEL.INFO),
+      API_RATE_LIMIT_MAX: z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(DEFAULT_RATE_LIMIT_MAX),
+      API_RATE_LIMIT_WINDOW_MS: z.coerce
+        .number()
+        .int()
+        .positive()
+        .default(DEFAULT_RATE_LIMIT_WINDOW_MS),
+      API_REDIS_URL: z.url(),
+      API_TRUSTED_PROXY_HOPS: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .default(DEFAULT_TRUSTED_PROXY_HOPS),
       // Unset switches telemetry off. Named after the OTel spec so the
       // collector docs apply unchanged; app code reads them from here.
       OTEL_EXPORTER_OTLP_ENDPOINT: z
@@ -76,22 +94,6 @@ export function parseEnv(raw: Record<string, string | undefined>) {
         .default({}),
       OTEL_SERVICE_NAME: z.string().default(DEFAULT_OTEL_SERVICE_NAME),
       PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
-      RATE_LIMIT_MAX: z.coerce
-        .number()
-        .int()
-        .positive()
-        .default(DEFAULT_RATE_LIMIT_MAX),
-      RATE_LIMIT_WINDOW_MS: z.coerce
-        .number()
-        .int()
-        .positive()
-        .default(DEFAULT_RATE_LIMIT_WINDOW_MS),
-      REDIS_URL: z.url(),
-      TRUSTED_PROXY_HOPS: z.coerce
-        .number()
-        .int()
-        .min(0)
-        .default(DEFAULT_TRUSTED_PROXY_HOPS),
     },
   });
 }

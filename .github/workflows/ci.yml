@@ -34,6 +34,8 @@ jobs:
         run: pnpm check-types
       - name: Lint
         run: pnpm lint
+      - name: Design copies in sync
+        run: pnpm design:sync --check
       - name: i18n placeholders and generated types
         run: pnpm turbo run i18n:check
       # ShellCheck ships on GitHub's Ubuntu runners.
@@ -72,10 +74,10 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      REDIS_URL: redis://localhost:6379/0
-      CORS_ORIGINS: http://localhost:3200
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      AUTH_URL: ${{ secrets.AUTH_URL }}
+      API_REDIS_URL: redis://localhost:6379/0
+      API_CORS_ORIGINS: http://localhost:3200
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -105,10 +107,9 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
       BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+      STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
+      STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
+      STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5

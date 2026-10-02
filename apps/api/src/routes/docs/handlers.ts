@@ -23,7 +23,7 @@ const whenEnabled = (
   handler: MiddlewareHandler<AppBindings>
 ): MiddlewareHandler<AppBindings> => {
   // `env` is fixed at import, so the gate is decided once, not per request.
-  const enabled = isDocsEnabled(env.NODE_ENV, env.ENABLE_DOCS);
+  const enabled = isDocsEnabled(env.NODE_ENV, env.API_ENABLE_DOCS);
   return async (context, next) =>
     enabled ? await handler(context, next) : notFound(context);
 };

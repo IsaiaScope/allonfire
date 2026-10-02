@@ -1,0 +1,12 @@
+{
+  "Common": {
+    "NotFound": {
+      "title": "Page not found",
+      "back": "Back to the start"
+    },
+    "Error": {
+      "title": "Something went wrong",
+      "retry": "Try again"
+    }
+  }
+}

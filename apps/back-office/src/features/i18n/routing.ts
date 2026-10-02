@@ -1,7 +1,3 @@
-import { defineRouting } from "next-intl/routing";
+import { AOFDefineRouting } from "@allonfire/utils/next/i18n/aof-define-routing";
 
-export const routing = defineRouting({
-  defaultLocale: "en",
-  localePrefix: "as-needed",
-  locales: ["en", "it"],
-});
+export const routing = AOFDefineRouting();

@@ -2,20 +2,23 @@
 import { parseEnv } from "../environment";
 
 const valid = {
-  BETTER_AUTH_SECRET: "test-secret-at-least-thirty-two-characters",
-  BETTER_AUTH_URL: "http://localhost:3300",
-  CORS_ORIGINS: "http://localhost:3200",
+  API_CORS_ORIGINS: "http://localhost:3200",
+  API_REDIS_URL: "redis://localhost:6379/0",
+  AUTH_SECRET: "test-secret-at-least-thirty-two-characters",
+  AUTH_URL: "http://localhost:3300",
   DATABASE_URL: "postgresql://u:p@localhost:5432/db",
-  REDIS_URL: "redis://localhost:6379/0",
+  STORAGE_ACCESS_KEY: "allonfire",
+  STORAGE_ENDPOINT: "http://localhost:9000",
+  STORAGE_SECRET_KEY: "allonfire",
 };
 
 describe("parseEnv", () => {
   it("applies defaults for optional values", () => {
     const env = parseEnv(valid);
     expect(env.PORT).toBe(3300);
-    expect(env.LOG_LEVEL).toBe("info");
-    expect(env.TRUSTED_PROXY_HOPS).toBe(0);
-    expect(env.ENABLE_DOCS).toBe(false);
+    expect(env.API_LOG_LEVEL).toBe("info");
+    expect(env.API_TRUSTED_PROXY_HOPS).toBe(0);
+    expect(env.API_ENABLE_DOCS).toBe(false);
     expect(env.AUTH_RATE_LIMIT_MAX).toBe(10);
     expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(900_000);
     expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth:");
@@ -34,12 +37,12 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...valid, AUTH_RATE_LIMIT_MAX: "0" })).toThrow();
   });
 
-  it("splits CORS_ORIGINS into a trimmed array", () => {
+  it("splits API_CORS_ORIGINS into a trimmed array", () => {
     const env = parseEnv({
       ...valid,
-      CORS_ORIGINS: "http://a.test, http://b.test",
+      API_CORS_ORIGINS: "http://a.test, http://b.test",
     });
-    expect(env.CORS_ORIGINS).toEqual(["http://a.test", "http://b.test"]);
+    expect(env.API_CORS_ORIGINS).toEqual(["http://a.test", "http://b.test"]);
   });
 
   it("coerces numeric values", () => {
@@ -47,8 +50,8 @@ describe("parseEnv", () => {
     expect(env.PORT).toBe(4000);
   });
 
-  it("rejects a missing REDIS_URL", () => {
-    const { REDIS_URL, ...withoutRedis } = valid;
+  it("rejects a missing API_REDIS_URL", () => {
+    const { API_REDIS_URL, ...withoutRedis } = valid;
     expect(() => parseEnv(withoutRedis)).toThrow();
   });
 

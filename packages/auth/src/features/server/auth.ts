@@ -17,11 +17,22 @@ export type CreateAuthOptions = {
   basePath: string;
   /** Browser origins allowed to send cookie-bearing requests. */
   trustedOrigins: string[];
+  /**
+   * The parent domain shared by the API and the Apps: the Session cookies are
+   * set for it, so a browser sends them straight to the API. None: the host's
+   * own domain only.
+   */
+  cookieDomain?: string | undefined;
 };
 
-export function createAuth(options: CreateAuthOptions) {
+export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
   return betterAuth({
     ...options,
+    ...(cookieDomain && {
+      advanced: {
+        crossSubDomainCookies: { domain: cookieDomain, enabled: true },
+      },
+    }),
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     disabledPaths: [OPENAPI_SCHEMA_PATH],
     // Users are created by the seed, never by a request.

@@ -1,12 +1,12 @@
 // @module-tag unit
-import { objectEntries, objectKeys } from "@allonfire/utils/helpers/object";
+
 import {
-  CATALOGUE,
-  DEFAULT_LOCALE,
   LOCALE,
   type Locale,
   SUPPORTED_LOCALES,
-} from "../constants/locales";
+} from "@allonfire/utils/constants/locales";
+import { objectEntries, objectKeys } from "@allonfire/utils/helpers/object";
+import { CATALOGUE, DEFAULT_LOCALE } from "../constants/locales";
 import { resolveLocale } from "../middleware/locale-resolver";
 
 describe("resolveLocale — exact regional variants", () => {

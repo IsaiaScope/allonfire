@@ -3,8 +3,10 @@ import {
   HTTP_HEADER,
   HTTP_STATUS,
 } from "@allonfire/utils/constants/http";
-import { SEPARATOR } from "@allonfire/utils/constants/separators";
+import type { Locale } from "@allonfire/utils/constants/locales";
 import { MS_PER_SECOND } from "@allonfire/utils/constants/units";
+import { CodedError, invalidHook } from "@allonfire/utils/helpers/coded-error";
+import type { ValueOf } from "@allonfire/utils/helpers/object";
 import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
@@ -17,14 +19,14 @@ import {
   REQUEST_TIMEOUT_MS,
 } from "../../../shared/constants/limits";
 import { CONTEXT_VAR, LOG_MESSAGE } from "../../../shared/constants/runtime";
-import type { Locale } from "../../i18n/constants/locales";
 import { localeOf } from "../../i18n/middleware/locale-resolver";
-import { translate } from "../../i18n/translate";
+import { translate, translateCode } from "../../i18n/translate";
 import { logger } from "../../logger/logger";
 import {
   ERROR_CODE,
   ERROR_TYPE,
   type ErrorCode,
+  errorCodeSchema,
   STATUS_TO_ERROR_CODE,
   UNKNOWN_REQUEST_ID,
 } from "../constants/error-codes";
@@ -46,19 +48,22 @@ export const codeForStatus = <S extends ErrorStatus>(
   status: S
 ): (typeof STATUS_TO_ERROR_CODE)[S] => STATUS_TO_ERROR_CODE[status];
 
+/** The codes a bare `HTTPException` status maps to. */
+type StatusErrorCode = ValueOf<typeof STATUS_TO_ERROR_CODE>;
+
 /**
  * Renders a code with the values this layer can supply.
  *
  * `onError` sees whatever status Hono's middleware threw, so it has to cover
- * every code — including the parameterized ones. The values come from the same
- * constants the middleware was configured with, so the message cannot claim a
- * limit the server does not enforce. The switch is exhaustive: a new code with
- * values fails to compile here until it is handled.
+ * every code a status maps to — including the parameterized ones. The values
+ * come from the same constants the middleware was configured with, so the
+ * message cannot claim a limit the server does not enforce. A module throws
+ * `CodedError` with its own values and never reaches here. The switch is
+ * exhaustive: a new status code with values fails to compile here until it is
+ * handled.
  */
-export function fallbackMessage(code: ErrorCode, locale: Locale): string {
+export function fallbackMessage(code: StatusErrorCode, locale: Locale): string {
   switch (code) {
-    case ERROR_CODE.VALIDATION_FAILED:
-      return translate(code, locale, { count: 0 });
     case ERROR_CODE.RATE_LIMITED:
       return translate(code, locale, { seconds: 0 });
     case ERROR_CODE.TIMEOUT:
@@ -142,6 +147,20 @@ export const normalizeThrown =
 export function onError(err: Error, context: Context): Response {
   const requestId = requestIdOf(context);
 
+  // A shared module's error (ADR 0015): its code and values, our format and
+  // language. A code or status this API does not document is a bug below.
+  if (err instanceof CodedError) {
+    const code = errorCodeSchema.safeParse(err.code);
+    if (code.success && isErrorStatus(err.status)) {
+      return problemResponse(context, {
+        code: code.data,
+        detail: translateCode(code.data, localeOf(context), err.values),
+        status: err.status,
+        ...(err.errors.length > 0 && { errors: [...err.errors] }),
+      });
+    }
+  }
+
   // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than this
   // API documents. One it does not (a 418) is a bug: it falls through to the
   // unhandled path, gets logged and answers 500.
@@ -180,46 +199,7 @@ export function notFound(context: Context): Response {
 }
 
 /**
- * Matches `Hook` from `@hono/standard-validator`: on failure `error` is the
- * Standard Schema issue array itself, not a wrapper object.
+ * A validator hook: a failed parse throws the coded 400, which `onError`
+ * renders like any module's.
  */
-type StandardIssue = {
-  readonly message: string;
-  readonly path?:
-    | readonly (PropertyKey | { readonly key: PropertyKey })[]
-    | undefined;
-};
-
-type ValidationResult =
-  | { success: true }
-  | { success: false; error?: readonly StandardIssue[] };
-
-function issuePath(issue: StandardIssue): string {
-  return (issue.path ?? [])
-    .map((segment) =>
-      typeof segment === "object" && segment !== null && "key" in segment
-        ? String(segment.key)
-        : String(segment)
-    )
-    .join(SEPARATOR.PATH);
-}
-
-export function validationHook(result: ValidationResult, context: Context) {
-  if (result.success) {
-    return;
-  }
-
-  const details: ErrorDetail[] = (result.error ?? []).map((issue) => ({
-    message: issue.message,
-    path: issuePath(issue),
-  }));
-
-  return problemResponse(context, {
-    code: ERROR_CODE.VALIDATION_FAILED,
-    detail: translate(ERROR_CODE.VALIDATION_FAILED, localeOf(context), {
-      count: details.length,
-    }),
-    errors: details,
-    status: HTTP_STATUS.BAD_REQUEST,
-  });
-}
+export const validationHook = invalidHook(ERROR_CODE.VALIDATION_FAILED);

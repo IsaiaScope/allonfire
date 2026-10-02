@@ -1,10 +1,12 @@
 // @module-tag unit
 
+import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { LOCALE } from "@allonfire/utils/constants/locales";
+import { HTTPException } from "hono/http-exception";
 import { createApp } from "../../../app";
 import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
 import { API_VERSION_PREFIX } from "../../../shared/constants/routes";
 import { appDeps } from "../../../shared/tests/app-deps";
-import { LOCALE } from "../../i18n/constants/locales";
 import { fallbackMessage } from "../middleware/error-handler";
 import { problemOf } from "./problem-of";
 
@@ -103,5 +105,25 @@ describe("RFC 9457 problem documents", () => {
     const res = await createApp(appDeps()).request(path);
     const body = await problemOf(res);
     expect(body.instance).toBe(path);
+  });
+});
+
+describe("415", () => {
+  it("renders an unsupported image as a localised problem", async () => {
+    const app = createApp(appDeps()).get("/v1/unsupported", () => {
+      throw new HTTPException(HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE);
+    });
+    const res = await app.request("/v1/unsupported", {
+      headers: { "accept-language": "it" },
+    });
+    expect(res.status).toBe(415);
+    const body = await problemOf(res);
+    expect(body).toMatchObject({
+      code: "UNSUPPORTED_IMAGE",
+      type: "/errors/unsupported-image",
+    });
+    expect(body.detail).toBe(
+      "Immagine non supportata. Invia JPEG, PNG, WebP o AVIF"
+    );
   });
 });

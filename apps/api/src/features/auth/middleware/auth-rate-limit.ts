@@ -19,7 +19,7 @@ export const authRateLimit = (auth: AuthLike, store: RateLimitStore) =>
       keyPrefix: env.AUTH_RATE_LIMIT_KEY_PREFIX,
       limit: env.AUTH_RATE_LIMIT_MAX,
       store,
-      trustedHops: env.TRUSTED_PROXY_HOPS,
+      trustedHops: env.API_TRUSTED_PROXY_HOPS,
       windowMs: env.AUTH_RATE_LIMIT_WINDOW_MS,
     })
   );

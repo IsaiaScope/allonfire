@@ -1,6 +1,7 @@
 // @module-tag integration
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client";
 import { CHANGESET_FILE } from "../../scripts/changeset-file";
 import {
@@ -18,14 +19,17 @@ import {
 const DOCKER_TIMEOUT = 300_000;
 
 const AUTH_TABLES = ["Account", "Session", "User", "Verification"];
-const LAURA_TABLES = [
+const LAURA_TABLES = ["GameScore"];
+const IMAGE_TABLES = ["Image"];
+/** What the baseline holds in public; 0003 dropped Laura's photo and quiz tables, its rollback brings them back. */
+const BASELINE_TABLES = [
+  ...AUTH_TABLES,
+  ...LAURA_TABLES,
   "Favorite",
-  "GameScore",
   "Photo",
   "QuizAnswer",
   "QuizQuestion",
-];
-const ALL_TABLES = [...AUTH_TABLES, ...LAURA_TABLES].sort();
+].sort();
 
 const BASELINE = resolve(PACKAGE_DIR, "changelog/changesets/0000-baseline.sql");
 const EXISTING_USER = "existing-user";
@@ -58,6 +62,10 @@ describe("changelog on an empty database", () => {
 
   it("puts the laura tables in laura", async () => {
     expect(await tablesIn(client, "laura")).toEqual(LAURA_TABLES);
+  });
+
+  it("puts the Image table in image", async () => {
+    expect(await tablesIn(client, "image")).toEqual(IMAGE_TABLES);
   });
 
   it("leaves nothing of ours in public", async () => {
@@ -130,10 +138,10 @@ describe("rolling back the schema move", () => {
     "puts every table back in public and drops the App schemas",
     async () => {
       liquibase(url, "rollback-count", `--count=${CHANGESETS_AFTER_BASELINE}`);
-      expect(await tablesIn(client, "public")).toEqual(ALL_TABLES);
+      expect(await tablesIn(client, "public")).toEqual(BASELINE_TABLES);
       const schemas = await client.$queryRaw<{ schema_name: string }[]>`
         SELECT schema_name FROM information_schema.schemata
-        WHERE schema_name IN ('auth', 'laura')
+        WHERE schema_name IN ('auth', 'image', 'laura')
       `;
       expect(schemas).toEqual([]);
     },
@@ -146,14 +154,17 @@ describe("rolling back the schema move", () => {
       liquibase(url, "update");
       expect(await tablesIn(client, "auth")).toEqual(AUTH_TABLES);
       expect(await tablesIn(client, "laura")).toEqual(LAURA_TABLES);
+      expect(await tablesIn(client, "image")).toEqual(IMAGE_TABLES);
     },
     DOCKER_TIMEOUT
   );
 });
 
-const { version } = JSON.parse(
-  readFileSync(resolve(PACKAGE_DIR, "../../package.json"), "utf8")
-) as { version: string };
+const { version } = z
+  .object({ version: z.string() })
+  .parse(
+    JSON.parse(readFileSync(resolve(PACKAGE_DIR, "../../package.json"), "utf8"))
+  );
 const RELEASE_TAG = `v${version}`;
 
 async function tags(client: PrismaClient): Promise<string[]> {

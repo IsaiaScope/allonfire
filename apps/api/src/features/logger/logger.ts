@@ -67,7 +67,7 @@ export function createLogger(opts?: {
   destination?: DestinationStream;
 }): Logger {
   const options = {
-    level: env.LOG_LEVEL,
+    level: env.API_LOG_LEVEL,
     mixin: traceContext,
     redact: { censor: REDACT_CENSOR, paths: [...REDACT_PATHS] },
   };
@@ -84,7 +84,7 @@ export function createLogger(opts?: {
     // Each target filters at `info` unless told otherwise.
     const targets = [consoleTarget, otelTransport(endpoint)].map((target) => ({
       ...target,
-      level: env.LOG_LEVEL,
+      level: env.API_LOG_LEVEL,
     }));
     return pino({ ...options, transport: { targets } });
   }

@@ -1,0 +1,14 @@
+{
+  "extends": "../config/typescript/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    // Screens import AOF components, which import shadcn's .tsx source, so
+    // TypeScript checks it under this config too: the two strict flags the
+    // generated code breaks are off here as in packages/ui (ADR 0010).
+    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": false,
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "scripts", "vitest.config.ts"]
+}

@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Zod-4-3068B7?logo=zod&logoColor=white" alt="Zod" />
 </p>
 
-<p align="center">The Auth module: signing in, Sessions and the access rules, mountable by any Hono backend.</p>
+<p align="center">The Auth module: signing in, Sessions and the access rules, mountable by any Hono backend and read by every Next App through it.</p>
 
 ## What it is
 
@@ -16,8 +16,16 @@ predicates, a Hono adapter (routes, Session loader, guards) and the OpenAPI
 fragment a host merges into its own document. The API is the only backend that
 mounts it today.
 
-No Next and no React yet: the frontend refactor adds a `./client` export. The
-old Next-bound package lives in `packages/auth-old`, untracked, until then.
+A Next App never runs Better Auth itself, and holds no auth logic either:
+`features/next` signs in and out (server actions), guards pages, reads and
+renews the Session, all by calling the
+API from the App's server and setting the cookies it answers with on the
+App's own response. An App sets `AUTH_APP`, `API_URL` and `API_AUTH_URL`
+(`environment/next-environment`, extended into its env) and draws its own
+components; who it lets in is `mayEnter`, the same rule the API's
+`requireApp` applies.
+Laura still uses the old Next-bound package in `packages/auth-old`,
+untracked, until its refactor.
 
 Everything the adapter touches goes through the `AuthLike` port
 (`basePath`, `handler`, `getSession`, `openApi`), so a test passes `stubAuth()` instead of a
@@ -32,11 +40,26 @@ keeps no copy of them. HTTP statuses and methods come from
 
 | Export | Contents |
 |--------|----------|
-| `./environment/environment` | `authEnvSchema` (`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
-| `./features/access/access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
-| `./features/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User's Allowed apps include it or `ALL`; mount it once per App |
+| `./environment/environment` | `authEnvSchema` (`AUTH_SECRET`, `AUTH_URL`, `AUTH_COOKIE_DOMAIN` (optional: the parent domain the Session cookies are set for), `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
+| `./features/access/access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `mayEnter(user, app)` (Allowed apps plus the App's Role floor, `APP_MIN_ROLE`), `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
+| `./features/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User may enter it (`mayEnter`); mount it once per App |
 | `./features/guards/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer); ranks are `ROLE_RANK`, in steps of 100 |
 | `./features/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
+| `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL`, `API_URL`, `AUTH_APP`) for a Next App to extend its env with |
+| `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
+| `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
+| `./features/next/constants/access` | `APP_PATH` |
+| `./features/next/utils/require-app-session` | `requireAppSession()` — a page's guard: the Session or a redirect to Sign in |
+| `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
+| `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
+| `./features/next/constants/api` | `AUTH_COOKIE`, `AUTH_COOKIE_MARKER`, `SIGN_IN_ERROR` (an App translates each), `signInErrorSchema`, `SignInState` |
+| `./features/next/utils/access` | `canAccess(user)` — `mayEnter` for `AUTH_APP`, on the User as the API sends it |
+| `./features/next/utils/auth-client` | `createApiAuthClient()` — Better Auth's own client (`better-auth/client`) for the API's auth routes, typed from `Auth`; `ApiAuthClient`, `Session` |
+| `./features/next/utils/refresh-session` | `refreshSession(request)` — for an App's proxy: the renewed cookies once the cookie cache has expired |
+| `./features/next/utils/session` | `getSession()`, `getAppSession()` (`null` for anyone the App refuses) |
+| `./features/next/utils/set-cookie` | `parseSetCookies(headers)` — the API's `Set-Cookie` headers, read by Better Auth's parser, as `cookies().set` takes them |
+| `./features/next/utils/sign-in` | `signInWithEmail(formData)` — the error, or none once it set the Session cookies, or revokes the Session of someone the App refuses |
+| `./features/next/utils/sign-out` | `signOutOfApi()` — ends the Session and clears the cookies |
 | `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
 | `./features/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
 | `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
@@ -59,9 +82,14 @@ src/
     auth/        index (authRoutes), constants/http (AUTH_METHODS), tests/
   features/
     access/      access (hasRole, canEnterApp, allowedAppsFrom, roleFrom),
-                 constants/roles (ROLE_RANK), tests/
+                 constants/roles (ROLE_RANK, APP_MIN_ROLE), tests/
     guards/      middleware/{require-session,require-role,require-app},
                  utils/guard, tests/ (incl. a type test)
+    next/        a Next App's side, through the API: actions/{sign-in,sign-out},
+                 constants/{access,api},
+                 utils/{access,auth-client,redirect-to,refresh-session,
+                 require-app-session,session,with-session-refresh,
+                 set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), constants/openapi, tests/
     rate-limit/  middleware/auth-limit, tests/
     server/      auth (createAuth, toAuthLike), tests/

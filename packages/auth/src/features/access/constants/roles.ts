@@ -1,4 +1,5 @@
-import type { Role } from "@allonfire/database/enums";
+import { Role } from "@allonfire/database/enums";
+import type { App } from "../../../shared/types/auth";
 
 /**
  * How far each Role reaches; a higher rank holds every right of a lower one.
@@ -10,3 +11,9 @@ export const ROLE_RANK = {
   USER: 200,
   VIEWER: 100,
 } as const satisfies Record<Role, number>;
+
+/** The lowest Role each App lets in, beside the User's Allowed apps. */
+export const APP_MIN_ROLE = {
+  BACK_OFFICE: Role.ADMIN,
+  LAURA: Role.VIEWER,
+} as const satisfies Record<App, Role>;

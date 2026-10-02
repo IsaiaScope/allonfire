@@ -56,13 +56,15 @@ async function upsertUser(
 async function main() {
   // Always seed the main admin
   const adminName =
-    seedEnv.ADMIN_NAME ?? seedEnv.ADMIN_EMAIL.split("@")[0] ?? "Admin";
-  const adminHash = await hashPassword(seedEnv.ADMIN_PASSWORD);
+    seedEnv.DATABASE_SEED_ADMIN_NAME ??
+    seedEnv.DATABASE_SEED_ADMIN_EMAIL.split("@")[0] ??
+    "Admin";
+  const adminHash = await hashPassword(seedEnv.DATABASE_SEED_ADMIN_PASSWORD);
 
   await upsertUser(
     {
       allowedApps: [AllowedApp.ALL],
-      email: seedEnv.ADMIN_EMAIL,
+      email: seedEnv.DATABASE_SEED_ADMIN_EMAIL,
       name: adminName,
       role: Role.ADMIN,
     },
@@ -70,24 +72,30 @@ async function main() {
   );
 
   // Always seed the Laura viewer account (like admin, available in all modes)
-  const lauraViewerHash = await hashPassword(seedEnv.LAURA_VIEWER_PASSWORD);
+  const lauraViewerHash = await hashPassword(
+    seedEnv.DATABASE_SEED_LAURA_VIEWER_PASSWORD
+  );
   await upsertUser(
     {
       allowedApps: [AllowedApp.LAURA],
-      email: seedEnv.LAURA_VIEWER_EMAIL,
-      name: seedEnv.LAURA_VIEWER_EMAIL.split("@")[0] ?? "laura-viewer",
+      email: seedEnv.DATABASE_SEED_LAURA_VIEWER_EMAIL,
+      name:
+        seedEnv.DATABASE_SEED_LAURA_VIEWER_EMAIL.split("@")[0] ??
+        "laura-viewer",
       role: Role.VIEWER,
     },
     lauraViewerHash
   );
 
-  if (seedEnv.SEED_MODE === "dev") {
-    if (!seedEnv.TEST_PASSWORD) {
-      console.error("TEST_PASSWORD is required when SEED_MODE=dev");
+  if (seedEnv.DATABASE_SEED_MODE === "dev") {
+    if (!seedEnv.DATABASE_SEED_TEST_PASSWORD) {
+      console.error(
+        "DATABASE_SEED_TEST_PASSWORD is required when DATABASE_SEED_MODE=dev"
+      );
       process.exit(1);
     }
 
-    const testHash = await hashPassword(seedEnv.TEST_PASSWORD);
+    const testHash = await hashPassword(seedEnv.DATABASE_SEED_TEST_PASSWORD);
     const testUsers = readSeedFile("users.json", seedUsersSchema);
 
     await Promise.all(testUsers.map((user) => upsertUser(user, testHash)));

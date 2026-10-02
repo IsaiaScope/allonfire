@@ -1,0 +1,12 @@
+{
+  "Common": {
+    "NotFound": {
+      "title": "Pagina non trovata",
+      "back": "Torna all'inizio"
+    },
+    "Error": {
+      "title": "Qualcosa è andato storto",
+      "retry": "Riprova"
+    }
+  }
+}

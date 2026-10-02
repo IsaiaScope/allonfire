@@ -8,6 +8,7 @@ describe("AOFButton", () => {
     expect(html).toContain('data-slot="button"');
     expect(html).toContain("bg-primary");
     expect(html).toContain(">Save<");
+    expect(html).toContain("cursor-pointer");
   });
 
   it("forwards the variant", () => {

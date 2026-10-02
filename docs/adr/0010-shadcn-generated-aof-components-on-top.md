@@ -1,5 +1,7 @@
 # shadcn components stay as generated; AOF components sit on top
 
+> **Superseded in part by [ADR 0011](0011-designs-and-screens-live-in-the-design-package.md):** the Theme per App moved out of `@allonfire/ui`; Designs are shared and live in `packages/design`.
+
 The old `packages/ui` held shadcn components that had been copied and then edited
 by hand, so no one could tell upstream code from ours, and updating shadcn meant
 re-applying every edit blind. The Design system is now two packages:

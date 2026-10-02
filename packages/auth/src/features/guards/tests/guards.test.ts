@@ -62,4 +62,10 @@ describe("requireApp", () => {
     ).toBe(200);
     expect(await status(sessionFor({ allowedApps: [] }), guard)).toBe(403);
   });
+
+  it("refuses a Role under the App's floor", async () => {
+    const guard = requireApp(AllowedApp.BACK_OFFICE);
+    expect(await status(sessionFor({ role: Role.USER }), guard)).toBe(403);
+    expect(await status(sessionFor({ role: Role.ADMIN }), guard)).toBe(200);
+  });
 });

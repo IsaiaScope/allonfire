@@ -1,9 +1,10 @@
+import type { Locale } from "@allonfire/utils/constants/locales";
+import type { CodedErrorValues } from "@allonfire/utils/helpers/coded-error";
 import { memoize, strategies } from "@formatjs/fast-memoize";
 import { type Formatters, IntlMessageFormat } from "intl-messageformat";
 import {
   CATALOGUE,
   DEFAULT_LOCALE,
-  type Locale,
   type TranslationKey,
 } from "./constants/locales";
 import type { TranslationValues } from "./translation-values";
@@ -69,6 +70,25 @@ export function translate<K extends TranslationKey>(
   ...[values]: [TranslationValues[K]] extends [never]
     ? []
     : [TranslationValues[K]]
+): string {
+  return render(key, locale, values);
+}
+
+/**
+ * For a code whose values arrive at runtime, a module's `CodedError`:
+ * unchecked against `TranslationValues`, so a value the module forgot renders
+ * ICU's fallback instead of failing the build.
+ */
+export const translateCode = (
+  key: TranslationKey,
+  locale: Locale,
+  values: CodedErrorValues
+): string => render(key, locale, values);
+
+function render(
+  key: TranslationKey,
+  locale: Locale,
+  values: CodedErrorValues | undefined
 ): string {
   try {
     // `never`: the catalogue has no rich-text tags, so no part is anything but

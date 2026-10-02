@@ -1,13 +1,14 @@
 # @allonfire/api
 
 The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
-(`packages/auth`) under `/v1/auth`, no domain endpoints yet.
+(`packages/auth`) under `/v1/auth`, and the Images every App shows under
+`/v1/images`.
 
 ## Running it
 
 ```bash
 cp .env.example .env
-pnpm --filter @allonfire/api dev      # starts Redis and OpenObserve via predev, then tsx watch
+pnpm --filter @allonfire/api dev      # starts Redis, OpenObserve and MinIO via predev, then tsx watch
 ```
 
 Then: `http://localhost:3300/health`, `/ready`, `/reference`.
@@ -18,9 +19,11 @@ they get their values from `vitest.setup.ts`.
 
 ## Environment
 
-Every variable is documented in `.env.example`. `DATABASE_URL`, `REDIS_URL`,
-`CORS_ORIGINS`, `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` are required — the
-process exits at boot if any is missing.
+Every variable is documented in `.env.example`. `DATABASE_URL`, `API_REDIS_URL`,
+`API_CORS_ORIGINS`, `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
+`STORAGE_ACCESS_KEY` and `STORAGE_SECRET_KEY` are required — the process exits
+at boot if any is missing. The `STORAGE_*` names say storage, not MinIO, so the
+server behind them can change without renaming them.
 
 ## Auth
 
@@ -43,6 +46,38 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 - **Docs** — Better Auth's endpoints appear in `/openapi.json` and `/reference`
   under the `Auth` tag. The plugin's own schema route and reference page are off.
 - **Sign-up is disabled.** Users come from the seed.
+
+## Images
+
+The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
+ADR 0015). Its errors are `CodedError`s the API renders as its own localized
+problem documents. Files go to the public
+`image` bucket as `<uuid>.webp`, prepared by `@allonfire/storage` (upright,
+EXIF stripped, capped at 2560px, WebP, 16px blur); rows live in
+`image."Image"`. Apps render them with `AOFStorageImage` through their `/storage/images/*`
+rewrite.
+
+| Endpoint | Guard | Does |
+|---|---|---|
+| `GET /v1/images?app=&cursor=&limit=` | Session, may enter `app` | the App's Images and the `ALL` ones, newest first; `nextCursor` (opaque) pages |
+| `GET /v1/images/:id` | Session; 404 unless it may enter its App (`ALL`: anyone signed in) | one Image |
+| `POST /v1/images` | `ADMIN` | multipart: repeated `file` parts plus one `meta` JSON part, `[{ app, alt: { en, it } }]` in file order |
+| `PATCH /v1/images` | `ADMIN` | `[{ id, app?, alt? }]`: move between Apps, change alt |
+| `DELETE /v1/images` | `ADMIN` | `{ ids }`: rows first, then files |
+
+- **All or nothing.** One bad file rejects the whole upload (415), an unknown
+  id rejects a whole PATCH or DELETE (404). A failed insert deletes the files
+  it already stored.
+- **Limits:** 20 MiB per file and 100 MiB per upload (413 naming the limit
+  crossed), 20 files per upload, 100 items per PATCH or DELETE. The upload
+  skips the API-wide 1 MiB body limit and brings its own.
+- **App values are the enum names**, `LAURA` and `ALL`, not the lowercase the
+  database stores.
+- **Readable by key, never listable.** In dev, `minio-init` creates the bucket
+  with an anonymous policy allowing only `s3:GetObject` on `images/*`; in
+  production apply the same JSON with `mc anonymous set-json`. Never
+  `mc anonymous set download`: it also grants `ListBucket`, which would list
+  every key. Each App's rewrite proxies `/storage/images/:key` only, for the same reason.
 
 ## Writing routes
 

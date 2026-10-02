@@ -9,6 +9,7 @@ node_modules
 # Local env files
 .env
 .env.local
+.env.development
 .env.development.local
 .env.test.local
 .env.production.local
@@ -65,3 +66,22 @@ apps/laura/seed-photos/
 # Old Next-bound auth package, kept locally as reference until Laura's refactor
 /packages/auth-old/
 /packages/ui-old/
+
+# impeccable engine: a platform binary the launcher downloads to
+# ~/.impeccable/bin when missing (ADR 0011)
+.claude/skills/impeccable/scripts/bin/
+
+# impeccable: packages/design/.impeccable keeps config.json and surfaces/;
+# everything else is per-session. Live mode also writes into the App and the
+# repo root for a session (ADR 0011).
+packages/design/.impeccable/critique/
+packages/design/.impeccable/mocks/
+packages/design/.impeccable/review/
+packages/design/.impeccable/live/
+# impeccable writes its sidecar here; aof-design moves it to the App folder.
+packages/design/.impeccable/design.json
+**/.impeccable/config.local.json
+apps/*/.impeccable/
+apps/*/PRODUCT.md
+apps/*/DESIGN.md
+/.impeccable/

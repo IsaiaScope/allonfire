@@ -8,10 +8,8 @@
     "./enums": "./generated/prisma/enums.ts",
     "./environment/environment": "./src/environment/environment.ts",
     "./features/auth/user.service": "./src/features/auth/user.service.ts",
-    "./features/laura/favorite.service": "./src/features/laura/favorite.service.ts",
-    "./features/laura/game-score.service": "./src/features/laura/game-score.service.ts",
-    "./features/laura/photo.service": "./src/features/laura/photo.service.ts",
-    "./features/laura/quiz.service": "./src/features/laura/quiz.service.ts"
+    "./features/image/image.service": "./src/features/image/image.service.ts",
+    "./features/laura/game-score.service": "./src/features/laura/game-score.service.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -20,7 +18,6 @@
     "db:generate": "prisma generate",
     "db:rollback": "bash scripts/liquibase.sh rollback",
     "db:seed": "tsx --env-file=.env src/features/seed/seed.ts",
-    "db:seed-quiz": "tsx --env-file=.env src/features/seed/seed-quiz.ts",
     "db:status": "bash scripts/liquibase.sh status --verbose",
     "db:update": "bash scripts/liquibase.sh update",
     "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",

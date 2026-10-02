@@ -27,17 +27,18 @@ COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
-# collection. MINIO_ENDPOINT, MINIO_BUCKET, and BETTER_AUTH_URL must match
-# runtime values because Next.js bakes them into prerendered HTML at build time.
-# Other values are placeholders that never reach the runner stage (multi-stage isolation).
+# collection. STORAGE_ENDPOINT and BETTER_AUTH_URL must match runtime values:
+# Next.js bakes them in at build (STORAGE_ENDPOINT is the /storage/images
+# rewrite target). The Back office's build fails without STORAGE_ENDPOINT.
+# Other values are placeholders that never reach the runner stage.
 ARG BETTER_AUTH_URL="http://localhost:3000"
+ARG STORAGE_ENDPOINT
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     BETTER_AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
     BETTER_AUTH_URL=${BETTER_AUTH_URL} \
-    MINIO_ENDPOINT="http://minio:9000" \
-    MINIO_ACCESS_KEY="build" \
-    MINIO_SECRET_KEY="build-placeholder" \
-    MINIO_BUCKET="allonfire"
+    STORAGE_ENDPOINT=${STORAGE_ENDPOINT} \
+    STORAGE_ACCESS_KEY="build" \
+    STORAGE_SECRET_KEY="build-placeholder"
 RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 

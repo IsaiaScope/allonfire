@@ -7,5 +7,7 @@
   "RATE_LIMITED": "Too many requests. Retry in {seconds, plural, one {# second} other {# seconds}}",
   "TIMEOUT": "Request timed out after {seconds, number} s",
   "PAYLOAD_TOO_LARGE": "Payload too large. Maximum {limit, number} bytes",
+  "UNSUPPORTED_IMAGE": "Unsupported image. Send JPEG, PNG, WebP or AVIF",
+  "IMAGE_TOO_LARGE": "Image too large. Send at most {limit, number} megapixels",
   "INTERNAL_ERROR": "Internal server error"
 }

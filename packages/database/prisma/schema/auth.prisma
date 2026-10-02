@@ -12,27 +12,27 @@ enum Role {
 /// One entry of a User's Allowed apps: an App, or ALL for every App.
 /// Upper-case in code like Role; stored as the App names themselves.
 enum AllowedApp {
-  ALL   @map("all")
-  LAURA @map("laura")
+  ALL         @map("all")
+  LAURA       @map("laura")
+  BACK_OFFICE @map("back-office")
 
   @@schema("auth")
 }
 
 model User {
-  id            String         @id @default(cuid(2))
-  email         String         @unique
+  id            String       @id @default(cuid(2))
+  email         String       @unique
   name          String?
-  emailVerified Boolean        @default(false)
+  emailVerified Boolean      @default(false)
   image         String?
-  role          Role           @default(USER)
-  allowedApps   AllowedApp[]   @default([ALL])
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  role          Role         @default(USER)
+  allowedApps   AllowedApp[] @default([ALL])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   sessions      Session[]
   accounts      Account[]
-  photos        Photo[]
+  images        Image[]
   gameScores    GameScore[]
-  quizQuestions QuizQuestion[]
 
   @@schema("auth")
 }
