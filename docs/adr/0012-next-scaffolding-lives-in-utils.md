@@ -35,3 +35,8 @@ utils under the reserved `Common` namespace, merged under the App's messages.
   from utils' own devDependencies, not the App's. Two versions would split React
   contexts, so `src/next/tests/peer-versions.test.ts` fails when an App on the
   scaffolding declares a peer at a range other than utils'.
+
+## Status
+
+Location updated by ADR 0016: `utils` is now `core`, and the scaffolding lives
+in `packages/core/src/features/next/`.

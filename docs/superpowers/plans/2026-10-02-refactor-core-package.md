@@ -4,6 +4,8 @@
 
 **Goal:** Rename `@allonfire/utils` to `@allonfire/core`, reorganise it into `environment/`, `shared/` and `features/`, rewrite every importer, and write the package-architecture rules into `CLAUDE.md` and ADR 0016.
 
+**Status:** implemented (uncommitted) @ 2026-10-07T12:30:16Z
+
 **Architecture:** Plan 1 of 7 in the package-architecture roadmap. A move map (old path → new path) drives two scripts: one moves the files and fixes the relative imports inside the package, the other rewrites every `@allonfire/utils/...` specifier in the workspace to its `@allonfire/core/...` twin. No behaviour changes; the existing suites are the guard, and the type check of every Host proves no importer was missed.
 
 **Tech Stack:** pnpm workspaces + turbo, TypeScript 6, Vitest, Python 3 (one-off scripts run from the plan, not committed).
@@ -57,12 +59,12 @@
 | `environment/environment` | `environment/environment` |
 | `next/<rest>` | `features/next/<rest>` |
 
-- [ ] **Step 1: Record the baseline**
+- [x] **Step 1: Record the baseline**
 
 Run: `cd packages/utils && pnpm exec vitest run 2>&1 | grep -E "Test Files|Tests " ; pnpm exec tsc --noEmit && echo TSC-OK`
 Expected: `Test Files  12 passed`, `Tests  43 passed` (note the exact counts), `TSC-OK`.
 
-- [ ] **Step 2: Move the files and fix the relative imports**
+- [x] **Step 2: Move the files and fix the relative imports**
 
 Run from the repo root:
 
@@ -124,7 +126,7 @@ find packages/core/src -name '._*' -delete; ls packages/core/src
 
 Expected: no `unresolved` exit; `ls` prints `environment  features  shared`.
 
-- [ ] **Step 3: Fix what the script cannot see**
+- [x] **Step 3: Fix what the script cannot see**
 
 `packages/core/src/features/next/tests/scaffolded-apps.ts`: the file is one folder deeper, so
 `export const REPO = new URL("../../../../../", import.meta.url);` becomes
@@ -159,14 +161,14 @@ Expected: prints `25`, the same keys as before under their new paths (`scaffolde
 
 `packages/core/tsconfig.json`: the comment `// src/next/ holds React components` becomes `// src/features/next/ holds React components`.
 
-- [ ] **Step 4: Run core's own checks**
+- [x] **Step 4: Run core's own checks**
 
 No `pnpm install` yet: the other packages still depend on `@allonfire/utils`, which no longer exists, so install fails until Task 2. `packages/core/node_modules` moved with the folder and its links still resolve.
 
 Run: `cd packages/core && pnpm exec tsc --noEmit && pnpm exec vitest run 2>&1 | grep -E "Test Files|Tests "`
 Expected: tsc exit 0; the same counts as Step 1.
 
-- [ ] **Step 5: Format**
+- [x] **Step 5: Format**
 
 Run: `pnpm biome check --write packages/core`
 Expected: exit 0.
@@ -181,12 +183,12 @@ Expected: exit 0.
 **Interfaces:**
 - Consumes: the export table from Task 1.
 
-- [ ] **Step 1: Watch the workspace fail**
+- [x] **Step 1: Watch the workspace fail**
 
 Run: `pnpm turbo run check-types --continue --filter='!@allonfire/laura' 2>&1 | grep -c "Cannot find module '@allonfire/utils"`
 Expected: a count above 0 — every importer still names the old package (this is the RED: the rename is visible to the type checker).
 
-- [ ] **Step 2: Rewrite the specifiers**
+- [x] **Step 2: Rewrite the specifiers**
 
 ```bash
 python3 - <<'EOF'
@@ -233,7 +235,7 @@ EOF
 
 Expected: a list of files, no `unmapped` exit. Markdown is left to Task 3, where prose needs a reader, not a regex. The `tsconfig.json` `paths` entries now read `"@allonfire/core/*": [".../core/src/*"]`.
 
-- [ ] **Step 3: Re-sort the dependency blocks and install**
+- [x] **Step 3: Re-sort the dependency blocks and install**
 
 ```bash
 for p in packages/*/package.json apps/*/package.json; do node -e '
@@ -245,17 +247,17 @@ pnpm install
 
 Expected: exit 0; `pnpm-lock.yaml` names `@allonfire/core`, not `@allonfire/utils`.
 
-- [ ] **Step 4: Type-check and test the workspace**
+- [x] **Step 4: Type-check and test the workspace**
 
 Run: `pnpm turbo run check-types --continue --filter='!@allonfire/laura'; pnpm turbo run test --continue --filter='!@allonfire/laura'`
 Expected: every task passes. The only failures allowed are ones that also failed before this plan in `@allonfire/auth`'s own unfinished files (name them in the ledger); none may mention `@allonfire/utils` or `@allonfire/core`.
 
-- [ ] **Step 5: Prove nothing names the old package**
+- [x] **Step 5: Prove nothing names the old package**
 
 Run: `grep -rn "@allonfire/utils\|packages/utils" apps packages turbo.json biome.jsonc docker .github package.json --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=auth-old --exclude-dir=ui-old --exclude-dir=dist --exclude='*.md'`
 Expected: no output (Markdown is Task 3's).
 
-- [ ] **Step 6: Format**
+- [x] **Step 6: Format**
 
 Run: `pnpm biome check --write $(git diff --name-only -- apps packages | grep -E '\.(ts|tsx|json)$' | grep -v '^apps/laura/')`
 Expected: exit 0.
@@ -270,7 +272,7 @@ Expected: exit 0.
 
 No test: documentation.
 
-- [ ] **Step 1: ADR 0016**
+- [x] **Step 1: ADR 0016**
 
 `docs/adr/0016-packages-are-concepts-with-adapter-folders.md`:
 
@@ -308,7 +310,7 @@ sub-feature. Code lives in the deepest feature that contains every reader.
   adapter, one source of truth, languages) follow this ADR.
 ```
 
-- [ ] **Step 2: ADR 0012 status**
+- [x] **Step 2: ADR 0012 status**
 
 Append to `docs/adr/0012-next-scaffolding-lives-in-utils.md`:
 
@@ -320,7 +322,7 @@ Location updated by ADR 0016: `utils` is now `core`, and the scaffolding lives
 in `packages/core/src/features/next/`.
 ```
 
-- [ ] **Step 3: CLAUDE.md**
+- [x] **Step 3: CLAUDE.md**
 
 In `## Package Layout (every Node package and apps/api)`, replace the code block and the paragraph after it ("Every folder is optional. … (plus `types/` if it ever holds types alone).") with:
 
@@ -364,7 +366,7 @@ Then, everywhere in `CLAUDE.md`:
 - `` `@allonfire/utils/helpers/coded-error` `` → `` `@allonfire/core/features/errors/coded-error` ``.
 - The sentence "A package with no features needs no `shared/` either: `packages/utils` is `environment/`, `constants/`, `helpers/` and `next/`, the App scaffolding by topic (`config/`, `i18n/`, `query/`, `providers/`; ADR 0012)" is deleted (the new paragraph replaces it).
 
-- [ ] **Step 4: READMEs and indexes**
+- [x] **Step 4: READMEs and indexes**
 
 - `packages/core/README.md`: title `@allonfire/core`; every `@allonfire/utils/…` path through the Task 1 table; the intro says it holds the framework-free constants and helpers every Host shares, plus the Next scaffolding in `features/next` (ADR 0012, ADR 0016).
 - `README.md` (root): the packages table row becomes `| 🔧 | **[@allonfire/core](packages/core/)** | Shared constants, helpers and the Next scaffolding |`; the tree line `utils/                Utility functions` becomes `core/                 Shared constants, helpers, Next scaffolding`.
@@ -372,7 +374,19 @@ Then, everywhere in `CLAUDE.md`:
 - `apps/laura/src/features/games/CLAUDE.md:115`: `` `@allonfire/utils` `` → `` `@allonfire/core` ``.
 - `packages/auth/README.md`, `packages/storage/README.md`: any `@allonfire/utils` mention through the Task 1 table.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `grep -rn "@allonfire/utils\|packages/utils" CLAUDE.md README.md packages/*/README.md .claude/skills docs/adr`
 Expected: only ADR 0012's title line and its file name (history), nothing else.
+
+## Implementation Log
+- Implemented: 2026-10-07T12:30:16Z
+- Workspace: current-branch — feat/design-package
+- Committed: no — awaiting user review
+- Rulings:
+  - Task 2: `--filter='!@allonfire/laura'` dropped: Laura is not a workspace member (`pnpm-workspace.yaml` excludes it), and turbo refuses an unknown filter.
+  - Task 2: integration tests (5 files, Postgres/Redis) not verified — the Docker daemon was down; every unit suite passed and check-types is 10/10.
+  - Task 2: the old-name grep runs as `git grep --untracked` so generated files (`*.tsbuildinfo`, `coverage/`, Laura's `.next-mobile/`, `.turbo` logs) do not count.
+  - Task 3: ADR 0015 also points at the new `CodedError` path (a live reference); ADR 0012's body keeps the old name as history, under its new Status note.
+  - Open for plan 7: `features/next/i18n/translations/` is a data folder, not in the kind list; decide there whether `translations` joins the list.
+  - Follow-up (user): `shared/constants/node-env` merged into `shared/constants/env` (`BOOLEAN_ENV` and `NODE_ENV` in one file); its export key removed, importers rewritten.

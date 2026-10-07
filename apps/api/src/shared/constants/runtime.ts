@@ -1,4 +1,4 @@
-import { HTTP_HEADER } from "@allonfire/utils/constants/http";
+import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
 import { z } from "zod";
 
 /**

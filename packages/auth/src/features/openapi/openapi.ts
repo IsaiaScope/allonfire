@@ -1,7 +1,7 @@
 import {
   objectEntries,
   objectFromEntries,
-} from "@allonfire/utils/helpers/object";
+} from "@allonfire/core/shared/utils/object";
 import type { AuthLike, OpenApiFragment } from "../../shared/types/auth";
 import { AUTH_OPENAPI_TAG } from "./constants/openapi";
 

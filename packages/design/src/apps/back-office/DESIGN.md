@@ -42,9 +42,10 @@ reading; line colours own whole regions where they appear.
 
 ### Secondary
 
-- **Line colours**, one per App: Back office green (#00a650), Laura orange
-  (#f39700). Used as bands, badges and route markers; never as text on the
-  ground, and green never carries white body text (3.2:1).
+- **Line colours**, one per App, from a palette: green (#00a650), orange
+  (#f39700). Each App picks its own as `--line` in its styles.css (`bg-line`).
+  Used as bands, badges and route markers; never as text on the ground, and
+  green never carries white body text (3.2:1).
 
 ### Neutral
 

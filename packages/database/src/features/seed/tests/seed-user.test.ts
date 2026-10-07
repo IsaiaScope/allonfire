@@ -1,6 +1,8 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { parseJson } from "@allonfire/core/shared/utils/json";
 import { seedUsersSchema } from "../seed-user";
 
 describe("seedUsersSchema", () => {
@@ -9,7 +11,7 @@ describe("seedUsersSchema", () => {
       resolve(import.meta.dirname, "../mock/users.json"),
       "utf-8"
     );
-    expect(seedUsersSchema.safeParse(JSON.parse(raw)).success).toBe(true);
+    expect(seedUsersSchema.safeParse(parseJson(raw)).success).toBe(true);
   });
 
   it("rejects an unknown Role or Allowed app", () => {

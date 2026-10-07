@@ -18,7 +18,7 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Fetch data in Server Components (pages, layouts), pass as props to client components
 - Use Server Actions for mutations — keep form logic in client components but action definitions server-side
 - Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
-- Providers must be client: an App composes the AOF providers from `@allonfire/utils/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
+- Providers must be client: an App composes the AOF providers from `@allonfire/core/features/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
 
 ## Context7 Usage
 
@@ -28,7 +28,7 @@ Always use Context7 MCP tools when generating code involving:
 - Resolve library ID first, then query docs
 
 For Next.js, read the docs that ship with the installed version first:
-`packages/utils/node_modules/next/dist/docs/` (`01-app`, `02-pages`,
+`packages/core/node_modules/next/dist/docs/` (`01-app`, `02-pages`,
 `03-architecture`, `index.md`). They match the exact `next` in the lockfile,
 so they never describe an option this version lacks. Use Context7 when they
 do not cover the question.
@@ -38,7 +38,7 @@ skills (see Agent skills) for a guide that covers it and follow it: `shadcn` for
 components, `vercel-react-best-practices` and `vercel-composition-patterns` for
 React, the `next-*` skills for caching, prefetching and the dev loop.
 
-## Object Helpers (`@allonfire/utils/helpers/object`)
+## Object Helpers (`@allonfire/core/shared/utils/object`)
 
 Never call `Object.keys` / `values` / `entries` / `fromEntries` directly. Use
 `objectKeys`, `objectValues`, `objectEntries`, `objectFromEntries` — the
@@ -53,16 +53,29 @@ level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 `readonly [...] as const` tuple (`ValueOf` on a tuple would also pick up
 `length`, `map` and the rest of the array prototype).
 
+## JSON Helpers (`@allonfire/core/shared/utils/json`)
+
+Never call `JSON.parse` / `JSON.stringify` directly. `JSON.parse` returns
+`any`, so a typo on the result compiles; `JSON.stringify` takes anything, so
+`undefined`, a function or a `Date` compiles and comes out as nothing or as a
+string the reader does not expect. Every helper is generic, so the types
+carry through: `stringifyJson(value)` (`value: T & Json<T>` rejects any part
+that is not JSON, at any depth, interfaces included) returns `JsonText<T>`, and
+`parseJson(text)` reads that `T` back on its own; on any other string it is
+`unknown`, or the `T` passed as `parseJson<T>` (a claim, not a check).
+`parseJsonWith(text, schema)` parses and validates text from outside;
+`jsonFrom<T>(message)` is the zod step for a field that holds JSON text.
+
 ## Database Schema Quick Reference
 
-Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, `laura.prisma`).
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds only the admin and users for every App.
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
 - **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
 - **`image` schema (shared):** `Image`, the Images every App shows (ADR 0013)
 - **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `allowedAppSchema`, `appSchema`, `App`), `ROLE_RANK`, `AccessUser`, `AppPolicy`, and four functions: `hasRole`, `canSeeContent` (is a User allowed to see content shown by an App; `ALL` content is for anyone signed in), `canEnterApp(user, { app, minRole })` (is a User allowed into an App: Allowed apps plus the Role floor the App declares), `accessUserFrom` (a User read as strings, narrowed). Never `z.enum(Role)` or an `ALL` check by hand; an App only declares its policy (`requireApp`, `AUTH_MIN_ROLE`).
 - Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -133,16 +146,32 @@ One layout everywhere, so a file's place answers "who reads it?":
 
 ```
 src/
-  environment/       the zod env schema, validated at import
-  routes/<name>/     only when the package serves HTTP: index (the router),
-                     constants/, utils/, tests/
-  features/<topic>/  one concept each, with the kinds it needs: constants/,
-                     middleware/, types/, utils/, tests/
-  shared/            what more than one feature reads, by kind: constants/,
-                     middleware/, types/, utils/, tests/ (test helpers other
-                     packages import, e.g. `stubAuth`)
-  index.ts           only a package's root export, never a barrel inside it
+  index.ts            root entry only (an App's boot file, a package's root export)
+  environment/        the zod env schema, validated at import
+  shared/             what more than one top-level feature reads, by kind
+  features/
+    <feature>/
+      <kind>/         components, hooks, actions, middleware, routes,
+                      constants, types, utils, translations, tests
+      <sub-feature>/  any folder that is not a kind; same shape, recursively
 ```
+
+Only `environment/`, `shared/` and `features/` sit at the top of `src/`; routes
+live in their feature (`features/<name>/routes/`). Kind folders are the closed
+list above; any other folder inside a feature is a sub-feature. Nest only when
+a feature really has sub-features. Code lives in the deepest feature that
+contains every reader: one sub-feature reads it, it lives there; two
+sub-features, their parent's kind folder; two top-level features, `shared/`.
+A feature's main file can sit directly in its folder when a kind folder would
+hold only that file. Every folder is optional (ADR 0016).
+
+**Packages are concepts.** One package per concept, usable by any Host (an App
+or the API, see `CONTEXT.md`). A framework adapter lives in a sub-folder
+(`features/next/`, `features/hono/`) with the framework as an optional peer. A
+package or folder is named after an App, vendor or framework only when it is
+wholly that thing (`shadcn`, `features/next`, `database/apps/laura`). A
+package's logic never names an App; packages that catalogue per App
+(`database`, `design`) keep App folders.
 
 A package never imports an App (`@allonfire/api`, `@allonfire/back-office`,
 `@allonfire/laura`, or a path into `apps/`); Biome's `noRestrictedImports`
@@ -150,11 +179,6 @@ enforces it. A package is a module any host can mount: the Auth module knows
 `/auth`, never the `/v1` the API mounts it under, and a Next App is told the
 full address (`API_AUTH_URL`).
 
-Every folder is optional. A package with no features needs no `shared/`
-either: `packages/utils` is `environment/`, `constants/`, `helpers/` and
-`next/`, the App scaffolding by topic (`config/`, `i18n/`, `query/`,
-`providers/`; ADR 0012)
-(plus `types/` if it ever holds types alone).
 Env var names start with their owner: a package's with the package name
 (`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_MODE`, `AUTH_SECRET`), the
 API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
@@ -162,12 +186,12 @@ another service carries that service's name (`API_URL` in the Back office). A
 name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
 `OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
-`"./features/guards/middleware/require-role": "./src/features/guards/middleware/require-role.ts"`.
-`routes/<name>/index.ts` exports as `./routes/<name>`. Generated code keeps its
+`"./features/hono/guards/middleware/require-role": "./src/features/hono/guards/middleware/require-role.ts"`.
+A folder's `index.ts` exports as the folder (`./features/image/hono/routes`). Generated code keeps its
 own key (`@allonfire/database/enums`). A package that serves HTTP for any host
-(the Auth and Image modules) exports its router from `routes/<name>/index.ts`,
+(the Auth and Image modules) exports its router from `features/<name>/routes/index.ts`,
 takes its dependencies as arguments, and throws `CodedError` from
-`@allonfire/utils/helpers/coded-error` instead of building responses (ADR 0015).
+`@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015).
 `packages/shadcn`, `packages/ui`,
 `packages/hooks` and `packages/design` are exempt: the first three follow
 shadcn's `components/` and `lib/` so `shadcn add` works; `packages/design`
@@ -188,16 +212,15 @@ apps/api/
     │                     "./client" export; types only, no runtime code
     ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
     ├── environment/      environment — zod env schema, validated at import
-    ├── routes/           one folder per resource, mounted by app.ts; owns its
-    │   │                 constants/, utils/ and tests/; the Image module
-    │   │                 mounts from @allonfire/storage (ADR 0015)
-    │   ├── docs/         index, handlers, constants/{openapi,routes},
+    ├── features/         one folder per topic, mounted or applied by app.ts;
+    │   │                 each owns its routes/, constants/, middleware/,
+    │   │                 utils/ and tests/; the Image module mounts from
+    │   │                 @allonfire/storage (ADR 0015)
+    │   ├── docs/         routes/{index,handlers}, constants/{openapi,routes},
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
-    │   └── health/       index, routes, handlers, constants/statuses,
-    │                     utils/status (HealthDeps, status mapping) — /health, /ready
-    ├── features/         one folder per cross-cutting topic (no endpoints),
-    │   │                 each owning constants/, middleware/ and tests/
+    │   ├── health/       routes/{index,routes,handlers}, constants/statuses,
+    │   │                 utils/status (HealthDeps, status mapping) — /health, /ready
     │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
     │   │                 API's limiter wrapped in the module's authLimit)
     │   ├── errors/       constants/{error-codes,problem-details},
@@ -221,7 +244,7 @@ feature reads it. `CONTEXT_VAR` and the mount prefixes are
 shared, so they stay in `shared/constants/`. Anything not API-specific —
 `HTTP_STATUS`, `HTTP_METHOD`, `HTTP_HEADER`, `CONTENT_TYPE`, `LOG_LEVEL`, the
 redaction list, `BOOLEAN_ENV`, `SEPARATOR`, `TRAILING_SLASHES`, time and size units, `SECURITY_HEADERS` — lives in
-`@allonfire/utils/constants/*`; only `ERROR_STATUS` stays in the API's
+`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`); only `ERROR_STATUS` stays in the API's
 `shared/constants/http.ts`. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
@@ -229,7 +252,7 @@ Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V
 shared too: the health routes serve it, and telemetry, the request logger and
 the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
 `LOCALE` and the rate-limit tunables belong to the feature that owns them.
-Tests live beside what they test: the feature's or route's `tests/`, or
+Tests live beside what they test: the feature's `tests/`, or
 `shared/<kind>/tests/` for shared helpers. A feature checked through the whole
 middleware chain still lives in its own `tests/` and builds the app with
 `createApp(appDeps())` (`shared/tests/app-deps.ts`). Only `client` and
@@ -241,10 +264,10 @@ queue, external API) and are named
 `*.integration.test.ts`. Type tests (`*.test-d.ts`) take no tag: `tsc`
 checks them and nothing executes. Browser tests are Playwright's, under the app's `e2e/`.
 
-**Route modules** are self-contained folders under `routes/<name>/`:
+**Routes live in their feature**, under `features/<name>/routes/`:
 `index.ts` builds the chained sub-app, `routes.ts` holds the `describeRoute`
-specs, `handlers.ts` the handlers, plus `constants/`, `utils/` and `tests/` as
-needed. File names carry no `<name>.` prefix; the folder already says it. Named
+specs, `handlers.ts` the handlers; the feature's `constants/`, `utils/` and
+`tests/` sit beside `routes/`. File names carry no `<name>.` prefix; the folder already says it. Named
 exports only, no `import * as`. `index.ts` assembles a router; it is not a
 barrel. A handler for a path with params (`/:id`) goes through
 `createFactory<AppBindings>().createHandlers(...)` so the params stay inferred.
@@ -269,14 +292,16 @@ many, and `middlewares/` reads wrong.
   of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
 - **Every documented body comes from its zod schema**: `content: { [CONTENT_TYPE.JSON]:
   { schema: resolver(bodySchema) } }` in `describeRoute`, the same schema the
-  handler `satisfies`. Errors reference `#/components/responses/Problem`
-  (`ProblemDetails`, registered once in `routes/docs/handlers.ts`). Never
+  handler `satisfies`. An error response is `{ $ref: problemResponseRef(status) }`
+  (`@allonfire/core/features/errors/constants/openapi`): `features/docs/routes/handlers.ts`
+  registers one `Problem<status>` per `ERROR_STATUS`, listing only that status's
+  codes (`ERROR_CODE_STATUS`). Never
   `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
 - **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
-- **Auth guards** come from `@allonfire/auth/features/guards/middleware/*` and throw
+- **Auth guards** come from `@allonfire/auth/features/hono/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
@@ -287,11 +312,11 @@ many, and `middlewares/` reads wrong.
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
   (reserved). Eviction is `volatile-lru`; never TTL a session key.
-- **`LOCALE` lives in `@allonfire/utils/constants/locales`**, shared with the
+- **`LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
   Apps (ADR 0012), which route by its derived `Language`. `SUPPORTED_LOCALES`
   there is the explicit preference order `match()` sees, main variant of each
-  language first; `src/constants/tests/locales.test-d.ts` fails if a locale is
-  missing from it or a language from `LANGUAGES`. The API's
+  language first; `src/features/i18n/tests/locales.test-d.ts` fails if a locale is
+  missing from it or speaks a language outside `BASE_LANGUAGES`. The API's
   `features/i18n/constants/locales.ts` keeps `DEFAULT_LOCALE` and the catalogue.
   `CATALOGUE` uses computed `[LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a

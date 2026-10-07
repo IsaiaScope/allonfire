@@ -32,7 +32,7 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 `createApp` loads the Session once per request, after the rate limiters.
 
 - **Guards** — `requireSession`, `requireRole(min)` and `requireApp`
-  (mounted once per App) from `@allonfire/auth/features/guards/middleware/*`. They throw
+  (mounted once per App) from `@allonfire/auth/features/hono/guards/middleware/*`. They throw
   `HTTPException(401 | 403)` and `onError` renders the localised problem
   document. A failing Session lookup is a 500, never anonymous.
 - **Auth bucket** — the routes where Better Auth checks a password,
@@ -52,15 +52,15 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
 ADR 0015). Its errors are `CodedError`s the API renders as its own localized
 problem documents. Files go to the public
-`image` bucket as `<uuid>.webp`, prepared by `@allonfire/storage` (upright,
-EXIF stripped, capped at 2560px, WebP, 16px blur); rows live in
+`image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
+decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
 `image."Image"`. Apps render them with `AOFStorageImage` through their `/storage/images/*`
 rewrite.
 
 | Endpoint | Guard | Does |
 |---|---|---|
-| `GET /v1/images?app=&cursor=&limit=` | Session, may enter `app` | the App's Images and the `ALL` ones, newest first; `nextCursor` (opaque) pages |
-| `GET /v1/images/:id` | Session; 404 unless it may enter its App (`ALL`: anyone signed in) | one Image |
+| `GET /v1/images?app=&cursor=&limit=` | Session, allowed into `app` | the App's Images and the `ALL` ones, newest first; `nextCursor` (opaque) pages |
+| `GET /v1/images/:id` | Session; 404 unless the User is allowed into its App (`ALL`: anyone signed in) | one Image |
 | `POST /v1/images` | `ADMIN` | multipart: repeated `file` parts plus one `meta` JSON part, `[{ app, alt: { en, it } }]` in file order |
 | `PATCH /v1/images` | `ADMIN` | `[{ id, app?, alt? }]`: move between Apps, change alt |
 | `DELETE /v1/images` | `ADMIN` | `{ ids }`: rows first, then files |

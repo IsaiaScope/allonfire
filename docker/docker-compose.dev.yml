@@ -63,8 +63,8 @@ services:
       timeout: 5s
       retries: 5
 
-  # One-shot: the bucket Images live in (ADR 0013). Anyone may read a key,
-  # nobody may list the bucket (`download` would allow ListBucket). Safe to re-run.
+  # One-shot: the bucket Images live in (ADR 0013). Anyone can read a key,
+  # nobody can list the bucket (`download` would allow ListBucket). Safe to re-run.
   minio-init:
     container_name: allonfire-minio-init
     # The server image ships mc; minio/mc is no longer on Docker Hub.

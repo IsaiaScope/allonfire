@@ -1,5 +1,6 @@
 // @module-tag unit
 
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
@@ -48,7 +49,7 @@ describe("onError", () => {
     const body = await problemOf(res);
     expect(body.code).toBe("INTERNAL_ERROR");
     expect(body.detail).toBe("Internal server error");
-    expect(JSON.stringify(body)).not.toContain("secret_col");
+    expect(stringifyJson(body)).not.toContain("secret_col");
   });
 
   it("returns NOT_FOUND in the same envelope for unmatched routes", async () => {
@@ -75,7 +76,7 @@ describe("validationHook", () => {
 
   it("returns 400 with field paths and no schema dump", async () => {
     const res = await app.request("/echo", {
-      body: JSON.stringify({ age: "old", email: "nope" }),
+      body: stringifyJson({ age: "old", email: "nope" }),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -86,6 +87,6 @@ describe("validationHook", () => {
     const paths = (body.errors ?? []).map((d: { path: string }) => d.path);
     expect(paths).toContain("email");
     expect(paths).toContain("age");
-    expect(JSON.stringify(body)).not.toContain("ZodError");
+    expect(stringifyJson(body)).not.toContain("ZodError");
   });
 });

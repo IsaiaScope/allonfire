@@ -1,6 +1,7 @@
 // @module-tag unit
-import { LOCALE } from "@allonfire/utils/constants/locales";
-import { CodedError } from "@allonfire/utils/helpers/coded-error";
+
+import { CodedError } from "@allonfire/core/features/errors/coded-error";
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { Hono } from "hono";
 import { translate } from "../../i18n/translate";
 import { onError } from "../middleware/error-handler";

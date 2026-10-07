@@ -1,6 +1,6 @@
 import { stubAuth } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
-import { stubImageDeps } from "@allonfire/storage/shared/tests/stub-image-deps";
+import { stubImageDeps } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { AppDeps } from "../../app";
 import { memoryStore } from "../../features/rate-limit/tests/memory-store";
 import { AUTH_BASE_PATH } from "../constants/routes";

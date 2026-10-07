@@ -8,6 +8,9 @@ beforeEach(() => {
   vi.stubEnv("STORAGE_ENDPOINT", undefined);
   vi.stubEnv("AUTH_APP", "BACK_OFFICE");
   vi.stubEnv("API_AUTH_URL", "http://localhost:3300/v1/auth");
+  vi.stubEnv("AUTH_MIN_ROLE", "ADMIN");
+  vi.stubEnv("API_URL", "http://localhost:3300");
+  vi.stubEnv("NEXT_PUBLIC_API_URL", "http://localhost:3300");
 });
 
 afterEach(() => {

@@ -53,10 +53,11 @@
   --ring: #006fb3;
   --radius: 0.25rem;
 
-  /* One colour per App (the Line Rule): bands, badges and route markers only,
-     never text on the ground. */
-  --line-back-office: #00a650;
-  --line-laura: #f39700;
+  /* The line palette (the Line Rule): bands, badges and route markers only,
+     never text on the ground. Each App picks its own as `--line` in its
+     styles.css; the Design names no App. */
+  --line-green: #00a650;
+  --line-orange: #f39700;
 
   /* Station furniture, the same by day and night (declared once, so `.dark`
      inherits them): the LED departure board, the yellow tactile paving. */
@@ -128,8 +129,7 @@
 }
 
 @theme inline {
-  --color-line-back-office: var(--line-back-office);
-  --color-line-laura: var(--line-laura);
+  --color-line: var(--line);
   --color-led: var(--led);
   --color-led-dim: var(--led-dim);
   --color-led-panel: var(--led-panel);

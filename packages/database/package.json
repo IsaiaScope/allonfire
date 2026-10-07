@@ -7,9 +7,13 @@
     ".": "./src/index.ts",
     "./enums": "./generated/prisma/enums.ts",
     "./environment/environment": "./src/environment/environment.ts",
+    "./features/apps/laura/game-score.service": "./src/features/apps/laura/game-score.service.ts",
+    "./features/auth/access/access": "./src/features/auth/access/access.ts",
+    "./features/auth/access/constants/roles": "./src/features/auth/access/constants/roles.ts",
+    "./features/auth/access/constants/schemas": "./src/features/auth/access/constants/schemas.ts",
     "./features/auth/user.service": "./src/features/auth/user.service.ts",
-    "./features/image/image.service": "./src/features/image/image.service.ts",
-    "./features/laura/game-score.service": "./src/features/laura/game-score.service.ts"
+    "./features/image/alt": "./src/features/image/alt.ts",
+    "./features/image/image.service": "./src/features/image/image.service.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -24,7 +28,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@allonfire/utils": "workspace:*",
+    "@allonfire/core": "workspace:*",
     "@prisma/client": "^6.19.3",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",

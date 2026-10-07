@@ -1,3 +1,5 @@
+import { APP_PATH } from "@allonfire/auth/features/next/constants/access";
+import { languageSchema } from "@allonfire/core/features/i18n/constants/locales";
 import {
   AOFControlBar,
   AOFControlBarSeparator,
@@ -6,7 +8,6 @@ import { AOFStorageImage } from "@allonfire/ui/components/aof-image";
 import { AOFPage } from "@allonfire/ui/components/aof-page";
 import { AOFThemeToggle } from "@allonfire/ui/components/aof-theme-toggle";
 import { cn } from "@allonfire/ui/lib/utils";
-import { languageSchema } from "@allonfire/utils/constants/locales";
 import { cva } from "class-variance-authority";
 import { useLocale, useTranslations } from "next-intl";
 import { BOARD_KANA, NOTICE_KANA, PLATFORM, SEAL } from "../constants/sign-in";
@@ -84,7 +85,7 @@ export const SignIn = () => {
           <div className="dark flex items-center gap-3 border-led border-b bg-led-panel px-4 py-3 text-foreground lg:px-6 dark:border-led-dim">
             <span
               aria-hidden
-              className="flex size-10 shrink-0 items-center justify-center rounded-md bg-line-back-office text-led-panel"
+              className="flex size-10 shrink-0 items-center justify-center rounded-md bg-line text-led-panel"
             >
               <Shinkansen className="size-8" />
             </span>
@@ -96,7 +97,7 @@ export const SignIn = () => {
           <SignInForm />
         </div>
         <AOFControlBar className="absolute right-4 bottom-4 lg:right-auto lg:bottom-6 lg:left-10">
-          <LanguageSwitch href="/sign-in" label={t("language")} />
+          <LanguageSwitch href={APP_PATH.SIGN_IN} label={t("language")} />
           <AOFControlBarSeparator />
           <AOFThemeToggle label={t("theme")} />
         </AOFControlBar>

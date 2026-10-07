@@ -1,4 +1,7 @@
-import { AllowedApp } from "@allonfire/database/enums";
+import {
+  appSchema,
+  roleSchema,
+} from "@allonfire/database/features/auth/access/constants/schemas";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { z } from "zod";
@@ -27,14 +30,20 @@ export const nextAuthEnv = createEnv({
      * The API as the App's server reaches it. In production the internal
      * address on the Docker network, not the public one through Traefik:
      * Traefik would replace the visitor's forwarded address with the App's,
-     * and the API's per-IP limits would count every visitor as one.
+     * and the API's per-IP limits would count every visitor as one. No
+     * default: the API's address is the API's to say, not this package's.
      */
-    API_URL: z.url().default("http://localhost:3300"),
+    API_URL: z.url(),
     /**
      * Which App this server is. No default: an App that forgot it must fail
      * to start, not let in whoever another App lets in.
      */
-    AUTH_APP: z.enum(AllowedApp).exclude([AllowedApp.ALL]),
+    AUTH_APP: appSchema,
+    /**
+     * The lowest Role this App lets in, the App's own policy (`ADMIN` for the
+     * Back office). No default, for the same reason as `AUTH_APP`.
+     */
+    AUTH_MIN_ROLE: roleSchema,
   },
   skipValidation: process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD,
 });

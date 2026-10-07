@@ -64,7 +64,7 @@ Every screenshot uses the `laura-` / `mobile-laura-` prefix. An unprefixed PNG i
 | `packages/storage/README.md` | P1 | EXISTS. S3/MinIO client, upload helpers, bucket config |
 | `packages/ui/README.md` | P1 | EXISTS. Component inventory table, shadcn/ui setup, globals.css, cn utility, usage patterns |
 | `packages/hooks/README.md` | P2 | EXISTS. Breakpoint constants, useBreakpoint, useMounted |
-| `packages/utils/README.md` | P2 | EXISTS. Utility functions: objectKeys, objectEntries, formatErrorMessage |
+| `packages/core/README.md` | P2 | EXISTS. Shared constants, helpers, Next scaffolding |
 | `packages/config/README.md` | P3 | EXISTS. TypeScript config presets |
 | `packages/design/README.md` | P1 | Designs, Screens, `design:sync`, `/aof-design` |
 | `packages/design/src/apps/<app>/PRODUCT.md` | — | Kept by impeccable through `/aof-design`; never hand-generated |

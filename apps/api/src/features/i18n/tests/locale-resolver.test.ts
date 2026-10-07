@@ -4,8 +4,8 @@ import {
   LOCALE,
   type Locale,
   SUPPORTED_LOCALES,
-} from "@allonfire/utils/constants/locales";
-import { objectEntries, objectKeys } from "@allonfire/utils/helpers/object";
+} from "@allonfire/core/features/i18n/constants/locales";
+import { objectEntries, objectKeys } from "@allonfire/core/shared/utils/object";
 import { CATALOGUE, DEFAULT_LOCALE } from "../constants/locales";
 import { resolveLocale } from "../middleware/locale-resolver";
 

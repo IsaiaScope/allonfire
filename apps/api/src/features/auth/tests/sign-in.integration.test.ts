@@ -1,6 +1,7 @@
 // @module-tag integration
 
-import { requireRole } from "@allonfire/auth/features/guards/middleware/require-role";
+import { requireRole } from "@allonfire/auth/features/hono/guards/middleware/require-role";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
 import { AllowedApp, Role } from "@allonfire/database/enums";
 import { hashPassword } from "better-auth/crypto";
@@ -60,7 +61,7 @@ afterAll(async () => {
 
 async function signIn(): Promise<string> {
   const res = await app.request("/v1/auth/sign-in/email", {
-    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    body: stringifyJson({ email: EMAIL, password: PASSWORD }),
     headers: { "content-type": "application/json", origin: ORIGIN },
     method: "POST",
   });
@@ -95,7 +96,7 @@ describe("sign-in against Postgres", () => {
 
   it("does not let a request create a User", async () => {
     const res = await app.request("/v1/auth/sign-up/email", {
-      body: JSON.stringify({
+      body: stringifyJson({
         email: SIGN_UP_EMAIL,
         name: "x",
         password: PASSWORD,

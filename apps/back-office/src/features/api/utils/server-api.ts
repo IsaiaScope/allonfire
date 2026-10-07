@@ -1,7 +1,6 @@
 import type { ApiType } from "@allonfire/api/client";
-import { visitorHeaders } from "@allonfire/utils/next/api/forwarded-for";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
 import { hc } from "hono/client";
-import { cookies, headers } from "next/headers";
 import { env } from "@/environment/environment";
 import type { ApiClient } from "./api";
 
@@ -12,5 +11,5 @@ import type { ApiClient } from "./api";
  */
 export const getServerApi = async (): Promise<ApiClient> =>
   hc<ApiType>(env.API_URL, {
-    headers: visitorHeaders((await cookies()).toString(), await headers()),
+    headers: await readVisitorHeaders(),
   });

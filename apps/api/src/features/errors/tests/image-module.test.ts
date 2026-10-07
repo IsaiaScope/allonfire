@@ -1,14 +1,16 @@
 // @module-tag unit
+
 import { sessionFor } from "@allonfire/auth/shared/tests/stub-auth";
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { AllowedApp, Role } from "@allonfire/database/enums";
-import { MAX_INPUT_MEGAPIXELS } from "@allonfire/storage/features/image/constants/limits";
-import { ImageTooLargeError } from "@allonfire/storage/features/image/prepare-image";
-import type { ImageDeps } from "@allonfire/storage/routes/image/utils/deps";
 import {
   imageRecord,
   stubImageDeps,
-} from "@allonfire/storage/shared/tests/stub-image-deps";
-import { LOCALE } from "@allonfire/utils/constants/locales";
+} from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
+import type { ImageDeps } from "@allonfire/storage/features/image/hono/utils/deps";
+import { MAX_INPUT_MEGAPIXELS } from "@allonfire/storage/features/image/prepare/constants/limits";
+import { ImageTooLargeError } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { createApp } from "../../../app";
 import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
@@ -37,7 +39,7 @@ const upload = () => {
   form.append("file", new File([new Uint8Array(10)], "a.jpg"));
   form.append(
     "meta",
-    JSON.stringify([{ alt: { en: "", it: "" }, app: AllowedApp.LAURA }])
+    stringifyJson([{ alt: { en: "", it: "" }, app: AllowedApp.LAURA }])
   );
   return {
     body: form,

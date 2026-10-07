@@ -1,57 +1,15 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { hashPassword } from "better-auth/crypto";
-import type { z } from "zod";
 import { AllowedApp, Role } from "../../../generated/prisma/client";
 import { seedEnv } from "../../environment/seed-environment";
+import { APP_SEEDS } from "../apps/seeds";
 import { prisma } from "../prisma/client";
-import { type SeedUser, seedUsersSchema } from "./seed-user";
+import { seedUsersSchema } from "./seed-user";
+import { upsertUser } from "./upsert-user";
 
 const MOCK_DIR = resolve(import.meta.dirname, "mock");
-
-function readSeedFile<S extends z.ZodType>(
-  filename: string,
-  schema: S
-): z.infer<S> {
-  return schema.parse(
-    JSON.parse(readFileSync(resolve(MOCK_DIR, filename), "utf-8"))
-  );
-}
-
-async function upsertUser(
-  { email, name, role, allowedApps }: SeedUser,
-  hashedPassword: string
-) {
-  const user = await prisma.user.upsert({
-    create: { allowedApps, email, emailVerified: true, name, role },
-    update: { allowedApps, role },
-    where: { email },
-  });
-
-  const existingAccount = await prisma.account.findFirst({
-    where: { providerId: "credential", userId: user.id },
-  });
-
-  if (existingAccount) {
-    await prisma.account.update({
-      data: { password: hashedPassword },
-      where: { id: existingAccount.id },
-    });
-  } else {
-    await prisma.account.create({
-      data: {
-        accountId: user.id,
-        password: hashedPassword,
-        providerId: "credential",
-        userId: user.id,
-      },
-    });
-  }
-
-  console.log(
-    `Seeded: ${email} (role: ${role}, apps: ${allowedApps.join(", ")})`
-  );
-}
 
 async function main() {
   // Always seed the main admin
@@ -71,20 +29,14 @@ async function main() {
     adminHash
   );
 
-  // Always seed the Laura viewer account (like admin, available in all modes)
-  const lauraViewerHash = await hashPassword(
-    seedEnv.DATABASE_SEED_LAURA_VIEWER_PASSWORD
-  );
-  await upsertUser(
-    {
-      allowedApps: [AllowedApp.LAURA],
-      email: seedEnv.DATABASE_SEED_LAURA_VIEWER_EMAIL,
-      name:
-        seedEnv.DATABASE_SEED_LAURA_VIEWER_EMAIL.split("@")[0] ??
-        "laura-viewer",
-      role: Role.VIEWER,
-    },
-    lauraViewerHash
+  // Each App's own users, seeded in every mode (Laura's guest Viewer).
+  await Promise.all(
+    APP_SEEDS.map(async (app) => {
+      const hash = await hashPassword(app.password(seedEnv));
+      await Promise.all(
+        app.users(seedEnv).map((user) => upsertUser(user, hash))
+      );
+    })
   );
 
   if (seedEnv.DATABASE_SEED_MODE === "dev") {
@@ -96,7 +48,12 @@ async function main() {
     }
 
     const testHash = await hashPassword(seedEnv.DATABASE_SEED_TEST_PASSWORD);
-    const testUsers = readSeedFile("users.json", seedUsersSchema);
+    const testUsers = [
+      resolve(MOCK_DIR, "users.json"),
+      ...APP_SEEDS.map(({ mockUsersFile }) => mockUsersFile),
+    ].flatMap((path) =>
+      parseJsonWith(readFileSync(path, "utf-8"), seedUsersSchema)
+    );
 
     await Promise.all(testUsers.map((user) => upsertUser(user, testHash)));
 

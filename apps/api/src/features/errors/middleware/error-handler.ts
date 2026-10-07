@@ -1,12 +1,15 @@
 import {
+  CodedError,
+  invalidHook,
+} from "@allonfire/core/features/errors/coded-error";
+import {
   CONTENT_TYPE,
   HTTP_HEADER,
   HTTP_STATUS,
-} from "@allonfire/utils/constants/http";
-import type { Locale } from "@allonfire/utils/constants/locales";
-import { MS_PER_SECOND } from "@allonfire/utils/constants/units";
-import { CodedError, invalidHook } from "@allonfire/utils/helpers/coded-error";
-import type { ValueOf } from "@allonfire/utils/helpers/object";
+} from "@allonfire/core/features/http/constants/http";
+import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
+import { MS_PER_SECOND } from "@allonfire/core/shared/constants/units";
+import type { ValueOf } from "@allonfire/core/shared/utils/object";
 import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
@@ -81,14 +84,6 @@ function requestIdOf(context: Context): string {
   return context.get(CONTEXT_VAR.REQUEST_ID) ?? UNKNOWN_REQUEST_ID;
 }
 
-/**
- * Builds an RFC 9457 problem document.
- *
- * `title` is the status's registered reason phrase rather than a string we
- * maintain: the RFC wants it invariant across occurrences, which is exactly
- * what a reason phrase is. Everything that varies — and everything localised —
- * is `detail`.
- */
 /** What varies between one problem document and the next. */
 export type Problem = {
   code: ErrorCode;
@@ -97,6 +92,14 @@ export type Problem = {
   errors?: ErrorDetail[];
 };
 
+/**
+ * Builds an RFC 9457 problem document.
+ *
+ * `title` is the status's registered reason phrase rather than a string we
+ * maintain: the RFC wants it invariant across occurrences, which is exactly
+ * what a reason phrase is. Everything that varies — and everything localised —
+ * is `detail`.
+ */
 function problem(
   context: Context,
   { code, status, detail, errors }: Problem

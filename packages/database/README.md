@@ -35,7 +35,8 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
 | `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `checkUserAppAccess`, `updateUserAllowedApps` |
 | `@allonfire/database/features/image/image.service` | `createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages` (batches all or nothing), `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange` |
-| `@allonfire/database/features/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
+| `@allonfire/database/features/auth/access/access` | `AccessUser`, `AppPolicy`, `hasRole`, `canSeeContent`, `canEnterApp`, `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}` |
+| `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `AllowedApp`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 
@@ -43,7 +44,7 @@ One subpath per service file, no barrel. Raw SQL names the schema:
 `FROM laura."GameScore"`, never `FROM "GameScore"`.
 
 ```ts
-import { getLeaderboard } from "@allonfire/database/features/laura/game-score.service";
+import { getLeaderboard } from "@allonfire/database/features/apps/laura/game-score.service";
 
 const leaderboard = await getLeaderboard("MEMORY", 25);
 ```
@@ -157,9 +158,10 @@ pg_restore --clean --if-exists --no-owner -d <url> /backups/allonfire-<stamp>.du
 ```
 packages/database/
   prisma/schema/
-    schema.prisma           generator + datasource (schemas = auth, laura)
-    auth.prisma             auth schema
-    laura.prisma            laura schema
+    schema.prisma           generator + datasource (schemas = auth, image, laura)
+    auth.prisma             auth schema (shared)
+    image.prisma            image schema (shared)
+    apps/laura.prisma       laura schema, one file per App under apps/
   changelog/
     db.changelog-master.yaml  root changelog, never edited
     changesets/             one formatted-SQL changeset per file, in order
@@ -180,10 +182,12 @@ packages/database/
                             (seed scripts), tests/
     features/
       prisma/               client.ts (Prisma singleton)
-      auth/                 auth services
-      laura/                Laura services, tests/ (raw SQL against the DB)
-      seed/                 seed.ts, seed-user.ts, tests/
-        mock/               users.json
+      auth/                 user.service, access/ (Role and Allowed apps rules)
+      image/                image.service, tests/
+      apps/                 one folder per App; seeds.ts lists each App's seed
+        laura/              game-score.service, seed/ (guest Viewer, mock/users.json, tests/)
+      seed/                 seed.ts, seed-user.ts (AppSeed), upsert-user.ts, tests/
+        mock/               users.json (users for every App only)
 ```
 
 ## Dependencies

@@ -6,3 +6,8 @@
 @import "../../designs/japan/theme.css";
 
 @source "./prototypes";
+
+/* Back office's line (the Line Rule). */
+:root {
+  --line: var(--line-green);
+}

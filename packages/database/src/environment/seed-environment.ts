@@ -10,7 +10,7 @@ export const seedEnv = createEnv({
     DATABASE_SEED_ADMIN_EMAIL: z.email(),
     DATABASE_SEED_ADMIN_NAME: z.string().min(1).optional(),
     DATABASE_SEED_ADMIN_PASSWORD: z.string().min(8),
-    // Required: Laura viewer account seeded alongside admin
+    // Required: Laura's guest Viewer, seeded by features/apps/laura/seed
     DATABASE_SEED_LAURA_VIEWER_EMAIL: z.email(),
     DATABASE_SEED_LAURA_VIEWER_PASSWORD: z.string().min(8),
     // "prod" (default) = admin only, "dev" = admin + test users + mock data
@@ -18,3 +18,5 @@ export const seedEnv = createEnv({
     DATABASE_SEED_TEST_PASSWORD: z.string().min(8).optional(),
   },
 });
+
+export type SeedEnv = typeof seedEnv;

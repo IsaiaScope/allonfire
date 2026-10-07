@@ -1,47 +1,7 @@
-import { LANGUAGES } from "@allonfire/utils/constants/locales";
-import { objectFromEntries } from "@allonfire/utils/helpers/object";
-import { z } from "zod";
 import type { Image } from "../../../generated/prisma/client";
 import { AllowedApp } from "../../../generated/prisma/enums";
 import { prisma } from "../prisma/client";
-
-/** Screen readers read alt aloud; past a sentence or two it belongs in a caption. */
-const MAX_ALT_LENGTH = 300;
-
-/** Every Language must be present; an empty string marks a decorative Image. */
-export const imageAltSchema = z.object(
-  objectFromEntries(
-    LANGUAGES.map(
-      (language) => [language, z.string().max(MAX_ALT_LENGTH)] as const
-    )
-  )
-);
-export type ImageAlt = z.infer<typeof imageAltSchema>;
-
-/**
- * How alt reads back: every Language optional, unknown keys kept, so a row
- * saved before a Language was added (or after one was removed) still parses.
- */
-const storedAltSchema = z.looseObject(
-  objectFromEntries(
-    LANGUAGES.map((language) => [language, z.string().optional()] as const)
-  )
-);
-
-/**
- * A Language missing from the stored alt reads as the first Language that has
- * text, else "". A stored "" stays "": it marks a decorative Image.
- */
-const readAlt = (stored: unknown): ImageAlt => {
-  const known = storedAltSchema.parse(stored);
-  const fallback =
-    LANGUAGES.map((language) => known[language]).find(Boolean) ?? "";
-  return objectFromEntries(
-    LANGUAGES.map(
-      (language) => [language, known[language] ?? fallback] as const
-    )
-  );
-};
+import { type ImageAlt, readAlt } from "./alt";
 
 /** Where the last page ended: its last Image's sort key, not a row reference. */
 export type ImageCursor = { createdAt: Date; id: string };

@@ -7,7 +7,7 @@
   "RATE_LIMITED": "Troppe richieste. Riprova tra {seconds, plural, one {# secondo} other {# secondi}}",
   "TIMEOUT": "Richiesta scaduta dopo {seconds, number} s",
   "PAYLOAD_TOO_LARGE": "Contenuto troppo grande. Massimo {limit, number} byte",
-  "UNSUPPORTED_IMAGE": "Immagine non supportata. Invia JPEG, PNG, WebP o AVIF",
+  "UNSUPPORTED_IMAGE": "Immagine non supportata. Invia JPEG, PNG, WebP, AVIF o HEIC",
   "IMAGE_TOO_LARGE": "Immagine troppo grande. Invia al massimo {limit, number} megapixel",
   "INTERNAL_ERROR": "Errore interno del server"
 }

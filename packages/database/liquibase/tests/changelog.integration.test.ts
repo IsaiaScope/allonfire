@@ -1,6 +1,8 @@
 // @module-tag integration
+
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client";
 import { CHANGESET_FILE } from "../../scripts/changeset-file";
@@ -160,11 +162,10 @@ describe("rolling back the schema move", () => {
   );
 });
 
-const { version } = z
-  .object({ version: z.string() })
-  .parse(
-    JSON.parse(readFileSync(resolve(PACKAGE_DIR, "../../package.json"), "utf8"))
-  );
+const { version } = parseJsonWith(
+  readFileSync(resolve(PACKAGE_DIR, "../../package.json"), "utf8"),
+  z.object({ version: z.string() })
+);
 const RELEASE_TAG = `v${version}`;
 
 async function tags(client: PrismaClient): Promise<string[]> {

@@ -1,5 +1,5 @@
-import type { Locale } from "@allonfire/utils/constants/locales";
-import type { CodedErrorValues } from "@allonfire/utils/helpers/coded-error";
+import type { CodedErrorValues } from "@allonfire/core/features/errors/coded-error";
+import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import { memoize, strategies } from "@formatjs/fast-memoize";
 import { type Formatters, IntlMessageFormat } from "intl-messageformat";
 import {

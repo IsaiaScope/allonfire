@@ -1,5 +1,8 @@
-import { REDACT_CENSOR, REDACT_PATHS } from "@allonfire/utils/constants/logger";
-import { NODE_ENV } from "@allonfire/utils/constants/node-env";
+import {
+  REDACT_CENSOR,
+  REDACT_PATHS,
+} from "@allonfire/core/features/logger/constants/logger";
+import { NODE_ENV } from "@allonfire/core/shared/constants/env";
 import { trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };

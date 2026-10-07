@@ -1,5 +1,7 @@
+import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
 import { z } from "zod";
-import { errorCodeSchema } from "./error-codes";
+import type { ErrorStatus } from "../../../shared/constants/http";
+import { codesFor, errorCodeSchema } from "./error-codes";
 
 export const errorDetailSchema = z.object({
   message: z.string(),
@@ -25,20 +27,25 @@ export const errorDetailSchema = z.object({
  * rather than `details` because `detail` singular is already a standard member
  * and the two would read as the same thing.
  */
-export const problemDetailsSchema = z
-  .object({
-    code: errorCodeSchema,
-    detail: z.string(),
-    errors: z.array(errorDetailSchema).optional(),
-    instance: z.string(),
-    requestId: z.string(),
-    status: z.number(),
-    title: z.string(),
-    type: z.string(),
-  })
-  // One named schema in the OpenAPI document, referenced by every error
-  // response rather than inlined into each.
-  .meta({ ref: "ProblemDetails" });
+export const problemDetailsSchema = z.object({
+  code: errorCodeSchema,
+  detail: z.string(),
+  errors: z.array(errorDetailSchema).optional(),
+  instance: z.string(),
+  requestId: z.string(),
+  status: z.number(),
+  title: z.string(),
+  type: z.string(),
+});
+
+/**
+ * The problem document for one status, as the docs show it: `status` fixed
+ * and `code` only the codes sent with it. One named schema per status.
+ */
+export const problemDetailsSchemaFor = (status: ErrorStatus) =>
+  problemDetailsSchema
+    .extend({ code: z.enum(codesFor(status)), status: z.literal(status) })
+    .meta({ ref: problemResponseName(status) });
 
 export type ErrorDetail = z.infer<typeof errorDetailSchema>;
 export type ProblemDetails = z.infer<typeof problemDetailsSchema>;

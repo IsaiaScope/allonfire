@@ -1,4 +1,4 @@
-import { NODE_ENV } from "@allonfire/utils/constants/node-env";
+import { NODE_ENV } from "@allonfire/core/shared/constants/env";
 import { PrismaClient } from "../../../generated/prisma/client";
 import { env } from "../../environment/environment";
 

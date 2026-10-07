@@ -1,8 +1,8 @@
-import { NODE_ENV } from "@allonfire/utils/constants/node-env";
-import { AOFNuqsAdapter } from "@allonfire/utils/next/providers/aof-nuqs-adapter";
-import { AOFQueryClientProvider } from "@allonfire/utils/next/providers/aof-query-client-provider";
-import { AOFReactQueryDevtools } from "@allonfire/utils/next/providers/aof-react-query-devtools";
-import { AOFThemeProvider } from "@allonfire/utils/next/providers/aof-theme-provider";
+import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/aof-nuqs-adapter";
+import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/aof-query-client-provider";
+import { AOFReactQueryDevtools } from "@allonfire/core/features/next/providers/aof-react-query-devtools";
+import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
+import { NODE_ENV } from "@allonfire/core/shared/constants/env";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";

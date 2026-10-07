@@ -1,7 +1,7 @@
 // @module-tag unit
 
 import { SIGN_IN_ERROR } from "@allonfire/auth/features/next/constants/api";
-import { objectValues } from "@allonfire/utils/helpers/object";
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -48,7 +48,7 @@ describe("SignIn", () => {
     expect(html).toContain('aria-label="Switch theme"');
   });
 
-  it("states who may sign in on the departure board", () => {
+  it("states who can sign in on the departure board", () => {
     expect(render(<SignIn />)).toContain(
       '<span class="sr-only">Authorized users only. Sign-up is closed.</span>'
     );

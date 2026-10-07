@@ -2,9 +2,9 @@
 
 A feature with its own endpoints (Auth, Images) ships as a package any
 backend mounts, not as routes inside the API: the Image module is
-`imageRoutes(deps)` from `@allonfire/storage/routes/image`, mounted with one
+`imageRoutes(deps)` from `@allonfire/storage/features/image/hono/routes`, mounted with one
 `.route()`. A module never builds an error response or translates a message.
-It throws `CodedError` (`@allonfire/utils/helpers/coded-error`: status, code,
+It throws `CodedError` (`@allonfire/core/features/errors/coded-error`: status, code,
 ICU values, field errors), and each host's `onError` renders it in that
 host's format and language. The module exports the codes it can throw; the
 host's type test checks them against its own codes.

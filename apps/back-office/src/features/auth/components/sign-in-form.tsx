@@ -8,16 +8,14 @@ import {
 import { AOFButton } from "@allonfire/ui/components/aof-button";
 import { AOFInput } from "@allonfire/ui/components/aof-input";
 import { AOFLabel } from "@allonfire/ui/components/aof-label";
-import { cva } from "class-variance-authority";
 import { KeyRound, LoaderCircle, Mail, Nfc, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState } from "react";
 
 // Each field opens on a pictogram tile, white on black like station signage.
-const field = cva("h-12 pl-14 text-base md:text-base");
-const fieldIcon = cva(
-  "dark pointer-events-none absolute inset-y-1.5 left-1.5 flex w-9 items-center justify-center rounded-sm bg-led-panel text-foreground *:size-5"
-);
+const FIELD = "h-12 pl-14 text-base md:text-base";
+const FIELD_ICON =
+  "dark pointer-events-none absolute inset-y-1.5 left-1.5 flex w-9 items-center justify-center rounded-sm bg-led-panel text-foreground *:size-5";
 
 /**
  * The email and password form, posted to the shared `signIn` server action
@@ -71,13 +69,13 @@ export const SignInForm = ({
           {t("email")}
         </AOFLabel>
         <div className="relative">
-          <span aria-hidden className={fieldIcon()}>
+          <span aria-hidden className={FIELD_ICON}>
             <Mail />
           </span>
           <AOFInput
             aria-invalid={invalid}
             autoComplete="username"
-            className={field()}
+            className={FIELD}
             id="sign-in-email"
             inputMode="email"
             name="email"
@@ -92,13 +90,13 @@ export const SignInForm = ({
           {t("password")}
         </AOFLabel>
         <div className="relative">
-          <span aria-hidden className={fieldIcon()}>
+          <span aria-hidden className={FIELD_ICON}>
             <KeyRound />
           </span>
           <AOFInput
             aria-invalid={invalid}
             autoComplete="current-password"
-            className={field()}
+            className={FIELD}
             id="sign-in-password"
             name="password"
             required

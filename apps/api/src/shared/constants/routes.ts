@@ -1,6 +1,6 @@
 import { AUTH_PATH } from "@allonfire/auth/shared/constants/paths";
-import { IMAGE_PATH } from "@allonfire/storage/shared/constants/paths";
-import { objectValues } from "@allonfire/utils/helpers/object";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { IMAGE_PATH } from "@allonfire/storage/features/image/constants/paths";
 
 /** Where sub-routers mount onto the base app. */
 export const ROOT_PATH = "/";

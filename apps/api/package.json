@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@allonfire/auth": "workspace:*",
+    "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
     "@allonfire/storage": "workspace:*",
-    "@allonfire/utils": "workspace:*",
     "@formatjs/fast-memoize": "^3.1.7",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hono/node-server": "^1.14.0",

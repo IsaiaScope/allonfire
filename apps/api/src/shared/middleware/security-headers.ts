@@ -1,4 +1,4 @@
-import { SECURITY_HEADERS } from "@allonfire/utils/constants/security-headers";
+import { SECURITY_HEADERS } from "@allonfire/core/features/http/constants/security-headers";
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import { secureHeaders } from "hono/secure-headers";

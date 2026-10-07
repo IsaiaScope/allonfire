@@ -61,7 +61,7 @@ Shared libraries consumed by all apps in the monorepo.
 | 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
 | 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
 | 🪝 | **[@allonfire/hooks](packages/hooks/)** | Responsive breakpoint hooks |
-| 🔧 | **[@allonfire/utils](packages/utils/)** | Type-safe utility functions |
+| 🔧 | **[@allonfire/core](packages/core/)** | Shared constants, helpers and the Next scaffolding |
 | ⚙️ | **[@allonfire/config](packages/config/)** | Shared TypeScript configuration |
 
 ## 🗂️ Project Structure
@@ -85,7 +85,7 @@ allonfire/
     storage/              S3/MinIO uploads + image processing
     ui/                   Shared UI components
     hooks/                React hooks
-    utils/                Utility functions
+    core/                 Shared constants, helpers, Next scaffolding
     config/               TypeScript config
   docker/                 Docker Compose + Dockerfile
   docs/                   Project documentation

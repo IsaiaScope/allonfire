@@ -1,5 +1,5 @@
-import { withStorageImages } from "@allonfire/storage/next/with-storage-images";
-import { AOFCreateNextConfig } from "@allonfire/utils/next/config/aof-create-next-config";
+import { AOFCreateNextConfig } from "@allonfire/core/features/next/config/aof-create-next-config";
+import { withStorageImages } from "@allonfire/storage/features/image/next/with-storage-images";
 import { buildEnv } from "./src/environment/build-environment";
 
 // Turbopack's file cache stays on (the default). On the exFAT drive macOS writes

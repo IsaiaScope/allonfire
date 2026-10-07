@@ -1,7 +1,7 @@
 // @module-tag unit
 
-import { requireRole } from "@allonfire/auth/features/guards/middleware/require-role";
-import { requireSession } from "@allonfire/auth/features/guards/middleware/require-session";
+import { requireRole } from "@allonfire/auth/features/hono/guards/middleware/require-role";
+import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import { sessionFor } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { Role } from "@allonfire/database/enums";

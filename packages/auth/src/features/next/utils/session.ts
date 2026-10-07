@@ -1,5 +1,6 @@
-import { visitorHeaders } from "@allonfire/utils/next/api/forwarded-for";
-import { cookies, headers } from "next/headers";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { getSessionCookie } from "better-auth/cookies";
+import { headers } from "next/headers";
 import { canAccess } from "./access";
 import { createApiAuthClient, type Session } from "./auth-client";
 
@@ -9,13 +10,13 @@ import { createApiAuthClient, type Session } from "./auth-client";
  * the cookies (`refreshSession`), so a renewal the API sends here is a repeat.
  */
 export const getSession = async (): Promise<Session | null> => {
-  const cookie = (await cookies()).toString();
-  if (!cookie) {
+  // Any other cookie (the language one) is no reason to ask the API.
+  if (!getSessionCookie(await headers())) {
     return null;
   }
   try {
     const { data } = await createApiAuthClient().getSession({
-      fetchOptions: { headers: visitorHeaders(cookie, await headers()) },
+      fetchOptions: { headers: await readVisitorHeaders() },
     });
     return data;
   } catch {

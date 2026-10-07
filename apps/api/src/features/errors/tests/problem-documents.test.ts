@@ -1,7 +1,7 @@
 // @module-tag unit
 
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
-import { LOCALE } from "@allonfire/utils/constants/locales";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { HTTPException } from "hono/http-exception";
 import { createApp } from "../../../app";
 import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
@@ -123,7 +123,7 @@ describe("415", () => {
       type: "/errors/unsupported-image",
     });
     expect(body.detail).toBe(
-      "Immagine non supportata. Invia JPEG, PNG, WebP o AVIF"
+      "Immagine non supportata. Invia JPEG, PNG, WebP, AVIF o HEIC"
     );
   });
 });

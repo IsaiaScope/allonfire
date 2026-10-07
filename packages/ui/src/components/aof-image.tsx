@@ -1,5 +1,9 @@
-import { IMAGE_BASE_PATH } from "@allonfire/storage/shared/constants/paths";
-import type { Language } from "@allonfire/utils/constants/locales";
+import {
+  type ContentLanguage,
+  DEFAULT_LANGUAGE,
+} from "@allonfire/core/features/i18n/constants/locales";
+import { IMAGE_PROXY_PATH } from "@allonfire/storage/features/image/constants/paths";
+import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import Image, { type ImageProps } from "next/image";
 
 /** next/image's loading knobs; `lcp` sets them, so callers cannot disagree. */
@@ -38,13 +42,10 @@ export const AOFImage = ({ lcp = false, ...props }: AOFImageProps) => {
 };
 
 /** What AOFStorageImage reads from an API Image: enough to size, blur and describe it. */
-export type AOFStorageImageSource = {
-  key: string;
-  width: number;
-  height: number;
-  alt: Record<Language, string>;
-  blurDataUrl: string;
-};
+export type AOFStorageImageSource = Pick<
+  ImageBody,
+  "alt" | "blurDataUrl" | "height" | "key" | "width"
+>;
 
 /** The props AOFStorageImage sets itself, from the Image. */
 type StoredProps =
@@ -58,8 +59,8 @@ type StoredProps =
 
 export type AOFStorageImageProps = Omit<AOFImageProps, StoredProps> & {
   image: AOFStorageImageSource;
-  /** The page's language; picks the alt. */
-  language: Language;
+  /** The page's language; picks the alt, English when the Image has none in it. */
+  language: ContentLanguage;
 };
 
 /**
@@ -74,11 +75,12 @@ export const AOFStorageImage = ({
 }: AOFStorageImageProps) => (
   <AOFImage
     {...props}
-    alt={image.alt[language]}
+    // Base languages are always stored; another content language can be missing.
+    alt={image.alt[language] ?? image.alt[DEFAULT_LANGUAGE]}
     blurDataURL={image.blurDataUrl}
     height={image.height}
     placeholder="blur"
-    src={`${IMAGE_BASE_PATH}/${image.key}`}
+    src={`${IMAGE_PROXY_PATH}/${image.key}`}
     width={image.width}
   />
 );

@@ -1,4 +1,4 @@
-import { authLimit } from "@allonfire/auth/features/rate-limit/middleware/auth-limit";
+import { authLimit } from "@allonfire/auth/features/hono/rate-limit/middleware/auth-limit";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { env } from "../../../environment/environment";
 import {

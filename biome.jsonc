@@ -97,12 +97,20 @@
       }
     },
     {
+      // A type test may need an interface to check how interfaces behave.
+      "includes": ["**/*.test-d.ts"],
+      "linter": {
+        "rules": { "style": { "useConsistentTypeDefinitions": "off" } }
+      }
+    },
+    {
       // The places allowed to touch process.env, print, and run long.
       "includes": [
         "**/env.ts",
         "**/environment.ts",
         "**/*-environment.ts",
         "**/seed*.ts",
+        "**/seed/**",
         // Seed data: long lists by nature.
         "**/mock/**",
         "**/scripts/**",
@@ -167,7 +175,9 @@
                       "@allonfire/back-office/**",
                       "@allonfire/laura",
                       "@allonfire/laura/**",
-                      "**/apps/**"
+                      "**/apps/**",
+                      // database catalogues per App in its own features/apps.
+                      "!../apps/**"
                     ],
                     "message": "A package stays pure: it never imports an App. Move what both need into a package, or let the App pass it in."
                   }

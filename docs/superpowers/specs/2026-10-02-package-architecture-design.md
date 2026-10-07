@@ -65,9 +65,8 @@ optional peer, so a host that is not that framework never loads it.
 | `core` | `environment/`; `shared/` (generic constants: units, separators, patterns, env flags, node env; object helpers); `features/http` (HTTP constants, security headers), `features/errors` (`CodedError`, `formatErrorMessage`), `features/i18n` (languages, locales), `features/logger`, `features/next` (config, i18n, providers, query, api) | renamed from `utils`, reorganised |
 | `auth` | `features/server` (Better Auth), `features/hono` (guards, rate limit, session, routes, OpenAPI), `features/next` (actions, proxy, redirects), `features/access` (the mechanism) | regrouped by adapter; App policy leaves |
 | `database` | shared schemas (`auth`, `image`) and their services; `apps/<app>/` for an App's own schema, services and seed (Laura today) | Laura moves under `apps/laura/` |
-| `storage` | S3 client, put/delete objects in any bucket | generic: no Image code |
-| `image` | sharp preparation, the Image module (`features/image/routes`), the Next rewrite, Image paths and codes | new; taken out of `storage` |
-| `ui` | `AOF*` components, `AOFStorageImage` | depends on `image` (constants only) instead of `storage` |
+| `storage` | `features/s3` (client, put/delete objects in any bucket) and `features/image` (preparation, Image objects, the Image module in `hono/`, the Next proxy in `next/`) | generic object storage with Images as its first kind (revised 2026-10-07: no separate `image` package) |
+| `ui` | `AOF*` components, `AOFStorageImage` | depends on `storage` (Image path constants only) |
 | `design`, `shadcn`, `hooks`, `config` | unchanged | |
 
 - **Naming:** a package or folder carries an App, vendor or framework name only
@@ -131,7 +130,7 @@ one before it has landed, so its paths are real.
 | # | Plan | Depends on |
 |---|---|---|
 | 1 | Rules in `CLAUDE.md` + ADR 0016; `utils` → `core`, reorganised to section 1; every importer rewritten | — |
-| 2 | `storage` / `image` split; `ui` depends on `image`; `IMAGE_PROXY_PATH` | 1 |
+| 2 | `storage` generic objects + `features/image` layout; `IMAGE_PROXY_PATH` | 1 |
 | 3 | API layout: `routes/` into `features/` (`docs`, `health`) | 1 |
 | 4 | `database/apps/laura`; Laura seed users out of the shared seed | 1 |
 | 5 | `auth` regrouped by adapter; App declares its access policy; no `3300` default | 1, and the in-progress auth work committed |
@@ -149,3 +148,24 @@ Prisma enums.
 ADR 0016, "Packages are concepts with adapter folders": hard to reverse (every
 import path), surprising without context (why `core` has a `features/next`, why
 `auth` is one package), and a real trade-off against one package per adapter.
+
+## Implementation log
+
+- **Plan 6 (2026-10-07):** `imageBodySchema` moved to
+  `storage/features/image/constants/schemas`, with a type test against
+  `ImageRecord`; `AOFStorageImageSource` picks from `ImageBody`. The japan
+  Design names a line palette (`--line-green`, `--line-orange`) and each App
+  picks `--line` in its own `styles.css` (`bg-line`). shadcn's two `@source`
+  globs into `packages/apps` and `packages/components` (paths that never
+  existed) are gone. The env defaults went in plan 5.
+- **Plan 7 (2026-10-07):** `core` owns `BASE_LANGUAGES`, `DEFAULT_LANGUAGE`,
+  `EXTRA_LANGUAGES` (empty), `CONTENT_LANGUAGES` and `defineLanguages`.
+  `AOFDefineRouting(languages, options?)` routes the Host's list;
+  `AOFGetRequestConfig` takes one loader per language and, for a language
+  beyond the base ones, the shared text in it (`SharedTranslationsFor`). The
+  Back office's catalogue `satisfies Record<Language, () => Promise<typeof EN>>`;
+  `global-error.tsx` reads the shared `Common.Error` in `DEFAULT_LANGUAGE`.
+  Image alt (`database/features/image/alt`) requires the base languages,
+  allows extras, and reads a missing one as English; `AOFStorageImage` takes
+  any content language and falls back to English. `translations` joins the
+  kind folders. The API's catalogue was already typed per locale.

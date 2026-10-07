@@ -1,10 +1,10 @@
-import { sessionLoader } from "@allonfire/auth/features/session/middleware/session-loader";
-import { authRoutes } from "@allonfire/auth/routes/auth";
+import { authRoutes } from "@allonfire/auth/features/hono/routes";
+import { sessionLoader } from "@allonfire/auth/features/hono/session/middleware/session-loader";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
-import { imageRoutes } from "@allonfire/storage/routes/image";
-import type { ImageDeps } from "@allonfire/storage/routes/image/utils/deps";
-import { isImageUpload } from "@allonfire/storage/routes/image/utils/upload";
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { imageRoutes } from "@allonfire/storage/features/image/hono/routes";
+import type { ImageDeps } from "@allonfire/storage/features/image/hono/utils/deps";
+import { isImageUpload } from "@allonfire/storage/features/image/hono/utils/upload";
 import { type Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { except } from "hono/combine";
@@ -13,11 +13,14 @@ import { requestId } from "hono/request-id";
 import { timeout } from "hono/timeout";
 import type { Logger } from "pino";
 import { authRateLimit } from "./features/auth/middleware/auth-rate-limit";
+import { docsRoutes } from "./features/docs/routes";
 import {
   normalizeThrown,
   notFound,
   onError,
 } from "./features/errors/middleware/error-handler";
+import { healthRoutes } from "./features/health/routes";
+import type { HealthDeps } from "./features/health/utils/status";
 import { localeResolver } from "./features/i18n/middleware/locale-resolver";
 import { requestLogger } from "./features/logger/middleware/request-logger";
 import {
@@ -26,9 +29,6 @@ import {
   rateLimit,
 } from "./features/rate-limit/middleware/rate-limiter";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
-import { docsRoutes } from "./routes/docs/index";
-import { healthRoutes } from "./routes/health/index";
-import type { HealthDeps } from "./routes/health/utils/status";
 import {
   BODY_LIMIT_BYTES,
   REQUEST_TIMEOUT_MS,

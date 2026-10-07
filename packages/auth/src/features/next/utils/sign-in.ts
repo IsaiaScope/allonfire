@@ -1,5 +1,5 @@
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
-import { forwardedFor } from "@allonfire/utils/next/api/forwarded-for";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { forwardedFor } from "@allonfire/core/features/next/api/forwarded-for";
 import { setCookieToHeader } from "better-auth/cookies";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
@@ -53,14 +53,14 @@ export const signInWithEmail = async (
   }
 
   const client = createApiAuthClient();
-  const incoming = await headers();
+  const forwarded = forwardedFor(await headers());
   // The new Session's cookies, as a request would send them, to revoke it.
-  const sessionHeaders = new Headers(forwardedFor(incoming));
+  const sessionHeaders = new Headers(forwarded);
   let setCookies: string[] = [];
   let signedIn: Awaited<ReturnType<ApiAuthClient["signIn"]["email"]>>;
   try {
     signedIn = await client.signIn.email(credentials.data, {
-      headers: forwardedFor(incoming),
+      headers: forwarded,
       onResponse: (context) => {
         setCookies = context.response.headers.getSetCookie();
         setCookieToHeader(sessionHeaders)(context);

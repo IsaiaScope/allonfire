@@ -8,7 +8,7 @@ one database, and one design system.
 **App**:
 One product in the monorepo, with its own users. Laura is the first App (paused
 while the Design system is rebuilt); the Back office is the internal one, and a
-React Native client is planned. Who may enter an App is decided by Allowed apps,
+React Native client is planned. Who is allowed into an App is decided by Allowed apps,
 including for internal ones.
 _Avoid_: site, project, product
 
@@ -37,6 +37,11 @@ original name: an AOF component, or a piece of App scaffolding.
 An AllOnFire component composed from shadcn components. The only place the
 Design system is customised, and the only Design system component an App imports.
 _Avoid_: custom component, wrapper
+
+**AOF form**:
+A form whose fields `useAOFForm` manages: checked in the browser, then sent to
+a server action, which has the last word. A form without fields is not one.
+_Avoid_: form kit, form library
 
 **App scaffolding**:
 The shared wiring every App composes piece by piece: providers, request config,
@@ -77,8 +82,14 @@ Components.
 
 **Auth module**:
 The shared package that owns signing in, Sessions and the access mechanism;
-each App decides who may enter it. Any Host mounts it; the API is the only one that does today.
+each App decides who is allowed in. Any Host mounts it; the API is the only one that does today.
 _Avoid_: auth service, auth server
+
+**Storage**:
+Where the files behind App content live, kept apart from the database: Images
+today, any other kind of file later. Which provider holds them (MinIO today)
+is a detail only Storage knows.
+_Avoid_: MinIO, bucket, S3 (for the concept), media library
 
 **Image module**:
 The shared package that stores, lists, edits and deletes Images. Any Host
@@ -88,13 +99,13 @@ _Avoid_: Images module, media service, upload service
 
 **Base languages**:
 English and Italian: every Host speaks them, and every text and alt has them.
-A Host may speak more, and then translates everything it shows into each of
+A Host can speak more, and then translates everything it shows into each of
 them, shared texts included.
 _Avoid_: default languages, core languages
 
 **Content languages**:
 The Base languages plus every extra language any Host speaks. Stored texts such
-as an Image's alt may hold any of them; only the Base languages are required.
+as an Image's alt can hold any of them; only the Base languages are required.
 _Avoid_: locales (a locale is a regional variant of a language)
 
 **Session**:
@@ -112,7 +123,7 @@ A User whose Role allows browsing and playing but no mutations.
 _Avoid_: guest, demo user, read-only user
 
 **Allowed apps**:
-The list on a User naming which Apps they may enter. The value `ALL` grants
+The list on a User naming which Apps they are allowed into. The value `ALL` grants
 every App, the Back office included, which also requires an admin.
 _Avoid_: permissions, entitlements
 

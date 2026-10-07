@@ -1,6 +1,11 @@
 // @module-tag unit
+
+import { objectKeys } from "@allonfire/core/shared/utils/object";
 import type { Role } from "@allonfire/database";
-import { objectKeys } from "@allonfire/utils/helpers/object";
+import {
+  SESSION_EXPIRES_IN_S,
+  SESSION_UPDATE_AGE_S,
+} from "../../../shared/constants/limits";
 import {
   OPENAPI_SCHEMA_PATH,
   SIGN_IN_EMAIL_PATH,
@@ -42,6 +47,12 @@ describe("createAuth", () => {
       new Request(`${BASE_URL}${BASE_PATH}/reference`)
     );
     expect(res.status).toBe(404);
+  });
+
+  it("keeps a Session 60 days, extended at most once a day", () => {
+    expect(auth.options.session?.expiresIn).toBe(SESSION_EXPIRES_IN_S);
+    expect(SESSION_EXPIRES_IN_S).toBe(60 * 24 * 60 * 60);
+    expect(auth.options.session?.updateAge).toBe(SESSION_UPDATE_AGE_S);
   });
 
   it("types role as the Prisma Role union", () => {

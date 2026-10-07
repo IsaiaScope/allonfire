@@ -1,4 +1,4 @@
-import { visitorHeaders } from "@allonfire/utils/next/api/forwarded-for";
+import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { AUTH_COOKIE } from "../constants/api";

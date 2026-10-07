@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { context as otelContext, trace } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";

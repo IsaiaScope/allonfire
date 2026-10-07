@@ -41,7 +41,7 @@ App copies in step, and `aof-design` is the only way to run impeccable.
 
 - The `./apps/<app>/screens/*` export is gone; `./apps/<app>/prototypes/*`
   replaces it, for drafts only.
-- An App page may hold its own markup when it is trivial (home, error, not
+- An App page can hold its own markup when it is trivial (home, error, not
   found); a page with real interface renders a feature component.
 - impeccable's surface briefs for App targets land in the App's gitignored
   `.impeccable/`; only prototypes keep their briefs in the package.

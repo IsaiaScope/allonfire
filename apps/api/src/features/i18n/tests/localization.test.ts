@@ -1,6 +1,6 @@
 // @module-tag unit
 
-import { LOCALE } from "@allonfire/utils/constants/locales";
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { createApp } from "../../../app";
 import { appDeps } from "../../../shared/tests/app-deps";
 import { problemOf } from "../../errors/tests/problem-of";

@@ -1,13 +1,17 @@
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { prisma } from "@allonfire/database";
 import { AllowedApp, Role } from "@allonfire/database/enums";
-import { objectValues } from "@allonfire/utils/helpers/object";
+import { accessUserFrom } from "@allonfire/database/features/auth/access/access";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { openAPI } from "better-auth/plugins";
-import { COOKIE_CACHE_MAX_AGE_S } from "../../shared/constants/limits";
+import {
+  COOKIE_CACHE_MAX_AGE_S,
+  SESSION_EXPIRES_IN_S,
+  SESSION_UPDATE_AGE_S,
+} from "../../shared/constants/limits";
 import { OPENAPI_SCHEMA_PATH } from "../../shared/constants/paths";
 import type { AuthLike } from "../../shared/types/auth";
-import { allowedAppsFrom, roleFrom } from "../access/access";
 
 export type CreateAuthOptions = {
   secret: string;
@@ -43,6 +47,8 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
     rateLimit: { enabled: false },
     session: {
       cookieCache: { enabled: true, maxAge: COOKIE_CACHE_MAX_AGE_S },
+      expiresIn: SESSION_EXPIRES_IN_S,
+      updateAge: SESSION_UPDATE_AGE_S,
     },
     user: {
       additionalFields: {
@@ -76,11 +82,7 @@ export const toAuthLike = (auth: Auth): AuthLike => ({
     return (
       found && {
         ...found,
-        user: {
-          ...found.user,
-          allowedApps: allowedAppsFrom(found.user.allowedApps),
-          role: roleFrom(found.user.role),
-        },
+        user: { ...found.user, ...accessUserFrom(found.user) },
       }
     );
   },

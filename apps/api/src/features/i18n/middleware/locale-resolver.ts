@@ -1,9 +1,9 @@
-import { HTTP_HEADER } from "@allonfire/utils/constants/http";
+import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
 import {
   type Locale,
   localeSchema,
   SUPPORTED_LOCALES,
-} from "@allonfire/utils/constants/locales";
+} from "@allonfire/core/features/i18n/constants/locales";
 import { match } from "@formatjs/intl-localematcher";
 import type { Context, MiddlewareHandler } from "hono";
 import Negotiator from "negotiator";

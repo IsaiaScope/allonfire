@@ -20,10 +20,10 @@ A Next App never runs Better Auth itself, and holds no auth logic either:
 `features/next` signs in and out (server actions), guards pages, reads and
 renews the Session, all by calling the
 API from the App's server and setting the cookies it answers with on the
-App's own response. An App sets `AUTH_APP`, `API_URL` and `API_AUTH_URL`
-(`environment/next-environment`, extended into its env) and draws its own
-components; who it lets in is `mayEnter`, the same rule the API's
-`requireApp` applies.
+App's own response. An App sets `AUTH_APP`, `AUTH_MIN_ROLE`, `API_URL` and
+`API_AUTH_URL` (`environment/next-environment`, extended into its env; none
+has a default) and draws its own components; who it lets in is `canEnterApp`
+with the App's own policy, the same rule the API's `requireApp` applies.
 Laura still uses the old Next-bound package in `packages/auth-old`,
 untracked, until its refactor.
 
@@ -36,16 +36,15 @@ real instance.
 Roles and Allowed apps are the Prisma enums, imported from
 `@allonfire/database/enums` (`Role.VIEWER`, `AllowedApp.LAURA`); this package
 keeps no copy of them. HTTP statuses and methods come from
-`@allonfire/utils/constants/http`.
+`@allonfire/core/features/http/constants/http`.
 
 | Export | Contents |
 |--------|----------|
 | `./environment/environment` | `authEnvSchema` (`AUTH_SECRET`, `AUTH_URL`, `AUTH_COOKIE_DOMAIN` (optional: the parent domain the Session cookies are set for), `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
-| `./features/access/access` | `hasRole(role, min)`, `canEnterApp(allowedApps, app)`, `mayEnter(user, app)` (Allowed apps plus the App's Role floor, `APP_MIN_ROLE`), `allowedAppsFrom(values)`, `roleFrom(value)` (throws on a Role this build does not know) |
-| `./features/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User may enter it (`mayEnter`); mount it once per App |
-| `./features/guards/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer); ranks are `ROLE_RANK`, in steps of 100 |
-| `./features/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
-| `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL`, `API_URL`, `AUTH_APP`) for a Next App to extend its env with |
+| `./features/hono/guards/middleware/require-app` | `requireApp({ app, minRole })` — 403 unless the User is allowed into it (`canEnterApp` from `@allonfire/database/features/auth/access/access`); the host declares the policy, mount it once per App |
+| `./features/hono/guards/middleware/require-role` | `requireRole(min)` — 403 unless the User's Role reaches `min` (`Role.USER` refuses a Viewer); ranks are `ROLE_RANK`, in steps of 100 |
+| `./features/hono/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
+| `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL`, `API_URL`, `AUTH_APP`, `AUTH_MIN_ROLE`, all required) for a Next App to extend its env with |
 | `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
 | `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
 | `./features/next/constants/access` | `APP_PATH` |
@@ -53,7 +52,7 @@ keeps no copy of them. HTTP statuses and methods come from
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
 | `./features/next/constants/api` | `AUTH_COOKIE`, `AUTH_COOKIE_MARKER`, `SIGN_IN_ERROR` (an App translates each), `signInErrorSchema`, `SignInState` |
-| `./features/next/utils/access` | `canAccess(user)` — `mayEnter` for `AUTH_APP`, on the User as the API sends it |
+| `./features/next/utils/access` | `canAccess(user)` — `canEnterApp` for `AUTH_APP` and `AUTH_MIN_ROLE`, on the User as the API sends it |
 | `./features/next/utils/auth-client` | `createApiAuthClient()` — Better Auth's own client (`better-auth/client`) for the API's auth routes, typed from `Auth`; `ApiAuthClient`, `Session` |
 | `./features/next/utils/refresh-session` | `refreshSession(request)` — for an App's proxy: the renewed cookies once the cookie cache has expired |
 | `./features/next/utils/session` | `getSession()`, `getAppSession()` (`null` for anyone the App refuses) |
@@ -61,15 +60,15 @@ keeps no copy of them. HTTP statuses and methods come from
 | `./features/next/utils/sign-in` | `signInWithEmail(formData)` — the error, or none once it set the Session cookies, or revokes the Session of someone the App refuses |
 | `./features/next/utils/sign-out` | `signOutOfApi()` — ends the Session and clears the cookies |
 | `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
-| `./features/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
+| `./features/hono/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
 | `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
-| `./features/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
-| `./routes/auth` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
+| `./features/hono/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
+| `./features/hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
 | `./shared/constants/limits` | The auth bucket defaults (10 attempts / 15 min, `auth:` key prefix), the secret and cookie-cache limits |
 | `./shared/constants/paths` | `AUTH_PATH`, `SIGN_IN_EMAIL_PATH`, `CHANGE_PASSWORD_PATH`, `LIMITED_AUTH_PATHS`, `OPENAPI_SCHEMA_PATH` |
 | `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` |
 | `./shared/types/auth` | `App`, `AuthSession`, `AuthLike`, `OpenApiDocument`, `OpenApiFragment` |
-| `./shared/types/variables` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
+| `./features/hono/types/variables` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
 
 ## Directory structure
 
@@ -77,26 +76,24 @@ The repo's package layout (`CLAUDE.md`, Package Layout):
 
 ```
 src/
-  environment/   environment (authEnvSchema)
-  routes/
-    auth/        index (authRoutes), constants/http (AUTH_METHODS), tests/
+  environment/   environment (authEnvSchema), next-environment (nextAuthEnv)
   features/
-    access/      access (hasRole, canEnterApp, allowedAppsFrom, roleFrom),
-                 constants/roles (ROLE_RANK, APP_MIN_ROLE), tests/
-    guards/      middleware/{require-session,require-role,require-app},
-                 utils/guard, tests/ (incl. a type test)
+    hono/        the Hono adapter: routes/ (authRoutes), constants/{http,variables},
+                 types/variables (AuthEnv, SignedInEnv), tests/, and
+      guards/      middleware/{require-session,require-role,require-app},
+                   utils/guard, tests/ (incl. a type test)
+      rate-limit/  middleware/auth-limit, tests/
+      session/     middleware/session-loader, tests/
     next/        a Next App's side, through the API: actions/{sign-in,sign-out},
                  constants/{access,api},
                  utils/{access,auth-client,redirect-to,refresh-session,
                  require-app-session,session,with-session-refresh,
                  set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), constants/openapi, tests/
-    rate-limit/  middleware/auth-limit, tests/
     server/      auth (createAuth, toAuthLike), tests/
-    session/     middleware/session-loader, tests/
   shared/
-    constants/   paths, limits, variables (AUTH_VAR)
-    types/       auth (AuthSession, AuthLike, OpenApi*), variables (AuthEnv, SignedInEnv)
+    constants/   paths, limits
+    types/       auth (AuthSession, AuthLike, OpenApi*)
     tests/       stub-auth (stubAuth, sessionFor)
 ```
 
@@ -112,7 +109,7 @@ new Hono()
   .route("/", authRoutes(auth))
   .use(sessionLoader(auth))
   .post("/v1/things", requireRole(Role.USER), handler)
-  .route("/v1/laura", new Hono().use(requireApp(AllowedApp.LAURA)).get(...));
+  .route("/v1/laura", new Hono().use(requireApp({ app: AllowedApp.LAURA, minRole: Role.VIEWER })).get(...));
 ```
 
 The `AuthLike` port carries the `basePath` given to `createAuth`, so the
@@ -120,7 +117,7 @@ routes, the sign-in matcher and the OpenAPI paths all read it from there and
 nothing else can drift from it. Guards
 throw `HTTPException(401 | 403)`; the host's `onError` renders the response.
 A Role check names the lowest Role allowed, never a list: Roles are ranked
-(`ROLE_RANK`), and a Role added later slots between two ranks. Every guard
+(`ROLE_RANK`, in `@allonfire/database`), and a Role added later slots between two ranks. Every guard
 types the Session as present for the handlers chained after it, so
 `c.get("session")` needs no null check there.
 Better Auth's own rate limiter is off. The host brings its own limiter, built
@@ -131,7 +128,8 @@ the proxy hop count and the 429 body. Sign-up is disabled: Users come from the s
 
 ## Trade-off
 
-Sessions live in Postgres behind Better Auth's five-minute cookie cache. A
+Sessions live in Postgres for 60 days from the last visit (extended at most
+once a day), behind Better Auth's five-minute cookie cache. A
 change to a User's Role or Allowed apps, or a revoked Session, reaches the
 guards up to five minutes late. See
 [ADR 0009](../../docs/adr/0009-auth-runs-in-the-api-sessions-in-postgres.md).

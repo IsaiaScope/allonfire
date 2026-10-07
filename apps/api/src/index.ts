@@ -9,8 +9,8 @@ import {
 import {
   deleteImageObjects,
   putImageObject,
-} from "@allonfire/storage/features/image/image-objects";
-import { prepareImage } from "@allonfire/storage/features/image/prepare-image";
+} from "@allonfire/storage/features/image/objects/image-objects";
+import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";
