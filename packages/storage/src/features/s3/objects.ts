@@ -25,7 +25,10 @@ export async function putObject(
   );
 }
 
-/** One request for up to 1000 keys; no keys, no request. */
+/**
+ * One request for up to 1000 keys; no keys, no request. Throws when the
+ * provider refuses any key: S3 and MinIO answer 200 and list them in `Errors`.
+ */
 export async function deleteObjects(
   bucket: string,
   keys: readonly string[]
@@ -33,10 +36,15 @@ export async function deleteObjects(
   if (keys.length === 0) {
     return;
   }
-  await s3.send(
+  const { Errors: refused = [] } = await s3.send(
     new DeleteObjectsCommand({
       Bucket: bucket,
       Delete: { Objects: keys.map((Key) => ({ Key })) },
     })
   );
+  if (refused.length > 0) {
+    throw new Error(
+      `Delete refused: ${refused.map(({ Code, Key }) => `${Key}: ${Code}`).join(", ")}`
+    );
+  }
 }

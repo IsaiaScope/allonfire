@@ -3,7 +3,7 @@ import { SECURE_COOKIE_PREFIX } from "better-auth/cookies";
 import { cookies } from "next/headers";
 import { AUTH_COOKIE_MARKER } from "../constants/api";
 import { createApiAuthClient } from "./auth-client";
-import { parseSetCookies } from "./set-cookie";
+import { adoptSetCookies } from "./set-cookie";
 
 /**
  * Ends the Session on the API and clears Better Auth's cookies on the App's
@@ -25,11 +25,7 @@ export const signOutOfApi = async () => {
     })
     .catch(() => undefined);
   const jar = await cookies();
-  const expired = new Set<string>();
-  for (const { name, value, options } of parseSetCookies(expiredByApi)) {
-    jar.set(name, value, options);
-    expired.add(name);
-  }
+  const expired = new Set(adoptSetCookies(jar, expiredByApi));
   for (const { name } of jar.getAll()) {
     if (name.includes(AUTH_COOKIE_MARKER) && !expired.has(name)) {
       jar.delete({

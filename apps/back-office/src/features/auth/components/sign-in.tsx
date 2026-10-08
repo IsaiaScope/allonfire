@@ -62,7 +62,7 @@ export const SignIn = () => {
           className="absolute inset-0 bg-background/20 lg:hidden dark:bg-background/40"
         />
       </div>
-      <section className="min-w-0 p-4 lg:flex-1 lg:p-10">
+      <section className="min-w-0 p-3 sm:p-4 lg:flex-1 lg:p-10">
         <div className={cn("mx-auto max-w-xl", enter({ from: "top" }))}>
           <DepartureBoard
             kana={BOARD_KANA}
@@ -75,14 +75,14 @@ export const SignIn = () => {
         </div>
       </section>
       <TactileStrip className="hidden lg:block" orientation="vertical" />
-      <section className="relative flex flex-1 items-center justify-center px-4 pt-8 pb-20 lg:w-lg lg:flex-none lg:px-10 lg:pb-8">
+      <section className="relative flex flex-1 items-center justify-center px-3 pt-8 pb-20 sm:px-4 lg:w-lg lg:flex-none lg:px-10 lg:pb-8">
         <div
           className={cn(
             "flex w-full max-w-md flex-col overflow-hidden rounded-lg border border-border bg-card shadow-lg",
             enter({ from: "bottom" })
           )}
         >
-          <div className="dark flex items-center gap-3 border-led border-b bg-led-panel px-4 py-3 text-foreground lg:px-6 dark:border-led-dim">
+          <div className="dark flex items-center gap-3 border-led border-b bg-led-panel px-3 py-3 text-foreground sm:px-4 lg:px-6 dark:border-led-dim">
             <span
               aria-hidden
               className="flex size-10 shrink-0 items-center justify-center rounded-md bg-line text-led-panel"
@@ -96,7 +96,7 @@ export const SignIn = () => {
           </div>
           <SignInForm />
         </div>
-        <AOFControlBar className="absolute right-4 bottom-4 lg:right-auto lg:bottom-6 lg:left-10">
+        <AOFControlBar className="absolute right-3 bottom-4 sm:right-4 lg:right-auto lg:bottom-6 lg:left-10">
           <LanguageSwitch href={APP_PATH.SIGN_IN} label={t("language")} />
           <AOFControlBarSeparator />
           <AOFThemeToggle label={t("theme")} />

@@ -8,6 +8,7 @@ import type { PrismaClient } from "../../generated/prisma/client";
 import { CHANGESET_FILE } from "../../scripts/changeset-file";
 import {
   clientFor,
+  DOCKER_TIMEOUT,
   dropDatabase,
   executeFile,
   liquibase,
@@ -16,9 +17,6 @@ import {
   tablesIn,
   throwawayUrl,
 } from "./throwaway-db";
-
-// Liquibase runs in Docker; the first build pulls the image.
-const DOCKER_TIMEOUT = 300_000;
 
 const AUTH_TABLES = ["Account", "Session", "User", "Verification"];
 const LAURA_TABLES = ["GameScore"];

@@ -1,7 +1,5 @@
 import type { AllowedApp } from "../../../generated/prisma/client";
 import { prisma } from "../prisma/client";
-import { canSeeContent } from "./access/access";
-import type { App } from "./access/constants/schemas";
 
 export async function getUserById(userId: string) {
   return await prisma.user.findUnique({
@@ -35,20 +33,6 @@ export async function deleteUser(userId: string) {
   return await prisma.user.delete({
     where: { id: userId },
   });
-}
-
-export async function checkUserAppAccess(
-  userId: string,
-  appName: App
-): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    select: { allowedApps: true },
-    where: { id: userId },
-  });
-  if (!user) {
-    return false;
-  }
-  return canSeeContent(user.allowedApps, appName);
 }
 
 export async function updateUserAllowedApps(

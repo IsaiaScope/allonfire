@@ -43,7 +43,7 @@ const upload = () => {
   );
   return {
     body: form,
-    headers: { "accept-language": "en-US" },
+    headers: { "accept-language": "it" },
     method: "POST",
   };
 };
@@ -57,7 +57,7 @@ describe("the Image module inside the API", () => {
     const body = await problemOf(res);
     expect(body.code).toBe("IMAGE_TOO_LARGE");
     expect(body.detail).toBe(
-      translate("IMAGE_TOO_LARGE", LOCALE.EN_US, {
+      translate("IMAGE_TOO_LARGE", LOCALE.IT_IT, {
         limit: MAX_INPUT_MEGAPIXELS,
       })
     );

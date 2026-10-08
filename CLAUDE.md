@@ -66,6 +66,37 @@ that is not JSON, at any depth, interfaces included) returns `JsonText<T>`, and
 `parseJsonWith(text, schema)` parses and validates text from outside;
 `jsonFrom<T>(message)` is the zod step for a field that holds JSON text.
 
+## Forms (`@allonfire/ui/lib/form`)
+
+Every form with fields is an AOF form (ADR 0017): `useAOFForm` manages its
+fields, never bare `useForm`, and never `@tanstack/react-form` outside
+`packages/ui` (Biome enforces it). Only the form is a client component; the
+page stays on the server. The server action keeps the last word:
+
+- `useActionState(action, initialState)` holds the action's answer and the
+  pending flag; the action returns its own state, never TanStack form state.
+- `useAOFForm({ defaultValues, validators: { onChange: schema } })`; a
+  submit runs the `onChange` validators too.
+- `<form action={action} noValidate onSubmit={submit}>`, where `submit` is
+  `(event) => submitAOFForm(form, event, formDataTo(action))` from
+  `@allonfire/ui/lib/form-submit`: it stops the browser's post; when the
+  checks pass it sends the form's own controls to the action in a transition,
+  the same data a post before hydration sends; when they block it focuses the
+  first invalid field; a validator that throws is reported. Before hydration
+  the browser posts to the action. See
+  `apps/back-office/src/features/auth/components/sign-in-form.tsx`.
+- Fields render through `form.AppField` and `field.TextField` (`variant`
+  `default` or `primary`, `icon`), which sets `name`, adopts a value typed or
+  autofilled before hydration, and shows errors (not a live region) once the
+  field is left or a submit was tried, in a line kept free so nothing moves.
+  `invalid` marks a field the server refused. `AOFSubmitButton` takes
+  `pending`.
+- The zod schema with translated messages is built in the form; it repeats
+  the action's rules, and the action's copy is the one that counts.
+
+A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
+`react-hook-form` until it is rebuilt.
+
 ## Database Schema Quick Reference
 
 Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds only the admin and users for every App.

@@ -6,6 +6,9 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import en from "../../../i18n/translations/en.json" with { type: "json" };
+import itMessages from "../../../i18n/translations/it.json" with {
+  type: "json",
+};
 import { SignIn } from "../sign-in";
 import { SignInForm } from "../sign-in-form";
 
@@ -81,6 +84,20 @@ describe("SignInForm", () => {
     expect(html).not.toMatch(INVALID_FIELD);
   });
 
+  it("names each field, so a post before hydration sends both", () => {
+    const html = render(<SignInForm />);
+    expect(html).toContain('name="email"');
+    expect(html).toContain('name="password"');
+    expect(html).toContain('id="sign-in-password"');
+  });
+
+  it("marks both fields on a refusal although the browser found nothing wrong", () => {
+    const html = render(
+      <SignInForm initialState={{ error: SIGN_IN_ERROR.MISSING }} />
+    );
+    expect(html.match(INVALID_FIELD)).toHaveLength(2);
+  });
+
   it("leaves the checks to the server", () => {
     expect(render(<SignInForm />)).toContain("noValidate");
   });
@@ -88,4 +105,12 @@ describe("SignInForm", () => {
   it.each(objectValues(SIGN_IN_ERROR))("has a translation for %s", (error) => {
     expect(en.SignIn.error).toHaveProperty(error);
   });
+
+  it.each(["emailInvalid", "emailRequired", "passwordRequired"])(
+    "has a field translation for %s in English and Italian",
+    (key) => {
+      expect(en.SignIn.field).toHaveProperty(key);
+      expect(itMessages.SignIn.field).toHaveProperty(key);
+    }
+  );
 });

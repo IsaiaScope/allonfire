@@ -1,0 +1,5 @@
+{
+  // Tailwind v4 at-rules (@source, @theme, @custom-variant, @utility, @apply)
+  // are unknown to VS Code's built-in CSS linter; Biome lints CSS instead.
+  "css.lint.unknownAtRules": "ignore"
+}

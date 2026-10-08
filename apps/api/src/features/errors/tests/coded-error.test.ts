@@ -3,12 +3,14 @@
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
 import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { Hono } from "hono";
+import { localeResolver } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
 import { onError } from "../middleware/error-handler";
 import { problemOf } from "./problem-of";
 
 const appThrowing = (error: Error) =>
   new Hono()
+    .use(localeResolver())
     .get("/", () => {
       throw error;
     })
@@ -22,12 +24,12 @@ describe("onError with a CodedError", () => {
         status: 413,
         values: { limit: 2048 },
       })
-    ).request("/", { headers: { "accept-language": "en-US" } });
+    ).request("/", { headers: { "accept-language": "it" } });
     expect(res.status).toBe(413);
     const body = await problemOf(res);
     expect(body.code).toBe("PAYLOAD_TOO_LARGE");
     expect(body.detail).toBe(
-      translate("PAYLOAD_TOO_LARGE", LOCALE.EN_US, { limit: 2048 })
+      translate("PAYLOAD_TOO_LARGE", LOCALE.IT_IT, { limit: 2048 })
     );
   });
 

@@ -71,7 +71,7 @@ export function translate<K extends TranslationKey>(
     ? []
     : [TranslationValues[K]]
 ): string {
-  return render(key, locale, values);
+  return translateCode(key, locale, values);
 }
 
 /**
@@ -79,16 +79,10 @@ export function translate<K extends TranslationKey>(
  * unchecked against `TranslationValues`, so a value the module forgot renders
  * ICU's fallback instead of failing the build.
  */
-export const translateCode = (
+export function translateCode(
   key: TranslationKey,
   locale: Locale,
-  values: CodedErrorValues
-): string => render(key, locale, values);
-
-function render(
-  key: TranslationKey,
-  locale: Locale,
-  values: CodedErrorValues | undefined
+  values?: CodedErrorValues
 ): string {
   try {
     // `never`: the catalogue has no rich-text tags, so no part is anything but

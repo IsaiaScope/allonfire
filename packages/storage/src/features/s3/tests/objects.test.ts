@@ -48,6 +48,15 @@ describe("deleteObjects", () => {
     });
   });
 
+  it("throws when the provider refuses any key, though it answers 200", async () => {
+    send.mockResolvedValueOnce({
+      Errors: [{ Code: "AccessDenied", Key: "b", Message: "Access Denied" }],
+    });
+    await expect(deleteObjects("files", ["a", "b"])).rejects.toThrow(
+      "b: AccessDenied"
+    );
+  });
+
   it("sends nothing for no keys", async () => {
     await deleteObjects("files", []);
     expect(send).not.toHaveBeenCalled();

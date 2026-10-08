@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseJsonWith } from "@allonfire/core/shared/utils/json";
-import { AllowedApp } from "../../../../../../generated/prisma/enums";
+import { AllowedApp, Role } from "../../../../../../generated/prisma/enums";
 import { seedUsersSchema } from "../../../../seed/seed-user";
 import { lauraSeedUsers } from "../laura-seed";
 
@@ -28,7 +28,7 @@ describe("Laura's seed", () => {
         allowedApps: [AllowedApp.LAURA],
         email: "guest@laura.test",
         name: "guest",
-        role: "VIEWER",
+        role: Role.VIEWER,
       },
     ]);
   });

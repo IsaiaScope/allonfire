@@ -61,9 +61,9 @@ rewrite.
 |---|---|---|
 | `GET /v1/images?app=&cursor=&limit=` | Session, allowed into `app` | the App's Images and the `ALL` ones, newest first; `nextCursor` (opaque) pages |
 | `GET /v1/images/:id` | Session; 404 unless the User is allowed into its App (`ALL`: anyone signed in) | one Image |
-| `POST /v1/images` | `ADMIN` | multipart: repeated `file` parts plus one `meta` JSON part, `[{ app, alt: { en, it } }]` in file order |
-| `PATCH /v1/images` | `ADMIN` | `[{ id, app?, alt? }]`: move between Apps, change alt |
-| `DELETE /v1/images` | `ADMIN` | `{ ids }`: rows first, then files |
+| `POST /v1/images` | `ADMIN` of any App | multipart: repeated `file` parts plus one `meta` JSON part, `[{ app, alt: { en, it } }]` in file order |
+| `PATCH /v1/images` | `ADMIN` of any App | `[{ id, app?, alt? }]`: move between Apps, change alt |
+| `DELETE /v1/images` | `ADMIN` of any App | `{ ids }`: rows first, then files |
 
 - **All or nothing.** One bad file rejects the whole upload (415), an unknown
   id rejects a whole PATCH or DELETE (404). A failed insert deletes the files

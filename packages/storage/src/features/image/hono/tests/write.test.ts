@@ -23,6 +23,11 @@ import { errorOf, testHost } from "./test-host";
 
 const admin = sessionFor({ role: Role.ADMIN });
 const user = sessionFor({ role: Role.USER });
+/** An ADMIN of one App only; managing Images needs no particular App. */
+const lauraAdmin = sessionFor({
+  allowedApps: [AllowedApp.LAURA],
+  role: Role.ADMIN,
+});
 const ALT = { en: "The sea", it: "Il mare" };
 const PREPARED = {
   blurDataUrl: "data:image/webp;base64,AAAA",
@@ -91,6 +96,13 @@ describe("POST /v1/images", () => {
   it("refuses a USER", async () => {
     const res = await app(user, {}).request(IMAGE_PATH, upload(1));
     expect(res.status).toBe(403);
+  });
+
+  it("lets an ADMIN of any App write, not only the Back office's", async () => {
+    const res = await app(lauraAdmin, {
+      updateImages: () => Promise.reject(new ImageNotFoundError(["a"])),
+    }).request(IMAGE_PATH, json("PATCH", [{ id: "a" }]));
+    expect(res.status).toBe(404);
   });
 
   it("refuses meta that does not match the files", async () => {

@@ -33,7 +33,7 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | Import | Content |
 |---|---|
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `checkUserAppAccess`, `updateUserAllowedApps` |
+| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `updateUserAllowedApps` |
 | `@allonfire/database/features/image/image.service` | `createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages` (batches all or nothing), `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange` |
 | `@allonfire/database/features/auth/access/access` | `AccessUser`, `AppPolicy`, `hasRole`, `canSeeContent`, `canEnterApp`, `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}` |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |

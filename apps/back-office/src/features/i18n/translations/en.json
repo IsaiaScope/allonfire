@@ -17,10 +17,16 @@
       "rateLimited": "Too many attempts. Try again in a few minutes.",
       "unavailable": "Signing in is not available right now. Try again shortly."
     },
+    "field": {
+      "emailInvalid": "Enter a valid email address.",
+      "emailRequired": "Enter your email.",
+      "passwordRequired": "Enter your password."
+    },
     "language": "Language",
     "notice": "Authorized users only. Sign-up is closed.",
     "password": "Password",
     "pauseNotice": "Pause notice",
+    "showPassword": "Show password",
     "submit": "Sign in",
     "submitting": "Signing in…",
     "theme": "Switch theme"

@@ -142,6 +142,13 @@
                   {
                     "group": ["@allonfire/shadcn", "@allonfire/shadcn/**"],
                     "message": "Import the AOF component from @allonfire/ui instead; add one there if it does not exist yet."
+                  },
+                  {
+                    "group": [
+                      "@tanstack/react-form",
+                      "@tanstack/react-form/**"
+                    ],
+                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
                   }
                 ]
               }
@@ -166,6 +173,13 @@
                   {
                     "group": ["@allonfire/shadcn", "@allonfire/shadcn/**"],
                     "message": "Import the AOF component from @allonfire/ui instead; add one there if it does not exist yet."
+                  },
+                  {
+                    "group": [
+                      "@tanstack/react-form",
+                      "@tanstack/react-form/**"
+                    ],
+                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
                   },
                   {
                     "group": [

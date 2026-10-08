@@ -1,23 +1,33 @@
 import { cookies, headers } from "next/headers";
+import { objectFromEntries } from "../../../shared/utils/object";
 import { HTTP_HEADER } from "../../http/constants/http";
 
-/**
- * The visitor's address chain as it reached this server, to pass on to the
- * API so its per-IP limits count the visitor rather than this server. The
- * API reads it only when API_TRUSTED_PROXY_HOPS says a proxy wrote it.
- */
-export const forwardedFor = (incoming: Headers): Record<string, string> => {
-  const chain = incoming.get(HTTP_HEADER.X_FORWARDED_FOR);
-  return chain ? { [HTTP_HEADER.X_FORWARDED_FOR]: chain } : {};
-};
+/** What a visitor's request carries that the API must see as theirs. */
+const FORWARDED = [HTTP_HEADER.ORIGIN, HTTP_HEADER.X_FORWARDED_FOR] as const;
 
-/** What the App's server sends the API as the visitor: their cookies and address. */
+/**
+ * The visitor's headers to pass on to the API, as they reached this server:
+ * the page's Origin, which Better Auth checks against its trusted origins
+ * before a sign in or sign out (a call without one is refused), and the
+ * address chain, so the API's per-IP limits count the visitor rather than
+ * this server; the API reads that only when API_TRUSTED_PROXY_HOPS says a
+ * proxy wrote it.
+ */
+export const forwardedHeaders = (incoming: Headers): Record<string, string> =>
+  objectFromEntries(
+    FORWARDED.flatMap((name) => {
+      const value = incoming.get(name);
+      return value ? [[name, value] as const] : [];
+    })
+  );
+
+/** What the App's server sends the API as the visitor: their cookies, address and Origin. */
 export const visitorHeaders = (
   cookie: string,
   incoming: Headers
 ): Record<string, string> => ({
   [HTTP_HEADER.COOKIE]: cookie,
-  ...forwardedFor(incoming),
+  ...forwardedHeaders(incoming),
 });
 
 /**

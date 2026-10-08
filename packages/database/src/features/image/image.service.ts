@@ -1,4 +1,4 @@
-import type { Image } from "../../../generated/prisma/client";
+import type { Image, Prisma } from "../../../generated/prisma/client";
 import { AllowedApp } from "../../../generated/prisma/enums";
 import { prisma } from "../prisma/client";
 import { type ImageAlt, readAlt } from "./alt";
@@ -29,10 +29,11 @@ const toRecord = (row: Image): ImageRecord => ({
   alt: readAlt(row.alt),
 });
 
-type Transaction = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
 /** Throws unless every id exists; duplicates in `ids` count once. */
-async function assertAllExist(tx: Transaction, ids: readonly string[]) {
+async function assertAllExist(
+  tx: Prisma.TransactionClient,
+  ids: readonly string[]
+) {
   const unique = [...new Set(ids)];
   const found = await tx.image.findMany({
     select: { id: true, key: true },

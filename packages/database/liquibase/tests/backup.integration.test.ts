@@ -1,6 +1,7 @@
 // @module-tag integration
 import { execFileSync } from "node:child_process";
 import {
+  DOCKER_TIMEOUT,
   dropDatabase,
   liquibase,
   migrateImage,
@@ -8,7 +9,6 @@ import {
   throwawayUrl,
 } from "./throwaway-db";
 
-const DOCKER_TIMEOUT = 300_000;
 const DATABASE = "allonfire_backup";
 const VOLUME = "allonfire-backup-test";
 const KEEP = 2;

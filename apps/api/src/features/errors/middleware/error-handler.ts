@@ -170,13 +170,11 @@ export function onError(err: Error, context: Context): Response {
   if (err instanceof HTTPException && isErrorStatus(err.status)) {
     const { status } = err;
     const code = codeForStatus(status);
-    // An explicit message on the exception is caller-supplied and already in
-    // whatever language the caller chose, so it wins. Hono's own middleware
-    // throws with an empty message, which is where the catalogue takes over.
-    const detail = err.message || fallbackMessage(code, localeOf(context));
+    // Always the catalogue: Hono's validators throw English text ("Malformed
+    // JSON in request body") that would otherwise reach every language.
     return problemResponse(context, {
       code,
-      detail,
+      detail: fallbackMessage(code, localeOf(context)),
       status,
     });
   }

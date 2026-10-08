@@ -128,7 +128,7 @@ imports these.
 | `./features/next/query/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
 | `./features/next/i18n/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
 | `./features/next/i18n/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
-| `./features/next/api/forwarded-for` | — | `forwardedFor(headers)`, the visitor's `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies and address for a call to the API |
+| `./features/next/api/forwarded-for` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API |
 | `./features/next/i18n/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
 | `./features/next/i18n/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing |
 | `./features/next/i18n/shared-translations` | — | `SHARED_TRANSLATIONS` and `SharedTranslations`: the `Common` namespace every App gets, merged under its own translations; an App never defines `Common`, and `global-error.tsx` reads it in `DEFAULT_LANGUAGE` |

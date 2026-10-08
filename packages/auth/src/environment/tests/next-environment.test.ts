@@ -1,4 +1,5 @@
 // @module-tag unit
+import { AllowedApp, Role } from "@allonfire/database/enums";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 beforeEach(() => {
@@ -17,17 +18,17 @@ describe("nextAuthEnv", () => {
   });
 
   it("refuses an App that does not say which Role it lets in", async () => {
-    vi.stubEnv("AUTH_APP", "BACK_OFFICE");
+    vi.stubEnv("AUTH_APP", AllowedApp.BACK_OFFICE);
     vi.stubEnv("API_AUTH_URL", "http://api.test/v1/auth");
     vi.stubEnv("API_URL", "http://api.test");
     await expect(import("../next-environment")).rejects.toThrow(
       "Invalid environment variables"
     );
-    vi.stubEnv("AUTH_MIN_ROLE", "ADMIN");
+    vi.stubEnv("AUTH_MIN_ROLE", Role.ADMIN);
     vi.resetModules();
     await expect(import("../next-environment")).resolves.toHaveProperty(
       "nextAuthEnv.AUTH_MIN_ROLE",
-      "ADMIN"
+      Role.ADMIN
     );
   });
 

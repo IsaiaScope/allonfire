@@ -4,6 +4,8 @@
 
 **Goal:** Every form with fields runs on TanStack Form through `useAOFForm` in `@allonfire/ui`, starting with the back office Sign in form, while the `signIn` server action stays the source of truth.
 
+**Status:** implemented (uncommitted) @ 2026-10-07T16:21:11Z
+
 **Architecture:** `packages/ui` gains AOF field components (shadcn's `field.tsx`), a pure `shownErrors` rule, an `AOFTextField` bound to TanStack's field context, an `AOFSubmitButton`, and `useAOFForm` (`createFormHook`). A form checks its fields in the browser with a zod schema, then hands the browser's own `FormData` to the action through `useActionState` inside `startTransition`; `<form action={action}>` keeps the post before hydration working.
 
 **Tech Stack:** `@tanstack/react-form` 1.33.x, React 19 `useActionState`, zod 4 (Standard Schema), next-intl, Vitest (globals, static renders), Biome.
@@ -43,7 +45,7 @@
 - Consumes: `Field`, `FieldLabel`, `FieldError` from `@allonfire/shadcn/components/field` (already installed; `FieldError` takes `errors?: Array<{ message?: string } | undefined>` and renders nothing when empty).
 - Produces: `AOFField`, `AOFFieldLabel`, `AOFFieldError` and their `...Props` types.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // @module-tag unit
@@ -73,12 +75,12 @@ describe("AOFField", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run src/components/tests/aof-field.test.tsx`
 Expected: FAIL, cannot resolve `../aof-field`.
 
-- [ ] **Step 3: Write the component**
+- [x] **Step 3: Write the component**
 
 ```tsx
 import {
@@ -103,7 +105,7 @@ export const AOFFieldError = (props: AOFFieldErrorProps) => (
 );
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run src/components/tests/aof-field.test.tsx`
 Expected: PASS, 2 tests.
@@ -119,7 +121,7 @@ Expected: PASS, 2 tests.
 **Interfaces:**
 - Produces: `type FieldMessage = { message: string }`, `type ErrorVisibility = { isBlurred: boolean; submissionAttempts: number }`, `shownErrors(errors: readonly unknown[], visibility: ErrorVisibility): FieldMessage[]`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // @module-tag unit
@@ -157,12 +159,12 @@ describe("shownErrors", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run src/lib/tests/form-errors.test.ts`
 Expected: FAIL, cannot resolve `../form-errors`.
 
-- [ ] **Step 3: Write the rule**
+- [x] **Step 3: Write the rule**
 
 ```ts
 /** A message an AOF field shows under its input. */
@@ -209,7 +211,7 @@ export const shownErrors = (
 };
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run src/lib/tests/form-errors.test.ts`
 Expected: PASS, 4 tests.
@@ -235,12 +237,12 @@ Expected: PASS, 4 tests.
   - `AOFTextField` props: input props minus `name | value | defaultValue | onChange | onBlur | aria-invalid | aria-describedby`, plus `label: ReactNode`, `labelClassName?: string`, `start?: ReactNode`, `invalid?: boolean`.
   - `AOFSubmitButton` props: `AOFButtonProps` minus `type | disabled | aria-busy`, plus `pending: boolean`, `pendingChildren: ReactNode`.
 
-- [ ] **Step 1: Add the dependency**
+- [x] **Step 1: Add the dependency**
 
 Run: `pnpm --filter @allonfire/ui add @tanstack/react-form@^1.33.5`
 Expected: `packages/ui/package.json` lists `"@tanstack/react-form": "^1.33.5"` under `dependencies`.
 
-- [ ] **Step 2: Keep TanStack Form behind `useAOFForm`**
+- [x] **Step 2: Keep TanStack Form behind `useAOFForm`**
 
 In `biome.jsonc`, add this entry to the `patterns` array of the `apps/**` override (after the shadcn entry) and of the `packages/**`, `!packages/ui/**` override (after the shadcn entry):
 
@@ -251,7 +253,7 @@ In `biome.jsonc`, add this entry to the `patterns` array of the `apps/**` overri
 }
 ```
 
-- [ ] **Step 3: Write the failing tests**
+- [x] **Step 3: Write the failing tests**
 
 `packages/ui/src/components/tests/aof-text-field.test.tsx`:
 
@@ -286,12 +288,12 @@ describe("AOFTextField", () => {
     expect(html).toContain('name="email"');
     expect(html).toContain('value="ada@example.com"');
     expect(html).toContain('autoComplete="username"');
-    expect(html).toContain('data-start=""');
+    expect(html).toContain('data-start="true"');
   });
 
   it("shows no error before the field is left or a submit is tried", () => {
     const html = renderToStaticMarkup(<EmailForm />);
-    expect(html).not.toContain("aria-invalid");
+    expect(html).not.toContain('aria-invalid="');
     expect(html).not.toContain('role="alert"');
   });
 
@@ -323,25 +325,25 @@ describe("AOFSubmitButton", () => {
     expect(html).toContain('type="submit"');
     expect(html).toContain("Sign in");
     expect(html).not.toContain("Signing in…");
-    expect(html).not.toContain("disabled");
+    expect(html).not.toContain(' disabled=""');
     expect(html).not.toContain("aria-busy");
   });
 
   it("is disabled and busy while pending, so a second click does nothing", () => {
     const html = render(true);
-    expect(html).toContain("disabled");
+    expect(html).toContain(' disabled=""');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Signing in…");
   });
 });
 ```
 
-- [ ] **Step 4: Run them and see them fail**
+- [x] **Step 4: Run them and see them fail**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run src/components/tests/aof-text-field.test.tsx src/components/tests/aof-submit-button.test.tsx`
 Expected: FAIL, cannot resolve `../../lib/form` and `../aof-submit-button`.
 
-- [ ] **Step 5: Write the contexts**
+- [x] **Step 5: Write the contexts**
 
 `packages/ui/src/lib/form-context.ts`:
 
@@ -358,7 +360,7 @@ export const { fieldContext, formContext, useFieldContext, useFormContext } =
   createFormHookContexts();
 ```
 
-- [ ] **Step 6: Write `AOFTextField`**
+- [x] **Step 6: Write `AOFTextField`**
 
 `packages/ui/src/components/aof-text-field.tsx`:
 
@@ -441,7 +443,7 @@ export const AOFTextField = ({
 };
 ```
 
-- [ ] **Step 7: Write `AOFSubmitButton`**
+- [x] **Step 7: Write `AOFSubmitButton`**
 
 `packages/ui/src/components/aof-submit-button.tsx`:
 
@@ -481,7 +483,7 @@ export const AOFSubmitButton = ({
 );
 ```
 
-- [ ] **Step 8: Write `useAOFForm`**
+- [x] **Step 8: Write `useAOFForm`**
 
 `packages/ui/src/lib/form.ts`:
 
@@ -506,12 +508,12 @@ export const { useAppForm: useAOFForm } = createFormHook({
 });
 ```
 
-- [ ] **Step 9: Run the tests and see them pass**
+- [x] **Step 9: Run the tests and see them pass**
 
 Run: `pnpm --filter @allonfire/ui exec vitest run`
 Expected: PASS, every `packages/ui` test, the five new ones included.
 
-- [ ] **Step 10: Type-check the package**
+- [x] **Step 10: Type-check the package**
 
 Run: `pnpm --filter @allonfire/ui check-types`
 Expected: no errors.
@@ -530,7 +532,7 @@ Expected: no errors.
 **Interfaces:**
 - Produces: `type SignInFieldMessages = { emailInvalid: string; emailRequired: string; passwordRequired: string }`, `signInSchema(messages: SignInFieldMessages)`: a zod object over `{ email: string; password: string }`.
 
-- [ ] **Step 1: Write the failing schema test**
+- [x] **Step 1: Write the failing schema test**
 
 ```ts
 // @module-tag unit
@@ -573,12 +575,12 @@ describe("signInSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `pnpm --filter @allonfire/back-office exec vitest run src/features/auth/utils/tests/sign-in-schema.test.ts`
 Expected: FAIL, cannot resolve `../sign-in-schema`.
 
-- [ ] **Step 3: Write the schema**
+- [x] **Step 3: Write the schema**
 
 ```ts
 import { z } from "zod";
@@ -606,12 +608,12 @@ export const signInSchema = (messages: SignInFieldMessages) =>
   });
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `pnpm --filter @allonfire/back-office exec vitest run src/features/auth/utils/tests/sign-in-schema.test.ts`
 Expected: PASS, 5 tests (checked against zod 4: a failed `min` stops the pipe, so a blank email gets one message).
 
-- [ ] **Step 5: Add the translations**
+- [x] **Step 5: Add the translations**
 
 In `en.json`, inside `"SignIn"`, after `"error"`:
 
@@ -633,7 +635,7 @@ In `it.json`, inside `"SignIn"`, after `"error"`:
 },
 ```
 
-- [ ] **Step 6: Pin the translations in both languages**
+- [x] **Step 6: Pin the translations in both languages**
 
 In `sign-in.test.tsx`, add the Italian translations beside the English
 import (named `itMessages`, since `it` is Vitest's global) and a test at the
@@ -653,7 +655,7 @@ import itMessages from "../../../i18n/translations/it.json" with { type: "json" 
   );
 ```
 
-- [ ] **Step 7: Run the back office tests**
+- [x] **Step 7: Run the back office tests**
 
 Run: `pnpm --filter @allonfire/back-office exec vitest run src/features/auth`
 Expected: PASS.
@@ -670,7 +672,7 @@ Expected: PASS.
 - Consumes: `useAOFForm` (`@allonfire/ui/lib/form`), `AOFSubmitButton` (`@allonfire/ui/components/aof-submit-button`), `field.TextField` props (Task 3); `signInSchema` (Task 4); `signIn`, `SIGN_IN_ERROR`, `SignInState` (unchanged, `@allonfire/auth`).
 - Produces: `SignInForm({ initialState?: SignInState })`, same signature as today.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `sign-in.test.tsx`, inside `describe("SignInForm")`:
 
@@ -690,12 +692,12 @@ In `sign-in.test.tsx`, inside `describe("SignInForm")`:
   });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `pnpm --filter @allonfire/back-office exec vitest run src/features/auth/components/tests/sign-in.test.tsx`
 Expected: the new tests pass already (the current form names its inputs) — that is fine: they guard the rewrite. Every existing test passes too. Record that, then go on.
 
-- [ ] **Step 3: Rewrite the form**
+- [x] **Step 3: Rewrite the form**
 
 Replace `sign-in-form.tsx` with:
 
@@ -846,17 +848,17 @@ export const SignInForm = ({
 };
 ```
 
-- [ ] **Step 4: Run the Sign in tests**
+- [x] **Step 4: Run the Sign in tests**
 
 Run: `pnpm --filter @allonfire/back-office exec vitest run src/features/auth`
 Expected: PASS, every existing test unchanged plus the new ones: the alert, two `aria-invalid="true"` on `invalid`/`missing`, none on `unavailable`, `noValidate`, both names.
 
-- [ ] **Step 5: Lint the files**
+- [x] **Step 5: Lint the files**
 
 Run: `pnpm exec biome check --write apps/back-office/src/features/auth packages/ui/src biome.jsonc`
 Expected: no errors. If `noMisusedPromises` or `noFloatingPromises` flags `onSubmit`, the `.catch(() => undefined)` above is the repo's own pattern (`packages/auth/src/features/next/utils/sign-in.ts`, `revoke`); keep it rather than adding `async`.
 
-- [ ] **Step 6: Type-check the App**
+- [x] **Step 6: Type-check the App**
 
 Run: `pnpm --filter @allonfire/back-office check-types`
 Expected: no errors in `sign-in-form.tsx`. `field.TextField` rejects an unknown prop and `form.AppField` an unknown `name`, which is the check.
@@ -868,7 +870,7 @@ Expected: no errors in `sign-in-form.tsx`. `field.TextField` rejects an unknown 
 **Files:**
 - Modify: `CLAUDE.md` (new section after "JSON Helpers", before "Database Schema Quick Reference")
 
-- [ ] **Step 1: Add the Forms section to `CLAUDE.md`**
+- [x] **Step 1: Add the Forms section to `CLAUDE.md`**
 
 ```markdown
 ## Forms (`@allonfire/ui/lib/form`)
@@ -899,12 +901,17 @@ A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
 `react-hook-form` until it is rebuilt.
 ```
 
-- [ ] **Step 2: Format what the run touched**
+- [x] **Step 2: Format what the run touched**
 
 Run: `git diff --name-only -z -- '*.ts' '*.tsx' '*.json' '*.jsonc' | xargs -0 pnpm exec biome check --write`
 Expected: no errors left.
 
-- [ ] **Step 3: Run the repo-wide gates**
+- [x] **Step 3: Run the repo-wide gates**
 
 Run: `pnpm check-types && pnpm lint && pnpm test`
 Expected: all green. A failure outside this plan's files (for example `packages/auth/src/features/next/utils/redirect-to.ts` importing `LANGUAGES`, from another session's in-progress core refactor) is reported, not fixed here.
+
+## Implementation Log
+- Implemented: 2026-10-07T16:21:11Z
+- Workspace: current-branch — feat/design-package
+- Committed: no — awaiting user review

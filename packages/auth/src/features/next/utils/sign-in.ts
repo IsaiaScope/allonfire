@@ -1,12 +1,12 @@
 import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
-import { forwardedFor } from "@allonfire/core/features/next/api/forwarded-for";
+import { forwardedHeaders } from "@allonfire/core/features/next/api/forwarded-for";
 import { setCookieToHeader } from "better-auth/cookies";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { SIGN_IN_ERROR, type SignInError } from "../constants/api";
 import { canAccess } from "./access";
 import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
-import { parseSetCookies } from "./set-cookie";
+import { adoptSetCookies } from "./set-cookie";
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -53,7 +53,7 @@ export const signInWithEmail = async (
   }
 
   const client = createApiAuthClient();
-  const forwarded = forwardedFor(await headers());
+  const forwarded = forwardedHeaders(await headers());
   // The new Session's cookies, as a request would send them, to revoke it.
   const sessionHeaders = new Headers(forwarded);
   let setCookies: string[] = [];
@@ -77,9 +77,6 @@ export const signInWithEmail = async (
     return SIGN_IN_ERROR.FORBIDDEN;
   }
 
-  const jar = await cookies();
-  for (const { name, value, options } of parseSetCookies(setCookies)) {
-    jar.set(name, value, options);
-  }
+  adoptSetCookies(await cookies(), setCookies);
   return undefined;
 };

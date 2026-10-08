@@ -5,27 +5,23 @@ import {
   SIGN_IN_ERROR,
   type SignInState,
 } from "@allonfire/auth/features/next/constants/api";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { AOFInput } from "@allonfire/ui/components/aof-input";
-import { AOFLabel } from "@allonfire/ui/components/aof-label";
+import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
+import { useAOFForm } from "@allonfire/ui/lib/form";
+import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
 import { KeyRound, LoaderCircle, Mail, Nfc, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useActionState } from "react";
-
-// Each field opens on a pictogram tile, white on black like station signage.
-const FIELD = "h-12 pl-14 text-base md:text-base";
-const FIELD_ICON =
-  "dark pointer-events-none absolute inset-y-1.5 left-1.5 flex w-9 items-center justify-center rounded-sm bg-led-panel text-foreground *:size-5";
+import { type SubmitEvent, useActionState, useCallback } from "react";
+import { signInSchema } from "../utils/sign-in-schema";
 
 /**
- * The email and password form, posted to the shared `signIn` server action
- * through `useActionState`, Next's pattern for a form that shows errors: the
- * action and every check run on the server; this client leaf only holds the
- * answer (why it failed) and the pending flag, so the page stays mounted and
- * nothing replays. Works before hydration too, as a plain form post. The
- * server checks the fields (`noValidate`: the browser's own bubbles speak its
- * UI language, not the page's). A success never comes back: the action
- * redirects home.
+ * The email and password form, an AOF form (ADR 0017). `useAOFForm` checks
+ * the fields in the browser and, when they pass, hands the browser's own
+ * `FormData` to the shared `signIn` server action through `useActionState`,
+ * which holds why it failed and the pending flag. Before hydration the form
+ * posts to the same action, which checks everything again: its answer is the
+ * one that counts. `noValidate`: the browser's own bubbles speak its UI
+ * language, not the page's. A success never comes back: the action redirects
+ * home.
  */
 export const SignInForm = ({
   initialState = {},
@@ -39,18 +35,33 @@ export const SignInForm = ({
     signIn.bind(null, locale),
     initialState
   );
+  const form = useAOFForm({
+    defaultValues: { email: "", password: "" },
+    // A submit runs the onChange validators too.
+    validators: {
+      onChange: signInSchema({
+        emailInvalid: t("field.emailInvalid"),
+        emailRequired: t("field.emailRequired"),
+        passwordRequired: t("field.passwordRequired"),
+      }),
+    },
+  });
+  const submit = useCallback(
+    (event: SubmitEvent<HTMLFormElement>) =>
+      submitAOFForm(form, event, formDataTo(action)),
+    [form, action]
+  );
   // A server-side refusal or outage is not the fields' fault.
   const invalid =
-    error === SIGN_IN_ERROR.INVALID || error === SIGN_IN_ERROR.MISSING
-      ? true
-      : undefined;
+    error === SIGN_IN_ERROR.INVALID || error === SIGN_IN_ERROR.MISSING;
 
   return (
     <form
       action={action}
       aria-label={t("submit")}
-      className="flex flex-col gap-5 p-4 lg:p-6"
+      className="flex flex-col gap-4 px-3 py-4 sm:px-4 lg:p-6"
       noValidate
+      onSubmit={submit}
     >
       {error ? (
         <p
@@ -64,59 +75,50 @@ export const SignInForm = ({
           {t(`error.${error}`)}
         </p>
       ) : null}
-      <div className="flex flex-col gap-2">
-        <AOFLabel className="font-bold" htmlFor="sign-in-email">
-          {t("email")}
-        </AOFLabel>
-        <div className="relative">
-          <span aria-hidden className={FIELD_ICON}>
-            <Mail />
-          </span>
-          <AOFInput
-            aria-invalid={invalid}
+      <form.AppField name="email">
+        {(email) => (
+          <email.TextField
             autoComplete="username"
-            className={FIELD}
+            icon={<Mail />}
             id="sign-in-email"
             inputMode="email"
-            name="email"
+            invalid={invalid}
+            label={t("email")}
             required
             spellCheck={false}
             type="email"
+            variant="primary"
           />
-        </div>
-      </div>
-      <div className="flex flex-col gap-2">
-        <AOFLabel className="font-bold" htmlFor="sign-in-password">
-          {t("password")}
-        </AOFLabel>
-        <div className="relative">
-          <span aria-hidden className={FIELD_ICON}>
-            <KeyRound />
-          </span>
-          <AOFInput
-            aria-invalid={invalid}
-            autoComplete="current-password"
-            className={FIELD}
-            id="sign-in-password"
-            name="password"
-            required
-            type="password"
-          />
-        </div>
-      </div>
-      <AOFButton
-        aria-busy={pending || undefined}
-        className="mt-1 h-12 w-full gap-2 font-bold text-base"
-        disabled={pending}
-        type="submit"
-      >
-        {pending ? (
-          <LoaderCircle aria-hidden className="animate-spin" />
-        ) : (
-          <Nfc aria-hidden />
         )}
-        {pending ? t("submitting") : t("submit")}
-      </AOFButton>
+      </form.AppField>
+      <form.AppField name="password">
+        {(password) => (
+          <password.TextField
+            autoComplete="current-password"
+            icon={<KeyRound />}
+            id="sign-in-password"
+            invalid={invalid}
+            label={t("password")}
+            required
+            reveal={t("showPassword")}
+            type="password"
+            variant="primary"
+          />
+        )}
+      </form.AppField>
+      <AOFSubmitButton
+        className="mt-1 h-12 w-full gap-2 font-bold text-base"
+        pending={pending}
+        pendingChildren={
+          <>
+            <LoaderCircle aria-hidden className="animate-spin" />
+            {t("submitting")}
+          </>
+        }
+      >
+        <Nfc aria-hidden />
+        {t("submit")}
+      </AOFSubmitButton>
     </form>
   );
 };

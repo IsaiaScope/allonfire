@@ -62,10 +62,11 @@ prototype is deleted; nothing ships from a prototype.
 _Avoid_: Screen, mockup
 
 **Image**:
-A picture managed in the Back office and shown by one App or by all of them,
-with its alt text in the Base languages and, optionally, the other Content
-languages. App content that shows a
-picture points to an Image rather than holding the picture itself.
+A picture shown by one App or by all of them. Any User with the Admin Role
+can upload, edit or delete one, whichever Apps they are allowed into. It
+carries its alt text in the Base languages and, optionally, the other Content
+languages. App content that shows a picture points to an Image rather than
+holding the picture itself.
 _Avoid_: media, asset, file, picture, photo
 
 **Host**:
@@ -145,6 +146,12 @@ runs.
 The VPS. The only deployed environment; the `test` and `prod` branches are
 promotion gates, not environments.
 _Avoid_: prod server, staging — no staging exists.
+
+**Deploy unit**:
+One thing Production runs that ships on its own: the API, an App, or the
+database migration. A change deploys exactly the units it affects, through
+the packages they read.
+_Avoid_: service (the compose word), release.
 
 ### Data about usage
 

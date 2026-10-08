@@ -17,10 +17,16 @@
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
       "unavailable": "L’accesso non è disponibile ora. Riprova tra poco."
     },
+    "field": {
+      "emailInvalid": "Inserisci un indirizzo email valido.",
+      "emailRequired": "Inserisci la tua email.",
+      "passwordRequired": "Inserisci la password."
+    },
     "language": "Lingua",
     "notice": "Solo utenti autorizzati. Registrazione chiusa.",
     "password": "Password",
     "pauseNotice": "Metti in pausa l'avviso",
+    "showPassword": "Mostra password",
     "submit": "Accedi",
     "submitting": "Accesso in corso…",
     "theme": "Cambia tema"
