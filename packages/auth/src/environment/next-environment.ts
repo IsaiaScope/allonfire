@@ -1,7 +1,4 @@
-import {
-  appSchema,
-  roleSchema,
-} from "@allonfire/database/features/auth/access/constants/schemas";
+import { appSchema } from "@allonfire/database/features/auth/access/constants/schemas";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { z } from "zod";
@@ -39,11 +36,6 @@ export const nextAuthEnv = createEnv({
      * to start, not let in whoever another App lets in.
      */
     AUTH_APP: appSchema,
-    /**
-     * The lowest Role this App lets in, the App's own policy (`ADMIN` for the
-     * Back office). No default, for the same reason as `AUTH_APP`.
-     */
-    AUTH_MIN_ROLE: roleSchema,
   },
   skipValidation: process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD,
 });

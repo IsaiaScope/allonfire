@@ -19,8 +19,8 @@ database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
 
 | Schema | Owner | Holds |
 |---|---|---|
-| `auth` | the user base every App shares (Better Auth) | `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp` |
-| `image` | the Images every App shows, managed in the Back office ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md)) | `Image` |
+| `auth` | the user base every App shares (Better Auth) | `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App` |
+| `image` | the Images, each placed in one or more Apps, public or private in each ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [ADR 0020](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md)) | `Image`, `ImageApp` |
 | `laura` | Laura | `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType` |
 | `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
 
@@ -33,11 +33,11 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | Import | Content |
 |---|---|
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `updateUserAllowedApps` |
-| `@allonfire/database/features/image/image.service` | `createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages` (batches all or nothing), `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange` |
-| `@allonfire/database/features/auth/access/access` | `AccessUser`, `AppPolicy`, `hasRole`, `canSeeContent`, `canEnterApp`, `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}` |
+| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers` (each with its Memberships), `deleteUser` |
+| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `linksOfImages`, `updateImages` (places and takes out only what each change names; refuses to leave an Image in no App), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and both deletes run the caller's `authorise` check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks` |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `ImageLink`, `canSeeImageIn`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}`; `APP_SETTINGS` (each App's `minRole` and `registration`), `AppSettings`, `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
-| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `AllowedApp`, `GameType`) with no client attached |
+| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
@@ -182,7 +182,7 @@ packages/database/
                             (seed scripts), tests/
     features/
       prisma/               client.ts (Prisma singleton)
-      auth/                 user.service, access/ (Role and Allowed apps rules)
+      auth/                 user.service, access/ (Role, Membership and App settings rules)
       image/                image.service, tests/
       apps/                 one folder per App; seeds.ts lists each App's seed
         laura/              game-score.service, seed/ (guest Viewer, mock/users.json, tests/)

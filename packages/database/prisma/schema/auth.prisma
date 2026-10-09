@@ -9,10 +9,9 @@ enum Role {
   @@schema("auth")
 }
 
-/// One entry of a User's Allowed apps: an App, or ALL for every App.
-/// Upper-case in code like Role; stored as the App names themselves.
-enum AllowedApp {
-  ALL         @map("all")
+/// An App of the monorepo. Upper-case in code like Role; stored as the App
+/// names themselves.
+enum App {
   LAURA       @map("laura")
   BACK_OFFICE @map("back-office")
 
@@ -25,15 +24,26 @@ model User {
   name          String?
   emailVerified Boolean      @default(false)
   image         String?
-  role          Role         @default(USER)
-  allowedApps   AllowedApp[] @default([ALL])
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   sessions      Session[]
   accounts      Account[]
+  memberships   Membership[]
   images        Image[]
   gameScores    GameScore[]
 
+  @@schema("auth")
+}
+
+/// A User's place in one App, and their Role there (ADR 0019).
+model Membership {
+  userId    String
+  app       App
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, app])
   @@schema("auth")
 }
 

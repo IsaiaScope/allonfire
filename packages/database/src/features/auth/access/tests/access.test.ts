@@ -1,9 +1,32 @@
 // @module-tag unit
-import { AllowedApp, Role } from "../../../../../generated/prisma/enums";
-import { accessUserFrom, canEnterApp, canSeeContent, hasRole } from "../access";
+import { App, Role } from "../../../../../generated/prisma/enums";
+import {
+  accessUserFrom,
+  canEnterApp,
+  canManageEverywhere,
+  canManageImage,
+  canSeeImage,
+  canSeeImageIn,
+  enterableApps,
+  hasRole,
+  type ImageLink,
+  roleIn,
+} from "../access";
 import { appSchema } from "../constants/schemas";
 
-const LAURA_VIEWERS = { app: AllowedApp.LAURA, minRole: Role.VIEWER };
+const member = (app: App, role: Role) => ({
+  memberships: [{ app, role }],
+});
+
+const LAURA_PRIVATE: ImageLink = { app: App.LAURA, public: false };
+const LAURA_PUBLIC: ImageLink = { app: App.LAURA, public: true };
+const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
+const everywhereAdmin = {
+  memberships: [
+    { app: App.LAURA, role: Role.ADMIN },
+    { app: App.BACK_OFFICE, role: Role.ADMIN },
+  ],
+};
 
 describe("hasRole", () => {
   it("reaches its own Role and every one below, never above", () => {
@@ -19,69 +42,132 @@ describe("hasRole", () => {
   });
 });
 
-describe("canSeeContent", () => {
-  it("shows content for every App to any signed-in User", () => {
-    expect(canSeeContent([], AllowedApp.ALL)).toBe(true);
+describe("roleIn", () => {
+  it("is the Role of the User's Membership in that App, or nothing", () => {
+    const user = {
+      memberships: [
+        { app: App.LAURA, role: Role.VIEWER },
+        { app: App.BACK_OFFICE, role: Role.ADMIN },
+      ],
+    };
+    expect(roleIn(user, App.LAURA)).toBe(Role.VIEWER);
+    expect(roleIn(user, App.BACK_OFFICE)).toBe(Role.ADMIN);
+    expect(roleIn({ memberships: [] }, App.LAURA)).toBeUndefined();
+  });
+});
+
+describe("canEnterApp", () => {
+  it("needs a Membership in the App", () => {
+    expect(canEnterApp(member(App.LAURA, Role.VIEWER), App.LAURA)).toBe(true);
+    expect(canEnterApp(member(App.LAURA, Role.ADMIN), App.BACK_OFFICE)).toBe(
+      false
+    );
   });
 
-  it("shows an App's content to the Users allowed into it", () => {
-    expect(canSeeContent([AllowedApp.LAURA], AllowedApp.LAURA)).toBe(true);
-    expect(canSeeContent([AllowedApp.ALL], AllowedApp.BACK_OFFICE)).toBe(true);
-    expect(canSeeContent([AllowedApp.LAURA], AllowedApp.BACK_OFFICE)).toBe(
+  it("needs the Role there to reach the App's floor", () => {
+    expect(
+      canEnterApp(member(App.BACK_OFFICE, Role.USER), App.BACK_OFFICE)
+    ).toBe(false);
+    expect(
+      canEnterApp(member(App.BACK_OFFICE, Role.ADMIN), App.BACK_OFFICE)
+    ).toBe(true);
+  });
+});
+
+describe("canManageImage", () => {
+  it("needs the Admin Role in that App", () => {
+    expect(canManageImage(member(App.LAURA, Role.ADMIN), App.LAURA)).toBe(true);
+    expect(canManageImage(member(App.LAURA, Role.USER), App.LAURA)).toBe(false);
+    expect(canManageImage(member(App.BACK_OFFICE, Role.ADMIN), App.LAURA)).toBe(
       false
     );
   });
 });
 
-describe("canEnterApp", () => {
-  it("needs the App in Allowed apps, or ALL", () => {
-    const viewer = (allowedApps: AllowedApp[]) =>
-      canEnterApp({ allowedApps, role: Role.VIEWER }, LAURA_VIEWERS);
-    expect(viewer([AllowedApp.LAURA])).toBe(true);
-    expect(viewer([AllowedApp.ALL])).toBe(true);
-    expect(viewer([AllowedApp.BACK_OFFICE])).toBe(false);
-  });
-
-  it("needs a Role reaching the App's floor", () => {
-    const user = { allowedApps: [AllowedApp.ALL], role: Role.USER };
-    expect(
-      canEnterApp(user, { app: AllowedApp.BACK_OFFICE, minRole: Role.ADMIN })
-    ).toBe(false);
-  });
-
-  it("accepts only real Apps at compile time", () => {
-    const user = { allowedApps: [], role: Role.ADMIN };
-    // @ts-expect-error ALL is no App: nobody enters "every App" as one place
-    canEnterApp(user, { app: AllowedApp.ALL, minRole: Role.VIEWER });
-  });
-});
-
 describe("appSchema", () => {
-  it("is every Allowed apps value but ALL", () => {
-    expect(appSchema.options).toEqual([
-      AllowedApp.LAURA,
-      AllowedApp.BACK_OFFICE,
-    ]);
-    expect(appSchema.safeParse(AllowedApp.ALL).success).toBe(false);
+  it("is every App, and only Apps", () => {
+    expect(appSchema.options).toEqual([App.LAURA, App.BACK_OFFICE]);
+    expect(appSchema.safeParse("ALL").success).toBe(false);
+    expect(appSchema.safeParse("back-office").success).toBe(false);
   });
 });
 
 describe("accessUserFrom", () => {
-  it("narrows a User read as strings, dropping unknown Apps", () => {
+  it("narrows Memberships read as strings, dropping unknown Apps", () => {
     expect(
       accessUserFrom({
-        allowedApps: [AllowedApp.LAURA, AllowedApp.ALL, "social", "laura"],
-        role: Role.VIEWER,
+        memberships: [
+          { app: App.LAURA, role: Role.VIEWER },
+          { app: "social", role: Role.ADMIN },
+        ],
       })
-    ).toEqual({
-      allowedApps: [AllowedApp.LAURA, AllowedApp.ALL],
-      role: Role.VIEWER,
-    });
+    ).toEqual({ memberships: [{ app: App.LAURA, role: Role.VIEWER }] });
   });
 
   it("throws on a Role this build does not know, never guesses", () => {
     expect(() =>
-      accessUserFrom({ allowedApps: [], role: "MODERATOR" })
+      accessUserFrom({ memberships: [{ app: App.LAURA, role: "MODERATOR" }] })
     ).toThrow('Unknown Role "MODERATOR"');
+  });
+});
+
+describe("canSeeImageIn", () => {
+  it("shows a public placement to anyone, signed in or not", () => {
+    expect(canSeeImageIn(null, LAURA_PUBLIC)).toBe(true);
+    expect(canSeeImageIn({ memberships: [] }, LAURA_PUBLIC)).toBe(true);
+  });
+
+  it("shows a private placement only to a User who enters its App", () => {
+    expect(canSeeImageIn(member(App.LAURA, Role.VIEWER), LAURA_PRIVATE)).toBe(
+      true
+    );
+    expect(
+      canSeeImageIn(member(App.BACK_OFFICE, Role.ADMIN), LAURA_PRIVATE)
+    ).toBe(false);
+    expect(canSeeImageIn(null, LAURA_PRIVATE)).toBe(false);
+  });
+
+  it("hides a private placement from a User under the App's floor", () => {
+    expect(
+      canSeeImageIn(member(App.BACK_OFFICE, Role.USER), OFFICE_PRIVATE)
+    ).toBe(false);
+  });
+});
+
+describe("canSeeImage", () => {
+  it("is true when any placement shows the Image", () => {
+    expect(canSeeImage(null, [OFFICE_PRIVATE, LAURA_PUBLIC])).toBe(true);
+    expect(canSeeImage(null, [OFFICE_PRIVATE, LAURA_PRIVATE])).toBe(false);
+    expect(
+      canSeeImage(member(App.LAURA, Role.VIEWER), [
+        OFFICE_PRIVATE,
+        LAURA_PRIVATE,
+      ])
+    ).toBe(true);
+  });
+});
+
+describe("canManageEverywhere", () => {
+  it("needs the Admin Role in every App the Image is in", () => {
+    const lauraAdmin = member(App.LAURA, Role.ADMIN);
+    expect(canManageEverywhere(lauraAdmin, [LAURA_PUBLIC])).toBe(true);
+    expect(
+      canManageEverywhere(lauraAdmin, [LAURA_PUBLIC, OFFICE_PRIVATE])
+    ).toBe(false);
+    expect(
+      canManageEverywhere(everywhereAdmin, [LAURA_PUBLIC, OFFICE_PRIVATE])
+    ).toBe(true);
+  });
+});
+
+describe("enterableApps", () => {
+  it("lists the Apps the User enters, none for a visitor", () => {
+    expect(enterableApps(null)).toEqual([]);
+    expect(enterableApps(member(App.LAURA, Role.VIEWER))).toEqual([App.LAURA]);
+    expect(enterableApps(member(App.BACK_OFFICE, Role.USER))).toEqual([]);
+    expect(enterableApps(everywhereAdmin)).toEqual([
+      App.LAURA,
+      App.BACK_OFFICE,
+    ]);
   });
 });

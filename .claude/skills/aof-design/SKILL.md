@@ -254,8 +254,8 @@ language, not the page's: server-validated forms set `noValidate`.
 
 **Auth is shared.** All auth logic lives in `@allonfire/auth/features/next/*`
 for every App: the `signIn`/`signOut` server actions, `requireAppSession` for
-pages and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` and `AUTH_MIN_ROLE` in its
-env and keeps only its components, styles and translations.
+pages and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` in its
+env (its floor and Registration live in `APP_SETTINGS`) and keeps only its components, styles and translations.
 
 **Forms.** Next's pattern (forms guide, "Validation errors"): the action
 and every check live on the server; the component that defines the `<form>`

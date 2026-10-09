@@ -102,11 +102,12 @@ A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
 Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds only the admin and users for every App.
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
-- **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
-- **`image` schema (shared):** `Image`, the Images every App shows (ADR 0013)
+- **`auth` schema (shared):** `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App`
+- **`image` schema (shared):** `Image` and `ImageApp`: the Images every App shows, each placed in one or more Apps, public or private in each (ADR 0013, ADR 0020)
 - **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `allowedAppSchema`, `appSchema`, `App`), `ROLE_RANK`, `AccessUser`, `AppPolicy`, and four functions: `hasRole`, `canSeeContent` (is a User allowed to see content shown by an App; `ALL` content is for anyone signed in), `canEnterApp(user, { app, minRole })` (is a User allowed into an App: Allowed apps plus the Role floor the App declares), `accessUserFrom` (a User read as strings, narrowed). Never `z.enum(Role)` or an `ALL` check by hand; an App only declares its policy (`requireApp`, `AUTH_MIN_ROLE`).
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ROLE_RANK`, `APP_SETTINGS` and `AppSettings` (`constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `APP_SETTINGS`.
+- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `APP_SETTINGS`.
 - Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -152,7 +153,7 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 
 ### Viewer Role System
 
-- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API uses `requireRole(Role.USER)`
+- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API has only `requireApp(App.LAURA)`, which lets Viewers in (Laura's floor); a guard for "USER or higher in Laura" comes with Laura's API (`roleIn` + `hasRole`)
 - Client: `UserRoleProvider` + `useIsViewer()` hook for UI restrictions
 - Viewers can browse gallery and play games but cannot upload, favorite, delete, or submit scores
 
@@ -217,12 +218,13 @@ another service carries that service's name (`API_URL` in the Back office). A
 name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
 `OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
-`"./features/hono/guards/middleware/require-role": "./src/features/hono/guards/middleware/require-role.ts"`.
+`"./features/hono/guards/middleware/require-app": "./src/features/hono/guards/middleware/require-app.ts"`.
 A folder's `index.ts` exports as the folder (`./features/image/hono/routes`). Generated code keeps its
 own key (`@allonfire/database/enums`). A package that serves HTTP for any host
 (the Auth and Image modules) exports its router from `features/<name>/routes/index.ts`,
 takes its dependencies as arguments, and throws `CodedError` from
-`@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015).
+`@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015;
+routes Better Auth serves throw its `APIError`, which its handler answers).
 `packages/shadcn`, `packages/ui`,
 `packages/hooks` and `packages/design` are exempt: the first three follow
 shadcn's `components/` and `lib/` so `shadcn add` works; `packages/design`

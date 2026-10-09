@@ -25,3 +25,7 @@ host's type test checks them against its own codes.
   `utils` depends on no workspace package and no cycle forms.
 - A module adding an error code breaks every host's type check until the host
   gives the code a message.
+- Routes Better Auth serves (sign-in, Registration, `/join-app`) throw Better
+  Auth's `APIError` with a code from `AUTH_ERROR_CODE` instead: Better Auth's
+  handler turns every throw into its own `{ code, message }` answer before a
+  host's `onError` runs, so a `CodedError` there would come out as a 500.

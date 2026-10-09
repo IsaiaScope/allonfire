@@ -8,8 +8,9 @@ one database, and one design system.
 **App**:
 One product in the monorepo, with its own users. Laura is the first App (paused
 while the Design system is rebuilt); the Back office is the internal one, and a
-React Native client is planned. Who is allowed into an App is decided by Allowed apps,
-including for internal ones.
+React Native client is planned. Who is allowed into an App is decided by their
+Membership in it and the lowest Role the App lets in, including for internal
+ones.
 _Avoid_: site, project, product
 
 **Back office**:
@@ -55,6 +56,18 @@ Japan is the first. Each App wears exactly one; a change to a Design reaches
 every App wearing it.
 _Avoid_: theme, skin, look, palette
 
+**Brand**:
+The AOF monogram, its O lit by a flame, that every App carries in its icon and
+link previews beside the App's own label. Shared by every App whatever Design
+it wears.
+_Avoid_: logo (an App's logo is the monogram plus its label)
+
+**Indexing**:
+Whether search engines may list an App's pages: indexed (listed, with its
+language alternates and a sitemap) or unindexed (kept out; link previews still
+work). Each App declares it among its settings.
+_Avoid_: visibility, public/private (an Image's), SEO mode
+
 **Prototype**:
 A draft page built with impeccable in the design package to try a look before
 it is real. Once approved it moves into its App as a feature component and the
@@ -62,9 +75,11 @@ prototype is deleted; nothing ships from a prototype.
 _Avoid_: Screen, mockup
 
 **Image**:
-A picture shown by one App or by all of them. Any User with the Admin Role
-can upload, edit or delete one, whichever Apps they are allowed into. It
-carries its alt text in the Base languages and, optionally, the other Content
+A picture in one or more Apps, stored once. In each App it is public, shown
+to anyone even when not signed in, or private, shown to those the App lets in.
+An App's Admin adds it to their App or removes it from there; it is deleted
+when it is in no App any more, or by someone with the Admin Role in every App
+it is in. It carries its alt text in the Base languages and, optionally, the other Content
 languages. App content that shows a picture points to an Image rather than
 holding the picture itself.
 _Avoid_: media, asset, file, picture, photo
@@ -119,14 +134,25 @@ paths, keys and file names, `signIn` / `SIGN_IN` in code — the names Better
 Auth uses for its own routes.
 _Avoid_: log in, log out, login, logout
 
-**Viewer**:
-A User whose Role allows browsing and playing but no mutations.
-_Avoid_: guest, demo user, read-only user
+**Membership**:
+A User's place in one App, with their Role there. A User holds one per App
+they belong to; nothing spans every App.
+_Avoid_: Allowed apps, permissions, entitlements, account
 
-**Allowed apps**:
-The list on a User naming which Apps they are allowed into. The value `ALL` grants
-every App, the Back office included, which also requires an admin.
-_Avoid_: permissions, entitlements
+**Registration**:
+Becoming a User through an App that allows it, which gives a Membership in that
+App only. An existing User joins another such App the same way, once signed in.
+Each App says whether it allows it; the Back office never does.
+_Avoid_: sign-up (except in Better Auth's route names), enrolment, invite
+
+**Role**:
+What a User may do inside one App: Admin, User or Viewer. It belongs to a
+Membership, never to the User as a whole.
+_Avoid_: permission level, rank
+
+**Viewer**:
+A Role in an App that allows browsing and playing but no mutations.
+_Avoid_: guest, demo user, read-only user
 
 **App schema**:
 The Postgres schema holding one App's tables, named after the App (`laura`).

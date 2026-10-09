@@ -27,6 +27,8 @@
 | `./features/image/objects/image-objects` | `putImageObject(key, body)`, `deleteImageObjects(keys)` in the `image` bucket |
 | `./features/image/next/with-storage-images` | `withStorageImages(config, { origin })`: the `/storage/images/:key` rewrite and next/image settings, wrapped around an App's Next config |
 | `./features/image/hono/routes` | `imageRoutes(deps)`, the Image module |
+| `./features/image/hono/routes/read-handlers` | `listHandlers`, `getHandlers` |
+| `./features/image/hono/routes/write-handlers` | `uploadHandlers`, `patchHandlers`, `deleteHandlers` |
 | `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host |
 | `./features/image/hono/utils/upload` | `isImageUpload(method, path, basePath)`, so a host skips its own body limit and timeout for the upload |
 | `./features/image/hono/constants/errors` | `IMAGE_ERROR_CODE`, every code the module throws |
@@ -47,8 +49,9 @@ packages/storage/
         constants/               paths, bucket
         prepare/                 sharp (+ heic-decode): orient, strip metadata, cap, AVIF, blur
         objects/                 put and delete Image objects (through s3/objects)
-        hono/                    the Image module: routes/ (index, routes, handlers),
-                                 constants/, utils/, tests/ (stubImageDeps for hosts)
+
+In the access bullet, this text:
+
         next/                    withStorageImages, the App's proxy and next/image settings
 ```
 
@@ -60,7 +63,9 @@ packages/storage/
 .route(IMAGE_BASE_PATH, imageRoutes(deps.images))
 ```
 
-`ImageDeps` is everything it touches: the `image.service` functions from `@allonfire/database` (`createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages`), `putObject` and `deleteObjects` from `./features/image/objects/image-objects`, `prepare` (`prepareImage`) and `log` (`{ warn }`, pino's shape).
+`ImageDeps` is everything it touches: the `image.service` functions from `@allonfire/database` (`createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages`, `removeImagesFromApp`, and `linksOf`, which is `linksOfImages` and checks a PATCH; a DELETE hands its check to the delete itself, which runs it on the placements it locks), `putObject` and `deleteObjects` from `./features/image/objects/image-objects`, `prepare` (`prepareImage`) and `log` (`{ warn }`, pino's shape).
+
+- **Access** (ADR 0020): an Image is in one or more Apps, public or private in each. Reads need no Session: a visitor sees public placements, a User also the Apps they enter, and an Image they cannot see answers 404. Writes need one: placing an Image in an App, taking it out or switching it public needs the Admin Role there; its alt or deleting it everywhere needs it in every App it is in. A batch answers 404 for any Image the User cannot see before any 403. `hono/utils/access.ts` holds these checks; `hono/tests/recap.test.ts` is the agreed table, one test per row.
 
 - **Errors** are `CodedError`s (ADR 0015) with a code from `IMAGE_ERROR_CODE`; the host renders and translates them. Its type test should check `IMAGE_ERROR_CODE satisfies Record<string, ErrorCode>`.
 - **Limits**: the upload brings its own 100 MiB body limit and 5-minute timeout; `isImageUpload` lets the host skip its global ones.

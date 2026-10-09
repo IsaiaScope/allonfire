@@ -80,12 +80,13 @@
 
 ### Shared Vitest preset (`packages/config/tests/vitest.config.ts`)
 
-- Becomes two projects:
-  - `node`: today's config, excluding `**/*.browser.test.{ts,tsx}`.
-  - `browser`: includes `src/**/*.browser.test.{ts,tsx}`,
-    `browser: { enabled: true, headless: true, provider: playwright(),
-    instances: [{ browser: "chromium" }] }`.
-- The tag check runs in both projects; a browser test starts with
+- Gains a sibling, `vitest.browser.config.ts` (`vitestBrowserConfig`):
+  includes `src/**/*.browser.test.{ts,tsx}`, `browser: { enabled: true,
+  headless: true, provider: playwright(), instances: [{ browser: "chromium" }] }`.
+  The Node config excludes `**/*.browser.test.*`. A separate file, not
+  `projects`: Vitest allows `projects` only in the root config, and each
+  package config is already one root project.
+- The tag check runs in both configs; a browser test starts with
   `// @module-tag integration`.
 - New dev dependencies: `@vitest/browser-playwright`, `vitest-browser-react`,
   `msw` (all above 1M weekly downloads).
@@ -122,7 +123,8 @@
 
 - E2e (`apps/back-office/e2e/`):
   - an ADMIN signs in and lands home;
-  - a USER is refused and sees the forbidden message;
+  - a User whose Back office Membership is under its floor (USER) is
+    refused and sees the forbidden message;
   - sign-out returns to sign-in;
   - the existing smoke spec stays.
 - Browser test: the sign-in form's pending state and each error message

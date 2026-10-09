@@ -1,9 +1,20 @@
 // @module-tag unit
 
-import { sessionFor } from "@allonfire/auth/shared/tests/stub-auth";
+import {
+  membershipsIn,
+  sessionFor,
+} from "@allonfire/auth/shared/tests/stub-auth";
+import {
+  CONTENT_TYPE,
+  HTTP_HEADER,
+} from "@allonfire/core/features/http/constants/http";
 import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
-import { AllowedApp, Role } from "@allonfire/database/enums";
-import { ImageNotFoundError } from "@allonfire/database/features/image/image.service";
+import { App, Role } from "@allonfire/database/enums";
+import type { ImageLink } from "@allonfire/database/features/auth/access/access";
+import {
+  type AuthoriseLinks,
+  ImageNotFoundError,
+} from "@allonfire/database/features/image/image.service";
 import { z } from "zod";
 import { IMAGE_PATH } from "../../constants/paths";
 import { imageBodySchema } from "../../constants/schemas";
@@ -21,13 +32,56 @@ import type { ImageDeps } from "../utils/deps";
 import { imageRecord } from "./stub-image-deps";
 import { errorOf, testHost } from "./test-host";
 
-const admin = sessionFor({ role: Role.ADMIN });
-const user = sessionFor({ role: Role.USER });
-/** An ADMIN of one App only; managing Images needs no particular App. */
+const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
+const user = sessionFor({ memberships: membershipsIn(Role.USER) });
+/** An Admin of Laura only. */
 const lauraAdmin = sessionFor({
-  allowedApps: [AllowedApp.LAURA],
-  role: Role.ADMIN,
+  memberships: [{ app: App.LAURA, role: Role.ADMIN }],
 });
+/** A User of Laura, below Admin. */
+const lauraUser = sessionFor({
+  memberships: [{ app: App.LAURA, role: Role.USER }],
+});
+/** An Admin of the Back office only. */
+const officeAdmin = sessionFor({
+  memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
+});
+const LAURA_PRIVATE: ImageLink = { app: App.LAURA, public: false };
+const LAURA_PUBLIC: ImageLink = { app: App.LAURA, public: true };
+const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
+const OFFICE_PUBLIC: ImageLink = { app: App.BACK_OFFICE, public: true };
+
+/** Every Image of the batch placed as given, as `linksOf` answers. */
+const placedIn =
+  (...links: ImageLink[]): ImageDeps["linksOf"] =>
+  (ids) =>
+    Promise.resolve(new Map(ids.map((id) => [id, links])));
+/** Every Image in these tests is private in Laura unless a test says otherwise. */
+const inLaura = placedIn(LAURA_PRIVATE);
+
+/**
+ * The delete services as the database runs them: the route's check against
+ * the placements `links` answers, then the write, recorded in `written`.
+ */
+const deletes = (links: ImageDeps["linksOf"], keys: string[] = []) => {
+  const written = vi.fn<(ids: readonly string[], fromApp?: App) => void>();
+  const run = async (
+    ids: readonly string[],
+    authorise: AuthoriseLinks,
+    fromApp?: App
+  ) => {
+    authorise(await links(ids));
+    written(ids, fromApp);
+    return keys;
+  };
+  const services: Pick<ImageDeps, "deleteImages" | "removeImagesFromApp"> = {
+    deleteImages: (ids, authorise) => run(ids, authorise),
+    removeImagesFromApp: (ids, fromApp, authorise) =>
+      run(ids, authorise, fromApp),
+  };
+  return { services, written };
+};
+
 const ALT = { en: "The sea", it: "Il mare" };
 const PREPARED = {
   blurDataUrl: "data:image/webp;base64,AAAA",
@@ -39,27 +93,35 @@ const PREPARED = {
 const imagesBody = z.array(imageBodySchema);
 const IMAGE_KEY = /^[0-9a-f-]{36}\.avif$/;
 
+/** A placement as upload meta and PATCH send it: `public` may be left out. */
+type LinkInput = { app: App; public?: boolean };
+const NO_APPS: LinkInput[] = [];
+const LAURA_TWICE: LinkInput[] = [
+  { app: App.LAURA },
+  { app: App.LAURA, public: true },
+];
+
 const app = testHost;
-const upload = (count: number, metaCount = count, size = 10) => {
+const upload = (
+  count: number,
+  metaCount = count,
+  size = 10,
+  apps: LinkInput[] = [{ app: App.LAURA }]
+) => {
   const form = new FormData();
   for (let index = 0; index < count; index += 1) {
     form.append("file", new File([new Uint8Array(size)], `${index}.jpg`));
   }
   form.append(
     "meta",
-    stringifyJson(
-      Array.from({ length: metaCount }, () => ({
-        alt: ALT,
-        app: AllowedApp.LAURA,
-      }))
-    )
+    stringifyJson(Array.from({ length: metaCount }, () => ({ alt: ALT, apps })))
   );
   return { body: form, method: "POST" };
 };
 
 const json = <T>(method: string, body: T & Json<T>) => ({
   body: stringifyJson(body),
-  headers: { "content-type": "application/json" },
+  headers: { [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.JSON },
   method,
 });
 
@@ -81,7 +143,7 @@ describe("POST /v1/images", () => {
     expect(createImages).toHaveBeenCalledWith([
       {
         alt: ALT,
-        app: AllowedApp.LAURA,
+        apps: [LAURA_PRIVATE],
         blurDataUrl: PREPARED.blurDataUrl,
         bytes: 4,
         height: 600,
@@ -93,17 +155,68 @@ describe("POST /v1/images", () => {
     expect(imagesBody.parse(await res.json())).toHaveLength(1);
   });
 
+  it("keeps a placement uploaded public, and makes one sent without `public` private", async () => {
+    const createImages = vi.fn<ImageDeps["createImages"]>(async (rows) =>
+      rows.map((row) => imageRecord(row))
+    );
+    const res = await app(admin, {
+      createImages,
+      prepare: async () => PREPARED,
+      putObject: async () => undefined,
+    }).request(
+      IMAGE_PATH,
+      upload(1, 1, 10, [
+        { app: App.LAURA, public: true },
+        { app: App.BACK_OFFICE },
+      ])
+    );
+    expect(res.status).toBe(201);
+    expect(createImages.mock.calls[0]?.[0][0]?.apps).toEqual([
+      LAURA_PUBLIC,
+      OFFICE_PRIVATE,
+    ]);
+  });
+
   it("refuses a USER", async () => {
     const res = await app(user, {}).request(IMAGE_PATH, upload(1));
     expect(res.status).toBe(403);
   });
 
-  it("lets an ADMIN of any App write, not only the Back office's", async () => {
+  it("lets an Admin of every App named upload it", async () => {
     const res = await app(lauraAdmin, {
-      updateImages: () => Promise.reject(new ImageNotFoundError(["a"])),
-    }).request(IMAGE_PATH, json("PATCH", [{ id: "a" }]));
-    expect(res.status).toBe(404);
+      createImages: async (images) => images.map((image) => imageRecord(image)),
+      prepare: async () => PREPARED,
+      putObject: async () => undefined,
+    }).request(IMAGE_PATH, upload(1));
+    expect(res.status).toBe(201);
   });
+
+  it("refuses an upload to an App the User is no Admin of, preparing nothing", async () => {
+    const prepare = vi.fn();
+    const res = await app(lauraAdmin, { prepare }).request(
+      IMAGE_PATH,
+      upload(1, 1, 10, [{ app: App.LAURA }, { app: App.BACK_OFFICE }])
+    );
+    expect(res.status).toBe(403);
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no App", NO_APPS],
+    ["one App twice", LAURA_TWICE],
+  ])(
+    "refuses meta placing an Image in %s, preparing nothing",
+    async (_, apps) => {
+      const prepare = vi.fn();
+      const res = await app(admin, { prepare }).request(
+        IMAGE_PATH,
+        upload(1, 1, 10, apps)
+      );
+      expect(res.status).toBe(400);
+      expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+      expect(prepare).not.toHaveBeenCalled();
+    }
+  );
 
   it("refuses meta that does not match the files", async () => {
     const res = await app(admin, {}).request(IMAGE_PATH, upload(2, 1));
@@ -250,23 +363,133 @@ describe("POST /v1/images refusals and failures", () => {
 });
 
 describe("PATCH /v1/images", () => {
-  it("updates a batch", async () => {
-    const res = await app(admin, {
-      updateImages: async (changes) =>
-        changes.map(({ id }) => imageRecord({ app: AllowedApp.ALL, id })),
-    }).request(
+  it("replaces the placements of a batch", async () => {
+    const updateImages = vi.fn<ImageDeps["updateImages"]>(async (changes) =>
+      changes.map(({ id }) => imageRecord({ apps: [OFFICE_PRIVATE], id }))
+    );
+    const res = await app(admin, { linksOf: inLaura, updateImages }).request(
       IMAGE_PATH,
-      json("PATCH", [{ app: AllowedApp.ALL, id: "image-1" }])
+      json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "image-1" }])
     );
     expect(res.status).toBe(200);
-    expect(imagesBody.parse(await res.json())[0]?.app).toBe(AllowedApp.ALL);
+    expect(updateImages).toHaveBeenCalledWith([
+      { id: "image-1", place: [OFFICE_PRIVATE], remove: [App.LAURA] },
+    ]);
+    expect(imagesBody.parse(await res.json())[0]?.apps).toEqual([
+      OFFICE_PRIVATE,
+    ]);
+  });
+
+  it("keeps a public placement public when `public` is left out, and starts a new one private", async () => {
+    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
+    const res = await app(admin, {
+      linksOf: placedIn(LAURA_PUBLIC),
+      updateImages,
+    }).request(
+      IMAGE_PATH,
+      json("PATCH", [
+        { apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE }], id: "image-1" },
+      ])
+    );
+    expect(res.status).toBe(200);
+    expect(updateImages).toHaveBeenCalledWith([
+      { id: "image-1", place: [OFFICE_PRIVATE] },
+    ]);
+  });
+
+  it("needs no Admin in an App whose placement stays as it is", async () => {
+    // Public in Laura, private in the Back office: a Back office Admin
+    // switches only the Back office placement, and Laura's stays.
+    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
+    const res = await app(officeAdmin, {
+      linksOf: placedIn(LAURA_PUBLIC, OFFICE_PRIVATE),
+      updateImages,
+    }).request(
+      IMAGE_PATH,
+      json("PATCH", [
+        {
+          apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE, public: true }],
+          id: "image-1",
+        },
+      ])
+    );
+    expect(res.status).toBe(200);
+    expect(updateImages).toHaveBeenCalledWith([
+      { id: "image-1", place: [OFFICE_PUBLIC] },
+    ]);
+  });
+
+  it("sends no placement to write when the list is unchanged, so one added since stays", async () => {
+    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
+    const res = await app(lauraUser, {
+      linksOf: placedIn(LAURA_PRIVATE),
+      updateImages,
+    }).request(
+      IMAGE_PATH,
+      json("PATCH", [{ apps: [{ app: App.LAURA }], id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    expect(updateImages).toHaveBeenCalledWith([{ id: "image-1" }]);
   });
 
   it("answers 404 when an id is unknown", async () => {
     const res = await app(admin, {
-      updateImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
+      linksOf: () => Promise.reject(new ImageNotFoundError(["missing"])),
     }).request(IMAGE_PATH, json("PATCH", [{ id: "missing" }]));
     expect(res.status).toBe(404);
+  });
+
+  it("refuses an alt-only edit by a User below Admin in one of the Image's Apps", async () => {
+    const updateImages = vi.fn();
+    const res = await app(lauraUser, {
+      linksOf: inLaura,
+      updateImages,
+    }).request(IMAGE_PATH, json("PATCH", [{ alt: ALT, id: "image-1" }]));
+    expect(res.status).toBe(403);
+    expect(updateImages).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 for an Image in an App the User cannot enter", async () => {
+    const updateImages = vi.fn();
+    const res = await app(lauraAdmin, {
+      linksOf: placedIn(OFFICE_PRIVATE),
+      updateImages,
+    }).request(IMAGE_PATH, json("PATCH", [{ alt: ALT, id: "image-1" }]));
+    expect(res.status).toBe(404);
+    expect(updateImages).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
+    // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
+    const updateImages = vi.fn();
+    const res = await app(lauraUser, {
+      linksOf: async () =>
+        new Map([
+          ["image-1", [LAURA_PRIVATE]],
+          ["image-2", [OFFICE_PRIVATE]],
+        ]),
+      updateImages,
+    }).request(
+      IMAGE_PATH,
+      json("PATCH", [
+        { alt: ALT, id: "image-1" },
+        { alt: ALT, id: "image-2" },
+      ])
+    );
+    expect(res.status).toBe(404);
+    expect(updateImages).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no App", NO_APPS],
+    ["one App twice", LAURA_TWICE],
+  ])("refuses apps naming %s", async (_, apps) => {
+    const res = await app(admin, {}).request(
+      IMAGE_PATH,
+      json("PATCH", [{ apps, id: "image-1" }])
+    );
+    expect(res.status).toBe(400);
+    expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
   });
 
   it("refuses alt missing a language", async () => {
@@ -279,12 +502,42 @@ describe("PATCH /v1/images", () => {
 });
 
 describe("DELETE /v1/images", () => {
+  it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
+    // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
+    const { services, written } = deletes(
+      async () =>
+        new Map([
+          ["image-1", [LAURA_PRIVATE]],
+          ["image-2", [OFFICE_PRIVATE]],
+        ])
+    );
+    const res = await app(lauraUser, services).request(
+      IMAGE_PATH,
+      json("DELETE", { ids: ["image-1", "image-2"] })
+    );
+    expect(res.status).toBe(404);
+    expect(written).not.toHaveBeenCalled();
+  });
+
+  it("refuses a PATCH naming one Image twice before reading anything", async () => {
+    const linksOf = vi.fn();
+    const res = await app(admin, { linksOf }).request(
+      IMAGE_PATH,
+      json("PATCH", [
+        { alt: ALT, id: "image-1" },
+        { alt: ALT, id: "image-1" },
+      ])
+    );
+    expect(res.status).toBe(400);
+    expect(linksOf).not.toHaveBeenCalled();
+  });
+
   it("deletes the rows, then the objects", async () => {
     const order: string[] = [];
     const res = await app(admin, {
       deleteImages: () => {
         order.push("rows");
-        return Promise.resolve(["a.webp"]);
+        return Promise.resolve(["a.avif"]);
       },
       deleteObjects: (keys) => {
         order.push(`objects:${keys.join()}`);
@@ -292,12 +545,12 @@ describe("DELETE /v1/images", () => {
       },
     }).request(IMAGE_PATH, json("DELETE", { ids: ["image-1"] }));
     expect(res.status).toBe(204);
-    expect(order).toEqual(["rows", "objects:a.webp"]);
+    expect(order).toEqual(["rows", "objects:a.avif"]);
   });
 
   it("still answers 204 when storage fails after the rows are gone", async () => {
     const res = await app(admin, {
-      deleteImages: async () => ["a.webp"],
+      deleteImages: async () => ["a.avif"],
       deleteObjects: () => Promise.reject(new Error("storage down")),
     }).request(IMAGE_PATH, json("DELETE", { ids: ["image-1"] }));
     expect(res.status).toBe(204);
@@ -308,5 +561,29 @@ describe("DELETE /v1/images", () => {
       deleteImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
     }).request(IMAGE_PATH, json("DELETE", { ids: ["missing"] }));
     expect(res.status).toBe(404);
+  });
+
+  it("takes the Images out of one App and removes the files of those left in none", async () => {
+    const { services, written } = deletes(inLaura, ["a.avif"]);
+    const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
+      async () => undefined
+    );
+    const res = await app(lauraAdmin, { ...services, deleteObjects }).request(
+      IMAGE_PATH,
+      json("DELETE", { app: App.LAURA, ids: ["image-1"] })
+    );
+    expect(res.status).toBe(204);
+    expect(written).toHaveBeenCalledWith(["image-1"], App.LAURA);
+    expect(deleteObjects).toHaveBeenCalledWith(["a.avif"]);
+  });
+
+  it("answers 404 for an Image not placed in the App named", async () => {
+    const { services, written } = deletes(placedIn(OFFICE_PRIVATE));
+    const res = await app(admin, services).request(
+      IMAGE_PATH,
+      json("DELETE", { app: App.LAURA, ids: ["image-1"] })
+    );
+    expect(res.status).toBe(404);
+    expect(written).not.toHaveBeenCalled();
   });
 });

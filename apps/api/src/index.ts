@@ -3,7 +3,9 @@ import {
   createImages,
   deleteImages,
   getImage,
+  linksOfImages,
   listImages,
+  removeImagesFromApp,
   updateImages,
 } from "@allonfire/database/features/image/image.service";
 import {
@@ -49,10 +51,12 @@ const app = createApp({
     deleteImages,
     deleteObjects: deleteImageObjects,
     getImage,
+    linksOf: linksOfImages,
     listImages,
     log: logger,
     prepare: prepareImage,
     putObject: putImageObject,
+    removeImagesFromApp,
     updateImages,
   },
   store: createRedisStore(redis),

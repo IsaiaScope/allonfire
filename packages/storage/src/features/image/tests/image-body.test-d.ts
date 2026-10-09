@@ -1,3 +1,4 @@
+import type { ImageLink } from "@allonfire/database/features/auth/access/access";
 import type { ImageRecord } from "@allonfire/database/features/image/image.service";
 import type { ImageBody } from "../constants/schemas";
 
@@ -10,4 +11,8 @@ test("the wire Image is the stored one, picked and serialised", () => {
   expectTypeOf<ImageBody>().toEqualTypeOf<
     Wire<Pick<ImageRecord, keyof ImageBody>>
   >();
+});
+
+test("a placement travels as the access rules read it", () => {
+  expectTypeOf<ImageBody["apps"][number]>().toEqualTypeOf<ImageLink>();
 });

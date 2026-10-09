@@ -1,10 +1,11 @@
 import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
 import { forwardedHeaders } from "@allonfire/core/features/next/api/forwarded-for";
-import { setCookieToHeader } from "better-auth/cookies";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
+import { nextAuthEnv } from "../../../environment/next-environment";
+import { AUTH_ERROR_CODE } from "../../../shared/constants/errors";
+import { APP_HEADER } from "../../../shared/constants/headers";
 import { SIGN_IN_ERROR, type SignInError } from "../constants/api";
-import { canAccess } from "./access";
 import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
 import { adoptSetCookies } from "./set-cookie";
 
@@ -17,15 +18,17 @@ const credentialsSchema = z.object({
 const text = (value: FormDataEntryValue | null) =>
   typeof value === "string" ? value.trim() : "";
 
-/** Ends a Session the API just opened for someone the App refuses. */
-const revoke = async (client: ApiAuthClient, sessionHeaders: Headers) => {
-  await client
-    .signOut({ fetchOptions: { headers: sessionHeaders } })
-    .catch(() => undefined);
-};
-
-/** Why the API refused, by its status. */
-const errorFor = (status: number) => {
+/**
+ * Why the API refused, by its status. Only the App's own refusal is
+ * `forbidden`: Better Auth also answers 403 to an untrusted origin, a
+ * misconfiguration, not this User's fault.
+ */
+const errorFor = ({ code, status }: { code?: string; status: number }) => {
+  if (status === HTTP_STATUS.FORBIDDEN) {
+    return code === AUTH_ERROR_CODE.APP_FORBIDDEN
+      ? SIGN_IN_ERROR.FORBIDDEN
+      : SIGN_IN_ERROR.UNAVAILABLE;
+  }
   if (status === HTTP_STATUS.TOO_MANY_REQUESTS) {
     return SIGN_IN_ERROR.RATE_LIMITED;
   }
@@ -35,9 +38,10 @@ const errorFor = (status: number) => {
 };
 
 /**
- * Signs in through the API's Better Auth with the form's email and password.
- * Someone the App lets in gets the Session cookies on the App's own response
- * and no error back; anyone else's fresh Session is revoked at once.
+ * Signs in through the API's Better Auth with the form's email and password,
+ * naming this App: the API refuses anyone the App does not let in and opens
+ * no Session for them. Someone let in gets the Session cookies on the App's
+ * own response and no error back.
  */
 export const signInWithEmail = async (
   formData: FormData
@@ -52,31 +56,23 @@ export const signInWithEmail = async (
     return SIGN_IN_ERROR.INVALID;
   }
 
-  const client = createApiAuthClient();
-  const forwarded = forwardedHeaders(await headers());
-  // The new Session's cookies, as a request would send them, to revoke it.
-  const sessionHeaders = new Headers(forwarded);
+  const requestHeaders = new Headers(forwardedHeaders(await headers()));
+  requestHeaders.set(APP_HEADER, nextAuthEnv.AUTH_APP);
   let setCookies: string[] = [];
   let signedIn: Awaited<ReturnType<ApiAuthClient["signIn"]["email"]>>;
   try {
-    signedIn = await client.signIn.email(credentials.data, {
-      headers: forwarded,
+    signedIn = await createApiAuthClient().signIn.email(credentials.data, {
+      headers: requestHeaders,
       onResponse: (context) => {
         setCookies = context.response.headers.getSetCookie();
-        setCookieToHeader(sessionHeaders)(context);
       },
     });
   } catch {
     return SIGN_IN_ERROR.UNAVAILABLE;
   }
   if (signedIn.error) {
-    return errorFor(signedIn.error.status);
+    return errorFor(signedIn.error);
   }
-  if (!canAccess(signedIn.data.user)) {
-    await revoke(client, sessionHeaders);
-    return SIGN_IN_ERROR.FORBIDDEN;
-  }
-
   adoptSetCookies(await cookies(), setCookies);
   return undefined;
 };

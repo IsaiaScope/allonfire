@@ -40,11 +40,7 @@ export const listRoute = describeRoute({
       content: imageListBody,
       description: IMAGE_ROUTE_DOC.LIST_200,
     },
-    ...problems(
-      HTTP_STATUS.BAD_REQUEST,
-      HTTP_STATUS.UNAUTHORIZED,
-      HTTP_STATUS.FORBIDDEN
-    ),
+    ...problems(HTTP_STATUS.BAD_REQUEST),
   },
   summary: IMAGE_ROUTE_DOC.LIST_SUMMARY,
   tags: [IMAGE_OPENAPI_TAG],
@@ -57,7 +53,7 @@ export const getRoute = describeRoute({
       content: imageBody,
       description: IMAGE_ROUTE_DOC.GET_200,
     },
-    ...problems(HTTP_STATUS.UNAUTHORIZED, HTTP_STATUS.NOT_FOUND),
+    ...problems(HTTP_STATUS.NOT_FOUND),
   },
   summary: IMAGE_ROUTE_DOC.GET_SUMMARY,
   tags: [IMAGE_OPENAPI_TAG],

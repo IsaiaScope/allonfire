@@ -6,7 +6,7 @@ import type { AOFStorageImageSource } from "@allonfire/ui/components/aof-image";
  * https://unsplash.com/photos/R1OKYQkalRc. Decorative, so its alt is empty.
  *
  * ponytail: the key is the one the local MinIO holds. Each environment needs
- * this Image uploaded (POST /v1/images, app BACK_OFFICE) and its key here,
+ * this Image uploaded (POST /v1/images, apps [{ app: BACK_OFFICE }]) and its key here,
  * until the page can look an Image up by name without a session.
  */
 export const SIGN_IN_IMAGE = {

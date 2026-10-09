@@ -23,23 +23,22 @@ with nothing else touched.
 
 ## Positioning
 
-One place governs every App's users. A User's Role (Viewer, User, Admin, ranked)
-and Allowed apps (one or more Apps, or all of them) decide what they can do
-everywhere at once, so the Back office edits access for the whole family of
-Apps, not for a single product.
+One place governs every App's users. A User belongs to one or more Apps, with
+a Role in each (Viewer, User, Admin, ranked), so the Back office edits access
+for the whole family of Apps, not for a single product.
 
 ## Operating Context
 
 - Used on desktop and phone alike; designed mobile-first.
 - Ships in English and Italian (English by default, Italian at `/it`).
-- Signing in goes through the API's Auth module; Sessions live in Postgres and
-  reach the guards up to five minutes late through the cookie cache, so an
-  access change is not instant everywhere.
-- Users come from the seed; sign-up is disabled.
+- Signing in goes through the API's Auth module; Sessions live in Postgres. A
+  Role change counts at once; a revoked Session reaches the guards up to five
+  minutes late through the cookie cache.
+- The Back office is sign-in only: nobody registers there.
 
 ## Capabilities and Constraints
 
-- First job: Users and access. List Users, set a User's Role and Allowed apps,
+- First job: Users and access. List Users, set a User's Memberships (the Apps they belong to and their Role in each),
   revoke Sessions.
 - Later, not yet decided: each App's content (Laura's photos and quiz), data
   and health views.

@@ -9,6 +9,7 @@
     "./environment/environment": "./src/environment/environment.ts",
     "./features/apps/laura/game-score.service": "./src/features/apps/laura/game-score.service.ts",
     "./features/auth/access/access": "./src/features/auth/access/access.ts",
+    "./features/auth/access/constants/app-settings": "./src/features/auth/access/constants/app-settings.ts",
     "./features/auth/access/constants/roles": "./src/features/auth/access/constants/roles.ts",
     "./features/auth/access/constants/schemas": "./src/features/auth/access/constants/schemas.ts",
     "./features/auth/user.service": "./src/features/auth/user.service.ts",

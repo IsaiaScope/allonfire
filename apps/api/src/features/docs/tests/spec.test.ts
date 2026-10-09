@@ -76,6 +76,21 @@ describe("GET /openapi.json", () => {
 });
 
 describe("GET /openapi.json error responses", () => {
+  it("documents the Image reads with no sign-in errors, the writes with them", async () => {
+    const { paths } = await document();
+    expect(paths["/v1/images"]).not.toHaveProperty(["get", "responses", "401"]);
+    expect(paths["/v1/images"]).not.toHaveProperty(["get", "responses", "403"]);
+    expect(paths["/v1/images/{id}"]).not.toHaveProperty([
+      "get",
+      "responses",
+      "401",
+    ]);
+    expect(paths["/v1/images"]).toHaveProperty(
+      ["patch", "responses", "401", "$ref"],
+      "#/components/responses/Problem401"
+    );
+  });
+
   const problemSpecSchema = z.object({
     components: z.object({
       responses: z.record(z.string(), z.unknown()),

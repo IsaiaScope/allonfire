@@ -17,7 +17,7 @@ export const AUTH_COOKIE = {
 
 /** Why a sign in failed; an App translates each one. */
 export const SIGN_IN_ERROR = {
-  /** Signed in, but the User's Role or Allowed apps keep them out. */
+  /** The API refused: this User has no Membership in the App, or a Role under its floor. */
   FORBIDDEN: "forbidden",
   INVALID: "invalid",
   /** The email or the password was left empty. */

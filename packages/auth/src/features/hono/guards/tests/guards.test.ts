@@ -1,12 +1,11 @@
 // @module-tag unit
-import { AllowedApp, Role } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
 import { Hono, type MiddlewareHandler } from "hono";
 import { sessionFor, stubAuth } from "../../../../shared/tests/stub-auth";
 import type { AuthSession } from "../../../../shared/types/auth";
 import { sessionLoader } from "../../session/middleware/session-loader";
 import type { AuthEnv, SignedInEnv } from "../../types/variables";
 import { requireApp } from "../middleware/require-app";
-import { requireRole } from "../middleware/require-role";
 import { requireSession } from "../middleware/require-session";
 
 async function status(
@@ -35,39 +34,31 @@ describe("requireSession", () => {
   });
 });
 
-describe("requireRole", () => {
-  it("passes the minimum Role and every Role above it", async () => {
-    const guard = requireRole(Role.USER);
-    expect(await status(sessionFor({ role: Role.VIEWER }), guard)).toBe(403);
-    expect(await status(sessionFor({ role: Role.USER }), guard)).toBe(200);
-    expect(await status(sessionFor({ role: Role.ADMIN }), guard)).toBe(200);
-    expect(await status(null, guard)).toBe(401);
-  });
-
-  it("lets only ADMIN through requireRole(ADMIN)", async () => {
-    const guard = requireRole(Role.ADMIN);
-    expect(await status(sessionFor({ role: Role.ADMIN }), guard)).toBe(200);
-    expect(await status(sessionFor({ role: Role.USER }), guard)).toBe(403);
-  });
-});
-
 describe("requireApp", () => {
-  it("allows the named App or all", async () => {
-    const guard = requireApp({ app: AllowedApp.LAURA, minRole: Role.VIEWER });
-    expect(
-      await status(sessionFor({ allowedApps: [AllowedApp.LAURA] }), guard)
-    ).toBe(200);
-    expect(
-      await status(sessionFor({ allowedApps: [AllowedApp.ALL] }), guard)
-    ).toBe(200);
-    expect(await status(sessionFor({ allowedApps: [] }), guard)).toBe(403);
+  it("allows a User whose Role in the App reaches its floor", async () => {
+    const guard = requireApp(App.LAURA);
+    const laura = (role: Role) =>
+      sessionFor({ memberships: [{ app: App.LAURA, role }] });
+    expect(await status(laura(Role.VIEWER), guard)).toBe(200);
+    expect(await status(laura(Role.ADMIN), guard)).toBe(200);
   });
 
-  it("refuses a Role under the floor the host sets", async () => {
-    const admins = requireApp({ app: AllowedApp.LAURA, minRole: Role.ADMIN });
-    expect(await status(sessionFor({ role: Role.USER }), admins)).toBe(403);
-    expect(await status(sessionFor({ role: Role.ADMIN }), admins)).toBe(200);
-    const viewers = requireApp({ app: AllowedApp.LAURA, minRole: Role.VIEWER });
-    expect(await status(sessionFor({ role: Role.VIEWER }), viewers)).toBe(200);
+  it("refuses a User of another App, and a Role under the floor", async () => {
+    const guard = requireApp(App.BACK_OFFICE);
+    expect(
+      await status(
+        sessionFor({ memberships: [{ app: App.LAURA, role: Role.ADMIN }] }),
+        guard
+      )
+    ).toBe(403);
+    expect(
+      await status(
+        sessionFor({
+          memberships: [{ app: App.BACK_OFFICE, role: Role.USER }],
+        }),
+        guard
+      )
+    ).toBe(403);
+    expect(await status(null, guard)).toBe(401);
   });
 });

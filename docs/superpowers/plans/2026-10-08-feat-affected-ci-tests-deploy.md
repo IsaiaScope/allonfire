@@ -317,7 +317,7 @@ Expected: a number smaller than the full run's (`pnpm -s turbo run check-types -
 
 - [ ] **Step 5: Document**
 
-`CLAUDE.md`, Deployment section, add: `- CI runs check-types, test and build with \`turbo --affected\`; lint and the repo-wide checks always run. \`packages/config/ci/affected.ts\` turns \`turbo ls --affected\` into the affected Apps and Deploy units.`
+`CLAUDE.md`, Deployment section, add: `- CI runs check-types, test and build with \`turbo --affected\`; lint and the repo-wide checks always run. \`packages/ci/src/features/affected/affected.ts\` turns \`turbo ls --affected\` into the affected Apps and Deploy units.`
 
 ---
 
@@ -370,7 +370,7 @@ Expected: FAIL, cannot resolve `./tests/vitest.browser.config`.
 
 - [ ] **Step 3: Install and write the browser preset**
 
-Run: `pnpm --filter @allonfire/config add -D @vitest/browser-playwright@^4.1.11 playwright@^1.63.0` and add both to `peerDependencies` as optional (like `vitest`). Then `pnpm exec playwright install chromium`.
+Run: `pnpm --filter @allonfire/config add -D vitest@^4.1.11 @vitest/browser-playwright@^4.1.11 playwright@^1.63.0` and add the last two to `peerDependencies` as optional (like `vitest`). Then `pnpm exec playwright install chromium`.
 
 ```ts
 // packages/config/tests/vitest.browser.config.ts
@@ -711,7 +711,9 @@ export default aofPlaywrightConfig({ app: "back-office", port: 3400 });
 // apps/back-office/e2e/users.ts
 /**
  * The seeded Users (`pnpm db:seed` in dev mode): the admin from
- * DATABASE_SEED_ADMIN_*, the mock USER with DATABASE_SEED_TEST_PASSWORD.
+ * DATABASE_SEED_ADMIN_* (ADMIN in every App), and a mock User whose Back
+ * office Membership is USER, under the floor in APP_SETTINGS (ADMIN), with
+ * DATABASE_SEED_TEST_PASSWORD.
  * Defaults match packages/database/.env.example.
  */
 export const E2E_USER = {
@@ -747,7 +749,7 @@ test("an admin signs in and lands home", async ({ page }) => {
   await expect(page.getByText("Nothing here yet.")).toBeVisible();
 });
 
-test("a USER is refused and stays on sign-in", async ({ page }) => {
+test("a User under the Back office floor is refused", async ({ page }) => {
   await signIn(page, E2E_USER.USER);
   await expect(page.getByRole("alert")).toHaveText(
     "This account cannot enter the Back office."
@@ -829,7 +831,6 @@ Check the dev server ownership rule first: if 3300 or 3400 is already served by 
       API_AUTH_URL: http://localhost:3300/v1/auth
       NEXT_PUBLIC_API_URL: http://localhost:3300
       AUTH_APP: BACK_OFFICE
-      AUTH_MIN_ROLE: ADMIN
       DATABASE_SEED_MODE: dev
       DATABASE_SEED_ADMIN_EMAIL: admin@example.com
       DATABASE_SEED_ADMIN_PASSWORD: changeme123
@@ -888,7 +889,7 @@ Check the dev server ownership rule first: if 3300 or 3400 is already served by 
 
 - [ ] **Step 2: Pass the env through Turbo**
 
-`turbo.json`, `test:e2e`: add `"passThroughEnv": ["CI", "DATABASE_SEED_*", "API_AUTH_URL", "NEXT_PUBLIC_API_URL", "AUTH_APP", "AUTH_MIN_ROLE"]` (globals already pass the rest). Same list on `test:browser` is not needed.
+`turbo.json`, `test:e2e`: add `"passThroughEnv": ["CI", "DATABASE_SEED_*", "API_AUTH_URL", "NEXT_PUBLIC_API_URL", "AUTH_APP"]` (globals already pass the rest). Same list on `test:browser` is not needed.
 
 - [ ] **Step 3: Verify**
 
@@ -1008,7 +1009,6 @@ In `docker/docker-compose.prod.yml`:
       - API_URL=http://api:3000
       - API_AUTH_URL=http://api:3000/v1/auth
       - AUTH_APP=BACK_OFFICE
-      - AUTH_MIN_ROLE=ADMIN
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
       interval: 30s

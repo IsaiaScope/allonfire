@@ -1,13 +1,14 @@
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { z } from "zod";
+import { App, Role } from "../../../generated/prisma/enums";
 import type { SeedEnv } from "../../environment/seed-environment";
-import { allowedAppSchema, roleSchema } from "../auth/access/constants/schemas";
+import { appSchema, roleSchema } from "../auth/access/constants/schemas";
 
-/** A seeded User. Parsed, not cast: a typo in the mock file fails the seed. */
+/** A seeded User and the Apps they belong to. Parsed, not cast: a typo in the mock file fails the seed. */
 export const seedUserSchema = z.object({
-  allowedApps: z.array(allowedAppSchema),
   email: z.email(),
+  memberships: z.array(z.object({ app: appSchema, role: roleSchema })).min(1),
   name: z.string(),
-  role: roleSchema,
 });
 
 export const seedUsersSchema = z.array(seedUserSchema);
@@ -24,3 +25,10 @@ export type AppSeed = {
   password: (env: SeedEnv) => string;
   mockUsersFile: string;
 };
+
+/** The main admin: Admin of every App there is today; a new App's changeset adds its row. */
+export const adminSeedUser = (email: string, name: string): SeedUser => ({
+  email,
+  memberships: objectValues(App).map((app) => ({ app, role: Role.ADMIN })),
+  name,
+});

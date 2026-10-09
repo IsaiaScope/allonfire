@@ -1,8 +1,13 @@
-import { AllowedApp, Role } from "@allonfire/database/enums";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App, Role } from "@allonfire/database/enums";
 import { AUTH_PATH } from "../constants/paths";
 import type { AuthLike, AuthSession } from "../types/auth";
 
 const SESSION_TTL_MS = 60_000;
+
+/** The same Role in every App, for a test about one Role. */
+export const membershipsIn = (role: Role) =>
+  objectValues(App).map((app) => ({ app, role }));
 
 /** A signed-in Session; override the user fields a test is about. */
 export function sessionFor(
@@ -14,11 +19,10 @@ export function sessionFor(
       id: "session-1",
     },
     user: {
-      allowedApps: [AllowedApp.ALL],
       email: "user@allonfire.test",
       id: "user-1",
+      memberships: membershipsIn(Role.USER),
       name: "Test User",
-      role: Role.USER,
       ...user,
     },
   };

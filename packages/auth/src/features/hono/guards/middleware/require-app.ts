@@ -1,12 +1,11 @@
-import {
-  type AppPolicy,
-  canEnterApp,
-} from "@allonfire/database/features/auth/access/access";
+import type { App } from "@allonfire/database/enums";
+import { canEnterApp } from "@allonfire/database/features/auth/access/access";
 import { guard } from "../utils/guard";
 
 /**
- * 403 unless the User is allowed into the App (`canEnterApp`). The host declares
- * the policy: `requireApp({ app: AllowedApp.LAURA, minRole: Role.VIEWER })`.
+ * 403 unless the User is allowed into the App (`canEnterApp`): a Membership
+ * there whose Role reaches the App's floor in `APP_SETTINGS`.
+ * `requireApp(App.LAURA)`.
  */
-export const requireApp = (policy: AppPolicy) =>
-  guard(({ user }) => canEnterApp(user, policy));
+export const requireApp = (app: App) =>
+  guard(({ user }) => canEnterApp(user, app));

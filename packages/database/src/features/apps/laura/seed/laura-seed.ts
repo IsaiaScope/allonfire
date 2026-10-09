@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import { AllowedApp, Role } from "../../../../../generated/prisma/enums";
+import { App, Role } from "../../../../../generated/prisma/enums";
 import type { SeedEnv } from "../../../../environment/seed-environment";
 import type { AppSeed, SeedUser } from "../../../seed/seed-user";
 
@@ -10,10 +10,9 @@ export const lauraSeedUsers = ({
   DATABASE_SEED_LAURA_VIEWER_EMAIL: email,
 }: LauraSeedEnv): SeedUser[] => [
   {
-    allowedApps: [AllowedApp.LAURA],
     email,
+    memberships: [{ app: App.LAURA, role: Role.VIEWER }],
     name: email.split("@")[0] ?? "laura-viewer",
-    role: Role.VIEWER,
   },
 ];
 

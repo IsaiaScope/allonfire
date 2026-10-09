@@ -2,8 +2,8 @@
 
 Images are managed in the Back office and shown by one App or by all of them,
 so their rows cannot sit in any one App's schema (ADR 0007). They live in a
-shared `image` schema beside `auth`, one `image."Image"` table with an `app`
-column, and their files in one public MinIO bucket, `image`, under keys that
+shared `image` schema beside `auth`, one `image."Image"` table (the Apps an
+Image is in are `image."ImageApp"` rows, ADR 0020), and their files in one public MinIO bucket, `image`, under keys that
 carry no App, so moving an Image between Apps changes a row and never a file.
 Each App resizes and converts them with Next's built-in optimizer, reading the
 bucket through a `/storage/images/*` rewrite, instead of running imgproxy: no new

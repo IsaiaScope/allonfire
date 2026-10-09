@@ -1,8 +1,6 @@
 import { jsonFrom } from "@allonfire/core/shared/utils/json";
-import {
-  allowedAppSchema,
-  appSchema,
-} from "@allonfire/database/features/auth/access/constants/schemas";
+import type { App } from "@allonfire/database/enums";
+import { appSchema } from "@allonfire/database/features/auth/access/constants/schemas";
 import { imageAltSchema } from "@allonfire/database/features/image/alt";
 import { z } from "zod";
 import { imageBodySchema } from "../../constants/schemas";
@@ -21,9 +19,9 @@ export const imageListBodySchema = z.object({
 });
 export type ImageListBody = z.infer<typeof imageListBodySchema>;
 
-/** A caller lists for its own App; ALL Images come with every App's list. */
+/** The Images visible in `app`, or in any App when it is left out. */
 export const listQuerySchema = z.object({
-  app: appSchema,
+  app: appSchema.optional(),
   cursor: cursorSchema.optional(),
   limit: z.coerce
     .number()
@@ -35,10 +33,30 @@ export const listQuerySchema = z.object({
 
 export const idParamSchema = z.object({ id: z.string().min(1) });
 
+/** An Image is placed in an App once: a repeat is the client's 400, not a key clash. */
+const eachAppOnce = (links: readonly { app: App }[]) =>
+  new Set(links.map(({ app }) => app)).size === links.length;
+const EACH_APP_ONCE = "names an App more than once";
+
+/** Upload: at least one App, each once; a placement sent without `public` is private. */
+const uploadLinksSchema = z
+  .array(z.object({ app: appSchema, public: z.boolean().default(false) }))
+  .min(1)
+  .refine(eachAppOnce, EACH_APP_ONCE);
+
+/**
+ * PATCH: the Image's full new list, at least one App, each once. A `public`
+ * left out is the route's to resolve against the current placements.
+ */
+const patchLinksSchema = z
+  .array(z.object({ app: appSchema, public: z.boolean().optional() }))
+  .min(1)
+  .refine(eachAppOnce, EACH_APP_ONCE);
+
 /** One entry per uploaded file, in the same order. */
 export const uploadItemSchema = z.object({
   alt: imageAltSchema,
-  app: allowedAppSchema,
+  apps: uploadLinksSchema,
 });
 
 /**
@@ -71,13 +89,22 @@ export const patchBodySchema = z
   .array(
     z.object({
       alt: imageAltSchema.optional(),
-      app: allowedAppSchema.optional(),
+      apps: patchLinksSchema.optional(),
       id: z.string().min(1),
     })
   )
   .min(1)
-  .max(MAX_BATCH);
+  .max(MAX_BATCH)
+  // Each change is checked and resolved against the Image as read: a second
+  // change to the same Image would read placements the first one replaced.
+  .refine(
+    (changes) => new Set(changes.map(({ id }) => id)).size === changes.length,
+    "names an Image more than once"
+  );
+export type PatchChange = z.output<typeof patchBodySchema>[number];
 
 export const deleteBodySchema = z.object({
+  /** Takes the Images out of this App only; left out, deletes them everywhere. */
+  app: appSchema.optional(),
   ids: z.array(z.string().min(1)).min(1).max(MAX_BATCH),
 });

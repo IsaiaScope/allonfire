@@ -1,12 +1,12 @@
 // @module-tag unit
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { AllowedApp, Role } from "@allonfire/database/enums";
+import { App } from "@allonfire/database/enums";
 import { NextResponse } from "next/server";
+import { AUTH_ERROR_CODE } from "../../../shared/constants/errors";
 import { SIGN_IN_ERROR } from "../constants/api";
 import { signInWithEmail } from "../utils/sign-in";
 
 const TOKEN = "better-auth.session_token";
-const SIGN_OUT_PATH = /\/sign-out$/;
 const NEW_SESSION = `${TOKEN}=fresh; Path=/; HttpOnly; SameSite=Lax`;
 
 let response = new NextResponse();
@@ -24,12 +24,12 @@ vi.mock("next/headers", () => ({
 }));
 
 /** The API's answer to the sign-in, with the new Session's cookie. */
-const signedInAs = (user: { allowedApps: string[]; role: string }) =>
+const signedIn = () =>
   new Response(
     stringifyJson({
       redirect: false,
       token: "fresh",
-      user: { email: "a@b.test", id: "user-1", name: "A", ...user },
+      user: { email: "a@b.test", id: "user-1", name: "A" },
     }),
     {
       headers: [
@@ -39,8 +39,8 @@ const signedInAs = (user: { allowedApps: string[]; role: string }) =>
     }
   );
 
-const refusedWith = (status: number) =>
-  new Response(stringifyJson({ message: "no" }), {
+const refusedWith = (status: number, code = "REFUSED") =>
+  new Response(stringifyJson({ code, message: "no" }), {
     headers: { "content-type": "application/json" },
     status,
   });
@@ -75,38 +75,33 @@ beforeEach(() => {
 });
 
 describe("signInWithEmail", () => {
-  it("adopts the Session cookies for a User the App lets in", async () => {
-    fetchMock.mockResolvedValueOnce(
-      signedInAs({ allowedApps: [AllowedApp.BACK_OFFICE], role: Role.ADMIN })
-    );
+  it("names the App and adopts the Session cookies the API sends", async () => {
+    fetchMock.mockResolvedValueOnce(signedIn());
     await expect(signInWithEmail(form())).resolves.toBeUndefined();
     expect(
       sentCookies().some((cookie) => cookie.startsWith(`${TOKEN}=fresh`))
     ).toBe(true);
+    expect(call(0).headers.get("x-aof-app")).toBe(App.BACK_OFFICE);
     expect(call(0).headers.get("origin")).toBe("http://localhost:3400");
     expect(call(0).headers.get("x-forwarded-for")).toBe("1.2.3.4");
   });
 
-  it("revokes the fresh Session of a User the App refuses, and sets no cookie", async () => {
+  it("answers forbidden when the API refuses the App, and sets no cookie", async () => {
     fetchMock.mockResolvedValueOnce(
-      signedInAs({ allowedApps: [AllowedApp.LAURA], role: Role.ADMIN })
+      refusedWith(403, AUTH_ERROR_CODE.APP_FORBIDDEN)
     );
     await expect(signInWithEmail(form())).resolves.toBe(
       SIGN_IN_ERROR.FORBIDDEN
     );
     expect(sentCookies()).toEqual([]);
-    expect(call(1).url).toMatch(SIGN_OUT_PATH);
-    expect(call(1).headers.get("cookie")).toContain(`${TOKEN}=fresh`);
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("refuses a Viewer when the App's floor is ADMIN", async () => {
-    fetchMock.mockResolvedValueOnce(
-      signedInAs({ allowedApps: [AllowedApp.ALL], role: Role.VIEWER })
-    );
+  it("answers unavailable to any other 403, such as an untrusted origin", async () => {
+    fetchMock.mockResolvedValueOnce(refusedWith(403, "INVALID_ORIGIN"));
     await expect(signInWithEmail(form())).resolves.toBe(
-      SIGN_IN_ERROR.FORBIDDEN
+      SIGN_IN_ERROR.UNAVAILABLE
     );
-    expect(sentCookies()).toEqual([]);
   });
 
   it.each([

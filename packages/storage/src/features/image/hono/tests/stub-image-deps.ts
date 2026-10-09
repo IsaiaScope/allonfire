@@ -1,4 +1,4 @@
-import { AllowedApp } from "@allonfire/database/enums";
+import { App } from "@allonfire/database/enums";
 import type { ImageRecord } from "@allonfire/database/features/image/image.service";
 import type { ImageDeps } from "../utils/deps";
 
@@ -10,7 +10,7 @@ export const imageRecord = (
   overrides: Partial<ImageRecord> = {}
 ): ImageRecord => ({
   alt: { en: "The sea", it: "Il mare" },
-  app: AllowedApp.LAURA,
+  apps: [{ app: App.LAURA, public: false }],
   blurDataUrl: "data:image/webp;base64,AAAA",
   bytes: 1000,
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
@@ -30,10 +30,12 @@ export const stubImageDeps = (
   deleteImages: unexpected("deleteImages"),
   deleteObjects: unexpected("deleteObjects"),
   getImage: unexpected("getImage"),
+  linksOf: unexpected("linksOf"),
   listImages: unexpected("listImages"),
   log: { warn: () => undefined },
   prepare: unexpected("prepare"),
   putObject: unexpected("putObject"),
+  removeImagesFromApp: unexpected("removeImagesFromApp"),
   updateImages: unexpected("updateImages"),
   ...overrides,
 });

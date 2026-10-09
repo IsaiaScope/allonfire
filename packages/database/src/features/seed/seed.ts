@@ -2,11 +2,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { hashPassword } from "better-auth/crypto";
-import { AllowedApp, Role } from "../../../generated/prisma/client";
 import { seedEnv } from "../../environment/seed-environment";
 import { APP_SEEDS } from "../apps/seeds";
 import { prisma } from "../prisma/client";
-import { seedUsersSchema } from "./seed-user";
+import { adminSeedUser, seedUsersSchema } from "./seed-user";
 import { upsertUser } from "./upsert-user";
 
 const MOCK_DIR = resolve(import.meta.dirname, "mock");
@@ -20,12 +19,7 @@ async function main() {
   const adminHash = await hashPassword(seedEnv.DATABASE_SEED_ADMIN_PASSWORD);
 
   await upsertUser(
-    {
-      allowedApps: [AllowedApp.ALL],
-      email: seedEnv.DATABASE_SEED_ADMIN_EMAIL,
-      name: adminName,
-      role: Role.ADMIN,
-    },
+    adminSeedUser(seedEnv.DATABASE_SEED_ADMIN_EMAIL, adminName),
     adminHash
   );
 

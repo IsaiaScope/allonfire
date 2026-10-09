@@ -1,9 +1,12 @@
 // @module-tag unit
 
-import { sessionFor } from "@allonfire/auth/shared/tests/stub-auth";
+import {
+  membershipsIn,
+  sessionFor,
+} from "@allonfire/auth/shared/tests/stub-auth";
 import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { AllowedApp, Role } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
 import {
   imageRecord,
   stubImageDeps,
@@ -17,7 +20,7 @@ import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import { translate } from "../../i18n/translate";
 import { problemOf } from "./problem-of";
 
-const admin = sessionFor({ role: Role.ADMIN });
+const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
 const PREPARED = {
   blurDataUrl: "data:image/webp;base64,AAAA",
   buffer: Buffer.from("webp"),
@@ -39,7 +42,7 @@ const upload = () => {
   form.append("file", new File([new Uint8Array(10)], "a.jpg"));
   form.append(
     "meta",
-    stringifyJson([{ alt: { en: "", it: "" }, app: AllowedApp.LAURA }])
+    stringifyJson([{ alt: { en: "", it: "" }, apps: [{ app: App.LAURA }] }])
   );
   return {
     body: form,
@@ -92,5 +95,30 @@ describe("the Image module inside the API", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("the Image module's reads and writes inside the API", () => {
+  it("lists for a visitor: no Session, no App entered", async () => {
+    const listImages = vi.fn<ImageDeps["listImages"]>(async () => []);
+    const res = await createApp(
+      appDeps({ images: stubImageDeps({ listImages }) })
+    ).request(`/v1/images?app=${App.LAURA}`);
+    expect(res.status).toBe(200);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.LAURA,
+      enterable: [],
+      limit: 30,
+    });
+  });
+
+  it("asks a visitor to sign in before a write, as a problem document", async () => {
+    const res = await createApp(appDeps()).request("/v1/images", {
+      body: stringifyJson({ ids: ["image-1"] }),
+      headers: { "content-type": "application/json" },
+      method: "DELETE",
+    });
+    expect(res.status).toBe(401);
+    expect((await problemOf(res)).status).toBe(401);
   });
 });
