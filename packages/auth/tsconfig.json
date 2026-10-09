@@ -1,9 +1,11 @@
 {
   "extends": "../config/typescript/node.json",
   "compilerOptions": {
+    // features/next reads FormData and Headers, typed by the DOM lib.
+    "lib": ["dom", "dom.iterable", "ES2022"],
     "paths": {
       "@allonfire/database": ["../database/src/index.ts"],
-      "@allonfire/utils/*": ["../utils/src/*"]
+      "@allonfire/core/*": ["../core/src/*"]
     }
   },
   "include": ["src", "vitest.config.ts", "vitest.setup.ts"],

@@ -8,15 +8,16 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis openobserve",
+    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis openobserve minio minio-init",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
     "test": "vitest run"
   },
   "dependencies": {
     "@allonfire/auth": "workspace:*",
+    "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
-    "@allonfire/utils": "workspace:*",
+    "@allonfire/storage": "workspace:*",
     "@formatjs/fast-memoize": "^3.1.7",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hono/node-server": "^1.14.0",

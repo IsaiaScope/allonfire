@@ -27,17 +27,20 @@ COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
-# collection. MINIO_ENDPOINT, MINIO_BUCKET, and BETTER_AUTH_URL must match
-# runtime values because Next.js bakes them into prerendered HTML at build time.
-# Other values are placeholders that never reach the runner stage (multi-stage isolation).
-ARG BETTER_AUTH_URL="http://localhost:3000"
+# collection. STORAGE_ENDPOINT and NEXT_PUBLIC_API_URL must match runtime values:
+# Next.js bakes them in at build (STORAGE_ENDPOINT is the /storage/images
+# rewrite target, NEXT_PUBLIC_API_URL the API the browser calls). The Back
+# office's build fails without STORAGE_ENDPOINT or NEXT_PUBLIC_API_URL.
+# Other values are placeholders that never reach the runner stage.
+ARG STORAGE_ENDPOINT
+ARG NEXT_PUBLIC_API_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
-    BETTER_AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
-    BETTER_AUTH_URL=${BETTER_AUTH_URL} \
-    MINIO_ENDPOINT="http://minio:9000" \
-    MINIO_ACCESS_KEY="build" \
-    MINIO_SECRET_KEY="build-placeholder" \
-    MINIO_BUCKET="allonfire"
+    AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
+    AUTH_URL="http://build.placeholder" \
+    STORAGE_ENDPOINT=${STORAGE_ENDPOINT} \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    STORAGE_ACCESS_KEY="build" \
+    STORAGE_SECRET_KEY="build-placeholder"
 RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 

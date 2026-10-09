@@ -1,9 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { MS_PER_MINUTE } from "@allonfire/core/shared/constants/units";
 import { PrismaClient } from "../../generated/prisma/client";
 import { env } from "../../src/environment/environment";
 
 export const PACKAGE_DIR = resolve(import.meta.dirname, "../..");
+
+/** Liquibase runs in Docker; the first build pulls the image. */
+export const DOCKER_TIMEOUT = 5 * MS_PER_MINUTE;
 
 const LIQUIBASE_TABLE = /^databasechangelog/;
 

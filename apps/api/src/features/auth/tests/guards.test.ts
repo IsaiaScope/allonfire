@@ -1,10 +1,10 @@
 // @module-tag unit
 
-import { requireRole } from "@allonfire/auth/features/guards/middleware/require-role";
-import { requireSession } from "@allonfire/auth/features/guards/middleware/require-session";
+import { requireApp } from "@allonfire/auth/features/hono/guards/middleware/require-app";
+import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import { sessionFor } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
-import { Role } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
 import { createApp } from "../../../app";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import { problemOf } from "../../errors/tests/problem-of";
@@ -14,7 +14,7 @@ function guarded(session: AuthSession | null) {
     appDeps({ auth: apiAuth({ getSession: () => Promise.resolve(session) }) })
   )
     .get("/v1/guarded", requireSession(), (c) => c.text("ok"))
-    .get("/v1/mutate", requireRole(Role.USER), (c) => c.text("ok"));
+    .get("/v1/back-office", requireApp(App.BACK_OFFICE), (c) => c.text("ok"));
 }
 
 describe("guards through the API", () => {
@@ -35,10 +35,10 @@ describe("guards through the API", () => {
     expect(body.detail).not.toBe("Authentication required");
   });
 
-  it("renders 403 for a Viewer", async () => {
-    const res = await guarded(sessionFor({ role: Role.VIEWER })).request(
-      "/v1/mutate"
-    );
+  it("renders 403 for a User the App does not let in", async () => {
+    const res = await guarded(
+      sessionFor({ memberships: [{ app: App.LAURA, role: Role.VIEWER }] })
+    ).request("/v1/back-office");
     expect(res.status).toBe(403);
     expect((await problemOf(res)).code).toBe("FORBIDDEN");
   });

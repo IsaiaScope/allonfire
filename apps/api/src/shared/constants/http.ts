@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
 import { z } from "zod";
 
 /**
@@ -11,6 +11,7 @@ export const ERROR_STATUS = [
   HTTP_STATUS.FORBIDDEN,
   HTTP_STATUS.NOT_FOUND,
   HTTP_STATUS.PAYLOAD_TOO_LARGE,
+  HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
   HTTP_STATUS.TOO_MANY_REQUESTS,
   HTTP_STATUS.INTERNAL_SERVER_ERROR,
   HTTP_STATUS.SERVICE_UNAVAILABLE,

@@ -1,4 +1,3 @@
-@import "@allonfire/ui/styles/base.css";
-@import "@allonfire/ui/styles/theme-back-office.css";
+@import "@allonfire/design/apps/back-office/styles.css";
 
 @source "../";

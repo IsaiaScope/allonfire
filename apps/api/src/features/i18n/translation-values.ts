@@ -11,5 +11,7 @@ export type TranslationValues = {
   RATE_LIMITED: { seconds: number };
   TIMEOUT: { seconds: number };
   PAYLOAD_TOO_LARGE: { limit: number };
+  UNSUPPORTED_IMAGE: never;
+  IMAGE_TOO_LARGE: { limit: number };
   INTERNAL_ERROR: never;
 };

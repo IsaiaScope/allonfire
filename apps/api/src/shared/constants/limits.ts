@@ -1,4 +1,4 @@
-import { BYTES_PER_MIB } from "@allonfire/utils/constants/units";
+import { BYTES_PER_MIB } from "@allonfire/core/shared/constants/units";
 
 /**
  * Operational tunables that are not env-configurable. Anything a deployment
@@ -15,7 +15,7 @@ export const REQUEST_TIMEOUT_MS = 30_000;
 export const DEFAULT_DRAIN_TIMEOUT_MS = 10_000;
 
 /**
- * How long the final telemetry flush may take. The OTLP exporter retries an
+ * How long the final telemetry flush is allowed to take. The OTLP exporter retries an
  * unreachable collector for ~8s; tsx watch force-kills after 5s and Docker
  * after 10s, so the flush gets less than either.
  */

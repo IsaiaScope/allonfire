@@ -1,4 +1,4 @@
-import { HTTP_HEADER } from "@allonfire/utils/constants/http";
+import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
 import { z } from "zod";
 
 /**
@@ -58,7 +58,6 @@ export const CONTEXT_VAR = {
   REQUEST_ID: "requestId",
 } as const;
 
-/** `ENABLE_DOCS` arrives as a string; these are the two accepted spellings. */
 /** Exit code after a second signal arrives mid-drain. */
 export const FORCED_EXIT_CODE = 1;
 export const CLEAN_EXIT_CODE = 0;

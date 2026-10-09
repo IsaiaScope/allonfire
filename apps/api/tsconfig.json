@@ -4,7 +4,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@allonfire/database": ["../../packages/database/src/index.ts"],
-      "@allonfire/utils/*": ["../../packages/utils/src/*"]
+      "@allonfire/core/*": ["../../packages/core/src/*"]
     }
   },
   "include": ["src", "vitest.config.ts", "vitest.setup.ts"],

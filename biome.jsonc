@@ -18,7 +18,12 @@
     // CLI update into a diff against our own edits. Laura is paused until it
     // moves to the new Design system (ADR 0010), out of lint like it is out of
     // the workspace, turbo and vitest.
-    "includes": ["!packages/shadcn/src", "!apps/laura"]
+    // impeccable is written by its installer (ADR 0011), same reason as shadcn.
+    "includes": [
+      "!packages/shadcn/src",
+      "!apps/laura",
+      "!.claude/skills/impeccable"
+    ]
   },
   "linter": {
     "rules": {
@@ -57,7 +62,11 @@
       },
       "suspicious": {
         "noConsole": { "level": "error", "options": { "allow": ["error"] } },
-        "noUndeclaredEnvVars": "error"
+        // Next sets NEXT_PHASE itself inside the build; turbo never passes it.
+        "noUndeclaredEnvVars": {
+          "level": "error",
+          "options": { "allowedEnvVars": ["NEXT_PHASE"] }
+        }
       }
     }
   },
@@ -88,11 +97,20 @@
       }
     },
     {
+      // A type test may need an interface to check how interfaces behave.
+      "includes": ["**/*.test-d.ts"],
+      "linter": {
+        "rules": { "style": { "useConsistentTypeDefinitions": "off" } }
+      }
+    },
+    {
       // The places allowed to touch process.env, print, and run long.
       "includes": [
         "**/env.ts",
         "**/environment.ts",
+        "**/*-environment.ts",
         "**/seed*.ts",
+        "**/seed/**",
         // Seed data: long lists by nature.
         "**/mock/**",
         "**/scripts/**",
@@ -112,9 +130,8 @@
       }
     },
     {
-      // Apps and packages reach the Design system through AOF components only
-      // (ADR 0010). `packages/ui` is the one place that wraps shadcn.
-      "includes": ["apps/**", "packages/**", "!packages/ui/**"],
+      // Apps reach the Design system through AOF components only (ADR 0010).
+      "includes": ["apps/**"],
       "linter": {
         "rules": {
           "style": {
@@ -125,6 +142,87 @@
                   {
                     "group": ["@allonfire/shadcn", "@allonfire/shadcn/**"],
                     "message": "Import the AOF component from @allonfire/ui instead; add one there if it does not exist yet."
+                  },
+                  {
+                    "group": [
+                      "@tanstack/react-form",
+                      "@tanstack/react-form/**"
+                    ],
+                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      // Packages likewise (`packages/ui` is the one place that wraps shadcn), and
+      // a package never imports an App: Apps depend on packages, never the
+      // reverse. One override per scope: a later override replaces a rule's
+      // options rather than merging them.
+      "includes": ["packages/**", "!packages/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@allonfire/shadcn", "@allonfire/shadcn/**"],
+                    "message": "Import the AOF component from @allonfire/ui instead; add one there if it does not exist yet."
+                  },
+                  {
+                    "group": [
+                      "@tanstack/react-form",
+                      "@tanstack/react-form/**"
+                    ],
+                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
+                  },
+                  {
+                    "group": [
+                      "@allonfire/api",
+                      "@allonfire/api/**",
+                      "@allonfire/back-office",
+                      "@allonfire/back-office/**",
+                      "@allonfire/laura",
+                      "@allonfire/laura/**",
+                      "**/apps/**",
+                      // database catalogues per App in its own features/apps.
+                      "!../apps/**"
+                    ],
+                    "message": "A package stays pure: it never imports an App. Move what both need into a package, or let the App pass it in."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      // packages/ui wraps shadcn, but imports no App either.
+      "includes": ["packages/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@allonfire/api",
+                      "@allonfire/api/**",
+                      "@allonfire/back-office",
+                      "@allonfire/back-office/**",
+                      "@allonfire/laura",
+                      "@allonfire/laura/**",
+                      "**/apps/**"
+                    ],
+                    "message": "A package stays pure: it never imports an App. Move what both need into a package, or let the App pass it in."
                   }
                 ]
               }

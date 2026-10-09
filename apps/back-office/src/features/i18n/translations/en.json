@@ -5,14 +5,30 @@
   "Home": {
     "title": "Back office",
     "description": "Nothing here yet.",
-    "action": "Get started"
+    "signOut": "Sign out"
   },
-  "NotFound": {
-    "title": "Page not found",
-    "back": "Back to the start"
-  },
-  "Error": {
-    "title": "Something went wrong",
-    "retry": "Try again"
+  "SignIn": {
+    "app": "Back office",
+    "email": "Email",
+    "error": {
+      "forbidden": "This account cannot enter the Back office.",
+      "invalid": "Email or password is wrong.",
+      "missing": "Enter your email and password.",
+      "rateLimited": "Too many attempts. Try again in a few minutes.",
+      "unavailable": "Signing in is not available right now. Try again shortly."
+    },
+    "field": {
+      "emailInvalid": "Enter a valid email address.",
+      "emailRequired": "Enter your email.",
+      "passwordRequired": "Enter your password."
+    },
+    "language": "Language",
+    "notice": "Authorized users only. Sign-up is closed.",
+    "password": "Password",
+    "pauseNotice": "Pause notice",
+    "showPassword": "Show password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "theme": "Switch theme"
   }
 }

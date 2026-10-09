@@ -1,0 +1,95 @@
+{
+  "name": "@allonfire/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./environment/environment": "./src/environment/environment.ts",
+    "./features/errors/constants/openapi": "./src/features/errors/constants/openapi.ts",
+    "./features/errors/coded-error": "./src/features/errors/coded-error.ts",
+    "./features/errors/format-error-message": "./src/features/errors/format-error-message.ts",
+    "./features/http/constants/http": "./src/features/http/constants/http.ts",
+    "./features/http/constants/security-headers": "./src/features/http/constants/security-headers.ts",
+    "./features/i18n/constants/locales": "./src/features/i18n/constants/locales.ts",
+    "./features/logger/constants/logger": "./src/features/logger/constants/logger.ts",
+    "./features/next/api/forwarded-for": "./src/features/next/api/forwarded-for.ts",
+    "./features/next/config/aof-create-next-config": "./src/features/next/config/aof-create-next-config.ts",
+    "./features/next/i18n/aof-create-middleware": "./src/features/next/i18n/aof-create-middleware.ts",
+    "./features/next/i18n/aof-create-navigation": "./src/features/next/i18n/aof-create-navigation.ts",
+    "./features/next/i18n/aof-define-routing": "./src/features/next/i18n/aof-define-routing.ts",
+    "./features/next/i18n/aof-get-request-config": "./src/features/next/i18n/aof-get-request-config.ts",
+    "./features/next/i18n/shared-translations": "./src/features/next/i18n/shared-translations.ts",
+    "./features/next/providers/aof-nuqs-adapter": "./src/features/next/providers/aof-nuqs-adapter.tsx",
+    "./features/next/providers/aof-query-client-provider": "./src/features/next/providers/aof-query-client-provider.tsx",
+    "./features/next/providers/aof-react-query-devtools": "./src/features/next/providers/aof-react-query-devtools.tsx",
+    "./features/next/providers/aof-theme-provider": "./src/features/next/providers/aof-theme-provider.tsx",
+    "./features/next/query/aof-get-query-client": "./src/features/next/query/aof-get-query-client.ts",
+    "./shared/constants/env": "./src/shared/constants/env.ts",
+    "./shared/constants/patterns": "./src/shared/constants/patterns.ts",
+    "./shared/constants/separators": "./src/shared/constants/separators.ts",
+    "./shared/constants/units": "./src/shared/constants/units.ts",
+    "./shared/utils/json": "./src/shared/utils/json.ts",
+    "./shared/utils/object": "./src/shared/utils/object.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "i18n:check": "i18n-check --locales src/features/next/i18n/translations --source en",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.10",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@allonfire/config": "workspace:*",
+    "@lingual/i18n-check": "^0.9.5",
+    "@tanstack/react-query": "^5.103.2",
+    "@tanstack/react-query-devtools": "^5.103.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "next": "^16.3.6",
+    "next-intl": "^4.14.7",
+    "next-themes": "^0.4.6",
+    "nuqs": "^2.10.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-query-devtools": "^5.0.0",
+    "next": "^16.0.0",
+    "next-intl": "^4.0.0",
+    "next-themes": "^0.4.0",
+    "nuqs": "^2.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "@tanstack/react-query-devtools": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "next-intl": {
+      "optional": true
+    },
+    "next-themes": {
+      "optional": true
+    },
+    "nuqs": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  }
+}

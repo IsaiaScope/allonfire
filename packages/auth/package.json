@@ -5,39 +5,68 @@
   "type": "module",
   "exports": {
     "./environment/environment": "./src/environment/environment.ts",
-    "./features/access/access": "./src/features/access/access.ts",
-    "./features/guards/middleware/require-app": "./src/features/guards/middleware/require-app.ts",
-    "./features/guards/middleware/require-role": "./src/features/guards/middleware/require-role.ts",
-    "./features/guards/middleware/require-session": "./src/features/guards/middleware/require-session.ts",
+    "./environment/next-environment": "./src/environment/next-environment.ts",
+    "./features/hono/constants/variables": "./src/features/hono/constants/variables.ts",
+    "./features/hono/guards/middleware/require-app": "./src/features/hono/guards/middleware/require-app.ts",
+    "./features/hono/guards/middleware/require-session": "./src/features/hono/guards/middleware/require-session.ts",
+    "./features/hono/rate-limit/middleware/auth-limit": "./src/features/hono/rate-limit/middleware/auth-limit.ts",
+    "./features/hono/routes": "./src/features/hono/routes/index.ts",
+    "./features/hono/session/middleware/session-loader": "./src/features/hono/session/middleware/session-loader.ts",
+    "./features/hono/types/variables": "./src/features/hono/types/variables.ts",
+    "./features/next/actions/sign-in": "./src/features/next/actions/sign-in.ts",
+    "./features/next/actions/sign-out": "./src/features/next/actions/sign-out.ts",
+    "./features/next/constants/access": "./src/features/next/constants/access.ts",
+    "./features/next/constants/api": "./src/features/next/constants/api.ts",
+    "./features/next/utils/access": "./src/features/next/utils/access.ts",
+    "./features/next/utils/auth-client": "./src/features/next/utils/auth-client.ts",
+    "./features/next/utils/redirect-to": "./src/features/next/utils/redirect-to.ts",
+    "./features/next/utils/refresh-session": "./src/features/next/utils/refresh-session.ts",
+    "./features/next/utils/require-app-session": "./src/features/next/utils/require-app-session.ts",
+    "./features/next/utils/session": "./src/features/next/utils/session.ts",
+    "./features/next/utils/set-cookie": "./src/features/next/utils/set-cookie.ts",
+    "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
+    "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",
+    "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
-    "./features/rate-limit/middleware/auth-limit": "./src/features/rate-limit/middleware/auth-limit.ts",
     "./features/server/auth": "./src/features/server/auth.ts",
-    "./features/session/middleware/session-loader": "./src/features/session/middleware/session-loader.ts",
-    "./routes/auth": "./src/routes/auth/index.ts",
+    "./shared/constants/errors": "./src/shared/constants/errors.ts",
+    "./shared/constants/headers": "./src/shared/constants/headers.ts",
     "./shared/constants/limits": "./src/shared/constants/limits.ts",
     "./shared/constants/paths": "./src/shared/constants/paths.ts",
     "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
-    "./shared/types/auth": "./src/shared/types/auth.ts",
-    "./shared/types/variables": "./src/shared/types/variables.ts"
+    "./shared/types/auth": "./src/shared/types/auth.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
-    "@allonfire/utils": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "better-auth": "^1.5.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@allonfire/config": "workspace:*",
     "hono": "^4.9.0",
+    "next": "^16.3.6",
+    "next-intl": "^4.14.7",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {
-    "hono": "^4.9.0"
+    "hono": "^4.9.0",
+    "next": "^16.0.0",
+    "next-intl": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "next-intl": {
+      "optional": true
+    }
   }
 }

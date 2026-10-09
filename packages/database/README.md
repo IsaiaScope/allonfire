@@ -19,32 +19,32 @@ database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
 
 | Schema | Owner | Holds |
 |---|---|---|
-| `auth` | the user base every App shares (Better Auth) | `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp` |
-| `laura` | Laura | `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType` |
+| `auth` | the user base every App shares (Better Auth) | `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App` |
+| `image` | the Images, each placed in one or more Apps, public or private in each ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [ADR 0020](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md)) | `Image`, `ImageApp` |
+| `laura` | Laura | `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType` |
 | `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
 
-Foreign keys cross schemas (`laura."Photo"."uploadedBy"` references
+Foreign keys cross schemas (`image."Image"."uploadedBy"` references
 `auth."User"."id"`), so one Prisma client spans them all. Prisma requires
-back-relations, which is why `User` in `auth.prisma` lists Laura's models.
+back-relations, which is why `User` in `auth.prisma` lists other schemas' models.
 
 ## Exports
 
 | Import | Content |
 |---|---|
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers`, `deleteUser`, `checkUserAppAccess`, `updateUserAllowedApps` |
-| `@allonfire/database/features/laura/photo.service` | `getPhotosPaginated`, `createPhoto`, `deletePhoto`, `getPhotoCount`, `getRandomPhotos`, `getAllRandomPhotos`, `getUserPhotoCount`, type `PhotoWithUser` |
-| `@allonfire/database/features/laura/favorite.service` | `toggleFavorite`, `getFavoritePhotoIds`, `getFavoritesPaginated` |
-| `@allonfire/database/features/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
-| `@allonfire/database/features/laura/quiz.service` | `createQuizQuestion`, `getRandomQuizQuestions`, `getQuizQuestionCount`, `getAllQuizQuestions`, `getQuizQuestionById`, `updateQuizQuestion`, `deleteQuizQuestion`, type `QuizQuestionWithAnswers` |
-| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `AllowedApp`, `GameType`) with no client attached |
+| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers` (each with its Memberships), `deleteUser` |
+| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `linksOfImages`, `updateImages` (places and takes out only what each change names; refuses to leave an Image in no App), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and both deletes run the caller's `authorise` check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks` |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `ImageLink`, `canSeeImageIn`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}`; `APP_SETTINGS` (each App's `minRole` and `registration`), `AppSettings`, `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
+| `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
+| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
-`FROM laura."Photo"`, never `FROM "Photo"`.
+`FROM laura."GameScore"`, never `FROM "GameScore"`.
 
 ```ts
-import { getLeaderboard } from "@allonfire/database/features/laura/game-score.service";
+import { getLeaderboard } from "@allonfire/database/features/apps/laura/game-score.service";
 
 const leaderboard = await getLeaderboard("MEMORY", 25);
 ```
@@ -85,7 +85,7 @@ fails a `.prisma` edit that has no changeset.
 | `pnpm db:rollback --tag=<tag>` | Roll back every changeset after a tag |
 | `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
 | `pnpm db:drift` | Compare the database with the Prisma schema |
-| `pnpm db:seed` / `db:seed-quiz` | Seed users and mock data / quiz questions (data in `src/features/seed/mock/`) |
+| `pnpm db:seed` | Seed users (data in `src/features/seed/mock/`) |
 | `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5555 (`pnpm dev` starts it too) |
 | `pnpm test` | Unit tests, plus `*.integration.test.ts` against Docker and the dev Postgres (`pnpm docker:up`). Tests live in a `tests/` folder beside what they test |
 
@@ -158,9 +158,10 @@ pg_restore --clean --if-exists --no-owner -d <url> /backups/allonfire-<stamp>.du
 ```
 packages/database/
   prisma/schema/
-    schema.prisma           generator + datasource (schemas = auth, laura)
-    auth.prisma             auth schema
-    laura.prisma            laura schema
+    schema.prisma           generator + datasource (schemas = auth, image, laura)
+    auth.prisma             auth schema (shared)
+    image.prisma            image schema (shared)
+    apps/laura.prisma       laura schema, one file per App under apps/
   changelog/
     db.changelog-master.yaml  root changelog, never edited
     changesets/             one formatted-SQL changeset per file, in order
@@ -181,10 +182,12 @@ packages/database/
                             (seed scripts), tests/
     features/
       prisma/               client.ts (Prisma singleton)
-      auth/                 auth services
-      laura/                Laura services, tests/ (raw SQL against the DB)
-      seed/                 seed.ts, seed-quiz.ts, seed-user.ts, tests/
-        mock/               users.json, quiz-questions.ts
+      auth/                 user.service, access/ (Role, Membership and App settings rules)
+      image/                image.service, tests/
+      apps/                 one folder per App; seeds.ts lists each App's seed
+        laura/              game-score.service, seed/ (guest Viewer, mock/users.json, tests/)
+      seed/                 seed.ts, seed-user.ts (AppSeed), upsert-user.ts, tests/
+        mock/               users.json (users for every App only)
 ```
 
 ## Dependencies

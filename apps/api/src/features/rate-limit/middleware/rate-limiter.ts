@@ -1,6 +1,9 @@
-import { HTTP_HEADER, HTTP_STATUS } from "@allonfire/utils/constants/http";
-import { SEPARATOR } from "@allonfire/utils/constants/separators";
-import { MS_PER_SECOND } from "@allonfire/utils/constants/units";
+import {
+  HTTP_HEADER,
+  HTTP_STATUS,
+} from "@allonfire/core/features/http/constants/http";
+import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
+import { MS_PER_SECOND } from "@allonfire/core/shared/constants/units";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { Context, MiddlewareHandler } from "hono";
 import { type ClientRateLimitInfo, rateLimiter } from "hono-rate-limiter";
@@ -185,10 +188,10 @@ export function createRateLimiter(opts: {
 /** The app's limiter, tuned from env. Probes bypass it. */
 export const rateLimit = (store: RateLimitStore): MiddlewareHandler => {
   const limiter = createRateLimiter({
-    limit: env.RATE_LIMIT_MAX,
+    limit: env.API_RATE_LIMIT_MAX,
     store,
-    trustedHops: env.TRUSTED_PROXY_HOPS,
-    windowMs: env.RATE_LIMIT_WINDOW_MS,
+    trustedHops: env.API_TRUSTED_PROXY_HOPS,
+    windowMs: env.API_RATE_LIMIT_WINDOW_MS,
   });
   return (context, next) =>
     isProbe(context.req.path) ? next() : limiter(context, next);

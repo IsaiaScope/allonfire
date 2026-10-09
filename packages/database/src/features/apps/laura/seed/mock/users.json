@@ -1,0 +1,12 @@
+[
+  {
+    "email": "laura-admin@allonfire.com",
+    "name": "laura-admin",
+    "memberships": [{ "app": "LAURA", "role": "ADMIN" }]
+  },
+  {
+    "email": "laura-user@allonfire.com",
+    "name": "laura-user",
+    "memberships": [{ "app": "LAURA", "role": "USER" }]
+  }
+]

@@ -1,9 +1,10 @@
 // @module-tag unit
 
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { createApp } from "../../../app";
 import { appDeps } from "../../../shared/tests/app-deps";
 import { problemOf } from "../../errors/tests/problem-of";
-import { CATALOGUE, DEFAULT_LOCALE, LOCALE } from "../constants/locales";
+import { CATALOGUE, DEFAULT_LOCALE } from "../constants/locales";
 
 describe("error message localization", () => {
   const notFoundIn = async (headers?: Record<string, string>) => {

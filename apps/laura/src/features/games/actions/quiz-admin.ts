@@ -9,7 +9,7 @@ import {
   getQuizQuestionById,
   updateQuizQuestion,
 } from "@allonfire/database/features/laura/quiz.service";
-import { formatErrorMessage } from "@allonfire/utils/helpers/error";
+import { formatErrorMessage } from "@allonfire/core/features/errors/format-error-message";
 import { revalidatePath } from "next/cache";
 import {
   processAndUploadImage,

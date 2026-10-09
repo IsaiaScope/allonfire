@@ -1,6 +1,11 @@
 // @module-tag unit
+
+import {
+  LOCALE,
+  SUPPORTED_LOCALES,
+} from "@allonfire/core/features/i18n/constants/locales";
 import { ERROR_CODE } from "../../errors/constants/error-codes";
-import { CATALOGUE, LOCALE, SUPPORTED_LOCALES } from "../constants/locales";
+import { CATALOGUE } from "../constants/locales";
 import { translate } from "../translate";
 
 /** Any surviving brace means a placeholder was not substituted. */

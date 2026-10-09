@@ -1,8 +1,9 @@
-import { HTTP_STATUS } from "@allonfire/utils/constants/http";
+import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
 import {
+  objectEntries,
   objectFromEntries,
   objectValues,
-} from "@allonfire/utils/helpers/object";
+} from "@allonfire/core/shared/utils/object";
 import { z } from "zod";
 import type { ErrorStatus } from "../../../shared/constants/http";
 import type { TranslationKey } from "../../i18n/constants/locales";
@@ -21,12 +22,14 @@ import type { TranslationKey } from "../../i18n/constants/locales";
 export const ERROR_CODE = {
   BAD_REQUEST: "BAD_REQUEST",
   FORBIDDEN: "FORBIDDEN",
+  IMAGE_TOO_LARGE: "IMAGE_TOO_LARGE",
   INTERNAL_ERROR: "INTERNAL_ERROR",
   NOT_FOUND: "NOT_FOUND",
   PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
   RATE_LIMITED: "RATE_LIMITED",
   TIMEOUT: "TIMEOUT",
   UNAUTHORIZED: "UNAUTHORIZED",
+  UNSUPPORTED_IMAGE: "UNSUPPORTED_IMAGE",
   VALIDATION_FAILED: "VALIDATION_FAILED",
 } as const satisfies Record<string, TranslationKey>;
 
@@ -47,11 +50,38 @@ export const STATUS_TO_ERROR_CODE = {
   [HTTP_STATUS.FORBIDDEN]: ERROR_CODE.FORBIDDEN,
   [HTTP_STATUS.NOT_FOUND]: ERROR_CODE.NOT_FOUND,
   [HTTP_STATUS.PAYLOAD_TOO_LARGE]: ERROR_CODE.PAYLOAD_TOO_LARGE,
+  [HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE]: ERROR_CODE.UNSUPPORTED_IMAGE,
   [HTTP_STATUS.TOO_MANY_REQUESTS]: ERROR_CODE.RATE_LIMITED,
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: ERROR_CODE.INTERNAL_ERROR,
-  // The only 503 the API throws is its own request timeout.
+  // The only bare 503 is the API's own request timeout; the Image module
+  // throws its upload timeout coded, with its own seconds.
   [HTTP_STATUS.SERVICE_UNAVAILABLE]: ERROR_CODE.TIMEOUT,
 } as const satisfies Record<ErrorStatus, ErrorCode>;
+
+/**
+ * The one status each code is sent with, so the docs list under each status
+ * only its own codes. `error-codes.test-d.ts` checks the bare-status default
+ * above agrees with it.
+ */
+export const ERROR_CODE_STATUS = {
+  [ERROR_CODE.BAD_REQUEST]: HTTP_STATUS.BAD_REQUEST,
+  [ERROR_CODE.FORBIDDEN]: HTTP_STATUS.FORBIDDEN,
+  [ERROR_CODE.IMAGE_TOO_LARGE]: HTTP_STATUS.PAYLOAD_TOO_LARGE,
+  [ERROR_CODE.INTERNAL_ERROR]: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+  [ERROR_CODE.NOT_FOUND]: HTTP_STATUS.NOT_FOUND,
+  [ERROR_CODE.PAYLOAD_TOO_LARGE]: HTTP_STATUS.PAYLOAD_TOO_LARGE,
+  [ERROR_CODE.RATE_LIMITED]: HTTP_STATUS.TOO_MANY_REQUESTS,
+  [ERROR_CODE.TIMEOUT]: HTTP_STATUS.SERVICE_UNAVAILABLE,
+  [ERROR_CODE.UNAUTHORIZED]: HTTP_STATUS.UNAUTHORIZED,
+  [ERROR_CODE.UNSUPPORTED_IMAGE]: HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
+  [ERROR_CODE.VALIDATION_FAILED]: HTTP_STATUS.BAD_REQUEST,
+} as const satisfies Record<ErrorCode, ErrorStatus>;
+
+/** The codes sent with `status`, in `ERROR_CODE` order. */
+export const codesFor = (status: ErrorStatus): ErrorCode[] =>
+  objectEntries(ERROR_CODE_STATUS).flatMap(([code, codeStatus]) =>
+    codeStatus === status ? [code] : []
+  );
 
 /**
  * The stable identifier for each problem type, per RFC 9457 §3.1.1.

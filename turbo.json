@@ -3,18 +3,18 @@
   "ui": "stream",
   "globalPassThroughEnv": [
     "DATABASE_URL",
-    "BETTER_AUTH_SECRET",
-    "BETTER_AUTH_URL",
-    "MINIO_ENDPOINT",
-    "MINIO_ACCESS_KEY",
-    "MINIO_SECRET_KEY",
-    "MINIO_BUCKET",
-    "REDIS_URL",
+    "AUTH_SECRET",
+    "AUTH_URL",
+    "STORAGE_ENDPOINT",
+    "STORAGE_ACCESS_KEY",
+    "STORAGE_SECRET_KEY",
+    "API_REDIS_URL",
     "PORT",
-    "LOG_LEVEL",
-    "CORS_ORIGINS",
-    "TRUSTED_PROXY_HOPS",
-    "ENABLE_DOCS"
+    "API_LOG_LEVEL",
+    "API_CORS_ORIGINS",
+    "API_TRUSTED_PROXY_HOPS",
+    "API_ENABLE_DOCS",
+    "API_URL"
   ],
   "tasks": {
     "build": {
@@ -22,8 +22,7 @@
       "env": [
         "ANALYZE",
         "NEXT_DIST_DIR",
-        "MINIO_ENDPOINT",
-        "MINIO_BUCKET",
+        "STORAGE_ENDPOINT",
         "NEXT_PUBLIC_API_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
@@ -38,7 +37,7 @@
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "i18n:check": {
-      "inputs": ["src/features/i18n/translations/**"]
+      "inputs": ["src/**/i18n/translations/**"]
     },
     "test": {
       "dependsOn": ["transit"],

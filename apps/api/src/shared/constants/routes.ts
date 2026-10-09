@@ -1,11 +1,15 @@
 import { AUTH_PATH } from "@allonfire/auth/shared/constants/paths";
-import { objectValues } from "@allonfire/utils/helpers/object";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { IMAGE_PATH } from "@allonfire/storage/features/image/constants/paths";
 
 /** Where sub-routers mount onto the base app. */
 export const ROOT_PATH = "/";
 
 /** Domain routes mount here; `/health` and `/ready` stay unversioned. */
 export const API_VERSION_PREFIX = "/v1";
+
+/** Where the Image module mounts. */
+export const IMAGE_BASE_PATH = `${API_VERSION_PREFIX}${IMAGE_PATH}` as const;
 
 /** Where the Auth module is mounted and what `createAuth` gets as `basePath`. */
 export const AUTH_BASE_PATH = `${API_VERSION_PREFIX}${AUTH_PATH}` as const;

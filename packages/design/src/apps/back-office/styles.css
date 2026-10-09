@@ -1,0 +1,13 @@
+/* Back office's single stylesheet: ui's base layer, the Design it wears, and
+   where Tailwind finds any prototype under review. The App imports only this
+   file and adds its own `@source`. A Design is worn by importing its
+   theme.css here (`/aof-design new` adds it). */
+@import "@allonfire/ui/styles/base.css";
+@import "../../designs/japan/theme.css";
+
+@source "./prototypes";
+
+/* Back office's line (the Line Rule). */
+:root {
+  --line: var(--line-green);
+}

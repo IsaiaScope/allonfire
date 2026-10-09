@@ -1,23 +1,29 @@
 // @module-tag unit
 
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { validator } from "hono-openapi";
 import { z } from "zod";
+import { localeResolver } from "../../i18n/middleware/locale-resolver";
 import { notFound, onError, validationHook } from "../middleware/error-handler";
 import { problemOf } from "./problem-of";
 
 function testApp() {
   return new Hono()
     .use(requestId())
+    .use(localeResolver())
     .get("/boom", () => {
       throw new Error(
         "Invalid `prisma.user.findMany()` on column `secret_col`"
       );
     })
     .get("/nope", () => {
-      throw new HTTPException(403, { message: "not allowed" });
+      // Hono's validators throw English text like this.
+      throw new HTTPException(403, {
+        message: "Malformed JSON in request body",
+      });
     })
     .get("/teapot", () => {
       throw new HTTPException(418);
@@ -27,13 +33,20 @@ function testApp() {
 }
 
 describe("onError", () => {
-  it("maps an HTTPException to its status and a code", async () => {
+  it("maps an HTTPException to its status, a code and the catalogue's text", async () => {
     const res = await testApp().request("/nope");
     expect(res.status).toBe(403);
     const body = await problemOf(res);
     expect(body.code).toBe("FORBIDDEN");
-    expect(body.detail).toBe("not allowed");
+    expect(body.detail).toBe("Not allowed");
     expect(body.requestId).toBeTruthy();
+  });
+
+  it("answers an HTTPException in the request's language", async () => {
+    const res = await testApp().request("/nope", {
+      headers: { "accept-language": "it" },
+    });
+    expect((await problemOf(res)).detail).toBe("Non consentito");
   });
 
   it("answers 500 for a status the API does not document", async () => {
@@ -48,7 +61,7 @@ describe("onError", () => {
     const body = await problemOf(res);
     expect(body.code).toBe("INTERNAL_ERROR");
     expect(body.detail).toBe("Internal server error");
-    expect(JSON.stringify(body)).not.toContain("secret_col");
+    expect(stringifyJson(body)).not.toContain("secret_col");
   });
 
   it("returns NOT_FOUND in the same envelope for unmatched routes", async () => {
@@ -75,7 +88,7 @@ describe("validationHook", () => {
 
   it("returns 400 with field paths and no schema dump", async () => {
     const res = await app.request("/echo", {
-      body: JSON.stringify({ age: "old", email: "nope" }),
+      body: stringifyJson({ age: "old", email: "nope" }),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -86,6 +99,6 @@ describe("validationHook", () => {
     const paths = (body.errors ?? []).map((d: { path: string }) => d.path);
     expect(paths).toContain("email");
     expect(paths).toContain("age");
-    expect(JSON.stringify(body)).not.toContain("ZodError");
+    expect(stringifyJson(body)).not.toContain("ZodError");
   });
 });

@@ -1,11 +1,22 @@
 // @module-tag unit
-import type { Role } from "@allonfire/database";
-import { objectKeys } from "@allonfire/utils/helpers/object";
+
+import { objectKeys } from "@allonfire/core/shared/utils/object";
+import { App } from "@allonfire/database/enums";
+import type { AccessMembership } from "@allonfire/database/features/auth/access/access";
+import { APP_HEADER } from "../../../shared/constants/headers";
 import {
+  SESSION_EXPIRES_IN_S,
+  SESSION_UPDATE_AGE_S,
+} from "../../../shared/constants/limits";
+import {
+  JOIN_APP_PATH,
+  LIMITED_AUTH_PATHS,
   OPENAPI_SCHEMA_PATH,
   SIGN_IN_EMAIL_PATH,
+  SIGN_UP_EMAIL_PATH,
 } from "../../../shared/constants/paths";
 import { type Auth, createAuth, toAuthLike } from "../auth";
+import { JOIN_APP_DOC } from "../constants/openapi";
 
 const BASE_URL = "http://localhost:3300";
 const BASE_PATH = "/v1/auth";
@@ -30,6 +41,25 @@ describe("createAuth", () => {
     );
   });
 
+  it("documents what joining an App answers on success", async () => {
+    const document = await toAuthLike(auth).openApi();
+    expect(document.paths[JOIN_APP_PATH]?.post).toMatchObject({
+      description: JOIN_APP_DOC.DESCRIPTION,
+      parameters: [{ in: "header", name: APP_HEADER, required: true }],
+      responses: {
+        "200": {
+          content: {
+            "application/json": {
+              schema: {
+                properties: { app: { enum: [App.LAURA, App.BACK_OFFICE] } },
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
   it("does not serve the schema over HTTP", async () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${OPENAPI_SCHEMA_PATH}`)
@@ -44,9 +74,19 @@ describe("createAuth", () => {
     expect(res.status).toBe(404);
   });
 
-  it("types role as the Prisma Role union", () => {
-    expectTypeOf<
-      Auth["$Infer"]["Session"]["user"]["role"]
-    >().toEqualTypeOf<Role>();
+  it("keeps a Session 60 days, extended at most once a day", () => {
+    expect(auth.options.session?.expiresIn).toBe(SESSION_EXPIRES_IN_S);
+    expect(SESSION_EXPIRES_IN_S).toBe(60 * 24 * 60 * 60);
+    expect(auth.options.session?.updateAge).toBe(SESSION_UPDATE_AGE_S);
+  });
+
+  it("types the Session's Memberships from the database", () => {
+    expectTypeOf<Auth["$Infer"]["Session"]["user"]["memberships"]>().toExtend<
+      readonly AccessMembership[]
+    >();
+  });
+
+  it("rate-limits Registration like sign-in: each attempt hashes a password", () => {
+    expect(LIMITED_AUTH_PATHS).toContain(SIGN_UP_EMAIL_PATH);
   });
 });

@@ -18,7 +18,7 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Fetch data in Server Components (pages, layouts), pass as props to client components
 - Use Server Actions for mutations — keep form logic in client components but action definitions server-side
 - Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
-- Providers (`ThemeProvider`, `QueryClientProvider`) must be client — wrap them in a single `Providers` component
+- Providers must be client: an App composes the AOF providers from `@allonfire/core/features/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
 
 ## Context7 Usage
 
@@ -27,7 +27,18 @@ Always use Context7 MCP tools when generating code involving:
 - Next.js, React, Prisma, BetterAuth, shadcn/ui, TanStack Query, Zustand
 - Resolve library ID first, then query docs
 
-## Object Helpers (`@allonfire/utils/helpers/object`)
+For Next.js, read the docs that ship with the installed version first:
+`packages/core/node_modules/next/dist/docs/` (`01-app`, `02-pages`,
+`03-architecture`, `index.md`). They match the exact `next` in the lockfile,
+so they never describe an option this version lacks. Use Context7 when they
+do not cover the question.
+
+Before implementing anything in Next.js, React or shadcn, check the Framework
+skills (see Agent skills) for a guide that covers it and follow it: `shadcn` for
+components, `vercel-react-best-practices` and `vercel-composition-patterns` for
+React, the `next-*` skills for caching, prefetching and the dev loop.
+
+## Object Helpers (`@allonfire/core/shared/utils/object`)
 
 Never call `Object.keys` / `values` / `entries` / `fromEntries` directly. Use
 `objectKeys`, `objectValues`, `objectEntries`, `objectFromEntries` — the
@@ -42,16 +53,62 @@ level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 `readonly [...] as const` tuple (`ValueOf` on a tuple would also pick up
 `length`, `map` and the rest of the array prototype).
 
+## JSON Helpers (`@allonfire/core/shared/utils/json`)
+
+Never call `JSON.parse` / `JSON.stringify` directly. `JSON.parse` returns
+`any`, so a typo on the result compiles; `JSON.stringify` takes anything, so
+`undefined`, a function or a `Date` compiles and comes out as nothing or as a
+string the reader does not expect. Every helper is generic, so the types
+carry through: `stringifyJson(value)` (`value: T & Json<T>` rejects any part
+that is not JSON, at any depth, interfaces included) returns `JsonText<T>`, and
+`parseJson(text)` reads that `T` back on its own; on any other string it is
+`unknown`, or the `T` passed as `parseJson<T>` (a claim, not a check).
+`parseJsonWith(text, schema)` parses and validates text from outside;
+`jsonFrom<T>(message)` is the zod step for a field that holds JSON text.
+
+## Forms (`@allonfire/ui/lib/form`)
+
+Every form with fields is an AOF form (ADR 0017): `useAOFForm` manages its
+fields, never bare `useForm`, and never `@tanstack/react-form` outside
+`packages/ui` (Biome enforces it). Only the form is a client component; the
+page stays on the server. The server action keeps the last word:
+
+- `useActionState(action, initialState)` holds the action's answer and the
+  pending flag; the action returns its own state, never TanStack form state.
+- `useAOFForm({ defaultValues, validators: { onChange: schema } })`; a
+  submit runs the `onChange` validators too.
+- `<form action={action} noValidate onSubmit={submit}>`, where `submit` is
+  `(event) => submitAOFForm(form, event, formDataTo(action))` from
+  `@allonfire/ui/lib/form-submit`: it stops the browser's post; when the
+  checks pass it sends the form's own controls to the action in a transition,
+  the same data a post before hydration sends; when they block it focuses the
+  first invalid field; a validator that throws is reported. Before hydration
+  the browser posts to the action. See
+  `apps/back-office/src/features/auth/components/sign-in-form.tsx`.
+- Fields render through `form.AppField` and `field.TextField` (`variant`
+  `default` or `primary`, `icon`), which sets `name`, adopts a value typed or
+  autofilled before hydration, and shows errors (not a live region) once the
+  field is left or a submit was tried, in a line kept free so nothing moves.
+  `invalid` marks a field the server refused. `AOFSubmitButton` takes
+  `pending`.
+- The zod schema with translated messages is built in the form; it repeats
+  the action's rules, and the action's copy is the one that counts.
+
+A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
+`react-hook-form` until it is rebuilt.
+
 ## Database Schema Quick Reference
 
-Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `laura.prisma`).
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds only the admin and users for every App.
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
-- **`auth` schema (shared):** `User`, `Session`, `Account`, `Verification`, enums `Role`, `AllowedApp`
-- **`laura` schema:** `Photo`, `Favorite`, `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType`
+- **`auth` schema (shared):** `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App`
+- **`image` schema (shared):** `Image` and `ImageApp`: the Images every App shows, each placed in one or more Apps, public or private in each (ADR 0013, ADR 0020)
+- **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/laura/photo.service`, `@allonfire/database/features/auth/user.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `AllowedApp.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant.
-- Raw SQL names the schema: `laura."Photo"`.
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ROLE_RANK`, `APP_SETTINGS` and `AppSettings` (`constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `APP_SETTINGS`.
+- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `APP_SETTINGS`.
+- Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
 ## Laura App Structure (`apps/laura/src/`)
@@ -96,7 +153,7 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 
 ### Viewer Role System
 
-- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API uses `requireRole(Role.USER)`
+- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API has only `requireApp(App.LAURA)`, which lets Viewers in (Laura's floor); a guard for "USER or higher in Laura" comes with Laura's API (`roleIn` + `hasRole`)
 - Client: `UserRoleProvider` + `useIsViewer()` hook for UI restrictions
 - Viewers can browse gallery and play games but cannot upload, favorite, delete, or submit scores
 
@@ -121,26 +178,57 @@ One layout everywhere, so a file's place answers "who reads it?":
 
 ```
 src/
-  environment/       the zod env schema, validated at import
-  routes/<name>/     only when the package serves HTTP: index (the router),
-                     constants/, utils/, tests/
-  features/<topic>/  one concept each, with the kinds it needs: constants/,
-                     middleware/, types/, utils/, tests/
-  shared/            what more than one feature reads, by kind: constants/,
-                     middleware/, types/, utils/, tests/ (test helpers other
-                     packages import, e.g. `stubAuth`)
-  index.ts           only a package's root export, never a barrel inside it
+  index.ts            root entry only (an App's boot file, a package's root export)
+  environment/        the zod env schema, validated at import
+  shared/             what more than one top-level feature reads, by kind
+  features/
+    <feature>/
+      <kind>/         components, hooks, actions, middleware, routes,
+                      constants, types, utils, translations, tests
+      <sub-feature>/  any folder that is not a kind; same shape, recursively
 ```
 
-Every folder is optional. A package with no features needs no `shared/`
-either: `packages/utils` is just `environment/`, `constants/` and `helpers/`
-(plus `types/` if it ever holds types alone).
+Only `environment/`, `shared/` and `features/` sit at the top of `src/`; routes
+live in their feature (`features/<name>/routes/`). Kind folders are the closed
+list above; any other folder inside a feature is a sub-feature. Nest only when
+a feature really has sub-features. Code lives in the deepest feature that
+contains every reader: one sub-feature reads it, it lives there; two
+sub-features, their parent's kind folder; two top-level features, `shared/`.
+A feature's main file can sit directly in its folder when a kind folder would
+hold only that file. Every folder is optional (ADR 0016).
+
+**Packages are concepts.** One package per concept, usable by any Host (an App
+or the API, see `CONTEXT.md`). A framework adapter lives in a sub-folder
+(`features/next/`, `features/hono/`) with the framework as an optional peer. A
+package or folder is named after an App, vendor or framework only when it is
+wholly that thing (`shadcn`, `features/next`, `database/apps/laura`). A
+package's logic never names an App; packages that catalogue per App
+(`database`, `design`) keep App folders.
+
+A package never imports an App (`@allonfire/api`, `@allonfire/back-office`,
+`@allonfire/laura`, or a path into `apps/`); Biome's `noRestrictedImports`
+enforces it. A package is a module any host can mount: the Auth module knows
+`/auth`, never the `/v1` the API mounts it under, and a Next App is told the
+full address (`API_AUTH_URL`).
+
+Env var names start with their owner: a package's with the package name
+(`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_MODE`, `AUTH_SECRET`), the
+API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
+another service carries that service's name (`API_URL` in the Back office). A
+name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
+`OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
-`"./features/guards/middleware/require-role": "./src/features/guards/middleware/require-role.ts"`.
-`routes/<name>/index.ts` exports as `./routes/<name>`. Generated code keeps its
-own key (`@allonfire/database/enums`). `packages/shadcn`, `packages/ui` and
-`packages/hooks` are exempt: they follow shadcn's `components/` and `lib/` so
-`shadcn add` works.
+`"./features/hono/guards/middleware/require-app": "./src/features/hono/guards/middleware/require-app.ts"`.
+A folder's `index.ts` exports as the folder (`./features/image/hono/routes`). Generated code keeps its
+own key (`@allonfire/database/enums`). A package that serves HTTP for any host
+(the Auth and Image modules) exports its router from `features/<name>/routes/index.ts`,
+takes its dependencies as arguments, and throws `CodedError` from
+`@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015;
+routes Better Auth serves throw its `APIError`, which its handler answers).
+`packages/shadcn`, `packages/ui`,
+`packages/hooks` and `packages/design` are exempt: the first three follow
+shadcn's `components/` and `lib/` so `shadcn add` works; `packages/design`
+holds Designs and Apps (ADR 0011).
 
 ## API App Structure (`apps/api/src/`)
 
@@ -157,15 +245,15 @@ apps/api/
     │                     "./client" export; types only, no runtime code
     ├── shutdown.ts       createShutdown(deps) — ordered close, drain timeout
     ├── environment/      environment — zod env schema, validated at import
-    ├── routes/           one folder per resource, mounted by app.ts; owns its
-    │   │                 constants/, utils/ and tests/
-    │   ├── docs/         index, handlers, constants/{openapi,routes},
+    ├── features/         one folder per topic, mounted or applied by app.ts;
+    │   │                 each owns its routes/, constants/, middleware/,
+    │   │                 utils/ and tests/; the Image module mounts from
+    │   │                 @allonfire/storage (ADR 0015)
+    │   ├── docs/         routes/{index,handlers}, constants/{openapi,routes},
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
-    │   └── health/       index, routes, handlers, constants/statuses,
-    │                     utils/status (HealthDeps, status mapping) — /health, /ready
-    ├── features/         one folder per cross-cutting topic (no endpoints),
-    │   │                 each owning constants/, middleware/ and tests/
+    │   ├── health/       routes/{index,routes,handlers}, constants/statuses,
+    │   │                 utils/status (HealthDeps, status mapping) — /health, /ready
     │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
     │   │                 API's limiter wrapped in the module's authLimit)
     │   ├── errors/       constants/{error-codes,problem-details},
@@ -189,7 +277,7 @@ feature reads it. `CONTEXT_VAR` and the mount prefixes are
 shared, so they stay in `shared/constants/`. Anything not API-specific —
 `HTTP_STATUS`, `HTTP_METHOD`, `HTTP_HEADER`, `CONTENT_TYPE`, `LOG_LEVEL`, the
 redaction list, `BOOLEAN_ENV`, `SEPARATOR`, `TRAILING_SLASHES`, time and size units, `SECURITY_HEADERS` — lives in
-`@allonfire/utils/constants/*`; only `ERROR_STATUS` stays in the API's
+`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`); only `ERROR_STATUS` stays in the API's
 `shared/constants/http.ts`. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
@@ -197,7 +285,7 @@ Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V
 shared too: the health routes serve it, and telemetry, the request logger and
 the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
 `LOCALE` and the rate-limit tunables belong to the feature that owns them.
-Tests live beside what they test: the feature's or route's `tests/`, or
+Tests live beside what they test: the feature's `tests/`, or
 `shared/<kind>/tests/` for shared helpers. A feature checked through the whole
 middleware chain still lives in its own `tests/` and builds the app with
 `createApp(appDeps())` (`shared/tests/app-deps.ts`). Only `client` and
@@ -209,10 +297,10 @@ queue, external API) and are named
 `*.integration.test.ts`. Type tests (`*.test-d.ts`) take no tag: `tsc`
 checks them and nothing executes. Browser tests are Playwright's, under the app's `e2e/`.
 
-**Route modules** are self-contained folders under `routes/<name>/`:
+**Routes live in their feature**, under `features/<name>/routes/`:
 `index.ts` builds the chained sub-app, `routes.ts` holds the `describeRoute`
-specs, `handlers.ts` the handlers, plus `constants/`, `utils/` and `tests/` as
-needed. File names carry no `<name>.` prefix; the folder already says it. Named
+specs, `handlers.ts` the handlers; the feature's `constants/`, `utils/` and
+`tests/` sit beside `routes/`. File names carry no `<name>.` prefix; the folder already says it. Named
 exports only, no `import * as`. `index.ts` assembles a router; it is not a
 barrel. A handler for a path with params (`/:id`) goes through
 `createFactory<AppBindings>().createHandlers(...)` so the params stay inferred.
@@ -237,28 +325,32 @@ many, and `middlewares/` reads wrong.
   of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
 - **Every documented body comes from its zod schema**: `content: { [CONTENT_TYPE.JSON]:
   { schema: resolver(bodySchema) } }` in `describeRoute`, the same schema the
-  handler `satisfies`. Errors reference `#/components/responses/Problem`
-  (`ProblemDetails`, registered once in `routes/docs/handlers.ts`). Never
+  handler `satisfies`. An error response is `{ $ref: problemResponseRef(status) }`
+  (`@allonfire/core/features/errors/constants/openapi`): `features/docs/routes/handlers.ts`
+  registers one `Problem<status>` per `ERROR_STATUS`, listing only that status's
+  codes (`ERROR_CODE_STATUS`). Never
   `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
 - **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
-- **Auth guards** come from `@allonfire/auth/features/guards/middleware/*` and throw
+- **Auth guards** come from `@allonfire/auth/features/hono/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
-- **Required env:** `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`,
-  `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`. Full list in
+- **Required env:** `DATABASE_URL`, `API_REDIS_URL`, `API_CORS_ORIGINS`,
+  `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
+  `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`. Full list in
   `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
   (reserved). Eviction is `volatile-lru`; never TTL a session key.
-- **Locales and the catalogue live in `features/i18n/constants/locales.ts`** — one file to
-  maintain. `LOCALE` is the source; `Locale` and `DEFAULT_LOCALE` derive from
-  it. Its key order means nothing (Biome sorts it): `SUPPORTED_LOCALES` is the
-  explicit preference order `match()` sees, main variant of each language first,
-  and `tests/locales.test-d.ts` fails if a locale is missing from it.
+- **`LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
+  Apps (ADR 0012), which route by its derived `Language`. `SUPPORTED_LOCALES`
+  there is the explicit preference order `match()` sees, main variant of each
+  language first; `src/features/i18n/tests/locales.test-d.ts` fails if a locale is
+  missing from it or speaks a language outside `BASE_LANGUAGES`. The API's
+  `features/i18n/constants/locales.ts` keeps `DEFAULT_LOCALE` and the catalogue.
   `CATALOGUE` uses computed `[LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
   locale has no messages. `Translations` is `typeof EN`, derived rather than
@@ -290,6 +382,7 @@ many, and `middlewares/` reads wrong.
 - Orchestrator: Dokploy
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
+- Back office build needs `STORAGE_ENDPOINT` (Docker build arg, CI secret); it is baked into the `/storage/images` rewrite.
 
 ## Agent skills
 
@@ -312,12 +405,16 @@ Pinned in `skills-lock.json`, restored with `npx skills experimental_install`:
 - Vercel: `vercel-react-best-practices`, `vercel-composition-patterns`, `web-design-guidelines`, `vercel-react-view-transitions`, `writing-guidelines`.
 - Next.js: `next-dev-loop`, `next-cache-components-adoption`, `next-cache-components-optimizer`, `next-partial-prefetching-adoption`, `next-partial-prefetching-optimizer`.
 - shadcn: `shadcn`, `migrate-radix-to-base`.
+- impeccable: installed with `npx impeccable install --providers=claude --scope=project`, not in `skills-lock.json`; its engine binary is gitignored and downloaded on first run. Reach it only through `/aof-design`.
+- Repo's own: `aof-design` (every page, ADR 0011 and 0014) and `aof-documentation` (READMEs, docs, screenshots).
 
 MCP servers in `.mcp.json`: `shadcn` (browse and add registry components) and `next-devtools` (errors, routes and logs from a running `next dev`).
 
 ### Design system
 
-`packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. Customisation lives in AOF components in `packages/ui`, and Apps and other packages import only those (Biome rejects `@allonfire/shadcn` anywhere else). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
+`packages/design` holds what Apps share visually and no real components (ADR 0011, ADR 0014): the Designs (`src/designs/<name>/`: `DESIGN.md`, `DESIGN.json`, `theme.css`, fonts), each App's `PRODUCT.md` and stylesheet (`src/apps/<app>/`), prototypes under review (`src/apps/<app>/prototypes/`), and impeccable's state. Pages and their components are built in the App, under `apps/<app>/src/features/<topic>/components/`, using next-intl directly. Build or edit any page with `/aof-design` (prototype or direct), never plain `/impeccable`. An App imports only `@allonfire/design/apps/<app>/styles.css` from it. `pnpm design:sync` copies a Design into the Apps wearing it; CI runs `--check`.
+
+`packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. AOF components live in `packages/ui`, the only package that imports `@allonfire/shadcn` (Biome enforces it). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
 
 ### exFAT volume
 

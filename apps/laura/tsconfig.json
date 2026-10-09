@@ -9,7 +9,7 @@
       "@allonfire/storage": ["../../packages/storage/src/index.ts"],
       "@allonfire/storage/*": ["../../packages/storage/src/*"],
       "@allonfire/auth/*": ["../../packages/auth/src/*"],
-      "@allonfire/utils/*": ["../../packages/utils/src/*"]
+      "@allonfire/core/*": ["../../packages/core/src/*"]
     },
     "allowJs": true
   },

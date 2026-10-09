@@ -8,5 +8,5 @@ export const corsPolicy = (): MiddlewareHandler =>
     // wildcard origin — setting it now removes a landmine from the
     // auth migration.
     credentials: true,
-    origin: env.CORS_ORIGINS,
+    origin: env.API_CORS_ORIGINS,
   });

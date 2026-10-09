@@ -1,0 +1,36 @@
+// Images, each placed in one or more Apps (ADR 0013, ADR 0020).
+
+model Image {
+  id          String     @id @default(cuid(2))
+  /// `<uuid>.avif` in the image bucket; carries no App, so placing it is an ImageApp row.
+  key         String     @unique
+  width       Int
+  height      Int
+  bytes       Int
+  blurDataUrl String
+  /// One alt per Language, `{ en, it }`; shape checked by imageAltSchema.
+  alt         Json
+  uploadedBy  String?
+  user        User?      @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  /// Every App the Image is in; never empty (the API refuses an empty list,
+  /// and removing the last placement deletes the Image).
+  apps        ImageApp[]
+  createdAt   DateTime   @default(now())
+
+  @@index([createdAt, id])
+  @@schema("image")
+}
+
+/// One App an Image is placed in (ADR 0020).
+model ImageApp {
+  imageId   String
+  app       App
+  /// Shown to anyone in this App, signed in or not.
+  public    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@id([imageId, app])
+  @@index([app, imageId])
+  @@schema("image")
+}

@@ -1,4 +1,18 @@
 import { prisma } from "@allonfire/database";
+import {
+  createImages,
+  deleteImages,
+  getImage,
+  linksOfImages,
+  listImages,
+  removeImagesFromApp,
+  updateImages,
+} from "@allonfire/database/features/image/image.service";
+import {
+  deleteImageObjects,
+  putImageObject,
+} from "@allonfire/storage/features/image/objects/image-objects";
+import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";
@@ -23,7 +37,7 @@ import { createCrashHandler, createShutdown } from "./shutdown";
 // global MeterProvider, unlike the tracer, has no proxy that attaches later.
 startTelemetry();
 
-const redis = createRedis(env.REDIS_URL);
+const redis = createRedis(env.API_REDIS_URL);
 
 const app = createApp({
   auth,
@@ -32,6 +46,19 @@ const app = createApp({
     return true;
   },
   checkRedis: async () => (await redis.ping()) === REDIS_PING_REPLY,
+  images: {
+    createImages,
+    deleteImages,
+    deleteObjects: deleteImageObjects,
+    getImage,
+    linksOf: linksOfImages,
+    listImages,
+    log: logger,
+    prepare: prepareImage,
+    putObject: putImageObject,
+    removeImagesFromApp,
+    updateImages,
+  },
   store: createRedisStore(redis),
 });
 

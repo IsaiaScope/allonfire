@@ -5,14 +5,30 @@
   "Home": {
     "title": "Back office",
     "description": "Ancora niente qui.",
-    "action": "Inizia"
+    "signOut": "Esci"
   },
-  "NotFound": {
-    "title": "Pagina non trovata",
-    "back": "Torna all'inizio"
-  },
-  "Error": {
-    "title": "Qualcosa è andato storto",
-    "retry": "Riprova"
+  "SignIn": {
+    "app": "Back office",
+    "email": "Email",
+    "error": {
+      "forbidden": "Questo account non può accedere al Back office.",
+      "invalid": "Email o password errate.",
+      "missing": "Inserisci email e password.",
+      "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
+      "unavailable": "L’accesso non è disponibile ora. Riprova tra poco."
+    },
+    "field": {
+      "emailInvalid": "Inserisci un indirizzo email valido.",
+      "emailRequired": "Inserisci la tua email.",
+      "passwordRequired": "Inserisci la password."
+    },
+    "language": "Lingua",
+    "notice": "Solo utenti autorizzati. Registrazione chiusa.",
+    "password": "Password",
+    "pauseNotice": "Metti in pausa l'avviso",
+    "showPassword": "Mostra password",
+    "submit": "Accedi",
+    "submitting": "Accesso in corso…",
+    "theme": "Cambia tema"
   }
 }

@@ -1,4 +1,5 @@
 // @module-tag unit
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { context, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import {
@@ -83,7 +84,7 @@ describe("requestSpans", () => {
     expect(attributes["url.full"]).toBe("http://localhost/things/42");
     expect(attributes["url.path"]).toBe("/things/42");
     expect(attributes["url.scheme"]).toBe("http");
-    expect(JSON.stringify(attributes)).not.toContain("secret");
+    expect(objectValues(attributes).join(" ")).not.toContain("secret");
   });
 
   it("leaves a 4xx span unset, as the HTTP semantic conventions require", async () => {

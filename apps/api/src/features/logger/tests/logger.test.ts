@@ -3,22 +3,22 @@ import { captureLog } from "./capture";
 
 describe("createLogger", () => {
   it("redacts the authorization header", () => {
-    const { lines, logger } = captureLog();
+    const { logger, output } = captureLog();
 
     logger.info(
       { req: { headers: { authorization: "Bearer secret-token" } } },
       "req"
     );
 
-    expect(JSON.stringify(lines)).not.toContain("secret-token");
-    expect(JSON.stringify(lines)).toContain("[Redacted]");
+    expect(output()).not.toContain("secret-token");
+    expect(output()).toContain("[Redacted]");
   });
 
   it("redacts nested password fields", () => {
-    const { lines, logger } = captureLog();
+    const { logger, output } = captureLog();
 
     logger.info({ body: { password: "hunter2" } }, "sign-in");
 
-    expect(JSON.stringify(lines)).not.toContain("hunter2");
+    expect(output()).not.toContain("hunter2");
   });
 });

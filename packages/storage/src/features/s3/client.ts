@@ -3,10 +3,10 @@ import { env } from "../../environment/environment";
 
 export const s3 = new S3Client({
   credentials: {
-    accessKeyId: env.MINIO_ACCESS_KEY,
-    secretAccessKey: env.MINIO_SECRET_KEY,
+    accessKeyId: env.STORAGE_ACCESS_KEY,
+    secretAccessKey: env.STORAGE_SECRET_KEY,
   },
-  endpoint: env.MINIO_ENDPOINT,
+  endpoint: env.STORAGE_ENDPOINT,
   forcePathStyle: true,
   region: "us-east-1",
 });

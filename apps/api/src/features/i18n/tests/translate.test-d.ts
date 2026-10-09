@@ -1,5 +1,5 @@
+import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
 import { ERROR_CODE } from "../../errors/constants/error-codes";
-import { LOCALE } from "../constants/locales";
 import { translate } from "../translate";
 
 describe("translate call signature", () => {

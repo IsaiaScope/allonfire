@@ -112,7 +112,7 @@
 | `@allonfire/database` | `GameType` type |
 | `@allonfire/auth/guard` | `checkAppAccess`, `checkMutationAccess`, `checkAdminAccess` for server action authorization |
 | `@allonfire/storage` | `blurHashToDataURL`, `processPhoto`, `uploadFile` for image handling |
-| `@allonfire/utils` | `formatErrorMessage` for error normalization in quiz CRUD |
+| `@allonfire/core` | `formatErrorMessage` for error normalization in quiz CRUD |
 | `@allonfire/ui` | Button, Card, Badge, AlertDialog, Avatar, Input, Label, cn utility |
 | `framer-motion` | Answer feedback animations (bounce/shake), leaderboard row stagger, game hub card animations |
 | `lucide-react` | Icons: Gamepad2, BrainCircuit, Trophy, Clock, MousePointerClick, Plus, Pencil, Trash2, Search, ArrowLeft, ImagePlus, Check, X, Loader2 |

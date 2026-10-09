@@ -1,8 +1,9 @@
-import createIntlMiddleware from "next-intl/middleware";
+import { withSessionRefresh } from "@allonfire/auth/features/next/utils/with-session-refresh";
+import { AOFCreateMiddleware } from "@allonfire/core/features/next/i18n/aof-create-middleware";
 import { routing } from "./features/i18n/routing";
 
-// Locale only. Sign-in checks arrive with the auth plan (ADR 0009).
-export default createIntlMiddleware(routing);
+// Routes the locale and renews the Session cookies.
+export default withSessionRefresh(AOFCreateMiddleware(routing));
 
 export const config = {
   matcher: "/((?!api|_next|_vercel|.*\\..*).*)",

@@ -1,7 +1,4 @@
-import type { AllowedApp, Role } from "@allonfire/database/enums";
-
-/** Every App a User can be allowed into: each Allowed apps value but `ALL`. */
-export type App = Exclude<AllowedApp, typeof AllowedApp.ALL>;
+import type { AccessMembership } from "@allonfire/database/features/auth/access/access";
 
 /** What the guards and hosts read from a Session. Better Auth's is a superset. */
 export type AuthSession = {
@@ -10,8 +7,7 @@ export type AuthSession = {
     id: string;
     email: string;
     name: string;
-    role: Role;
-    allowedApps: AllowedApp[];
+    memberships: readonly AccessMembership[];
   };
 };
 

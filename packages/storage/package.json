@@ -4,24 +4,62 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
     "./environment/environment": "./src/environment/environment.ts",
-    "./features/image/image-processing": "./src/features/image/image-processing.ts"
+    "./features/image/constants/bucket": "./src/features/image/constants/bucket.ts",
+    "./features/image/constants/format": "./src/features/image/constants/format.ts",
+    "./features/image/constants/paths": "./src/features/image/constants/paths.ts",
+    "./features/image/constants/schemas": "./src/features/image/constants/schemas.ts",
+    "./features/image/hono/constants/errors": "./src/features/image/hono/constants/errors.ts",
+    "./features/image/hono/constants/limits": "./src/features/image/hono/constants/limits.ts",
+    "./features/image/hono/constants/openapi": "./src/features/image/hono/constants/openapi.ts",
+    "./features/image/hono/constants/schemas": "./src/features/image/hono/constants/schemas.ts",
+    "./features/image/hono/routes": "./src/features/image/hono/routes/index.ts",
+    "./features/image/hono/routes/read-handlers": "./src/features/image/hono/routes/read-handlers.ts",
+    "./features/image/hono/routes/write-handlers": "./src/features/image/hono/routes/write-handlers.ts",
+    "./features/image/hono/routes/routes": "./src/features/image/hono/routes/routes.ts",
+    "./features/image/hono/tests/stub-image-deps": "./src/features/image/hono/tests/stub-image-deps.ts",
+    "./features/image/hono/utils/cursor": "./src/features/image/hono/utils/cursor.ts",
+    "./features/image/hono/utils/deps": "./src/features/image/hono/utils/deps.ts",
+    "./features/image/hono/utils/upload": "./src/features/image/hono/utils/upload.ts",
+    "./features/image/hono/utils/validation": "./src/features/image/hono/utils/validation.ts",
+    "./features/image/next/with-storage-images": "./src/features/image/next/with-storage-images.ts",
+    "./features/image/objects/image-objects": "./src/features/image/objects/image-objects.ts",
+    "./features/image/prepare/constants/limits": "./src/features/image/prepare/constants/limits.ts",
+    "./features/image/prepare/prepare-image": "./src/features/image/prepare/prepare-image.ts",
+    "./features/s3/client": "./src/features/s3/client.ts",
+    "./features/s3/objects": "./src/features/s3/objects.ts",
+    "./shared/constants/paths": "./src/shared/constants/paths.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/auth": "workspace:*",
+    "@allonfire/core": "workspace:*",
+    "@allonfire/database": "workspace:*",
     "@aws-sdk/client-s3": "^3.800.0",
+    "@hono/standard-validator": "^0.2.0",
     "@t3-oss/env-core": "^0.13.10",
-    "blurhash": "^2.0.5",
+    "heic-decode": "^2.1.0",
+    "hono-openapi": "^1.1.0",
     "sharp": "^0.34.5",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@allonfire/config": "workspace:*",
+    "hono": "^4.9.0",
+    "next": "^16.3.6",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "hono": "^4.9.0",
+    "next": "^16.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
   }
 }

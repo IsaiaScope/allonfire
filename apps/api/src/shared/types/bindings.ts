@@ -1,6 +1,6 @@
-import type { AuthVariables } from "@allonfire/auth/shared/types/variables";
+import type { AuthVariables } from "@allonfire/auth/features/hono/types/variables";
+import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import type { PinoLogger } from "hono-pino";
-import type { Locale } from "../../features/i18n/constants/locales";
 import type { CONTEXT_VAR } from "../constants/runtime";
 
 export type AppBindings = {

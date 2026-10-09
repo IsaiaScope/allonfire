@@ -6,8 +6,9 @@ import { AUTH_BASE_PATH } from "../../shared/constants/routes";
 export const auth = toAuthLike(
   createAuth({
     basePath: AUTH_BASE_PATH,
-    baseURL: env.BETTER_AUTH_URL,
-    secret: env.BETTER_AUTH_SECRET,
-    trustedOrigins: env.CORS_ORIGINS,
+    baseURL: env.AUTH_URL,
+    cookieDomain: env.AUTH_COOKIE_DOMAIN,
+    secret: env.AUTH_SECRET,
+    trustedOrigins: env.API_CORS_ORIGINS,
   })
 );

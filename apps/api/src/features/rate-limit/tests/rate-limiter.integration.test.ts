@@ -2,7 +2,7 @@
 import { awaitReady, createRedis } from "../../redis/redis";
 import { createRedisStore } from "../middleware/rate-limiter";
 
-const url = process.env.REDIS_URL ?? "redis://localhost:6379/0";
+const url = process.env.API_REDIS_URL ?? "redis://localhost:6379/0";
 const redis = createRedis(url);
 
 beforeAll(async () => {

@@ -2,25 +2,17 @@
   {
     "email": "allonfire-user@allonfire.com",
     "name": "allonfire-user",
-    "role": "USER",
-    "allowedApps": ["ALL"]
+    "memberships": [
+      { "app": "LAURA", "role": "USER" },
+      { "app": "BACK_OFFICE", "role": "USER" }
+    ]
   },
   {
     "email": "allonfire-viewer@allonfire.com",
     "name": "allonfire-viewer",
-    "role": "VIEWER",
-    "allowedApps": ["ALL"]
-  },
-  {
-    "email": "laura-admin@allonfire.com",
-    "name": "laura-admin",
-    "role": "ADMIN",
-    "allowedApps": ["LAURA"]
-  },
-  {
-    "email": "laura-user@allonfire.com",
-    "name": "laura-user",
-    "role": "USER",
-    "allowedApps": ["LAURA"]
+    "memberships": [
+      { "app": "LAURA", "role": "VIEWER" },
+      { "app": "BACK_OFFICE", "role": "VIEWER" }
+    ]
   }
 ]

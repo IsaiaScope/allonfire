@@ -1,6 +1,7 @@
 // @module-tag integration
 import { execFileSync } from "node:child_process";
 import {
+  DOCKER_TIMEOUT,
   dropDatabase,
   liquibase,
   migrateImage,
@@ -8,7 +9,6 @@ import {
   throwawayUrl,
 } from "./throwaway-db";
 
-const DOCKER_TIMEOUT = 300_000;
 const DATABASE = "allonfire_backup";
 const VOLUME = "allonfire-backup-test";
 const KEEP = 2;
@@ -82,7 +82,8 @@ describe("backup", () => {
         `/b/${newest}`
       );
       expect(contents).toContain("TABLE DATA auth User");
-      expect(contents).toContain("TABLE DATA laura Photo");
+      expect(contents).toContain("TABLE DATA laura GameScore");
+      expect(contents).toContain("TABLE DATA image Image");
     },
     DOCKER_TIMEOUT
   );

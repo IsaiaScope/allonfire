@@ -1,7 +1,10 @@
-import { LOG_LEVEL } from "@allonfire/utils/constants/logger";
+import { LOG_LEVEL } from "@allonfire/core/features/logger/constants/logger";
+import { parseJsonWith } from "@allonfire/core/shared/utils/json";
+import { z } from "zod";
 import { createLogger } from "../logger";
 
-export type LogLine = { level: number; msg: string } & Record<string, unknown>;
+const logLineSchema = z.looseObject({ level: z.number(), msg: z.string() });
+export type LogLine = z.infer<typeof logLineSchema>;
 
 /**
  * A real logger whose output is parsed into `lines` instead of written out.
@@ -9,11 +12,18 @@ export type LogLine = { level: number; msg: string } & Record<string, unknown>;
  */
 export function captureLog() {
   const lines: LogLine[] = [];
+  // The text pino wrote, for checks that nothing secret reached it at all.
+  const output: string[] = [];
   const logger = createLogger({
-    destination: { write: (chunk: string) => lines.push(JSON.parse(chunk)) },
+    destination: {
+      write: (chunk: string) => {
+        output.push(chunk);
+        lines.push(parseJsonWith(chunk, logLineSchema));
+      },
+    },
   });
   logger.level = LOG_LEVEL.DEBUG;
-  return { lines, logger };
+  return { lines, logger, output: () => output.join("") };
 }
 
 /** pino's numeric level for `info`, to filter `lines` at or above it. */
