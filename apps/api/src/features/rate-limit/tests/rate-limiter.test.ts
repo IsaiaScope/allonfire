@@ -1,11 +1,13 @@
 // @module-tag unit
 
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 import { onError } from "../../errors/middleware/error-handler";
 import { problemOf } from "../../errors/tests/problem-of";
 import { localeResolver } from "../../i18n/middleware/locale-resolver";
 import { captureLog } from "../../logger/tests/capture";
+import { RATE_LIMIT } from "../constants/limits";
 import {
   createRateLimiter,
   failOpen,
@@ -80,7 +82,7 @@ describe("rate limited response", () => {
     expect(res.headers.get("ratelimit-limit")).toBe("1");
 
     const body = await problemOf(res);
-    expect(body.code).toBe("RATE_LIMITED");
+    expect(body.code).toBe(ERROR.CODE.RATE_LIMITED);
     expect(body.requestId).toBeTruthy();
   });
 
@@ -130,7 +132,7 @@ describe("rate limited response", () => {
     const res = await app.request("/ping", req("5.5.5.5"));
 
     const body = await problemOf(res);
-    expect(body.code).toBe("RATE_LIMITED");
+    expect(body.code).toBe(ERROR.CODE.RATE_LIMITED);
     expect(body.detail).toContain("Riprova tra 5 secondi");
   });
 });
@@ -192,7 +194,9 @@ describe("createRateLimiter keyPrefix", () => {
 
     await app.request("/");
 
-    expect([...store.hits.keys()]).toEqual(["sign-in:unknown"]);
+    expect([...store.hits.keys()]).toEqual([
+      `sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`,
+    ]);
   });
 });
 
@@ -224,8 +228,8 @@ describe("one store behind several limiters", () => {
 
     expect(windows).toEqual(
       new Map([
-        ["unknown", 60_000],
-        ["sign-in:unknown", 900_000],
+        [RATE_LIMIT.UNKNOWN_CLIENT, 60_000],
+        [`sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`, 900_000],
       ])
     );
   });

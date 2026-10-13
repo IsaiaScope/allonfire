@@ -37,10 +37,6 @@ const submit = (
   return { preventDefault, send };
 };
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe("submitAOFForm", () => {
   it("stops the browser's post and sends the form when its checks pass", async () => {
     const { element, focused } = formWith(["email"]);

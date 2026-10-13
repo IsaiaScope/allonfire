@@ -1,4 +1,5 @@
 import { vitestConfig } from "@allonfire/config/tests/vitest";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(
@@ -6,7 +7,9 @@ export default mergeConfig(
   defineConfig({
     test: {
       fileParallelism: false,
-      hookTimeout: 30_000,
+      // A Test database per run, dropped after (CONTEXT.md).
+      globalSetup: ["./src/features/test-database/global-setup.ts"],
+      hookTimeout: 30 * UNIT.MS_PER_SECOND,
       setupFiles: ["./vitest.setup.ts"],
     },
   })

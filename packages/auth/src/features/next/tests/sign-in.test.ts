@@ -1,9 +1,9 @@
 // @module-tag unit
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App } from "@allonfire/database/enums";
 import { NextResponse } from "next/server";
-import { AUTH_ERROR_CODE } from "../../../shared/constants/errors";
-import { SIGN_IN_ERROR } from "../constants/api";
+import { AUTH } from "../../../shared/constants/auth";
 import { signInWithEmail } from "../utils/sign-in";
 
 const TOKEN = "better-auth.session_token";
@@ -18,7 +18,7 @@ vi.mock("next/headers", () => ({
   }),
   headers: async () =>
     new Headers({
-      origin: "http://localhost:3400",
+      origin: LOCAL.URL.BACK_OFFICE,
       "x-forwarded-for": "1.2.3.4",
     }),
 }));
@@ -82,16 +82,16 @@ describe("signInWithEmail", () => {
       sentCookies().some((cookie) => cookie.startsWith(`${TOKEN}=fresh`))
     ).toBe(true);
     expect(call(0).headers.get("x-aof-app")).toBe(App.BACK_OFFICE);
-    expect(call(0).headers.get("origin")).toBe("http://localhost:3400");
+    expect(call(0).headers.get("origin")).toBe(LOCAL.URL.BACK_OFFICE);
     expect(call(0).headers.get("x-forwarded-for")).toBe("1.2.3.4");
   });
 
   it("answers forbidden when the API refuses the App, and sets no cookie", async () => {
     fetchMock.mockResolvedValueOnce(
-      refusedWith(403, AUTH_ERROR_CODE.APP_FORBIDDEN)
+      refusedWith(403, AUTH.ERROR_CODE.APP_FORBIDDEN)
     );
     await expect(signInWithEmail(form())).resolves.toBe(
-      SIGN_IN_ERROR.FORBIDDEN
+      AUTH.SIGN_IN_ERROR.FORBIDDEN
     );
     expect(sentCookies()).toEqual([]);
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -100,14 +100,14 @@ describe("signInWithEmail", () => {
   it("answers unavailable to any other 403, such as an untrusted origin", async () => {
     fetchMock.mockResolvedValueOnce(refusedWith(403, "INVALID_ORIGIN"));
     await expect(signInWithEmail(form())).resolves.toBe(
-      SIGN_IN_ERROR.UNAVAILABLE
+      AUTH.SIGN_IN_ERROR.UNAVAILABLE
     );
   });
 
   it.each([
-    [401, SIGN_IN_ERROR.INVALID],
-    [429, SIGN_IN_ERROR.RATE_LIMITED],
-    [503, SIGN_IN_ERROR.UNAVAILABLE],
+    [401, AUTH.SIGN_IN_ERROR.INVALID],
+    [429, AUTH.SIGN_IN_ERROR.RATE_LIMITED],
+    [503, AUTH.SIGN_IN_ERROR.UNAVAILABLE],
   ])("maps the API's %i to %s", async (status, error) => {
     fetchMock.mockResolvedValueOnce(refusedWith(status));
     await expect(signInWithEmail(form())).resolves.toBe(error);
@@ -117,16 +117,16 @@ describe("signInWithEmail", () => {
   it("answers unavailable when the API cannot be reached", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
     await expect(signInWithEmail(form())).resolves.toBe(
-      SIGN_IN_ERROR.UNAVAILABLE
+      AUTH.SIGN_IN_ERROR.UNAVAILABLE
     );
   });
 
   it("asks nothing of the API for an empty field or a malformed email", async () => {
     await expect(signInWithEmail(form(" ", "secret"))).resolves.toBe(
-      SIGN_IN_ERROR.MISSING
+      AUTH.SIGN_IN_ERROR.MISSING
     );
     await expect(signInWithEmail(form("not-an-email"))).resolves.toBe(
-      SIGN_IN_ERROR.INVALID
+      AUTH.SIGN_IN_ERROR.INVALID
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UNIT } from "../../../shared/constants/units";
 
 /**
  * The statuses of RFC 9110 and its companions that a web app can reasonably
@@ -8,7 +9,7 @@ import { z } from "zod";
  * `never` (apps/api's `client.test-d.ts` catches it). The library is still
  * used, for `getReasonPhrase`.
  */
-export const HTTP_STATUS = {
+const STATUS = {
   ACCEPTED: 202,
   BAD_GATEWAY: 502,
   BAD_REQUEST: 400,
@@ -54,11 +55,11 @@ export const HTTP_STATUS = {
   URI_TOO_LONG: 414,
 } as const;
 
-export const httpStatusSchema = z.enum(HTTP_STATUS);
+export const httpStatusSchema = z.enum(STATUS);
 export type HttpStatus = z.infer<typeof httpStatusSchema>;
 
 /** Every method RFC 9110 defines, plus PATCH (RFC 5789). */
-export const HTTP_METHOD = {
+const METHOD = {
   CONNECT: "CONNECT",
   DELETE: "DELETE",
   GET: "GET",
@@ -70,10 +71,10 @@ export const HTTP_METHOD = {
   TRACE: "TRACE",
 } as const;
 
-export const httpMethodSchema = z.enum(HTTP_METHOD);
+export const httpMethodSchema = z.enum(METHOD);
 export type HttpMethod = z.infer<typeof httpMethodSchema>;
 
-export const CONTENT_TYPE = {
+const CONTENT_TYPES = {
   EVENT_STREAM: "text/event-stream",
   FORM_URLENCODED: "application/x-www-form-urlencoded",
   HTML: "text/html",
@@ -89,14 +90,14 @@ export const CONTENT_TYPE = {
   TEXT: "text/plain",
 } as const;
 
-export const contentTypeSchema = z.enum(CONTENT_TYPE);
+export const contentTypeSchema = z.enum(CONTENT_TYPES);
 export type ContentType = z.infer<typeof contentTypeSchema>;
 
 /**
  * Lower-case, the form HTTP/2 puts on the wire and the Fetch `Headers` class
  * returns. Lookups are case-insensitive either way.
  */
-export const HTTP_HEADER = {
+const HEADER = {
   ACCEPT: "accept",
   /** How a frontend passes its language; absent means the default locale. */
   ACCEPT_LANGUAGE: "accept-language",
@@ -123,5 +124,35 @@ export const HTTP_HEADER = {
   X_REQUEST_ID: "x-request-id",
 } as const;
 
-export const httpHeaderSchema = z.enum(HTTP_HEADER);
+export const httpHeaderSchema = z.enum(HEADER);
 export type HttpHeader = z.infer<typeof httpHeaderSchema>;
+
+/** Two years, the HSTS preload list's minimum. */
+const HSTS_MAX_AGE_S = 2 * UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY;
+
+/**
+ * Headers every allonfire app sends. Mutable on purpose: Next's `headers()`
+ * config takes a `Header[]`, not a readonly one.
+ */
+const SECURITY_HEADERS: { key: HttpHeader; value: string }[] = [
+  { key: HEADER.X_FRAME_OPTIONS, value: "DENY" },
+  { key: HEADER.X_CONTENT_TYPE_OPTIONS, value: "nosniff" },
+  {
+    key: HEADER.REFERRER_POLICY,
+    value: "strict-origin-when-cross-origin",
+  },
+  { key: HEADER.X_DNS_PREFETCH_CONTROL, value: "on" },
+  {
+    key: HEADER.STRICT_TRANSPORT_SECURITY,
+    value: `max-age=${HSTS_MAX_AGE_S}; includeSubDomains`,
+  },
+];
+
+/** Everything HTTP names: `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, and the `SECURITY_HEADERS` every app sends. */
+export const HTTP = {
+  CONTENT_TYPE: CONTENT_TYPES,
+  HEADER,
+  METHOD,
+  SECURITY_HEADERS,
+  STATUS,
+} as const;

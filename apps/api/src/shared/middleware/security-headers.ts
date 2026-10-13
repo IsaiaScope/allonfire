@@ -1,4 +1,4 @@
-import { SECURITY_HEADERS } from "@allonfire/core/features/http/constants/security-headers";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import { secureHeaders } from "hono/secure-headers";
@@ -11,7 +11,7 @@ import { secureHeaders } from "hono/secure-headers";
 export const securityHeaders = (): MiddlewareHandler =>
   every(async (context, next) => {
     await next();
-    for (const header of SECURITY_HEADERS) {
+    for (const header of HTTP.SECURITY_HEADERS) {
       context.header(header.key, header.value);
     }
   }, secureHeaders());

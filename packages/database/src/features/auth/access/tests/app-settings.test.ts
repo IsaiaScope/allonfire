@@ -1,17 +1,18 @@
 // @module-tag unit
+
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import { hasRole } from "../access";
+import { ACCESS } from "../constants/access";
 import {
-  APP_SETTINGS,
   type AppSettingsTable,
   registrationRoleSchema,
 } from "../constants/app-settings";
 
-describe("APP_SETTINGS", () => {
+describe("ACCESS.APP_SETTINGS", () => {
   it("gives every open App's newcomers a Role the App lets in", () => {
     // Widened, so a future open row is checked too.
-    const settings: AppSettingsTable = APP_SETTINGS;
+    const settings: AppSettingsTable = ACCESS.APP_SETTINGS;
     for (const [app, { minRole, registration }] of objectEntries(settings)) {
       expect({
         app,
@@ -21,7 +22,7 @@ describe("APP_SETTINGS", () => {
   });
 
   it("keeps the Back office sign-in only and Admin-only", () => {
-    expect(APP_SETTINGS[App.BACK_OFFICE]).toEqual({
+    expect(ACCESS.APP_SETTINGS[App.BACK_OFFICE]).toEqual({
       minRole: Role.ADMIN,
       registration: null,
     });

@@ -51,7 +51,8 @@ export function objectEntries<T extends object>(obj: T): EntryOf<T>[] {
  *
  * Here the cast happens once, behind a signature that infers `K` from the
  * entries. Callers get the record type back without writing an assertion, so a
- * wrong key is a type error where the entries are built.
+ * wrong key is a type error where the entries are built. A missing key is
+ * not: entries filtered down to part of `K` still type as the whole record.
  *
  * Pass entries as tuples — `.map((k) => [k, f(k)] as const)`. Without `as
  * const` an array literal widens to `(K | V)[]` and `K` cannot be inferred.

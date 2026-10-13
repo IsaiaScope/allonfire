@@ -1,13 +1,17 @@
 // @module-tag unit
 import { Hono } from "hono";
-import { stubAuth } from "../../../shared/tests/stub-auth";
+import { AUTH } from "../../../shared/constants/auth";
+import { HOST_AUTH_PATH, stubAuth } from "../../../shared/tests/stub-auth";
 import { authRoutes } from "../routes";
+
+const GET_SESSION = `${HOST_AUTH_PATH}${AUTH.PATH.GET_SESSION}`;
+const SIGN_IN = `${HOST_AUTH_PATH}${AUTH.PATH.SIGN_IN_EMAIL}`;
 
 describe("authRoutes", () => {
   it("hands GET and POST to Better Auth with the original URL", async () => {
     const seen: string[] = [];
     const auth = stubAuth({
-      basePath: "/v1/auth",
+      basePath: HOST_AUTH_PATH,
       handler: (request) => {
         seen.push(`${request.method} ${new URL(request.url).pathname}`);
         return Promise.resolve(new Response("handled"));
@@ -15,23 +19,18 @@ describe("authRoutes", () => {
     });
     const app = new Hono().route("/", authRoutes(auth));
 
-    expect(await (await app.request("/v1/auth/get-session")).text()).toBe(
-      "handled"
-    );
-    await app.request("/v1/auth/sign-in/email", { method: "POST" });
+    expect(await (await app.request(GET_SESSION)).text()).toBe("handled");
+    await app.request(SIGN_IN, { method: "POST" });
 
-    expect(seen).toEqual([
-      "GET /v1/auth/get-session",
-      "POST /v1/auth/sign-in/email",
-    ]);
+    expect(seen).toEqual([`GET ${GET_SESSION}`, `POST ${SIGN_IN}`]);
   });
 
   it("does not answer other methods", async () => {
     const app = new Hono().route(
       "/",
-      authRoutes(stubAuth({ basePath: "/v1/auth" }))
+      authRoutes(stubAuth({ basePath: HOST_AUTH_PATH }))
     );
-    expect((await app.request("/v1/auth/x", { method: "PUT" })).status).toBe(
+    expect((await app.request(GET_SESSION, { method: "PUT" })).status).toBe(
       404
     );
   });

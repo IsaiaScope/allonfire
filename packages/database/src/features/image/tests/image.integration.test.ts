@@ -6,9 +6,9 @@ import {
   createImages,
   deleteImages,
   getImage,
+  type ImageChange,
   type ImageCursor,
   ImageNotFoundError,
-  linksOfImages,
   listImages,
   type NewImage,
   removeImagesFromApp,
@@ -24,6 +24,12 @@ const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
 const IN_LAURA: App[] = [App.LAURA];
 /** The check a caller runs inside the write; these tests let everything through. */
 const ALLOW = () => undefined;
+/** Writes `changes` as given, whatever the locked placements are. */
+const update = (...changes: ImageChange[]) =>
+  updateImages(
+    changes.map(({ id }) => id),
+    () => changes
+  );
 
 const image = (key: string, apps: ImageLink[] = [LAURA_PRIVATE]): NewImage => ({
   alt: { en: `${key} en`, it: `${key} it` },
@@ -51,9 +57,8 @@ beforeEach(async () => {
   });
 });
 
+// The Test database is dropped after the run; only the connection needs closing.
 afterAll(async () => {
-  await cleanUp();
-  await prisma.user.deleteMany({ where: { id: USER_ID } });
   await prisma.$disconnect();
 });
 
@@ -166,18 +171,19 @@ describe("image.service writes", () => {
     const [one] = await createImages([image("one", [LAURA_PRIVATE])]);
     const id = one?.id ?? "";
     await expect(
-      updateImages([
+      update(
         { id, place: [OFFICE_PRIVATE], remove: [App.LAURA] },
-        { id: "missing", place: [OFFICE_PRIVATE] },
-      ])
+        { id: "missing", place: [OFFICE_PRIVATE] }
+      )
     ).rejects.toBeInstanceOf(ImageNotFoundError);
     expect((await getImage(id))?.apps).toEqual([LAURA_PRIVATE]);
 
-    const [switched] = await updateImages([
-      { id, place: [LAURA_PUBLIC, OFFICE_PRIVATE] },
-    ]);
+    const [switched] = await update({
+      id,
+      place: [LAURA_PUBLIC, OFFICE_PRIVATE],
+    });
     expect(switched?.apps).toEqual([LAURA_PUBLIC, OFFICE_PRIVATE]);
-    const [moved] = await updateImages([{ id, remove: [App.LAURA] }]);
+    const [moved] = await update({ id, remove: [App.LAURA] });
     expect(moved?.apps).toEqual([OFFICE_PRIVATE]);
   });
 
@@ -186,29 +192,49 @@ describe("image.service writes", () => {
     const id = one?.id ?? "";
     // Another Admin places it in the Back office after this caller's read.
     await prisma.imageApp.create({ data: { ...OFFICE_PRIVATE, imageId: id } });
-    const [changed] = await updateImages([{ id, place: [LAURA_PUBLIC] }]);
+    const [changed] = await update({ id, place: [LAURA_PUBLIC] });
     expect(changed?.apps).toEqual([LAURA_PUBLIC, OFFICE_PRIVATE]);
   });
 
   it("keeps the placements when a change leaves apps out", async () => {
     const [one] = await createImages([image("kept", [LAURA_PUBLIC])]);
     const alt = { en: "new en", it: "new it" };
-    const [changed] = await updateImages([{ alt, id: one?.id ?? "" }]);
+    const [changed] = await update({ alt, id: one?.id ?? "" });
     expect(changed?.apps).toEqual([LAURA_PUBLIC]);
     expect(changed?.alt).toEqual(alt);
   });
 
-  it("names each Image's placements, or every id it does not know", async () => {
+  it("works the changes out against the placements it locked", async () => {
     const [one] = await createImages([
-      image("links-of", [OFFICE_PRIVATE, LAURA_PUBLIC]),
+      image("resolved", [OFFICE_PRIVATE, LAURA_PUBLIC]),
     ]);
     const id = one?.id ?? "";
-    expect(await linksOfImages([id, id])).toEqual(
-      new Map([[id, [LAURA_PUBLIC, OFFICE_PRIVATE]]])
-    );
-    await expect(linksOfImages([id, "missing"])).rejects.toMatchObject({
-      ids: ["missing"],
-    });
+    // Another Admin takes it out of Laura before this write locks it.
+    await removeImagesFromApp([id], App.LAURA, ALLOW);
+    const seen = vi.fn((): ImageChange[] => [{ id, place: [LAURA_PRIVATE] }]);
+    const [changed] = await updateImages([id, id], seen);
+    expect(seen).toHaveBeenCalledWith(new Map([[id, [OFFICE_PRIVATE]]]));
+    expect(changed?.apps).toEqual([LAURA_PRIVATE, OFFICE_PRIVATE]);
+  });
+
+  it("names every id it does not know before asking for the changes", async () => {
+    const [one] = await createImages([image("unknown")]);
+    const resolve = vi.fn((): ImageChange[] => []);
+    await expect(
+      updateImages([one?.id ?? "", "missing"], resolve)
+    ).rejects.toMatchObject({ ids: ["missing"] });
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing when working out the changes refuses", async () => {
+    const [one] = await createImages([image("refused", [LAURA_PRIVATE])]);
+    const id = one?.id ?? "";
+    await expect(
+      updateImages([id], () => {
+        throw new Error("refused");
+      })
+    ).rejects.toThrow("refused");
+    expect((await getImage(id))?.apps).toEqual([LAURA_PRIVATE]);
   });
 
   it("applies a batch naming one Image twice in order", async () => {
@@ -216,10 +242,10 @@ describe("image.service writes", () => {
     const id = one?.id ?? "";
     const alt = { en: "new en", it: "new it" };
     await expect(
-      updateImages([
+      update(
         { id, place: [LAURA_PUBLIC] },
-        { alt, id, place: [OFFICE_PRIVATE], remove: [App.LAURA] },
-      ])
+        { alt, id, place: [OFFICE_PRIVATE], remove: [App.LAURA] }
+      )
     ).resolves.toHaveLength(2);
     expect((await getImage(id))?.apps).toEqual([OFFICE_PRIVATE]);
     expect(await deleteImages([id, id], ALLOW)).toEqual([one?.key]);
@@ -280,7 +306,7 @@ describe("image.service never leaves an Image in no App", () => {
     // Another Admin takes it out of Laura after this caller read both placements.
     await removeImagesFromApp([id], App.LAURA, ALLOW);
     await expect(
-      updateImages([{ id, remove: [App.BACK_OFFICE] }])
+      update({ id, remove: [App.BACK_OFFICE] })
     ).rejects.toMatchObject({ ids: [id] });
     expect((await getImage(id))?.apps).toEqual([OFFICE_PRIVATE]);
   });
@@ -295,7 +321,7 @@ describe("image.service never leaves an Image in no App", () => {
         const id = one?.id ?? "";
         await Promise.allSettled([
           removeImagesFromApp([id], App.LAURA, ALLOW),
-          updateImages([{ id, remove: [App.BACK_OFFICE] }]),
+          update({ id, remove: [App.BACK_OFFICE] }),
         ]);
         return getImage(id);
       })

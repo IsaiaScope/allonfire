@@ -1,4 +1,4 @@
-import { CHECK_STATUS, type CheckStatus } from "../constants/statuses";
+import { type CheckStatus, HEALTH } from "../constants/statuses";
 
 export type HealthDeps = {
   checkDatabase: () => Promise<boolean>;
@@ -6,4 +6,4 @@ export type HealthDeps = {
 };
 
 export const checkStatus = (reachable: boolean): CheckStatus =>
-  reachable ? CHECK_STATUS.OK : CHECK_STATUS.UNREACHABLE;
+  reachable ? HEALTH.CHECK_STATUS.OK : HEALTH.CHECK_STATUS.UNREACHABLE;

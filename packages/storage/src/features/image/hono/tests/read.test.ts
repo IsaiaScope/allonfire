@@ -1,19 +1,20 @@
 // @module-tag unit
+
 import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { App, Role } from "@allonfire/database/enums";
-import { IMAGE_PATH } from "../../constants/paths";
+import { STORAGE } from "../../../../shared/constants/paths";
 import { imageBodySchema } from "../../constants/schemas";
 import { imageListBodySchema } from "../constants/schemas";
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
 import { imageRecord } from "./stub-image-deps";
-import { errorOf, testHost } from "./test-host";
+import { testHost as app, errorOf } from "./test-host";
 
-const app = testHost;
 const lauraUser = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.VIEWER }],
 });
@@ -23,13 +24,13 @@ const LAURA_PRIVATE = { app: App.LAURA, public: false };
 const LAURA_PUBLIC = { app: App.LAURA, public: true };
 const noImages = () => vi.fn<ImageDeps["listImages"]>(async () => []);
 
-describe("GET /v1/images", () => {
+describe("GET /images", () => {
   it("lists the Images visible in the App with the next cursor", async () => {
     const listImages = vi.fn<ImageDeps["listImages"]>(async () => [
       imageRecord(),
     ]);
     const res = await app(lauraUser, { listImages }).request(
-      `${IMAGE_PATH}?app=${App.LAURA}&limit=1`
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&limit=1`
     );
     expect(res.status).toBe(200);
     expect(listImages).toHaveBeenCalledWith({
@@ -60,13 +61,15 @@ describe("GET /v1/images", () => {
   it("has no next cursor on a short page", async () => {
     const res = await app(lauraUser, {
       listImages: async () => [imageRecord()],
-    }).request(`${IMAGE_PATH}?app=${App.LAURA}`);
+    }).request(`${STORAGE.PATH.IMAGES}?app=${App.LAURA}`);
     expect(imageListBodySchema.parse(await res.json()).nextCursor).toBeNull();
   });
 
   it("asks for the Images visible in any App when none is named", async () => {
     const listImages = noImages();
-    const res = await app(lauraUser, { listImages }).request(IMAGE_PATH);
+    const res = await app(lauraUser, { listImages }).request(
+      STORAGE.PATH.IMAGES
+    );
     expect(res.status).toBe(200);
     expect(listImages).toHaveBeenCalledWith({
       enterable: [App.LAURA],
@@ -78,7 +81,7 @@ describe("GET /v1/images", () => {
     const listImages = noImages();
     await app(sessionFor({ memberships: membershipsIn(Role.ADMIN) }), {
       listImages,
-    }).request(`${IMAGE_PATH}?app=${App.BACK_OFFICE}`);
+    }).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
     expect(listImages).toHaveBeenCalledWith({
       app: App.BACK_OFFICE,
       enterable: [App.LAURA, App.BACK_OFFICE],
@@ -91,7 +94,7 @@ describe("GET /v1/images", () => {
     await app(
       sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.USER }] }),
       { listImages }
-    ).request(`${IMAGE_PATH}?app=${App.BACK_OFFICE}`);
+    ).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
     expect(listImages).toHaveBeenCalledWith({
       app: App.BACK_OFFICE,
       enterable: [],
@@ -102,7 +105,7 @@ describe("GET /v1/images", () => {
   it("lists for a visitor without a Session, who enters no App", async () => {
     const listImages = noImages();
     const res = await app(visitor, { listImages }).request(
-      `${IMAGE_PATH}?app=${App.LAURA}`
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
     );
     expect(res.status).toBe(200);
     expect(listImages).toHaveBeenCalledWith({
@@ -115,7 +118,7 @@ describe("GET /v1/images", () => {
   it("never answers 403: a User who cannot enter the App gets its public Images", async () => {
     const listImages = noImages();
     const res = await app(otherAppUser, { listImages }).request(
-      `${IMAGE_PATH}?app=${App.LAURA}`
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
     );
     expect(res.status).toBe(200);
     expect(listImages).toHaveBeenCalledWith({
@@ -132,7 +135,7 @@ describe("GET /v1/images", () => {
       id: "image-1",
     };
     await app(lauraUser, { listImages }).request(
-      `${IMAGE_PATH}?app=${App.LAURA}&cursor=${encodeCursor(cursor)}`
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${encodeCursor(cursor)}`
     );
     expect(listImages).toHaveBeenCalledWith({
       app: App.LAURA,
@@ -143,31 +146,33 @@ describe("GET /v1/images", () => {
   });
 });
 
-describe("GET /v1/images refusals", () => {
+describe("GET /images refusals", () => {
   it.each([
     ["not base64url JSON", "%%%"],
     ["JSON of the wrong shape", Buffer.from("{}").toString("base64url")],
   ])("refuses a cursor that is %s", async (_, cursor) => {
     const res = await app(lauraUser, {}).request(
-      `${IMAGE_PATH}?app=${App.LAURA}&cursor=${cursor}`
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${cursor}`
     );
     expect(res.status).toBe(400);
-    expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 
   it("refuses app=ALL with a validation problem", async () => {
-    const res = await app(lauraUser, {}).request(`${IMAGE_PATH}?app=ALL`);
+    const res = await app(lauraUser, {}).request(
+      `${STORAGE.PATH.IMAGES}?app=ALL`
+    );
     expect(res.status).toBe(400);
-    expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 
   it("reports each invalid field", async () => {
     const res = await app(lauraUser, {}).request(
-      `${IMAGE_PATH}?app=ALL&limit=0`
+      `${STORAGE.PATH.IMAGES}?app=ALL&limit=0`
     );
     expect(res.status).toBe(400);
     const body = await errorOf(res);
-    expect(body.code).toBe("VALIDATION_FAILED");
+    expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
     expect(body.errors?.map(({ path }) => path).sort()).toEqual([
       "app",
       "limit",
@@ -176,11 +181,11 @@ describe("GET /v1/images refusals", () => {
   });
 });
 
-describe("GET /v1/images/:id", () => {
+describe("GET /images/:id", () => {
   it("returns an Image of an App the User enters", async () => {
     const res = await app(lauraUser, {
       getImage: async () => imageRecord(),
-    }).request(`${IMAGE_PATH}/image-1`);
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(200);
     expect(imageBodySchema.parse(await res.json()).apps).toEqual([
       LAURA_PRIVATE,
@@ -190,31 +195,31 @@ describe("GET /v1/images/:id", () => {
   it("returns a public Image to a visitor without a Session", async () => {
     const res = await app(visitor, {
       getImage: async () => imageRecord({ apps: [LAURA_PUBLIC] }),
-    }).request(`${IMAGE_PATH}/image-1`);
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(200);
   });
 
   it("answers 404 to a visitor for an Image public nowhere", async () => {
     const res = await app(visitor, {
       getImage: async () => imageRecord(),
-    }).request(`${IMAGE_PATH}/image-1`);
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(404);
-    expect((await errorOf(res)).code).toBe("NOT_FOUND");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 
   it("answers 404 for another App's Image, as if it did not exist", async () => {
     const res = await app(otherAppUser, {
       getImage: async () => imageRecord(),
-    }).request(`${IMAGE_PATH}/image-1`);
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(404);
-    expect((await errorOf(res)).code).toBe("NOT_FOUND");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 
   it("answers 404 for an unknown id", async () => {
     const res = await app(lauraUser, { getImage: async () => null }).request(
-      `${IMAGE_PATH}/missing`
+      `${STORAGE.PATH.IMAGES}/missing`
     );
     expect(res.status).toBe(404);
-    expect((await errorOf(res)).code).toBe("NOT_FOUND");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });

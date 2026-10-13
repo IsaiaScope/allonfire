@@ -1,36 +1,18 @@
 import { prisma } from "@allonfire/database";
-import {
-  createImages,
-  deleteImages,
-  getImage,
-  linksOfImages,
-  listImages,
-  removeImagesFromApp,
-  updateImages,
-} from "@allonfire/database/features/image/image.service";
-import {
-  deleteImageObjects,
-  putImageObject,
-} from "@allonfire/storage/features/image/objects/image-objects";
-import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";
 import { auth } from "./features/auth/auth";
+import { imageDeps } from "./features/image/image-deps";
 import { logger } from "./features/logger/logger";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
+import { REDIS } from "./features/redis/constants/redis";
 import { createRedis } from "./features/redis/redis";
 import {
   shutdownTelemetry,
   startTelemetry,
 } from "./features/telemetry/telemetry";
-import {
-  CLEAN_EXIT_CODE,
-  FORCED_EXIT_CODE,
-  LOG_MESSAGE,
-  REDIS_PING_REPLY,
-  SHUTDOWN_SIGNAL,
-} from "./shared/constants/runtime";
+import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
 
 // Before createApp: @hono/otel binds its meter when the app is built, and the
@@ -45,25 +27,13 @@ const app = createApp({
     await prisma.$queryRaw`SELECT 1`;
     return true;
   },
-  checkRedis: async () => (await redis.ping()) === REDIS_PING_REPLY,
-  images: {
-    createImages,
-    deleteImages,
-    deleteObjects: deleteImageObjects,
-    getImage,
-    linksOf: linksOfImages,
-    listImages,
-    log: logger,
-    prepare: prepareImage,
-    putObject: putImageObject,
-    removeImagesFromApp,
-    updateImages,
-  },
+  checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
+  images: imageDeps(logger),
   store: createRedisStore(redis),
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
-  logger.info({ env: env.NODE_ENV, port: info.port }, LOG_MESSAGE.LISTENING)
+  logger.info({ env: env.NODE_ENV, port: info.port }, API.LOG_MESSAGE.LISTENING)
 );
 
 const shutdown = createShutdown({
@@ -86,16 +56,16 @@ process.on("uncaughtException", crash);
 
 let shuttingDown = false;
 
-for (const signal of SHUTDOWN_SIGNAL) {
+for (const signal of API.SHUTDOWN.SIGNAL) {
   process.on(signal, async () => {
     if (shuttingDown) {
-      logger.warn({ signal }, LOG_MESSAGE.SECOND_SIGNAL);
-      process.exit(FORCED_EXIT_CODE);
+      logger.warn({ signal }, API.LOG_MESSAGE.SECOND_SIGNAL);
+      process.exit(API.EXIT_CODE.FORCED);
     }
     shuttingDown = true;
-    logger.info({ signal }, LOG_MESSAGE.SHUTTING_DOWN);
+    logger.info({ signal }, API.LOG_MESSAGE.SHUTTING_DOWN);
     const completed = await shutdown();
-    logger.info({ completed }, LOG_MESSAGE.SHUTDOWN_COMPLETE);
-    process.exit(CLEAN_EXIT_CODE);
+    logger.info({ completed }, API.LOG_MESSAGE.SHUTDOWN_COMPLETE);
+    process.exit(API.EXIT_CODE.CLEAN);
   });
 }

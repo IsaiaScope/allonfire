@@ -1,32 +1,7 @@
 import { z } from "zod";
+import { AUTH } from "../../../shared/constants/auth";
 
-/**
- * Better Auth's cookie names start with this, behind `__Secure-` on https;
- * signing out clears every cookie that carries it.
- */
-export const AUTH_COOKIE_MARKER = "better-auth.";
-
-/**
- * Better Auth's Session cookies, matched past any `__Secure-` prefix: the
- * signed copy of the Session that spares the API a database read until it
- * expires. The Session itself is read with Better Auth's `getSessionCookie`.
- */
-export const AUTH_COOKIE = {
-  SESSION_DATA: `${AUTH_COOKIE_MARKER}session_data`,
-} as const;
-
-/** Why a sign in failed; an App translates each one. */
-export const SIGN_IN_ERROR = {
-  /** The API refused: this User has no Membership in the App, or a Role under its floor. */
-  FORBIDDEN: "forbidden",
-  INVALID: "invalid",
-  /** The email or the password was left empty. */
-  MISSING: "missing",
-  RATE_LIMITED: "rateLimited",
-  UNAVAILABLE: "unavailable",
-} as const;
-
-export const signInErrorSchema = z.enum(SIGN_IN_ERROR);
+export const signInErrorSchema = z.enum(AUTH.SIGN_IN_ERROR);
 export type SignInError = z.infer<typeof signInErrorSchema>;
 
 /**

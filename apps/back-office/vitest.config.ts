@@ -7,13 +7,14 @@ import { defineConfig, mergeConfig } from "vitest/config";
 // compiler, so vitest is told to compile it. next-intl imports
 // `next/navigation` without an extension, which only a bundler resolves, so
 // vite processes it instead of Node.
+export const appViteOptions = defineConfig({
+  oxc: { jsx: { runtime: "automatic" } },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
+});
+
 export default mergeConfig(
-  vitestConfig,
-  defineConfig({
-    oxc: { jsx: { runtime: "automatic" } },
-    resolve: {
-      alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
-    },
-    test: { server: { deps: { inline: ["next-intl"] } } },
-  })
+  mergeConfig(vitestConfig, appViteOptions),
+  defineConfig({ test: { server: { deps: { inline: ["next-intl"] } } } })
 );

@@ -4,30 +4,24 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
-import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, Role } from "@allonfire/database/enums";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import {
   imageRecord,
+  PREPARED,
   stubImageDeps,
 } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { ImageDeps } from "@allonfire/storage/features/image/hono/utils/deps";
-import { MAX_INPUT_MEGAPIXELS } from "@allonfire/storage/features/image/prepare/constants/limits";
 import { ImageTooLargeError } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { createApp } from "../../../app";
-import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
+import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import { translate } from "../../i18n/translate";
 import { problemOf } from "./problem-of";
 
 const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
-const PREPARED = {
-  blurDataUrl: "data:image/webp;base64,AAAA",
-  buffer: Buffer.from("webp"),
-  bytes: 4,
-  height: 600,
-  width: 800,
-};
 
 const app = (images: Partial<ImageDeps>) =>
   createApp(
@@ -55,46 +49,42 @@ describe("the Image module inside the API", () => {
   it("answers a module error as this API's localized problem document", async () => {
     const res = await app({
       prepare: () => Promise.reject(new ImageTooLargeError()),
-    }).request("/v1/images", upload());
+    }).request(API.PATH.IMAGES, upload());
     expect(res.status).toBe(413);
     const body = await problemOf(res);
-    expect(body.code).toBe("IMAGE_TOO_LARGE");
+    expect(body.code).toBe(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE);
     expect(body.detail).toBe(
-      translate("IMAGE_TOO_LARGE", LOCALE.IT_IT, {
-        limit: MAX_INPUT_MEGAPIXELS,
+      translate(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE, I18N.LOCALE.IT_IT, {
+        limit: IMAGE.LIMIT.INPUT_MEGAPIXELS,
       })
     );
   });
 
   it("is not cut off by the API-wide request timeout", async () => {
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    try {
-      let reach: () => void = () => undefined;
-      const reached = new Promise<void>((resolve) => {
-        reach = resolve;
-      });
-      let release: () => void = () => undefined;
-      const gate = new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      const pending = app({
-        createImages: (rows) =>
-          Promise.resolve(rows.map((row) => imageRecord({ ...row }))),
-        prepare: async () => {
-          reach();
-          await gate;
-          return PREPARED;
-        },
-        putObject: () => Promise.resolve(),
-      }).request("/v1/images", upload());
-      // The handler is inside prepare; a 30 s timeout would fire now.
-      await reached;
-      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS + 1000);
-      release();
-      expect((await pending).status).toBe(201);
-    } finally {
-      vi.useRealTimers();
-    }
+    let reach: () => void = () => undefined;
+    const reached = new Promise<void>((resolve) => {
+      reach = resolve;
+    });
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const pending = app({
+      createImages: (rows) =>
+        Promise.resolve(rows.map((row) => imageRecord({ ...row }))),
+      prepare: async () => {
+        reach();
+        await gate;
+        return PREPARED;
+      },
+      putObject: () => Promise.resolve(),
+    }).request(API.PATH.IMAGES, upload());
+    // The handler is inside prepare; a 30 s timeout would fire now.
+    await reached;
+    await vi.advanceTimersByTimeAsync(API.LIMIT.REQUEST_TIMEOUT_MS + 1000);
+    release();
+    expect((await pending).status).toBe(201);
   });
 });
 
@@ -103,7 +93,7 @@ describe("the Image module's reads and writes inside the API", () => {
     const listImages = vi.fn<ImageDeps["listImages"]>(async () => []);
     const res = await createApp(
       appDeps({ images: stubImageDeps({ listImages }) })
-    ).request(`/v1/images?app=${App.LAURA}`);
+    ).request(`${API.PATH.IMAGES}?app=${App.LAURA}`);
     expect(res.status).toBe(200);
     expect(listImages).toHaveBeenCalledWith({
       app: App.LAURA,
@@ -113,7 +103,7 @@ describe("the Image module's reads and writes inside the API", () => {
   });
 
   it("asks a visitor to sign in before a write, as a problem document", async () => {
-    const res = await createApp(appDeps()).request("/v1/images", {
+    const res = await createApp(appDeps()).request(API.PATH.IMAGES, {
       body: stringifyJson({ ids: ["image-1"] }),
       headers: { "content-type": "application/json" },
       method: "DELETE",

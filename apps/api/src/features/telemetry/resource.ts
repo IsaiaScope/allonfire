@@ -1,7 +1,7 @@
 import type { ValueOf } from "@allonfire/core/shared/utils/object";
 import pkg from "../../../package.json" with { type: "json" };
 import { env } from "../../environment/environment";
-import { type OTLP_PATH, RESOURCE_ATTRIBUTE } from "./constants/telemetry";
+import { OTEL, type OTLP } from "./constants/telemetry";
 
 /**
  * What every trace, metric and log line says about the process that produced
@@ -10,15 +10,15 @@ import { type OTLP_PATH, RESOURCE_ATTRIBUTE } from "./constants/telemetry";
  * import it without the SDK.
  */
 export const telemetryResourceAttributes = () => ({
-  [RESOURCE_ATTRIBUTE.SERVICE_NAME]: env.OTEL_SERVICE_NAME,
-  [RESOURCE_ATTRIBUTE.SERVICE_VERSION]: pkg.version,
-  [RESOURCE_ATTRIBUTE.DEPLOYMENT_ENVIRONMENT]: env.NODE_ENV,
+  [OTEL.ATTRIBUTE.RESOURCE.SERVICE_NAME]: env.OTEL_SERVICE_NAME,
+  [OTEL.ATTRIBUTE.RESOURCE.SERVICE_VERSION]: pkg.version,
+  [OTEL.ATTRIBUTE.RESOURCE.DEPLOYMENT_ENVIRONMENT]: env.NODE_ENV,
 });
 
 /** Where one signal ships, and the auth it ships with. Same shape for all three. */
 export const otlpExporterOptions = (
   endpoint: string,
-  path: ValueOf<typeof OTLP_PATH>
+  path: ValueOf<typeof OTLP.PATH>
 ) => ({
   headers: env.OTEL_EXPORTER_OTLP_HEADERS,
   url: `${endpoint}${path}`,

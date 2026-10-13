@@ -9,7 +9,7 @@ export type AOFFieldProps = ComponentProps<typeof ShadcnField>;
 export type AOFFieldLabelProps = ComponentProps<typeof ShadcnFieldLabel>;
 export type AOFFieldErrorProps = ComponentProps<typeof ShadcnFieldError>;
 
-// ponytail: shadcn's Field and FieldLabel as-is, like AOFLabel; AOFTextField
+// ponytail: shadcn's Field and FieldLabel as-is, like AOFButton's base; AOFTextField
 // composes them for an AOF form.
 export const AOFField = (props: AOFFieldProps) => <ShadcnField {...props} />;
 export const AOFFieldLabel = (props: AOFFieldLabelProps) => (

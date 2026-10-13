@@ -1,8 +1,8 @@
 import { createEnv } from "@t3-oss/env-core";
-import { NODE_ENV, nodeEnvSchema } from "../shared/constants/env";
+import { ENV, nodeEnvSchema } from "../shared/constants/env";
 
 /**
- * Variables every package and app reads. `NODE_ENV` defaults to development,
+ * Variables every package and app reads. `ENV.NODE` defaults to development,
  * as Node treats it when unset.
  *
  * Build an env from process.env with `extends: [env]`. Where an env is built
@@ -11,7 +11,7 @@ import { NODE_ENV, nodeEnvSchema } from "../shared/constants/env";
  * process.env, not the record.
  */
 export const runtimeEnvSchema = {
-  NODE_ENV: nodeEnvSchema.default(NODE_ENV.DEVELOPMENT),
+  NODE_ENV: nodeEnvSchema.default(ENV.NODE.DEVELOPMENT),
 };
 
 export const env = createEnv({

@@ -1,8 +1,15 @@
 import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import {
+  accessUserFrom,
+  canEnterApp,
+} from "@allonfire/database/features/auth/access/access";
 import { getSessionCookie } from "better-auth/cookies";
 import { headers } from "next/headers";
-import { canAccess } from "./access";
+import { getLocale } from "next-intl/server";
+import { nextAuthEnv } from "../../../environment/next-environment";
+import { AUTH } from "../../../shared/constants/auth";
 import { createApiAuthClient, type Session } from "./auth-client";
+import { redirectTo } from "./redirect-to";
 
 /**
  * The visitor's Session, read from the API with the browser's cookies; `null`
@@ -24,8 +31,20 @@ export const getSession = async (): Promise<Session | null> => {
   }
 };
 
-/** The Session of someone this App lets in, or `null` for anyone else. */
-export const getAppSession = async () => {
+/**
+ * The guard every signed-in page calls first: the Session of someone this App
+ * (`AUTH_APP`, its row in `ACCESS.APP_SETTINGS`) lets in, or a redirect to Sign in
+ * for anyone else. Checked where the page renders, not in a layout, so each
+ * navigation checks again.
+ */
+export const requireAppSession = async (): Promise<Session> => {
   const session = await getSession();
-  return session && canAccess(session.user) ? session : null;
+  if (
+    !(
+      session && canEnterApp(accessUserFrom(session.user), nextAuthEnv.AUTH_APP)
+    )
+  ) {
+    return redirectTo(await getLocale(), AUTH.PAGE.SIGN_IN);
+  }
+  return session;
 };

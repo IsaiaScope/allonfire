@@ -1,12 +1,13 @@
-import { AUTH_VAR } from "@allonfire/auth/features/hono/constants/variables";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { z } from "zod";
-import { IMAGE_PATH } from "../../constants/paths";
+import { STORAGE } from "../../../../shared/constants/paths";
 import { imageRoutes } from "../routes/index";
 import type { ImageDeps } from "../utils/deps";
 import { stubImageDeps } from "./stub-image-deps";
@@ -22,10 +23,10 @@ export const testHost = (
 ) =>
   new Hono<AuthEnv>()
     .use((c, next) => {
-      c.set(AUTH_VAR.SESSION, session);
+      c.set(AUTH.VAR.SESSION, session);
       return next();
     })
-    .route(IMAGE_PATH, imageRoutes(stubImageDeps(images)))
+    .route(STORAGE.PATH.IMAGES, imageRoutes(stubImageDeps(images)))
     .onError((err) => {
       if (err instanceof CodedError) {
         return Response.json(
@@ -36,7 +37,7 @@ export const testHost = (
       const status =
         err instanceof HTTPException
           ? err.status
-          : HTTP_STATUS.INTERNAL_SERVER_ERROR;
+          : HTTP.STATUS.INTERNAL_SERVER_ERROR;
       return Response.json({ code: "HOST" }, { status });
     });
 
@@ -46,6 +47,13 @@ const contractSchema = z.object({
     .array(z.object({ message: z.string(), path: z.string() }))
     .optional(),
   values: z.record(z.string(), z.union([z.number(), z.string()])).optional(),
+});
+
+/** A request sending `body` as JSON. */
+export const json = <T>(method: string, body: T & Json<T>) => ({
+  body: stringifyJson(body),
+  headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
+  method,
 });
 
 /** The module's error, as the test host answered it. */

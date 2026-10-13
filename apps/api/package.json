@@ -11,6 +11,7 @@
     "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis openobserve minio minio-init",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -44,6 +45,7 @@
     "negotiator": "^1.1.0",
     "pino": "^10.3.1",
     "pino-opentelemetry-transport": "^4.0.2",
+    "tsx": "^4.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -55,7 +57,6 @@
     "better-auth": "^1.5.3",
     "http-status-codes": "^2.3.0",
     "pino-pretty": "^13.0.0",
-    "tsx": "^4.19.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   }

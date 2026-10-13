@@ -2,6 +2,18 @@ import { App } from "@allonfire/database/enums";
 import type { ImageRecord } from "@allonfire/database/features/image/image.service";
 import type { ImageDeps } from "../utils/deps";
 
+/** An alt in both languages. */
+export const ALT = { en: "The sea", it: "Il mare" };
+
+/** What `prepare` hands back for any file. */
+export const PREPARED = {
+  blurDataUrl: "data:image/webp;base64,AAAA",
+  buffer: Buffer.from("webp"),
+  bytes: 4,
+  height: 600,
+  width: 800,
+};
+
 const unexpected = (name: string) => () =>
   Promise.reject(new Error(`${name} must not be called`));
 
@@ -9,7 +21,7 @@ const unexpected = (name: string) => () =>
 export const imageRecord = (
   overrides: Partial<ImageRecord> = {}
 ): ImageRecord => ({
-  alt: { en: "The sea", it: "Il mare" },
+  alt: ALT,
   apps: [{ app: App.LAURA, public: false }],
   blurDataUrl: "data:image/webp;base64,AAAA",
   bytes: 1000,
@@ -30,7 +42,6 @@ export const stubImageDeps = (
   deleteImages: unexpected("deleteImages"),
   deleteObjects: unexpected("deleteObjects"),
   getImage: unexpected("getImage"),
-  linksOf: unexpected("linksOf"),
   listImages: unexpected("listImages"),
   log: { warn: () => undefined },
   prepare: unexpected("prepare"),

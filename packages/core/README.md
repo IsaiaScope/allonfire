@@ -11,7 +11,7 @@
 Every constant follows one pattern: an `as const` object is the source,
 `z.enum(OBJECT)` (or `z.literal(TUPLE)`) builds the schema, and the type is
 `z.infer` of that schema — never a hand-written union, never `ValueOf`.
-Number values work too (`z.enum(HTTP_STATUS)`).
+Number values work too (`z.enum(HTTP.STATUS)`).
 
 ### `./features/errors/coded-error`
 
@@ -19,9 +19,25 @@ Number values work too (`z.enum(HTTP_STATUS)`).
 |--------|------|-------------|
 | `CodedError` | Class | What a shared HTTP module throws (ADR 0015): `status`, `code`, ICU `values`, field `errors`; each host's `onError` renders it |
 | `CodedErrorDetail` | Type | `{ message, path }`, one field that failed validation |
-| `validationError(code, issues)` | Function | Standard Schema issues as a 400 `CodedError` under the host's validation `code`, paths joined with `.` |
-| `invalidHook(code)` | Function | A validator hook (`sValidator`, hono-openapi) that throws `validationError` on a failed parse |
+| `validationError(issues)` | Function | Standard Schema issues as a 400 `CodedError` coded `ERROR.CODE.VALIDATION_FAILED`, paths joined with `.` |
+| `invalidHook` | Function | A validator hook (`sValidator`, hono-openapi) that throws `validationError` on a failed parse |
 | `StandardIssue` | Type | The part of a Standard Schema issue those read |
+
+### `./features/errors/constants/error-codes`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `ERROR` | Constant | `ERROR.CODE`, the error codes every Host and module shares: `BAD_REQUEST`, `FORBIDDEN`, `INTERNAL_ERROR`, `NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `TIMEOUT`, `UNAUTHORIZED`, `VALIDATION_FAILED`. A module adds only its own; a Host answers with these plus its modules' and owns each code's message and status |
+
+### `./features/ci/affected`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `affectedFrom(turboQueryJson, turboLsJson, changedFiles)` | Function | `turbo query affected --packages` read as `{ apps, deploy }`: the Apps CI tests end to end and the Deploy units to ship, `db-migrate` first. A changed image file Turbo does not read (`docker/`, `.dockerignore`, `pnpm-workspace.yaml`) reaches every unit (`turboLsJson`, `turbo ls` of the whole workspace) |
+| `everything(turboLsJson)` | Function | Every App and every Deploy unit |
+| `Affected` | Type | `{ apps, deploy }`: an App is a package under `apps/`, named by its folder (the API included); a Deploy unit is an App or `db-migrate` |
+
+CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `apps=` and `deploy=` for `$GITHUB_OUTPUT`. What counts as affected is Turbo's (`futureFlags.affectedUsingTaskInputs` in `turbo.json`): a package whose task inputs changed, and its dependents. Every task excludes `**/*.md`, so a Markdown-only change affects nothing, and a root `package.json`, `turbo.json` or lockfile change affects everything. No base, or one that does not resolve (no deploy yet), prints every unit.
 
 ### `./shared/utils/json`
 
@@ -53,16 +69,16 @@ Number values work too (`z.enum(HTTP_STATUS)`).
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `HTTP_STATUS`, `httpStatusSchema`, `HttpStatus` | const / zod / type | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
-| `HTTP_METHOD`, `httpMethodSchema`, `HttpMethod` | const / zod / type | Every RFC 9110 method plus `PATCH` |
-| `CONTENT_TYPE`, `contentTypeSchema`, `ContentType` | const / zod / type | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
-| `HTTP_HEADER`, `httpHeaderSchema`, `HttpHeader` | const / zod / type | Common request, response and security header names, lower-case |
+| `HTTP.STATUS`, `httpStatusSchema`, `HttpStatus` | const / zod / type | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
+| `HTTP.METHOD`, `httpMethodSchema`, `HttpMethod` | const / zod / type | Every RFC 9110 method plus `PATCH` |
+| `HTTP.CONTENT_TYPE`, `contentTypeSchema`, `ContentType` | const / zod / type | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
+| `HTTP.HEADER`, `httpHeaderSchema`, `HttpHeader` | const / zod / type | Common request, response and security header names, lower-case |
 
 ### `./shared/constants/env`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `BOOLEAN_ENV`, `booleanEnvSchema`, `BooleanEnv` | const / zod / type | `"true"` / `"false"`, the only accepted spellings of an env flag |
+| `ENV.BOOLEAN`, `booleanEnvSchema`, `BooleanEnv` | const / zod / type | `"true"` / `"false"`, the only accepted spellings of an env flag |
 | `NODE_ENV`, `nodeEnvSchema`, `NodeEnv` | const / zod / type | `development`, `production`, `test`: compare against these, not bare strings; `nodeEnvSchema.default(...)` in each env module |
 
 ### `./shared/constants/separators`
@@ -75,43 +91,43 @@ Number values work too (`z.enum(HTTP_STATUS)`).
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `TRAILING_SLASHES` | RegExp | `/\/+$/`, stripped from a URL or path before comparing or appending |
+| `PATTERN.TRAILING_SLASHES` | RegExp | `/\/+$/`, stripped from a URL or path before comparing or appending |
 
 ### `./features/logger/constants/logger`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `LOG_LEVEL`, `logLevelSchema`, `LogLevel` | const / zod / type | pino's levels plus `silent` |
-| `REDACT_PATHS`, `REDACT_CENSOR` | const | What pino scrubs before a transport sees it, and what it writes instead |
+| `LOG.LEVEL`, `logLevelSchema`, `LogLevel` | const / zod / type | pino's levels plus `silent` |
+| `LOG.REDACT.PATHS`, `LOG.REDACT.CENSOR` | const | What pino scrubs before a transport sees it, and what it writes instead |
 
 ### `./shared/constants/units`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `MS_PER_SECOND`, `SECONDS_PER_MINUTE`, `MS_PER_MINUTE` | number | Time conversions, so no bare `1000` or `60_000` |
-| `BYTES_PER_KIB`, `BYTES_PER_MIB` | number | Size conversions |
+| `UNIT.MS_PER_SECOND`, `UNIT.SECONDS_PER_MINUTE`, `UNIT.MS_PER_MINUTE`, `UNIT.SECONDS_PER_HOUR`, `UNIT.SECONDS_PER_DAY` | number | Time conversions, so no bare `1000` or `60_000` |
+| `UNIT.BYTES_PER_KIB`, `UNIT.BYTES_PER_MIB` | number | Size conversions |
 
-### `./features/http/constants/security-headers`
+### `./features/http/constants/http` (security headers)
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `SECURITY_HEADERS` | `{ key: HttpHeader; value: string }[]` | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
+| `HTTP.SECURITY_HEADERS` | `{ key: HttpHeader; value: string }[]` | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
 
 ### `./features/i18n/constants/locales`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `LOCALE` | `as const` object | `EN_GB`, `EN_US`, `IT_CH`, `IT_IT`: full BCP 47 tags, shared by the API and the Apps (ADR 0012) |
+| `I18N.LOCALE` | `as const` object | `EN_GB`, `EN_US`, `IT_CH`, `IT_IT`: full BCP 47 tags, shared by the API and the Apps (ADR 0012) |
 | `localeSchema` | Zod enum | Validates a `Locale` |
 | `Locale` | Type | `"en-GB" \| "en-US" \| "it-CH" \| "it-IT"` |
-| `SUPPORTED_LOCALES` | `readonly Locale[]` | Preference order the API's matcher sees, main variant of each language first |
-| `BASE_LANGUAGES` | `readonly ["en", "it"]` | The Base languages: every Host speaks them; a type test checks every locale speaks one |
-| `Language` | Type | `"en" \| "it"`, from `BASE_LANGUAGES` |
-| `DEFAULT_LANGUAGE` | `"en"` | `BASE_LANGUAGES[0]`: where an unknown language lands and what content falls back to; never write `"en"` |
+| `I18N.SUPPORTED_LOCALES` | `readonly Locale[]` | Preference order the API's matcher sees, main variant of each language first |
+| `I18N.BASE_LANGUAGES` | `readonly ["en", "it"]` | The Base languages: every Host speaks them; a type test checks every locale speaks one |
+| `Language` | Type | `"en" \| "it"`, from `I18N.BASE_LANGUAGES` |
+| `I18N.DEFAULT_LANGUAGE` | `"en"` | `I18N.BASE_LANGUAGES[0]`: where an unknown language lands and what content falls back to; never write `"en"` |
 | `languageSchema` | Zod enum | Narrows a string to a base `Language` |
-| `EXTRA_LANGUAGES` | `readonly []` | Languages a Host can add; a language goes here before any Host routes it |
-| `CONTENT_LANGUAGES`, `ContentLanguage`, `contentLanguageSchema` | | The Content languages: base plus extras |
-| `HostLanguages`, `defineLanguages` | | A Host's own list, `defineLanguages([...BASE_LANGUAGES, "fr"])`: dropping a base language, or adding one not in `CONTENT_LANGUAGES`, fails to compile |
+| `I18N.EXTRA_LANGUAGES` | `readonly []` | Languages a Host can add; a language goes here before any Host routes it |
+| `I18N.CONTENT_LANGUAGES`, `ContentLanguage`, `contentLanguageSchema` | | The Content languages: base plus extras |
+| `HostLanguages`, `defineLanguages` | | A Host's own list, `defineLanguages([...BASE_LANGUAGES, "fr"])`: dropping a base language, or adding one not in `I18N.CONTENT_LANGUAGES`, fails to compile |
 
 ### App scaffolding (`./features/next/*`)
 
@@ -129,9 +145,9 @@ imports these.
 | `./features/next/i18n/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
 | `./features/next/i18n/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
 | `./features/next/api/forwarded-for` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API |
-| `./features/next/i18n/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
+| `./features/next/i18n/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`I18N.BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
 | `./features/next/i18n/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing |
-| `./features/next/i18n/shared-translations` | — | `SHARED_TRANSLATIONS` and `SharedTranslations`: the `Common` namespace every App gets, merged under its own translations; an App never defines `Common`, and `global-error.tsx` reads it in `DEFAULT_LANGUAGE` |
+| `./features/next/i18n/shared-translations` | — | `SHARED_TRANSLATIONS` and `SharedTranslations`: the `Common` namespace every App gets, merged under its own translations; an App never defines `Common`, and `global-error.tsx` reads it in `I18N.DEFAULT_LANGUAGE` |
 | `./features/next/config/aof-create-next-config` | `NextConfig` | base config, security headers, next-intl plugin |
 
 An App composes the providers in its `[locale]/layout.tsx` and drops any it does
@@ -163,12 +179,12 @@ try { ... } catch (error) {
 ```
 
 ```ts
-import { SECURITY_HEADERS } from "@allonfire/core/features/http/constants/security-headers";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 
 // In next.config.ts
 const nextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: SECURITY_HEADERS }];
+    return [{ source: "/(.*)", headers: HTTP.SECURITY_HEADERS }];
   },
 };
 ```

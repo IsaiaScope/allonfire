@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
-import { SECURITY_HEADERS } from "../../http/constants/security-headers";
+import { HTTP } from "../../http/constants/http";
 
 /** core ships TypeScript source, so every App transpiles it. */
 const BASE_TRANSPILE = ["@allonfire/core"];
@@ -37,7 +37,7 @@ export const AOFCreateNextConfig = (
     ...config,
     /** Every path gets the security headers; the App's rules come after them, so they win. */
     headers: async () => [
-      { headers: SECURITY_HEADERS, source: "/(.*)" },
+      { headers: HTTP.SECURITY_HEADERS, source: "/(.*)" },
       ...((await config.headers?.()) ?? []),
     ],
     /** Workspace packages that ship TypeScript source, which Next must compile itself. */

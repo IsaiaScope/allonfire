@@ -1,10 +1,8 @@
 "use client";
 
 import { signIn } from "@allonfire/auth/features/next/actions/sign-in";
-import {
-  SIGN_IN_ERROR,
-  type SignInState,
-} from "@allonfire/auth/features/next/constants/api";
+import type { SignInState } from "@allonfire/auth/features/next/constants/api";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
@@ -53,7 +51,8 @@ export const SignInForm = ({
   );
   // A server-side refusal or outage is not the fields' fault.
   const invalid =
-    error === SIGN_IN_ERROR.INVALID || error === SIGN_IN_ERROR.MISSING;
+    error === AUTH.SIGN_IN_ERROR.INVALID ||
+    error === AUTH.SIGN_IN_ERROR.MISSING;
 
   return (
     <form

@@ -1,9 +1,13 @@
 // @module-tag unit
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { API } from "../../../shared/constants/api";
 import { mergeOpenApi } from "../utils/merge";
+
+const GET_SESSION_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`;
 
 const fragment = {
   components: { schemas: { User: { type: "object" } } },
-  paths: { "/v1/auth/get-session": { get: { tags: ["Auth"] } } },
+  paths: { [GET_SESSION_ROUTE]: { get: { tags: ["Auth"] } } },
   tags: [{ name: "Auth" }],
 };
 
@@ -13,13 +17,13 @@ describe("mergeOpenApi", () => {
       {
         components: { responses: { Problem: { description: "x" } } },
         openapi: "3.1.0",
-        paths: { "/health": { get: {} } },
+        paths: { [API.PATH.HEALTH]: { get: {} } },
         tags: [{ name: "Infrastructure" }],
       },
       fragment
     );
-    expect(merged.paths).toHaveProperty(["/health"]);
-    expect(merged.paths).toHaveProperty(["/v1/auth/get-session"]);
+    expect(merged.paths).toHaveProperty([API.PATH.HEALTH]);
+    expect(merged.paths).toHaveProperty([GET_SESSION_ROUTE]);
     expect(merged.components).toEqual({
       responses: { Problem: { description: "x" } },
       schemas: { User: { type: "object" } },

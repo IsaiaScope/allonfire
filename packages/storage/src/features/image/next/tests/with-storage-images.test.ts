@@ -1,10 +1,15 @@
 // @module-tag unit
+import { STORAGE } from "../../../../shared/constants/paths";
 import { withStorageImages } from "../with-storage-images";
 
 const ORIGIN = { origin: "http://minio:9000" };
 const IMAGE_REWRITE = {
   destination: "http://minio:9000/image/:key",
-  source: "/storage/images/:key",
+  source: `${STORAGE.PATH.IMAGE_PROXY}/:key`,
+};
+const IMAGE_PATTERN = {
+  pathname: `${STORAGE.PATH.IMAGE_PROXY}/**`,
+  search: "",
 };
 
 describe("withStorageImages", () => {
@@ -13,7 +18,7 @@ describe("withStorageImages", () => {
     expect(await config.rewrites?.()).toEqual([IMAGE_REWRITE]);
     expect(config.images).toEqual({
       formats: ["image/avif", "image/webp"],
-      localPatterns: [{ pathname: "/storage/images/**", search: "" }],
+      localPatterns: [IMAGE_PATTERN],
       minimumCacheTTL: 31_536_000,
     });
   });
@@ -43,6 +48,19 @@ describe("withStorageImages", () => {
     });
   });
 
+  it("rewrites into the bucket it is given", async () => {
+    const config = withStorageImages(
+      {},
+      { ...ORIGIN, bucket: "allonfire-test-x" }
+    );
+    expect(await config.rewrites?.()).toEqual([
+      {
+        ...IMAGE_REWRITE,
+        destination: "http://minio:9000/allonfire-test-x/:key",
+      },
+    ]);
+  });
+
   it("ignores trailing slashes on the origin", async () => {
     const config = withStorageImages({}, { origin: "http://minio:9000//" });
     expect(await config.rewrites?.()).toEqual([IMAGE_REWRITE]);
@@ -63,9 +81,6 @@ describe("withStorageImages", () => {
       { images: { localPatterns: [own] } },
       ORIGIN
     );
-    expect(config.images?.localPatterns).toEqual([
-      { pathname: "/storage/images/**", search: "" },
-      own,
-    ]);
+    expect(config.images?.localPatterns).toEqual([IMAGE_PATTERN, own]);
   });
 });

@@ -1,6 +1,12 @@
 // @module-tag unit
+
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { createApp } from "../../../app";
+import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
+
+const GET_SESSION_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`;
 
 describe("/v1/auth/*", () => {
   it("reaches Better Auth and keeps its Set-Cookie", async () => {
@@ -14,10 +20,9 @@ describe("/v1/auth/*", () => {
           })
         ),
     });
-    const res = await createApp(appDeps({ auth })).request(
-      "/v1/auth/get-session",
-      { headers: { origin: "http://localhost:3200" } }
-    );
+    const res = await createApp(appDeps({ auth })).request(GET_SESSION_ROUTE, {
+      headers: { origin: LOCAL.URL.LAURA },
+    });
     expect(res.status).toBe(200);
     expect(res.headers.getSetCookie()).toEqual([
       "better-auth.session_token=abc; Path=/; HttpOnly",
@@ -38,11 +43,11 @@ describe("Session read", () => {
     });
     const app = createApp(appDeps({ auth }));
 
-    await app.request("/v1/auth/get-session");
-    await app.request("/health");
+    await app.request(GET_SESSION_ROUTE);
+    await app.request(API.PATH.HEALTH);
     expect(reads).toBe(0);
 
-    await app.request("/v1/anything");
+    await app.request(`${API.PATH.VERSION}/anything`);
     expect(reads).toBe(1);
   });
 });

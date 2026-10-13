@@ -33,12 +33,14 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | Import | Content |
 |---|---|
 | `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/features/auth/user.service` | `getUserById`, `getUsers` (each with its Memberships), `deleteUser` |
-| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `linksOfImages`, `updateImages` (places and takes out only what each change names; refuses to leave an Image in no App), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and both deletes run the caller's `authorise` check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks` |
-| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `ImageLink`, `canSeeImageIn`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ROLE_RANK` in `./constants/{schemas,roles}`; `APP_SETTINGS` (each App's `minRole` and `registration`), `AppSettings`, `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
+| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `updateImages(ids, resolve)` (places and takes out only what the changes `resolve` works out from the locked placements name; refuses to leave an Image in no App), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks`, `ResolveChanges` |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `ImageLink`, `canSeeImageIn`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `AppSettings`, `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
+| `@allonfire/database/features/seed/fixtures/{fixtures,seed-fixtures}` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD`; `FIXTURE.IMAGE`, `FixtureImage`; `seedFixtures(client)` |
+| `@allonfire/database/features/seed/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
+| `@allonfire/database/features/test-database/{names,server,template,test-database,global-setup}` | The Test database: `createTestDatabase(server, label, stamp)` (the template, built when missing, then a sweep of crashed runs, then the clone; returns its URL), `dropTestDatabase(server, label, stamp)`, `ensureTemplate`, `sweepTestDatabases`, `testDatabaseName`; `global-setup` is the Vitest `globalSetup`; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
 `FROM laura."GameScore"`, never `FROM "GameScore"`.
@@ -85,12 +87,34 @@ fails a `.prisma` edit that has no changeset.
 | `pnpm db:rollback --tag=<tag>` | Roll back every changeset after a tag |
 | `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
 | `pnpm db:drift` | Compare the database with the Prisma schema |
-| `pnpm db:seed` | Seed users (data in `src/features/seed/mock/`) |
+| `pnpm db:seed` | Seed the real Admin and Laura's guest Viewer; with `DATABASE_SEED_MODE="local"` also every Fixture (`src/features/seed/fixtures/`) |
 | `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5555 (`pnpm dev` starts it too) |
-| `pnpm test` | Unit tests, plus `*.integration.test.ts` against Docker and the dev Postgres (`pnpm docker:up`). Tests live in a `tests/` folder beside what they test |
+| `pnpm --filter @allonfire/database test-database template \| create <label> <stamp> \| drop <label> <stamp>` | Build or check the template; make a Test database (prints its URL); drop it |
+| `pnpm test` | Unit tests, plus `*.integration.test.ts` on a Test database (`pnpm docker:up` first). Tests live in a `tests/` folder beside what they test |
 
 Liquibase needs Java, so it only runs in Docker: every `db:*` Liquibase script
 builds the same `db-migrate` image Production runs (`scripts/liquibase.sh`).
+
+## Test Databases and Fixtures
+
+No test writes the Local database. The template is built on the server
+`DATABASE_URL` names: Liquibase's `update`, then `seedFixtures`. Its name,
+`allonfire_test_template_<epoch>_<fingerprint>`, carries the start of a sha256
+of `changelog/`, `liquibase/` and `src/features/seed/` (dotfiles and `tests/`
+left out), so a changeset, db-migrate or Fixture edit builds
+a new one on the next run while a tree built from other sources keeps its own;
+an advisory lock makes packages that start at once build it once. Each package's Vitest run clones it
+(`allonfire_test_<package>_<epoch>_<random>`), hands the clone to its workers as
+`DATABASE_URL` and drops it at the end; a run with `--tags-filter=unit` skips
+all of it, so unit tests need no Docker. A clone older than a day belongs to a
+run that crashed and is dropped by the next one, and so is a template a day
+old that the run does not clone.
+
+The Fixtures are the data every Local and Test database holds:
+`FIXTURE.USER.<App>.<Role>` (`back-office-admin@allonfire.test`, generated from
+the enums), `ADMIN_EVERYWHERE`, `NO_MEMBERSHIP`, all with `FIXTURE.PASSWORD`,
+and the Images in `FIXTURE.IMAGE` (their files live in `@allonfire/storage`).
+Tests sign in and point at them, never at a retyped email or key.
 
 ## The db-migrate Image
 
@@ -170,7 +194,7 @@ packages/database/
     entrypoint.sh           backup | deploy | any Liquibase command
     database-url.sh         DATABASE_URL -> JDBC URL, libpq URL, user, password
     tests/                  URL split, changelog up/down/deploy, backup;
-                            throwaway-db.ts (scratch databases)
+                            throwaway-db.ts (scratch databases on test-database/server)
   scripts/
     liquibase.sh            build and run the image locally
     changeset.ts            pnpm db:changeset
@@ -182,12 +206,15 @@ packages/database/
                             (seed scripts), tests/
     features/
       prisma/               client.ts (Prisma singleton)
-      auth/                 user.service, access/ (Role, Membership and App settings rules)
+      auth/                 access/ (Role, Membership and App settings rules)
       image/                image.service, tests/
       apps/                 one folder per App; seeds.ts lists each App's seed
-        laura/              game-score.service, seed/ (guest Viewer, mock/users.json, tests/)
-      seed/                 seed.ts, seed-user.ts (AppSeed), upsert-user.ts, tests/
-        mock/               users.json (users for every App only)
+        laura/              game-score.service, seed/ (guest Viewer)
+      seed/                 seed.ts, cli.ts (pnpm db:seed), seed-user.ts (AppSeed),
+                            upsert-user.ts, tests/
+        fixtures/           users.ts, images.ts, seed-fixtures.ts, tests/
+      test-database/        names, server, template, test-database, cli,
+                            global-setup, tests/
 ```
 
 ## Dependencies

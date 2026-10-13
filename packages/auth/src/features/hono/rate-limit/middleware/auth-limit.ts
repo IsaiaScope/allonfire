@@ -1,7 +1,7 @@
-import { HTTP_METHOD } from "@allonfire/core/features/http/constants/http";
-import { TRAILING_SLASHES } from "@allonfire/core/shared/constants/patterns";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import type { Env, MiddlewareHandler } from "hono";
-import { LIMITED_AUTH_PATHS } from "../../../../shared/constants/paths";
+import { AUTH } from "../../../../shared/constants/auth";
 import type { AuthLike } from "../../../../shared/types/auth";
 
 /**
@@ -15,11 +15,11 @@ export const authLimit = <E extends Env>(
   limiter: MiddlewareHandler<E>
 ): MiddlewareHandler<E> => {
   const routes: ReadonlySet<string> = new Set(
-    LIMITED_AUTH_PATHS.map((path) => `${auth.basePath}${path}`)
+    AUTH.LIMITED_PATHS.map((path) => `${auth.basePath}${path}`)
   );
   return (context, next) =>
-    context.req.method === HTTP_METHOD.POST &&
-    routes.has(context.req.path.replace(TRAILING_SLASHES, ""))
+    context.req.method === HTTP.METHOD.POST &&
+    routes.has(context.req.path.replace(PATTERN.TRAILING_SLASHES, ""))
       ? limiter(context, next)
       : next();
 };

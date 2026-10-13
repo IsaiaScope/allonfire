@@ -1,6 +1,7 @@
-import { AUTH_VAR } from "@allonfire/auth/features/hono/constants/variables";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { invalidHook } from "@allonfire/core/features/errors/coded-error";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   canSeeImage,
   enterableApps,
@@ -16,7 +17,6 @@ import {
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
 import { notFound } from "../utils/errors";
-import { throwOnInvalid } from "../utils/validation";
 import { getRoute, listRoute } from "./routes";
 
 const factory = createFactory<AuthEnv>();
@@ -29,12 +29,12 @@ const factory = createFactory<AuthEnv>();
 export const listHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     listRoute,
-    sValidator("query", listQuerySchema, throwOnInvalid),
+    sValidator("query", listQuerySchema, invalidHook),
     async (c) => {
       const query = c.req.valid("query");
       const images = await deps.listImages({
         ...query,
-        enterable: enterableApps(c.get(AUTH_VAR.SESSION)?.user ?? null),
+        enterable: enterableApps(c.get(AUTH.VAR.SESSION)?.user ?? null),
       });
       const last = images.at(-1);
       const body = {
@@ -42,7 +42,7 @@ export const listHandlers = (deps: ImageDeps) =>
         nextCursor:
           images.length === query.limit && last ? encodeCursor(last) : null,
       } satisfies ImageListBody;
-      return c.json(body, HTTP_STATUS.OK);
+      return c.json(body, HTTP.STATUS.OK);
     }
   );
 
@@ -50,14 +50,14 @@ export const listHandlers = (deps: ImageDeps) =>
 export const getHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     getRoute,
-    sValidator("param", idParamSchema, throwOnInvalid),
+    sValidator("param", idParamSchema, invalidHook),
     async (c) => {
       const image = await deps.getImage(c.req.valid("param").id);
-      const user = c.get(AUTH_VAR.SESSION)?.user ?? null;
+      const user = c.get(AUTH.VAR.SESSION)?.user ?? null;
       // Hidden is missing: a 403 would tell someone who cannot see it that the id exists.
       if (!(image && canSeeImage(user, image.apps))) {
         throw notFound();
       }
-      return c.json(toImageBody(image), HTTP_STATUS.OK);
+      return c.json(toImageBody(image), HTTP.STATUS.OK);
     }
   );

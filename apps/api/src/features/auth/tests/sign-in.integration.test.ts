@@ -1,139 +1,154 @@
 // @module-tag integration
 
+import { randomUUID } from "node:crypto";
 import { requireApp } from "@allonfire/auth/features/hono/guards/middleware/require-app";
-import { APP_HEADER } from "@allonfire/auth/shared/constants/headers";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
-import { hashPassword } from "better-auth/crypto";
-import { z } from "zod";
+import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { createApp } from "../../../app";
+import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
+import {
+  authCodeOf,
+  cookieFor,
+  getSession,
+  ORIGIN,
+  signIn,
+  type TestApp,
+  tokenOnly,
+} from "../../../shared/tests/sign-in";
 import { auth } from "../auth";
 
-const EMAIL = "sign-in-integration@allonfire.test";
-const SIGN_UP_EMAIL = "sign-up-integration@allonfire.test";
-const PASSWORD = "integration-password-1";
-const ORIGIN = "http://localhost:3200";
-
-const app = createApp(appDeps({ auth })).get(
-  "/v1/back-office",
-  requireApp(App.BACK_OFFICE),
-  (c) => c.text("ok")
+const LAURA_VIEWER = FIXTURE.USER.LAURA.VIEWER;
+/** A route only this file mounts, behind `requireApp(BACK_OFFICE)`. */
+const BACK_OFFICE_ROUTE = `${API.PATH.VERSION}/back-office`;
+const CLOSED_APPS = objectValues(App).filter(
+  (each) => ACCESS.APP_SETTINGS[each].registration === null
 );
 
-beforeAll(async () => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-  } catch (cause) {
-    throw new Error(
-      "Postgres unavailable — run: pnpm docker:up && pnpm --filter @allonfire/database db:update",
-      { cause }
-    );
-  }
-  const user = await prisma.user.upsert({
-    create: {
-      email: EMAIL,
-      emailVerified: true,
-      memberships: { create: { app: App.LAURA, role: Role.VIEWER } },
-      name: "Integration",
-    },
-    update: {},
-    where: { email: EMAIL },
-  });
-  await prisma.account.deleteMany({ where: { userId: user.id } });
-  await prisma.account.create({
-    data: {
-      accountId: user.id,
-      password: await hashPassword(PASSWORD),
-      providerId: "credential",
-      userId: user.id,
-    },
-  });
+// A fresh app per test: its in-memory rate-limit store starts empty, so the
+// sign-ins in this file never add up to the auth limit.
+let app: TestApp;
+beforeEach(() => {
+  app = createApp(appDeps({ auth })).get(
+    BACK_OFFICE_ROUTE,
+    requireApp(App.BACK_OFFICE),
+    (c) => c.text("ok")
+  );
 });
 
 afterAll(async () => {
-  await prisma.user.deleteMany({
-    where: { email: { in: [EMAIL, SIGN_UP_EMAIL] } },
-  });
   await prisma.$disconnect();
 });
 
-async function signIn(appName?: string): Promise<string> {
-  const res = await app.request("/v1/auth/sign-in/email", {
-    body: stringifyJson({ email: EMAIL, password: PASSWORD }),
+const signUp = (email: string, appHeader: Record<string, string>) =>
+  app.request(`${API.PATH.AUTH}${AUTH.PATH.SIGN_UP_EMAIL}`, {
+    body: stringifyJson({ email, name: "x", password: FIXTURE.PASSWORD }),
     headers: {
-      "content-type": "application/json",
+      "content-type": HTTP.CONTENT_TYPE.JSON,
       origin: ORIGIN,
-      ...(appName && { [APP_HEADER]: appName }),
+      ...appHeader,
     },
     method: "POST",
   });
-  if (!res.ok) {
-    throw new Error(`sign-in answered ${res.status}`);
-  }
-  return res.headers
-    .getSetCookie()
-    .map((cookie) => cookie.split(";")[0])
-    .join("; ");
-}
+
+const joinApp = (headers: Record<string, string>) =>
+  app.request(`${API.PATH.AUTH}${AUTH.PATH.JOIN_APP}`, {
+    headers: { origin: ORIGIN, [AUTH.HEADER.APP]: App.BACK_OFFICE, ...headers },
+    method: "POST",
+  });
 
 describe("sign-in against Postgres", () => {
   it("returns a Session carrying the User's Memberships", async () => {
-    const cookie = await signIn();
-    const res = await app.request("/v1/auth/get-session", {
-      headers: { cookie },
-    });
-    const body = z.object({ user: z.looseObject({}) }).parse(await res.json());
-    expect(body.user).toMatchObject({
-      email: EMAIL,
+    const session = await getSession(app, await cookieFor(app, LAURA_VIEWER));
+    expect(session?.user).toMatchObject({
+      email: LAURA_VIEWER.email,
       memberships: [{ app: App.LAURA, role: Role.VIEWER }],
     });
   });
 
   it("refuses a Laura Viewer at requireApp(BACK_OFFICE)", async () => {
-    const cookie = await signIn();
-    const res = await app.request("/v1/back-office", { headers: { cookie } });
+    const cookie = await cookieFor(app, LAURA_VIEWER);
+    const res = await app.request(BACK_OFFICE_ROUTE, { headers: { cookie } });
     expect(res.status).toBe(403);
-  });
-
-  it("refuses a sign-in naming the Back office, and opens no Session", async () => {
-    await prisma.session.deleteMany({ where: { user: { email: EMAIL } } });
-    const res = await app.request("/v1/auth/sign-in/email", {
-      body: stringifyJson({ email: EMAIL, password: PASSWORD }),
-      headers: {
-        "content-type": "application/json",
-        origin: ORIGIN,
-        [APP_HEADER]: App.BACK_OFFICE,
-      },
-      method: "POST",
-    });
-    expect(res.status).toBe(403);
-    expect(
-      await prisma.session.count({ where: { user: { email: EMAIL } } })
-    ).toBe(0);
   });
 
   it.each([
-    ["for the Back office", { [APP_HEADER]: App.BACK_OFFICE }],
-    ["naming no App", {}],
-  ])("does not let a request create a User %s", async (_, appHeader) => {
-    const res = await app.request("/v1/auth/sign-up/email", {
-      body: stringifyJson({
-        email: SIGN_UP_EMAIL,
-        name: "x",
-        password: PASSWORD,
-      }),
-      headers: {
-        "content-type": "application/json",
-        origin: ORIGIN,
-        ...appHeader,
-      },
+    { status: 200, user: FIXTURE.USER.BACK_OFFICE.ADMIN },
+    { status: 403, user: FIXTURE.USER.BACK_OFFICE.USER },
+    { status: 403, user: FIXTURE.USER.BACK_OFFICE.VIEWER },
+    { status: 403, user: FIXTURE.USER.NO_MEMBERSHIP },
+    { status: 403, user: LAURA_VIEWER },
+  ])(
+    "signs $user.email into the Back office: $status",
+    async ({ status, user }) => {
+      const userAgent = randomUUID();
+      const res = await signIn(app, user, {
+        appName: App.BACK_OFFICE,
+        userAgent,
+      });
+      expect(res.status).toBe(status);
+      if (status === 403) {
+        expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.APP_FORBIDDEN);
+        expect(await prisma.session.count({ where: { userAgent } })).toBe(0);
+      }
+    }
+  );
+
+  it("answers 401 to a wrong password and to an unknown email", async () => {
+    const wrong = await signIn(app, FIXTURE.USER.BACK_OFFICE.ADMIN, {
+      password: "wrong-password-1",
+    });
+    expect(wrong.status).toBe(401);
+    expect((await signIn(app, { email: "nobody@allonfire.test" })).status).toBe(
+      401
+    );
+  });
+
+  it("returns every Membership with the Session, and nothing after sign-out", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.ADMIN_EVERYWHERE);
+    expect((await getSession(app, cookie))?.user.memberships).toHaveLength(
+      objectValues(App).length
+    );
+    await app.request(`${API.PATH.AUTH}${AUTH.PATH.SIGN_OUT}`, {
+      headers: { cookie, origin: ORIGIN },
       method: "POST",
     });
+    expect(await getSession(app, tokenOnly(cookie))).toBeNull();
+  });
+});
+
+describe("Registration on the real ACCESS.APP_SETTINGS", () => {
+  it.each([
+    ...CLOSED_APPS.map(
+      (closed) => [closed, { [AUTH.HEADER.APP]: closed }] as const
+    ),
+    ["no App", {}] as const,
+  ])("refuses a User for %s with REGISTRATION_CLOSED", async (name, header) => {
+    const email = `closed-${name.replace(" ", "-").toLowerCase()}@registration.allonfire.test`;
+    const res = await signUp(email, header);
     expect(res.status).toBe(403);
-    expect(await prisma.user.count({ where: { email: SIGN_UP_EMAIL } })).toBe(
-      0
-    );
+    expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.REGISTRATION_CLOSED);
+    expect(await prisma.user.count({ where: { email } })).toBe(0);
+  });
+
+  it("refuses joining a closed App and adds no Membership", async () => {
+    const res = await joinApp({ cookie: await cookieFor(app, LAURA_VIEWER) });
+    expect(res.status).toBe(403);
+    expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.REGISTRATION_CLOSED);
+    expect(
+      await prisma.membership.count({
+        where: { app: App.BACK_OFFICE, user: { email: LAURA_VIEWER.email } },
+      })
+    ).toBe(0);
+  });
+
+  it("refuses a signed-out visitor", async () => {
+    expect((await joinApp({})).status).toBe(401);
   });
 });

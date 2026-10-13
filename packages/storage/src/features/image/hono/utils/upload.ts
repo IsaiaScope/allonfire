@@ -1,4 +1,4 @@
-import { HTTP_METHOD } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 
 /**
  * The upload brings its own body limit and time budget (100 MiB, 5 minutes),
@@ -9,4 +9,4 @@ export const isImageUpload = (
   method: string,
   path: string,
   basePath: string
-): boolean => method === HTTP_METHOD.POST && path === basePath;
+): boolean => method === HTTP.METHOD.POST && path === basePath;

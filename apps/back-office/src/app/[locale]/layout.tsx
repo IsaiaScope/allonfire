@@ -2,7 +2,7 @@ import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/aof-nuqs
 import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/aof-query-client-provider";
 import { AOFReactQueryDevtools } from "@allonfire/core/features/next/providers/aof-react-query-devtools";
 import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
-import { NODE_ENV } from "@allonfire/core/shared/constants/env";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -35,7 +35,7 @@ const LocaleLayout = async ({ children }: { children: ReactNode }) => {
               <AOFNuqsAdapter>{children}</AOFNuqsAdapter>
             </AOFThemeProvider>
             <AOFReactQueryDevtools
-              enabled={env.NODE_ENV === NODE_ENV.DEVELOPMENT}
+              enabled={env.NODE_ENV === ENV.NODE.DEVELOPMENT}
             />
           </AOFQueryClientProvider>
         </NextIntlClientProvider>

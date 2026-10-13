@@ -1,4 +1,5 @@
-import type { App } from "@allonfire/database/enums";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App } from "@allonfire/database/enums";
 import {
   type AccessUser,
   canManageEverywhere,
@@ -52,6 +53,17 @@ const assertManagesEverywhere = (
     if (!canManageEverywhere(user, placements)) {
       throw forbidden();
     }
+  }
+};
+
+/**
+ * 403 unless the User is an Admin in some App. Nobody else adds an Image, so
+ * the upload is refused before its body (up to `IMAGE.LIMIT.UPLOAD_BYTES`) is
+ * read into memory.
+ */
+export const authoriseUploader = (user: AccessUser) => {
+  if (!objectValues(App).some((app) => canManageImage(user, app))) {
+    throw forbidden();
   }
 };
 
@@ -130,7 +142,7 @@ export const authorisePatch = (
     if (alt && !canManageEverywhere(user, links)) {
       throw forbidden();
     }
-    // Only what changes is written: a placement added since the read stays.
+    // Only what changes is written.
     const place = next?.filter(({ app }) => changed.includes(app)) ?? [];
     const remove = changed.filter(
       (app) => !next?.some((link) => link.app === app)

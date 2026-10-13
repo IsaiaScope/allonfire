@@ -6,7 +6,10 @@ import { buildEnv } from "./src/environment/build-environment";
 // a `._*` sidecar next to each cache file and Turbopack fails to open the cache,
 // so `dev` and `build` delete them under `.next` first; a no-op elsewhere.
 export default AOFCreateNextConfig(
-  withStorageImages({}, { origin: buildEnv.STORAGE_ENDPOINT }),
+  withStorageImages(
+    {},
+    { bucket: buildEnv.STORAGE_BUCKET, origin: buildEnv.STORAGE_ENDPOINT }
+  ),
   {
     // next-intl reads the request config from src/features/i18n, next to the translations.
     intl: { requestConfig: "./src/features/i18n/request.ts" },

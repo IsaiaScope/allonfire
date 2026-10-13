@@ -1,5 +1,7 @@
 // @module-tag unit
+import { TEST_API_URL } from "@allonfire/config/local/addresses";
 import { NextRequest } from "next/server";
+import { AUTH } from "../../../shared/constants/auth";
 import { refreshSession } from "../utils/refresh-session";
 
 const TOKEN = "__Secure-better-auth.session_token=t";
@@ -44,7 +46,9 @@ describe("refreshSession", () => {
       }),
     ]);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
-    expect(String(url)).toBe("http://api.test/auth/get-session");
+    expect(String(url)).toBe(
+      `${TEST_API_URL}${AUTH.PATH.BASE}${AUTH.PATH.GET_SESSION}`
+    );
     expect(new Headers(init?.headers).get("x-forwarded-for")).toBe(
       "203.0.113.7"
     );

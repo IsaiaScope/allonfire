@@ -1,5 +1,6 @@
 import { SEPARATOR } from "../../shared/constants/separators";
-import { HTTP_STATUS } from "../http/constants/http";
+import { HTTP } from "../http/constants/http";
+import { ERROR } from "./constants/error-codes";
 
 /** The ICU values a code's message interpolates. */
 export type CodedErrorValues = Readonly<Record<string, number | string>>;
@@ -10,7 +11,7 @@ export type CodedErrorDetail = { message: string; path: string };
 type CodedErrorFields = {
   /** An HTTP error status. */
   status: number;
-  /** The host's error code; the host owns its message and translation. */
+  /** A standard code (`ERROR.CODE`) or a module's own; the host owns its message and translation. */
   code: string;
   /** The ICU values the code's message interpolates. */
   values?: CodedErrorValues;
@@ -64,9 +65,8 @@ const pathOf = (issue: StandardIssue): string =>
     )
     .join(SEPARATOR.PATH);
 
-/** A 400 under the host's validation `code`, each failed field named. */
+/** A 400 `VALIDATION_FAILED`, each failed field named. */
 export const validationError = (
-  code: string,
   issues: readonly StandardIssue[]
 ): CodedError => {
   const errors = issues.map((issue) => ({
@@ -74,18 +74,16 @@ export const validationError = (
     path: pathOf(issue),
   }));
   return new CodedError({
-    code,
+    code: ERROR.CODE.VALIDATION_FAILED,
     errors,
-    status: HTTP_STATUS.BAD_REQUEST,
+    status: HTTP.STATUS.BAD_REQUEST,
     values: { count: errors.length },
   });
 };
 
 /** A validator hook (`sValidator`, hono-openapi) that throws `validationError`. */
-export const invalidHook =
-  (code: string) =>
-  (result: ValidationResult): void => {
-    if (!result.success) {
-      throw validationError(code, result.error ?? []);
-    }
-  };
+export const invalidHook = (result: ValidationResult): void => {
+  if (!result.success) {
+    throw validationError(result.error ?? []);
+  }
+};

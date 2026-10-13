@@ -2,11 +2,7 @@ import type { CodedErrorValues } from "@allonfire/core/features/errors/coded-err
 import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import { memoize, strategies } from "@formatjs/fast-memoize";
 import { type Formatters, IntlMessageFormat } from "intl-messageformat";
-import {
-  CATALOGUE,
-  DEFAULT_LOCALE,
-  type TranslationKey,
-} from "./constants/locales";
+import { TRANSLATION, type TranslationKey } from "./constants/locales";
 import type { TranslationValues } from "./translation-values";
 
 // `variadic` keys the cache on every argument. The default picks by arity, and
@@ -46,7 +42,7 @@ function formatterFor(key: TranslationKey, locale: Locale): IntlMessageFormat {
 
   if (!formatter) {
     formatter = new IntlMessageFormat(
-      CATALOGUE[locale][key],
+      TRANSLATION.CATALOGUE[locale][key],
       locale,
       undefined,
       {
@@ -90,6 +86,6 @@ export function translateCode(
     const parts = formatterFor(key, locale).format<never>(values);
     return typeof parts === "string" ? parts : parts.join("");
   } catch {
-    return CATALOGUE[DEFAULT_LOCALE][key];
+    return TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][key];
   }
 }

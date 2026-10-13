@@ -7,14 +7,17 @@ import { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client";
 import { CHANGESET_FILE } from "../../scripts/changeset-file";
 import {
-  clientFor,
   DOCKER_TIMEOUT,
-  dropDatabase,
-  executeFile,
   liquibase,
   PACKAGE_DIR,
+} from "../../src/features/test-database/server";
+import {
+  clientFor,
+  dropDatabase,
+  executeFile,
   recreateDatabase,
   tablesIn,
+  throwawayName,
   throwawayUrl,
 } from "./throwaway-db";
 
@@ -53,7 +56,7 @@ const CHANGESETS_AFTER_BASELINE =
   ).length - 1;
 
 describe("changelog on an empty database", () => {
-  const database = "allonfire_changelog_fresh";
+  const database = throwawayName("changelog_fresh");
   const url = throwawayUrl(database);
   let client: PrismaClient;
 
@@ -123,7 +126,7 @@ describe("changelog on an empty database", () => {
 
 describe("changelog on a database that already has the tables", () => {
   // Production and every existing local database: built by prisma db push.
-  const database = "allonfire_changelog_existing";
+  const database = throwawayName("changelog_existing");
   const url = throwawayUrl(database);
   let client: PrismaClient;
 
@@ -196,7 +199,7 @@ describe("changelog on a database that already has the tables", () => {
 });
 
 describe("rolling back the schema move", () => {
-  const database = "allonfire_changelog_rollback";
+  const database = throwawayName("changelog_rollback");
   const url = throwawayUrl(database);
   let client: PrismaClient;
 
@@ -275,7 +278,7 @@ async function tags(client: PrismaClient): Promise<string[]> {
 }
 
 describe("deploy", () => {
-  const database = "allonfire_changelog_deploy";
+  const database = throwawayName("changelog_deploy");
   const url = throwawayUrl(database);
   let client: PrismaClient;
 

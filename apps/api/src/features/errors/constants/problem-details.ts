@@ -1,7 +1,10 @@
 import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
 import { z } from "zod";
-import type { ErrorStatus } from "../../../shared/constants/http";
-import { codesFor, errorCodeSchema } from "./error-codes";
+import {
+  codesFor,
+  type ErrorStatus,
+  errorCodeSchema,
+} from "../../../shared/constants/error";
 
 export const errorDetailSchema = z.object({
   message: z.string(),
@@ -15,7 +18,7 @@ export const errorDetailSchema = z.object({
  * one clients may already understand — Spring and ASP.NET emit it natively —
  * rather than one they have to learn from our docs.
  *
- * - `type`     stable identifier for the problem class, from `ERROR_TYPE`
+ * - `type`     stable identifier for the problem class, from `API.ERROR.TYPE`
  * - `title`    invariant summary; the registered reason phrase for the status
  * - `status`   duplicated from the response line, per the RFC, so a logged or
  *              forwarded body is still self-describing

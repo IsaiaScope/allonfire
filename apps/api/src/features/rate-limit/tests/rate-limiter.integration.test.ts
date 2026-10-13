@@ -1,8 +1,10 @@
 // @module-tag integration
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { awaitReady, createRedis } from "../../redis/redis";
+import { rateLimitKey } from "../constants/limits";
 import { createRedisStore } from "../middleware/rate-limiter";
 
-const url = process.env.API_REDIS_URL ?? "redis://localhost:6379/0";
+const url = process.env.API_REDIS_URL ?? LOCAL.URL.REDIS;
 const redis = createRedis(url);
 
 beforeAll(async () => {
@@ -30,14 +32,14 @@ describe("redis rate limit store", () => {
     const first = await store.increment(key, windowMs);
     expect(first.totalHits).toBe(1);
 
-    const ttl = await redis.pttl(`ratelimit:${key}`);
+    const ttl = await redis.pttl(rateLimitKey(key));
     expect(ttl).toBeGreaterThan(0);
     expect(ttl).toBeLessThanOrEqual(windowMs);
 
     const second = await store.increment(key, windowMs);
     expect(second.totalHits).toBe(2);
 
-    const ttlAfter = await redis.pttl(`ratelimit:${key}`);
+    const ttlAfter = await redis.pttl(rateLimitKey(key));
     expect(ttlAfter).toBeLessThanOrEqual(ttl);
 
     await store.resetKey(key);
@@ -53,7 +55,7 @@ describe("redis rate limit store", () => {
     await store.decrement(key);
     await store.increment(key, windowMs);
 
-    const ttl = await redis.pttl(`ratelimit:${key}`);
+    const ttl = await redis.pttl(rateLimitKey(key));
     expect(ttl).toBeGreaterThan(0);
     expect(ttl).toBeLessThanOrEqual(windowMs);
 

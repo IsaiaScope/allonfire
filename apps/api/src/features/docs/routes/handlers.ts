@@ -1,19 +1,18 @@
 import { authOpenApi } from "@allonfire/auth/features/openapi/openapi";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
-import { CONTENT_TYPE } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { Scalar } from "@scalar/hono-api-reference";
 import type { Hono, MiddlewareHandler } from "hono";
 import { generateSpecs, resolver } from "hono-openapi";
 import pkg from "../../../../package.json" with { type: "json" };
 import { env } from "../../../environment/environment";
-import { ERROR_STATUS } from "../../../shared/constants/http";
+import { API } from "../../../shared/constants/api";
 import type { AppBindings } from "../../../shared/types/bindings";
 import { problemDetailsSchemaFor } from "../../errors/constants/problem-details";
 import { notFound } from "../../errors/middleware/error-handler";
-import { OPENAPI_DOC } from "../constants/openapi";
-import { DOCS_ROUTE } from "../constants/routes";
+import { OPENAPI } from "../constants/openapi";
 import { isDocsEnabled } from "../utils/enabled";
 import { mergeOpenApi } from "../utils/merge";
 
@@ -36,25 +35,25 @@ const DOCUMENTATION = {
     // One error response per status; a route points at one with
     // `problemResponseRef(status)`.
     responses: objectFromEntries(
-      ERROR_STATUS.map(
+      API.ERROR.STATUS.map(
         (status) =>
           [
             problemResponseName(status),
             {
               content: {
-                [CONTENT_TYPE.PROBLEM_JSON]: {
+                [HTTP.CONTENT_TYPE.PROBLEM_JSON]: {
                   schema: resolver(problemDetailsSchemaFor(status)),
                 },
               },
-              description: OPENAPI_DOC.PROBLEM_DESCRIPTION,
+              description: OPENAPI.DOC.PROBLEM_DESCRIPTION,
             },
           ] as const
       )
     ),
   },
   info: {
-    description: OPENAPI_DOC.DESCRIPTION,
-    title: OPENAPI_DOC.TITLE,
+    description: OPENAPI.DOC.DESCRIPTION,
+    title: OPENAPI.DOC.TITLE,
     version: pkg.version,
   },
 };
@@ -82,5 +81,5 @@ export const specHandler = (app: Hono<AppBindings>, auth: AuthLike) => {
 };
 
 export const referenceHandler = whenEnabled(
-  Scalar<AppBindings>({ url: DOCS_ROUTE.OPENAPI })
+  Scalar<AppBindings>({ url: API.PATH.OPENAPI })
 );

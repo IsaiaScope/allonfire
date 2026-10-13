@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { z } from "zod";
 import { parseJsonWith } from "../../../../shared/utils/json";
-import { BASE_LANGUAGES } from "../../../i18n/constants/locales";
+import { I18N } from "../../../i18n/constants/locales";
 import { APPS, scaffoldedApps } from "../../tests/scaffolded-apps";
 import { SHARED_TRANSLATIONS } from "../shared-translations";
 
@@ -20,7 +20,7 @@ const appTranslations = scaffoldedApps().flatMap((app) => {
 });
 
 describe("shared translations", () => {
-  it.each(BASE_LANGUAGES)("%s has the Common namespace", (language) => {
+  it.each(I18N.BASE_LANGUAGES)("%s has the Common namespace", (language) => {
     expect(SHARED_TRANSLATIONS[language]).toHaveProperty(SHARED_NAMESPACE);
   });
 

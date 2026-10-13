@@ -1,7 +1,7 @@
 import type { ApplyGlobalResponse } from "hono/client";
 import type { createApp } from "./app";
 import type { ProblemDetails } from "./features/errors/middleware/error-handler";
-import type { ERROR_STATUS } from "./shared/constants/http";
+import type { API } from "./shared/constants/api";
 
 export type AppType = ReturnType<typeof createApp>;
 
@@ -17,5 +17,5 @@ export type {
  */
 export type ApiType = ApplyGlobalResponse<
   AppType,
-  { [S in (typeof ERROR_STATUS)[number]]: { json: ProblemDetails } }
+  { [S in (typeof API.ERROR.STATUS)[number]]: { json: ProblemDetails } }
 >;

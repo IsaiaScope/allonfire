@@ -4,7 +4,7 @@ import { guard } from "../utils/guard";
 
 /**
  * 403 unless the User is allowed into the App (`canEnterApp`): a Membership
- * there whose Role reaches the App's floor in `APP_SETTINGS`.
+ * there whose Role reaches the App's floor in `ACCESS.APP_SETTINGS`.
  * `requireApp(App.LAURA)`.
  */
 export const requireApp = (app: App) =>

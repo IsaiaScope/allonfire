@@ -5,11 +5,12 @@
   "type": "module",
   "exports": {
     "./environment/environment": "./src/environment/environment.ts",
-    "./features/errors/constants/openapi": "./src/features/errors/constants/openapi.ts",
+    "./features/ci/affected": "./src/features/ci/affected.ts",
     "./features/errors/coded-error": "./src/features/errors/coded-error.ts",
+    "./features/errors/constants/error-codes": "./src/features/errors/constants/error-codes.ts",
+    "./features/errors/constants/openapi": "./src/features/errors/constants/openapi.ts",
     "./features/errors/format-error-message": "./src/features/errors/format-error-message.ts",
     "./features/http/constants/http": "./src/features/http/constants/http.ts",
-    "./features/http/constants/security-headers": "./src/features/http/constants/security-headers.ts",
     "./features/i18n/constants/locales": "./src/features/i18n/constants/locales.ts",
     "./features/logger/constants/logger": "./src/features/logger/constants/logger.ts",
     "./features/next/api/forwarded-for": "./src/features/next/api/forwarded-for.ts",
@@ -53,6 +54,7 @@
     "nuqs": "^2.10.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "tsx": "^4.19.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   },

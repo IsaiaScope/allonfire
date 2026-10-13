@@ -1,10 +1,10 @@
 // @module-tag unit
-import { BASE_LANGUAGES } from "../../../i18n/constants/locales";
+import { I18N } from "../../../i18n/constants/locales";
 import { AOFDefineRouting } from "../aof-define-routing";
 
 describe("AOFDefineRouting", () => {
   it("routes the Host's languages, the default first, prefix only when needed", () => {
-    expect(AOFDefineRouting(BASE_LANGUAGES)).toEqual({
+    expect(AOFDefineRouting(I18N.BASE_LANGUAGES)).toEqual({
       defaultLocale: "en",
       localePrefix: "as-needed",
       locales: ["en", "it"],
@@ -13,7 +13,7 @@ describe("AOFDefineRouting", () => {
 
   it("takes the Host's overrides and keeps its languages", () => {
     expect(
-      AOFDefineRouting(BASE_LANGUAGES, {
+      AOFDefineRouting(I18N.BASE_LANGUAGES, {
         defaultLocale: "it",
         localeCookie: false,
       })

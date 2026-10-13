@@ -1,4 +1,4 @@
-import { LOG_LEVEL } from "@allonfire/core/features/logger/constants/logger";
+import { LOG } from "@allonfire/core/features/logger/constants/logger";
 import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { z } from "zod";
 import { createLogger } from "../logger";
@@ -8,7 +8,7 @@ export type LogLine = z.infer<typeof logLineSchema>;
 
 /**
  * A real logger whose output is parsed into `lines` instead of written out.
- * It logs at `debug` whatever `LOG_LEVEL` says: tests run with it `silent`.
+ * It logs at `debug` whatever `LOG.LEVEL` says: tests run with it `silent`.
  */
 export function captureLog() {
   const lines: LogLine[] = [];
@@ -22,11 +22,11 @@ export function captureLog() {
       },
     },
   });
-  logger.level = LOG_LEVEL.DEBUG;
+  logger.level = LOG.LEVEL.DEBUG;
   return { lines, logger, output: () => output.join("") };
 }
 
 /** pino's numeric level for `info`, to filter `lines` at or above it. */
 export function infoLevel(logger: ReturnType<typeof captureLog>["logger"]) {
-  return logger.levels.values[LOG_LEVEL.INFO] ?? 0;
+  return logger.levels.values[LOG.LEVEL.INFO] ?? 0;
 }

@@ -13,6 +13,3 @@ import { env } from "@/environment/environment";
 export const api = hc<ApiType>(env.NEXT_PUBLIC_API_URL, {
   init: { credentials: "include" },
 });
-
-/** Either client; a query options factory takes one, so it runs on both sides. */
-export type ApiClient = typeof api;

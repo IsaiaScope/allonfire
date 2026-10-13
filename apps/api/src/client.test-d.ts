@@ -1,9 +1,10 @@
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { hc } from "hono/client";
 import type { ApiType, AppType, ErrorCode, ProblemDetails } from "./client";
 
 describe("client contract", () => {
   it("infers the /health response body", async () => {
-    const client = hc<AppType>("http://localhost:3300");
+    const client = hc<AppType>(LOCAL.URL.API);
     const res = await client.health.$get({});
     const body = await res.json();
 
@@ -20,7 +21,7 @@ describe("client contract", () => {
   });
 
   it("types the error envelope on the merged client type", async () => {
-    const client = hc<ApiType>("http://localhost:3300");
+    const client = hc<ApiType>(LOCAL.URL.API);
     const res = await client.health.$get({});
     const body = await res.json();
 

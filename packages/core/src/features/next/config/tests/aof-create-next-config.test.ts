@@ -1,5 +1,5 @@
 // @module-tag unit
-import { SECURITY_HEADERS } from "../../../http/constants/security-headers";
+import { HTTP } from "../../../http/constants/http";
 import { AOFCreateNextConfig } from "../aof-create-next-config";
 
 vi.mock("next-intl/plugin", () => ({
@@ -45,7 +45,7 @@ describe("AOFCreateNextConfig", () => {
       headers: async () => [{ headers: [APP_HEADER], source: "/embed" }],
     });
     expect(await config.headers?.()).toEqual([
-      { headers: SECURITY_HEADERS, source: "/(.*)" },
+      { headers: HTTP.SECURITY_HEADERS, source: "/(.*)" },
       { headers: [APP_HEADER], source: "/embed" },
     ]);
   });

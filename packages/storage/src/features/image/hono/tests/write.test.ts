@@ -4,33 +4,27 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
-import {
-  CONTENT_TYPE,
-  HTTP_HEADER,
-} from "@allonfire/core/features/http/constants/http";
-import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, Role } from "@allonfire/database/enums";
 import type { ImageLink } from "@allonfire/database/features/auth/access/access";
 import {
   type AuthoriseLinks,
+  type ImageChange,
+  type ImageLinksById,
   ImageNotFoundError,
 } from "@allonfire/database/features/image/image.service";
 import { z } from "zod";
-import { IMAGE_PATH } from "../../constants/paths";
+import { STORAGE } from "../../../../shared/constants/paths";
+import { IMAGE } from "../../constants/image";
 import { imageBodySchema } from "../../constants/schemas";
-import { MAX_INPUT_MEGAPIXELS } from "../../prepare/constants/limits";
 import {
   ImageTooLargeError,
   UnsupportedImageError,
 } from "../../prepare/prepare-image";
-import {
-  MAX_FILE_BYTES,
-  MAX_UPLOAD_BYTES,
-  UPLOAD_TIMEOUT_MS,
-} from "../constants/limits";
 import type { ImageDeps } from "../utils/deps";
-import { imageRecord } from "./stub-image-deps";
-import { errorOf, testHost } from "./test-host";
+import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
+import { testHost as app, errorOf, json } from "./test-host";
 
 const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
 const user = sessionFor({ memberships: membershipsIn(Role.USER) });
@@ -51,9 +45,12 @@ const LAURA_PUBLIC: ImageLink = { app: App.LAURA, public: true };
 const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
 const OFFICE_PUBLIC: ImageLink = { app: App.BACK_OFFICE, public: true };
 
-/** Every Image of the batch placed as given, as `linksOf` answers. */
+/** The placements a write locks, as the database would find them. */
+type Links = (ids: readonly string[]) => Promise<ImageLinksById>;
+
+/** Every Image of the batch placed as given. */
 const placedIn =
-  (...links: ImageLink[]): ImageDeps["linksOf"] =>
+  (...links: ImageLink[]): Links =>
   (ids) =>
     Promise.resolve(new Map(ids.map((id) => [id, links])));
 /** Every Image in these tests is private in Laura unless a test says otherwise. */
@@ -63,7 +60,7 @@ const inLaura = placedIn(LAURA_PRIVATE);
  * The delete services as the database runs them: the route's check against
  * the placements `links` answers, then the write, recorded in `written`.
  */
-const deletes = (links: ImageDeps["linksOf"], keys: string[] = []) => {
+const deletes = (links: Links, keys: string[] = []) => {
   const written = vi.fn<(ids: readonly string[], fromApp?: App) => void>();
   const run = async (
     ids: readonly string[],
@@ -82,14 +79,24 @@ const deletes = (links: ImageDeps["linksOf"], keys: string[] = []) => {
   return { services, written };
 };
 
-const ALT = { en: "The sea", it: "Il mare" };
-const PREPARED = {
-  blurDataUrl: "data:image/webp;base64,AAAA",
-  buffer: Buffer.from("webp"),
-  bytes: 4,
-  height: 600,
-  width: 800,
+/**
+ * The update service as the database runs it: the route works its changes
+ * out against the placements `links` answers, recorded in `written`, and each
+ * changed Image comes back as `answer` builds it.
+ */
+const updates = (
+  links: Links,
+  answer = (id: string) => imageRecord({ id })
+) => {
+  const written = vi.fn<(changes: ImageChange[]) => void>();
+  const updateImages: ImageDeps["updateImages"] = async (ids, resolve) => {
+    const changes = resolve(await links(ids));
+    written(changes);
+    return changes.map(({ id }) => answer(id));
+  };
+  return { updateImages, written };
 };
+
 const imagesBody = z.array(imageBodySchema);
 const IMAGE_KEY = /^[0-9a-f-]{36}\.avif$/;
 
@@ -101,7 +108,6 @@ const LAURA_TWICE: LinkInput[] = [
   { app: App.LAURA, public: true },
 ];
 
-const app = testHost;
 const upload = (
   count: number,
   metaCount = count,
@@ -119,13 +125,16 @@ const upload = (
   return { body: form, method: "POST" };
 };
 
-const json = <T>(method: string, body: T & Json<T>) => ({
-  body: stringifyJson(body),
-  headers: { [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.JSON },
-  method,
-});
+describe("POST /images", () => {
+  it("refuses a User who is Admin in no App before reading their upload", async () => {
+    const res = await app(user).request(STORAGE.PATH.IMAGES, {
+      body: "never parsed",
+      method: "POST",
+    });
+    expect(res.status).toBe(403);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.FORBIDDEN);
+  });
 
-describe("POST /v1/images", () => {
   it("prepares, stores and records a batch of one", async () => {
     const putObject = vi.fn<ImageDeps["putObject"]>(async () => undefined);
     const createImages = vi.fn<ImageDeps["createImages"]>(async (rows) =>
@@ -135,7 +144,7 @@ describe("POST /v1/images", () => {
       createImages,
       prepare: async () => PREPARED,
       putObject,
-    }).request(IMAGE_PATH, upload(1));
+    }).request(STORAGE.PATH.IMAGES, upload(1));
 
     expect(res.status).toBe(201);
     const [key] = putObject.mock.calls[0] ?? [];
@@ -164,7 +173,7 @@ describe("POST /v1/images", () => {
       prepare: async () => PREPARED,
       putObject: async () => undefined,
     }).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       upload(1, 1, 10, [
         { app: App.LAURA, public: true },
         { app: App.BACK_OFFICE },
@@ -178,7 +187,7 @@ describe("POST /v1/images", () => {
   });
 
   it("refuses a USER", async () => {
-    const res = await app(user, {}).request(IMAGE_PATH, upload(1));
+    const res = await app(user, {}).request(STORAGE.PATH.IMAGES, upload(1));
     expect(res.status).toBe(403);
   });
 
@@ -187,14 +196,14 @@ describe("POST /v1/images", () => {
       createImages: async (images) => images.map((image) => imageRecord(image)),
       prepare: async () => PREPARED,
       putObject: async () => undefined,
-    }).request(IMAGE_PATH, upload(1));
+    }).request(STORAGE.PATH.IMAGES, upload(1));
     expect(res.status).toBe(201);
   });
 
   it("refuses an upload to an App the User is no Admin of, preparing nothing", async () => {
     const prepare = vi.fn();
     const res = await app(lauraAdmin, { prepare }).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       upload(1, 1, 10, [{ app: App.LAURA }, { app: App.BACK_OFFICE }])
     );
     expect(res.status).toBe(403);
@@ -209,44 +218,44 @@ describe("POST /v1/images", () => {
     async (_, apps) => {
       const prepare = vi.fn();
       const res = await app(admin, { prepare }).request(
-        IMAGE_PATH,
+        STORAGE.PATH.IMAGES,
         upload(1, 1, 10, apps)
       );
       expect(res.status).toBe(400);
-      expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+      expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
       expect(prepare).not.toHaveBeenCalled();
     }
   );
 
   it("refuses meta that does not match the files", async () => {
-    const res = await app(admin, {}).request(IMAGE_PATH, upload(2, 1));
+    const res = await app(admin, {}).request(STORAGE.PATH.IMAGES, upload(2, 1));
     expect(res.status).toBe(400);
-    expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 });
 
-describe("POST /v1/images refusals and failures", () => {
+describe("POST /images refusals", () => {
   it("refuses a body over the upload limit through the host's onError", async () => {
-    const res = await app(admin, {}).request(IMAGE_PATH, {
+    const res = await app(admin, {}).request(STORAGE.PATH.IMAGES, {
       body: "x",
-      headers: { "content-length": String(MAX_UPLOAD_BYTES + 1) },
+      headers: { "content-length": String(IMAGE.LIMIT.UPLOAD_BYTES + 1) },
       method: "POST",
     });
     expect(res.status).toBe(413);
     const body = await errorOf(res);
-    expect(body.code).toBe("PAYLOAD_TOO_LARGE");
-    expect(body.values).toEqual({ limit: MAX_UPLOAD_BYTES });
+    expect(body.code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
+    expect(body.values).toEqual({ limit: IMAGE.LIMIT.UPLOAD_BYTES });
   });
 
   it("refuses a file over the per-file limit, naming that limit", async () => {
     const res = await app(admin, {}).request(
-      IMAGE_PATH,
-      upload(1, 1, MAX_FILE_BYTES + 1)
+      STORAGE.PATH.IMAGES,
+      upload(1, 1, IMAGE.LIMIT.FILE_BYTES + 1)
     );
     expect(res.status).toBe(413);
     const body = await errorOf(res);
-    expect(body.code).toBe("PAYLOAD_TOO_LARGE");
-    expect(body.values).toEqual({ limit: MAX_FILE_BYTES });
+    expect(body.code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
+    expect(body.values).toEqual({ limit: IMAGE.LIMIT.FILE_BYTES });
   });
 
   it("rejects the whole batch when one file is not an image", async () => {
@@ -258,36 +267,36 @@ describe("POST /v1/images refusals and failures", () => {
           ? Promise.reject(new UnsupportedImageError())
           : Promise.resolve(PREPARED);
       },
-    }).request(IMAGE_PATH, upload(2));
+    }).request(STORAGE.PATH.IMAGES, upload(2));
     expect(res.status).toBe(415);
-    expect((await errorOf(res)).code).toBe("UNSUPPORTED_IMAGE");
+    expect((await errorOf(res)).code).toBe(IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE);
   });
 
   it("refuses an image over the pixel limit with its own 413", async () => {
     const res = await app(admin, {
       prepare: () => Promise.reject(new ImageTooLargeError()),
-    }).request(IMAGE_PATH, upload(1));
+    }).request(STORAGE.PATH.IMAGES, upload(1));
     expect(res.status).toBe(413);
     const body = await errorOf(res);
-    expect(body.code).toBe("IMAGE_TOO_LARGE");
-    expect(body.values).toEqual({ limit: MAX_INPUT_MEGAPIXELS });
+    expect(body.code).toBe(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE);
+    expect(body.values).toEqual({ limit: IMAGE.LIMIT.INPUT_MEGAPIXELS });
   });
+});
 
+describe("POST /images failures", () => {
   it("names its own time budget when the upload runs out of time", async () => {
     vi.useFakeTimers();
-    try {
-      const pending = app(admin, {
-        prepare: () => new Promise(() => undefined),
-      }).request(IMAGE_PATH, upload(1));
-      await vi.advanceTimersByTimeAsync(UPLOAD_TIMEOUT_MS);
-      const res = await pending;
-      expect(res.status).toBe(503);
-      const body = await errorOf(res);
-      expect(body.code).toBe("TIMEOUT");
-      expect(body.values).toEqual({ seconds: UPLOAD_TIMEOUT_MS / 1000 });
-    } finally {
-      vi.useRealTimers();
-    }
+    const pending = app(admin, {
+      prepare: () => new Promise(() => undefined),
+    }).request(STORAGE.PATH.IMAGES, upload(1));
+    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
+    const res = await pending;
+    expect(res.status).toBe(503);
+    const body = await errorOf(res);
+    expect(body.code).toBe(ERROR.CODE.TIMEOUT);
+    expect(body.values).toEqual({
+      seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / 1000,
+    });
   });
 
   it("stores and records nothing once the upload has run out of time", async () => {
@@ -295,20 +304,17 @@ describe("POST /v1/images refusals and failures", () => {
     const putObject = vi.fn<ImageDeps["putObject"]>(async () => undefined);
     const createImages = vi.fn<ImageDeps["createImages"]>(async () => []);
     vi.useFakeTimers();
-    try {
-      const pending = app(admin, {
-        createImages,
-        prepare: () =>
-          new Promise((resolve) => {
-            release = () => resolve(PREPARED);
-          }),
-        putObject,
-      }).request(IMAGE_PATH, upload(1));
-      await vi.advanceTimersByTimeAsync(UPLOAD_TIMEOUT_MS);
-      expect((await pending).status).toBe(503);
-    } finally {
-      vi.useRealTimers();
-    }
+    const pending = app(admin, {
+      createImages,
+      prepare: () =>
+        new Promise((resolve) => {
+          release = () => resolve(PREPARED);
+        }),
+      putObject,
+    }).request(STORAGE.PATH.IMAGES, upload(1));
+    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
+    expect((await pending).status).toBe(503);
+    vi.useRealTimers();
     // The handler finishes preparing after the client already has its 503.
     release();
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -337,7 +343,7 @@ describe("POST /v1/images refusals and failures", () => {
         await gate;
         order.push("late put");
       },
-    }).request(IMAGE_PATH, upload(2));
+    }).request(STORAGE.PATH.IMAGES, upload(2));
     await vi.waitFor(() => expect(puts).toBe(2));
     // With Promise.all the cleanup has already run here, before the slow put.
     release();
@@ -355,24 +361,24 @@ describe("POST /v1/images refusals and failures", () => {
       deleteObjects,
       prepare: async () => PREPARED,
       putObject,
-    }).request(IMAGE_PATH, upload(2));
+    }).request(STORAGE.PATH.IMAGES, upload(2));
     expect(res.status).toBe(500);
     const putKeys = putObject.mock.calls.map(([key]) => key);
     expect(deleteObjects).toHaveBeenCalledWith(putKeys);
   });
 });
 
-describe("PATCH /v1/images", () => {
+describe("PATCH /images", () => {
   it("replaces the placements of a batch", async () => {
-    const updateImages = vi.fn<ImageDeps["updateImages"]>(async (changes) =>
-      changes.map(({ id }) => imageRecord({ apps: [OFFICE_PRIVATE], id }))
+    const { updateImages, written } = updates(inLaura, (id) =>
+      imageRecord({ apps: [OFFICE_PRIVATE], id })
     );
-    const res = await app(admin, { linksOf: inLaura, updateImages }).request(
-      IMAGE_PATH,
+    const res = await app(admin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "image-1" }])
     );
     expect(res.status).toBe(200);
-    expect(updateImages).toHaveBeenCalledWith([
+    expect(written).toHaveBeenCalledWith([
       { id: "image-1", place: [OFFICE_PRIVATE], remove: [App.LAURA] },
     ]);
     expect(imagesBody.parse(await res.json())[0]?.apps).toEqual([
@@ -381,18 +387,15 @@ describe("PATCH /v1/images", () => {
   });
 
   it("keeps a public placement public when `public` is left out, and starts a new one private", async () => {
-    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
-    const res = await app(admin, {
-      linksOf: placedIn(LAURA_PUBLIC),
-      updateImages,
-    }).request(
-      IMAGE_PATH,
+    const { updateImages, written } = updates(placedIn(LAURA_PUBLIC));
+    const res = await app(admin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [
         { apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE }], id: "image-1" },
       ])
     );
     expect(res.status).toBe(200);
-    expect(updateImages).toHaveBeenCalledWith([
+    expect(written).toHaveBeenCalledWith([
       { id: "image-1", place: [OFFICE_PRIVATE] },
     ]);
   });
@@ -400,12 +403,11 @@ describe("PATCH /v1/images", () => {
   it("needs no Admin in an App whose placement stays as it is", async () => {
     // Public in Laura, private in the Back office: a Back office Admin
     // switches only the Back office placement, and Laura's stays.
-    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
-    const res = await app(officeAdmin, {
-      linksOf: placedIn(LAURA_PUBLIC, OFFICE_PRIVATE),
-      updateImages,
-    }).request(
-      IMAGE_PATH,
+    const { updateImages, written } = updates(
+      placedIn(LAURA_PUBLIC, OFFICE_PRIVATE)
+    );
+    const res = await app(officeAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [
         {
           apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE, public: true }],
@@ -414,70 +416,82 @@ describe("PATCH /v1/images", () => {
       ])
     );
     expect(res.status).toBe(200);
-    expect(updateImages).toHaveBeenCalledWith([
+    expect(written).toHaveBeenCalledWith([
       { id: "image-1", place: [OFFICE_PUBLIC] },
     ]);
   });
 
-  it("sends no placement to write when the list is unchanged, so one added since stays", async () => {
-    const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
-    const res = await app(lauraUser, {
-      linksOf: placedIn(LAURA_PRIVATE),
-      updateImages,
-    }).request(
-      IMAGE_PATH,
+  it("sends no placement to write when the list is unchanged", async () => {
+    const { updateImages, written } = updates(placedIn(LAURA_PRIVATE));
+    const res = await app(lauraUser, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [{ apps: [{ app: App.LAURA }], id: "image-1" }])
     );
     expect(res.status).toBe(200);
-    expect(updateImages).toHaveBeenCalledWith([{ id: "image-1" }]);
+    expect(written).toHaveBeenCalledWith([{ id: "image-1" }]);
   });
+});
 
+describe("PATCH /images refusals", () => {
   it("answers 404 when an id is unknown", async () => {
     const res = await app(admin, {
-      linksOf: () => Promise.reject(new ImageNotFoundError(["missing"])),
-    }).request(IMAGE_PATH, json("PATCH", [{ id: "missing" }]));
+      updateImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
+    }).request(STORAGE.PATH.IMAGES, json("PATCH", [{ id: "missing" }]));
     expect(res.status).toBe(404);
   });
 
   it("refuses an alt-only edit by a User below Admin in one of the Image's Apps", async () => {
-    const updateImages = vi.fn();
-    const res = await app(lauraUser, {
-      linksOf: inLaura,
-      updateImages,
-    }).request(IMAGE_PATH, json("PATCH", [{ alt: ALT, id: "image-1" }]));
+    const { updateImages, written } = updates(inLaura);
+    const res = await app(lauraUser, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ alt: ALT, id: "image-1" }])
+    );
     expect(res.status).toBe(403);
-    expect(updateImages).not.toHaveBeenCalled();
+    expect(written).not.toHaveBeenCalled();
+  });
+
+  it("checks an alt edit against the placements the write locks", async () => {
+    // Laura's Admin read it in Laura only; by the time the write locks it, a
+    // Back office Admin has placed it there too, so it is no longer theirs alone.
+    const { updateImages, written } = updates(
+      placedIn(LAURA_PRIVATE, OFFICE_PRIVATE)
+    );
+    const res = await app(lauraAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ alt: ALT, id: "image-1" }])
+    );
+    expect(res.status).toBe(403);
+    expect(written).not.toHaveBeenCalled();
   });
 
   it("answers 404 for an Image in an App the User cannot enter", async () => {
-    const updateImages = vi.fn();
-    const res = await app(lauraAdmin, {
-      linksOf: placedIn(OFFICE_PRIVATE),
-      updateImages,
-    }).request(IMAGE_PATH, json("PATCH", [{ alt: ALT, id: "image-1" }]));
+    const { updateImages, written } = updates(placedIn(OFFICE_PRIVATE));
+    const res = await app(lauraAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ alt: ALT, id: "image-1" }])
+    );
     expect(res.status).toBe(404);
-    expect(updateImages).not.toHaveBeenCalled();
+    expect(written).not.toHaveBeenCalled();
   });
 
   it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
     // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
-    const updateImages = vi.fn();
-    const res = await app(lauraUser, {
-      linksOf: async () =>
+    const { updateImages, written } = updates(
+      async () =>
         new Map([
           ["image-1", [LAURA_PRIVATE]],
           ["image-2", [OFFICE_PRIVATE]],
-        ]),
-      updateImages,
-    }).request(
-      IMAGE_PATH,
+        ])
+    );
+    const res = await app(lauraUser, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [
         { alt: ALT, id: "image-1" },
         { alt: ALT, id: "image-2" },
       ])
     );
     expect(res.status).toBe(404);
-    expect(updateImages).not.toHaveBeenCalled();
+    expect(written).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -485,23 +499,23 @@ describe("PATCH /v1/images", () => {
     ["one App twice", LAURA_TWICE],
   ])("refuses apps naming %s", async (_, apps) => {
     const res = await app(admin, {}).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("PATCH", [{ apps, id: "image-1" }])
     );
     expect(res.status).toBe(400);
-    expect((await errorOf(res)).code).toBe("VALIDATION_FAILED");
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 
   it("refuses alt missing a language", async () => {
     const res = await app(admin, {}).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("PATCH", [{ alt: { en: "only English" }, id: "image-1" }])
     );
     expect(res.status).toBe(400);
   });
 });
 
-describe("DELETE /v1/images", () => {
+describe("DELETE /images", () => {
   it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
     // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
     const { services, written } = deletes(
@@ -512,7 +526,7 @@ describe("DELETE /v1/images", () => {
         ])
     );
     const res = await app(lauraUser, services).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { ids: ["image-1", "image-2"] })
     );
     expect(res.status).toBe(404);
@@ -520,16 +534,16 @@ describe("DELETE /v1/images", () => {
   });
 
   it("refuses a PATCH naming one Image twice before reading anything", async () => {
-    const linksOf = vi.fn();
-    const res = await app(admin, { linksOf }).request(
-      IMAGE_PATH,
+    const updateImages = vi.fn();
+    const res = await app(admin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
       json("PATCH", [
         { alt: ALT, id: "image-1" },
         { alt: ALT, id: "image-1" },
       ])
     );
     expect(res.status).toBe(400);
-    expect(linksOf).not.toHaveBeenCalled();
+    expect(updateImages).not.toHaveBeenCalled();
   });
 
   it("deletes the rows, then the objects", async () => {
@@ -543,7 +557,7 @@ describe("DELETE /v1/images", () => {
         order.push(`objects:${keys.join()}`);
         return Promise.resolve();
       },
-    }).request(IMAGE_PATH, json("DELETE", { ids: ["image-1"] }));
+    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["image-1"] }));
     expect(res.status).toBe(204);
     expect(order).toEqual(["rows", "objects:a.avif"]);
   });
@@ -552,14 +566,14 @@ describe("DELETE /v1/images", () => {
     const res = await app(admin, {
       deleteImages: async () => ["a.avif"],
       deleteObjects: () => Promise.reject(new Error("storage down")),
-    }).request(IMAGE_PATH, json("DELETE", { ids: ["image-1"] }));
+    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["image-1"] }));
     expect(res.status).toBe(204);
   });
 
   it("answers 404 when an id is unknown", async () => {
     const res = await app(admin, {
       deleteImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
-    }).request(IMAGE_PATH, json("DELETE", { ids: ["missing"] }));
+    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["missing"] }));
     expect(res.status).toBe(404);
   });
 
@@ -569,7 +583,7 @@ describe("DELETE /v1/images", () => {
       async () => undefined
     );
     const res = await app(lauraAdmin, { ...services, deleteObjects }).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { app: App.LAURA, ids: ["image-1"] })
     );
     expect(res.status).toBe(204);
@@ -580,7 +594,7 @@ describe("DELETE /v1/images", () => {
   it("answers 404 for an Image not placed in the App named", async () => {
     const { services, written } = deletes(placedIn(OFFICE_PRIVATE));
     const res = await app(admin, services).request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { app: App.LAURA, ids: ["image-1"] })
     );
     expect(res.status).toBe(404);

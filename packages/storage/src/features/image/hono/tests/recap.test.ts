@@ -5,19 +5,19 @@ import {
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
-import {
-  CONTENT_TYPE,
-  HTTP_HEADER,
-} from "@allonfire/core/features/http/constants/http";
-import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
-import { ImageNotFoundError } from "@allonfire/database/features/image/image.service";
-import { IMAGE_PATH } from "../../constants/paths";
+import {
+  type ImageChange,
+  type ImageLinksById,
+  ImageNotFoundError,
+} from "@allonfire/database/features/image/image.service";
+import { STORAGE } from "../../../../shared/constants/paths";
 import { imageListBodySchema } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
-import { imageRecord } from "./stub-image-deps";
-import { testHost } from "./test-host";
+import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
+import { json, testHost } from "./test-host";
 
 /**
  * The recap agreed for ADR 0020, one test per row. P is public in Laura and
@@ -80,7 +80,8 @@ const listImages: ImageDeps["listImages"] = async ({ app, enterable }) =>
     )
   );
 
-const linksOf: ImageDeps["linksOf"] = (ids) => {
+/** The placements a write locks, as the database finds them in P, Q and R. */
+const linksOf = (ids: readonly string[]): Promise<ImageLinksById> => {
   const missing = ids.filter((id) => !IMAGES.some((image) => image.id === id));
   if (missing.length > 0) {
     return Promise.reject(new ImageNotFoundError(missing));
@@ -115,7 +116,8 @@ const host = (session: AuthSession | null) => {
           ids.includes(id) && apps.every((link) => link.app === fromApp)
       ).map(({ key }) => key)
     ),
-    updateImages: vi.fn<ImageDeps["updateImages"]>(async (changes) =>
+    // The changes an update writes, worked out by the route's check.
+    updateImages: vi.fn((changes: ImageChange[]) =>
       changes.map(({ id }) => imageRecord({ id }))
     ),
   };
@@ -127,31 +129,21 @@ const host = (session: AuthSession | null) => {
       return writes.deleteImages(ids);
     },
     getImage: async (id) => IMAGES.find((image) => image.id === id) ?? null,
-    linksOf,
     listImages,
-    prepare: async () => ({
-      blurDataUrl: "data:image/webp;base64,AAAA",
-      buffer: Buffer.from("avif"),
-      bytes: 4,
-      height: 600,
-      width: 800,
-    }),
+    prepare: async () => PREPARED,
     removeImagesFromApp: async (ids, fromApp, authorise) => {
       authorise(await linksOf(ids));
       return writes.removeImagesFromApp(ids, fromApp);
     },
+    // As the database runs an update: the changes worked out on the placements.
+    updateImages: async (ids, resolve) =>
+      writes.updateImages(resolve(await linksOf(ids))),
   });
   const wrote = () =>
     objectValues(writes).some((write) => write.mock.calls.length > 0);
   return { app, writes, wrote };
 };
 
-const ALT = { en: "The sea", it: "Il mare" };
-const json = <T>(method: string, body: T & Json<T>) => ({
-  body: stringifyJson(body),
-  headers: { [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.JSON },
-  method,
-});
 const uploadToLauraAndBackOffice = () => {
   const form = new FormData();
   form.append("file", new File([new Uint8Array(10)], "a.jpg"));
@@ -165,7 +157,7 @@ const uploadToLauraAndBackOffice = () => {
 };
 
 const listed = async (session: AuthSession | null, query: string) => {
-  const res = await host(session).app.request(`${IMAGE_PATH}${query}`);
+  const res = await host(session).app.request(`${STORAGE.PATH.IMAGES}${query}`);
   return imageListBodySchema.parse(await res.json()).images.map(({ id }) => id);
 };
 
@@ -204,8 +196,8 @@ describe("recap: reads", () => {
     ["an Admin", admin, 200, 200],
   ])("GET {Q} / GET {R} answer %s %i / %i", async (_, session, q, r) => {
     const { app } = host(session);
-    expect((await app.request(`${IMAGE_PATH}/Q`)).status).toBe(q);
-    expect((await app.request(`${IMAGE_PATH}/R`)).status).toBe(r);
+    expect((await app.request(`${STORAGE.PATH.IMAGES}/Q`)).status).toBe(q);
+    expect((await app.request(`${STORAGE.PATH.IMAGES}/R`)).status).toBe(r);
   });
 });
 
@@ -269,7 +261,7 @@ describe("recap: writes", () => {
       "answers %s %i, writing only when it succeeds",
       async (__, status, session) => {
         const { app, wrote } = host(session);
-        const res = await app.request(IMAGE_PATH, request());
+        const res = await app.request(STORAGE.PATH.IMAGES, request());
         expect({ status: res.status, wrote: wrote() }).toEqual({
           status,
           wrote: status < 400,
@@ -281,7 +273,7 @@ describe("recap: writes", () => {
   it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back office placement private", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "P" }])
     );
     expect(done.updateImages).toHaveBeenCalledWith([
@@ -292,7 +284,7 @@ describe("recap: writes", () => {
   it("DELETE { [P], LAURA } by Mario leaves P stored: it is still in the Back office", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { app: App.LAURA, ids: ["P"] })
     );
     expect(done.removeImagesFromApp).toHaveBeenCalledWith(["P"], App.LAURA);
@@ -303,7 +295,7 @@ describe("recap: writes", () => {
   it("DELETE { [Q], LAURA } by Mario deletes Q and its file: Laura was its only App", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { app: App.LAURA, ids: ["Q"] })
     );
     expect(done.deleteObjects).toHaveBeenCalledWith(["q.avif"]);
@@ -312,7 +304,7 @@ describe("recap: writes", () => {
   it("DELETE { [Q, R] } by Mario deletes nothing, not even Q", async () => {
     const { app, wrote } = host(mario);
     const res = await app.request(
-      IMAGE_PATH,
+      STORAGE.PATH.IMAGES,
       json("DELETE", { ids: ["Q", "R"] })
     );
     expect(res.status).toBe(404);

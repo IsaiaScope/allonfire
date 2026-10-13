@@ -1,20 +1,24 @@
 // @module-tag unit
 
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
-import { LOCALE } from "@allonfire/core/features/i18n/constants/locales";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { HTTPException } from "hono/http-exception";
 import { createApp } from "../../../app";
-import { REQUEST_TIMEOUT_MS } from "../../../shared/constants/limits";
-import { API_VERSION_PREFIX } from "../../../shared/constants/routes";
+import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
 import { fallbackMessage } from "../middleware/error-handler";
 import { problemOf } from "./problem-of";
+
+/** A route only this file mounts, to throw a 415 from. */
+const UNSUPPORTED_ROUTE = `${API.PATH.VERSION}/unsupported`;
 
 describe("unmatched routes", () => {
   it("returns the NOT_FOUND envelope", async () => {
     const res = await createApp(appDeps()).request("/nothing-here");
     expect(res.status).toBe(404);
-    expect((await problemOf(res)).code).toBe("NOT_FOUND");
+    expect((await problemOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });
 
@@ -38,8 +42,8 @@ describe("RFC 9457 problem documents", () => {
     }
     const bodies = await Promise.all(responses.map((res) => problemOf(res)));
     expect(bodies.map((body) => body.code)).toEqual([
-      "INTERNAL_ERROR",
-      "INTERNAL_ERROR",
+      ERROR.CODE.INTERNAL_ERROR,
+      ERROR.CODE.INTERNAL_ERROR,
     ]);
   });
 
@@ -51,16 +55,17 @@ describe("RFC 9457 problem documents", () => {
     );
 
     const pending = app.request("/slow", {
-      headers: { "accept-language": LOCALE.IT_IT },
+      headers: { "accept-language": I18N.LOCALE.IT_IT },
     });
-    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(API.LIMIT.REQUEST_TIMEOUT_MS);
     const res = await pending;
-    vi.useRealTimers();
 
     expect(res.status).toBe(503);
     const body = await problemOf(res);
-    expect(body.code).toBe("TIMEOUT");
-    expect(body.detail).toBe(fallbackMessage("TIMEOUT", LOCALE.IT_IT));
+    expect(body.code).toBe(ERROR.CODE.TIMEOUT);
+    expect(body.detail).toBe(
+      fallbackMessage(ERROR.CODE.TIMEOUT, I18N.LOCALE.IT_IT)
+    );
   });
 
   it("serves the problem media type, not application/json", async () => {
@@ -75,7 +80,7 @@ describe("RFC 9457 problem documents", () => {
     const body = await problemOf(res);
 
     expect(body).toMatchObject({
-      code: "NOT_FOUND",
+      code: ERROR.CODE.NOT_FOUND,
       instance: "/nothing-here",
       status: 404,
       title: "Not Found",
@@ -101,7 +106,7 @@ describe("RFC 9457 problem documents", () => {
   });
 
   it("reports the path the problem occurred on", async () => {
-    const path = `${API_VERSION_PREFIX}/definitely-missing`;
+    const path = `${API.PATH.VERSION}/definitely-missing`;
     const res = await createApp(appDeps()).request(path);
     const body = await problemOf(res);
     expect(body.instance).toBe(path);
@@ -110,16 +115,16 @@ describe("RFC 9457 problem documents", () => {
 
 describe("415", () => {
   it("renders an unsupported image as a localised problem", async () => {
-    const app = createApp(appDeps()).get("/v1/unsupported", () => {
-      throw new HTTPException(HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE);
+    const app = createApp(appDeps()).get(UNSUPPORTED_ROUTE, () => {
+      throw new HTTPException(HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE);
     });
-    const res = await app.request("/v1/unsupported", {
+    const res = await app.request(UNSUPPORTED_ROUTE, {
       headers: { "accept-language": "it" },
     });
     expect(res.status).toBe(415);
     const body = await problemOf(res);
     expect(body).toMatchObject({
-      code: "UNSUPPORTED_IMAGE",
+      code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
       type: "/errors/unsupported-image",
     });
     expect(body.detail).toBe(

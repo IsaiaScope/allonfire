@@ -23,7 +23,7 @@ describe("AOFGetQueryClient on the server", () => {
   it("dehydrates a query still pending, so the browser streams it in", () => {
     const client = AOFGetQueryClient();
     // Never settles, so the query stays pending.
-    const pending = client.prefetchQuery({
+    const pending = client.query({
       queryFn: () => new Promise(() => undefined),
       queryKey: ["slow"],
     });

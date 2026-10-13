@@ -1,54 +1,48 @@
 // @module-tag integration
-import {
-  CONTENT_TYPE,
-  HTTP_HEADER,
-} from "@allonfire/core/features/http/constants/http";
 
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
-import {
-  APP_SETTINGS,
-  type AppSettingsTable,
-} from "@allonfire/database/features/auth/access/constants/app-settings";
+import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
+import type { AppSettingsTable } from "@allonfire/database/features/auth/access/constants/app-settings";
 import { z } from "zod";
-import { AUTH_ERROR_CODE } from "../../../shared/constants/errors";
-import { APP_HEADER } from "../../../shared/constants/headers";
-import {
-  JOIN_APP_PATH,
-  SIGN_IN_EMAIL_PATH,
-  SIGN_UP_EMAIL_PATH,
-} from "../../../shared/constants/paths";
+import { AUTH } from "../../../shared/constants/auth";
+import { cookieOf, HOST_AUTH_PATH } from "../../../shared/tests/stub-auth";
 import { createAuth } from "../auth";
 
-/** The table the next request reads; null: the real `APP_SETTINGS`. */
+/** The table the next request reads; null: the real `ACCESS.APP_SETTINGS`. */
 const current = vi.hoisted((): { table: AppSettingsTable | null } => ({
   table: null,
 }));
 
 vi.mock(
-  "@allonfire/database/features/auth/access/constants/app-settings",
+  "@allonfire/database/features/auth/access/constants/access",
   async (importOriginal) => {
     const actual =
       await importOriginal<
-        typeof import("@allonfire/database/features/auth/access/constants/app-settings")
+        typeof import("@allonfire/database/features/auth/access/constants/access")
       >();
     return {
       ...actual,
-      get APP_SETTINGS() {
-        return current.table ?? actual.APP_SETTINGS;
+      ACCESS: {
+        ...actual.ACCESS,
+        get APP_SETTINGS() {
+          return current.table ?? actual.ACCESS.APP_SETTINGS;
+        },
       },
     };
   }
 );
 
-const BASE_URL = "http://localhost:3300";
-const BASE_PATH = "/v1/auth";
-const ORIGIN = "http://localhost:3200";
+const BASE_URL = LOCAL.URL.API;
+const BASE_PATH = HOST_AUTH_PATH;
+const ORIGIN = LOCAL.URL.LAURA;
 const PASSWORD = "registration-password-1";
 const EMAIL_DOMAIN = "@registration.allonfire.test";
-const TOKEN_COOKIE = "better-auth.session_token=";
-const DATA_COOKIE = "better-auth.session_data=";
+const TOKEN_COOKIE = `${AUTH.COOKIE.MARKER}session_token=`;
+const DATA_COOKIE = `${AUTH.COOKIE.SESSION_DATA}=`;
 
 /** Both Apps open, so registering and joining can be watched. */
 const open: AppSettingsTable = {
@@ -56,7 +50,7 @@ const open: AppSettingsTable = {
   [App.LAURA]: { minRole: Role.VIEWER, registration: Role.VIEWER },
 };
 /** The settings the Apps ship with: every App closed. */
-const closed: AppSettingsTable = APP_SETTINGS;
+const closed: AppSettingsTable = ACCESS.APP_SETTINGS;
 
 const auth = createAuth({
   basePath: BASE_PATH,
@@ -85,7 +79,7 @@ const post = (
     new Request(`${BASE_URL}${BASE_PATH}${path}`, {
       body: stringifyJson(body),
       headers: {
-        [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.JSON,
+        [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
         origin: ORIGIN,
         ...headers,
       },
@@ -97,25 +91,18 @@ const post = (
 const signUp = (settings: AppSettingsTable, email: string, app?: string) =>
   post(
     settings,
-    SIGN_UP_EMAIL_PATH,
+    AUTH.PATH.SIGN_UP_EMAIL,
     { email, name: "New", password: PASSWORD },
-    app ? { [APP_HEADER]: app } : {}
+    app ? { [AUTH.HEADER.APP]: app } : {}
   );
 
 const signIn = (settings: AppSettingsTable, email: string, app?: string) =>
   post(
     settings,
-    SIGN_IN_EMAIL_PATH,
+    AUTH.PATH.SIGN_IN_EMAIL,
     { email, password: PASSWORD },
-    app ? { [APP_HEADER]: app } : {}
+    app ? { [AUTH.HEADER.APP]: app } : {}
   );
-
-/** The cookies a response set, as a request sends them back. */
-const cookieOf = (res: Response) =>
-  res.headers
-    .getSetCookie()
-    .map((cookie) => cookie.split(";")[0])
-    .join("; ");
 
 /** Session cookies that still carry a value; a cleared one has none. */
 const liveSessionCookies = (res: Response) =>
@@ -134,17 +121,6 @@ const membershipsOf = (email: string) =>
     select: { app: true, role: true },
     where: { user: { email } },
   });
-
-beforeAll(async () => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-  } catch (cause) {
-    throw new Error(
-      "Postgres unavailable — run: pnpm docker:up && pnpm db:update",
-      { cause }
-    );
-  }
-});
 
 afterAll(async () => {
   await prisma.user.deleteMany({
@@ -187,7 +163,7 @@ describe("Registration", () => {
     const res = await signUp(closed, email, app);
     expect(res.status).toBe(403);
     expect(errorBody.parse(await res.json()).code).toBe(
-      AUTH_ERROR_CODE.REGISTRATION_CLOSED
+      AUTH.ERROR_CODE.REGISTRATION_CLOSED
     );
     expect(await prisma.user.count({ where: { email } })).toBe(0);
   });
@@ -198,7 +174,7 @@ describe("Registration", () => {
     const res = await signUp(closed, email, App.LAURA);
     expect(res.status).toBe(403);
     expect(errorBody.parse(await res.json()).code).toBe(
-      AUTH_ERROR_CODE.REGISTRATION_CLOSED
+      AUTH.ERROR_CODE.REGISTRATION_CLOSED
     );
   });
 });
@@ -209,9 +185,9 @@ describe("joining another App", () => {
     const cookie = cookieOf(await signUp(open, email, App.LAURA));
     const res = await post(
       open,
-      JOIN_APP_PATH,
+      AUTH.PATH.JOIN_APP,
       {},
-      { cookie, [APP_HEADER]: App.BACK_OFFICE }
+      { cookie, [AUTH.HEADER.APP]: App.BACK_OFFICE }
     );
     expect(res.status).toBe(200);
     expect(await membershipsOf(email)).toEqual([
@@ -229,9 +205,9 @@ describe("joining another App", () => {
     });
     const res = await post(
       open,
-      JOIN_APP_PATH,
+      AUTH.PATH.JOIN_APP,
       {},
-      { cookie, [APP_HEADER]: App.LAURA }
+      { cookie, [AUTH.HEADER.APP]: App.LAURA }
     );
     expect(res.status).toBe(200);
     expect(await membershipsOf(email)).toEqual([
@@ -244,9 +220,9 @@ describe("joining another App", () => {
     const cookie = cookieOf(await signUp(open, email, App.LAURA));
     const res = await post(
       closed,
-      JOIN_APP_PATH,
+      AUTH.PATH.JOIN_APP,
       {},
-      { cookie, [APP_HEADER]: App.BACK_OFFICE }
+      { cookie, [AUTH.HEADER.APP]: App.BACK_OFFICE }
     );
     expect(res.status).toBe(403);
     expect(await membershipsOf(email)).toHaveLength(1);
@@ -255,9 +231,9 @@ describe("joining another App", () => {
   it("needs a Session", async () => {
     const res = await post(
       open,
-      JOIN_APP_PATH,
+      AUTH.PATH.JOIN_APP,
       {},
-      { [APP_HEADER]: App.LAURA }
+      { [AUTH.HEADER.APP]: App.LAURA }
     );
     expect(res.status).toBe(401);
   });
@@ -271,20 +247,26 @@ describe("sign-in naming an App", () => {
     const res = await signIn(closed, email, App.BACK_OFFICE);
     expect(res.status).toBe(403);
     expect(errorBody.parse(await res.json()).code).toBe(
-      AUTH_ERROR_CODE.APP_FORBIDDEN
+      AUTH.ERROR_CODE.APP_FORBIDDEN
     );
     expect(liveSessionCookies(res)).toEqual([]);
     expect(await prisma.session.count({ where: { user: { email } } })).toBe(0);
   });
 
-  it.each([["an unknown App", "back-office"]])(
-    "refuses %s with 403",
-    async (_, app) => {
-      const email = nextEmail();
-      await signUp(open, email, App.LAURA);
-      expect((await signIn(closed, email, app)).status).toBe(403);
-    }
-  );
+  it("never writes the Session of a User the App does not let in", async () => {
+    const email = nextEmail();
+    await signUp(open, email, App.LAURA);
+    const written = vi.spyOn(prisma.session, "create");
+    const res = await signIn(closed, email, App.BACK_OFFICE);
+    expect(res.status).toBe(403);
+    expect(written).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown App with 403", async () => {
+    const email = nextEmail();
+    await signUp(open, email, App.LAURA);
+    expect((await signIn(closed, email, "back-office")).status).toBe(403);
+  });
 
   it("lets in a User the App admits, and anyone when no App is named", async () => {
     const email = nextEmail();
@@ -298,7 +280,7 @@ describe("sign-in naming an App", () => {
     const cookie = cookieOf(await signUp(open, email, App.LAURA));
     current.table = open;
     const res = await auth.handler(
-      new Request(`${BASE_URL}${BASE_PATH}/get-session`, {
+      new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.GET_SESSION}`, {
         headers: { cookie },
       })
     );

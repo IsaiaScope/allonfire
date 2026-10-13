@@ -1,56 +1,60 @@
-import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
+  I18N,
   type Locale,
   localeSchema,
-  SUPPORTED_LOCALES,
 } from "@allonfire/core/features/i18n/constants/locales";
 import { match } from "@formatjs/intl-localematcher";
 import type { Context, MiddlewareHandler } from "hono";
 import Negotiator from "negotiator";
-import { CONTEXT_VAR } from "../../../shared/constants/runtime";
-import { DEFAULT_LOCALE } from "../constants/locales";
+import { API } from "../../../shared/constants/api";
+import { TRANSLATION } from "../constants/locales";
 
 /**
  * Resolves the response locale from `Accept-Language`. Negotiator orders the
  * candidates by q-value, `match()` runs RFC 4647 lookup with CLDR
  * likely-subtags — so `it` lands on `it-IT` and `it-XX` falls back to it.
  *
- * Never throws: a malformed tag yields `DEFAULT_LOCALE`, because a bad language
+ * Never throws: a malformed tag yields `TRANSLATION.DEFAULT_LOCALE`, because a bad language
  * header is not a reason to fail a call that would otherwise succeed.
  */
 export function resolveLocale(header: string | undefined): Locale {
   if (!header) {
-    return DEFAULT_LOCALE;
+    return TRANSLATION.DEFAULT_LOCALE;
   }
 
   try {
     const requested = new Negotiator({
       // Negotiator reads this key verbatim, so it must stay lower-case.
-      headers: { [HTTP_HEADER.ACCEPT_LANGUAGE]: header },
+      headers: { [HTTP.HEADER.ACCEPT_LANGUAGE]: header },
     }).languages();
 
     if (requested.length === 0) {
-      return DEFAULT_LOCALE;
+      return TRANSLATION.DEFAULT_LOCALE;
     }
 
     // `match` returns a bare string; parsing re-narrows it.
-    const matched = match(requested, SUPPORTED_LOCALES, DEFAULT_LOCALE);
+    const matched = match(
+      requested,
+      I18N.SUPPORTED_LOCALES,
+      TRANSLATION.DEFAULT_LOCALE
+    );
     const parsed = localeSchema.safeParse(matched);
-    return parsed.success ? parsed.data : DEFAULT_LOCALE;
+    return parsed.success ? parsed.data : TRANSLATION.DEFAULT_LOCALE;
   } catch {
-    return DEFAULT_LOCALE;
+    return TRANSLATION.DEFAULT_LOCALE;
   }
 }
 
 /** Reads the resolved locale, defaulting for calls made outside the chain. */
 export const localeOf = (context: Context): Locale =>
-  context.get(CONTEXT_VAR.LOCALE) ?? DEFAULT_LOCALE;
+  context.get(API.CONTEXT_VAR.LOCALE) ?? TRANSLATION.DEFAULT_LOCALE;
 
 export const localeResolver =
   (): MiddlewareHandler => async (context, next) => {
     context.set(
-      CONTEXT_VAR.LOCALE,
-      resolveLocale(context.req.header(HTTP_HEADER.ACCEPT_LANGUAGE))
+      API.CONTEXT_VAR.LOCALE,
+      resolveLocale(context.req.header(HTTP.HEADER.ACCEPT_LANGUAGE))
     );
     await next();
   };

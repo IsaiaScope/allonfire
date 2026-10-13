@@ -1,9 +1,7 @@
-import {
-  HTTP_HEADER,
-  HTTP_STATUS,
-} from "@allonfire/core/features/http/constants/http";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
-import { MS_PER_SECOND } from "@allonfire/core/shared/constants/units";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { Context, MiddlewareHandler } from "hono";
 import { type ClientRateLimitInfo, rateLimiter } from "hono-rate-limiter";
@@ -11,22 +9,14 @@ import type { Redis } from "ioredis";
 import type { Logger } from "pino";
 import { z } from "zod";
 import { env } from "../../../environment/environment";
-import { LOG_MESSAGE } from "../../../shared/constants/runtime";
+import { API } from "../../../shared/constants/api";
 import { outageLatch } from "../../../shared/utils/outage";
 import { isProbe } from "../../../shared/utils/probe";
-import {
-  ERROR_CODE,
-  UNKNOWN_REQUEST_ID,
-} from "../../errors/constants/error-codes";
 import { problemResponse } from "../../errors/middleware/error-handler";
 import { localeOf } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
 import { logger as defaultLogger } from "../../logger/logger";
-import {
-  RATE_LIMIT_HEADER_SPEC,
-  RATE_LIMIT_INFO,
-  rateLimitKey,
-} from "../constants/limits";
+import { RATE_LIMIT, rateLimitKey } from "../constants/limits";
 
 /**
  * The library's own `Store` contract, narrowed to the calls it makes on ours,
@@ -79,7 +69,7 @@ export function createRedisStore(redis: Redis): RateLimitStore {
 
 export function clientKey(context: Context, trustedHops: number): string {
   if (trustedHops > 0) {
-    const chain = (context.req.header(HTTP_HEADER.X_FORWARDED_FOR) ?? "")
+    const chain = (context.req.header(HTTP.HEADER.X_FORWARDED_FOR) ?? "")
       .split(SEPARATOR.LIST)
       .map((entry) => entry.trim())
       .filter(Boolean);
@@ -93,7 +83,7 @@ export function clientKey(context: Context, trustedHops: number): string {
     }
   }
 
-  return remoteAddress(context) ?? UNKNOWN_REQUEST_ID;
+  return remoteAddress(context) ?? RATE_LIMIT.UNKNOWN_CLIENT;
 }
 
 function remoteAddress(context: Context): string | undefined {
@@ -119,8 +109,8 @@ export function failOpen(
   logger: Logger = defaultLogger
 ): RateLimitStore {
   const latch = outageLatch(logger, {
-    down: LOG_MESSAGE.RATE_LIMIT_STORE_DOWN,
-    recovered: LOG_MESSAGE.RATE_LIMIT_STORE_RECOVERED,
+    down: API.LOG_MESSAGE.RATE_LIMIT_STORE_DOWN,
+    recovered: API.LOG_MESSAGE.RATE_LIMIT_STORE_RECOVERED,
   });
 
   const guard = async <T>(call: () => Promise<T>, fallback: T) => {
@@ -159,27 +149,27 @@ export function createRateLimiter(opts: {
     handler: (context) => {
       // The time left in the window, which is what the library already put in
       // `Retry-After`. The full window only when the store has no reset time.
-      const resetTime = context.get(RATE_LIMIT_INFO)?.resetTime;
+      const resetTime = context.get(RATE_LIMIT.INFO)?.resetTime;
       const retryAfter = resetTime
         ? Math.max(
             0,
-            Math.ceil((resetTime.getTime() - Date.now()) / MS_PER_SECOND)
+            Math.ceil((resetTime.getTime() - Date.now()) / UNIT.MS_PER_SECOND)
           )
-        : Math.ceil(opts.windowMs / MS_PER_SECOND);
-      context.header(HTTP_HEADER.RETRY_AFTER, String(retryAfter));
+        : Math.ceil(opts.windowMs / UNIT.MS_PER_SECOND);
+      context.header(HTTP.HEADER.RETRY_AFTER, String(retryAfter));
       return problemResponse(context, {
-        code: ERROR_CODE.RATE_LIMITED,
-        detail: translate(ERROR_CODE.RATE_LIMITED, localeOf(context), {
+        code: ERROR.CODE.RATE_LIMITED,
+        detail: translate(ERROR.CODE.RATE_LIMITED, localeOf(context), {
           seconds: retryAfter,
         }),
-        status: HTTP_STATUS.TOO_MANY_REQUESTS,
+        status: HTTP.STATUS.TOO_MANY_REQUESTS,
       });
     },
     keyGenerator: (context) =>
       `${opts.keyPrefix ?? ""}${clientKey(context, opts.trustedHops)}`,
     limit: opts.limit,
-    requestPropertyName: RATE_LIMIT_INFO,
-    standardHeaders: RATE_LIMIT_HEADER_SPEC,
+    requestPropertyName: RATE_LIMIT.INFO,
+    standardHeaders: RATE_LIMIT.HEADER_SPEC,
     store,
     windowMs: opts.windowMs,
   });

@@ -1,5 +1,6 @@
 // @module-tag unit
 import { createApp } from "../../../app";
+import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
 import { captureLog, infoLevel } from "./capture";
 
@@ -8,7 +9,7 @@ describe("probe logging", () => {
     const { lines, logger } = captureLog();
     const app = createApp(appDeps({ logger }));
 
-    await app.request("/health");
+    await app.request(API.PATH.HEALTH);
 
     const infoLines = lines.filter((entry) => entry.level >= infoLevel(logger));
 
@@ -32,7 +33,7 @@ describe("request log headers", () => {
     const { lines, logger } = captureLog();
     const app = createApp(appDeps({ logger }));
 
-    await app.request("/openapi.json", {
+    await app.request(API.PATH.OPENAPI, {
       headers: {
         "accept-language": "it",
         traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",

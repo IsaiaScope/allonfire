@@ -4,16 +4,41 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./tests/playwright": "./tests/playwright.config.ts",
-    "./tests/vitest": "./tests/vitest.config.ts",
+    "./local/addresses": "./local/addresses.ts",
+    "./tests/browser": "./tests/browser/vitest.browser.config.ts",
+    "./tests/browser/msw": "./tests/browser/msw.ts",
+    "./tests/e2e": "./tests/e2e/playwright.config.ts",
+    "./tests/run/test-run": "./tests/run/test-run.ts",
+    "./tests/vitest": "./tests/vitest/vitest.config.ts",
     "./typescript/*": "./typescript/*"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@vitest/browser-playwright": "^4.1.11",
+    "msw": "^2.15.0",
+    "playwright": "^1.63.0",
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "@playwright/test": "^1.63.0",
+    "@vitest/browser-playwright": "^4.1.11",
+    "msw": "^2.15.0",
+    "playwright": "^1.63.0",
     "vitest": "^4.1.11"
   },
   "peerDependenciesMeta": {
     "@playwright/test": {
+      "optional": true
+    },
+    "@vitest/browser-playwright": {
+      "optional": true
+    },
+    "msw": {
+      "optional": true
+    },
+    "playwright": {
       "optional": true
     },
     "vitest": {

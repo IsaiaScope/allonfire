@@ -41,11 +41,28 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     STORAGE_ACCESS_KEY="build" \
     STORAGE_SECRET_KEY="build-placeholder"
-RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
+RUN pnpm --filter @allonfire/database db:generate
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 
-# Stage 4: Production runner (Next.js standalone)
-FROM node:${NODE_VERSION}-alpine AS runner
+# Stage 4a: the API (and any Node Host): runs the TypeScript sources with tsx,
+# with the workspace's installed dependencies. ponytail: bundle the API if
+# start time or image size ever matters.
+FROM node:${NODE_VERSION}-alpine AS node-runner
+# Prisma's musl engine needs OpenSSL.
+RUN apk add --no-cache openssl
+WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME} NODE_ENV=production PORT=3000
+COPY --from=builder --chown=appuser:nodejs /app ./
+USER appuser
+EXPOSE 3000
+WORKDIR /app/apps/${APP_NAME}
+CMD ["node_modules/.bin/tsx", "src/index.ts"]
+
+# Stage 4b: a Next App (standalone). The last stage, so the default target.
+FROM node:${NODE_VERSION}-alpine AS next-runner
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser

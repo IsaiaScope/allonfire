@@ -1,7 +1,7 @@
-import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { MiddlewareHandler } from "hono";
+import { AUTH } from "../../../../shared/constants/auth";
 import type { AuthLike } from "../../../../shared/types/auth";
-import { AUTH_VAR } from "../../constants/variables";
 import type { AuthEnv } from "../../types/variables";
 
 /**
@@ -17,13 +17,13 @@ export const sessionLoader =
   async (context, next) => {
     const cookies: string[] = [];
     context.set(
-      AUTH_VAR.SESSION,
+      AUTH.VAR.SESSION,
       await auth.getSession(context.req.raw.headers, (cookie) =>
         cookies.push(cookie)
       )
     );
     await next();
     for (const cookie of cookies) {
-      context.header(HTTP_HEADER.SET_COOKIE, cookie, { append: true });
+      context.header(HTTP.HEADER.SET_COOKIE, cookie, { append: true });
     }
   };

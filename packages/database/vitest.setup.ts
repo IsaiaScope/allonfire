@@ -1,2 +1,3 @@
-process.env.DATABASE_URL ??=
-  "postgresql://allonfire:allonfire@localhost:5432/allonfire";
+import { LOCAL } from "@allonfire/config/local/addresses";
+
+process.env.DATABASE_URL ??= LOCAL.URL.DATABASE;

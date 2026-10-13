@@ -1,6 +1,6 @@
 "use server";
 
-import { APP_PATH } from "../constants/access";
+import { AUTH } from "../../../shared/constants/auth";
 import type { SignInState } from "../constants/api";
 import { redirectTo } from "../utils/redirect-to";
 import { signInWithEmail } from "../utils/sign-in";
@@ -21,5 +21,5 @@ export const signIn = async (
   if (error) {
     return { error };
   }
-  return redirectTo(locale, APP_PATH.HOME);
+  return redirectTo(locale, AUTH.PAGE.HOME);
 };

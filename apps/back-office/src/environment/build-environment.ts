@@ -1,3 +1,4 @@
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
@@ -9,6 +10,8 @@ import { z } from "zod";
 export const buildEnv = createEnv({
   experimental__runtimeEnv: {},
   server: {
+    /** The Images' bucket; an e2e run builds against its own. */
+    STORAGE_BUCKET: z.string().min(3).default(IMAGE.BUCKET.DEFAULT),
     /**
      * MinIO as this App's server reaches it, baked into the `/storage/images`
      * rewrite. No default: a production build without it must fail, not proxy

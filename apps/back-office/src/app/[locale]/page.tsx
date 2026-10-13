@@ -1,5 +1,5 @@
 import { signOut } from "@allonfire/auth/features/next/actions/sign-out";
-import { requireAppSession } from "@allonfire/auth/features/next/utils/require-app-session";
+import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
 import { AOFButton } from "@allonfire/ui/components/aof-button";
 import { AOFPage } from "@allonfire/ui/components/aof-page";
 import { getLocale, getTranslations } from "next-intl/server";

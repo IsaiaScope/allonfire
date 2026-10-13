@@ -1,8 +1,8 @@
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { AUTH } from "../../../../shared/constants/auth";
 import type { AuthSession } from "../../../../shared/types/auth";
-import { AUTH_VAR } from "../../constants/variables";
 import type { SignedInEnv } from "../../types/variables";
 
 /**
@@ -16,12 +16,12 @@ import type { SignedInEnv } from "../../types/variables";
 export const guard =
   (allows: (session: AuthSession) => boolean): MiddlewareHandler<SignedInEnv> =>
   async (context, next) => {
-    const session: AuthSession | null = context.get(AUTH_VAR.SESSION);
+    const session: AuthSession | null = context.get(AUTH.VAR.SESSION);
     if (!session) {
-      throw new HTTPException(HTTP_STATUS.UNAUTHORIZED);
+      throw new HTTPException(HTTP.STATUS.UNAUTHORIZED);
     }
     if (!allows(session)) {
-      throw new HTTPException(HTTP_STATUS.FORBIDDEN);
+      throw new HTTPException(HTTP.STATUS.FORBIDDEN);
     }
     await next();
   };

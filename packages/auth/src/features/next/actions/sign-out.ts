@@ -1,6 +1,6 @@
 "use server";
 
-import { APP_PATH } from "../constants/access";
+import { AUTH } from "../../../shared/constants/auth";
 import { redirectTo } from "../utils/redirect-to";
 import { signOutOfApi } from "../utils/sign-out";
 
@@ -10,5 +10,5 @@ import { signOutOfApi } from "../utils/sign-out";
  */
 export const signOut = async (locale: string) => {
   await signOutOfApi();
-  return redirectTo(locale, APP_PATH.SIGN_IN);
+  return redirectTo(locale, AUTH.PAGE.SIGN_IN);
 };

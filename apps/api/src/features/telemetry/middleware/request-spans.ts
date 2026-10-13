@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { context as otelContext, trace } from "@opentelemetry/api";
 import { suppressTracing } from "@opentelemetry/core";
@@ -6,7 +6,7 @@ import type { MiddlewareHandler } from "hono";
 import pkg from "../../../../package.json" with { type: "json" };
 import { env } from "../../../environment/environment";
 import { isProbe } from "../../../shared/utils/probe";
-import { URL_ATTRIBUTE } from "../constants/telemetry";
+import { OTEL } from "../constants/telemetry";
 
 /**
  * One server span and one `http.server.request.duration` point per request,
@@ -34,15 +34,15 @@ export const requestSpans = (): MiddlewareHandler => {
       : httpSpans(context, async () => {
           const url = new URL(context.req.url);
           trace.getActiveSpan()?.setAttributes({
-            [URL_ATTRIBUTE.FULL]: `${url.origin}${url.pathname}`,
-            [URL_ATTRIBUTE.PATH]: url.pathname,
+            [OTEL.ATTRIBUTE.URL.FULL]: `${url.origin}${url.pathname}`,
+            [OTEL.ATTRIBUTE.URL.PATH]: url.pathname,
             // `protocol` keeps its trailing colon: "http:".
-            [URL_ATTRIBUTE.SCHEME]: url.protocol.slice(0, -1),
+            [OTEL.ATTRIBUTE.URL.SCHEME]: url.protocol.slice(0, -1),
           });
 
           await next();
 
-          if (context.res.status < HTTP_STATUS.INTERNAL_SERVER_ERROR) {
+          if (context.res.status < HTTP.STATUS.INTERNAL_SERVER_ERROR) {
             context.error = undefined;
           }
         });

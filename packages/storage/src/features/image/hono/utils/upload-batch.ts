@@ -1,17 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
-import { MS_PER_SECOND } from "@allonfire/core/shared/constants/units";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { createMiddleware } from "hono/factory";
-import { IMAGE_FORMAT } from "../../constants/format";
-import { MAX_INPUT_MEGAPIXELS } from "../../prepare/constants/limits";
+import { IMAGE } from "../../constants/image";
 import {
   ImageTooLargeError,
   type PreparedImage,
   UnsupportedImageError,
 } from "../../prepare/prepare-image";
-import { IMAGE_ERROR_CODE } from "../constants/errors";
-import { UPLOAD_TIMEOUT_MS } from "../constants/limits";
 import type { UploadItem } from "../constants/schemas";
 import type { ImageDeps } from "./deps";
 
@@ -23,9 +21,9 @@ const prepareFile = async (deps: ImageDeps, file: File) => {
     if (error instanceof ImageTooLargeError) {
       throw new CodedError(
         {
-          code: IMAGE_ERROR_CODE.IMAGE_TOO_LARGE,
-          status: HTTP_STATUS.PAYLOAD_TOO_LARGE,
-          values: { limit: MAX_INPUT_MEGAPIXELS },
+          code: IMAGE.ERROR_CODE.IMAGE_TOO_LARGE,
+          status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
+          values: { limit: IMAGE.LIMIT.INPUT_MEGAPIXELS },
         },
         { cause: error }
       );
@@ -33,8 +31,8 @@ const prepareFile = async (deps: ImageDeps, file: File) => {
     if (error instanceof UnsupportedImageError) {
       throw new CodedError(
         {
-          code: IMAGE_ERROR_CODE.UNSUPPORTED_IMAGE,
-          status: HTTP_STATUS.UNSUPPORTED_MEDIA_TYPE,
+          code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
+          status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
         },
         { cause: error }
       );
@@ -55,7 +53,7 @@ export const prepareAll = (deps: ImageDeps, items: UploadItem[]) =>
     list.push({
       ...item,
       image: await prepareFile(deps, item.file),
-      key: `${randomUUID()}${IMAGE_FORMAT.EXTENSION}`,
+      key: `${randomUUID()}${IMAGE.FORMAT.EXTENSION}`,
     });
     return list;
   }, Promise.resolve([]));
@@ -77,9 +75,6 @@ export const storeAll = async (deps: ImageDeps, prepared: PreparedItem[]) => {
   }
 };
 
-/** Where the upload's handler reads whether its time budget has run out. */
-export const UPLOAD_BUDGET = "uploadBudget";
-
 /**
  * The upload's own time budget. Hono's `timeout` only races the handler, which
  * then stores and records the batch after the client has its 503, so a retry
@@ -87,22 +82,24 @@ export const UPLOAD_BUDGET = "uploadBudget";
  * stores and before it records; its reason is the 503 naming this budget.
  */
 export const uploadTimeout = createMiddleware<{
-  Variables: { [UPLOAD_BUDGET]: AbortSignal };
+  Variables: { [IMAGE.VAR.UPLOAD_BUDGET]: AbortSignal };
 }>(async (c, next) => {
   const budget = new AbortController();
-  c.set(UPLOAD_BUDGET, budget.signal);
+  c.set(IMAGE.VAR.UPLOAD_BUDGET, budget.signal);
   let timer: ReturnType<typeof setTimeout> | undefined;
   const expired = new Promise<never>((_resolve, reject) => {
     timer = setTimeout(() => {
       budget.abort(
         new CodedError({
-          code: IMAGE_ERROR_CODE.TIMEOUT,
-          status: HTTP_STATUS.SERVICE_UNAVAILABLE,
-          values: { seconds: UPLOAD_TIMEOUT_MS / MS_PER_SECOND },
+          code: ERROR.CODE.TIMEOUT,
+          status: HTTP.STATUS.SERVICE_UNAVAILABLE,
+          values: {
+            seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_SECOND,
+          },
         })
       );
       reject(budget.signal.reason);
-    }, UPLOAD_TIMEOUT_MS);
+    }, IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
   });
   try {
     await Promise.race([next(), expired]);

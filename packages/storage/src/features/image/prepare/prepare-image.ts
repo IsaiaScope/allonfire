@@ -1,9 +1,7 @@
 /// <reference path="./types/heic-decode.d.ts" />
 import sharp, { type Metadata, type Sharp } from "sharp";
-import { MAX_INPUT_MEGAPIXELS, MAX_INPUT_PIXELS } from "./constants/limits";
+import { IMAGE } from "../constants/image";
 
-/** Longest side an Image is stored at; the optimizer never needs more. */
-export const MAX_IMAGE_DIMENSION = 2560;
 /**
  * The stored file is the optimizer's source, so it keeps near-full quality:
  * AVIF 64 looks like JPEG 80, at roughly a third of WebP 90's size.
@@ -30,10 +28,10 @@ export class UnsupportedImageError extends Error {
   }
 }
 
-/** More than `MAX_INPUT_PIXELS`, read from the header before any decode. */
+/** More than `IMAGE.LIMIT.INPUT_PIXELS`, read from the header before any decode. */
 export class ImageTooLargeError extends Error {
   constructor() {
-    super(`Image over ${MAX_INPUT_MEGAPIXELS} megapixels`);
+    super(`Image over ${IMAGE.LIMIT.INPUT_MEGAPIXELS} megapixels`);
     this.name = "ImageTooLargeError";
   }
 }
@@ -51,7 +49,7 @@ const isAccepted = (metadata: Metadata): boolean =>
 
 const SHARP_OPTIONS = {
   failOn: "truncated",
-  limitInputPixels: MAX_INPUT_PIXELS,
+  limitInputPixels: IMAGE.LIMIT.INPUT_PIXELS,
 } as const;
 
 /**
@@ -86,7 +84,7 @@ async function readMetadata(input: Buffer): Promise<Metadata> {
 }
 
 /**
- * Upright, metadata-free AVIF capped at `MAX_IMAGE_DIMENSION`, plus its WebP
+ * Upright, metadata-free AVIF capped at `IMAGE.LIMIT.DIMENSION`, plus its WebP
  * blur. `.rotate()` applies the EXIF orientation first; sharp then writes no
  * metadata unless asked, so GPS and camera data never reach the bucket.
  */
@@ -95,7 +93,10 @@ export async function prepareImage(input: Buffer): Promise<PreparedImage> {
   if (!isAccepted(metadata)) {
     throw new UnsupportedImageError();
   }
-  if ((metadata.width ?? 0) * (metadata.height ?? 0) > MAX_INPUT_PIXELS) {
+  if (
+    (metadata.width ?? 0) * (metadata.height ?? 0) >
+    IMAGE.LIMIT.INPUT_PIXELS
+  ) {
     throw new ImageTooLargeError();
   }
   try {
@@ -104,8 +105,8 @@ export async function prepareImage(input: Buffer): Promise<PreparedImage> {
     const { data, info } = await (await decode(input, metadata))
       .resize({
         fit: "inside",
-        height: MAX_IMAGE_DIMENSION,
-        width: MAX_IMAGE_DIMENSION,
+        height: IMAGE.LIMIT.DIMENSION,
+        width: IMAGE.LIMIT.DIMENSION,
         withoutEnlargement: true,
       })
       .avif({ quality: SOURCE_QUALITY })

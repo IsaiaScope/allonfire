@@ -1,11 +1,19 @@
 // @module-tag unit
+
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createApp } from "../../../app";
+import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import type { AppBindings } from "../../../shared/types/bindings";
 import { healthRoutes } from "../../health/routes/index";
 import { docsRoutes } from "../routes";
+
+/** OpenAPI spells a path parameter `{id}`, where Hono spells it `:id`. */
+const IMAGE_BY_ID_ROUTE = `${API.PATH.IMAGES}/{id}`;
 
 /** Only what these tests read; `looseObject` keeps the rest for `toMatchObject`. */
 const operationSchema = z.object({
@@ -41,10 +49,13 @@ const specSchema = z.object({
 type Spec = z.infer<typeof specSchema>;
 
 async function spec(): Promise<Spec> {
-  const app = new Hono<AppBindings>().route("/", healthRoutes(appDeps()));
+  const app = new Hono<AppBindings>().route(
+    API.PATH.ROOT,
+    healthRoutes(appDeps())
+  );
   const res = await app
-    .route("/", docsRoutes(app, appDeps().auth))
-    .request("/openapi.json");
+    .route(API.PATH.ROOT, docsRoutes(app, appDeps().auth))
+    .request(API.PATH.OPENAPI);
   return specSchema.parse(await res.json());
 }
 
@@ -56,17 +67,17 @@ describe("GET /openapi.json", () => {
   it("types the probe bodies from their zod schemas", async () => {
     const document = await spec();
 
-    expect(bodySchema(document, "/health", "200")).toMatchObject({
+    expect(bodySchema(document, API.PATH.HEALTH, "200")).toMatchObject({
       properties: { status: {}, uptime: {}, version: {} },
     });
     // 200 only while Postgres answers; 503 only when it does not.
-    expect(bodySchema(document, "/ready", "200")).toMatchObject({
+    expect(bodySchema(document, API.PATH.READY, "200")).toMatchObject({
       properties: {
         checks: { properties: { database: { const: "ok" } } },
         status: { enum: ["degraded", "ok"] },
       },
     });
-    expect(bodySchema(document, "/ready", "503")).toMatchObject({
+    expect(bodySchema(document, API.PATH.READY, "503")).toMatchObject({
       properties: {
         checks: { properties: { database: { const: "unreachable" } } },
         status: { const: "unavailable" },
@@ -78,14 +89,22 @@ describe("GET /openapi.json", () => {
 describe("GET /openapi.json error responses", () => {
   it("documents the Image reads with no sign-in errors, the writes with them", async () => {
     const { paths } = await document();
-    expect(paths["/v1/images"]).not.toHaveProperty(["get", "responses", "401"]);
-    expect(paths["/v1/images"]).not.toHaveProperty(["get", "responses", "403"]);
-    expect(paths["/v1/images/{id}"]).not.toHaveProperty([
+    expect(paths[API.PATH.IMAGES]).not.toHaveProperty([
       "get",
       "responses",
       "401",
     ]);
-    expect(paths["/v1/images"]).toHaveProperty(
+    expect(paths[API.PATH.IMAGES]).not.toHaveProperty([
+      "get",
+      "responses",
+      "403",
+    ]);
+    expect(paths[IMAGE_BY_ID_ROUTE]).not.toHaveProperty([
+      "get",
+      "responses",
+      "401",
+    ]);
+    expect(paths[API.PATH.IMAGES]).toHaveProperty(
       ["patch", "responses", "401", "$ref"],
       "#/components/responses/Problem401"
     );
@@ -108,17 +127,19 @@ describe("GET /openapi.json error responses", () => {
   });
   const document = async () =>
     problemSpecSchema.parse(
-      await (await createApp(appDeps()).request("/openapi.json")).json()
+      await (await createApp(appDeps()).request(API.PATH.OPENAPI)).json()
     );
 
   it("lists, for each status, only the codes sent with it", async () => {
     const { components } = await document();
     expect(components.schemas.Problem400?.properties.code.enum).toEqual([
-      "BAD_REQUEST",
-      "VALIDATION_FAILED",
+      ERROR.CODE.BAD_REQUEST,
+      ERROR.CODE.VALIDATION_FAILED,
     ]);
     expect(components.schemas.Problem413?.properties).toMatchObject({
-      code: { enum: ["IMAGE_TOO_LARGE", "PAYLOAD_TOO_LARGE"] },
+      code: {
+        enum: [IMAGE.ERROR_CODE.IMAGE_TOO_LARGE, ERROR.CODE.PAYLOAD_TOO_LARGE],
+      },
       status: { const: 413 },
     });
     expect(components.responses).toHaveProperty(["Problem404", "content"]);
@@ -126,7 +147,7 @@ describe("GET /openapi.json error responses", () => {
 
   it("points each Image route's error at its own status", async () => {
     const { paths } = await document();
-    expect(paths["/v1/images"]).toHaveProperty(
+    expect(paths[API.PATH.IMAGES]).toHaveProperty(
       ["post", "responses", "413", "$ref"],
       "#/components/responses/Problem413"
     );
@@ -139,18 +160,18 @@ describe("GET /openapi.json with the Auth module", () => {
       openApi: () =>
         Promise.resolve({
           components: { schemas: { Session: { type: "object" } } },
-          paths: { "/sign-in/email": { post: { tags: ["Default"] } } },
+          paths: { [AUTH.PATH.SIGN_IN_EMAIL]: { post: { tags: ["Default"] } } },
         }),
     });
-    const res = await createApp(appDeps({ auth })).request("/openapi.json");
+    const res = await createApp(appDeps({ auth })).request(API.PATH.OPENAPI);
     const document = specSchema.parse(await res.json());
 
     expect(document.paths).toHaveProperty(
-      ["/v1/auth/sign-in/email", "post", "tags"],
+      [`${API.PATH.AUTH}${AUTH.PATH.SIGN_IN_EMAIL}`, "post", "tags"],
       ["Auth"]
     );
-    expect(document.paths).toHaveProperty(["/health"]);
-    expect(document.paths).not.toHaveProperty(["/v1/auth/*"]);
+    expect(document.paths).toHaveProperty([API.PATH.HEALTH]);
+    expect(document.paths).not.toHaveProperty([`${API.PATH.AUTH}/*`]);
     expect(document.components?.schemas).toHaveProperty(["Session"]);
   });
 });
@@ -166,8 +187,8 @@ describe("GET /openapi.json caching", () => {
     });
     const app = createApp(appDeps({ auth }));
 
-    await app.request("/openapi.json");
-    await app.request("/openapi.json");
+    await app.request(API.PATH.OPENAPI);
+    await app.request(API.PATH.OPENAPI);
 
     expect(built).toBe(1);
   });
@@ -186,7 +207,7 @@ describe("GET /openapi.json after a failed build", () => {
     });
     const app = createApp(appDeps({ auth }));
 
-    expect((await app.request("/openapi.json")).status).toBe(500);
-    expect((await app.request("/openapi.json")).status).toBe(200);
+    expect((await app.request(API.PATH.OPENAPI)).status).toBe(500);
+    expect((await app.request(API.PATH.OPENAPI)).status).toBe(200);
   });
 });

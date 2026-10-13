@@ -1,6 +1,13 @@
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";
-
-const ROOT_URL = /\/$/;
+import EN from "../src/features/i18n/translations/en.json" with {
+  type: "json",
+};
+import IT from "../src/features/i18n/translations/it.json" with {
+  type: "json",
+};
+import { SIGN_IN_URL } from "./pages";
 
 const collectErrors = (page: Page) => {
   const errors: string[] = [];
@@ -13,24 +20,21 @@ const collectErrors = (page: Page) => {
   return errors;
 };
 
-test("serves English at / with the AOF button", async ({ page }) => {
+test("sends a signed-out visitor from / to sign-in", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/");
-  await expect(page).toHaveURL(ROOT_URL);
+  await expect(page).toHaveURL(SIGN_IN_URL);
   await expect(
-    page.getByRole("heading", { name: "Back office" })
+    page.getByRole("heading", { name: EN.SignIn.app })
   ).toBeVisible();
-  await expect(page.getByText("Nothing here yet.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Get started" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test("serves Italian at /it", async ({ page }) => {
-  const errors = collectErrors(page);
-  await page.goto("/it");
-  await expect(page.getByText("Ancora niente qui.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Inizia" })).toBeVisible();
-  expect(errors).toEqual([]);
+test("serves Italian at /it/sign-in", async ({ page }) => {
+  await page.goto(`/it${AUTH.PAGE.SIGN_IN}`);
+  await expect(
+    page.getByRole("button", { name: IT.SignIn.submit })
+  ).toBeVisible();
 });
 
 test("renders the localized 404 for an unknown path", async ({ page }) => {
@@ -42,4 +46,14 @@ test("renders the localized 404 for an unknown path", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Pagina non trovata" })
   ).toBeVisible();
+});
+
+test("loads the sign-in photo from the run's bucket", async ({ page }) => {
+  // next/image asks `/_next/image?url=/storage/images/<key>`; the key is in
+  // the URL either way.
+  const photo = page.waitForResponse((res) =>
+    res.url().includes(FIXTURE.IMAGE.SIGN_IN.key)
+  );
+  await page.goto(AUTH.PAGE.SIGN_IN);
+  expect((await photo).status()).toBe(200);
 });

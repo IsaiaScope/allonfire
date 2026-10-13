@@ -1,4 +1,4 @@
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { z } from "zod";
 
 /**
@@ -8,13 +8,13 @@ import { z } from "zod";
  * OpenAPI document never pairs `degraded` with a 503 or `unavailable` with a
  * 200.
  */
-export const READY_STATUS = {
+const READY_STATUS = {
   DEGRADED: "degraded",
   OK: "ok",
   UNAVAILABLE: "unavailable",
 } as const;
 
-export const CHECK_STATUS = {
+const CHECK_STATUS = {
   OK: "ok",
   UNREACHABLE: "unreachable",
 } as const;
@@ -51,12 +51,12 @@ export type ReadyServingBody = z.infer<typeof readyServingBodySchema>;
 export type ReadyUnavailableBody = z.infer<typeof readyUnavailableBodySchema>;
 
 /** Postgres is required; Redis failing open must not pull a healthy container. */
-export const READY_STATUS_CODE = {
-  NOT_READY: HTTP_STATUS.SERVICE_UNAVAILABLE,
-  READY: HTTP_STATUS.OK,
+const READY_STATUS_CODE = {
+  NOT_READY: HTTP.STATUS.SERVICE_UNAVAILABLE,
+  READY: HTTP.STATUS.OK,
 } as const;
 
-export const PROBE_DESCRIPTION = {
+const PROBE_DESCRIPTION = {
   HEALTH_200: "Process is alive",
   HEALTH_DESCRIPTION:
     "Answers while the process runs and touches no dependency, so a slow database never restarts the container. Reports the running version and uptime in seconds.",
@@ -66,4 +66,12 @@ export const PROBE_DESCRIPTION = {
   READY_DESCRIPTION:
     "Pings Postgres and Redis. Redis down only degrades, since rate limits fail open. 503 only when Postgres is unreachable, so traffic stops reaching an instance that cannot serve it.",
   READY_SUMMARY: "Readiness probe",
+} as const;
+
+/** The probes' vocabulary: what `/health` and `/ready` answer, and how the docs describe them. */
+export const HEALTH = {
+  CHECK_STATUS,
+  PROBE_DESCRIPTION,
+  READY_STATUS,
+  READY_STATUS_CODE,
 } as const;

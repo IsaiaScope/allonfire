@@ -1,10 +1,9 @@
-import { CONTENT_TYPE } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
-import { OPENAPI_TAG } from "../../docs/constants/openapi";
+import { OPENAPI } from "../../docs/constants/openapi";
 import {
+  HEALTH,
   healthBodySchema,
-  PROBE_DESCRIPTION,
-  READY_STATUS_CODE,
   readyServingBodySchema,
   readyUnavailableBodySchema,
 } from "../constants/statuses";
@@ -12,39 +11,39 @@ import {
 // The same schemas the handlers `satisfies`, so the documented body cannot
 // drift from the served one.
 const healthBody = {
-  [CONTENT_TYPE.JSON]: { schema: resolver(healthBodySchema) },
+  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(healthBodySchema) },
 };
 const readyServingBody = {
-  [CONTENT_TYPE.JSON]: { schema: resolver(readyServingBodySchema) },
+  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(readyServingBodySchema) },
 };
 const readyUnavailableBody = {
-  [CONTENT_TYPE.JSON]: { schema: resolver(readyUnavailableBodySchema) },
+  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(readyUnavailableBodySchema) },
 };
 
 export const healthRoute = describeRoute({
-  description: PROBE_DESCRIPTION.HEALTH_DESCRIPTION,
+  description: HEALTH.PROBE_DESCRIPTION.HEALTH_DESCRIPTION,
   responses: {
-    [READY_STATUS_CODE.READY]: {
+    [HEALTH.READY_STATUS_CODE.READY]: {
       content: healthBody,
-      description: PROBE_DESCRIPTION.HEALTH_200,
+      description: HEALTH.PROBE_DESCRIPTION.HEALTH_200,
     },
   },
-  summary: PROBE_DESCRIPTION.HEALTH_SUMMARY,
-  tags: [OPENAPI_TAG.INFRASTRUCTURE],
+  summary: HEALTH.PROBE_DESCRIPTION.HEALTH_SUMMARY,
+  tags: [OPENAPI.TAG.INFRASTRUCTURE],
 });
 
 export const readyRoute = describeRoute({
-  description: PROBE_DESCRIPTION.READY_DESCRIPTION,
+  description: HEALTH.PROBE_DESCRIPTION.READY_DESCRIPTION,
   responses: {
-    [READY_STATUS_CODE.READY]: {
+    [HEALTH.READY_STATUS_CODE.READY]: {
       content: readyServingBody,
-      description: PROBE_DESCRIPTION.READY_200,
+      description: HEALTH.PROBE_DESCRIPTION.READY_200,
     },
-    [READY_STATUS_CODE.NOT_READY]: {
+    [HEALTH.READY_STATUS_CODE.NOT_READY]: {
       content: readyUnavailableBody,
-      description: PROBE_DESCRIPTION.READY_503,
+      description: HEALTH.PROBE_DESCRIPTION.READY_503,
     },
   },
-  summary: PROBE_DESCRIPTION.READY_SUMMARY,
-  tags: [OPENAPI_TAG.INFRASTRUCTURE],
+  summary: HEALTH.PROBE_DESCRIPTION.READY_SUMMARY,
+  tags: [OPENAPI.TAG.INFRASTRUCTURE],
 });

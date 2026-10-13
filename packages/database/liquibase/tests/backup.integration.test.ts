@@ -2,15 +2,19 @@
 import { execFileSync } from "node:child_process";
 import {
   DOCKER_TIMEOUT,
-  dropDatabase,
   liquibase,
   migrateImage,
+} from "../../src/features/test-database/server";
+import {
+  dropDatabase,
   recreateDatabase,
+  throwawayName,
   throwawayUrl,
+  throwawayVolume,
 } from "./throwaway-db";
 
-const DATABASE = "allonfire_backup";
-const VOLUME = "allonfire-backup-test";
+const DATABASE = throwawayName("backup");
+const VOLUME = throwawayVolume("backup");
 const KEEP = 2;
 const DUMP_NAME = /^allonfire-\d{8}T\d{15}Z\.dump$/;
 

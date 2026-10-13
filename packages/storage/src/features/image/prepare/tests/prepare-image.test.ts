@@ -1,19 +1,20 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
 import sharp from "sharp";
+import { IMAGE } from "../../constants/image";
+import { IMAGE_FIXTURE_FILES } from "../../fixtures/constants/files";
 import {
   ImageTooLargeError,
-  MAX_IMAGE_DIMENSION,
   prepareImage,
   UnsupportedImageError,
 } from "../prepare-image";
 
 const RED = { b: 40, g: 40, r: 200 };
 /** 64x64 HEVC HEIC from libheif's test corpus, what an iPhone writes. */
-const HEIC = readFileSync(
-  new URL("fixtures/colors-no-alpha.heic", import.meta.url)
-);
+const HEIC = readFileSync(resolve(IMAGE_FIXTURE_FILES, "colors-no-alpha.heic"));
 const BLUR_MAX_BYTES = 1024;
 
 const jpeg = (width: number, height: number, orientation = 1) =>
@@ -56,7 +57,7 @@ describe("prepareImage", () => {
 
   it("caps the longest side at 2560px and keeps the aspect ratio", async () => {
     const image = await prepareImage(await jpeg(4000, 2000));
-    expect(image.width).toBe(MAX_IMAGE_DIMENSION);
+    expect(image.width).toBe(IMAGE.LIMIT.DIMENSION);
     expect(image.height).toBe(1280);
     expect(image.bytes).toBe(image.buffer.length);
   });

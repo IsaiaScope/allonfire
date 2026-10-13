@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import type { SeedEnv } from "../../../../environment/seed-environment";
 import type { AppSeed, SeedUser } from "../../../seed/seed-user";
@@ -17,7 +16,6 @@ export const lauraSeedUsers = ({
 ];
 
 export const lauraSeed: AppSeed = {
-  mockUsersFile: resolve(import.meta.dirname, "mock/users.json"),
   password: (env) => env.DATABASE_SEED_LAURA_VIEWER_PASSWORD,
   users: lauraSeedUsers,
 };

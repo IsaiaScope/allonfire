@@ -1,9 +1,9 @@
+import type { AUTH } from "../../../shared/constants/auth";
 import type { AuthSession } from "../../../shared/types/auth";
-import type { AUTH_VAR } from "../constants/variables";
 
 export type AuthVariables = {
   /** Set by `sessionLoader`; null when the request is anonymous. */
-  [AUTH_VAR.SESSION]: AuthSession | null;
+  [AUTH.VAR.SESSION]: AuthSession | null;
 };
 
 export type AuthEnv = { Variables: AuthVariables };
@@ -14,5 +14,5 @@ export type AuthEnv = { Variables: AuthVariables };
  * not `AuthSession | null`, with no `!` and no cast.
  */
 export type SignedInEnv = {
-  Variables: { [AUTH_VAR.SESSION]: AuthSession };
+  Variables: { [AUTH.VAR.SESSION]: AuthSession };
 };

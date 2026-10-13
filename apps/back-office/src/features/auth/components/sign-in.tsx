@@ -1,4 +1,4 @@
-import { APP_PATH } from "@allonfire/auth/features/next/constants/access";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { languageSchema } from "@allonfire/core/features/i18n/constants/locales";
 import {
   AOFControlBar,
@@ -10,8 +10,7 @@ import { AOFThemeToggle } from "@allonfire/ui/components/aof-theme-toggle";
 import { cn } from "@allonfire/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { useLocale, useTranslations } from "next-intl";
-import { BOARD_KANA, NOTICE_KANA, PLATFORM, SEAL } from "../constants/sign-in";
-import { SIGN_IN_IMAGE } from "../constants/sign-in-image";
+import { SIGN_IN } from "../constants/sign-in";
 import { DepartureBoard } from "./departure-board";
 import { Hanko } from "./hanko";
 import { LanguageSwitch } from "./language-switch";
@@ -48,11 +47,11 @@ export const SignIn = () => {
     <AOFPage layout="split">
       <div className="absolute inset-0 -z-10 *:size-full *:object-cover lg:right-132">
         {/* Photo: mos design on Unsplash (Unsplash License); provenance on
-            SIGN_IN_IMAGE. Cropped on the train for portrait screens. It is
+            SIGN_IN.IMAGE. Cropped on the train for portrait screens. It is
             the page's largest paint, so it loads first and never lazily. */}
         <AOFStorageImage
           className="object-[62%_50%]"
-          image={SIGN_IN_IMAGE}
+          image={SIGN_IN.IMAGE}
           language={language}
           lcp
           sizes="(min-width: 64rem) calc(100vw - 33rem), 100vw"
@@ -65,11 +64,11 @@ export const SignIn = () => {
       <section className="min-w-0 p-3 sm:p-4 lg:flex-1 lg:p-10">
         <div className={cn("mx-auto max-w-xl", enter({ from: "top" }))}>
           <DepartureBoard
-            kana={BOARD_KANA}
+            kana={SIGN_IN.BOARD_KANA}
             notice={t("notice")}
-            noticeKana={NOTICE_KANA}
+            noticeKana={SIGN_IN.NOTICE_KANA}
             pauseLabel={t("pauseNotice")}
-            platform={PLATFORM}
+            platform={SIGN_IN.PLATFORM}
             status={t("submit")}
           />
         </div>
@@ -91,13 +90,13 @@ export const SignIn = () => {
             </span>
             <h1 className="font-bold text-xl leading-tight">{t("app")}</h1>
             <span className="ml-auto">
-              <Hanko seal={SEAL} />
+              <Hanko seal={SIGN_IN.SEAL} />
             </span>
           </div>
           <SignInForm />
         </div>
         <AOFControlBar className="absolute right-3 bottom-4 sm:right-4 lg:right-auto lg:bottom-6 lg:left-10">
-          <LanguageSwitch href={APP_PATH.SIGN_IN} label={t("language")} />
+          <LanguageSwitch href={AUTH.PAGE.SIGN_IN} label={t("language")} />
           <AOFControlBarSeparator />
           <AOFThemeToggle label={t("theme")} />
         </AOFControlBar>

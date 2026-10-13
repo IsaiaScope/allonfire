@@ -1,6 +1,6 @@
 // @module-tag unit
 
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { App, Role } from "@allonfire/database/enums";
 import type {
   AccessUser,
@@ -51,7 +51,7 @@ describe("authoriseUpload", () => {
           { apps: [laura(), backOffice] },
         ])
       )
-    ).toBe(HTTP_STATUS.FORBIDDEN);
+    ).toBe(HTTP.STATUS.FORBIDDEN);
   });
 });
 
@@ -67,14 +67,14 @@ describe("authoriseDelete from one App", () => {
     const current = new Map([["a", [backOffice]]]);
     expect(
       statusOf(() => authoriseDelete(everywhereAdmin, current, App.LAURA))
-    ).toBe(HTTP_STATUS.NOT_FOUND);
+    ).toBe(HTTP.STATUS.NOT_FOUND);
   });
 
   it("answers 403 to a User who sees the Image but does not manage it", () => {
     const current = new Map([["a", [laura()]]]);
     expect(
       statusOf(() => authoriseDelete(lauraViewer, current, App.LAURA))
-    ).toBe(HTTP_STATUS.FORBIDDEN);
+    ).toBe(HTTP.STATUS.FORBIDDEN);
   });
 
   it("answers 404 across the batch before any 403", () => {
@@ -83,7 +83,7 @@ describe("authoriseDelete from one App", () => {
       ["hidden", [backOffice]],
     ]);
     expect(statusOf(() => authoriseDelete(lauraViewer, current))).toBe(
-      HTTP_STATUS.NOT_FOUND
+      HTTP.STATUS.NOT_FOUND
     );
   });
 });
@@ -92,7 +92,7 @@ describe("authoriseDelete everywhere", () => {
   it("needs an Admin in every App the Image is in", () => {
     const current = new Map([["a", [laura(true), backOffice]]]);
     expect(statusOf(() => authoriseDelete(lauraAdmin, current))).toBe(
-      HTTP_STATUS.FORBIDDEN
+      HTTP.STATUS.FORBIDDEN
     );
     expect(statusOf(() => authoriseDelete(everywhereAdmin, current))).toBe(
       "passed"

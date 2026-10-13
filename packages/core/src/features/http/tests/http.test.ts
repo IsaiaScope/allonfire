@@ -1,13 +1,9 @@
 // @module-tag unit
-import {
-  HTTP_STATUS,
-  httpHeaderSchema,
-  httpStatusSchema,
-} from "../constants/http";
+import { HTTP, httpHeaderSchema, httpStatusSchema } from "../constants/http";
 
 describe("http schemas", () => {
   it("accept only listed statuses, numbers included", () => {
-    expect(httpStatusSchema.safeParse(HTTP_STATUS.NOT_FOUND).success).toBe(
+    expect(httpStatusSchema.safeParse(HTTP.STATUS.NOT_FOUND).success).toBe(
       true
     );
     expect(httpStatusSchema.safeParse(999).success).toBe(false);

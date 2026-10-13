@@ -2,8 +2,8 @@ import {
   objectEntries,
   objectFromEntries,
 } from "@allonfire/core/shared/utils/object";
+import { AUTH } from "../../shared/constants/auth";
 import type { AuthLike, OpenApiFragment } from "../../shared/types/auth";
-import { AUTH_OPENAPI_TAG } from "./constants/openapi";
 
 /**
  * Better Auth's own OpenAPI document, reshaped for a host to merge: paths
@@ -17,7 +17,7 @@ export async function authOpenApi(auth: AuthLike): Promise<OpenApiFragment> {
       objectFromEntries(
         objectEntries(operations).map(([method, operation]) => [
           method,
-          { ...operation, tags: [AUTH_OPENAPI_TAG] },
+          { ...operation, tags: [AUTH.OPENAPI_TAG] },
         ])
       ),
     ])
@@ -25,6 +25,6 @@ export async function authOpenApi(auth: AuthLike): Promise<OpenApiFragment> {
   return {
     components: document.components ?? {},
     paths,
-    tags: [{ name: AUTH_OPENAPI_TAG }],
+    tags: [{ name: AUTH.OPENAPI_TAG }],
   };
 }
