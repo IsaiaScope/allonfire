@@ -46,7 +46,10 @@ services:
 
   minio:
     container_name: allonfire-minio
-    image: minio/minio:latest
+    # MinIO stopped publishing images and deleted minio/minio from Docker Hub
+    # (September 2026). This is its last release, rebuilt by Coolify's team;
+    # pinned, so a new machine pulls exactly what the tests ran against.
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     restart: unless-stopped
     ports:
       - "9000:9000"
@@ -68,7 +71,7 @@ services:
   minio-init:
     container_name: allonfire-minio-init
     # The server image ships mc; minio/mc is no longer on Docker Hub.
-    image: minio/minio:latest
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     depends_on:
       minio:
         condition: service_healthy
