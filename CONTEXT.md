@@ -173,6 +173,16 @@ The VPS. The only deployed environment; the `test` and `prod` branches are
 promotion gates, not environments.
 _Avoid_: prod server, staging — no staging exists.
 
+**Test database**:
+A database made for one test run from the Fixtures and dropped when the run
+ends. Never the Local database.
+_Avoid_: test DB, dev database (for this).
+
+**Fixture**:
+A known User or Image every Local and Test database holds, so a test or a
+developer can sign in with it or point at it without creating it.
+_Avoid_: mock user, seed user, test data.
+
 **Deploy unit**:
 One thing Production runs that ships on its own: the API, an App, or the
 database migration. A change deploys exactly the units it affects, through

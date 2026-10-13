@@ -3,14 +3,9 @@ import type { App } from "@allonfire/database/enums";
 import { appSchema } from "@allonfire/database/features/auth/access/constants/schemas";
 import { imageAltSchema } from "@allonfire/database/features/image/alt";
 import { z } from "zod";
+import { IMAGE } from "../../constants/image";
 import { imageBodySchema } from "../../constants/schemas";
 import { cursorSchema } from "../utils/cursor";
-import {
-  DEFAULT_LIST_LIMIT,
-  MAX_BATCH,
-  MAX_FILES_PER_UPLOAD,
-  MAX_LIST_LIMIT,
-} from "./limits";
 
 export const imageListBodySchema = z.object({
   images: z.array(imageBodySchema),
@@ -27,8 +22,8 @@ export const listQuerySchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(MAX_LIST_LIMIT)
-    .default(DEFAULT_LIST_LIMIT),
+    .max(IMAGE.LIMIT.LIST.MAX)
+    .default(IMAGE.LIMIT.LIST.DEFAULT),
 });
 
 export const idParamSchema = z.object({ id: z.string().min(1) });
@@ -65,7 +60,7 @@ export const uploadItemSchema = z.object({
  */
 export const uploadFormSchema = z
   .object({
-    file: z.array(z.instanceof(File)).min(1).max(MAX_FILES_PER_UPLOAD),
+    file: z.array(z.instanceof(File)).min(1).max(IMAGE.LIMIT.FILES_PER_UPLOAD),
     meta: jsonFrom("meta must be JSON").pipe(z.array(uploadItemSchema)),
   })
   .transform(({ file, meta }, context) => {
@@ -94,7 +89,7 @@ export const patchBodySchema = z
     })
   )
   .min(1)
-  .max(MAX_BATCH)
+  .max(IMAGE.LIMIT.BATCH)
   // Each change is checked and resolved against the Image as read: a second
   // change to the same Image would read placements the first one replaced.
   .refine(
@@ -106,5 +101,5 @@ export type PatchChange = z.output<typeof patchBodySchema>[number];
 export const deleteBodySchema = z.object({
   /** Takes the Images out of this App only; left out, deletes them everywhere. */
   app: appSchema.optional(),
-  ids: z.array(z.string().min(1)).min(1).max(MAX_BATCH),
+  ids: z.array(z.string().min(1)).min(1).max(IMAGE.LIMIT.BATCH),
 });

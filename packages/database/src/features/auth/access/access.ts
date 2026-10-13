@@ -1,7 +1,7 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../generated/prisma/enums";
-import { APP_SETTINGS, type AppSettingsTable } from "./constants/app-settings";
-import { ROLE_RANK } from "./constants/roles";
+import { ACCESS } from "./constants/access";
+import type { AppSettingsTable } from "./constants/app-settings";
 import { appSchema, roleSchema } from "./constants/schemas";
 
 /**
@@ -17,7 +17,7 @@ export type AccessUser = { memberships: readonly AccessMembership[] };
 
 /** True when `role` reaches at least `min`: `hasRole(Role.ADMIN, Role.USER)`. */
 export const hasRole = (role: Role, min: Role): boolean =>
-  ROLE_RANK[role] >= ROLE_RANK[min];
+  ACCESS.ROLE_RANK[role] >= ACCESS.ROLE_RANK[min];
 
 /** The User's Role in `app`, or `undefined` when they do not belong to it. */
 export const roleIn = (user: AccessUser, app: App): Role | undefined =>
@@ -29,7 +29,7 @@ export const roleIn = (user: AccessUser, app: App): Role | undefined =>
  * Next App's `canAccess` and the Image module's reads all apply it.
  */
 export const canEnterApp = (user: AccessUser, app: App): boolean => {
-  const settings: AppSettingsTable = APP_SETTINGS;
+  const settings: AppSettingsTable = ACCESS.APP_SETTINGS;
   const role = roleIn(user, app);
   return role !== undefined && hasRole(role, settings[app].minRole);
 };

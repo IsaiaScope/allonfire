@@ -1,4 +1,4 @@
-import { NODE_ENV } from "@allonfire/core/shared/constants/env";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import { PrismaClient } from "../../../generated/prisma/client";
 import { env } from "../../environment/environment";
 
@@ -10,6 +10,6 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
 // Dev servers reload modules; one client on globalThis keeps them from
 // opening a new connection pool on every reload.
-if (env.NODE_ENV !== NODE_ENV.PRODUCTION) {
+if (env.NODE_ENV !== ENV.NODE.PRODUCTION) {
   globalForPrisma.prisma = prisma;
 }

@@ -14,28 +14,31 @@ import { z } from "zod";
  * the module.
  */
 export const nextAuthEnv = createEnv({
+  emptyStringAsUndefined: true,
   experimental__runtimeEnv: {},
   server: {
     /**
      * Where the backend serves this module's routes, path included. The
      * module never knows the prefix its host mounts it under (the API adds
      * `/v1`), so the App is told the whole address. No default: the path is
-     * the host's to say. Internal address in production, like `API_URL`.
+     * the host's to say. In production the internal address on the Docker
+     * network, not the public one through Traefik: Traefik would replace the
+     * visitor's forwarded address with the App's, and the API's per-IP limits
+     * would count every visitor as one.
      */
     API_AUTH_URL: z.url(),
-    /**
-     * The API as the App's server reaches it. In production the internal
-     * address on the Docker network, not the public one through Traefik:
-     * Traefik would replace the visitor's forwarded address with the App's,
-     * and the API's per-IP limits would count every visitor as one. No
-     * default: the API's address is the API's to say, not this package's.
-     */
-    API_URL: z.url(),
     /**
      * Which App this server is. No default: an App that forgot it must fail
      * to start, not let in whoever another App lets in.
      */
     AUTH_APP: appSchema,
+    /**
+     * The parent domain the API sets the Session cookies for, the API's own
+     * `AUTH_COOKIE_DOMAIN`. Sign out needs it when the API does not answer: a
+     * browser drops a cookie only when told the Domain it was set with.
+     * None: the cookies belong to the App's own domain.
+     */
+    AUTH_COOKIE_DOMAIN: z.string().min(1).optional(),
   },
   skipValidation: process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD,
 });

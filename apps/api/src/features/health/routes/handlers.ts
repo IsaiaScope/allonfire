@@ -1,10 +1,8 @@
 import type { Context } from "hono";
 import pkg from "../../../../package.json" with { type: "json" };
 import {
-  CHECK_STATUS,
+  HEALTH,
   type HealthBody,
-  READY_STATUS,
-  READY_STATUS_CODE,
   type ReadyServingBody,
   type ReadyUnavailableBody,
 } from "../constants/statuses";
@@ -17,7 +15,7 @@ import { checkStatus, type HealthDeps } from "../utils/status";
 
 export const healthHandler = (context: Context) => {
   const body = {
-    status: READY_STATUS.OK,
+    status: HEALTH.READY_STATUS.OK,
     uptime: process.uptime(),
     version: pkg.version,
   } as const satisfies HealthBody;
@@ -34,15 +32,18 @@ export const readyHandler = (deps: HealthDeps) => async (context: Context) => {
   // that is still serving traffic correctly.
   if (!database) {
     const body = {
-      checks: { database: CHECK_STATUS.UNREACHABLE, redis: checkStatus(redis) },
-      status: READY_STATUS.UNAVAILABLE,
+      checks: {
+        database: HEALTH.CHECK_STATUS.UNREACHABLE,
+        redis: checkStatus(redis),
+      },
+      status: HEALTH.READY_STATUS.UNAVAILABLE,
     } as const satisfies ReadyUnavailableBody;
-    return context.json(body, READY_STATUS_CODE.NOT_READY);
+    return context.json(body, HEALTH.READY_STATUS_CODE.NOT_READY);
   }
 
   const body = {
-    checks: { database: CHECK_STATUS.OK, redis: checkStatus(redis) },
-    status: redis ? READY_STATUS.OK : READY_STATUS.DEGRADED,
+    checks: { database: HEALTH.CHECK_STATUS.OK, redis: checkStatus(redis) },
+    status: redis ? HEALTH.READY_STATUS.OK : HEALTH.READY_STATUS.DEGRADED,
   } as const satisfies ReadyServingBody;
-  return context.json(body, READY_STATUS_CODE.READY);
+  return context.json(body, HEALTH.READY_STATUS_CODE.READY);
 };

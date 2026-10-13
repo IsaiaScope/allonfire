@@ -1,71 +1,41 @@
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
-import { MS_PER_MINUTE } from "@allonfire/core/shared/constants/units";
+import { testRunStamp } from "@allonfire/config/tests/run/test-run";
 import { PrismaClient } from "../../generated/prisma/client";
 import { env } from "../../src/environment/environment";
-
-export const PACKAGE_DIR = resolve(import.meta.dirname, "../..");
-
-/** Liquibase runs in Docker; the first build pulls the image. */
-export const DOCKER_TIMEOUT = 5 * MS_PER_MINUTE;
+import {
+  databaseUrl,
+  testDatabaseName,
+} from "../../src/features/test-database/names";
+import {
+  createDatabase,
+  dropDatabase as dropOnServer,
+  PACKAGE_DIR,
+} from "../../src/features/test-database/server";
 
 const LIQUIBASE_TABLE = /^databasechangelog/;
+/** This run's: two runs at once (a watch and the hook) never share a database. */
+const RUN_STAMP = testRunStamp();
 
-/** The dev/CI server's URL, pointed at another database on it. */
+/** A database name for `label` in this run, swept like a Test database if left behind. */
+export const throwawayName = (label: string) =>
+  testDatabaseName(label, RUN_STAMP);
+
+/** A Docker volume name for `label` in this run. */
+export const throwawayVolume = (label: string) =>
+  throwawayName(label).replaceAll("_", "-");
+
+/** The Local or CI server's URL, pointed at another database on it. */
 export function throwawayUrl(database: string): string {
-  const url = new URL(env.DATABASE_URL);
-  url.pathname = `/${database}`;
-  url.search = "";
-  return url.toString();
-}
-
-async function onServer(sql: string): Promise<void> {
-  const admin = new PrismaClient();
-  try {
-    await admin.$executeRawUnsafe(sql);
-  } finally {
-    await admin.$disconnect();
-  }
+  return databaseUrl(env.DATABASE_URL, database);
 }
 
 export async function dropDatabase(database: string): Promise<void> {
-  await onServer(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`);
+  await dropOnServer(env.DATABASE_URL, database);
 }
 
 export async function recreateDatabase(database: string): Promise<void> {
   await dropDatabase(database);
-  await onServer(`CREATE DATABASE "${database}"`);
-}
-
-/**
- * Runs the db-migrate image against `url`; returns its stdout. `extraEnv`
- * holds `NAME=value` pairs for scripts/liquibase.sh (DB_BACKUPS_VOLUME,
- * BACKUP_KEEP).
- */
-export function migrateImage(
-  url: string,
-  extraEnv: readonly string[],
-  ...args: string[]
-): string {
-  // env(1) sets these for the child and inherits everything else. `stdio:
-  // "pipe"` keeps Liquibase's stderr out of the test output; a failure still
-  // carries it in the thrown error.
-  return execFileSync(
-    "env",
-    [
-      `DATABASE_URL=${url}`,
-      ...extraEnv,
-      "bash",
-      "scripts/liquibase.sh",
-      ...args,
-    ],
-    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
-  );
-}
-
-/** Runs a Liquibase command in the db-migrate image against `url`. */
-export function liquibase(url: string, ...args: string[]): string {
-  return migrateImage(url, [], ...args);
+  await createDatabase(env.DATABASE_URL, database);
 }
 
 /** Runs a SQL file the way `prisma db push` would have left a database. */

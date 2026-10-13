@@ -1,32 +1,20 @@
 import { authEnvSchema } from "@allonfire/auth/environment/environment";
 import { runtimeEnvSchema } from "@allonfire/core/environment/environment";
 import {
-  LOG_LEVEL,
+  LOG,
   logLevelSchema,
 } from "@allonfire/core/features/logger/constants/logger";
-import {
-  BOOLEAN_ENV,
-  booleanEnvSchema,
-} from "@allonfire/core/shared/constants/env";
-import { TRAILING_SLASHES } from "@allonfire/core/shared/constants/patterns";
+import { booleanEnvSchema, ENV } from "@allonfire/core/shared/constants/env";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { databaseEnvSchema } from "@allonfire/database/environment/environment";
 import { storageEnvSchema } from "@allonfire/storage/environment/environment";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
-import {
-  DEFAULT_RATE_LIMIT_MAX,
-  DEFAULT_RATE_LIMIT_WINDOW_MS,
-  DEFAULT_TRUSTED_PROXY_HOPS,
-} from "../features/rate-limit/constants/limits";
-import {
-  DEFAULT_OTEL_SERVICE_NAME,
-  OTLP_HEADERS_MALFORMED_ESCAPE,
-  OTLP_HEADERS_PATTERN,
-  OTLP_PROTOCOL_PATTERN,
-} from "../features/telemetry/constants/telemetry";
-import { DEFAULT_PORT } from "../shared/constants/limits";
+import { RATE_LIMIT } from "../features/rate-limit/constants/limits";
+import { OTEL, OTLP } from "../features/telemetry/constants/telemetry";
+import { API } from "../shared/constants/api";
 
 /** `a=1,b=x%20y` to `{ a: "1", b: "x y" }`, splitting each pair at its first `=`. */
 const parseHeaderList = (value: string): Record<string, string> =>
@@ -56,34 +44,34 @@ export function parseEnv(raw: Record<string, string | undefined>) {
           .filter(Boolean)
       ),
       API_ENABLE_DOCS: booleanEnvSchema
-        .default(BOOLEAN_ENV.FALSE)
-        .transform((value) => value === BOOLEAN_ENV.TRUE),
-      API_LOG_LEVEL: logLevelSchema.default(LOG_LEVEL.INFO),
+        .default(ENV.BOOLEAN.FALSE)
+        .transform((value) => value === ENV.BOOLEAN.TRUE),
+      API_LOG_LEVEL: logLevelSchema.default(LOG.LEVEL.INFO),
       API_RATE_LIMIT_MAX: z.coerce
         .number()
         .int()
         .positive()
-        .default(DEFAULT_RATE_LIMIT_MAX),
+        .default(RATE_LIMIT.DEFAULT.MAX),
       API_RATE_LIMIT_WINDOW_MS: z.coerce
         .number()
         .int()
         .positive()
-        .default(DEFAULT_RATE_LIMIT_WINDOW_MS),
+        .default(RATE_LIMIT.DEFAULT.WINDOW_MS),
       API_REDIS_URL: z.url(),
       API_TRUSTED_PROXY_HOPS: z.coerce
         .number()
         .int()
         .min(0)
-        .default(DEFAULT_TRUSTED_PROXY_HOPS),
+        .default(RATE_LIMIT.DEFAULT.TRUSTED_PROXY_HOPS),
       // Unset switches telemetry off. Named after the OTel spec so the
       // collector docs apply unchanged; app code reads them from here.
       OTEL_EXPORTER_OTLP_ENDPOINT: z
-        .url({ protocol: OTLP_PROTOCOL_PATTERN })
-        .transform((url) => url.replace(TRAILING_SLASHES, ""))
+        .url({ protocol: OTLP.PATTERN.PROTOCOL })
+        .transform((url) => url.replace(PATTERN.TRAILING_SLASHES, ""))
         .optional(),
       OTEL_EXPORTER_OTLP_HEADERS: z
         .string()
-        .regex(OTLP_HEADERS_PATTERN)
+        .regex(OTLP.PATTERN.HEADERS)
         // `decodeURIComponent` throws on a bad escape (`%E0`); report it as an
         // env issue so boot fails with the same message as any other typo.
         .transform((value, context) => {
@@ -92,14 +80,14 @@ export function parseEnv(raw: Record<string, string | undefined>) {
           } catch {
             context.addIssue({
               code: "custom",
-              message: OTLP_HEADERS_MALFORMED_ESCAPE,
+              message: OTLP.ERROR.HEADERS_MALFORMED_ESCAPE,
             });
             return z.NEVER;
           }
         })
         .default({}),
-      OTEL_SERVICE_NAME: z.string().default(DEFAULT_OTEL_SERVICE_NAME),
-      PORT: z.coerce.number().int().positive().default(DEFAULT_PORT),
+      OTEL_SERVICE_NAME: z.string().default(OTEL.DEFAULT_SERVICE_NAME),
+      PORT: z.coerce.number().int().positive().default(API.DEFAULT.PORT),
     },
   });
 }

@@ -1,9 +1,20 @@
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
-import { AUTH_PATH } from "../constants/paths";
+import { AUTH } from "../constants/auth";
 import type { AuthLike, AuthSession } from "../types/auth";
 
-const SESSION_TTL_MS = 60_000;
+const SESSION_TTL_MS = UNIT.MS_PER_MINUTE;
+
+/** Where a made-up host mounts the module in these tests; the module never knows the prefix. */
+export const HOST_AUTH_PATH = `/host${AUTH.PATH.BASE}` as const;
+
+/** The cookies a response set, as one `cookie` header a request sends back. */
+export const cookieOf = (res: Response) =>
+  res.headers
+    .getSetCookie()
+    .map((cookie) => cookie.split(";")[0])
+    .join("; ");
 
 /** The same Role in every App, for a test about one Role. */
 export const membershipsIn = (role: Role) =>
@@ -31,7 +42,7 @@ export function sessionFor(
 /** Anonymous, no routes, empty schema, mounted at `/auth` — override what the test needs. */
 export function stubAuth(overrides: Partial<AuthLike> = {}): AuthLike {
   return {
-    basePath: AUTH_PATH,
+    basePath: AUTH.PATH.BASE,
     getSession: () => Promise.resolve(null),
     handler: () => Promise.resolve(new Response(null, { status: 404 })),
     openApi: () => Promise.resolve({ paths: {} }),

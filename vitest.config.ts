@@ -3,7 +3,7 @@
 // invalidate every cached task in the repo.
 
 import { defineConfig, mergeConfig } from "vitest/config";
-import { vitestConfig } from "./packages/config/tests/vitest.config";
+import { vitestConfig } from "./packages/config/tests/vitest/vitest.config";
 
 /**
  * Every package in one run, for `pnpm test:ui` and a single merged

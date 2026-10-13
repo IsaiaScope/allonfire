@@ -1,23 +1,10 @@
-import { HTTP_HEADER } from "@allonfire/core/features/http/constants/http";
 import { prisma } from "@allonfire/database";
 import { canEnterApp } from "@allonfire/database/features/auth/access/access";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";
-import { deleteSessionCookie } from "better-auth/cookies";
 import { customSession, openAPI } from "better-auth/plugins";
-import { AUTH_ERROR_CODE } from "../../shared/constants/errors";
-import { APP_HEADER } from "../../shared/constants/headers";
-import {
-  COOKIE_CACHE_MAX_AGE_S,
-  SESSION_EXPIRES_IN_S,
-  SESSION_UPDATE_AGE_S,
-} from "../../shared/constants/limits";
-import {
-  OPENAPI_SCHEMA_PATH,
-  SIGN_IN_EMAIL_PATH,
-  SIGN_UP_EMAIL_PATH,
-} from "../../shared/constants/paths";
+import { AUTH } from "../../shared/constants/auth";
 import type { AuthLike } from "../../shared/types/auth";
 import { joinApp } from "./routes/join-app";
 import {
@@ -50,7 +37,7 @@ const membershipsOf = (userId: string) =>
   });
 
 /**
- * Who enters an App and who registers comes from `APP_SETTINGS` alone, the
+ * Who enters an App and who registers comes from `ACCESS.APP_SETTINGS` alone, the
  * table every guard and every App reads too (ADR 0019).
  */
 export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
@@ -63,6 +50,35 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
     }),
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     databaseHooks: {
+      session: {
+        create: {
+          // A sign-in naming an App is refused here: after the password
+          // check, before the Session is written or its cookies are set, so
+          // a refusal leaves nothing to undo.
+          before: async (session, ctx) => {
+            if (
+              ctx?.path !== AUTH.PATH.SIGN_IN_EMAIL ||
+              !ctx.headers?.has(AUTH.HEADER.APP)
+            ) {
+              return;
+            }
+            const app = namedApp(ctx.headers);
+            if (
+              app &&
+              canEnterApp(
+                { memberships: await membershipsOf(session.userId) },
+                app
+              )
+            ) {
+              return;
+            }
+            throw new APIError("FORBIDDEN", {
+              code: AUTH.ERROR_CODE.APP_FORBIDDEN,
+              message: "This App does not let this User in",
+            });
+          },
+        },
+      },
       user: {
         create: {
           // Better Auth runs this after the User's transaction commits, so a
@@ -91,38 +107,13 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
         },
       },
     },
-    disabledPaths: [OPENAPI_SCHEMA_PATH],
+    disabledPaths: [AUTH.PATH.OPENAPI_SCHEMA, AUTH.PATH.VERIFY_PASSWORD],
     emailAndPassword: { enabled: true },
     hooks: {
-      after: createAuthMiddleware(async (ctx) => {
-        const session = ctx.context.newSession;
-        if (
-          ctx.path !== SIGN_IN_EMAIL_PATH ||
-          !session ||
-          !ctx.headers?.has(APP_HEADER)
-        ) {
-          return;
-        }
-        const app = namedApp(ctx.headers);
-        const memberships = await membershipsOf(session.user.id);
-        if (app && canEnterApp({ memberships }, app)) {
-          return;
-        }
-        // The Session just opened must not outlive the refusal, in the
-        // database or in the cookie cache. Better Auth keeps the sign-in's
-        // cookies on an after hook's error, so they are dropped first.
-        await ctx.context.internalAdapter.deleteSession(session.session.token);
-        ctx.context.responseHeaders?.delete(HTTP_HEADER.SET_COOKIE);
-        deleteSessionCookie(ctx);
-        throw new APIError("FORBIDDEN", {
-          code: AUTH_ERROR_CODE.APP_FORBIDDEN,
-          message: "This App does not let this User in",
-        });
-      }),
       // Refused before Better Auth looks the email up: a closed App never
       // tells whether an account exists.
       before: createAuthMiddleware((ctx) =>
-        ctx.path === SIGN_UP_EMAIL_PATH && !registrationFor(ctx.headers)
+        ctx.path === AUTH.PATH.SIGN_UP_EMAIL && !registrationFor(ctx.headers)
           ? Promise.reject(registrationClosed())
           : Promise.resolve()
       ),
@@ -139,9 +130,12 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
     // per-process memory and does not know the proxy hop count.
     rateLimit: { enabled: false },
     session: {
-      cookieCache: { enabled: true, maxAge: COOKIE_CACHE_MAX_AGE_S },
-      expiresIn: SESSION_EXPIRES_IN_S,
-      updateAge: SESSION_UPDATE_AGE_S,
+      cookieCache: {
+        enabled: true,
+        maxAge: AUTH.SESSION.COOKIE_CACHE_MAX_AGE_S,
+      },
+      expiresIn: AUTH.SESSION.EXPIRES_IN_S,
+      updateAge: AUTH.SESSION.UPDATE_AGE_S,
     },
   });
 }

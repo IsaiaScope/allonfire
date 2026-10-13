@@ -1,14 +1,15 @@
 // @module-tag unit
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { parseEnv } from "../environment";
 
 const valid = {
-  API_CORS_ORIGINS: "http://localhost:3200",
-  API_REDIS_URL: "redis://localhost:6379/0",
+  API_CORS_ORIGINS: LOCAL.URL.LAURA,
+  API_REDIS_URL: LOCAL.URL.REDIS,
   AUTH_SECRET: "test-secret-at-least-thirty-two-characters",
-  AUTH_URL: "http://localhost:3300",
+  AUTH_URL: LOCAL.URL.API,
   DATABASE_URL: "postgresql://u:p@localhost:5432/db",
   STORAGE_ACCESS_KEY: "allonfire",
-  STORAGE_ENDPOINT: "http://localhost:9000",
+  STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
   STORAGE_SECRET_KEY: "allonfire",
 };
 

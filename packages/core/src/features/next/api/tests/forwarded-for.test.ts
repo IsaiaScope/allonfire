@@ -1,4 +1,5 @@
 // @module-tag unit
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { forwardedHeaders, readVisitorHeaders } from "../forwarded-for";
 
 const visitor = vi.hoisted(() => ({ cookie: "", incoming: new Headers() }));
@@ -18,12 +19,12 @@ describe("forwardedHeaders", () => {
     expect(
       forwardedHeaders(
         new Headers({
-          origin: "http://localhost:3400",
+          origin: LOCAL.URL.BACK_OFFICE,
           "x-forwarded-for": "203.0.113.7",
         })
       )
     ).toEqual({
-      origin: "http://localhost:3400",
+      origin: LOCAL.URL.BACK_OFFICE,
       "x-forwarded-for": "203.0.113.7",
     });
   });
@@ -36,12 +37,12 @@ describe("forwardedHeaders", () => {
 describe("readVisitorHeaders", () => {
   it("sends the visitor's cookies, address and Origin", async () => {
     visit("a=1", {
-      origin: "http://localhost:3400",
+      origin: LOCAL.URL.BACK_OFFICE,
       "x-forwarded-for": "203.0.113.7",
     });
     expect(await readVisitorHeaders()).toEqual({
       cookie: "a=1",
-      origin: "http://localhost:3400",
+      origin: LOCAL.URL.BACK_OFFICE,
       "x-forwarded-for": "203.0.113.7",
     });
   });

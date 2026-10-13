@@ -1,5 +1,5 @@
 // @module-tag unit
-import { SECURITY_HEADERS } from "@allonfire/core/features/http/constants/security-headers";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { Hono } from "hono";
 import { securityHeaders } from "../security-headers";
 
@@ -9,7 +9,7 @@ describe("securityHeaders", () => {
       .use(securityHeaders())
       .get("/", (c) => c.text("ok"))
       .request("/");
-    for (const { key, value } of SECURITY_HEADERS) {
+    for (const { key, value } of HTTP.SECURITY_HEADERS) {
       expect(res.headers.get(key)).toBe(value);
     }
   });

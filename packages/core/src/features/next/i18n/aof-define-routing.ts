@@ -8,9 +8,9 @@ type Options<L extends HostLanguages> = Omit<
 > & { defaultLocale?: ElementOf<L> | undefined };
 
 /**
- * Every App routes its Host's languages (`BASE_LANGUAGES`, or its own from
+ * Every App routes its Host's languages (`I18N.BASE_LANGUAGES`, or its own from
  * `defineLanguages`) with a prefix only when needed, the first one
- * (`DEFAULT_LANGUAGE`) unless it picks another default. Localized `pathnames` and `domains` are
+ * (`I18N.DEFAULT_LANGUAGE`) unless it picks another default. Localized `pathnames` and `domains` are
  * left out until an App needs them.
  */
 export const AOFDefineRouting = <const L extends HostLanguages>(
@@ -19,7 +19,7 @@ export const AOFDefineRouting = <const L extends HostLanguages>(
 ) =>
   defineRouting({
     ...options,
-    // A Host's languages start with the base ones, so this is DEFAULT_LANGUAGE.
+    // A Host's languages start with the base ones, so this is I18N.DEFAULT_LANGUAGE.
     defaultLocale: defaultLocale ?? languages[0],
     localePrefix: "as-needed",
     locales: languages,

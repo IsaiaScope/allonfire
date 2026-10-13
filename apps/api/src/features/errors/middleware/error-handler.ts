@@ -2,42 +2,29 @@ import {
   CodedError,
   invalidHook,
 } from "@allonfire/core/features/errors/coded-error";
-import {
-  CONTENT_TYPE,
-  HTTP_HEADER,
-  HTTP_STATUS,
-} from "@allonfire/core/features/http/constants/http";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
-import { MS_PER_SECOND } from "@allonfire/core/shared/constants/units";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import type { ValueOf } from "@allonfire/core/shared/utils/object";
 import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
+import { API } from "../../../shared/constants/api";
 import {
+  type ErrorCode,
   type ErrorStatus,
+  errorCodeSchema,
   errorStatusSchema,
-} from "../../../shared/constants/http";
-import {
-  BODY_LIMIT_BYTES,
-  REQUEST_TIMEOUT_MS,
-} from "../../../shared/constants/limits";
-import { CONTEXT_VAR, LOG_MESSAGE } from "../../../shared/constants/runtime";
+} from "../../../shared/constants/error";
 import { localeOf } from "../../i18n/middleware/locale-resolver";
 import { translate, translateCode } from "../../i18n/translate";
 import { logger } from "../../logger/logger";
-import {
-  ERROR_CODE,
-  ERROR_TYPE,
-  type ErrorCode,
-  errorCodeSchema,
-  STATUS_TO_ERROR_CODE,
-  UNKNOWN_REQUEST_ID,
-} from "../constants/error-codes";
 import type { ErrorDetail, ProblemDetails } from "../constants/problem-details";
 
 // Re-exported so callers import the error contract from the middleware that
 // produces it, without reaching into constants/ themselves.
-export type { ErrorCode } from "../constants/error-codes";
+export type { ErrorCode } from "../../../shared/constants/error";
 export type {
   ErrorDetail,
   ProblemDetails,
@@ -49,10 +36,10 @@ const isErrorStatus = (status: number): status is ErrorStatus =>
 /** Generic, so a literal status gives its exact code: `codeForStatus(404)` is `"NOT_FOUND"`. */
 export const codeForStatus = <S extends ErrorStatus>(
   status: S
-): (typeof STATUS_TO_ERROR_CODE)[S] => STATUS_TO_ERROR_CODE[status];
+): (typeof API.ERROR.CODE_OF_STATUS)[S] => API.ERROR.CODE_OF_STATUS[status];
 
 /** The codes a bare `HTTPException` status maps to. */
-type StatusErrorCode = ValueOf<typeof STATUS_TO_ERROR_CODE>;
+type StatusErrorCode = ValueOf<typeof API.ERROR.CODE_OF_STATUS>;
 
 /**
  * Renders a code with the values this layer can supply.
@@ -67,21 +54,23 @@ type StatusErrorCode = ValueOf<typeof STATUS_TO_ERROR_CODE>;
  */
 export function fallbackMessage(code: StatusErrorCode, locale: Locale): string {
   switch (code) {
-    case ERROR_CODE.RATE_LIMITED:
+    case ERROR.CODE.RATE_LIMITED:
       return translate(code, locale, { seconds: 0 });
-    case ERROR_CODE.TIMEOUT:
+    case ERROR.CODE.TIMEOUT:
       return translate(code, locale, {
-        seconds: REQUEST_TIMEOUT_MS / MS_PER_SECOND,
+        seconds: API.LIMIT.REQUEST_TIMEOUT_MS / UNIT.MS_PER_SECOND,
       });
-    case ERROR_CODE.PAYLOAD_TOO_LARGE:
-      return translate(code, locale, { limit: BODY_LIMIT_BYTES });
+    case ERROR.CODE.PAYLOAD_TOO_LARGE:
+      return translate(code, locale, { limit: API.LIMIT.BODY_BYTES });
     default:
       return translate(code, locale);
   }
 }
 
 function requestIdOf(context: Context): string {
-  return context.get(CONTEXT_VAR.REQUEST_ID) ?? UNKNOWN_REQUEST_ID;
+  return (
+    context.get(API.CONTEXT_VAR.REQUEST_ID) ?? API.ERROR.UNKNOWN_REQUEST_ID
+  );
 }
 
 /** What varies between one problem document and the next. */
@@ -111,14 +100,14 @@ function problem(
     requestId: requestIdOf(context),
     status,
     title: getReasonPhrase(status),
-    type: ERROR_TYPE[code],
+    type: API.ERROR.TYPE[code],
     ...(errors ? { errors } : {}),
   };
 }
 
 /** RFC 9457 documents carry their own media type, not `application/json`. */
 const PROBLEM_HEADERS = {
-  [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.PROBLEM_JSON,
+  [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.PROBLEM_JSON,
 } as const;
 
 /**
@@ -143,7 +132,7 @@ export const normalizeThrown =
     } catch (err) {
       throw err instanceof Error
         ? err
-        : new Error(LOG_MESSAGE.NON_ERROR_THROWN, { cause: err });
+        : new Error(API.LOG_MESSAGE.NON_ERROR_THROWN, { cause: err });
     }
   };
 
@@ -182,20 +171,20 @@ export function onError(err: Error, context: Context): Response {
   // pino's `err` serializer drops a `cause` that is not an Error, which is
   // exactly what `normalizeThrown` stores: log the thrown value beside it.
   const thrown = err.cause instanceof Error ? undefined : err.cause;
-  logger.error({ err, requestId, thrown }, LOG_MESSAGE.UNHANDLED_ERROR);
+  logger.error({ err, requestId, thrown }, API.LOG_MESSAGE.UNHANDLED_ERROR);
 
   return problemResponse(context, {
-    code: ERROR_CODE.INTERNAL_ERROR,
-    detail: translate(ERROR_CODE.INTERNAL_ERROR, localeOf(context)),
-    status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    code: ERROR.CODE.INTERNAL_ERROR,
+    detail: translate(ERROR.CODE.INTERNAL_ERROR, localeOf(context)),
+    status: HTTP.STATUS.INTERNAL_SERVER_ERROR,
   });
 }
 
 export function notFound(context: Context): Response {
   return problemResponse(context, {
-    code: ERROR_CODE.NOT_FOUND,
-    detail: translate(ERROR_CODE.NOT_FOUND, localeOf(context)),
-    status: HTTP_STATUS.NOT_FOUND,
+    code: ERROR.CODE.NOT_FOUND,
+    detail: translate(ERROR.CODE.NOT_FOUND, localeOf(context)),
+    status: HTTP.STATUS.NOT_FOUND,
   });
 }
 
@@ -203,4 +192,4 @@ export function notFound(context: Context): Response {
  * A validator hook: a failed parse throws the coded 400, which `onError`
  * renders like any module's.
  */
-export const validationHook = invalidHook(ERROR_CODE.VALIDATION_FAILED);
+export const validationHook = invalidHook;

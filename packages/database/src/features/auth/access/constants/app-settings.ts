@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { App, Role } from "../../../../../generated/prisma/enums";
+import { type App, Role } from "../../../../../generated/prisma/enums";
 import { roleSchema } from "./schemas";
 
 /** A Role a stranger can be given by Registration: never Admin. */
@@ -15,12 +15,3 @@ export type AppSettings = {
 };
 
 export type AppSettingsTable = Readonly<Record<App, AppSettings>>;
-
-/**
- * Every App's settings, read by the API (which enforces them) and every App.
- * A new App fails to compile until its row is here.
- */
-export const APP_SETTINGS = {
-  [App.LAURA]: { minRole: Role.VIEWER, registration: null },
-  [App.BACK_OFFICE]: { minRole: Role.ADMIN, registration: null },
-} as const satisfies AppSettingsTable;

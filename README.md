@@ -104,6 +104,37 @@ Production deployment stack powering all apps and services.
 | 🔒 | **Proxy** | Traefik + Let's Encrypt SSL |
 | 🔄 | **CI** | GitHub Actions |
 
+### 🚢 Deploy
+
+A push to `prod` runs `.github/workflows/deploy.yml`: it builds an image only
+for each Deploy unit (`api`, `back-office`, `db-migrate`) affected since the
+last deploy (the `deployed/prod` tag), pushes it to GHCR as `:<sha>`, tags
+every one `:prod` once all are built, and asks Dokploy to redeploy the one
+compose project, which recreates only the services whose image changed (ADR 0018).
+
+One-time setup:
+
+1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `PROD_STORAGE_ENDPOINT`, `PROD_NEXT_PUBLIC_API_URL`; variables `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`.
+2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
+3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
+4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
+
+Before the API starts, the one-shot `storage-setup` service creates the `image` bucket with its read-only policy and uploads the sign-in photo as AVIF, each only when missing; nothing is uploaded by hand.
+
+Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
+
+Laura is out of Production until its rebuild.
+
+### 💻 Local
+
+`pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
+database and uploads the Image Fixtures' files. `packages/database/.env` sets
+`DATABASE_SEED_MODE="local"` so the seed adds every Fixture User (password
+`FIXTURE.PASSWORD`); a `.env` from before the Fixtures drops
+`DATABASE_SEED_TEST_PASSWORD` and changes `dev` to `local`.
+`packages/storage/.env` (from its `.env.example`) holds the Local MinIO
+login the upload and the e2e run's bucket use.
+
 ---
 
 <p align="center">

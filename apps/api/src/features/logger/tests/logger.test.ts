@@ -21,4 +21,19 @@ describe("createLogger", () => {
 
     expect(output()).not.toContain("hunter2");
   });
+
+  it.each([
+    ["at the top", { password: "hunter2", token: "t0ken-value" }],
+    [
+      "two levels down",
+      { body: { user: { password: "hunter2", token: "t0ken-value" } } },
+    ],
+  ])("redacts a password and a token %s", (_, logged) => {
+    const { logger, output } = captureLog();
+
+    logger.info(logged, "sign-in");
+
+    expect(output()).not.toContain("hunter2");
+    expect(output()).not.toContain("t0ken-value");
+  });
 });

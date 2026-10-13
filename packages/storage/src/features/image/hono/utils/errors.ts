@@ -1,25 +1,25 @@
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ImageNotFoundError } from "@allonfire/database/features/image/image.service";
-import { IMAGE_ERROR_CODE } from "../constants/errors";
 
 export const notFound = (options?: ErrorOptions) =>
   new CodedError(
-    { code: IMAGE_ERROR_CODE.NOT_FOUND, status: HTTP_STATUS.NOT_FOUND },
+    { code: ERROR.CODE.NOT_FOUND, status: HTTP.STATUS.NOT_FOUND },
     options
   );
 
 export const forbidden = () =>
   new CodedError({
-    code: IMAGE_ERROR_CODE.FORBIDDEN,
-    status: HTTP_STATUS.FORBIDDEN,
+    code: ERROR.CODE.FORBIDDEN,
+    status: HTTP.STATUS.FORBIDDEN,
   });
 
 /** 413 naming the limit that was actually crossed, not a host-wide one. */
 export const tooLarge = (limit: number) =>
   new CodedError({
-    code: IMAGE_ERROR_CODE.PAYLOAD_TOO_LARGE,
-    status: HTTP_STATUS.PAYLOAD_TOO_LARGE,
+    code: ERROR.CODE.PAYLOAD_TOO_LARGE,
+    status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
     values: { limit },
   });
 

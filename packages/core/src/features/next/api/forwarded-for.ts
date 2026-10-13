@@ -1,9 +1,9 @@
 import { cookies, headers } from "next/headers";
 import { objectFromEntries } from "../../../shared/utils/object";
-import { HTTP_HEADER } from "../../http/constants/http";
+import { HTTP } from "../../http/constants/http";
 
 /** What a visitor's request carries that the API must see as theirs. */
-const FORWARDED = [HTTP_HEADER.ORIGIN, HTTP_HEADER.X_FORWARDED_FOR] as const;
+const FORWARDED = [HTTP.HEADER.ORIGIN, HTTP.HEADER.X_FORWARDED_FOR] as const;
 
 /**
  * The visitor's headers to pass on to the API, as they reached this server:
@@ -26,7 +26,7 @@ export const visitorHeaders = (
   cookie: string,
   incoming: Headers
 ): Record<string, string> => ({
-  [HTTP_HEADER.COOKIE]: cookie,
+  [HTTP.HEADER.COOKIE]: cookie,
   ...forwardedHeaders(incoming),
 });
 

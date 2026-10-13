@@ -1,6 +1,6 @@
 // @module-tag unit
 
-import { SIGN_IN_ERROR } from "@allonfire/auth/features/next/constants/api";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
@@ -21,7 +21,9 @@ vi.mock("@allonfire/auth/features/next/actions/sign-in", () => ({
 
 const HEADING = /<h1[^>]*>Back office<\/h1>/;
 const BOARD_SIGN_IN = /aria-live="polite"[^>]*>Sign in</;
-const CURRENT_LANGUAGE = /<a aria-current="true"[^>]*href="\/en\/sign-in"/;
+const CURRENT_LANGUAGE = new RegExp(
+  `<a aria-current="true"[^>]*href="/en${AUTH.PAGE.SIGN_IN}"`
+);
 const EMAIL_LABEL = /<label[^>]*for="sign-in-email"[^>]*>Email</;
 const EMAIL_AUTOCOMPLETE = /<input[^>]*autoComplete="username"/;
 const PASSWORD_AUTOCOMPLETE = /<input[^>]*autoComplete="current-password"/;
@@ -47,7 +49,7 @@ describe("SignIn", () => {
     const html = render(<SignIn />);
     expect(html).toContain('aria-label="Language"');
     expect(html).toMatch(CURRENT_LANGUAGE);
-    expect(html).toContain('href="/it/sign-in"');
+    expect(html).toContain(`href="/it${AUTH.PAGE.SIGN_IN}"`);
     expect(html).toContain('aria-label="Switch theme"');
   });
 
@@ -70,7 +72,7 @@ describe("SignInForm", () => {
 
   it("shows an error as an alert and marks both fields", () => {
     const html = render(
-      <SignInForm initialState={{ error: SIGN_IN_ERROR.INVALID }} />
+      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.INVALID }} />
     );
     expect(html).toMatch(ERROR_ALERT);
     expect(html.match(INVALID_FIELD)).toHaveLength(2);
@@ -78,7 +80,7 @@ describe("SignInForm", () => {
 
   it("leaves the fields alone when the API, not the visitor, failed", () => {
     const html = render(
-      <SignInForm initialState={{ error: SIGN_IN_ERROR.UNAVAILABLE }} />
+      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.UNAVAILABLE }} />
     );
     expect(html).toContain('role="alert"');
     expect(html).not.toMatch(INVALID_FIELD);
@@ -93,7 +95,7 @@ describe("SignInForm", () => {
 
   it("marks both fields on a refusal although the browser found nothing wrong", () => {
     const html = render(
-      <SignInForm initialState={{ error: SIGN_IN_ERROR.MISSING }} />
+      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.MISSING }} />
     );
     expect(html.match(INVALID_FIELD)).toHaveLength(2);
   });
@@ -102,9 +104,12 @@ describe("SignInForm", () => {
     expect(render(<SignInForm />)).toContain("noValidate");
   });
 
-  it.each(objectValues(SIGN_IN_ERROR))("has a translation for %s", (error) => {
-    expect(en.SignIn.error).toHaveProperty(error);
-  });
+  it.each(objectValues(AUTH.SIGN_IN_ERROR))(
+    "has a translation for %s",
+    (error) => {
+      expect(en.SignIn.error).toHaveProperty(error);
+    }
+  );
 
   it.each(["emailInvalid", "emailRequired", "passwordRequired"])(
     "has a field translation for %s in English and Italian",

@@ -1,4 +1,4 @@
-import { playwrightConfig } from "@allonfire/config/tests/playwright";
+import { playwrightConfig } from "@allonfire/config/tests/e2e";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 3200;

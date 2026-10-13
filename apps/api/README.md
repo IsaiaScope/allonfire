@@ -47,10 +47,11 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
   at once (ADR 0019). Redis db 2 stays reserved; see ADR 0009.
 - **Docs** — Better Auth's endpoints appear in `/openapi.json` and `/reference`
   under the `Auth` tag. The plugin's own schema route and reference page are off.
-- **Registration is per App** (`APP_SETTINGS`, ADR 0019): `/sign-up/email` and
+- **Registration is per App** (`ACCESS.APP_SETTINGS`, ADR 0019): `/sign-up/email` and
   `/join-app` need `x-aof-app` naming an App open to it, otherwise 403
   `REGISTRATION_CLOSED`; every App is closed today. A sign-in with `x-aof-app`
-  answers 403 `APP_FORBIDDEN` to a User that App does not let in.
+  answers 403 `APP_FORBIDDEN` to a User that App does not let in, before any
+  Session is written.
 
 ## Images
 
@@ -66,7 +67,7 @@ rewrite.
 |---|---|---|
 | `GET /v1/images?app=&cursor=&limit=` | none | the Images visible in `app` (any App when left out): placed there, and public or in an App the User enters; newest upload first; `nextCursor` (opaque) pages; never 403 |
 | `GET /v1/images/:id` | none; 404 unless visible in some App | one Image |
-| `POST /v1/images` | Session; `ADMIN` in every App named | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [{ app, public? }], alt: { en, it } }]` in file order |
+| `POST /v1/images` | Session; `ADMIN` in every App named (a User who is `ADMIN` in no App is refused before the body is read) | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [{ app, public? }], alt: { en, it } }]` in file order |
 | `PATCH /v1/images` | Session; `ADMIN` in each App whose placement is added, removed or switched public; for `alt`, in every App the Image is in | `[{ id, apps?, alt? }]`, each Image once: `apps` is the full new list; a `public` left out keeps the placement's own |
 | `DELETE /v1/images` | Session; with `app`, `ADMIN` there; without, in every App the Image is in | `{ ids, app? }`: with `app`, takes the Images out of it and deletes those left in none; without, deletes them everywhere; rows first, then files |
 
@@ -80,9 +81,10 @@ rewrite.
   lowercase the database stores. An App appears once in a list (400
   otherwise). A batch with one Image the User cannot see answers 404, before
   any 403, and writes nothing.
-- **Readable by key, never listable.** In dev, `minio-init` creates the bucket
-  with an anonymous policy allowing only `s3:GetObject` on `images/*`; in
-  production apply the same JSON with `mc anonymous set-json`. Never
+- **Readable by key, never listable.** The `image` bucket carries an anonymous
+  policy allowing only `s3:GetObject` on `image/*`: Locally `minio-init`
+  applies it with `mc anonymous set-json`, in Production the one-shot
+  `storage-setup` does (`setupImageBucket`), as does every test run's bucket. Never
   `mc anonymous set download`: it also grants `ListBucket`, which would list
   every key. Each App's rewrite proxies `/storage/images/:key` only, for the same reason.
 
@@ -105,11 +107,11 @@ app.get("/things", handler);
 
 `src/client.test-d.ts` guards this. If it starts failing, a route was un-chained.
 
-**Domain routes mount under `/v1`**, through `API_VERSION_PREFIX`
-(`src/shared/constants/routes.ts`) — never a hard-coded string:
+**Domain routes mount under `/v1`**, through `API.PATH.VERSION`
+(`src/shared/constants/api.ts`) — never a hard-coded string:
 
 ```ts
-.route(API_VERSION_PREFIX, createThingRoutes(deps))
+.route(API.PATH.VERSION, createThingRoutes(deps))
 ```
 
 `/health` and `/ready` stay unversioned — infrastructure endpoints are not part
@@ -165,7 +167,7 @@ Where each signal comes from:
   Its two one-off startup spans are ignored.
 - **Logs**: a pino `mixin` stamps `trace_id`/`span_id` on lines logged inside a
   request, and `pino-opentelemetry-transport` ships every line to OpenObserve.
-  Request lines record only the headers in `LOGGED_REQUEST_HEADERS`.
+  Request lines record only the headers in `API.LOGGED_REQUEST_HEADERS`.
 - **Redis**: not traced. ioredis can only be traced by patching it at load,
   which needs an ESM loader hook; see ADR 0006.
 - **OpenTelemetry's own failures** (collector down, wrong password) appear in

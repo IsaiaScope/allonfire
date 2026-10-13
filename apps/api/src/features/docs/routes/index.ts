@@ -1,11 +1,11 @@
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { Hono } from "hono";
+import { API } from "../../../shared/constants/api";
 import type { AppBindings } from "../../../shared/types/bindings";
-import { DOCS_ROUTE } from "../constants/routes";
 import { referenceHandler, specHandler } from "./handlers";
 
 /** Mount after the routes the spec should describe. */
 export const docsRoutes = (app: Hono<AppBindings>, auth: AuthLike) =>
   new Hono<AppBindings>()
-    .get(DOCS_ROUTE.OPENAPI, specHandler(app, auth))
-    .get(DOCS_ROUTE.REFERENCE, referenceHandler);
+    .get(API.PATH.OPENAPI, specHandler(app, auth))
+    .get(API.PATH.REFERENCE, referenceHandler);

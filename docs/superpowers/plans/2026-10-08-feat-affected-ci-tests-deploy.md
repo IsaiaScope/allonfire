@@ -4,6 +4,8 @@
 
 **Goal:** A PR runs only what it affects, three test layers (unit, browser, e2e) run in CI, and a merge to `prod` deploys only the affected Deploy units as CI-built images.
 
+**Status:** implemented (uncommitted) @ 2026-10-09T09:09:02Z
+
 **Architecture:** Turbo's package graph (`turbo ls --affected`) is the single source of "what changed"; one tested script turns it into the affected Apps and Deploy units, which the e2e job and the deploy workflow read. Vitest gains a browser config (real Chromium, MSW) beside the existing Node one; Playwright's shared preset starts the API plus the App. Production stays one Dokploy compose project, now made of GHCR images with `pull_policy: always`, redeployed by CI.
 
 **Tech Stack:** Turborepo 2.11, Vitest 4.1 (`@vitest/browser-playwright`, `vitest-browser-react`), MSW 2, Playwright Test 1.63, GitHub Actions, GHCR, Dokploy API, Docker Compose.
@@ -52,7 +54,7 @@ concept.
 - Consumes: the JSON `pnpm turbo ls --affected --output=json` prints: `{ packages: { items: { name: string; path: string }[] } }`.
 - Produces: `affectedFrom(json: string): { apps: App[]; deploy: DeployUnit[] }` where `App = "api" | "back-office"` and `DeployUnit = App | "db-migrate"`; CLI `pnpm -s --filter @allonfire/ci exec tsx src/index.ts` reads stdin and prints `apps=<json>` and `deploy=<json>` lines for `$GITHUB_OUTPUT`.
 
-- [ ] **Step 1: Scaffold the package**
+- [x] **Step 1: Scaffold the package**
 
 Copy the shape of the smallest existing package (`packages/core`'s `tsconfig.json` extends from `@allonfire/config/typescript/*`; reuse the same base). `package.json`:
 
@@ -96,7 +98,7 @@ export default mergeConfig(
 
 README: one paragraph (what the package does, the CLI line), in the repo's README style. Run `pnpm install`.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```ts
 // packages/ci/src/features/affected/tests/affected.test.ts
@@ -165,12 +167,12 @@ describe("affectedFrom", () => {
 
 `turbo ls --affected` already adds dependents (it is `--filter=...[base]`), so the script only maps names; it never walks the graph.
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `pnpm --filter @allonfire/ci test`
 Expected: FAIL, `Cannot find module '../affected'`.
 
-- [ ] **Step 4: Write the implementation and the CLI**
+- [x] **Step 4: Write the implementation and the CLI**
 
 ```ts
 // packages/ci/src/features/affected/affected.ts
@@ -235,7 +237,7 @@ process.stdout.write(
 );
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `pnpm --filter @allonfire/ci test`
 Expected: PASS, 6 tests.
@@ -255,7 +257,7 @@ Expected: two lines, `apps=[...]` and `deploy=[...]`.
 - Consumes: Task 1's CLI output lines `apps=` and `deploy=`.
 - Produces: job `changes` with `outputs.apps` and `outputs.deploy` (JSON arrays as strings), read by Task 6 (`e2e`) and reused by Task 8.
 
-- [ ] **Step 1: Add the `changes` job**
+- [x] **Step 1: Add the `changes` job**
 
 ```yaml
   changes:
@@ -289,7 +291,7 @@ Expected: two lines, `apps=[...]` and `deploy=[...]`.
 
 `set -o pipefail` is the default for `bash` steps on GitHub, so a failing `turbo ls` fails the job.
 
-- [ ] **Step 2: Make `check-types`, `test` and `build` affected-only**
+- [x] **Step 2: Make `check-types`, `test` and `build` affected-only**
 
 In `lint-types`, `test` and `build`: add `with: { fetch-depth: 0 }` to `actions/checkout`, then:
 - `pnpm check-types` becomes `pnpm turbo run check-types --affected`
@@ -298,7 +300,7 @@ In `lint-types`, `test` and `build`: add `with: { fetch-depth: 0 }` to `actions/
 
 Leave `pnpm lint`, `design:sync --check`, `i18n:check`, shellcheck and the Liquibase `docker build --check` repo-wide.
 
-- [ ] **Step 3: Lint the workflows in CI**
+- [x] **Step 3: Lint the workflows in CI**
 
 Add to `lint-types`, after shellcheck:
 
@@ -307,7 +309,7 @@ Add to `lint-types`, after shellcheck:
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
 ```
 
-- [ ] **Step 4: Verify locally**
+- [x] **Step 4: Verify locally**
 
 Run: `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color`
 Expected: no output, exit 0.
@@ -315,7 +317,7 @@ Expected: no output, exit 0.
 Run: `TURBO_SCM_BASE=dev pnpm -s turbo run check-types --affected --dry=json | grep -c '"taskId"'`
 Expected: a number smaller than the full run's (`pnpm -s turbo run check-types --dry=json | grep -c '"taskId"'`) when the branch does not touch root files; equal when it does.
 
-- [ ] **Step 5: Document**
+- [x] **Step 5: Document**
 
 `CLAUDE.md`, Deployment section, add: `- CI runs check-types, test and build with \`turbo --affected\`; lint and the repo-wide checks always run. \`packages/ci/src/features/affected/affected.ts\` turns \`turbo ls --affected\` into the affected Apps and Deploy units.`
 
@@ -339,7 +341,7 @@ Expected: a number smaller than the full run's (`pnpm -s turbo run check-types -
 
 Ruling against the spec's "two projects": Vitest allows `projects` only in the root config, and each package config is already one root project, so browser tests get their own config file instead. Same behaviour; the root `{apps,packages}/*/vitest.config.ts` glob keeps running Node tests only.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Create a throwaway `packages/config/tests/probe.browser.test.ts`:
 
@@ -363,12 +365,12 @@ export default mergeConfig(
 );
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter @allonfire/config exec vitest run --config vitest.browser.config.ts`
 Expected: FAIL, cannot resolve `./tests/vitest.browser.config`.
 
-- [ ] **Step 3: Install and write the browser preset**
+- [x] **Step 3: Install and write the browser preset**
 
 Run: `pnpm --filter @allonfire/config add -D vitest@^4.1.11 @vitest/browser-playwright@^4.1.11 playwright@^1.63.0` and add the last two to `peerDependencies` as optional (like `vitest`). Then `pnpm exec playwright install chromium`.
 
@@ -405,14 +407,14 @@ export const vitestBrowserConfig = mergeConfig(
 
 `vitest.setup.ts` comment: replace "Browser tests are Playwright's (`e2e/`), not vitest's." with "Browser tests (`*.browser.test.tsx`) are `integration`; e2e tests are Playwright's (`e2e/`)."
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 Run: `pnpm --filter @allonfire/config exec vitest run --config vitest.browser.config.ts`
 Expected: PASS, 1 test, Chromium launched headless.
 
 Then delete `probe.browser.test.ts` and `packages/config/vitest.browser.config.ts` (the probe proved the preset; the first real browser test arrives in Task 4).
 
-- [ ] **Step 5: Free the suffix and add the task**
+- [x] **Step 5: Free the suffix and add the task**
 
 `git mv packages/core/src/features/next/query/tests/aof-get-query-client.browser.test.ts packages/core/src/features/next/query/tests/aof-get-query-client.client.test.ts` (it runs in Node with a mocked `isServer`; the new name says what it covers). Run `pnpm --filter @allonfire/core test`: same count as before.
 
@@ -443,7 +445,7 @@ Root `package.json` scripts: `"test:browser": "turbo run test:browser"`.
 - Consumes: `vitestBrowserConfig` (Task 3); `api` from `@/features/api/utils/api`; `SignInForm`; `SIGN_IN_ERROR`.
 - Produces: `worker` (`setupWorker` instance) from `src/shared/tests/msw/worker.ts`; `handlers` array; `API_TEST_URL = "http://api.test"`.
 
-- [ ] **Step 1: Install and wire the config**
+- [x] **Step 1: Install and wire the config**
 
 Run: `pnpm --filter @allonfire/back-office add -D msw@^2 vitest-browser-react@^2 @vitest/browser-playwright@^4.1.11 playwright@^1.63.0`, then `pnpm --filter @allonfire/back-office exec msw init public --save` (writes `public/mockServiceWorker.js` and `"msw": { "workerDirectory": ["public"] }`).
 
@@ -508,7 +510,7 @@ afterAll(() => worker.stop());
 
 Check the `/health` response shape against `apps/api/src/features/health/routes/handlers.ts` and copy it exactly.
 
-- [ ] **Step 2: Write the failing API client tests**
+- [x] **Step 2: Write the failing API client tests**
 
 ```ts
 // apps/back-office/src/features/api/utils/tests/api.browser.test.ts
@@ -540,12 +542,12 @@ describe("api", () => {
 
 Adjust `api.health.$get()` to the real route path in `ApiType` (`/health` mounted at the root).
 
-- [ ] **Step 3: Run to verify it fails, then passes**
+- [x] **Step 3: Run to verify it fails, then passes**
 
 Run: `pnpm --filter @allonfire/back-office test:browser`
 Expected first: FAIL until `api.ts` resolves under the browser config (missing alias, `process` undefined, or the route name). Fix the config, not the test, until: PASS, 2 tests.
 
-- [ ] **Step 4: Write the sign-in form browser tests**
+- [x] **Step 4: Write the sign-in form browser tests**
 
 ```tsx
 // apps/back-office/src/features/auth/components/tests/sign-in-form.browser.test.tsx
@@ -622,7 +624,7 @@ describe("SignInForm", () => {
 
 If `getByLabelText("Password")` also matches the reveal toggle ("Show password"), use `{ exact: true }`.
 
-- [ ] **Step 5: Run to verify**
+- [x] **Step 5: Run to verify**
 
 Run: `pnpm --filter @allonfire/back-office test:browser`
 Expected: PASS, 6 tests. If one passes before you expect it to (e.g. the alert renders without the mock), stop: the mock is not applied, and the test proves nothing.
@@ -642,11 +644,11 @@ Then `pnpm --filter @allonfire/back-office test`: the Node suite still passes an
 **Interfaces:**
 - Produces: `aofPlaywrightConfig({ app: string; port: number }): PlaywrightTestConfig` from `@allonfire/config/tests/playwright`; `API_PORT = 3300`; `E2E_USER.ADMIN`, `E2E_USER.USER` (`{ email; password }`) from `apps/back-office/e2e/users.ts`.
 
-- [ ] **Step 1: The API gets a start script**
+- [x] **Step 1: The API gets a start script**
 
 `apps/api/package.json`: `"start": "tsx src/index.ts"` (no watch, no `--env-file`: the caller provides the env). Move `tsx` from `devDependencies` to `dependencies`, since the image runs it.
 
-- [ ] **Step 2: Rewrite the preset**
+- [x] **Step 2: Rewrite the preset**
 
 ```ts
 // packages/config/tests/playwright.config.ts
@@ -705,7 +707,7 @@ import { aofPlaywrightConfig } from "@allonfire/config/tests/playwright";
 export default aofPlaywrightConfig({ app: "back-office", port: 3400 });
 ```
 
-- [ ] **Step 3: Write the failing e2e specs**
+- [x] **Step 3: Write the failing e2e specs**
 
 ```ts
 // apps/back-office/e2e/users.ts
@@ -790,7 +792,7 @@ test("serves Italian at /it/sign-in", async ({ page }) => {
 
 (define `const SIGN_IN_URL = /\/sign-in$/;`, take the Italian submit label from `it.json` `SignIn.submit`, keep the 404 test). If the sign-in photograph's key does not exist in this MinIO, `collectErrors` catches the failed image load: filter out messages containing `/_next/image` in `collectErrors` with a comment pointing at `sign-in-image.ts`.
 
-- [ ] **Step 4: Run against the local stack**
+- [x] **Step 4: Run against the local stack**
 
 Run: `pnpm dev:setup` (Docker up, migrate, seed; dev mode needs `DATABASE_SEED_MODE="dev"` and `DATABASE_SEED_TEST_PASSWORD` in `packages/database/.env`), then `pnpm --filter @allonfire/back-office test:e2e`.
 Expected: first run FAILS where the old smoke assumptions or labels differ; fix selectors to the real page, never the flow. Final: PASS, 7 tests (4 sign-in, 3 smoke).
@@ -807,7 +809,7 @@ Check the dev server ownership rule first: if 3300 or 3400 is already served by 
 **Interfaces:**
 - Consumes: `needs.changes.outputs.apps` (Task 2); `test:browser` (Tasks 3-4); `aofPlaywrightConfig` (Task 5).
 
-- [ ] **Step 1: Add the job**
+- [x] **Step 1: Add the job**
 
 ```yaml
   e2e:
@@ -887,11 +889,11 @@ Check the dev server ownership rule first: if 3300 or 3400 is already served by 
 
 `minio-init` exits after creating the bucket; `--wait` waits for it to complete. If Compose reports the one-shot as a failure under `--wait`, start `postgres redis minio` with `--wait`, then `docker compose ... up minio-init` (no `-d`).
 
-- [ ] **Step 2: Pass the env through Turbo**
+- [x] **Step 2: Pass the env through Turbo**
 
 `turbo.json`, `test:e2e`: add `"passThroughEnv": ["CI", "DATABASE_SEED_*", "API_AUTH_URL", "NEXT_PUBLIC_API_URL", "AUTH_APP"]` (globals already pass the rest). Same list on `test:browser` is not needed.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color`
 Expected: exit 0.
@@ -899,7 +901,7 @@ Expected: exit 0.
 Run the job's steps locally once, from `Start Postgres` to `End-to-end tests`, with the env above exported (and `CI=true`), against a stopped local dev stack.
 Expected: browser tests PASS, e2e PASS (7). Stop the stack afterwards (`pnpm docker:down` or the repo's equivalent).
 
-- [ ] **Step 4: Document the layers**
+- [x] **Step 4: Document the layers**
 
 `CLAUDE.md`, the testing paragraph under API App Structure: replace "Browser tests are Playwright's, under the app's `e2e/`." with:
 
@@ -919,12 +921,12 @@ Expected: browser tests PASS, e2e PASS (7). Stop the stack afterwards (`pnpm doc
 **Interfaces:**
 - Produces: Docker targets `next-runner` (default, today's `runner` renamed) and `node-runner`; images `ghcr.io/isaiascope/allonfire-<unit>:prod` named in compose for `db-backup`/`db-migrate` (`allonfire-db-migrate`), `api`, `back-office`.
 
-- [ ] **Step 1: Write the failing check**
+- [x] **Step 1: Write the failing check**
 
 Run: `docker build --check -f docker/Dockerfile --target node-runner --build-arg APP_NAME=api .`
 Expected: FAIL, `target stage "node-runner" could not be found`.
 
-- [ ] **Step 2: Add the API runner**
+- [x] **Step 2: Add the API runner**
 
 In `docker/Dockerfile`, rename `AS runner` to `AS next-runner`, add before it (so `next-runner` stays the last, default stage):
 
@@ -948,7 +950,7 @@ CMD ["node_modules/.bin/tsx", "src/index.ts"]
 
 `openssl` is what Prisma's musl engine needs; sharp installs its musl binary during `pnpm install` on Alpine.
 
-- [ ] **Step 3: Verify both targets build**
+- [x] **Step 3: Verify both targets build**
 
 Run: `docker build -f docker/Dockerfile --target node-runner --build-arg APP_NAME=api -t allonfire-api:local .`
 Expected: success. Then `docker run --rm --env-file apps/api/.env -e DATABASE_URL=... --network host allonfire-api:local` against the local stack, `curl -s localhost:3000/health` answers.
@@ -956,7 +958,7 @@ Expected: success. Then `docker run --rm --env-file apps/api/.env -e DATABASE_UR
 Run: `docker build -f docker/Dockerfile --build-arg APP_NAME=back-office --build-arg STORAGE_ENDPOINT=http://localhost:9000 --build-arg NEXT_PUBLIC_API_URL=http://localhost:3300 -t allonfire-back-office:local .`
 Expected: success (`next-runner` is the default target).
 
-- [ ] **Step 4: Compose from images**
+- [x] **Step 4: Compose from images**
 
 In `docker/docker-compose.prod.yml`:
 - `x-db-job`: replace `build:` and `image: allonfire-db-migrate` with `image: ghcr.io/isaiascope/allonfire-db-migrate:prod` and `pull_policy: always`.
@@ -1028,7 +1030,7 @@ In `docker/docker-compose.prod.yml`:
 
 Check the API's env schema (`apps/api/src/environment/environment.ts`) and the Back office's (`packages/auth/src/environment/next-environment.ts`) for any required var missing above, and add it. The Back office's `STORAGE_ENDPOINT` and `NEXT_PUBLIC_API_URL` are baked at build (Task 8's build args), not set here.
 
-- [ ] **Step 5: Verify the compose file**
+- [x] **Step 5: Verify the compose file**
 
 Run: `DATABASE_URL=x API_REDIS_URL=x AUTH_SECRET=x API_HOST=api.example.com BACK_OFFICE_HOST=bo.example.com MINIO_ACCESS_KEY=x MINIO_SECRET_KEY=x docker compose -f docker/docker-compose.prod.yml config --quiet`
 Expected: exit 0. Run it again without `API_HOST`: expected FAIL naming `API_HOST is required`.
@@ -1044,7 +1046,7 @@ Expected: exit 0. Run it again without `API_HOST`: expected FAIL naming `API_HOS
 - Consumes: Task 1's CLI (`deploy=`), Task 7's targets and image names.
 - Produces: secrets `DOKPLOY_API_KEY`, `PROD_STORAGE_ENDPOINT`, `PROD_NEXT_PUBLIC_API_URL`; variables `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID` (all in the `prod` GitHub environment).
 
-- [ ] **Step 1: Write the workflow**
+- [x] **Step 1: Write the workflow**
 
 ```yaml
 name: Deploy
@@ -1149,12 +1151,12 @@ jobs:
 
 `deploy` inherits `image`'s skip when nothing is affected (a job whose `needs` was skipped is skipped), which is Review Focus 5. Confirm the endpoint and header against Dokploy's API reference for the installed version before running it; if it differs, change the `curl` line only.
 
-- [ ] **Step 2: Lint**
+- [x] **Step 2: Lint**
 
 Run: `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color`
 Expected: exit 0.
 
-- [ ] **Step 3: Dry check of the guards**
+- [x] **Step 3: Dry check of the guards**
 
 Run: `echo '{"packages":{"items":[]}}' | pnpm -s --filter @allonfire/ci exec tsx src/index.ts`
 Expected: `deploy=[]`, so `image` and `deploy` are skipped.
@@ -1162,7 +1164,7 @@ Expected: `deploy=[]`, so `image` and `deploy` are skipped.
 Run: `echo '{"packages":{"items":[{"name":"@allonfire/database","path":"packages/database"},{"name":"@allonfire/api","path":"apps/api"}]}}' | pnpm -s --filter @allonfire/ci exec tsx src/index.ts`
 Expected: `deploy=["db-migrate","api"]`.
 
-- [ ] **Step 4: Document the one-time setup**
+- [x] **Step 4: Document the one-time setup**
 
 `README.md`, Deploy section (create it under the existing deployment notes):
 
@@ -1175,7 +1177,13 @@ Expected: `deploy=["db-migrate","api"]`.
 
 `CLAUDE.md`, Deployment section: replace the Dokploy line with "Orchestrator: Dokploy runs one compose project of GHCR images; `.github/workflows/deploy.yml` builds only the affected Deploy units on a push to `prod` and redeploys it (ADR 0018)."
 
-- [ ] **Step 5: Final verification**
+- [x] **Step 5: Final verification**
 
 Run: `pnpm -s turbo run check-types && pnpm -s lint && pnpm -s turbo run test && pnpm -s test:browser`
 Expected: all green.
+
+## Implementation Log
+- Implemented: 2026-10-09T09:09:02Z
+- Workspace: current-branch — feat/design-package
+- Committed: no — awaiting user review
+- Changed from the plan: no `@allonfire/ci` package (the user's call); the script is `@allonfire/core/features/ci/affected`, and it takes the changed files too (root files reach every unit, Markdown-only changes none). The deploy diffs against a `deployed/prod` tag and moves `:prod` only after every image built (final review findings).

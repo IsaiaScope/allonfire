@@ -6,10 +6,14 @@ import { signOutOfApi } from "../utils/sign-out";
 const SECURE_ATTRIBUTE = /; Secure(;|$)/i;
 const TOKEN = "__Secure-better-auth.session_token";
 const DATA = "__Secure-better-auth.session_data";
+/** The parent domain the API sets the Session cookies for. */
+const DOMAIN = ".example.test";
 const EXPIRED_BY_API = [
-  `${TOKEN}=; Max-Age=0; Domain=.isaiariva.com; Path=/; HttpOnly; Secure; SameSite=Lax`,
-  `${DATA}=; Max-Age=0; Domain=.isaiariva.com; Path=/; HttpOnly; Secure; SameSite=Lax`,
+  `${TOKEN}=; Max-Age=0; Domain=${DOMAIN}; Path=/; HttpOnly; Secure; SameSite=Lax`,
+  `${DATA}=; Max-Age=0; Domain=${DOMAIN}; Path=/; HttpOnly; Secure; SameSite=Lax`,
 ];
+// The App is told the same domain; its env is read when the module loads.
+vi.hoisted(() => vi.stubEnv("AUTH_COOKIE_DOMAIN", ".example.test"));
 
 type VisitorCookie = { name: string; value: string };
 
@@ -65,17 +69,21 @@ describe("signOutOfApi", () => {
   it("clears the cookies with the Domain and Secure the API set them with", async () => {
     await signOutOfApi();
     for (const name of [TOKEN, DATA]) {
-      expect(sentFor(name)).toContain("Domain=.isaiariva.com");
+      expect(sentFor(name)).toContain(`Domain=${DOMAIN}`);
       expect(sentFor(name)).toMatch(SECURE_ATTRIBUTE);
     }
     expect(sentFor("NEXT_LOCALE")).toBeUndefined();
   });
 
-  it("still clears a __Secure- cookie, Secure included, when the API is down", async () => {
+  it("still clears the cookies, with their Domain and Secure, when the API is down", async () => {
     fetchMock.mockRejectedValueOnce(new Error("unreachable"));
     await signOutOfApi();
-    expect(sentFor(TOKEN)).toMatch(SECURE_ATTRIBUTE);
-    expect(sentFor(TOKEN)).toContain("Expires=Thu, 01 Jan 1970");
+    for (const name of [TOKEN, DATA]) {
+      expect(sentFor(name)).toMatch(SECURE_ATTRIBUTE);
+      expect(sentFor(name)).toContain("Expires=Thu, 01 Jan 1970");
+      // Without the Domain it was set with, a browser keeps the cookie.
+      expect(sentFor(name)).toContain(`Domain=${DOMAIN}`);
+    }
     expect(sentFor("NEXT_LOCALE")).toBeUndefined();
   });
 });

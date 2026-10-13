@@ -1,4 +1,4 @@
-import { PROBE_PATHS } from "../constants/routes";
+import { PROBE_PATHS } from "../constants/api";
 
 /**
  * Probes are self-generated on a fixed schedule. Tracing, rate limiting and

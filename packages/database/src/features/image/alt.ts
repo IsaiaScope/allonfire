@@ -1,8 +1,4 @@
-import {
-  BASE_LANGUAGES,
-  CONTENT_LANGUAGES,
-  EXTRA_LANGUAGES,
-} from "@allonfire/core/features/i18n/constants/locales";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { z } from "zod";
 
@@ -17,10 +13,10 @@ const altTextSchema = z.string().max(MAX_ALT_LENGTH);
  */
 export const imageAltSchema = z.object({
   ...objectFromEntries(
-    BASE_LANGUAGES.map((language) => [language, altTextSchema] as const)
+    I18N.BASE_LANGUAGES.map((language) => [language, altTextSchema] as const)
   ),
   ...objectFromEntries(
-    EXTRA_LANGUAGES.map(
+    I18N.EXTRA_LANGUAGES.map(
       (language) => [language, altTextSchema.optional()] as const
     )
   ),
@@ -30,7 +26,7 @@ export type ImageAlt = z.infer<typeof imageAltSchema>;
 /** How alt reads back: any content language may be missing from an old row. */
 const storedAltSchema = z.object(
   objectFromEntries(
-    CONTENT_LANGUAGES.map(
+    I18N.CONTENT_LANGUAGES.map(
       (language) => [language, z.string().optional()] as const
     )
   )
@@ -44,11 +40,11 @@ const storedAltSchema = z.object(
 export const readAlt = (stored: unknown): ImageAlt => {
   const known = storedAltSchema.parse(stored);
   const fallback =
-    BASE_LANGUAGES.map((language) => known[language]).find(Boolean) ?? "";
+    I18N.BASE_LANGUAGES.map((language) => known[language]).find(Boolean) ?? "";
   return {
     ...known,
     ...objectFromEntries(
-      BASE_LANGUAGES.map(
+      I18N.BASE_LANGUAGES.map(
         (language) => [language, known[language] ?? fallback] as const
       )
     ),

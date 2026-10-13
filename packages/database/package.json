@@ -10,11 +10,18 @@
     "./features/apps/laura/game-score.service": "./src/features/apps/laura/game-score.service.ts",
     "./features/auth/access/access": "./src/features/auth/access/access.ts",
     "./features/auth/access/constants/app-settings": "./src/features/auth/access/constants/app-settings.ts",
-    "./features/auth/access/constants/roles": "./src/features/auth/access/constants/roles.ts",
+    "./features/auth/access/constants/access": "./src/features/auth/access/constants/access.ts",
     "./features/auth/access/constants/schemas": "./src/features/auth/access/constants/schemas.ts",
-    "./features/auth/user.service": "./src/features/auth/user.service.ts",
     "./features/image/alt": "./src/features/image/alt.ts",
-    "./features/image/image.service": "./src/features/image/image.service.ts"
+    "./features/image/image.service": "./src/features/image/image.service.ts",
+    "./features/seed/fixtures/fixtures": "./src/features/seed/fixtures/fixtures.ts",
+    "./features/seed/fixtures/seed-fixtures": "./src/features/seed/fixtures/seed-fixtures.ts",
+    "./features/seed/upsert-user": "./src/features/seed/upsert-user.ts",
+    "./features/test-database/global-setup": "./src/features/test-database/global-setup.ts",
+    "./features/test-database/names": "./src/features/test-database/names.ts",
+    "./features/test-database/server": "./src/features/test-database/server.ts",
+    "./features/test-database/template": "./src/features/test-database/template.ts",
+    "./features/test-database/test-database": "./src/features/test-database/test-database.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -22,11 +29,12 @@
     "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
     "db:generate": "prisma generate",
     "db:rollback": "bash scripts/liquibase.sh rollback",
-    "db:seed": "tsx --env-file=.env src/features/seed/seed.ts",
+    "db:seed": "tsx --env-file=.env src/features/seed/cli.ts",
     "db:status": "bash scripts/liquibase.sh status --verbose",
     "db:update": "bash scripts/liquibase.sh update",
     "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test-database": "tsx --env-file-if-exists=.env src/features/test-database/cli.ts"
   },
   "dependencies": {
     "@allonfire/core": "workspace:*",

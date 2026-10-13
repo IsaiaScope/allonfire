@@ -99,15 +99,15 @@ A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
 
 ## Database Schema Quick Reference
 
-Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds only the admin and users for every App.
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds the real Admin and, with `DATABASE_SEED_MODE=local`, the Fixtures (`src/features/seed/fixtures/`: `FIXTURE.USER`, `FIXTURE.PASSWORD`, `FIXTURE.IMAGE`); `pnpm --filter @allonfire/storage db:seed:images` puts the Image Fixtures' files in the Local bucket.
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
 - **`auth` schema (shared):** `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App`
 - **`image` schema (shared):** `Image` and `ImageApp`: the Images every App shows, each placed in one or more Apps, public or private in each (ADR 0013, ADR 0020)
 - **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/auth/user.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ROLE_RANK`, `APP_SETTINGS` and `AppSettings` (`constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `APP_SETTINGS`.
-- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `APP_SETTINGS`.
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ACCESS.ROLE_RANK`, `ACCESS.APP_SETTINGS` and `AppSettings` (`constants/access` and `constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `ACCESS.APP_SETTINGS`.
+- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `ACCESS.APP_SETTINGS`.
 - Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -214,7 +214,7 @@ full address (`API_AUTH_URL`).
 Env var names start with their owner: a package's with the package name
 (`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_MODE`, `AUTH_SECRET`), the
 API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
-another service carries that service's name (`API_URL` in the Back office). A
+another service carries that service's name (`API_AUTH_URL` in the Back office). A
 name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
 `OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
@@ -249,42 +249,43 @@ apps/api/
     │   │                 each owns its routes/, constants/, middleware/,
     │   │                 utils/ and tests/; the Image module mounts from
     │   │                 @allonfire/storage (ADR 0015)
-    │   ├── docs/         routes/{index,handlers}, constants/{openapi,routes},
+    │   ├── docs/         routes/{index,handlers}, constants/openapi,
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
     │   ├── health/       routes/{index,routes,handlers}, constants/statuses,
     │   │                 utils/status (HealthDeps, status mapping) — /health, /ready
     │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
     │   │                 API's limiter wrapped in the module's authLimit)
-    │   ├── errors/       constants/{error-codes,problem-details},
+    │   ├── errors/       constants/problem-details,
     │   │                 middleware/error-handler
     │   ├── i18n/         constants/locales, middleware/locale-resolver,
     │   │                 translate, translation-values, translations/*.json
     │   ├── logger/       logger, middleware/request-logger
     │   ├── rate-limit/   constants/limits, middleware/rate-limiter
-    │   ├── redis/        redis
+    │   ├── redis/        redis, constants/redis (REDIS)
     │   └── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
     │                     + corrections), resource, telemetry — OTel SDK
     └── shared/           anything more than one feature reads, or no feature owns
-        ├── constants/    http, limits, routes, runtime — no logic
+        ├── constants/    api (API), error (API.ERROR, built on core's
+        │                 ERROR.CODE and each module's codes) — no logic
         ├── middleware/   cors, security-headers
         ├── types/        bindings (AppBindings)
         └── utils/        outage (outageLatch), probe (isProbe)
 ```
 
 A constant belongs in `features/<topic>/constants/` unless more than one
-feature reads it. `CONTEXT_VAR` and the mount prefixes are
-shared, so they stay in `shared/constants/`. Anything not API-specific —
-`HTTP_STATUS`, `HTTP_METHOD`, `HTTP_HEADER`, `CONTENT_TYPE`, `LOG_LEVEL`, the
-redaction list, `BOOLEAN_ENV`, `SEPARATOR`, `TRAILING_SLASHES`, time and size units, `SECURITY_HEADERS` — lives in
-`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`); only `ERROR_STATUS` stays in the API's
-`shared/constants/http.ts`. A constant's type always comes from zod:
+feature reads it. `API` (its paths, context keys, limits, log messages and shutdown steps) is
+shared, so it stays in `shared/constants/api.ts`. Anything not API-specific —
+`HTTP.STATUS`, `HTTP.METHOD`, `HTTP.HEADER`, `HTTP.CONTENT_TYPE`, `LOG.LEVEL`, the
+redaction list, `ENV.BOOLEAN`, `SEPARATOR`, `PATTERN.TRAILING_SLASHES`, `UNIT` (time and size), `HTTP.SECURITY_HEADERS` — lives in
+`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`), and so do the standard error codes, core's `ERROR.CODE` (`features/errors/constants/error-codes`: `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_FAILED`, …), which every Host and module throws. A module adds only its own (`IMAGE.ERROR_CODE`: `IMAGE_TOO_LARGE`, `UNSUPPORTED_IMAGE`; `AUTH.ERROR_CODE`). `API.ERROR` (every code the API answers with, built from those and never retyped, and the statuses it answers with a problem document) is the API's own,
+in `shared/constants/error.ts`. An error code is never a string literal, tests included; only core's own test types them, as the contract clients switch on. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
-Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `INFRA_ROUTE` is
-shared too: the health routes serve it, and telemetry, the request logger and
-the rate limiter skip the `PROBE_PATHS` derived from it. `ERROR_CODE`,
-`LOCALE` and the rate-limit tunables belong to the feature that owns them.
+Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `API.PATH` is
+shared too: the health routes serve its probes, and telemetry, the request logger and
+the rate limiter skip the `PROBE_PATHS` derived from them. `HEALTH`, `OPENAPI`,
+`RATE_LIMIT`, `REDIS`, `OTLP` and `OTEL` belong to the feature that owns them.
 Tests live beside what they test: the feature's `tests/`, or
 `shared/<kind>/tests/` for shared helpers. A feature checked through the whole
 middleware chain still lives in its own `tests/` and builds the app with
@@ -294,8 +295,45 @@ Vitest runs with globals (no `from "vitest"` import). Every test file's first
 line is `// @module-tag unit` or `// @module-tag integration`; a file with
 neither fails. Integration tests need a running service (database, cache,
 queue, external API) and are named
-`*.integration.test.ts`. Type tests (`*.test-d.ts`) take no tag: `tsc`
-checks them and nothing executes. Browser tests are Playwright's, under the app's `e2e/`.
+`*.integration.test.ts`. They never touch the Local database: a Vitest
+`globalSetup` clones a Test database per package per run from the template
+(`allonfire_test_template_<epoch>_<fingerprint>`: the changelog plus the
+Fixtures, a new one when `changelog/`, `liquibase/` or `src/features/seed/`
+change) and a bucket per run holding the
+Image Fixtures, and drops both when the run ends; e2e does the same per
+Playwright run. A test signs in as a Fixture (`FIXTURE.USER.BACK_OFFICE.ADMIN`
+with `FIXTURE.PASSWORD`) and points at an Image Fixture, never a retyped
+email or key; local addresses come from `@allonfire/config/local/addresses`
+(`LOCAL.URL`, `LOCAL.PORT`, `TEST_API_URL`), checked against compose, CI and
+the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no tag: `tsc`
+checks them and nothing executes. Three layers: unit and integration tests run
+in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
+`integration`) render one client component in real Chromium and WebKit through
+`vitest.browser.config.ts`, with MSW answering the API: the worker and its
+guard are shared (`@allonfire/config/tests/browser/msw`: `startMsw`,
+`worker`), the handlers are the App's own (`src/shared/tests/msw/handlers.ts`),
+and a request no handler answers fails the test; e2e
+tests are Playwright's, under the App's `e2e/`, against the API plus the App
+(`aofPlaywrightConfig`), each spec once per project: `chromium`, `webkit`,
+`mobile-chrome` (Pixel 7) and `mobile-safari` (iPhone 15). Both layers are
+headless; `pnpm test:e2e:headed`, `pnpm test:e2e:ui` and
+`pnpm test:browser:headed` show the browser. A server action is mocked in a browser test and
+covered for real by e2e. CI runs browser and e2e tests only for affected Apps.
+
+The pre-commit hook (`.husky/pre-commit`) runs Biome on the staged files
+(errors and warnings fail), `oxlint --type-aware` over the repo, starts the
+Local stack (`pnpm docker:up`, then waits for Postgres, Redis and MinIO; Docker must be running) for the
+integration tests, then `turbo run check-types test test:browser`, then
+`turbo run test:e2e`: the App's production build, served like the Docker
+image (standalone server), plus the API, on their own ports (3310 and the
+App's e2e port) beside `pnpm dev`, the same locally and in CI. Turbo's cache
+replays every task whose package and dependencies did not change, e2e
+included, and the remote cache lets CI replay an e2e run that passed
+locally. oxlint runs one rule, `typescript/no-deprecated`
+(`.oxlintrc.json`): a deprecated API, members included, fails `pnpm lint`;
+Biome's `noDeprecatedImports` sees only imports. Fix the use, never silence
+it; a deprecated name a library's own type still requires goes in the rule's
+`allow` list with the reason.
 
 **Routes live in their feature**, under `features/<name>/routes/`:
 `index.ts` builds the chained sub-app, `routes.ts` holds the `describeRoute`
@@ -312,28 +350,50 @@ exception: it is a mass noun — Hono, Express and Koa all use it for one or
 many, and `middlewares/` reads wrong.
 
 - **Errors are RFC 9457 problem documents** (`application/problem+json`):
-  `type` (stable `/errors/<kebab-code>`, derived from `ERROR_CODE`), `title`
+  `type` (stable `/errors/<kebab-code>`, derived from `API.ERROR.CODE`), `title`
   (the status's reason phrase, invariant per the RFC), `status`, `detail` (the
   localised message — the only member i18n touches), `instance` (the path),
   plus `requestId`, `code` and `errors` as extension members. Send them with
   `problemResponse(c, { code, status, detail, errors? })` in
   `features/errors/middleware/error-handler.ts`, which also sets the media
   type; never hand-assemble one.
-- **`HTTP_STATUS` stays numeric literals**, not `StatusCodes` from
+- **`HTTP.STATUS` stays numeric literals**, not `StatusCodes` from
   `http-status-codes`. An enum member is its own type, not `404`, which breaks
-  `ERROR_STATUS` as a key of Hono's response map and collapses every error arm
+  `API.ERROR.STATUS` as a key of Hono's response map and collapses every error arm
   of `hc<AppType>` to `never`. The library is used for `getReasonPhrase` only.
-- **Every documented body comes from its zod schema**: `content: { [CONTENT_TYPE.JSON]:
+- **Every documented body comes from its zod schema**: `content: { [HTTP.CONTENT_TYPE.JSON]:
   { schema: resolver(bodySchema) } }` in `describeRoute`, the same schema the
   handler `satisfies`. An error response is `{ $ref: problemResponseRef(status) }`
   (`@allonfire/core/features/errors/constants/openapi`): `features/docs/routes/handlers.ts`
-  registers one `Problem<status>` per `ERROR_STATUS`, listing only that status's
-  codes (`ERROR_CODE_STATUS`). Never
+  registers one `Problem<status>` per `API.ERROR.STATUS`, listing only that status's
+  codes (`API.ERROR.STATUS_OF_CODE`). Never
   `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
-- **Domain routes mount under `/v1`** via `API_VERSION_PREFIX` (`shared/constants/routes.ts`),
+- **Domain routes mount under `/v1`** via `API.PATH.VERSION` (`shared/constants/api.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
+- **Constants are one nested object per owner**, named so the first word says where a
+  value comes from, never a flat `X_Y_Z` beside its siblings and never a name that
+  carries its value (`VERSION.CURRENT`, not `V1`): `API` (`PATH`, `VERSION`, `LIMIT`,
+  `DEFAULT`, `CONTEXT_VAR`, `ERROR`, `EXIT_CODE`, `LOG_MESSAGE`, `SHUTDOWN`;
+  `apps/api/src/shared/constants/api.ts`) and each API feature's own (`HEALTH`,
+  `OPENAPI`, `RATE_LIMIT`, `REDIS`, `OTLP`, `OTEL`); `AUTH` (`PATH` the module's routes,
+  `PAGE` an App's pages, `LIMITED_PATHS`, `API_TIMEOUT_MS`, `COOKIE`, `HEADER`, `SESSION`, `RATE_LIMIT`,
+  `ERROR_CODE`, `SIGN_IN_ERROR`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
+  `@allonfire/auth/shared/constants/auth`); `IMAGE` (`BUCKET`, `CACHE`, `FORMAT`, `LIMIT`,
+  `ERROR_CODE`, `DOC`, `OPENAPI_TAG`, `VAR`;
+  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`); core's `HTTP`
+  (`STATUS`, `METHOD`, `HEADER`, `CONTENT_TYPE`), `LOG`, `ENV`, `PATTERN` and `I18N`; and
+  config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`); the database's `ACCESS`
+  (`APP_SETTINGS`, `ROLE_RANK`; `features/auth/access/constants/access`) and `FIXTURE`
+  (`USER`, `USERS`, `PASSWORD`, `IMAGE`; `features/seed/fixtures/fixtures`); the API's
+  `TRANSLATION` (`CATALOGUE`, `DEFAULT_LOCALE`). Core also holds `UNIT` (`MS_PER_SECOND`,
+  `BYTES_PER_MIB`, …), `SEPARATOR` and `ERROR` (`CODE`, the standard error codes): what
+  is most generic carries no owner's name. An object literal cannot read its own
+  keys: shared pieces are file-local consts above it. A path is never a string literal,
+  tests included: compose it (`${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`).
+  `@allonfire/config` cannot import the API, so its `API_PATH` is a copy the API's
+  `routes.test.ts` checks.
 - **Auth guards** come from `@allonfire/auth/features/hono/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
@@ -344,21 +404,22 @@ many, and `middlewares/` reads wrong.
   `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
   `apps/api/vitest.setup.ts`.
 - **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
-  (reserved). Eviction is `volatile-lru`; never TTL a session key.
-- **`LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
-  Apps (ADR 0012), which route by its derived `Language`. `SUPPORTED_LOCALES`
+  (reserved), 15 an e2e run's API (`LOCAL.URL.REDIS_E2E`), so its requests never
+  count against `pnpm dev`. Eviction is `volatile-lru`; never TTL a session key.
+- **`I18N.LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
+  Apps (ADR 0012), which route by its derived `Language`. `I18N.SUPPORTED_LOCALES`
   there is the explicit preference order `match()` sees, main variant of each
   language first; `src/features/i18n/tests/locales.test-d.ts` fails if a locale is
-  missing from it or speaks a language outside `BASE_LANGUAGES`. The API's
-  `features/i18n/constants/locales.ts` keeps `DEFAULT_LOCALE` and the catalogue.
-  `CATALOGUE` uses computed `[LOCALE.X]` keys
+  missing from it or speaks a language outside `I18N.BASE_LANGUAGES`. The API's
+  `features/i18n/constants/locales.ts` keeps `TRANSLATION.DEFAULT_LOCALE` and the catalogue.
+  `TRANSLATION.CATALOGUE` uses computed `[I18N.LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
   locale has no messages. `Translations` is `typeof EN`, derived rather than
   `Record<MessageKey, string>`, so a target locale missing a key fails too.
 - **The catalogue is not an error catalogue.** `TranslationKey` is
   `keyof typeof en.json`, so any localised string belongs there — a subject
   line, a notification body, a PDF heading. Errors are simply the keys that
-  exist today. The dependency runs errors -> messages: `ERROR_CODE` carries
+  exist today. The dependency runs errors -> messages: `API.ERROR.CODE` carries
   `satisfies Record<string, TranslationKey>`, so a code without a message fails at
   that declaration.
 - **Translations are JSON** (`src/features/i18n/translations/*.json`) so a translation platform
@@ -379,10 +440,12 @@ many, and `middlewares/` reads wrong.
 
 - VPS: Hetzner, 4 vCPU / 8 GB RAM, no swap, at 188.245.174.30 (ssh main-vps)
 - Observability: self-hosted OpenObserve + Umami (Local only so far) — see `docs/adr/0006-self-hosted-observability.md`
-- Orchestrator: Dokploy
+- Orchestrator: Dokploy runs one compose project of GHCR images; `.github/workflows/deploy.yml` builds only the affected Deploy units on a push to `prod` and redeploys it (ADR 0018).
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
 - Back office build needs `STORAGE_ENDPOINT` (Docker build arg, CI secret); it is baked into the `/storage/images` rewrite.
+- Before the API starts, the one-shot `storage-setup` service (the API's image) creates the `image` bucket with its read-only policy and uploads the Images the Apps show by key (the sign-in photo), each only when missing.
+- CI runs check-types, test and build with `turbo --affected`; lint and the repo-wide checks always run. Affected is Turbo's (`futureFlags.affectedUsingTaskInputs`): every task's `inputs` excludes `**/*.md`, so a Markdown-only change affects nothing, and a root `package.json`, `turbo.json` or lockfile change affects everything; a new task needs the same exclusion. `pnpm ci:affected <base>` (`@allonfire/core/features/ci/affected`) reads `turbo query affected --packages` as the affected Apps (packages under `apps/`) and Deploy units; `docker/`, `.dockerignore` and `pnpm-workspace.yaml`, which no task reads, reach every unit. A push to `prod` diffs against the `deployed/prod` tag, the last commit that deployed.
 
 ## Agent skills
 

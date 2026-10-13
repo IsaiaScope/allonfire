@@ -4,7 +4,6 @@ import { PHASE_PRODUCTION_BUILD } from "next/constants";
 beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("AUTH_APP", undefined);
-  vi.stubEnv("API_URL", undefined);
   vi.stubEnv("API_AUTH_URL", undefined);
 });
 

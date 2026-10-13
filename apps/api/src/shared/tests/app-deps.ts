@@ -3,11 +3,11 @@ import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { stubImageDeps } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { AppDeps } from "../../app";
 import { memoryStore } from "../../features/rate-limit/tests/memory-store";
-import { AUTH_BASE_PATH } from "../constants/routes";
+import { API } from "../constants/api";
 
 /** The module's stub, mounted where the API mounts the real one. */
 export const apiAuth = (overrides: Partial<AuthLike> = {}): AuthLike =>
-  stubAuth({ basePath: AUTH_BASE_PATH, ...overrides });
+  stubAuth({ basePath: API.PATH.AUTH, ...overrides });
 
 /**
  * Dependencies for `createApp` in tests that drive a feature through the whole

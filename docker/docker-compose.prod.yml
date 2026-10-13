@@ -6,10 +6,9 @@ name: allonfire
 # escalation, a scratch /tmp for the JVM, and only the network that reaches
 # dokploy-postgres.
 x-db-job: &db-job
-  build:
-    context: ..
-    dockerfile: packages/database/liquibase/Dockerfile
-  image: allonfire-db-migrate
+  # Built by CI (.github/workflows/deploy.yml, ADR 0018); pulled on every deploy.
+  image: ghcr.io/isaiascope/allonfire-db-migrate:prod
+  pull_policy: always
   restart: "no"
   init: true
   read_only: true
@@ -45,43 +44,90 @@ services:
       db-backup:
         condition: service_completed_successfully
 
-  laura:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        APP_NAME: laura
-        BETTER_AUTH_URL: https://laura.isaiariva.com
+  # Then: the Images' bucket with its read-only policy, and the Images the
+  # Apps show by key before any upload (the sign-in photo), each only when
+  # missing. Runs from the API's image, which holds the storage package.
+  storage-setup:
+    image: ghcr.io/isaiascope/allonfire-api:prod
+    pull_policy: always
+    restart: "no"
+    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/cli.ts"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - STORAGE_ENDPOINT=http://minio:9000
+      - STORAGE_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - STORAGE_SECRET_KEY=${MINIO_SECRET_KEY}
+    networks:
+      - allonfire
+
+  # Every Deploy unit below is an image CI built (ADR 0018); compose recreates
+  # only the ones whose :prod tag moved. Laura is out of Production until its
+  # rebuild (ADR 0010).
+  api:
+    image: ghcr.io/isaiascope/allonfire-api:prod
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       db-migrate:
         condition: service_completed_successfully
+      storage-setup:
+        condition: service_completed_successfully
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=https://laura.isaiariva.com
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=${MINIO_BUCKET}
-      - LAURA_VIEWER_EMAIL=${LAURA_VIEWER_EMAIL:-}
-      - LAURA_VIEWER_PASSWORD=${LAURA_VIEWER_PASSWORD:-}
-      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - API_REDIS_URL=${API_REDIS_URL:?API_REDIS_URL is required}
+      - API_CORS_ORIGINS=https://${BACK_OFFICE_HOST:?BACK_OFFICE_HOST is required}
+      - API_TRUSTED_PROXY_HOPS=1
+      - AUTH_SECRET=${AUTH_SECRET:?AUTH_SECRET is required}
+      - AUTH_URL=https://${API_HOST:?API_HOST is required}
+      - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
+      - STORAGE_ENDPOINT=http://minio:9000
+      - STORAGE_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - STORAGE_SECRET_KEY=${MINIO_SECRET_KEY}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 30s
     networks:
       - allonfire
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.allonfire-laura.rule=Host(`laura.isaiariva.com`)"
-      - "traefik.http.routers.allonfire-laura.entrypoints=websecure"
-      - "traefik.http.routers.allonfire-laura.tls.certresolver=letsencrypt"
-      - "traefik.http.services.allonfire-laura.loadbalancer.server.port=3000"
+      - "traefik.http.routers.allonfire-api.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.allonfire-api.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-api.loadbalancer.server.port=3000"
+
+  # STORAGE_ENDPOINT and NEXT_PUBLIC_API_URL are baked in at build (deploy.yml).
+  back-office:
+    image: ghcr.io/isaiascope/allonfire-back-office:prod
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - API_AUTH_URL=http://api:3000/v1/auth
+      - AUTH_APP=BACK_OFFICE
+      - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - allonfire
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.allonfire-back-office.rule=Host(`${BACK_OFFICE_HOST}`)"
+      - "traefik.http.routers.allonfire-back-office.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-back-office.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-back-office.loadbalancer.server.port=3000"
 
   minio:
     image: minio/minio:latest

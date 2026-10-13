@@ -1,5 +1,6 @@
 // @module-tag unit
 
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -37,7 +38,7 @@ describe("onError", () => {
     const res = await testApp().request("/nope");
     expect(res.status).toBe(403);
     const body = await problemOf(res);
-    expect(body.code).toBe("FORBIDDEN");
+    expect(body.code).toBe(ERROR.CODE.FORBIDDEN);
     expect(body.detail).toBe("Not allowed");
     expect(body.requestId).toBeTruthy();
   });
@@ -52,14 +53,14 @@ describe("onError", () => {
   it("answers 500 for a status the API does not document", async () => {
     const res = await testApp().request("/teapot");
     expect(res.status).toBe(500);
-    expect((await problemOf(res)).code).toBe("INTERNAL_ERROR");
+    expect((await problemOf(res)).code).toBe(ERROR.CODE.INTERNAL_ERROR);
   });
 
   it("never leaks an unknown error's message", async () => {
     const res = await testApp().request("/boom");
     expect(res.status).toBe(500);
     const body = await problemOf(res);
-    expect(body.code).toBe("INTERNAL_ERROR");
+    expect(body.code).toBe(ERROR.CODE.INTERNAL_ERROR);
     expect(body.detail).toBe("Internal server error");
     expect(stringifyJson(body)).not.toContain("secret_col");
   });
@@ -68,7 +69,7 @@ describe("onError", () => {
     const res = await testApp().request("/missing");
     expect(res.status).toBe(404);
     const body = await problemOf(res);
-    expect(body.code).toBe("NOT_FOUND");
+    expect(body.code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });
 
@@ -95,7 +96,7 @@ describe("validationHook", () => {
 
     expect(res.status).toBe(400);
     const body = await problemOf(res);
-    expect(body.code).toBe("VALIDATION_FAILED");
+    expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
     const paths = (body.errors ?? []).map((d: { path: string }) => d.path);
     expect(paths).toContain("email");
     expect(paths).toContain("age");

@@ -13,9 +13,9 @@ export const seedEnv = createEnv({
     // Required: Laura's guest Viewer, seeded by features/apps/laura/seed
     DATABASE_SEED_LAURA_VIEWER_EMAIL: z.email(),
     DATABASE_SEED_LAURA_VIEWER_PASSWORD: z.string().min(8),
-    // "prod" (default) = admin only, "dev" = admin + test users + mock data
-    DATABASE_SEED_MODE: z.enum(["dev", "prod"]).default("prod"),
-    DATABASE_SEED_TEST_PASSWORD: z.string().min(8).optional(),
+    // "prod" (default) = the real Admin and Laura's guest Viewer; "local" =
+    // also every Fixture (features/seed/fixtures).
+    DATABASE_SEED_MODE: z.enum(["local", "prod"]).default("prod"),
   },
 });
 

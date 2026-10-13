@@ -32,8 +32,9 @@ cp "$repo_root/package.json" "$context/"
 rsync -a --exclude='._*' --exclude='.DS_Store' --exclude='tests' \
   "$package_dir/changelog" "$package_dir/liquibase" "$context/packages/database/"
 
-docker build --quiet --tag allonfire-db-migrate \
-  --file "$context/packages/database/liquibase/Dockerfile" "$context" >/dev/null
+# By ID, not by tag: another checkout building at the same time moves the tag.
+image=$(docker build --quiet --tag allonfire-db-migrate \
+  --file "$context/packages/database/liquibase/Dockerfile" "$context")
 
 volume=()
 if [[ -n "${DB_BACKUPS_VOLUME:-}" ]]; then
@@ -49,4 +50,4 @@ docker run --rm --init \
   --add-host=host.docker.internal:host-gateway \
   --env DATABASE_URL --env BACKUP_KEEP \
   ${volume[@]+"${volume[@]}"} \
-  allonfire-db-migrate "$@"
+  "$image" "$@"

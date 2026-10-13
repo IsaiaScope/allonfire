@@ -1,12 +1,12 @@
 import {
   defaultShouldDehydrateQuery,
-  isServer,
+  environmentManager,
   QueryClient,
 } from "@tanstack/react-query";
-import { MS_PER_MINUTE } from "../../../shared/constants/units";
+import { UNIT } from "../../../shared/constants/units";
 
 /** Above zero, so the browser does not refetch what the server just sent. */
-const DEFAULT_STALE_TIME_MS = MS_PER_MINUTE;
+const DEFAULT_STALE_TIME_MS = UNIT.MS_PER_MINUTE;
 
 export type AOFQueryClientOptions = { staleTime?: number | undefined };
 
@@ -36,7 +36,7 @@ let browserQueryClient: QueryClient | undefined;
 export const AOFGetQueryClient = (
   options: AOFQueryClientOptions = {}
 ): QueryClient => {
-  if (isServer) {
+  if (environmentManager.isServer()) {
     return makeQueryClient(options);
   }
   browserQueryClient ??= makeQueryClient(options);

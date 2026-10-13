@@ -66,15 +66,23 @@
   package affected; Turbo already does this.
 - Biome lint, `i18n:check`, shellcheck and `design:sync --check` stay
   repo-wide: seconds each, and a wrong skip costs more than they save.
-- A `changes` job runs `pnpm turbo ls --affected --output=json` once and
-  publishes two outputs for later jobs:
+- A `changes` job runs `pnpm ci:affected <base>` (`turbo query affected
+  --packages`) once and publishes its output for later jobs:
   - `apps`: affected Apps (`api`, `back-office`), the e2e job's input.
   - `deploy`: affected deploy units, phase 3's input (`db-migrate` is a unit
     whenever `@allonfire/database` is affected).
-- A small package, `@allonfire/ci`, turns Turbo's JSON into those two lists
-  so the mapping (package name to unit) lives in one tested place. It is its
-  own package because it reads core's helpers and core already depends on
-  `@allonfire/config`.
+- `@allonfire/core` (`features/ci/affected`) turns Turbo's JSON into those
+  two lists, so the mapping (package to unit) lives in one tested place. Not
+  `config`: it reads core's helpers, and core already depends on
+  `@allonfire/config`. What is affected is Turbo's own rule, with
+  `futureFlags.affectedUsingTaskInputs`: every task's inputs exclude
+  `**/*.md`, so a Markdown-only change affects nothing; root `package.json`,
+  `turbo.json` and the lockfile affect everything. The one case Turbo cannot
+  see is an image file no task reads (`docker/`, `.dockerignore`,
+  `pnpm-workspace.yaml`): the changed files settle it, and it reaches every
+  unit.
+- `TURBO_SCM_BASE` is `origin/<base>`: Turbo reads `GITHUB_BASE_REF` as a
+  local branch, which checkout never creates.
 
 ## Phase 2: tests
 
@@ -150,10 +158,13 @@
 ## Phase 3: modular deploy (`prod`)
 
 - New workflow `.github/workflows/deploy.yml`, on push to `prod`.
-- Reuses the `changes` logic against the previous `prod` commit
-  (`--affected` with `TURBO_SCM_BASE=${{ github.event.before }}`).
+- Reuses the `changes` logic against the last commit that deployed, the
+  `deployed/prod` tag the deploy job moves (not the previous push: a failed
+  or cancelled run would drop its units). No tag yet, or a manual run: every
+  unit.
 - Per affected deploy unit, build and push
-  `ghcr.io/isaiascope/allonfire-<unit>:<sha>` and `:prod` (private images):
+  `ghcr.io/isaiascope/allonfire-<unit>:<sha>` (private images, no provenance
+  or SBOM manifests); `:prod` moves for every unit only after all built:
   - `back-office`: `docker/Dockerfile`, the Next standalone runner; its
     build args (`STORAGE_ENDPOINT`, `NEXT_PUBLIC_API_URL`) come from the
     `prod` environment's secrets.
@@ -186,8 +197,10 @@
 
 ## Error handling
 
-- `turbo ls --affected` failing (shallow clone, missing base) fails the
-  `changes` job; it never falls back to "nothing affected".
+- `turbo query` or `git diff` failing (shallow clone, a base with no merge
+  base) fails the `changes` job; it never falls back to "nothing affected".
+  A base that does not exist (no `deployed/prod` tag yet) or none (a manual
+  run) means every unit, never none.
 - A failed `db-backup` or `db-migrate` stops the compose project before any
   App is recreated (`service_completed_successfully`); the old containers keep
   serving.
@@ -195,8 +208,9 @@
 
 ## Testing the pipeline itself
 
-- `@allonfire/ci` has unit tests: an App change, a shared package
-  change, a database change (adds `db-migrate`), a root change (everything).
+- `affectedFrom` has unit tests: an App change, a shared package change, a
+  database change (adds `db-migrate`), each root file (everything), a
+  Markdown-only change (nothing).
 - The workflows are checked by running them on the PR that introduces them;
   `actionlint` runs in `lint-types`.
 

@@ -1,1 +1,21 @@
+# Staged files: Biome fixes what it can and fails on any error or warning.
 pnpm exec lint-staged --allow-empty
+# Deprecated APIs, members included, read from the types (.oxlintrc.json):
+# the whole repo, since a dependency upgrade deprecates code nobody staged.
+pnpm exec oxlint --type-aware
+# Integration tests run against the real Local stack: start it (a no-op when
+# it is already up; the one-shot init containers run too), then wait for the
+# services the tests use. Not `--wait` on the whole stack: it fails as soon as
+# a one-shot container exits, even with 0. Docker must run.
+pnpm docker:up
+docker compose -f docker/docker-compose.dev.yml up -d --wait postgres redis minio
+# Types, unit and integration tests, browser tests. Turbo's cache replays
+# every package whose inputs did not change, so only what this commit touches
+# (and what depends on it) runs.
+pnpm exec turbo run check-types test test:browser --output-logs=errors-only
+# E2e after the rest, so integration tests never touch the database under it.
+# Cached the same way: an App re-runs only when it or a package it reads
+# changed. It builds and starts the production App and the API on their own
+# ports (3310, 3410), beside `pnpm dev`; CI runs the same, so the remote cache
+# lets CI replay a run that passed here.
+pnpm exec turbo run test:e2e --output-logs=errors-only

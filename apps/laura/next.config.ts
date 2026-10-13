@@ -1,4 +1,4 @@
-import { SECURITY_HEADERS } from "@allonfire/core/features/http/constants/security-headers";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        headers: SECURITY_HEADERS,
+        headers: HTTP.SECURITY_HEADERS,
         source: "/(.*)",
       },
       {

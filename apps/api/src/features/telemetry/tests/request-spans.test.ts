@@ -15,6 +15,7 @@ import {
 } from "@opentelemetry/sdk-trace";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { API } from "../../../shared/constants/api";
 import { requestSpans } from "../middleware/request-spans";
 
 const spans = new InMemorySpanExporter();
@@ -36,7 +37,7 @@ const buildApp = () =>
       throw new Error("boom");
     })
     // Stands in for /ready's database check, which Prisma traces.
-    .get("/ready", (c) => {
+    .get(API.PATH.READY, (c) => {
       trace.getTracer("prisma-stand-in").startActiveSpan("query", (span) => {
         span.end();
       });
@@ -100,7 +101,7 @@ describe("requestSpans", () => {
   });
 
   it("traces nothing a probe triggers, including its database check", async () => {
-    await buildApp().request("/ready");
+    await buildApp().request(API.PATH.READY);
 
     expect(spans.getFinishedSpans()).toHaveLength(0);
   });

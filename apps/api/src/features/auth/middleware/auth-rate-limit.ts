@@ -7,8 +7,8 @@ import {
 } from "../../rate-limit/middleware/rate-limiter";
 
 /**
- * The auth bucket: sign-in and change-password, where each request is a
- * password guess. Fails open like the global limiter: with Redis down, scrypt's
+ * The auth bucket: sign-in, sign-up and change-password (`AUTH.LIMITED_PATHS`),
+ * where each request is a password guess or a hash. Fails open like the global limiter: with Redis down, scrypt's
  * cost per guess is the only brake. Shares the global store; the key prefix
  * keeps the counts apart and the window comes from here.
  */

@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  DEFAULT_AUTH_RATE_LIMIT_KEY_PREFIX,
-  DEFAULT_AUTH_RATE_LIMIT_MAX,
-  DEFAULT_AUTH_RATE_LIMIT_WINDOW_MS,
-  SECRET_MIN_LENGTH,
-} from "../shared/constants/limits";
+import { AUTH } from "../shared/constants/auth";
 
 /** Spread into a host's env `server` block. */
 export const authEnvSchema = {
@@ -17,17 +12,17 @@ export const authEnvSchema = {
   AUTH_RATE_LIMIT_KEY_PREFIX: z
     .string()
     .min(1)
-    .default(DEFAULT_AUTH_RATE_LIMIT_KEY_PREFIX),
+    .default(AUTH.RATE_LIMIT.DEFAULT.KEY_PREFIX),
   AUTH_RATE_LIMIT_MAX: z.coerce
     .number()
     .int()
     .positive()
-    .default(DEFAULT_AUTH_RATE_LIMIT_MAX),
+    .default(AUTH.RATE_LIMIT.DEFAULT.MAX),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
     .number()
     .int()
     .positive()
-    .default(DEFAULT_AUTH_RATE_LIMIT_WINDOW_MS),
-  AUTH_SECRET: z.string().min(SECRET_MIN_LENGTH),
+    .default(AUTH.RATE_LIMIT.DEFAULT.WINDOW_MS),
+  AUTH_SECRET: z.string().min(AUTH.SECRET_MIN_LENGTH),
   AUTH_URL: z.url(),
 };

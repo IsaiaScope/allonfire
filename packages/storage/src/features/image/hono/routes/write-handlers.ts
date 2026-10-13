@@ -1,13 +1,17 @@
-import { AUTH_VAR } from "@allonfire/auth/features/hono/constants/variables";
 import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
-import { HTTP_STATUS } from "@allonfire/core/features/http/constants/http";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import {
+  invalidHook,
+  validationError,
+} from "@allonfire/core/features/errors/coded-error";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { ImageLinksById } from "@allonfire/database/features/image/image.service";
 import { sValidator } from "@hono/standard-validator";
 import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
+import { IMAGE } from "../../constants/image";
 import { toImageBody } from "../../constants/schemas";
-import { MAX_FILE_BYTES, MAX_UPLOAD_BYTES } from "../constants/limits";
 import {
   deleteBodySchema,
   patchBodySchema,
@@ -17,16 +21,11 @@ import {
   authoriseDelete,
   authorisePatch,
   authoriseUpload,
+  authoriseUploader,
 } from "../utils/access";
 import type { ImageDeps } from "../utils/deps";
 import { notFoundOnUnknownIds, tooLarge } from "../utils/errors";
-import {
-  prepareAll,
-  storeAll,
-  UPLOAD_BUDGET,
-  uploadTimeout,
-} from "../utils/upload-batch";
-import { invalid, throwOnInvalid } from "../utils/validation";
+import { prepareAll, storeAll, uploadTimeout } from "../utils/upload-batch";
 import { deleteRoute, patchRoute, uploadRoute } from "./routes";
 
 /**
@@ -44,11 +43,15 @@ export const uploadHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     uploadRoute,
     requireSession(),
+    (c, next) => {
+      authoriseUploader(c.get(AUTH.VAR.SESSION).user);
+      return next();
+    },
     uploadTimeout,
     bodyLimit({
-      maxSize: MAX_UPLOAD_BYTES,
+      maxSize: IMAGE.LIMIT.UPLOAD_BYTES,
       onError: () => {
-        throw tooLarge(MAX_UPLOAD_BYTES);
+        throw tooLarge(IMAGE.LIMIT.UPLOAD_BYTES);
       },
     }),
     async (c) => {
@@ -59,17 +62,17 @@ export const uploadHandlers = (deps: ImageDeps) =>
         meta: form.meta,
       });
       if (!parsed.success) {
-        throw invalid(parsed.error.issues);
+        throw validationError(parsed.error.issues);
       }
       const items = parsed.data;
-      const { user } = c.get(AUTH_VAR.SESSION);
+      const { user } = c.get(AUTH.VAR.SESSION);
       authoriseUpload(user, items);
-      if (items.some(({ file }) => file.size > MAX_FILE_BYTES)) {
-        throw tooLarge(MAX_FILE_BYTES);
+      if (items.some(({ file }) => file.size > IMAGE.LIMIT.FILE_BYTES)) {
+        throw tooLarge(IMAGE.LIMIT.FILE_BYTES);
       }
       const prepared = await prepareAll(deps, items);
 
-      const budget = c.get(UPLOAD_BUDGET);
+      const budget = c.get(IMAGE.VAR.UPLOAD_BUDGET);
       budget.throwIfAborted();
       try {
         await storeAll(deps, prepared);
@@ -87,7 +90,7 @@ export const uploadHandlers = (deps: ImageDeps) =>
             width: image.width,
           }))
         );
-        return c.json(images.map(toImageBody), HTTP_STATUS.CREATED);
+        return c.json(images.map(toImageBody), HTTP.STATUS.CREATED);
       } catch (error) {
         // ponytail: best effort. An object left behind is invisible (no row
         // points at it); a failed cleanup must not hide the original error.
@@ -106,21 +109,19 @@ export const patchHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     patchRoute,
     requireSession(),
-    sValidator("json", patchBodySchema, throwOnInvalid),
+    sValidator("json", patchBodySchema, invalidHook),
     async (c) => {
       const changes = c.req.valid("json");
-      const current = await deps
-        .linksOf(changes.map(({ id }) => id))
-        .catch(notFoundOnUnknownIds);
-      const resolved = authorisePatch(
-        c.get(AUTH_VAR.SESSION).user,
-        current,
-        changes
-      );
+      const { user } = c.get(AUTH.VAR.SESSION);
+      // Worked out inside the write, against the placements it locks, as a
+      // delete checks: one added since nobody read it is checked too.
       const images = await deps
-        .updateImages(resolved)
+        .updateImages(
+          changes.map(({ id }) => id),
+          (current) => authorisePatch(user, current, changes)
+        )
         .catch(notFoundOnUnknownIds);
-      return c.json(images.map(toImageBody), HTTP_STATUS.OK);
+      return c.json(images.map(toImageBody), HTTP.STATUS.OK);
     }
   );
 
@@ -128,12 +129,11 @@ export const deleteHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     deleteRoute,
     requireSession(),
-    sValidator("json", deleteBodySchema, throwOnInvalid),
+    sValidator("json", deleteBodySchema, invalidHook),
     async (c) => {
       const { app, ids } = c.req.valid("json");
-      const { user } = c.get(AUTH_VAR.SESSION);
-      // Checked inside the write, against the placements it locks: one
-      // added since nobody read it is checked too.
+      const { user } = c.get(AUTH.VAR.SESSION);
+      // Checked inside the write, like a PATCH.
       const authorise = (current: ImageLinksById) =>
         authoriseDelete(user, current, app);
       const keys = await (app
@@ -147,6 +147,6 @@ export const deleteHandlers = (deps: ImageDeps) =>
         .catch((error: unknown) =>
           deps.log.warn({ err: error, keys }, LOG_MESSAGE.OBJECT_DELETE_FAILED)
         );
-      return c.body(null, HTTP_STATUS.NO_CONTENT);
+      return c.body(null, HTTP.STATUS.NO_CONTENT);
     }
   );

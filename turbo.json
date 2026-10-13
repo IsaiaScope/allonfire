@@ -1,6 +1,7 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+  "futureFlags": { "affectedUsingTaskInputs": true },
   "globalPassThroughEnv": [
     "DATABASE_URL",
     "AUTH_SECRET",
@@ -8,13 +9,13 @@
     "STORAGE_ENDPOINT",
     "STORAGE_ACCESS_KEY",
     "STORAGE_SECRET_KEY",
+    "STORAGE_BUCKET",
     "API_REDIS_URL",
     "PORT",
     "API_LOG_LEVEL",
     "API_CORS_ORIGINS",
     "API_TRUSTED_PROXY_HOPS",
-    "API_ENABLE_DOCS",
-    "API_URL"
+    "API_ENABLE_DOCS"
   ],
   "tasks": {
     "build": {
@@ -23,13 +24,15 @@
         "ANALYZE",
         "NEXT_DIST_DIR",
         "STORAGE_ENDPOINT",
+        "STORAGE_BUCKET",
         "NEXT_PUBLIC_API_URL"
       ],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "dev": {
       "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "persistent": true
     },
     "check-types": {
@@ -43,16 +46,22 @@
       "dependsOn": ["transit"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
+    "test:browser": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
+    },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "transit": {
       "dependsOn": ["^transit"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "test:e2e": {
-      "cache": false,
-      "dependsOn": ["transit"]
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
+      "passThroughEnv": ["CI", "CONFIG_E2E_STAMP"]
     },
     "//#test:ui": {
       "cache": false,

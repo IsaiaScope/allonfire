@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // local/tests/local-files.test.ts reads these: a change to one re-runs it.
+      "inputs": [
+        "$TURBO_EXTENDS$",
+        "$TURBO_ROOT$/.github/workflows/ci.yml",
+        "$TURBO_ROOT$/docker/docker-compose.dev.yml",
+        "$TURBO_ROOT$/.env.example",
+        "$TURBO_ROOT$/apps/*/.env.example",
+        "$TURBO_ROOT$/apps/*/package.json",
+        "$TURBO_ROOT$/packages/*/.env.example"
+      ]
+    }
+  }
+}

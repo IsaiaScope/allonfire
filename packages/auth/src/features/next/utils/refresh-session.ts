@@ -1,7 +1,7 @@
 import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
-import { AUTH_COOKIE } from "../constants/api";
+import { AUTH } from "../../../shared/constants/auth";
 import { createApiAuthClient } from "./auth-client";
 import { type ParsedCookie, parseSetCookies } from "./set-cookie";
 
@@ -19,7 +19,7 @@ export const refreshSession = async (
   // `includes`: Better Auth splits a large cache into `.0`, `.1` chunks.
   const cached = request.cookies
     .getAll()
-    .some(({ name }) => name.includes(AUTH_COOKIE.SESSION_DATA));
+    .some(({ name }) => name.includes(AUTH.COOKIE.SESSION_DATA));
   if (!getSessionCookie(request) || cached) {
     return [];
   }

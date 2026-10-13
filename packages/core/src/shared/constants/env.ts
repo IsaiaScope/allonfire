@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 /** An env flag is a string; only these two spellings are accepted. */
-export const BOOLEAN_ENV = { FALSE: "false", TRUE: "true" } as const;
+const BOOLEAN = { FALSE: "false", TRUE: "true" } as const;
 
-export const booleanEnvSchema = z.enum(BOOLEAN_ENV);
+export const booleanEnvSchema = z.enum(BOOLEAN);
 export type BooleanEnv = z.infer<typeof booleanEnvSchema>;
 
 /**
@@ -11,12 +11,15 @@ export type BooleanEnv = z.infer<typeof booleanEnvSchema>;
  * against these instead of bare literals makes a typo a type error rather than
  * a branch that never fires.
  */
-export const NODE_ENV = {
+const NODE = {
   DEVELOPMENT: "development",
   PRODUCTION: "production",
   TEST: "test",
 } as const;
 
 /** Validates `NODE_ENV` in each env module: `nodeEnvSchema.default(...)`. */
-export const nodeEnvSchema = z.enum(NODE_ENV);
+export const nodeEnvSchema = z.enum(NODE);
 export type NodeEnv = z.infer<typeof nodeEnvSchema>;
+
+/** The values shared env variables can take: `ENV.BOOLEAN.*` for a flag, `ENV.NODE.*` for `NODE_ENV`. */
+export const ENV = { BOOLEAN, NODE } as const;

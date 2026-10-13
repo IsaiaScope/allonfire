@@ -1,15 +1,6 @@
 import type { Logger } from "pino";
 import { logger } from "./features/logger/logger";
-import {
-  DEFAULT_DRAIN_TIMEOUT_MS,
-  TELEMETRY_FLUSH_TIMEOUT_MS,
-} from "./shared/constants/limits";
-import {
-  CRASH_EXIT_CODE,
-  LOG_MESSAGE,
-  SHUTDOWN_STEP,
-  type ShutdownStep,
-} from "./shared/constants/runtime";
+import { API, type ShutdownStep } from "./shared/constants/api";
 
 export type ShutdownDeps = {
   closeServer: () => Promise<void>;
@@ -40,10 +31,10 @@ function withTimeout(promise: Promise<void>, ms: number): Promise<boolean> {
  * the same point.
  */
 const flushWithinBudget = (flush: () => Promise<void>): Promise<boolean> =>
-  withTimeout(flush(), TELEMETRY_FLUSH_TIMEOUT_MS);
+  withTimeout(flush(), API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
 
 export function createShutdown(deps: ShutdownDeps) {
-  const drainTimeoutMs = deps.drainTimeoutMs ?? DEFAULT_DRAIN_TIMEOUT_MS;
+  const drainTimeoutMs = deps.drainTimeoutMs ?? API.DEFAULT.DRAIN_TIMEOUT_MS;
 
   return async function shutdown(): Promise<ShutdownStep[]> {
     const completed: ShutdownStep[] = [];
@@ -51,23 +42,23 @@ export function createShutdown(deps: ShutdownDeps) {
     // Stop accepting and let in-flight requests finish before any dependency
     // is closed — closing Prisma first would fail requests that could complete.
     if (await withTimeout(deps.closeServer(), drainTimeoutMs)) {
-      completed.push(SHUTDOWN_STEP.SERVER);
+      completed.push(API.SHUTDOWN.STEP.SERVER);
     } else {
-      logger.warn({ drainTimeoutMs }, LOG_MESSAGE.DRAIN_TIMEOUT);
+      logger.warn({ drainTimeoutMs }, API.LOG_MESSAGE.DRAIN_TIMEOUT);
     }
 
     // An abandoned flush is reported like any other failed step.
     const flushTelemetry = async () => {
       if (!(await flushWithinBudget(deps.flushTelemetry))) {
-        throw new Error(LOG_MESSAGE.TELEMETRY_FLUSH_ABANDONED);
+        throw new Error(API.LOG_MESSAGE.TELEMETRY_FLUSH_ABANDONED);
       }
     };
 
     // Telemetry flushes last so the spans of the closes above are exported too.
     const steps: readonly [ShutdownStep, () => Promise<void>][] = [
-      [SHUTDOWN_STEP.REDIS, deps.closeRedis],
-      [SHUTDOWN_STEP.DATABASE, deps.closeDatabase],
-      [SHUTDOWN_STEP.TELEMETRY, flushTelemetry],
+      [API.SHUTDOWN.STEP.REDIS, deps.closeRedis],
+      [API.SHUTDOWN.STEP.DATABASE, deps.closeDatabase],
+      [API.SHUTDOWN.STEP.TELEMETRY, flushTelemetry],
     ];
 
     // Strictly one after another, never in parallel: the order is the point.
@@ -77,7 +68,7 @@ export function createShutdown(deps: ShutdownDeps) {
         await close();
         completed.push(name);
       } catch (err) {
-        logger.error({ err, step: name }, LOG_MESSAGE.SHUTDOWN_STEP_FAILED);
+        logger.error({ err, step: name }, API.LOG_MESSAGE.SHUTDOWN_STEP_FAILED);
       }
     }, Promise.resolve());
 
@@ -108,8 +99,8 @@ export function createCrashHandler(deps: CrashDeps) {
     err: unknown,
     origin: NodeJS.UncaughtExceptionOrigin
   ): Promise<void> {
-    log.fatal({ err, origin }, LOG_MESSAGE.CRASHED);
+    log.fatal({ err, origin }, API.LOG_MESSAGE.CRASHED);
     await flushWithinBudget(deps.flushTelemetry);
-    deps.exit(CRASH_EXIT_CODE);
+    deps.exit(API.EXIT_CODE.CRASH);
   };
 }

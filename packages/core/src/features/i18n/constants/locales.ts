@@ -9,7 +9,7 @@ import type { ElementOf } from "../../../shared/utils/object";
  * Key order means nothing here (Biome sorts it); the order the matcher sees is
  * `SUPPORTED_LOCALES`.
  */
-export const LOCALE = {
+const LOCALE = {
   EN_GB: "en-GB",
   EN_US: "en-US",
   IT_CH: "it-CH",
@@ -25,7 +25,7 @@ export type Locale = z.infer<typeof localeSchema>;
  * not know, such as `it-XX`, ties every Italian variant and `match()` takes the
  * first one listed. So the language's main variant comes first.
  */
-export const SUPPORTED_LOCALES = [
+const SUPPORTED_LOCALES = [
   LOCALE.EN_US,
   LOCALE.EN_GB,
   LOCALE.IT_IT,
@@ -36,11 +36,11 @@ export const SUPPORTED_LOCALES = [
  * The base languages: every Host speaks them, so shared text and stored
  * content always carry them. The first one is the default.
  */
-export const BASE_LANGUAGES = ["en", "it"] as const;
+const BASE_LANGUAGES = ["en", "it"] as const;
 export type Language = ElementOf<typeof BASE_LANGUAGES>;
 
 /** Where a missing or unknown language lands, and what content falls back to. */
-export const [DEFAULT_LANGUAGE] = BASE_LANGUAGES;
+const [DEFAULT_LANGUAGE] = BASE_LANGUAGES;
 
 /** Narrows next-intl's `useLocale()` (a plain string) to a base `Language`. */
 export const languageSchema = z.enum(BASE_LANGUAGES);
@@ -50,13 +50,10 @@ export const languageSchema = z.enum(BASE_LANGUAGES);
  * routes it: stored content (an Image's alt) then accepts it without a
  * migration, and every Host that reads it falls back to `DEFAULT_LANGUAGE`.
  */
-export const EXTRA_LANGUAGES = [] as const;
+const EXTRA_LANGUAGES = [] as const;
 
 /** Every language any Host speaks. */
-export const CONTENT_LANGUAGES = [
-  ...BASE_LANGUAGES,
-  ...EXTRA_LANGUAGES,
-] as const;
+const CONTENT_LANGUAGES = [...BASE_LANGUAGES, ...EXTRA_LANGUAGES] as const;
 export type ContentLanguage = ElementOf<typeof CONTENT_LANGUAGES>;
 export const contentLanguageSchema = z.enum(CONTENT_LANGUAGES);
 
@@ -74,3 +71,13 @@ export type HostLanguages = readonly [
 export const defineLanguages = <const L extends readonly ContentLanguage[]>(
   languages: readonly [...typeof BASE_LANGUAGES, ...L]
 ) => languages;
+
+/** Every locale and language AllOnFire knows: the API's locales, the Apps' languages. */
+export const I18N = {
+  BASE_LANGUAGES,
+  CONTENT_LANGUAGES,
+  DEFAULT_LANGUAGE,
+  EXTRA_LANGUAGES,
+  LOCALE,
+  SUPPORTED_LOCALES,
+} as const;

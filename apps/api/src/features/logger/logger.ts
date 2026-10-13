@@ -1,14 +1,11 @@
-import {
-  REDACT_CENSOR,
-  REDACT_PATHS,
-} from "@allonfire/core/features/logger/constants/logger";
-import { NODE_ENV } from "@allonfire/core/shared/constants/env";
+import { LOG } from "@allonfire/core/features/logger/constants/logger";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import { trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };
 import { env } from "../../environment/environment";
-import { TELEMETRY_FLUSH_TIMEOUT_MS } from "../../shared/constants/limits";
-import { OTLP_PATH } from "../telemetry/constants/telemetry";
+import { API } from "../../shared/constants/api";
+import { OTLP } from "../telemetry/constants/telemetry";
 import {
   otlpExporterOptions,
   telemetryResourceAttributes,
@@ -37,8 +34,8 @@ const otelTransport = (endpoint: string) => ({
     logRecordProcessorOptions: {
       exporterOptions: {
         protobufExporterOptions: {
-          ...otlpExporterOptions(endpoint, OTLP_PATH.LOGS),
-          timeoutMillis: TELEMETRY_FLUSH_TIMEOUT_MS,
+          ...otlpExporterOptions(endpoint, OTLP.PATH.LOGS),
+          timeoutMillis: API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS,
         },
         protocol: "http/protobuf",
       },
@@ -72,14 +69,14 @@ export function createLogger(opts?: {
   const options = {
     level: env.API_LOG_LEVEL,
     mixin: traceContext,
-    redact: { censor: REDACT_CENSOR, paths: [...REDACT_PATHS] },
+    redact: { censor: LOG.REDACT.CENSOR, paths: [...LOG.REDACT.PATHS] },
   };
 
   if (opts?.destination) {
     return pino(options, opts.destination);
   }
 
-  const isDevelopment = env.NODE_ENV === NODE_ENV.DEVELOPMENT;
+  const isDevelopment = env.NODE_ENV === ENV.NODE.DEVELOPMENT;
 
   const endpoint = env.OTEL_EXPORTER_OTLP_ENDPOINT;
   if (endpoint) {
