@@ -7,7 +7,7 @@ export default mergeConfig(
     test: {
       // A Test database per run, dropped after (CONTEXT.md).
       globalSetup: ["@allonfire/database/features/test-database/global-setup"],
-      include: ["src/**/*.test.ts"],
+      include: ["src/**/*.test.{ts,tsx}"],
       setupFiles: ["./vitest.setup.ts"],
     },
   })

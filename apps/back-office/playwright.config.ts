@@ -4,6 +4,10 @@ import { App } from "@allonfire/database/enums";
 
 export default aofPlaywrightConfig({
   app: "back-office",
-  env: { AUTH_APP: App.BACK_OFFICE },
+  env: {
+    AUTH_APP: App.BACK_OFFICE,
+    // The e2e stack sets its own addresses, the App's included.
+    BACK_OFFICE_URL: LOCAL.URL.BACK_OFFICE_E2E,
+  },
   port: LOCAL.PORT.BACK_OFFICE_E2E,
 });

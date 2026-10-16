@@ -117,7 +117,7 @@ Each feature is self-contained with its own components, actions, and hooks. No b
 
 ```bash
 pnpm dev          # Start on :3200
-pnpm dev:mobile   # Start on :3201 (Tailscale)
+pnpm dev:tailscale   # Start on :3201, over Tailscale
 pnpm build        # Production build
 pnpm check-types  # TypeScript check
 pnpm seed-photos  # Seed sample photos

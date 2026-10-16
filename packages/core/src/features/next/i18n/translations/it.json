@@ -2,11 +2,39 @@
   "Common": {
     "NotFound": {
       "title": "Pagina non trovata",
+      "lost": "Sembra che tu abbia perso la strada.",
       "back": "Torna all'inizio"
     },
     "Error": {
       "title": "Qualcosa è andato storto",
-      "retry": "Riprova"
+      "description": "Questa pagina si è fermata all'improvviso. Riprova tra un attimo.",
+      "retry": "Riprova",
+      "reference": "Riferimento {digest}"
+    },
+    "Loading": {
+      "label": "Caricamento"
+    },
+    "Offline": {
+      "title": "Nessuna connessione",
+      "description": "Questa pagina ha bisogno della rete. Controlla la connessione e riprova.",
+      "retry": "Riprova",
+      "banner": {
+        "title": "Nessuna connessione",
+        "description": "In attesa della rete"
+      }
+    },
+    "Install": {
+      "title": "Tienilo a portata di tocco",
+      "dismiss": "Non ora",
+      "cta": "Installa {app}",
+      "install": "Installa",
+      "installing": "Installazione…",
+      "error": "Non installata. Riprova.",
+      "step": {
+        "ios-share": "Tocca Condividi (o ···, poi Condividi)",
+        "ios-add": "Scegli Aggiungi alla schermata Home, poi Aggiungi",
+        "mac-add-to-dock": "Scegli File, poi Aggiungi al Dock"
+      }
     }
   }
 }

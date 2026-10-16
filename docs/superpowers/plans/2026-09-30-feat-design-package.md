@@ -638,7 +638,7 @@ Expected: no errors.
 
 ---
 
-### Task 4: Back office Screens
+### Task 4: Back Office Screens
 
 **Files:**
 - Create: `packages/design/src/apps/back-office/styles.css`
@@ -697,10 +697,10 @@ const findClickable = (node: unknown): ReactElement<{ onClick?: unknown }> | nul
 describe("HomeScreen", () => {
   it("renders its copy with an AOF button", () => {
     const html = renderToStaticMarkup(
-      <HomeScreen copy={{ action: "Get started", description: "Nothing here yet.", title: "Back office" }} />
+      <HomeScreen copy={{ action: "Get started", description: "Nothing here yet.", title: "Back Office" }} />
     );
     expect(html).toContain("<h1");
-    expect(html).toContain(">Back office<");
+    expect(html).toContain(">Back Office<");
     expect(html).toContain(">Nothing here yet.<");
     expect(html).toContain('data-slot="button"');
     expect(html).toContain(">Get started<");
@@ -813,7 +813,7 @@ Expected: PASS, the Screens' tests plus Task 2's.
 `packages/design/src/apps/back-office/styles.css`:
 
 ```css
-/* Back office's single stylesheet: ui's base layer, the Design it wears, and
+/* Back Office's single stylesheet: ui's base layer, the Design it wears, and
    where Tailwind finds its Screens. The App imports only this file. A Design
    is worn by importing its theme.css here (`/aof-design new` adds it). */
 @import "@allonfire/ui/styles/base.css";
@@ -832,7 +832,7 @@ Add to `packages/design/package.json` `exports` (replacing `{}`):
 
 Node allows one `*` per export key, so each App adds its own two lines.
 
-- [x] **Step 6: Wire Back office to the package**
+- [x] **Step 6: Wire Back Office to the package**
 
 `apps/back-office/package.json` `dependencies`, alphabetically before `@allonfire/ui`:
 
@@ -932,13 +932,13 @@ Replace the comment at the top of `packages/ui/src/styles/base.css` (lines 1-4) 
    tokens on top (ADR 0011). */
 ```
 
-- [x] **Step 8: Verify Back office end to end**
+- [x] **Step 8: Verify Back Office end to end**
 
 Run: `pnpm install && pnpm --filter @allonfire/design check-types && pnpm --filter @allonfire/back-office check-types && pnpm --filter @allonfire/back-office build`
 Expected: all pass.
 
 Run: `pnpm --filter @allonfire/back-office test:e2e`
-Expected: the three smoke tests pass (heading "Back office", "Get started" button, localized 404).
+Expected: the three smoke tests pass (heading "Back Office", "Get started" button, localized 404).
 
 - [x] **Step 9: Format**
 
@@ -1087,7 +1087,7 @@ Wearing a different Design is changing that one import, then
 - [x] **Step 2: Verify impeccable resolves the App context from the package**
 
 ```bash
-printf '# Back office\n\nPlaceholder for the context check.\n' > packages/design/src/apps/back-office/PRODUCT.md
+printf '# Back Office\n\nPlaceholder for the context check.\n' > packages/design/src/apps/back-office/PRODUCT.md
 IMPECCABLE_CONTEXT_DIR=packages/design/src/apps/back-office \
   .claude/skills/impeccable/scripts/impeccable context \
   --target packages/design/src/apps/back-office/screens/home.tsx | head -20
@@ -1106,7 +1106,7 @@ Expected: `git status --short packages/design/src/apps/back-office` shows no `PR
 
 - [x] **Step 4: Settle live mode against a Screen**
 
-Start Back office (`pnpm --filter @allonfire/back-office dev`), then:
+Start Back Office (`pnpm --filter @allonfire/back-office dev`), then:
 
 ```bash
 IMPECCABLE_CONTEXT_DIR=packages/design/src/apps/back-office \
@@ -1289,7 +1289,7 @@ Expected: the new lines appear; any remaining "Theme" hits refer to something ot
 
 - [x] **Step 1: Run the skill**
 
-Invoke `/aof-design new japan --app back-office` and follow it. impeccable interviews the user for Back office's `PRODUCT.md` (users: the family's admins managing content and users) and then for Japan's visual world. The palette, type and motion come from those answers, not from this plan. Do not answer the interviews on the user's behalf.
+Invoke `/aof-design new japan --app back-office` and follow it. impeccable interviews the user for Back Office's `PRODUCT.md` (users: the family's admins managing content and users) and then for Japan's visual world. The palette, type and motion come from those answers, not from this plan. Do not answer the interviews on the user's behalf.
 
 - [x] **Step 2: Verify the wiring**
 
@@ -1299,7 +1299,7 @@ Expected: the import line, no `stale` lines, `exit=0`.
 Run: `ls .impeccable apps/back-office/.impeccable 2>&1 | grep -c "No such file"`
 Expected: `2` (nothing of impeccable outside `packages/design`).
 
-- [x] **Step 3: Verify Back office wears it**
+- [x] **Step 3: Verify Back Office wears it**
 
 Run: `pnpm --filter @allonfire/design test && pnpm --filter @allonfire/back-office build && pnpm --filter @allonfire/back-office test:e2e`
 Expected: all pass. Then run `pnpm --filter @allonfire/back-office dev` and let the user look at `/` and `/does-not-exist`.

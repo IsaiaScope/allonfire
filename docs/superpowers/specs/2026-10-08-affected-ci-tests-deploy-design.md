@@ -6,12 +6,12 @@
 
 - CI runs every task for every package on every PR, so a one-line Back
   office change pays for the API, database and storage suites too.
-- No end-to-end test runs in CI. The Back office's only Playwright spec is a
+- No end-to-end test runs in CI. The Back Office's only Playwright spec is a
   smoke test against `next dev`, without the API.
 - UI tests render to static markup and match regexes: no DOM, no clicks, no
   way to see what a component shows when the API answers.
 - Production is one Dokploy compose project that builds on the VPS (8 GB, no
-  swap). Every deploy rebuilds everything, and the API and Back office are
+  swap). Every deploy rebuilds everything, and the API and Back Office are
   not deployed at all yet.
 
 ## Outcome
@@ -36,7 +36,7 @@
   order: the tests' CI job and the deploy both read the affected list phase 1
   produces.
 - **Turbo decides what is affected.** Its package graph is the only thing
-  that knows `packages/auth` feeds the API and the Back office; path globs
+  that knows `packages/auth` feeds the API and the Back Office; path globs
   would have to list that by hand.
 - **Browser mode, not jsdom**, for UI tests. Real Chromium (through
   Playwright) means real layout, focus and events, and `msw/browser`
@@ -127,11 +127,11 @@
   (`vitest run --project browser`); `turbo.json` gains the task, cached
   like `test`. `test` becomes `vitest run --project node`.
 
-### First tests (Back office)
+### First tests (Back Office)
 
 - E2e (`apps/back-office/e2e/`):
   - an ADMIN signs in and lands home;
-  - a User whose Back office Membership is under its floor (USER) is
+  - a User whose Back Office Membership is under its floor (USER) is
     refused and sees the forbidden message;
   - sign-out returns to sign-in;
   - the existing smoke spec stays.
@@ -149,7 +149,7 @@
   (cached by Playwright version), build the affected Apps, then
   `pnpm turbo run test:browser test:e2e --affected`.
 - Env: the API's required vars with test values, `API_CORS_ORIGINS` holding
-  `http://localhost:3400`, the Back office's `API_URL`, `API_AUTH_URL` and
+  `http://localhost:3400`, the Back Office's `API_URL`, `API_AUTH_URL` and
   `NEXT_PUBLIC_API_URL` pointing at `http://localhost:3300`.
 - Playwright traces upload as an artifact on failure.
 - Browser-mode tests run here (they need Chromium); the plain `test` job

@@ -8,7 +8,6 @@
     "./features/image/constants/image": "./src/features/image/constants/image.ts",
     "./features/image/constants/schemas": "./src/features/image/constants/schemas.ts",
     "./features/image/fixtures/constants/files": "./src/features/image/fixtures/constants/files.ts",
-    "./features/image/fixtures/upload-fixtures": "./src/features/image/fixtures/upload-fixtures.ts",
     "./features/image/hono/constants/schemas": "./src/features/image/hono/constants/schemas.ts",
     "./features/image/hono/routes": "./src/features/image/hono/routes/index.ts",
     "./features/image/hono/routes/read-handlers": "./src/features/image/hono/routes/read-handlers.ts",
@@ -33,7 +32,7 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "db:seed:images": "tsx --env-file-if-exists=.env src/features/image/fixtures/seed-local.ts",
+    "image:setup": "tsx --env-file-if-exists=.env src/features/image/setup/cli.ts",
     "test": "vitest run",
     "test-bucket": "tsx --env-file-if-exists=.env src/features/test-bucket/cli.ts"
   },

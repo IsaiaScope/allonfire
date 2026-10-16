@@ -3,7 +3,7 @@
 **Date:** 2026-09-30
 **Scope:** `packages/design` (new), `.claude/skills/aof-design` (new),
 `.claude/skills/aof-documentation` (renamed from `doc-gen`), impeccable v4
-installed per project, Back office wears the first Design (Japan) and its three
+installed per project, Back Office wears the first Design (Japan) and its three
 pages become Screens.
 **Records:** ADR 0011 (supersedes ADR 0010's "one Theme per App");
 CONTEXT.md gains **Design** and **Screen**, loses **Theme**.
@@ -24,7 +24,7 @@ repo's own skills share the `aof-` prefix.
 
 | Topic | Decision | Why |
 |---|---|---|
-| First App | Back office | The only live frontend; its Theme file is an empty placeholder. Laura is paused (ADR 0010) |
+| First App | Back Office | The only live frontend; its Theme file is an empty placeholder. Laura is paused (ADR 0010) |
 | impeccable install | `npx impeccable install --providers=claude --scope=project -y`: v4.1 into `.claude/skills/impeccable`, committed; its hooks moved into the tracked `.claude/settings.json`. The user-level 3.1.1 plugin is uninstalled | 3.1.1's skill runs `.claude/skills/impeccable/scripts/...`, which never existed here. One committed version for every machine. impeccable warns against duplicate installs. 200,578 weekly downloads (floor 200k) |
 | Where impeccable works | Only inside `packages/design`. Every call is given a target in the package | impeccable v4 puts `.impeccable/` at the project root of the target, and a target under `packages/*` resolves to `packages/design` |
 | Context per App | `packages/design/src/apps/<app>/` holds `PRODUCT.md` plus a generated copy of the worn Design's `DESIGN.md` and `DESIGN.json`; `aof-design` runs impeccable with `IMPECCABLE_CONTEXT_DIR` pointing there | impeccable reads `PRODUCT.md` and `DESIGN.md` from one folder, and falls back to `IMPECCABLE_CONTEXT_DIR` only when neither the project nor the repo root holds one. A Design is shared and a product record is per App, so the Design is copied into each App folder. exFAT has no links |
@@ -79,7 +79,7 @@ Dependencies: `@allonfire/ui` (workspace), peers `react`, `react-dom`.
 The package is exempt from the Package Layout, like `ui`, `shadcn` and
 `hooks`: it holds Designs and Apps, not features.
 Root `package.json` gains `"design:sync": "pnpm --filter @allonfire/design design:sync"`.
-Back office's `next.config.ts` adds `@allonfire/design` to `transpilePackages`.
+Back Office's `next.config.ts` adds `@allonfire/design` to `transpilePackages`.
 
 ### `design:sync`
 
@@ -162,7 +162,7 @@ impeccable command, or `new`.
 A different Design is worn by changing the one import in the App's
 `styles.css`, then `pnpm design:sync`.
 
-## Back office
+## Back Office
 
 - `globals.css` becomes the one design import plus `@source "../"`.
 - `[locale]/page.tsx` translates `Home` and renders
@@ -203,7 +203,7 @@ folders' `PRODUCT.md` (hand-kept through impeccable) and `DESIGN.md` copies
   `.impeccable/design.json`); a Design without `DESIGN.json` removes the copy.
 - `screens/tests/*.test.tsx` (`unit`): each Screen renders its `copy`, its
   slot, and `ErrorScreen` calls `onRetry` on click.
-- Back office's existing e2e still passes against the Screens.
+- Back Office's existing e2e still passes against the Screens.
 - CI: `pnpm design:sync --check` in the `lint-types` job.
 
 The Japan pass is the plan's last task and is interactive:
@@ -226,4 +226,4 @@ done when `pnpm --filter @allonfire/back-office build` compiles and
 
 ## Out of scope
 
-Laura (paused). Screens for pages Back office does not have yet.
+Laura (paused). Screens for pages Back Office does not have yet.

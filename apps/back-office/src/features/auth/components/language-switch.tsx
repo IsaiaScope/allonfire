@@ -3,8 +3,7 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { Languages } from "lucide-react";
 import { useLocale } from "next-intl";
-import { getPathname } from "@/features/i18n/navigation";
-import { routing } from "@/features/i18n/routing";
+import { languageLinks } from "@/features/i18n/navigation";
 
 const link = cva(
   "rounded-md px-3 py-1 font-led outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
@@ -20,10 +19,9 @@ const link = cva(
 );
 
 /**
- * One link per language to the same page, marking the current one with
- * `aria-current`. Plain links: switching is one server render, no script.
- * Always prefixed, since the default language's bare path would let the
- * proxy send a visitor back to the language its cookie remembers.
+ * One link per language to the same page (`languageLinks`), marking the
+ * current one with `aria-current`. Plain links: switching is one server
+ * render, no script.
  */
 export type LanguageSwitchProps = ComponentPropsWithoutChildren<"nav"> & {
   /** The App path every language links to, without a locale prefix. */
@@ -49,20 +47,11 @@ export const LanguageSwitch = ({
         aria-hidden
         className="mr-0.5 ml-2 size-4 text-muted-foreground"
       />
-      {routing.locales.map((language) => {
-        const current = language === locale;
-        return (
-          <a
-            aria-current={current ? "true" : undefined}
-            className={link({ current })}
-            href={getPathname({ forcePrefix: true, href, locale: language })}
-            key={language}
-            lang={language}
-          >
-            {language.toUpperCase()}
-          </a>
-        );
-      })}
+      {languageLinks(href, locale).map(({ attributes, current, language }) => (
+        <a {...attributes} className={link({ current })} key={language}>
+          {language.toUpperCase()}
+        </a>
+      ))}
     </nav>
   );
 };

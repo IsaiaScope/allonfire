@@ -1043,7 +1043,7 @@ it("rewrites into the bucket it is given", async () => {
 
 - [x] **Step 2: Run** — `pnpm --filter @allonfire/storage exec vitest run with-storage-images` — Expected: FAIL (bucket ignored).
 
-- [x] **Step 3: Implement** the option (`bucket = DEFAULT_IMAGE_BUCKET`), the env var, `image-objects.ts` reading `env.STORAGE_BUCKET`, and the Back office build env (`STORAGE_BUCKET: z.string().min(3).default("image")`, passed as `bucket: buildEnv.STORAGE_BUCKET`). Grep for `IMAGE_BUCKET` and update every importer.
+- [x] **Step 3: Implement** the option (`bucket = DEFAULT_IMAGE_BUCKET`), the env var, `image-objects.ts` reading `env.STORAGE_BUCKET`, and the Back Office build env (`STORAGE_BUCKET: z.string().min(3).default("image")`, passed as `bucket: buildEnv.STORAGE_BUCKET`). Grep for `IMAGE_BUCKET` and update every importer.
 
 - [x] **Step 4: Run** — `pnpm turbo run test check-types --filter=@allonfire/storage --filter=@allonfire/back-office --filter=@allonfire/api` — Expected: pass.
 
@@ -1259,7 +1259,7 @@ it("shows the Fixture the seed stores, as AVIF", () => {
 
 - [x] **Step 2: Run** — Expected: FAIL (`.webp` key).
 
-- [x] **Step 3: Implement** — `SIGN_IN_IMAGE` takes `key`, `blurDataUrl`, `width`, `height` from `FIXTURE_IMAGE.SIGN_IN` (spread the four fields; keep the credit comment, replace the "ponytail: each environment needs this uploaded" note with: "Local and Test databases get it from the seed; Production needs it uploaded once (POST /v1/images) under this key: see the plan's deploy note."). The Back office already depends on `@allonfire/database`. If importing a Fixture into App code is refused by Biome's restricted imports, copy the four values and keep the test above as the guard.
+- [x] **Step 3: Implement** — `SIGN_IN_IMAGE` takes `key`, `blurDataUrl`, `width`, `height` from `FIXTURE_IMAGE.SIGN_IN` (spread the four fields; keep the credit comment, replace the "ponytail: each environment needs this uploaded" note with: "Local and Test databases get it from the seed; Production needs it uploaded once (POST /v1/images) under this key: see the plan's deploy note."). The Back Office already depends on `@allonfire/database`. If importing a Fixture into App code is refused by Biome's restricted imports, copy the four values and keep the test above as the guard.
 
 - [x] **Step 4: Run** — `pnpm --filter @allonfire/back-office exec vitest run sign-in-image` and `pnpm --filter @allonfire/storage exec vitest run image-fixtures` — Expected: PASS.
 
@@ -1324,7 +1324,7 @@ If the existing test already has `signIn`/cookie helpers, move them here instead
 - [x] **Step 2: Write the failing tests** (they fail where behaviour is new to the suite, pass where it is pinned; read each failure)
 
 ```ts
-// in sign-in.integration.test.ts, a table over the Back office floor
+// in sign-in.integration.test.ts, a table over the Back Office floor
 const BACK_OFFICE_CASES = [
   { status: 200, user: FIXTURE_USER.BACK_OFFICE.ADMIN },
   { status: 403, user: FIXTURE_USER.BACK_OFFICE.USER },
@@ -1332,7 +1332,7 @@ const BACK_OFFICE_CASES = [
   { status: 403, user: FIXTURE_USER.NO_MEMBERSHIP },
 ] as const;
 
-it.each(BACK_OFFICE_CASES)("signs $user.email into the Back office: $status", async ({ status, user }) => {
+it.each(BACK_OFFICE_CASES)("signs $user.email into the Back Office: $status", async ({ status, user }) => {
   const res = await signIn(app, user, { appName: "back-office" });
   expect(res.status).toBe(status);
   if (status === 403) {
@@ -1393,7 +1393,7 @@ it("refuses a signed-out visitor", async () => {
 });
 ```
 
-`BACK_OFFICE_HEADER` is the header value the existing test sends for the Back office (see the note above). If the visitor case answers another status, pin what the route answers and note it in the plan's log; do not change the route.
+`BACK_OFFICE_HEADER` is the header value the existing test sends for the Back Office (see the note above). If the visitor case answers another status, pin what the route answers and note it in the plan's log; do not change the route.
 
 ```ts
 // apps/api/src/features/auth/tests/rate-limit.integration.test.ts
@@ -1499,7 +1499,7 @@ The three tests run in file order on one User (Vitest runs a file's tests in seq
 
 - [x] **Step 2: Run** — `pnpm --filter @allonfire/api exec vitest run change-password` — Expected: PASS.
 
-### Task 12: The e2e stack on a Test database and bucket, and the Back office cases
+### Task 12: The e2e stack on a Test database and bucket, and the Back Office cases
 
 **Files:**
 - Modify: `packages/config/tests/e2e/playwright.config.ts`
@@ -1569,7 +1569,7 @@ test("an Admin signs in, lands home, and stays signed in after a reload", async 
 for (const user of [FIXTURE_USER.BACK_OFFICE.USER, FIXTURE_USER.BACK_OFFICE.VIEWER, FIXTURE_USER.NO_MEMBERSHIP]) {
   test(`${user.email} is refused`, async ({ page }) => {
     await signIn(page, user);
-    await expect(formAlert(page)).toHaveText("This account cannot enter the Back office.");
+    await expect(formAlert(page)).toHaveText("This account cannot enter the Back Office.");
   });
 }
 
@@ -1593,7 +1593,7 @@ test("Italian sign-in shows the refusal in Italian", async ({ page }) => {
 });
 ```
 
-`EN` and `IT` are the Back office's translation JSON files, imported with `with { type: "json" }` (the same way the App loads them); the key paths above (`signIn.invalid`, `signIn.forbidden`, `home.signOut`) are the shape: open the files and use their real keys, so no message is ever retyped. The refusal test above uses `EN.signIn.forbidden` in place of the English literal. `signIn(page, user, { locale, password })` goes to `/${locale}/sign-in` when a locale is given and fills `password ?? FIXTURE_PASSWORD`; the sign-in form's field labels are read from the same files for the Italian case. Four sign-ins plus three refusals plus one Italian is eight attempts from one address, under the limit of ten; keep it so (Review: no rate-limit test in e2e).
+`EN` and `IT` are the Back Office's translation JSON files, imported with `with { type: "json" }` (the same way the App loads them); the key paths above (`signIn.invalid`, `signIn.forbidden`, `home.signOut`) are the shape: open the files and use their real keys, so no message is ever retyped. The refusal test above uses `EN.signIn.forbidden` in place of the English literal. `signIn(page, user, { locale, password })` goes to `/${locale}/sign-in` when a locale is given and fills `password ?? FIXTURE_PASSWORD`; the sign-in form's field labels are read from the same files for the Italian case. Four sign-ins plus three refusals plus one Italian is eight attempts from one address, under the limit of ten; keep it so (Review: no rate-limit test in e2e).
 
 `smoke.spec.ts` adds:
 
@@ -1693,7 +1693,7 @@ it("shows a visitor only public Images", async () => {
   expect(keys).not.toContain(FIXTURE_IMAGE.PRIVATE_IN_BACK_OFFICE.key);
 });
 
-it("shows a Back office Admin its private Images, not Laura's", async () => {
+it("shows a Back Office Admin its private Images, not Laura's", async () => {
   const keys = await listKeys(app, await cookieFor(app, FIXTURE_USER.BACK_OFFICE.ADMIN));
   expect(keys).toContain(FIXTURE_IMAGE.PRIVATE_IN_BACK_OFFICE.key);
   expect(keys).not.toContain(FIXTURE_IMAGE.PRIVATE_IN_LAURA.key);
@@ -1820,7 +1820,7 @@ Helpers in `image-test-app.ts`: `jpeg()` returns `{ bytes: readFileSync(<fixture
 - [x] **Step 4: Docs**
   - `CLAUDE.md` test-layers paragraph: integration tests run on a Test database cloned per package per run from `allonfire_test_template` (Liquibase plus the Fixtures, rebuilt when `changelog/` or `src/features/seed/` change) and a bucket per run; Fixtures from `@allonfire/database/features/seed/fixtures/*` (`FIXTURE_USER`, `FIXTURE_PASSWORD`, `FIXTURE_IMAGE`), never retyped; local addresses from `@allonfire/config/local/addresses`; `DATABASE_SEED_MODE=local`. Database Schema Quick Reference: the seed line.
   - `packages/database/README.md`: Test database and Fixtures sections; `packages/storage/README.md`: bucket per run, Image Fixtures, `db:seed:images`; `packages/config/README.md`: `local/addresses` and the guard test.
-  - `README.md` Deploy section: "Before the first deploy of this change, upload the sign-in photo to Production under `FIXTURE_IMAGE.SIGN_IN.key` (POST /v1/images as an Admin of the Back office, then set the key)", and Local setup: change `packages/database/.env` to `DATABASE_SEED_MODE="local"` and drop `DATABASE_SEED_TEST_PASSWORD`.
+  - `README.md` Deploy section: "Before the first deploy of this change, upload the sign-in photo to Production under `FIXTURE_IMAGE.SIGN_IN.key` (POST /v1/images as an Admin of the Back Office, then set the key)", and Local setup: change `packages/database/.env` to `DATABASE_SEED_MODE="local"` and drop `DATABASE_SEED_TEST_PASSWORD`.
 
 - [x] **Step 5: Verify everything**
 

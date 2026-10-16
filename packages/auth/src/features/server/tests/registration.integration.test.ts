@@ -46,8 +46,16 @@ const DATA_COOKIE = `${AUTH.COOKIE.SESSION_DATA}=`;
 
 /** Both Apps open, so registering and joining can be watched. */
 const open: AppSettingsTable = {
-  [App.BACK_OFFICE]: { minRole: Role.USER, registration: Role.USER },
-  [App.LAURA]: { minRole: Role.VIEWER, registration: Role.VIEWER },
+  [App.BACK_OFFICE]: {
+    ...ACCESS.APP_SETTINGS[App.BACK_OFFICE],
+    minRole: Role.USER,
+    registration: Role.USER,
+  },
+  [App.LAURA]: {
+    ...ACCESS.APP_SETTINGS[App.LAURA],
+    minRole: Role.VIEWER,
+    registration: Role.VIEWER,
+  },
 };
 /** The settings the Apps ship with: every App closed. */
 const closed: AppSettingsTable = ACCESS.APP_SETTINGS;

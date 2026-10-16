@@ -20,7 +20,7 @@
 | `./shared/constants/paths` | `STORAGE.PATH`: `BASE` (`/storage`, where an App serves every storage), `IMAGES` (`/images`), `IMAGE_PROXY` (`/storage/images`, what an App proxies to the bucket) |
 | `./features/s3/client` | `s3`, the provider client (MinIO, path-style) |
 | `./features/s3/objects` | `putObject(bucket, key, body, { contentType, cacheControl })`, `deleteObjects(bucket, keys)`: any file, any bucket |
-| `./features/s3/exists` | `bucketExists(bucket)`, `objectExists(bucket, key)`: the provider's 404 reads as `false`, any other failure is thrown |
+| `./features/s3/exists` | `bucketExists(bucket)`: the provider's 404 reads as `false`, any other failure is thrown |
 | `./shared/utils/stored-object-url` | `storedObjectUrl(origin, bucket, key)`: where the provider serves an object (path-style); reads no environment, so a Next config can import it |
 | `./features/image/constants/image` | `IMAGE`: `IMAGE.BUCKET.DEFAULT`, `IMAGE.CACHE.*` (`TTL_SECONDS`, `CONTROL`), `IMAGE.FORMAT.*` (`CONTENT_TYPE`, `EXTENSION`), `IMAGE.LIMIT.*` (file and upload bytes, files per upload, batch, list page, input pixels, stored dimension, upload timeout), `IMAGE.ERROR_CODE` (the module's own codes, `IMAGE_TOO_LARGE` and `UNSUPPORTED_IMAGE`; the standard ones it throws are core's `ERROR.CODE`), `IMAGE.DOC`, `IMAGE.OPENAPI_TAG`, `IMAGE.VAR` |
 | `./features/image/prepare/prepare-image` | `prepareImage(buffer)`: upright, metadata-free AVIF (quality 64) capped at 2560px plus a 16px WebP blur data URL; HEIC (iPhone, Mac) decodes through `heic-decode`; `UnsupportedImageError` for anything but JPEG, PNG, WebP, AVIF or HEIC |
@@ -32,10 +32,9 @@
 | `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host |
 | `./features/image/hono/utils/upload` | `isImageUpload(method, path, basePath)`, so a host skips its own body limit and timeout for the upload |
 | `./features/image/hono/tests/stub-image-deps` | `stubImageDeps`, `imageRecord` for host tests |
-| `./features/image/setup/setup-bucket` | `setupImageBucket(bucket, images?)`: the bucket, its read-only policy and `images` (the shipped ones unless told otherwise), each only when missing (the deploy's `storage-setup`, and every test run's bucket) |
-| `./features/image/fixtures/upload-fixtures` | `putFixtureImage(bucket, fixture)`: one Image Fixture's file through `prepareImage`, under its key; `uploadImageFixtures(bucket)`: all of them, replacing what is there |
+| `./features/image/setup/setup-bucket` | `setupImageBucket(bucket)`: the bucket and its read-only policy, only when missing, no Images (the deploy's `storage-setup`, and every test run's bucket before its Fixtures) |
 | `./features/image/fixtures/constants/files` | `IMAGE_FIXTURE_FILES`, the folder of source files (one per accepted format, plus `animation.gif`) |
-| `./features/test-bucket/{names,bucket,global-setup}` | A bucket per test run: `createTestBucket(label, stamp)` (sweeps crashed runs' buckets, then `setupImageBucket` with every Fixture), `dropTestBucket(label, stamp)`, `sweepTestBuckets`, `testBucketName` (the Test database's name with hyphens); `global-setup` is the Vitest `globalSetup` |
+| `./features/test-bucket/{names,bucket,global-setup}` | A bucket per test run: `createTestBucket(label, stamp)` (sweeps crashed runs' buckets, then `setupImageBucket` with every Fixture), `dropTestBucket(label, stamp)`, `dropTestBucketsOf(label)`, `sweepTestBuckets`, `testBucketName` (the Test database's name with hyphens); `global-setup` is the Vitest `globalSetup` |
 
 ## 📁 Directory Structure
 
@@ -49,28 +48,31 @@ packages/storage/
       s3/                        the only code that knows the provider
         client.ts                S3 client pointed at MinIO
         objects.ts               putObject, deleteObjects for any bucket
-        exists.ts                bucketExists, objectExists: a 404 is "not there"
+        exists.ts                bucketExists: a 404 is "not there"
       image/
         constants/               image (IMAGE), schemas
         prepare/                 sharp (+ heic-decode): orient, strip metadata, cap, AVIF, blur
         objects/                 put and delete Image objects (through s3/objects)
         hono/                    the Image module: routes, handlers, deps, errors, upload
-        setup/                   setupImageBucket: bucket, policy, shipped Images
+        setup/                   setupImageBucket: bucket and policy (pnpm image:setup)
         next/                    withStorageImages, the App's proxy and next/image settings
-        fixtures/                files/ (the Image Fixtures' sources), upload-fixtures,
-                                 seed-local (pnpm db:seed:images), scripts/describe-fixtures
-      test-bucket/               a bucket per test run: names, bucket, global-setup, cli
+        fixtures/                files/ (the Image Fixtures' sources),
+                                 scripts/describe-fixtures
+      test-bucket/               a bucket per test run, holding every Image Fixture: names, bucket, global-setup, cli
 ```
 
 ## 🧪 Test buckets
 
 A Vitest run with integration tests gets its own bucket
-(`allonfire-test-<package>-<epoch>-<random>`) holding every Image Fixture as
+(`allonfire-test-<package>-<epoch>-<pid>-<random>`) holding every Image Fixture as
 AVIF, with the read-only policy `image` has, as `STORAGE_BUCKET`; it is emptied
-and removed when the run ends, and one over a day old is swept. e2e makes one
-per Playwright run through `pnpm test-bucket create|drop|name`.
-`pnpm --filter @allonfire/storage db:seed:images` uploads the same files into
-the Local `image` bucket. After changing a source file, run
+and removed when the run ends; a killed run's is swept by the next run, which
+sees its process gone (the stamp carries it). e2e makes one per Playwright run through
+`pnpm test-bucket create|drop|name`, and `create` first drops every earlier
+e2e bucket (`dropTestBucketsOf`).
+The Local `image` bucket starts empty, like Production's:
+`pnpm --filter @allonfire/storage image:setup`, part of `pnpm dev:setup`, runs
+the setup Production runs. After changing a source file, run
 `scripts/describe-fixtures.ts` and copy its sizes into `FIXTURE.IMAGE`.
 
 ## 🖼️ Image module
@@ -98,9 +100,9 @@ the Local `image` bucket. After changing a source file, run
 | `STORAGE_SECRET_KEY` | ✅ | Secret access key |
 | `STORAGE_BUCKET` | | The Images' bucket, `image` by default; a test run sets its own |
 
-Locally, `db:seed:images` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
+Locally, `image:setup` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
 
-The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket (the Back office reads it at build, for the rewrite). It is readable by key and never listable: `minio-init` sets a `s3:GetObject`-only anonymous policy in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket with that policy and puts in the Images the Apps show by key (the sign-in photo), each only when missing. Do not use `mc anonymous set download`: it also allows listing every key.
+The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket (the Back Office reads it at build, for the rewrite). It is readable by key and never listable: `minio-init` sets a `s3:GetObject`-only anonymous policy in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket with that policy, only when missing. Do not use `mc anonymous set download`: it also allows listing every key.
 
 ## 🔧 Usage
 

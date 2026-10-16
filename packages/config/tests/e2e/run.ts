@@ -13,3 +13,12 @@ export const E2E_CLI = {
   BUCKET: { dir: resolve(PACKAGES, "storage"), script: "test-bucket" },
   DATABASE: { dir: resolve(PACKAGES, "database"), script: "test-database" },
 } as const;
+
+/**
+ * Tags an e2e test takes (`test(name, { tag }, ...)`). `CHROMIUM_ONLY`: the
+ * WebKit projects leave it out, for what Playwright drives in Chromium only
+ * (a page under a service worker, reloaded offline).
+ */
+export const E2E_TAG = {
+  CHROMIUM_ONLY: "@chromium-only",
+} as const;

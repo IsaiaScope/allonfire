@@ -429,7 +429,7 @@ Then delete `probe.browser.test.ts` and `packages/config/vitest.browser.config.t
 
 Root `package.json` scripts: `"test:browser": "turbo run test:browser"`.
 
-### Task 4: MSW and the first browser tests (Back office)
+### Task 4: MSW and the first browser tests (Back Office)
 
 **Files:**
 - Create: `apps/back-office/vitest.browser.config.ts`
@@ -599,7 +599,7 @@ describe("SignInForm", () => {
     await fill(screen, "user@allonfire.com", "testpass123");
     await expect
       .element(screen.getByRole("alert"))
-      .toHaveTextContent("This account cannot enter the Back office.");
+      .toHaveTextContent("This account cannot enter the Back Office.");
   });
 
   it("marks both fields wrong when the credentials are", async () => {
@@ -751,10 +751,10 @@ test("an admin signs in and lands home", async ({ page }) => {
   await expect(page.getByText("Nothing here yet.")).toBeVisible();
 });
 
-test("a User under the Back office floor is refused", async ({ page }) => {
+test("a User under the Back Office floor is refused", async ({ page }) => {
   await signIn(page, E2E_USER.USER);
   await expect(page.getByRole("alert")).toHaveText(
-    "This account cannot enter the Back office."
+    "This account cannot enter the Back Office."
   );
   await expect(page).toHaveURL(SIGN_IN_URL);
 });
@@ -780,7 +780,7 @@ test("sends a signed-out visitor from / to sign-in", async ({ page }) => {
   const errors = collectErrors(page);
   await page.goto("/");
   await expect(page).toHaveURL(SIGN_IN_URL);
-  await expect(page.getByRole("heading", { name: "Back office" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Back Office" })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -1028,7 +1028,7 @@ In `docker/docker-compose.prod.yml`:
       - "traefik.http.services.allonfire-back-office.loadbalancer.server.port=3000"
 ```
 
-Check the API's env schema (`apps/api/src/environment/environment.ts`) and the Back office's (`packages/auth/src/environment/next-environment.ts`) for any required var missing above, and add it. The Back office's `STORAGE_ENDPOINT` and `NEXT_PUBLIC_API_URL` are baked at build (Task 8's build args), not set here.
+Check the API's env schema (`apps/api/src/environment/environment.ts`) and the Back Office's (`packages/auth/src/environment/next-environment.ts`) for any required var missing above, and add it. The Back Office's `STORAGE_ENDPOINT` and `NEXT_PUBLIC_API_URL` are baked at build (Task 8's build args), not set here.
 
 - [x] **Step 5: Verify the compose file**
 

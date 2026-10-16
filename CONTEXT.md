@@ -7,17 +7,22 @@ one database, and one design system.
 
 **App**:
 One product in the monorepo, with its own users. Laura is the first App (paused
-while the Design system is rebuilt); the Back office is the internal one, and a
+while the Design system is rebuilt); the Back Office is the internal one, and a
 React Native client is planned. Who is allowed into an App is decided by their
 Membership in it and the lowest Role the App lets in, including for internal
 ones.
 _Avoid_: site, project, product
 
-**Back office**:
+**Back Office**:
 The internal App where the family's content, users and data are managed. Only
 admins enter it.
 _Avoid_: dashboard, admin panel, console — Laura's `(dashboard)` is only a
 route-group name, not this App.
+
+**Section**:
+An area of an App reached from its main menu. The Back Office's are Home,
+Users and Storage; Home is the one a User lands on after Sign in.
+_Avoid_: page (a page is a route, and a Section can hold several), tab, module
 
 **Design system**:
 Everything an App draws its interface from: shadcn components, AOF components,
@@ -57,10 +62,10 @@ every App wearing it.
 _Avoid_: theme, skin, look, palette
 
 **Brand**:
-The AOF monogram, its O lit by a flame, that every App carries in its icon and
-link previews beside the App's own label. Shared by every App whatever Design
-it wears.
-_Avoid_: logo (an App's logo is the monogram plus its label)
+The AOF monogram, its O lit by a flame, on a dark ground. Every App's logo is
+the Brand plus a banner in the App's own color carrying its name; the Brand is
+shared by every App whatever Design it wears.
+_Avoid_: logo (an App's logo is the Brand plus its banner)
 
 **Indexing**:
 Whether search engines may list an App's pages: indexed (listed, with its
@@ -68,11 +73,22 @@ language alternates and a sitemap) or unindexed (kept out; link previews still
 work). Each App declares it among its settings.
 _Avoid_: visibility, public/private (an Image's), SEO mode
 
-**Prototype**:
-A draft page built with impeccable in the design package to try a look before
-it is real. Once approved it moves into its App as a feature component and the
-prototype is deleted; nothing ships from a prototype.
-_Avoid_: Screen, mockup
+**Offline page**:
+The page an App shows, in the visitor's language, when a page cannot load
+because there is no network. It is shown at the address that failed, and
+retrying reloads that address. Losing the network in the middle of using an
+App does not show it: the App waits and carries on once the connection
+returns.
+_Avoid_: offline screen, fallback page, error page (an error is the App's,
+not the network's)
+
+**Install hint**:
+The dismissible card offering to install an App: an Install button where
+the browser has its own install dialog, else the browser's steps (iPhone,
+macOS Safari). Never on a first visit, never once installed; once dismissed
+it stays away for a year on that device.
+_Avoid_: install prompt (the browser's own dialog, which the hint's Install
+button opens), install banner
 
 **Image**:
 A picture in one or more Apps, stored once. In each App it is public, shown
@@ -142,7 +158,7 @@ _Avoid_: Allowed apps, permissions, entitlements, account
 **Registration**:
 Becoming a User through an App that allows it, which gives a Membership in that
 App only. An existing User joins another such App the same way, once signed in.
-Each App says whether it allows it; the Back office never does.
+Each App says whether it allows it; the Back Office never does.
 _Avoid_: sign-up (except in Better Auth's route names), enrolment, invite
 
 **Role**:
@@ -179,8 +195,9 @@ ends. Never the Local database.
 _Avoid_: test DB, dev database (for this).
 
 **Fixture**:
-A known User or Image every Local and Test database holds, so a test or a
-developer can sign in with it or point at it without creating it.
+A known User or Image every Test database holds, so a test can sign in with it
+or point at it without creating it. Local holds none: it holds what Production
+holds.
 _Avoid_: mock user, seed user, test data.
 
 **Deploy unit**:

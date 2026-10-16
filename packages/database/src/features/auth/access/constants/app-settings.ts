@@ -1,3 +1,4 @@
+import type { Indexing } from "@allonfire/core/features/metadata/constants/metadata";
 import type { z } from "zod";
 import { type App, Role } from "../../../../../generated/prisma/enums";
 import { roleSchema } from "./schemas";
@@ -8,6 +9,8 @@ export type RegistrationRole = z.infer<typeof registrationRoleSchema>;
 
 /** What an App declares about itself (ADR 0019); more fields can follow. */
 export type AppSettings = {
+  /** Whether search engines may list this App's pages (CONTEXT.md, Indexing). */
+  indexing: Indexing;
   /** The lowest Role this App lets in. */
   minRole: Role;
   /** The Role a visitor registering here gets; null: Registration is closed. */

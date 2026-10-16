@@ -6,3 +6,27 @@
 
 @source "../../../shadcn/src";
 @source "../components";
+
+/* How far a page keeps from the screen's edges: clear of a phone's rounded
+   corners, and of its notch, Dynamic Island or home indicator where they
+   reach further. The insets are real only under core's AOFBaseViewport
+   (viewport-fit=cover); they are physical, so each side is its own. Every
+   AOFPage pads itself to them, AOFToaster offsets toasts by them, and a fixed
+   control sits on them (`bottom-(--gutter-bottom)`); the body is never
+   padded. */
+:root {
+  --page-gutter: 1.5rem;
+  --gutter-top: max(var(--page-gutter), env(safe-area-inset-top, 0px));
+  --gutter-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  --gutter-bottom: max(var(--page-gutter), env(safe-area-inset-bottom, 0px));
+  --gutter-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+  /* The phone's tab bar (AOFTabBar), standing on the home indicator. */
+  --tab-bar-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* While a tab bar shows (a phone), a toast at the bottom sits above it. */
+@media (width < 48rem) {
+  :root:has([data-slot="tab-bar"]) {
+    --toast-bottom: calc(var(--tab-bar-height) + var(--page-gutter));
+  }
+}

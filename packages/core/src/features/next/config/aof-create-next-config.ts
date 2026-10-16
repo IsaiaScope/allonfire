@@ -1,15 +1,41 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { env } from "../../../environment/environment";
+import { ENV } from "../../../shared/constants/env";
 import { HTTP } from "../../http/constants/http";
+import { type Indexing, METADATA } from "../../metadata/constants/metadata";
+import { PWA } from "../pwa/constants/pwa";
+import { tailnetHosts } from "./tailnet-hosts";
 
 /** core ships TypeScript source, so every App transpiles it. */
 const BASE_TRANSPILE = ["@allonfire/core"];
+
+/**
+ * Dev only: Next checks it for its dev assets and HMR, never in a build, so
+ * Tailscale is asked only by `next dev`.
+ */
+const devOrigins = () =>
+  env.NODE_ENV === ENV.NODE.DEVELOPMENT ? tailnetHosts() : [];
+
+/**
+ * On macOS no optimized image is kept on disk. On a non-Apple volume (the
+ * repo's exFAT drive) macOS writes a `._*` sidecar beside each cached image,
+ * and Next serves the folder's first file, the sidecar, as the image. The
+ * Docker and CI builds run on Linux and keep the cache.
+ */
+const diskImageCache = () =>
+  process.platform === "darwin" ? { maximumDiskCacheSize: 0 } : {};
 
 type Options = {
   /** The App's workspace packages to transpile, added to `@allonfire/core`. */
   transpile?: string[] | undefined;
   /** Path to the App's next-intl request config; no `intl`, no plugin. */
   intl?: { requestConfig: string } | undefined;
+  /**
+   * The App's Indexing, from `ACCESS.APP_SETTINGS`. Unindexed (the default,
+   * so an App that forgets is never listed) sends `X-Robots-Tag` on every path.
+   */
+  indexing?: Indexing | undefined;
 };
 
 /**
@@ -19,7 +45,7 @@ type Options = {
  */
 export const AOFCreateNextConfig = (
   config: NextConfig = {},
-  { transpile = [], intl }: Options = {}
+  { transpile = [], intl, indexing = METADATA.INDEXING.UNINDEXED }: Options = {}
 ): NextConfig => {
   const merged: NextConfig = {
     /** Enables `"use cache"`, `cacheLife` and `cacheTag`, so parts of a page can be cached. */
@@ -35,11 +61,39 @@ export const AOFCreateNextConfig = (
     /** Type-checks `<Link href>` and `router.push` against the App's real routes. */
     typedRoutes: true,
     ...config,
-    /** Every path gets the security headers; the App's rules come after them, so they win. */
+    /** Dev only: every name on this machine's tailnet (the Apps' Tailscale Services) can load the dev server's assets and HMR; no other tailnet can. */
+    allowedDevOrigins: [...devOrigins(), ...(config.allowedDevOrigins ?? [])],
+    /** A navigation or Server Action the network fails waits and retries once it is back (`useOffline` reads it), instead of throwing. */
+    experimental: { ...config.experimental, useOffline: true },
+    /** Every path gets the security headers, an unindexed App's also `X-Robots-Tag`; the App's rules come after them, so they win. */
     headers: async () => [
-      { headers: HTTP.SECURITY_HEADERS, source: "/(.*)" },
+      {
+        headers:
+          indexing === METADATA.INDEXING.INDEXED
+            ? HTTP.SECURITY_HEADERS
+            : [
+                ...HTTP.SECURITY_HEADERS,
+                {
+                  key: HTTP.HEADER.X_ROBOTS_TAG,
+                  value: METADATA.ROBOTS.NOINDEX,
+                },
+              ],
+        source: "/(.*)",
+      },
+      /** The service worker, asked for again on every visit (Next's PWA guide), so a new build's reaches the browser. */
+      {
+        headers: [
+          {
+            key: HTTP.HEADER.CACHE_CONTROL,
+            value: HTTP.CACHE_CONTROL.NO_CACHE,
+          },
+        ],
+        source: PWA.PATH.SERVICE_WORKER,
+      },
       ...((await config.headers?.()) ?? []),
     ],
+    /** The optimized images Next keeps on disk: none on macOS (`diskImageCache`). */
+    images: { ...diskImageCache(), ...config.images },
     /** Workspace packages that ship TypeScript source, which Next must compile itself. */
     transpilePackages: [
       ...new Set([

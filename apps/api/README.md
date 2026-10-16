@@ -98,7 +98,7 @@ return value; separate statements silently degrade them to nothing.
 export const createThingRoutes = (deps: Deps) =>
   new Hono()
     .get("/things", (c) => c.json({ things: [] }))
-    .post("/things", validator("json", schema, validationHook), (c) => c.json({}, 201));
+    .post("/things", validator("json", schema, invalidHook), (c) => c.json({}, 201));
 
 // wrong — client types become unusable, and no runtime test will notice
 const app = new Hono();

@@ -21,7 +21,7 @@ import { json, testHost } from "./test-host";
 
 /**
  * The recap agreed for ADR 0020, one test per row. P is public in Laura and
- * private in the Back office, Q private in Laura, R private in the Back
+ * private in the Back Office, Q private in Laura, R private in the Back
  * office. Giulia is a Laura Viewer, Mario a Laura Admin outside the Back
  * office, Admin an Admin in every App.
  */
@@ -209,7 +209,7 @@ describe("recap: writes", () => {
     [number, number, number, number],
   ][] = [
     [
-      "Upload to Laura + Back office",
+      "Upload to Laura + Back Office",
       uploadToLauraAndBackOffice,
       [401, 403, 403, 201],
     ],
@@ -270,7 +270,7 @@ describe("recap: writes", () => {
     );
   });
 
-  it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back office placement private", async () => {
+  it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back Office placement private", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
@@ -281,7 +281,7 @@ describe("recap: writes", () => {
     ]);
   });
 
-  it("DELETE { [P], LAURA } by Mario leaves P stored: it is still in the Back office", async () => {
+  it("DELETE { [P], LAURA } by Mario leaves P stored: it is still in the Back Office", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,

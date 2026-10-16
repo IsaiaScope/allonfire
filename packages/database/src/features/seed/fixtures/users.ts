@@ -7,7 +7,7 @@ import type { SeedUser } from "../seed-user";
 
 /**
  * The password of every Fixture User. Not a secret: Fixtures exist only in
- * Local and Test databases, never in Production.
+ * Test databases.
  */
 export const PASSWORD = "fixture-password-1";
 

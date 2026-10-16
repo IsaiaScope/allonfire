@@ -1,3 +1,4 @@
+import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import type { AppSettingsTable } from "./app-settings";
 
@@ -17,8 +18,16 @@ const ROLE_RANK = {
  * A new App fails to compile until its row is here.
  */
 const APP_SETTINGS = {
-  [App.LAURA]: { minRole: Role.VIEWER, registration: null },
-  [App.BACK_OFFICE]: { minRole: Role.ADMIN, registration: null },
+  [App.LAURA]: {
+    indexing: METADATA.INDEXING.UNINDEXED,
+    minRole: Role.VIEWER,
+    registration: null,
+  },
+  [App.BACK_OFFICE]: {
+    indexing: METADATA.INDEXING.UNINDEXED,
+    minRole: Role.ADMIN,
+    registration: null,
+  },
 } as const satisfies AppSettingsTable;
 
 /** Who is allowed where: each App's own settings, and how far each Role reaches. */

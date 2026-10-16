@@ -36,7 +36,7 @@ const lauraAdmin = sessionFor({
 const lauraUser = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.USER }],
 });
-/** An Admin of the Back office only. */
+/** An Admin of the Back Office only. */
 const officeAdmin = sessionFor({
   memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
 });
@@ -401,8 +401,8 @@ describe("PATCH /images", () => {
   });
 
   it("needs no Admin in an App whose placement stays as it is", async () => {
-    // Public in Laura, private in the Back office: a Back office Admin
-    // switches only the Back office placement, and Laura's stays.
+    // Public in Laura, private in the Back Office: a Back Office Admin
+    // switches only the Back Office placement, and Laura's stays.
     const { updateImages, written } = updates(
       placedIn(LAURA_PUBLIC, OFFICE_PRIVATE)
     );
@@ -452,7 +452,7 @@ describe("PATCH /images refusals", () => {
 
   it("checks an alt edit against the placements the write locks", async () => {
     // Laura's Admin read it in Laura only; by the time the write locks it, a
-    // Back office Admin has placed it there too, so it is no longer theirs alone.
+    // Back Office Admin has placed it there too, so it is no longer theirs alone.
     const { updateImages, written } = updates(
       placedIn(LAURA_PRIVATE, OFFICE_PRIVATE)
     );

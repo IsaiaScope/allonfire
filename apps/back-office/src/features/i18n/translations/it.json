@@ -1,17 +1,14 @@
 {
   "Metadata": {
-    "title": "Back office"
+    "description": "Dove si gestiscono i contenuti, gli utenti e i dati della famiglia AllOnFire."
   },
   "Home": {
-    "title": "Back office",
-    "description": "Ancora niente qui.",
-    "signOut": "Esci"
+    "description": "Ancora niente qui."
   },
   "SignIn": {
-    "app": "Back office",
     "email": "Email",
     "error": {
-      "forbidden": "Questo account non può accedere al Back office.",
+      "forbidden": "Questo account non può accedere al Back Office.",
       "invalid": "Email o password errate.",
       "missing": "Inserisci email e password.",
       "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
@@ -30,5 +27,33 @@
     "submit": "Accedi",
     "submitting": "Accesso in corso…",
     "theme": "Cambia tema"
+  },
+  "Navigation": {
+    "account": "Account",
+    "home": "Home",
+    "language": "Lingua",
+    "menu": "Menu principale",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "Utente",
+      "VIEWER": "Visualizzatore"
+    },
+    "signOut": "Esci",
+    "storage": "Archivio",
+    "theme": "Cambia tema",
+    "toggleMenu": "Comprimi o espandi il menu",
+    "users": "Utenti"
+  },
+  "Storage": {
+    "empty": {
+      "description": "Immagini e altri file arriveranno qui con l'API di Archivio.",
+      "title": "Ancora nessun file"
+    }
+  },
+  "Users": {
+    "empty": {
+      "description": "L'elenco degli Utenti e dei loro Ruoli arriverà con l'API degli Utenti.",
+      "title": "Ancora nessun Utente"
+    }
   }
 }

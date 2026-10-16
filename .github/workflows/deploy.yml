@@ -37,7 +37,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -86,6 +86,7 @@ jobs:
             APP_NAME=${{ matrix.unit }}
             STORAGE_ENDPOINT=${{ secrets.PROD_STORAGE_ENDPOINT }}
             NEXT_PUBLIC_API_URL=${{ secrets.PROD_NEXT_PUBLIC_API_URL }}
+            BACK_OFFICE_URL=${{ secrets.PROD_BACK_OFFICE_URL }}
           push: true
           provenance: false
           sbom: false

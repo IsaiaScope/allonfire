@@ -1,5 +1,8 @@
 # Pages are built in their App; the design package holds Designs and prototypes
 
+> Partly superseded by ADR 0022: the image templates moved to `packages/ui`
+> (`AOFBrandLogo`, `AOFShareCard`) and prototype mode was dropped.
+
 ADR 0011 put every App page's interface in `packages/design` as a Screen, so
 impeccable kept one state folder. In practice a Screen was not a draft: it was
 the code the App shipped, living outside the App, taking every string as a
@@ -14,7 +17,7 @@ gitignored. So impeccable can work on App code directly.
 
 Pages and their components are now built in their App, under
 `apps/<app>/src/features/<topic>/components/`, using next-intl and Next
-directly. That includes a Design's signature pieces: the Back office's
+directly. That includes a Design's signature pieces: the Back Office's
 departure board, hanko seal and tactile strip live in its `auth` feature. A
 second App wanting one moves it to `@allonfire/ui` as an AOF component then.
 The design package holds no real component. It keeps the Designs
@@ -45,3 +48,10 @@ App copies in step, and `aof-design` is the only way to run impeccable.
   found); a page with real interface renders a feature component.
 - impeccable's surface briefs for App targets land in the App's gitignored
   `.impeccable/`; only prototypes keep their briefs in the package.
+- Generated-image templates are the exception that lives in the package: they
+  render no page, only PNGs through `ImageResponse`, and every App draws the
+  same ones. The Brand holds the logo (`aofLogoSvg` and `BrandLogo`, square and
+  horizontal, light and dark, from one geometry) and each Design its own
+  cards (`designs/japan/share-card`) and image colours. They take an App's
+  name, banner and line as arguments and never import Next or next-intl; the
+  Next routes that serve them are core's (`features/next/metadata/*`).

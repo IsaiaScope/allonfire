@@ -8,7 +8,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import { SIGN_IN_URL } from "./pages";
+import { SIGN_IN_URL, signIn } from "./pages";
 
 // Home is `/`; the locale middleware can answer it as `/en`.
 const HOME_URL = new RegExp(
@@ -20,27 +20,6 @@ type Translations = typeof EN;
 // Next's route announcer is an `alert` too: read the form's own.
 const formAlert = (page: Page, t: Translations = EN) =>
   page.getByRole("form", { name: t.SignIn.submit }).getByRole("alert");
-
-/**
- * Fills the sign-in form of `locale` (the default, English, without one) as
- * `user`, with the Fixture password unless told otherwise.
- */
-const signIn = async (
-  page: Page,
-  { email }: { email: string },
-  {
-    locale,
-    password = FIXTURE.PASSWORD,
-  }: { locale?: "it"; password?: string } = {}
-) => {
-  const t = locale === "it" ? IT : EN;
-  await page.goto(
-    locale ? `/${locale}${AUTH.PAGE.SIGN_IN}` : AUTH.PAGE.SIGN_IN
-  );
-  await page.getByLabel(t.SignIn.email).fill(email);
-  await page.getByLabel(t.SignIn.password, { exact: true }).fill(password);
-  await page.getByRole("button", { name: t.SignIn.submit }).click();
-};
 
 // Every test signs in from one address: the e2e preset raises the auth limit
 // for its API, so retries never meet it.
@@ -78,7 +57,13 @@ test("signing out returns to sign-in and keeps home closed", async ({
 }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(page).toHaveURL(HOME_URL);
-  await page.getByRole("button", { name: EN.Home.signOut }).click();
+  // Sign out is in the account menu: the sidebar's on desktop, the top
+  // bar's on a phone.
+  await page
+    .getByRole("button", { name: EN.Navigation.account })
+    .filter({ visible: true })
+    .click();
+  await page.getByRole("menuitem", { name: EN.Navigation.signOut }).click();
   await expect(page).toHaveURL(SIGN_IN_URL);
   await page.goto("/");
   await expect(page).toHaveURL(SIGN_IN_URL);

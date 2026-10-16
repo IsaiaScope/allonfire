@@ -6,14 +6,14 @@ Image is now stored once and placed in any number of Apps through
 `image."ImageApp"` rows (`imageId`, `app`, `public`). An App's Admin adds an
 Image to their App or removes it from there; removing its last placement
 deletes it. Changes every App sees at once, its alt text or deleting it
-everywhere, need the Admin Role in every App it is in, which every Back office
+everywhere, need the Admin Role in every App it is in, which every Back Office
 Admin holds through the add-an-App rule. A placement can be public: the Image
 then shows in that App to anyone, signed in or not, so the Image module's reads
 need no Session and an App can have public pages.
 
 ## Considered Options
 
-- **Back office Admin as a super Role for Images**: one rule to explain, but
+- **Back Office Admin as a super Role for Images**: one rule to explain, but
   it brings back a Role reaching every App, future ones included, which ADR
   0019 removed.
 - **A whole App public in `APP_SETTINGS`**: simpler, but all or nothing; a

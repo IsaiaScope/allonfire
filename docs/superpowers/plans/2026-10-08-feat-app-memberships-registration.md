@@ -400,7 +400,7 @@ describe("APP_SETTINGS", () => {
     }
   });
 
-  it("keeps the Back office sign-in only and Admin-only", () => {
+  it("keeps the Back Office sign-in only and Admin-only", () => {
     expect(APP_SETTINGS[App.BACK_OFFICE]).toEqual({
       minRole: Role.ADMIN,
       registration: null,
@@ -1549,7 +1549,7 @@ Expected: PASS (typecheck of `guards.test-d.ts` included).
 
 ---
 
-### Task 7: Next adapter and the Back office env
+### Task 7: Next adapter and the Back Office env
 
 **Files:**
 - Modify: `packages/auth/src/environment/next-environment.ts`
@@ -1758,7 +1758,7 @@ const inLaura = (ids: readonly string[]) =>
   Promise.resolve(new Map(ids.map((id) => [id, App.LAURA])));
 ```
 
-In `upload`, `app: App.LAURA`. Every existing PATCH/DELETE test passes `appsOf: inLaura` in its deps (the 404 tests pass `appsOf: () => Promise.reject(new ImageNotFoundError(["missing"]))` instead of stubbing `updateImages`/`deleteImages` to reject). `"updates a batch"` moves the Image to `App.BACK_OFFICE` with `admin`. Replace `"lets an ADMIN of any App write, not only the Back office's"` with:
+In `upload`, `app: App.LAURA`. Every existing PATCH/DELETE test passes `appsOf: inLaura` in its deps (the 404 tests pass `appsOf: () => Promise.reject(new ImageNotFoundError(["missing"]))` instead of stubbing `updateImages`/`deleteImages` to reject). `"updates a batch"` moves the Image to `App.BACK_OFFICE` with `admin`. Replace `"lets an ADMIN of any App write, not only the Back Office's"` with:
 
 ```ts
   it("lets an Admin of the Image's App upload it", async () => {
@@ -1816,10 +1816,10 @@ const lauraUser = sessionFor({
 const otherAppUser = sessionFor({ memberships: [] });
 ```
 
-`"lists the Back office's Images"` uses `sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }] })`; `"refuses app=ALL with a validation problem"` keeps the literal `?app=ALL`; delete `"returns an ALL Image to any signed-in User"`; add:
+`"lists the Back Office's Images"` uses `sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }] })`; `"refuses app=ALL with a validation problem"` keeps the literal `?app=ALL`; delete `"returns an ALL Image to any signed-in User"`; add:
 
 ```ts
-  it("answers 403 to a Laura member under the Back office's floor", async () => {
+  it("answers 403 to a Laura member under the Back Office's floor", async () => {
     const res = await app(
       sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.USER }] }),
       {}
@@ -1833,7 +1833,7 @@ const otherAppUser = sessionFor({ memberships: [] });
 - [x] **Step 2: Run to verify they fail**
 
 Run: `pnpm --filter @allonfire/storage exec vitest run src/features/image/hono`
-Expected: FAIL — `appsOf` unknown; the Back office Admin's upload to Laura is accepted.
+Expected: FAIL — `appsOf` unknown; the Back Office Admin's upload to Laura is accepted.
 
 - [x] **Step 3: Implement**
 
@@ -1967,7 +1967,7 @@ describe("sign-in against Postgres", () => {
     expect(res.status).toBe(403);
   });
 
-  it("refuses a sign-in naming the Back office, and opens no Session", async () => {
+  it("refuses a sign-in naming the Back Office, and opens no Session", async () => {
     await prisma.session.deleteMany({ where: { user: { email: EMAIL } } });
     const res = await app.request("/v1/auth/sign-in/email", {
       body: stringifyJson({ email: EMAIL, password: PASSWORD }),
@@ -1983,7 +1983,7 @@ describe("sign-in against Postgres", () => {
   });
 
   it.each([
-    ["for the Back office", { [APP_HEADER]: App.BACK_OFFICE }],
+    ["for the Back Office", { [APP_HEADER]: App.BACK_OFFICE }],
     ["naming no App", {}],
   ])("does not let a request create a User %s", async (_, appHeader) => {
     const res = await app.request("/v1/auth/sign-up/email", {
@@ -2044,7 +2044,7 @@ Expected: hits only in the files listed above and in code this plan already chan
 - `CLAUDE.md`, Database Schema Quick Reference:
   - `auth` bullet: ``User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App``;
   - the access bullet: the schemas (`roleSchema`, `appSchema`, `App`), `ROLE_RANK`, `APP_SETTINGS` and `AppSettings` (`constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `accessUserFrom`; "an App declares its floor and Registration only in `APP_SETTINGS`";
-  - add: "Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `APP_SETTINGS`."
+  - add: "Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back Office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `APP_SETTINGS`."
   - Viewer Role System: "the API uses `requireApp(App.LAURA)`".
 - `packages/auth/README.md`: an App sets `AUTH_APP`, `API_URL`, `API_AUTH_URL` (no `AUTH_MIN_ROLE`); `requireApp(app)` row; delete the `require-role` row; `canAccess` reads `APP_SETTINGS`; Registration, `/join-app`, `x-aof-app` and the two error codes; the mount example uses `requireApp(App.LAURA)`; "Sign-up is disabled" becomes the Registration sentence from Task 9.
 - `packages/database/README.md`: the access row lists the new exports and `constants/app-settings`.
@@ -2061,9 +2061,9 @@ pnpm test
 
 Expected: all green (Postgres up and migrated, Task 1). Run Biome per file if a multi-file call fails with "No such file or directory" (exFAT sidecars).
 
-- [x] **Step 4: Check the Back office still signs in**
+- [x] **Step 4: Check the Back Office still signs in**
 
-With the Local stack up, sign in to the Back office at `http://localhost:3400/en/sign-in` as the seeded admin (the user types the password; never type real credentials in an automated browser). Expected: home page. A Laura-only mock user (`laura-admin@allonfire.com`, dev seed) is refused with the "forbidden" message.
+With the Local stack up, sign in to the Back Office at `http://localhost:3400/en/sign-in` as the seeded admin (the user types the password; never type real credentials in an automated browser). Expected: home page. A Laura-only mock user (`laura-admin@allonfire.com`, dev seed) is refused with the "forbidden" message.
 
 ## Implementation Log
 - Implemented: 2026-10-08T12:17:41Z

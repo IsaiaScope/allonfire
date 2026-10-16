@@ -3,19 +3,30 @@ import { I18N } from "../../../i18n/constants/locales";
 import { AOFCreateNavigation } from "../aof-create-navigation";
 import { AOFDefineRouting } from "../aof-define-routing";
 
+const navigation = AOFCreateNavigation(AOFDefineRouting(I18N.BASE_LANGUAGES));
+const [FIRST, SECOND] = I18N.BASE_LANGUAGES;
+const PAGE = "/users";
+
 describe("AOFCreateNavigation", () => {
   it("gives the App its locale-aware Link and helpers", () => {
-    const navigation = AOFCreateNavigation(
-      AOFDefineRouting(I18N.BASE_LANGUAGES)
-    );
     expect(navigation.Link).toBeDefined();
     for (const helper of [
       navigation.getPathname,
+      navigation.languageLinks,
       navigation.redirect,
       navigation.usePathname,
       navigation.useRouter,
     ]) {
       expect(helper).toBeTypeOf("function");
     }
+  });
+
+  it("links every language to the same page, always prefixed, the current one marked", () => {
+    expect(
+      navigation.languageLinks(PAGE, SECOND).map(({ attributes }) => attributes)
+    ).toEqual([
+      { "aria-current": undefined, href: `/${FIRST}${PAGE}`, lang: FIRST },
+      { "aria-current": "true", href: `/${SECOND}${PAGE}`, lang: SECOND },
+    ]);
   });
 });

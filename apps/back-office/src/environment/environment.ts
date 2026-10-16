@@ -16,5 +16,14 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
   },
   extends: [nextAuthEnv],
+  server: {
+    /**
+     * The Back Office's own public address: metadataBase for every absolute
+     * URL in its head (link-preview images, og:url). Read at build
+     * (prerendered pages bake it in) and at runtime (home renders per
+     * request), so both must carry the same value.
+     */
+    BACK_OFFICE_URL: z.url(),
+  },
   shared: runtimeEnvSchema,
 });

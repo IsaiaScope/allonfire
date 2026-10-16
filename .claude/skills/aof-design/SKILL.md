@@ -3,9 +3,8 @@ name: aof-design
 description: >
   The only way to design, build or edit an AllOnFire page. Wraps impeccable
   (every command: craft, shape, critique, audit, polish, live, colorize,
-  typeset, layout, harden, document, init and the rest) in two modes:
-  prototype (a draft page in packages/design, promoted into the App once
-  approved) and direct (build or edit the page straight in its App). Use when
+  typeset, layout, harden, document, init and the rest), building or editing
+  every page directly in its App. Use when
   asked to design, redesign, build, style, polish, critique or audit any App
   page or component, to create a Design ("new"), or when the user types
   /aof-design. Never run plain /impeccable in this repo.
@@ -13,9 +12,9 @@ description: >
 
 # aof-design
 
-Every real component lives in an App (or in `@allonfire/ui` when generic);
-`packages/design` holds only what Apps share visually, impeccable's context
-and prototypes (ADR 0011, ADR 0014):
+Every component lives in an App, or in `@allonfire/ui` when Apps share it;
+`packages/design` holds no components, only fonts, CSS, Markdown, constants
+and impeccable's context (ADR 0011, ADR 0014, ADR 0022):
 
 ```
 apps/<app>/src/features/<topic>/components/   the real interface, tests in tests/
@@ -27,26 +26,16 @@ packages/design/
                                 fonts/ (no components)
   src/apps/<app>/               PRODUCT.md (source), DESIGN.md + DESIGN.json
                                 (generated copies of the worn Design),
-                                styles.css (the App's one stylesheet),
-                                prototypes/ (drafts under review only)
+                                styles.css (the App's layer over ui's base)
 ```
 
-Invocation: `/aof-design <command> [target] [--app <app>] [--prototype]`,
-where `<command>` is any impeccable command, or `new`.
+Invocation: `/aof-design <command> [target] [--app <app>]`, where `<command>`
+is any impeccable command, or `new`.
 
-## Two modes
-
-- **Direct** (the default): build or edit the page in its App. Use it for any
-  change to an existing page and for a new page whose direction is already
-  clear. The target is the App file itself.
-- **Prototype** (`--prototype`, or when the owner asks to try a look first, or
-  a new page needs a visual direction chosen): impeccable builds a draft in
-  `packages/design/src/apps/<app>/prototypes/<route>.tsx`, the App page
-  renders it while it is reviewed, and once the owner approves it is promoted
-  (step 6) and deleted. Nothing ships from `prototypes/`.
-
-Ask only when the request leaves the mode genuinely open; a fix, polish or
-tweak is always direct.
+Every page is built in its App; there is no draft area (ADR 0022). When a
+new page needs a visual direction, ask the owner to choose one first (the
+structured question tool with previews), then build it in the App and show
+it in their tab; a declined look is reverted.
 
 ## Every impeccable command
 
@@ -64,17 +53,12 @@ tweak is always direct.
    Then `pnpm design:sync`. If either command throws about a shadowing
    `PRODUCT.md`/`DESIGN.md` or `.impeccable/design.json`, move that file as the
    message says before anything else.
-4. **Target.**
-   - Direct: the App file. A route's interface beyond a few lines lives in a
-     feature component, `apps/<app>/src/features/<topic>/components/<name>.tsx`
-     (the Sign in page is `features/auth/components/sign-in.tsx`, export
-     `SignIn`); its page only adds metadata and renders it. A trivial page
-     (home placeholder, error, not found) keeps its markup in the page. A new
-     page gets its component file first.
-   - Prototype: `packages/design/src/apps/<app>/prototypes/<route>.tsx`, one
-     named export, text inline or as props (it never imports next-intl or
-     `next/*`). Point the App page at it through
-     `@allonfire/design/apps/<app>/prototypes/<route>` for the review.
+4. **Target.** The App file. A route's interface beyond a few lines lives in
+   a feature component, `apps/<app>/src/features/<topic>/components/<name>.tsx`
+   (the Sign in page is `features/auth/components/sign-in.tsx`, export
+   `SignIn`); its page only adds metadata and renders it. A trivial page
+   (home placeholder, error, not found) keeps its markup in the page. A new
+   page gets its component file first.
 5. **Hand off.** Invoke the `impeccable` skill with the command and
    `--target <path>`. Run **every** impeccable launcher command with
    `IMPECCABLE_CONTEXT_DIR=packages/design/src/apps/<app>` in front, for
@@ -84,19 +68,17 @@ tweak is always direct.
    the package (checked 2026-10-02, impeccable 4.3.1) and writes any state it
    creates under `apps/<app>/.impeccable/`, which is gitignored. Give
    impeccable the repo rules and the owner's taste below before the command.
-6. **Wire and promote.**
+6. **Wire.**
    - New strings go into the App's `src/features/i18n/translations/en.json`
      and `it.json` (run `pnpm i18n:check`); components read them with
      `useTranslations` (Server Components too) or `getTranslations` in an
-     async page.
-   - Promoting an approved prototype: move it to the App's feature component,
-     replace its inline text or copy props with `useTranslations`, its slots
-     with the App's own elements (`next/image`, the i18n `Link`, AOF
-     components), move its test, point the page at the component and delete
-     the prototype and its export use. A piece the App's other features
-     would reuse goes to `apps/<app>/src/shared/components/`; one every App
-     would reuse becomes an AOF component in `packages/ui`. Never into
-     `packages/design`.
+     async page. A name (the App's, the brand's) is never a translation: it
+     comes from its constant (`BACK_OFFICE.NAME`, `BRAND.NAME`).
+   - A piece the App's other features would reuse goes to
+     `apps/<app>/src/shared/components/`; one every App would reuse becomes
+     an AOF component in `packages/ui`, a generated-image one included.
+     Never into `packages/design`: what a Design adds to a shared component
+     is data there (`JAPAN_SHARE_CARD` dresses `AOFShareCard`).
 7. **Tokens.** If `packages/design/src/designs/<name>/theme.css` changed, run
    impeccable `document` in scan mode against the App folder (same env and
    target rules) so the App's `DESIGN.md`/`DESIGN.json` describe the new
@@ -119,6 +101,31 @@ tweak is always direct.
     `pnpm --filter @allonfire/design test`, the App's tests
     (`pnpm --filter <app> test`), its `tsc --noEmit`, and
     `pnpm exec biome check --write` on the files the run touched.
+
+## Library survey
+
+Before building a new piece of interface that shadcn's generated components do
+not already cover (an app shell, a navigation pattern, a complex menu), survey
+the libraries the owner uses for something already built:
+
+1. Official shadcn (`ui.shadcn.com/blocks`, the `base-nova` builds), Shadcn
+   Studio, Shadcnblocks, React Bits, Ui-Layouts, Shadcn UI Kit, Shadcn UI
+   Blocks (shadcnui-blocks), Aceternity UI.
+2. Free options only: the owner does not buy blocks, so a paid one gets one
+   line at most. For each: the matching blocks (names and links), Radix or
+   Base UI, how it installs (registry namespace or copy, extra npm packages), its
+   fit with the owner's taste, and a verdict (`use`, `idea only`, `skip`).
+   Write it as `docs/superpowers/specs/<date>-<topic>-library-survey.md`.
+3. **Show, don't only list.** Through `/iso-browser` with the owner driving:
+   open every free candidate's own page in their browser with `open <url>`
+   (the full-screen preview when there is one, such as shadcn's
+   `ui.shadcn.com/view/<style>/<block>`), check each URL answers 200 first,
+   then say which tab is which. A page that mixes free and paid items (Shadcn
+   Studio's) is opened on the free item's own anchor, and a block counts as
+   free only when its registry JSON answers 200 without a key. Never the browser tool's new-page call, which opens windows.
+4. Ask the owner to pick, recommendation first. Nothing is installed before
+   the pick; a Radix block goes through `migrate-radix-to-base`, and anything
+   installed lands through the shadcn CLI and is wrapped as an AOF component.
 
 ## live
 
@@ -155,8 +162,11 @@ and reads `PRODUCT.md`/`DESIGN.md` only by walking up from the App, ignoring
   needs state, effects or event handlers; then `"use client"` on the smallest
   part, ideally an AOF component passed in or imported as a leaf.
 - Components come from `@allonfire/ui/components/aof-*` (AOF components) or
-  the App itself (the Back office's departure board, hanko and tactile strip
-  sit in `features/auth/components/`). A missing AOF component is created in
+  the App itself (the Back Office's departure board, hanko and station sign
+  sit in `features/auth/components/`; the eki stamp, brush kanji and station
+  notice, which several pages share, in `shared/components/`: a special page
+  (not found, an error, a wait) is a `StationNotice`). A missing AOF
+  component is created in
   `packages/ui/src/components/aof-<name>.tsx` with a test, composing shadcn
   components. Never import `@allonfire/shadcn` outside `packages/ui`, never
   edit `packages/shadcn`: a missing primitive is `npx shadcn@4.21.0 add <name>`
@@ -166,7 +176,7 @@ and reads `PRODUCT.md`/`DESIGN.md` only by walking up from the App, ignoring
 
 ## Owner's taste
 
-Learned while designing the Back office Sign in (2026-10). Hand these to
+Learned while designing the Back Office Sign in (2026-10). Hand these to
 impeccable with the repo rules, and hold every result to them.
 
 **Budget.** One build pass, then one screenshot round (phone 390 wide and
@@ -175,7 +185,13 @@ critique subagent loops unless the owner asks: open-ended review rounds were
 called out as spending too much. Small change, small check.
 
 **Checking in a browser.** Through `/iso-browser`, attached to a window the
-owner already has open: never a new window, tab or isolated context. Before
+owner already has open: never a new window, tab or isolated context. In
+practice: list the pages, take the owner's tab on the App's origin
+(`localhost:3400` for the Back Office), navigate it to the route under review,
+emulate the phone and desktop sizes and the colour schemes there, then reset the
+emulation and reload. Never call the browser tool's new-page action: in an
+attached Chrome it opens a new window. impeccable's own checks (polish, audit,
+live) go through the same tab. No tab on that origin: ask first. Before
 starting a dev server, check its port (`lsof -iTCP:<port> -sTCP:LISTEN`); if
 it listens, the owner's server is running, so use it and never stop it. Stop
 only a server this run started, by its own task or PID, never with
@@ -189,8 +205,8 @@ only a server this run started, by its own task or PID, never with
   as overkill and made the page lag.
 - Never invent content: no other Apps, transfers or cross-links on a page
   that does not need them, no copy pairs in two languages beside each field.
-- Names are exact: "Back office" is the App, "AllOnFire" is the repository,
-  not a brand.
+- Names are exact: "Back Office" is the App, "AllOnFire" the brand its Apps
+  belong to (and the repository).
 
 **Motion.** A little, never a show. CSS only (tw-animate-css or a keyframe
 token in `theme.css`), each animation short (300 to 700ms), played once on
@@ -199,7 +215,7 @@ motion is allowed only where it carries meaning (a departure board's running
 notice) and then ships a pause control that works without a mouse and stops
 for reduced motion (WCAG 2.2.2).
 
-**Japan Design (Back office).** Tokyo station at night, used with taste:
+**Japan Design (Back Office).** Tokyo station at night, used with taste:
 - Desktop: the photograph on the left, the yellow tactile-paving strip as
   the vertical separator, the form centred in its own column (about 32rem).
 - Phone: the photograph full-bleed under a scrim, the departure board on
@@ -214,6 +230,11 @@ for reduced motion (WCAG 2.2.2).
 - Station furniture stays night in both themes through a scoped `.dark`.
 - Language and theme controls share one capsule: bottom right on a phone,
   bottom left of the form column on desktop.
+- The signed-in frame: on desktop a sidebar drawn as the App's line (after
+  React Bits' Branched Menu): a trunk, each Section a curved branch, the way
+  to the current Section drawn in the line colour (410ms, `motion-safe`); on
+  a phone a tab bar, the current tab marked by the line along its top. The
+  account menu opens from an initial on a black tile.
 
 **Server-first, client at the leaf.** Pages and their components stay Server
 Components. When
@@ -253,8 +274,8 @@ since every language is shipped. A form validated by the browser shows its bubbl
 language, not the page's: server-validated forms set `noValidate`.
 
 **Auth is shared.** All auth logic lives in `@allonfire/auth/features/next/*`
-for every App: the `signIn`/`signOut` server actions, `requireAppSession` for
-pages and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` in its
+for every App: the `signIn`/`signOut` server actions, `withAppSession` for
+pages (the Session check runs before the page renders, inside the page's own `<Suspense>`) and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` in its
 env (its floor and Registration live in `APP_SETTINGS`) and keeps only its components, styles and translations.
 
 **Forms.** Next's pattern (forms guide, "Validation errors"): the action
@@ -279,15 +300,14 @@ beside the element's real one (Japan's dot grids are `pattern-led-grid`,
 1. Create `packages/design/src/designs/<name>/`. If
    `packages/design/src/apps/<app>/` is missing, the App is new to the
    package; wire it:
-   - `packages/design/src/apps/<app>/styles.css` importing
-     `@allonfire/ui/styles/base.css` and `@source "./prototypes";`;
-   - two export lines in `packages/design/package.json`:
-     `"./apps/<app>/prototypes/*": "./src/apps/<app>/prototypes/*.tsx"`,
+   - `packages/design/src/apps/<app>/styles.css`, which the Design's import
+     will go into (step 5);
+   - one export line in `packages/design/package.json`:
      `"./apps/<app>/styles.css": "./src/apps/<app>/styles.css"`;
    - in the App: `"@allonfire/design": "workspace:*"` in `package.json`,
      `@allonfire/design` in `next.config.ts` `transpilePackages`, and
-     `globals.css` reduced to
-     `@import "@allonfire/design/apps/<app>/styles.css";` plus its own
+     `globals.css` reduced to `@import "@allonfire/ui/styles/base.css";`,
+     then `@import "@allonfire/design/apps/<app>/styles.css";`, plus its own
      `@source "../";`; then `pnpm install`.
 2. If the App folder has no `PRODUCT.md`, or it is a placeholder, run
    impeccable `init` there (env and target rules above).
@@ -302,8 +322,9 @@ beside the element's real one (Japan's dot grids are `pattern-led-grid`,
    `@theme inline` for any token shadcn has no variable for. Keep every text
    pair at WCAG AA: `src/designs/<name>/tests/theme.test.ts` checks them
    (copy Japan's test for a new Design).
-5. Add `@import "../../designs/<name>/theme.css";` to the App's `styles.css`
-   after the base import, then `pnpm design:sync`.
+5. Add `@import "../../designs/<name>/theme.css";` at the top of the App's
+   `styles.css` (the App's `globals.css` imports ui's base first), then
+   `pnpm design:sync`.
 6. Once a page is built in the Design, run step 7's `document` scan so the
    real tokens land in the frontmatter and `DESIGN.json` exists.
 

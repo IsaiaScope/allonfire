@@ -49,13 +49,15 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL` and `AUTH_APP`, required; `AUTH_COOKIE_DOMAIN`, optional: the API's own value, so Sign out clears the cookies even when the API does not answer) for a Next App to extend its env with |
 | `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
 | `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
+| `./features/next/components/with-app-session` | `withAppSession(Page, fallback)` — wraps every signed-in page: `requireAppSession` runs first, inside the page's own `<Suspense>` showing `fallback`, and the page renders only once it passes |
 | `./features/next/constants/paths` | `appPathSchema`, `AppPath` (the values of `AUTH.PAGE`) |
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
+| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` (`pages`: the App's signed-in paths after the locale, `""` for Home) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307) |
 | `./features/next/constants/api` | `signInErrorSchema`, `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
 | `./features/next/utils/auth-client` | `createApiAuthClient()` — Better Auth's own client (`better-auth/client`) for the API's auth routes, typed from `Auth`; `ApiAuthClient`, `Session` |
 | `./features/next/utils/refresh-session` | `refreshSession(request)` — for an App's proxy: the renewed cookies once the cookie cache has expired |
-| `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession()` — a page's guard: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`), or a redirect to Sign in |
+| `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession()` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`), or a redirect to Sign in |
 | `./features/next/utils/set-cookie` | `parseSetCookies(headers)` — the API's `Set-Cookie` headers, read by Better Auth's parser, as `cookies().set` takes them |
 | `./features/next/utils/sign-in` | `signInWithEmail(formData)` — names the App in `x-aof-app`; the error (`forbidden` when the API refuses the App), or none once it set the Session cookies |
 | `./features/next/utils/sign-out` | `signOutOfApi()` — ends the Session and clears the cookies |
@@ -87,7 +89,7 @@ src/
     next/        a Next App's side, through the API: actions/{sign-in,sign-out},
                  constants/{paths,api},
                  utils/{auth-client,redirect-to,refresh-session,session,
-                 with-session-refresh,set-cookie,sign-in,sign-out}, tests/
+                 with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), tests/
     server/      auth (createAuth, toAuthLike), routes/join-app,
                  utils/registration, tests/

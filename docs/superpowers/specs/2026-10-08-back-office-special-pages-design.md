@@ -1,8 +1,8 @@
-# Back office special pages and page information
+# Back Office special pages and page information
 
 ## Goal
 
-The Back office gets every Next.js special file and every piece of page
+The Back Office gets every Next.js special file and every piece of page
 information a private admin tool needs, each visual one designed in the Japan
 Design: the two not-found pages, the two error pages, a loading state, the
 icons, the manifest, the link-preview images, the iOS launch screens and a
@@ -18,12 +18,18 @@ TN3156, MDN browser-compat-data 8.1.5, web.dev, Chrome docs, ogp.me, Meta,
 WhatsApp, Slack, LinkedIn, Google Search docs). Safari/iOS 27 shipped
 2026-09-17 with no web-app changes, so the iOS 26 findings stand.
 
+Revised 2026-10-13, after the wiring was built (the 404 mechanism, per-page
+`openGraph`, explicit preview images, the logo); and for `dev` at v0.3.0: constants nest per owner (`HTTP`,
+`I18N`, `ACCESS`), e2e runs a production build, deploys go through
+`deploy.yml` and `docker-compose.prod.yml`.
+
 ## Scope
 
 In:
 
-- Pages: `[locale]/not-found.tsx`, `global-not-found.tsx`, `[locale]/error.tsx`,
-  `global-error.tsx`, `[locale]/loading.tsx`.
+- Pages: `[locale]/not-found.tsx`, `[locale]/error.tsx`, `global-error.tsx`,
+  `[locale]/(signed-in)/loading.tsx`, and the designed 404 for every URL no
+  language owns.
 - Head: the root layout's `generateMetadata` and `viewport`, page titles.
 - Files: `icon.tsx` (SVG), `apple-icon.tsx`, `public/favicon.ico`, `manifest.ts`,
   manifest PNG icons, `[locale]/opengraph-image.tsx`,
@@ -40,7 +46,7 @@ Out, with the reason:
   to Sign in, and Sign in already answers an account that cannot enter.
 - `template`, `default`: no per-navigation animation, no parallel routes.
 - A sitemap and `alternates` (canonical, hreflang, `x-default`) **in the
-  Back office**: it is unindexed, search engines never list a `noindex` page,
+  Back Office**: it is unindexed, search engines never list a `noindex` page,
   and next-intl already sends hreflang as a `Link` header from the proxy. The
   core helpers for them ship, tested, for the first indexed App.
 - Service worker, offline mode: not wanted, as in Laura.
@@ -61,11 +67,17 @@ in `@allonfire/core` (ADR 0012), written for both Indexing values. The App
 keeps its Brand label, text, colors and route files. Laura is paused and keeps
 its own setup until it is rebuilt.
 
-- **Indexing** (glossary): `INDEXING` (`indexed`, `unindexed`) with
-  `indexingSchema` and its inferred type, in core. `APP_SETTINGS` gains an
+- **One object, `METADATA`.** Core's page-information constants nest in
+  `METADATA` (`features/metadata/constants/metadata`): `INDEXING`, `ROBOTS`,
+  `COLOR_SCHEME`, `OG_LOCALE`, `PATH` (where Next serves each metadata file)
+  and `LAUNCH` (the iOS devices). The Back Office's own values nest in
+  `BACK_OFFICE` (`src/shared/constants/back-office`): `NAME`, `COLOR`, `PATH`,
+  `ICON`, `SHARE_IMAGE`. No path is a string literal outside them.
+- **Indexing** (glossary): `METADATA.INDEXING` (`indexed`, `unindexed`) with
+  `indexingSchema` and its inferred type, in core. `ACCESS.APP_SETTINGS` gains an
   `indexing` field, so an App declares it once beside `minRole` and
-  `registration`; Laura and the Back office are `unindexed`. The App passes
-  `APP_SETTINGS[app].indexing` to both helpers below, so its metadata and its
+  `registration`; Laura and the Back Office are `unindexed`. The App passes
+  `ACCESS.APP_SETTINGS[app].indexing` to both helpers below, so its metadata and its
   headers cannot disagree.
 - **`AOFBaseMetadata({ indexing, appName, locale, locales })`**
   (`core/features/next/metadata/`) returns the App-agnostic part of the root
@@ -82,9 +94,10 @@ its own setup until it is rebuilt.
   `startupImage`.
 - **`AOFCreateNextConfig(…, { indexing })`** adds `X-Robots-Tag:
   noindex, nofollow` to every path when unindexed, nothing when indexed.
-  `HTTP_HEADER` gains `X_ROBOTS_TAG`.
+  `HTTP.HEADER` gains `X_ROBOTS_TAG`, and `HTTP.CONTENT_TYPE` gains `PNG` and
+  `SVG`.
 - **Indexed-App helpers.** Pure functions, unit-tested on both branches; the
-  Back office uses only `AOFRobots`:
+  Back Office uses only `AOFRobots`:
   - `AOFAlternates(pathname, routing)`: canonical, every language and
     `x-default`, under next-intl's as-needed prefixes.
   - `AOFRobots({ indexing, origin })`: `Allow: /`, plus a sitemap line when
@@ -92,8 +105,8 @@ its own setup until it is rebuilt.
     and block preview bots.
   - `AOFSitemapEntries(paths, routing)`: each path in every locale, with its
     alternates.
-- **Launch screens.** `AOF_LAUNCH_SCREENS` (the device list) and
-  `AOFLaunchScreenLinks(list)` (the `startupImage` entries) live in core,
+- **Launch screens.** `METADATA.LAUNCH.DEVICES` (the device list) and
+  `AOFLaunchScreenLinks()` (the `startupImage` entries) live in core,
   plus a route factory whose `generateStaticParams` and `GET` the App's route
   file re-exports. The App passes the render (its mark, colors) and nothing
   else.
@@ -102,36 +115,60 @@ its own setup until it is rebuilt.
 
 ## Decisions: pages
 
-- **`global-not-found`.** The proxy skips any path with a dot
-  (`/missing.png`), so no locale is routed and no layout renders; Next falls
-  back to its own unstyled 404. `experimental.globalNotFound: true` in the
-  Back office's `next.config.ts` (not in `AOFCreateNextConfig`: Laura has its
-  own root `not-found.tsx`) and `app/global-not-found.tsx` fix it.
-- **Shared status components.** Each not-found pair and each error pair look
-  the same, so each pair renders one presentational component from
+- **The designed 404 for every URL, without `global-not-found`.** The first
+  design used Next's `global-not-found`, on the belief that a dotted path
+  (`/missing.png`), which the proxy skips, matches no route. It does match:
+  the root layout sits under `[locale]`, which takes any first segment. Such
+  a path reached the layout with a bogus locale, the request config called
+  `notFound()` with no boundary above the root layout, and Next answered its
+  bare error shell; `global-not-found` is only served for URLs that match
+  nothing, so it never ran. Instead, core's `AOFWithLocalizedNotFound`
+  (`features/next/config`) adds an `afterFiles` rewrite: a path whose first
+  segment is not a language, and that no file, static route or kept dynamic
+  route serves, is rendered under the default language, where the catch-all
+  shows `[locale]/not-found.tsx` with a 404. The App lists the dynamic routes
+  to keep (`METADATA.PATH.LAUNCH_SCREEN`, `BACK_OFFICE.PATH.MANIFEST_ICON`,
+  the storage proxy). No experimental flag is needed.
+- **A real 404 status.** A `loading.tsx` above a page wraps it in Suspense,
+  so Next streams a 200 shell before `notFound()` runs. `loading.tsx` and
+  home therefore live in a route group, `[locale]/(signed-in)/`, and the
+  catch-all and Sign in sit outside it.
+- **Shared status components.** The two error pages look the same, and the
+  not-found page is one more notice in the same language, so each renders a
+  presentational component from
   `apps/back-office/src/features/errors/components/`: `NotFoundNotice` and
   `ErrorNotice`. Text comes in as props; the components never import
-  next-intl. The `[locale]` pages pass translations; the global pages pass
-  `SHARED_TRANSLATIONS[DEFAULT_LANGUAGE].Common`, since no locale is known
+  next-intl. The `[locale]` pages pass translations; `global-error` passes
+  `SHARED_TRANSLATIONS[I18N.DEFAULT_LANGUAGE].Common`, since no locale is known
   outside `[locale]`.
-- **Global pages wear the theme.** `global-not-found.tsx` and
-  `global-error.tsx` replace the root layout, so each renders its own
-  `<html>` and `<body>`, imports `../globals.css` and wraps its content in
-  `AOFThemeProvider`, or it would always render light and unstyled.
+- **The global error page wears the theme.** `global-error.tsx` replaces the
+  root layout, so it renders its own `<html>` and `<body>`, imports
+  `./globals.css` and wraps its content in `AOFThemeProvider`, or it would
+  always render light and unstyled.
 - **Error digest.** `ErrorNotice` shows the error's `digest` small under the
   message when present, so a report can be matched to the server log.
-- **Loading.** `[locale]/loading.tsx` is the Suspense fallback while home
+- **Loading.** `[locale]/(signed-in)/loading.tsx` is the Suspense fallback while home
   checks the Session (`instant = false`, so nothing is prerendered there).
 
 ## Decisions: the `<head>`
 
 Everything lives in the root `[locale]/layout.tsx`, except each page's
-`title` and `description`. Nested metadata merges shallowly: a page that sets
+`title`, `description` and `openGraph`. Nested metadata merges shallowly: a page that sets
 `openGraph` replaces the layout's whole `openGraph` (the bug Laura has on
-every page). So the layout sets `openGraph` and `twitter` **without** title,
-description or images, pages set only `title` and `description`, and Next
-fills `og:title`, `og:description`, `twitter:*` and the image tags from them
-and from the image files. A page never sets `robots`, which would replace the
+every page). So the layout sets `openGraph` and `twitter` **without** title or
+description, and Next fills `og:title`, `og:description` and `twitter:*` from
+each page's own. Two things a page cannot inherit, both found by the e2e head
+test:
+
+- **`og:url`.** `"./"` resolves to the route Next renders (`/en/sign-in`), not
+  the path next-intl serves without a prefix (`/sign-in`). Each page passes
+  `openGraph: pageOpenGraph(path, locale)`, which spreads the layout's
+  `openGraph` (from `baseMetadata(locale)`) and sets the public address.
+- **The images.** A page's own `openGraph` would drop images that came from
+  the file convention, so `AOFBaseMetadata` takes `shareImage` and names
+  `og:image` and `twitter:image` explicitly, under the locale, with their alt
+  and size.
+ A page never sets `robots`, which would replace the
 layout's `noindex` whole.
 
 `generateMetadata` reads only translations (the locale comes from
@@ -143,13 +180,13 @@ blocking in `<head>`.
 | Field | Value | Why |
 |---|---|---|
 | `metadataBase` | `BACK_OFFICE_URL` | absolute URLs for every image and `og:url`; without it Next falls back to localhost in production |
-| `title` | `{ default: t("title"), template: "%s · Back office" }` | each page's tab and preview title; the template names the App once |
+| `title` | `{ default: t("title"), template: "%s · Back Office" }` | each page's tab and preview title; the template names the App once |
 | `description` | translated | search snippet, WhatsApp and LinkedIn previews need it |
-| `applicationName` | "Back office" | `application-name` meta |
+| `applicationName` | "Back Office" | `application-name` meta |
 | `robots` | `{ index: false, follow: false }` | keeps the App out of search; plus the `X-Robots-Tag` header for non-HTML responses |
 | `openGraph` | `type: "website"`, `siteName`, `locale` (`en_US` / `it_IT`), `alternateLocale` (the other one), `url: "./"` | WhatsApp needs `og:url`; `"./"` resolves against the current path |
 | `twitter` | `{ card: "summary_large_image" }` | X falls back to OG for the rest |
-| `appleWebApp` | `capable: true`, `title: "Back office"`, `statusBarStyle: "default"`, `startupImage` (launch screens) | iOS web app, add-sheet name, splash |
+| `appleWebApp` | `capable: true`, `title: "Back Office"`, `statusBarStyle: "default"`, `startupImage` (launch screens) | iOS web app, add-sheet name, splash |
 | `other` | `google: "notranslate"` (kept), `apple-mobile-web-app-capable: "yes"` | Next 15+ emits only `mobile-web-app-capable` for `capable`; iOS launch screens need the Apple tag |
 | `formatDetection` | `telephone: false, email: false, address: false` | iOS must not turn IDs and numbers into links |
 | `viewport.themeColor` | light `--background`, dark `--background` (`media: prefers-color-scheme`) | installed web app chrome; Safari 26+ tints tabs from the page background instead |
@@ -163,7 +200,7 @@ error set their own title. Every title and description is in `en.json` and
 translucent bar keeps white text, unreadable in the light theme, and it is
 buggy on iOS 26.1 and later (WebKit bugs 301994, 305546).
 
-`BACK_OFFICE_URL` is the Back office's own public address, server-only,
+`BACK_OFFICE_URL` is the Back Office's own public address, server-only,
 `z.url()`, in `src/environment/environment.ts`, named after its owner (never
 `APP_`).
 
@@ -172,26 +209,25 @@ buggy on iOS 26.1 and later (WebKit bugs 301994, 305546).
 - **Brand.** Laura's `src/app/icon.svg`, `public/allonfire-laura.svg`,
   `public/allonfire-laura-horizontal.svg` and `src/app/opengraph-image.tsx`
   carry the Brand, the AOF monogram (silver A, O, F) with the flame in the O,
-  plus a green "LAURA" label.
-  - The monogram, without label or background, becomes
-    `packages/design/src/brand/aof-monogram.ts`, which exports the SVG
-    markup as a string and as a data URL
-    (`@allonfire/design/brand/aof-monogram`). It is an asset, not a
-    component, so ADR 0014 holds. A string, not a `.svg` file, so the App can
-    serve it and embed it without a bundler loader.
-  - The Back office's mark is the monogram plus a Back office label in the
-    Japan Design: `BackOfficeMark` in `features/metadata/components/`, built
-    from Satori-safe markup (flex, inline styles) so `ImageResponse` renders
-    it. The label is real text in the loaded TTF, never SVG `<text>`, which
-    Satori's SVG renderer draws without fonts.
+  on a dark tile, plus a green "LAURA" banner.
+  - **The Back Office's logo is built the same way** (the owner's
+    instruction): the dark tile, the monogram, and a banner in its own color,
+    the Japan Design's blue, carrying "BACK OFFICE". Never the bare monogram.
+  - `packages/design/src/brand/aof-monogram.ts` exports `BRAND`: the
+    monogram (markup, SVG, data URL), the dark ground and the logo's
+    geometry, so every App lays its logo out alike. Strings, not `.svg`
+    files, so an App can serve and embed them without a bundler loader; an
+    asset, not a component, so ADR 0014 holds.
+  - `backOfficeLogoSvg()` is the logo as SVG; `BackOfficeMark` draws the same
+    logo for `ImageResponse` from Satori-safe markup, with the banner's text
+    set in the loaded TTF (Satori's SVG renderer draws `<text>` without
+    fonts) and the monogram as a CSS background.
   - Every PNG (apple icon, manifest icons, preview images, launch screens)
-    renders that one mark.
+    renders that one logo.
 - **Favicon.**
-  - `app/icon.tsx` (`contentType = "image/svg+xml"`) answers the monogram
-    SVG from the design package, with a `@media (prefers-color-scheme: dark)`
-    rule inside so it follows the OS theme. The label is left out: it is
-    unreadable at 16-32px. Safari 26 and every current browser read SVG
-    favicons.
+  - `app/icon.tsx` answers the Back Office's logo as SVG
+    (`backOfficeLogoSvg()`), sharp at any size. Safari 26 and every current
+    browser read SVG favicons.
   - `public/favicon.ico` (32x32) is served for whatever asks for
     `/favicon.ico` directly, and no `<link>` points at it. Next's
     `app/favicon.ico` convention would emit `sizes="any"`, which makes Chrome
@@ -208,31 +244,30 @@ buggy on iOS 26.1 and later (WebKit bugs 301994, 305546).
 - **Manifest** (`app/manifest.ts`; only discovered at the `app/` root, which
   is why Laura's `[locale]/manifest.ts` is never linked):
   - `id`, `start_url` and `scope` all `"/"`.
-  - `name` and `short_name` "Back office", plus `description`.
+  - `name` and `short_name` "Back Office", plus `description`.
   - `display: "browser"`, `lang: "en"`, `dir: "ltr"`.
   - `theme_color` and `background_color` from the light `--background`.
   - The icons above.
   - Add `color_scheme_dark` (dark theme and background colors) only if Next's
     `MetadataRoute.Manifest` type accepts it. It is in the W3C spec since
     April 2026 but not shipped in any browser yet.
-- **Open Graph image.** `[locale]/opengraph-image.tsx`, 1200x630 PNG under
-  300 KB (WhatsApp's limit is 600 KB), with a translated `alt` export. Next
-  emits `og:image`, `og:image:width`, `og:image:height`, `og:image:type` and
-  `og:image:alt` from it. It is a Route Handler, where `next/root-params` is
-  not available, so it reads `params.locale` and translates with next-intl's
-  `createTranslator` over the imported JSON, not `getTranslations`. No
-  branding in the title text (Apple TN3156).
-- **Twitter image.** `[locale]/twitter-image.tsx`, the same card drawn by the
-  same component, so `twitter:image` and `twitter:image:alt` are explicit,
-  like Laura's.
+- **Open Graph and X images.** `[locale]/opengraph-image.tsx` and
+  `[locale]/twitter-image.tsx`, 1200x630 PNG under 300 KB (WhatsApp's limit
+  is 600 KB), the same card from one function, each built once per language
+  (`generateStaticParams`). They are Route Handlers, where
+  `next/root-params` is not available, so they read `params.locale` and
+  translate with next-intl's `createTranslator` over the imported JSON
+  (`metadataText`), not `getTranslations`. The head names them through
+  `shareImage`, alt included. No branding in the title text (Apple TN3156).
 - **Theme colors in code.** Manifest, `themeColor` and the generated images
-  cannot read CSS variables, so `features/metadata/constants/colors.ts` holds
-  the Japan hex values they need. A test reads `theme.css` and fails if any
+  cannot read CSS variables, so `BACK_OFFICE.COLOR` holds the Japan hex
+  values they need, keyed by `METADATA.COLOR_SCHEME`. A test reads `theme.css` and fails if any
   of them drifts from its `--background` / `--primary` source.
 - **Fonts in generated images.** `ImageResponse` (Satori) reads TTF, OTF or
-  WOFF, not WOFF2, and the Japan fonts ship as WOFF2. The first image round
-  adds a TTF of Atkinson Hyperlegible Next (OFL) beside the WOFF2, read with
-  `readFile`.
+  WOFF, not WOFF2, and the Japan fonts ship as WOFF2. Static 400 and 700
+  TTFs of Atkinson Hyperlegible Next (OFL) sit beside the WOFF2;
+  `loadJapanImageFonts` reads them under `"use cache"`, which Cache
+  Components requires of a file read in a route rendered on demand.
 
 ## Decisions: iOS home-screen web app
 
@@ -246,13 +281,13 @@ buggy on iOS 26.1 and later (WebKit bugs 301994, 305546).
 - **Launch screens.**
   - iOS never builds a splash from the manifest, so without startup images
     the App opens on a blank screen.
-  - `AOF_LAUNCH_SCREENS` in core lists every current iPhone and iPad size:
+  - `METADATA.LAUNCH.DEVICES` in core lists every current iPhone and iPad size:
     CSS width, height and pixel ratio, from iPhone SE to the 17 and 18
     families, iPhone Air and the M4/M5 iPads (2026-10-08, sources in the
     file).
   - That one list drives both `appleWebApp.startupImage` (each link with its
     `(device-width) and (device-height) and (-webkit-device-pixel-ratio) and
-    (orientation)` media, via `AOFLaunchScreenLinks`) and the Back office's
+    (orientation)` media, via `AOFLaunchScreenLinks`) and the Back Office's
     `app/launch/[screen]/route.tsx`, which re-exports core's route factory
     and renders each screen as a PNG at build time
     (`generateStaticParams`).
@@ -286,11 +321,11 @@ the owner's approval before the next starts.
 
 1. `[locale]/not-found.tsx` with `NotFoundNotice`: sets the look every later
    status page reuses.
-2. `global-not-found.tsx`: reuses `NotFoundNotice`; checks it matches round 1.
+2. Dropped: there is no global not-found page (see "Decisions: pages").
 3. `[locale]/error.tsx` with `ErrorNotice`, digest included.
 4. `global-error.tsx`: reuses `ErrorNotice`; checks it matches round 3.
 5. `[locale]/loading.tsx`.
-6. The mark: the AOF monogram with the Back office label, then the `icon`
+6. The logo, built like Laura's with the Back Office's banner, then the `icon`
    (light and dark), `apple-icon`, the manifest icons and `favicon.ico`.
 7. Link-preview card: `opengraph-image` and `twitter-image`, localized.
 8. iOS launch screens, light and dark.
@@ -299,19 +334,24 @@ the owner's approval before the next starts.
 
 - `NotFoundNotice`, `ErrorNotice`: component tests (text from props, digest
   shown only when present, retry calls back).
-- `colors.ts` matches `theme.css`.
+- `BACK_OFFICE.COLOR` matches `theme.css`.
 - Core: `AOFBaseMetadata` on both Indexing values; `AOFCreateNextConfig`
   sends `X-Robots-Tag` only when unindexed; `AOFAlternates`, `AOFRobots`,
   `AOFSitemapEntries` on both values and with the as-needed prefix;
   `AOFLaunchScreenLinks` yields one portrait and one landscape link per
-  theme for every `AOF_LAUNCH_SCREENS` entry, and the route factory's static
+  scheme for every `METADATA.LAUNCH.DEVICES` entry, and the route factory's static
   params cover every link.
-- `APP_SETTINGS` type test: a row without `indexing` fails to compile.
-- The Back office proxy matcher: a unit test runs it against the paths it
+- `ACCESS.APP_SETTINGS`: a row without `indexing` fails `check-types`
+  (`satisfies AppSettingsTable`).
+- The Back Office proxy matcher: a unit test runs it against the paths it
   must and must not match.
 - Environment test covers `BACK_OFFICE_URL`.
-- Playwright smoke (`e2e/smoke.spec.ts`):
-  - `/missing.png` shows the styled "Page not found".
+- Playwright (`e2e/head.spec.ts`, on the production build
+  `aofPlaywrightConfig` serves at `LOCAL.URL.BACK_OFFICE_E2E`, four browser
+  projects):
+  - `/no-such-file.png`, `/zz/deep/no-such-file.png` and `/api/no-such-route`
+    show the designed "Page not found" with status 404; so does an unknown
+    page in a language.
   - `/manifest.webmanifest`, `/icon`, `/favicon.ico`, `/apple-icon`, a
     launch PNG, `/opengraph-image` and `/it/opengraph-image` all answer 200
     with an image or JSON type.
@@ -326,11 +366,20 @@ the owner's approval before the next starts.
 
 - `BACK_OFFICE_URL` is read at build (prerendered pages and images bake
   `metadataBase` in) and at runtime (home renders per request), so it must
-  have the same value in both: a `docker/Dockerfile` build arg, the CI
-  `build` job's env (secret `BACK_OFFICE_URL` in the `dev` environment) and
-  Dokploy's runtime env, all set before the deploy that ships this.
-- `globalNotFound` is experimental in Next 16.3.6; the e2e check on
-  `/missing.png` catches a regression on upgrade.
+  have the same value in both, all set before the deploy that ships this:
+  - a `docker/Dockerfile` build arg, fed by `deploy.yml` from the secret
+    `PROD_BACK_OFFICE_URL`;
+  - the CI `build` job's env (secret `BACK_OFFICE_URL` in the `dev`
+    environment);
+  - the `back-office` service's runtime env in `docker-compose.prod.yml`
+    (Dokploy);
+  - the e2e stack, where `playwright.config.ts` sets it to
+    `LOCAL.URL.BACK_OFFICE_E2E`.
+- A new dynamic route whose URL does not start with a language (another
+  generated file folder) must be added to `AOFWithLocalizedNotFound`'s `keep`
+  in `next.config.ts`, or the rewrite sends it to the 404.
+- A new page sets `openGraph: pageOpenGraph(path, locale)`, or its `og:url`
+  carries the `/en` prefix.
 - iOS 18 and earlier opening a `display: "browser"` App in Safari is
   accepted: iOS 26+ is the target.
 - Three things are unconfirmed and need a real device:

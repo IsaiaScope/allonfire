@@ -1,17 +1,14 @@
 {
   "Metadata": {
-    "title": "Back office"
+    "description": "Where the AllOnFire family's content, users and data are managed."
   },
   "Home": {
-    "title": "Back office",
-    "description": "Nothing here yet.",
-    "signOut": "Sign out"
+    "description": "Nothing here yet."
   },
   "SignIn": {
-    "app": "Back office",
     "email": "Email",
     "error": {
-      "forbidden": "This account cannot enter the Back office.",
+      "forbidden": "This account cannot enter the Back Office.",
       "invalid": "Email or password is wrong.",
       "missing": "Enter your email and password.",
       "rateLimited": "Too many attempts. Try again in a few minutes.",
@@ -30,5 +27,33 @@
     "submit": "Sign in",
     "submitting": "Signing in…",
     "theme": "Switch theme"
+  },
+  "Navigation": {
+    "account": "Account",
+    "home": "Home",
+    "language": "Language",
+    "menu": "Main menu",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "User",
+      "VIEWER": "Viewer"
+    },
+    "signOut": "Sign out",
+    "storage": "Storage",
+    "theme": "Switch theme",
+    "toggleMenu": "Collapse or expand the menu",
+    "users": "Users"
+  },
+  "Storage": {
+    "empty": {
+      "description": "Images and other files arrive here with Storage's API.",
+      "title": "No files yet"
+    }
+  },
+  "Users": {
+    "empty": {
+      "description": "The list of Users and their Roles arrives with the Users API.",
+      "title": "No Users yet"
+    }
   }
 }

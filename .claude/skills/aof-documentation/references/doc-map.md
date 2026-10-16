@@ -63,7 +63,6 @@ Every screenshot uses the `laura-` / `mobile-laura-` prefix. An unprefixed PNG i
 | `packages/auth/README.md` | P1 | EXISTS. BetterAuth setup, app-access guard (`checkAppAccess`), mutation guard, session helpers |
 | `packages/storage/README.md` | P1 | EXISTS. S3/MinIO client, upload helpers, bucket config |
 | `packages/ui/README.md` | P1 | EXISTS. Component inventory table, shadcn/ui setup, globals.css, cn utility, usage patterns |
-| `packages/hooks/README.md` | P2 | EXISTS. Breakpoint constants, useBreakpoint, useMounted |
 | `packages/core/README.md` | P2 | EXISTS. Shared constants, helpers, Next scaffolding |
 | `packages/config/README.md` | P3 | EXISTS. TypeScript config presets |
 | `packages/design/README.md` | P1 | Designs, Screens, `design:sync`, `/aof-design` |

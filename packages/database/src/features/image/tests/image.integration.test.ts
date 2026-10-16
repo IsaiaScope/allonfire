@@ -76,7 +76,7 @@ describe("image.service reads", () => {
 
   it("lists the Images visible in an App, or in any, newest first", async () => {
     // One call each, oldest first: Q (Laura, private), P (Laura public and
-    // Back office private), R (Back office, private).
+    // Back Office private), R (Back Office, private).
     const [q] = await createImages([image("q", [LAURA_PRIVATE])]);
     const [p] = await createImages([
       image("p", [LAURA_PUBLIC, OFFICE_PRIVATE]),
@@ -87,7 +87,7 @@ describe("image.service reads", () => {
 
     expect(await seen(App.LAURA, [])).toEqual([p?.id]);
     expect(await seen(App.LAURA, IN_LAURA)).toEqual([p?.id, q?.id]);
-    // P is public in Laura, not in the Back office: the filter and the
+    // P is public in Laura, not in the Back Office: the filter and the
     // public test hold on the same placement.
     expect(await seen(App.BACK_OFFICE, [])).toEqual([]);
     expect(await seen(App.BACK_OFFICE, IN_LAURA)).toEqual([]);
@@ -190,7 +190,7 @@ describe("image.service writes", () => {
   it("keeps a placement added since the caller read the Image", async () => {
     const [one] = await createImages([image("raced", [LAURA_PRIVATE])]);
     const id = one?.id ?? "";
-    // Another Admin places it in the Back office after this caller's read.
+    // Another Admin places it in the Back Office after this caller's read.
     await prisma.imageApp.create({ data: { ...OFFICE_PRIVATE, imageId: id } });
     const [changed] = await update({ id, place: [LAURA_PUBLIC] });
     expect(changed?.apps).toEqual([LAURA_PUBLIC, OFFICE_PRIVATE]);
@@ -336,7 +336,7 @@ describe("image.service deletes", () => {
   it("checks the placements it locked, and writes nothing when the check refuses", async () => {
     const [one] = await createImages([image("checked", [LAURA_PRIVATE])]);
     const id = one?.id ?? "";
-    // Placed in the Back office after the caller's own read: the check sees it.
+    // Placed in the Back Office after the caller's own read: the check sees it.
     await prisma.imageApp.create({ data: { ...OFFICE_PRIVATE, imageId: id } });
     const seen: ReadonlyMap<string, readonly ImageLink[]>[] = [];
     const refuse = (links: ReadonlyMap<string, readonly ImageLink[]>) => {

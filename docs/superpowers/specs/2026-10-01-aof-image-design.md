@@ -6,7 +6,7 @@ Decision record: `docs/adr/0013-images-live-in-a-shared-image-schema.md`
 
 ## Intent
 
-Every App shows Images the same fast, layout-stable way, and the Back office is
+Every App shows Images the same fast, layout-stable way, and the Back Office is
 the one place they are managed. Admins upload, edit and delete Images through
 the API, in batches; an App lists them from the API and renders them with
 `AOFImage`, which hands `next/image` everything it needs to serve the right
@@ -20,7 +20,7 @@ loads Images from the browser cache without touching the server.
 
 | Question | Decision |
 |---|---|
-| Who uploads | The Back office manages every App's Images; Apps only read and render them |
+| Who uploads | The Back Office manages every App's Images; Apps only read and render them |
 | Ownership | An Image belongs to one App or to `ALL` (every App). An admin can move it |
 | Where rows live | Shared Postgres schema `image`, table `image."Image"` (ADR 0013) |
 | Files | MinIO bucket `image` (ADR 0013), public read, keys `<uuid>.webp` with no App in them |
@@ -32,14 +32,14 @@ loads Images from the browser cache without touching the server.
 | Laura's Photo and quiz | Tables and database code dropped (Photo, Favorite, QuizQuestion, QuizAnswer); `apps/laura` itself is left untouched (user, 2026-10-02) |
 | MinIO | The existing service; new `image` bucket; `laura-photos` deleted by hand |
 
-Out of scope: the Back office upload screen (it needs `/aof-design`, its own
+Out of scope: the Back Office upload screen (it needs `/aof-design`, its own
 plan), rebuilding Laura's gallery or memory game on Image, a CDN, private
 Images, duplicate detection.
 
 ## Architecture
 
 ```
-Back office --POST /v1/images (multipart, up to 20 files)--> API
+Back Office --POST /v1/images (multipart, up to 20 files)--> API
   API: validate all -> prepareImage each (sharp, one at a time)
        -> MinIO images/<uuid>.webp -> one transaction of image."Image" rows
 
@@ -173,7 +173,7 @@ New option `images: { origin: string }`. When given:
   `minimumCacheTTL: 31_536_000`, `localPatterns: [{ pathname: "/images/**",
   search: "" }]`. `qualities` stays Next's default `[75]`.
 
-The Back office passes `images: { origin: env.STORAGE_ENDPOINT }`.
+The Back Office passes `images: { origin: env.STORAGE_ENDPOINT }`.
 
 ### 6. `apps/laura` — left untouched
 

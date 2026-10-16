@@ -28,13 +28,13 @@ describe("reading Images on the Fixtures", () => {
   it("shows a visitor only public Images", async () => {
     const keys = await listKeys(app);
     expect(keys).toContain(FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE.key);
-    // Private in the Back office, public in Laura.
+    // Private in the Back Office, public in Laura.
     expect(keys).toContain(FIXTURE.IMAGE.IN_BOTH_APPS.key);
     expect(keys).not.toContain(FIXTURE.IMAGE.PRIVATE_IN_BACK_OFFICE.key);
     expect(keys).not.toContain(FIXTURE.IMAGE.PRIVATE_IN_LAURA.key);
   });
 
-  it("shows a Back office Admin its private Images, not Laura's", async () => {
+  it("shows a Back Office Admin its private Images, not Laura's", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
     const keys = await listKeys(app, cookie);
     expect(keys).toContain(FIXTURE.IMAGE.PRIVATE_IN_BACK_OFFICE.key);

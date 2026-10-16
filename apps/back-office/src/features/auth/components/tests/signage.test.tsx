@@ -10,9 +10,11 @@ describe("DepartureBoard", () => {
     const html = renderToStaticMarkup(
       <DepartureBoard
         kana="まもなく"
-        notice="Admins only."
-        noticeKana="管理者専用"
-        pauseLabel="Pause notice"
+        notice={{
+          kana: "管理者専用",
+          pauseLabel: "Pause notice",
+          text: "Admins only.",
+        }}
         platform="1"
         status="Signing in…"
       />

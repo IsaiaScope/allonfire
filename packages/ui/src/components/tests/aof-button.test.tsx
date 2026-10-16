@@ -1,6 +1,6 @@
 // @module-tag unit
 import { renderToStaticMarkup } from "react-dom/server";
-import { AOFButton } from "../aof-button";
+import { AOFButton, aofButtonVariants } from "../aof-button";
 
 describe("AOFButton", () => {
   it("renders the shadcn button with its default variant", () => {
@@ -17,5 +17,11 @@ describe("AOFButton", () => {
     );
     expect(html).toContain("border-border");
     expect(html).not.toContain("bg-primary ");
+  });
+
+  it("styles a link as a button, pointer included", () => {
+    const classes = aofButtonVariants({ variant: "outline" });
+    expect(classes).toContain("border-border");
+    expect(classes).toContain("cursor-pointer");
   });
 });

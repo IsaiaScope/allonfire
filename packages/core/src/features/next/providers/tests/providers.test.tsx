@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { HTTP } from "../../../http/constants/http";
 import { AOFNuqsAdapter } from "../aof-nuqs-adapter";
 import { AOFQueryClientProvider } from "../aof-query-client-provider";
 import { AOFReactQueryDevtools } from "../aof-react-query-devtools";
@@ -67,6 +68,34 @@ describe("AOFThemeProvider", () => {
     expect(isValidElement(element) && element.props).toMatchObject({
       attribute: "data-theme",
       defaultTheme: "dark",
+    });
+  });
+
+  it("keeps the theme script executable in the server's HTML", () => {
+    const element = AOFThemeProvider({ children: "x" });
+    expect(isValidElement(element) && element.props).not.toHaveProperty(
+      "scriptProps"
+    );
+  });
+
+  it("renders the theme script inert in the browser, where React refuses to run one", () => {
+    vi.stubGlobal("window", {});
+    const element = AOFThemeProvider({ children: "x" });
+    vi.unstubAllGlobals();
+    expect(isValidElement(element) && element.props).toMatchObject({
+      scriptProps: { type: HTTP.CONTENT_TYPE.JSON },
+    });
+  });
+
+  it("keeps the browser's script inert beside the App's own scriptProps", () => {
+    vi.stubGlobal("window", {});
+    const element = AOFThemeProvider({
+      children: "x",
+      scriptProps: { "data-cfasync": "false" },
+    });
+    vi.unstubAllGlobals();
+    expect(isValidElement(element) && element.props).toMatchObject({
+      scriptProps: { "data-cfasync": "false", type: HTTP.CONTENT_TYPE.JSON },
     });
   });
 });

@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -54,7 +54,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -123,7 +123,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -165,7 +165,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -203,6 +203,7 @@ jobs:
       AUTH_URL: ${{ secrets.AUTH_URL }}
       STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      BACK_OFFICE_URL: ${{ secrets.BACK_OFFICE_URL }}
       STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
       STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
     steps:
@@ -215,7 +216,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

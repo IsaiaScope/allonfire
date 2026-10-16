@@ -1,23 +1,72 @@
 // @module-tag integration
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App, Role } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
-import { FIXTURE } from "../fixtures/fixtures";
 import { seed } from "../seed";
 
-const ENV = {
+const ADMIN = {
   DATABASE_SEED_ADMIN_EMAIL: "seed-admin@allonfire.test",
   DATABASE_SEED_ADMIN_PASSWORD: "seed-admin-password",
-  DATABASE_SEED_LAURA_VIEWER_EMAIL: "seed-laura-guest@allonfire.test",
-  DATABASE_SEED_LAURA_VIEWER_PASSWORD: "seed-guest-password",
-  DATABASE_SEED_MODE: "local",
 } as const;
 const KEEP = "keep-me@allonfire.test";
 
-describe("the Local seed", () => {
-  it("deletes nobody: a User it does not seed stays", async () => {
-    await prisma.user.create({
-      data: { email: KEEP, emailVerified: true, name: "keep" },
+const emails = async () =>
+  (await prisma.user.findMany({ select: { email: true } })).map(
+    ({ email }) => email
+  );
+const counts = async () => ({
+  images: await prisma.image.count(),
+  memberships: await prisma.membership.count(),
+  users: await prisma.user.count(),
+});
+
+// The Test database already holds every Fixture: the tests measure what the
+// seed adds, never absolute counts.
+beforeEach(async () => {
+  await prisma.user.deleteMany({
+    where: { email: ADMIN.DATABASE_SEED_ADMIN_EMAIL },
+  });
+});
+
+describe("the seed", () => {
+  it("adds the Admin and nobody else, Admin in every App", async () => {
+    const before = await emails();
+    await seed(prisma, ADMIN);
+    expect((await emails()).filter((email) => !before.includes(email))).toEqual(
+      [ADMIN.DATABASE_SEED_ADMIN_EMAIL]
+    );
+    const { memberships } = await prisma.user.findUniqueOrThrow({
+      select: { memberships: { select: { app: true, role: true } } },
+      where: { email: ADMIN.DATABASE_SEED_ADMIN_EMAIL },
     });
-    await seed(prisma, ENV);
+    expect(memberships).toHaveLength(objectValues(App).length);
+    expect(memberships).toEqual(
+      expect.arrayContaining(
+        objectValues(App).map((app) => ({ app, role: Role.ADMIN }))
+      )
+    );
+  });
+
+  it("adds no Image row", async () => {
+    const before = await prisma.image.count();
+    await seed(prisma, ADMIN);
+    expect(await prisma.image.count()).toBe(before);
+  });
+
+  it("changes nothing on a second run", async () => {
+    await seed(prisma, ADMIN);
+    const before = await counts();
+    await seed(prisma, ADMIN);
+    expect(await counts()).toEqual(before);
+  });
+
+  it("deletes nobody: a User it does not seed stays", async () => {
+    await prisma.user.upsert({
+      create: { email: KEEP, emailVerified: true, name: "keep" },
+      update: {},
+      where: { email: KEEP },
+    });
+    await seed(prisma, ADMIN);
     expect(
       await prisma.user.findUnique({ where: { email: KEEP } })
     ).not.toBeNull();
@@ -25,44 +74,7 @@ describe("the Local seed", () => {
 
   it("prints nothing: a CLI that seeds hands its stdout to a shell", async () => {
     const printed = vi.spyOn(console, "log");
-    await seed(prisma, ENV);
+    await seed(prisma, ADMIN);
     expect(printed).not.toHaveBeenCalled();
-  });
-
-  it("holds every Fixture User, and a second run changes nothing", async () => {
-    await seed(prisma, ENV);
-    const before = await prisma.user.count();
-    await seed(prisma, ENV);
-    expect(await prisma.user.count()).toBe(before);
-    const emails = (
-      await prisma.user.findMany({ select: { email: true } })
-    ).map(({ email }) => email);
-    expect(emails).toEqual(
-      expect.arrayContaining(FIXTURE.USERS.map(({ email }) => email))
-    );
-  });
-
-  it("brings a changed Image Fixture row back to the Fixture", async () => {
-    const { alt, key } = FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE;
-    await prisma.image.update({
-      data: { alt: { en: "stale", it: "vecchio" }, width: 1 },
-      where: { key },
-    });
-    await seed(prisma, ENV);
-    expect(
-      await prisma.image.findUniqueOrThrow({
-        select: { alt: true, width: true },
-        where: { key },
-      })
-    ).toEqual({ alt, width: FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE.width });
-  });
-
-  it("seeds no Fixture in prod mode", async () => {
-    const emails = FIXTURE.USERS.map(({ email }) => email);
-    await prisma.user.deleteMany({ where: { email: { in: emails } } });
-    await seed(prisma, { ...ENV, DATABASE_SEED_MODE: "prod" });
-    expect(await prisma.user.count({ where: { email: { in: emails } } })).toBe(
-      0
-    );
   });
 });

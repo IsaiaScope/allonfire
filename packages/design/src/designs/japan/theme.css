@@ -30,6 +30,16 @@
   src: url("./fonts/dotgothic16-subset.woff2") format("woff2");
 }
 
+/* Yuji Syuku (OFL), a brush calligraphy face for the kanji painted large
+   behind a page, subset to those kanji only (fonts/README.md). */
+@font-face {
+  font-family: "Yuji Syuku";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/yuji-syuku-subset.woff2") format("woff2");
+}
+
 :root {
   --font-sans:
     "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
@@ -136,11 +146,15 @@
   --color-tactile: var(--tactile);
   --color-hanko: var(--hanko);
   --font-led: "DotGothic16", ui-monospace, monospace;
+  --font-brush: "Yuji Syuku", serif;
   /* A seal pressed onto the card once it has landed. */
   --animate-stamp: stamp 360ms 500ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 
   /* A board's notice running right to left, one copy after the other. */
   --animate-marquee: marquee 24s linear infinite;
+
+  /* A board's lamp lighting up and fading, each lamp a beat after the last. */
+  --animate-lamp: lamp 1.2s ease-in-out infinite;
 
   @keyframes stamp {
     from {
@@ -150,6 +164,16 @@
     to {
       opacity: 1;
       scale: 1;
+    }
+  }
+
+  @keyframes lamp {
+    0%,
+    100% {
+      opacity: 0.2;
+    }
+    40% {
+      opacity: 1;
     }
   }
 
@@ -168,6 +192,12 @@
 @utility pattern-led-grid {
   background-image: radial-gradient(var(--led-dim) 0.75px, transparent 1px);
   background-size: 4px 4px;
+}
+
+/* An LED board: amber dots on a night panel, framed. Size and spacing are
+   the caller's. */
+@utility led-board {
+  @apply pattern-led-grid rounded-md border-2 border-led-dim bg-led-panel font-led text-led;
 }
 
 @utility pattern-tactile-dots {

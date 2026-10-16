@@ -1,5 +1,6 @@
 // @module-tag unit
 
+import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import { hasRole } from "../access";
@@ -21,11 +22,18 @@ describe("ACCESS.APP_SETTINGS", () => {
     }
   });
 
-  it("keeps the Back office sign-in only and Admin-only", () => {
+  it("keeps the Back Office sign-in only, Admin-only and out of search", () => {
     expect(ACCESS.APP_SETTINGS[App.BACK_OFFICE]).toEqual({
+      indexing: METADATA.INDEXING.UNINDEXED,
       minRole: Role.ADMIN,
       registration: null,
     });
+  });
+
+  it("keeps Laura out of search", () => {
+    expect(ACCESS.APP_SETTINGS[App.LAURA].indexing).toBe(
+      METADATA.INDEXING.UNINDEXED
+    );
   });
 
   it("never gives a stranger the Admin Role", () => {

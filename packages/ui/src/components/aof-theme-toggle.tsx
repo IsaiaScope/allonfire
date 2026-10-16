@@ -3,9 +3,8 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { cva } from "class-variance-authority";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useCallback } from "react";
 import type { ComponentPropsWithoutChildren } from "../lib/types";
+import { useAOFThemeSwitch } from "../lib/use-aof-theme-switch";
 import { cn } from "../lib/utils";
 import { AOFButton } from "./aof-button";
 
@@ -48,12 +47,10 @@ export const AOFThemeToggle = ({
   variant = "ghost",
   ...props
 }: AOFThemeToggleProps) => {
-  const { resolvedTheme, setTheme } = useTheme();
-  const toggle = useCallback(
-    () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
-    [resolvedTheme, setTheme]
+  const handlers = mergeProps<"button">(
+    { onClick: useAOFThemeSwitch() },
+    { onClick }
   );
-  const handlers = mergeProps<"button">({ onClick: toggle }, { onClick });
 
   return (
     <AOFButton

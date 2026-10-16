@@ -51,6 +51,9 @@ const TEXT_PAIRS = [
   ["primary-foreground", "primary"],
   ["destructive", "background"],
   ["led", "led-panel"],
+  // A button filled with the line's colour (the Install hint), labelled in
+  // the LED board's black.
+  ["led-panel", "line-green"],
 ] as const;
 
 describe.each([":root", ".dark"])("Japan theme %s", (selector) => {

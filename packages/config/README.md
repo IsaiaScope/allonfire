@@ -29,7 +29,7 @@ config/
       global-teardown.ts   Drops them
       run.ts               E2E_LABEL, the e2e run's label beside its stamp
     run/
-      test-run.ts          `testRunStamp()` names a run's Test database and bucket; `isStaleTestRun(name, now)` finds a crashed run's, over a day old; `runsIntegration(tagsFilter)` says whether a run needs them
+      test-run.ts          `testRunStamp()` names a run's Test database and bucket; `isStaleTestRun(name, now)` finds an ended run's, its process gone or a day old; `isTestRunOf(name, label)` finds a label's; `dropWhenRunEnds(drop)` is a global setup's teardown, run on SIGHUP too; `runsIntegration(tagsFilter)` says whether a run needs them
 ```
 
 ## 🔧 Usage

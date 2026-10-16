@@ -6,6 +6,8 @@ Self-hosted, all SIL Open Font License (the `OFL-*.txt` beside each face).
 |---|---|---|
 | `atkinson-hyperlegible-next-latin.woff2` | Atkinson Hyperlegible Next, 200 to 800 | Every Latin word (`font-sans`) |
 | `dotgothic16-subset.woff2` | DotGothic16 | LED departure boards (`font-led`) |
+| `yuji-syuku-subset.woff2` | Yuji Syuku | Brush kanji painted large behind a page (`font-brush`) |
+| `atkinson-hyperlegible-next-{400,700}.ttf` | Atkinson Hyperlegible Next, static 400 and 700 | Generated images (`loadJapanImageFonts`): Satori cannot read WOFF2 or variable fonts |
 
 DotGothic16 is a subset from the Google Fonts `text=` API:
 printable ASCII, Latin-1, all hiragana and katakana, `、。「」・…←→·“”’` and
@@ -19,3 +21,6 @@ curl -s -A "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 ```
 
 then fetch the `woff2` URL the CSS names.
+
+Yuji Syuku is subset the same way (`family=Yuji+Syuku`) to the kanji it
+paints: `改札入迷子戻到着運休再圏外`. A kanji outside it falls back to the system serif.

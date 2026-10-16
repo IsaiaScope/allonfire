@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "check-types": "tsc --noEmit",
     "dev": "next dev --port 3200",
-    "dev:mobile": "NEXT_DIST_DIR=.next-mobile BETTER_AUTH_URL=http://$(tailscale ip -4):3201 next dev --port 3201 --hostname 0.0.0.0",
+    "dev:tailscale": "NEXT_DIST_DIR=.next-tailscale BETTER_AUTH_URL=http://$(tailscale ip -4):3201 next dev --port 3201 --hostname 0.0.0.0",
     "seed-photos": "tsx scripts/seed-photos.ts",
     "start": "next start",
     "test:e2e": "playwright test"
@@ -17,7 +17,6 @@
     "@allonfire/auth": "workspace:*",
     "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
-    "@allonfire/hooks": "workspace:*",
     "@allonfire/storage": "workspace:*",
     "@allonfire/ui": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",

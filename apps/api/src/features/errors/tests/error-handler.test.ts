@@ -1,5 +1,6 @@
 // @module-tag unit
 
+import { invalidHook } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
@@ -8,7 +9,7 @@ import { requestId } from "hono/request-id";
 import { validator } from "hono-openapi";
 import { z } from "zod";
 import { localeResolver } from "../../i18n/middleware/locale-resolver";
-import { notFound, onError, validationHook } from "../middleware/error-handler";
+import { notFound, onError } from "../middleware/error-handler";
 import { problemOf } from "./problem-of";
 
 function testApp() {
@@ -73,7 +74,8 @@ describe("onError", () => {
   });
 });
 
-describe("validationHook", () => {
+// The modules' validator hook, rendered by the API's `onError`.
+describe("invalidHook", () => {
   const app = new Hono()
     .use(requestId())
     .post(
@@ -81,7 +83,7 @@ describe("validationHook", () => {
       validator(
         "json",
         z.object({ age: z.number(), email: z.email() }),
-        validationHook
+        invalidHook
       ),
       (context) => context.json(context.req.valid("json"))
     )

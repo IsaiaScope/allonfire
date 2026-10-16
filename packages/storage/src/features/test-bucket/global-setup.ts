@@ -1,6 +1,7 @@
 import { basename } from "node:path";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import {
+  dropWhenRunEnds,
   runsIntegration,
   testRunStamp,
 } from "@allonfire/config/tests/run/test-run";
@@ -25,5 +26,5 @@ export default async function setup(project: TestProject) {
   const bucket = await createTestBucket(label, stamp);
   // This project's workers only (see the database global setup).
   project.config.env = { ...project.config.env, STORAGE_BUCKET: bucket };
-  return () => dropTestBucket(label, stamp);
+  return dropWhenRunEnds(() => dropTestBucket(label, stamp));
 }

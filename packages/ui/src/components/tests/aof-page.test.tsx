@@ -21,4 +21,22 @@ describe("AOFPage", () => {
     expect(html).toContain("p-2");
     expect(html).toContain('data-state="idle"');
   });
+
+  // Every page keeps clear of a phone's corners, notch and home indicator
+  // (the edges in base.css), unless it says otherwise for one side.
+  it("keeps to the safe edges by default, one side at a time overridable", () => {
+    const html = renderToStaticMarkup(<AOFPage className="pb-24">Hi</AOFPage>);
+    expect(html).toContain("pt-(--gutter-top)");
+    expect(html).toContain("pr-(--gutter-right)");
+    expect(html).toContain("pl-(--gutter-left)");
+    expect(html).toContain("pb-24");
+    expect(html).not.toContain("pb-(--gutter-bottom)");
+  });
+
+  // A page that draws to the screen's edges on purpose (a full-bleed view)
+  // keeps clear of nothing.
+  it("drops the safe edges when told to", () => {
+    const html = renderToStaticMarkup(<AOFPage edges="none">Hi</AOFPage>);
+    expect(html).not.toContain("--gutter-");
+  });
 });
