@@ -137,6 +137,8 @@ export const METADATA = {
   },
   LOGO,
   OG_LOCALE,
+  /** Both schemes, as a page's `color-scheme` names them: it renders in either. */
+  PAGE_COLOR_SCHEME: `${COLOR_SCHEME.LIGHT} ${COLOR_SCHEME.DARK}`,
   PATH,
   /** The robots directive an unindexed App sends, as meta tag and header. */
   ROBOTS: { NOINDEX: "noindex, nofollow" },

@@ -24,10 +24,7 @@ import { StationSign } from "./station-sign";
 export const SignIn = () => {
   const t = useTranslations("SignIn");
   return (
-    <AOFPage
-      className="gap-0 overflow-hidden px-3 pt-4 pb-24 sm:px-4"
-      layout="centered"
-    >
+    <AOFPage className="gap-0 overflow-hidden pb-24" layout="centered">
       {/* The gate's name, painted huge across the wall behind the card. */}
       <BrushKanji kanji={SIGN_IN.BOARD_KANA} />
       <div className="flex w-full max-w-md flex-col gap-6">
@@ -46,7 +43,7 @@ export const SignIn = () => {
           <SignInForm />
         </StationSign>
       </div>
-      <AOFControlBar className="absolute right-3 bottom-8 sm:right-4 lg:right-auto lg:left-1/2 lg:-translate-x-1/2">
+      <AOFControlBar className="absolute right-(--gutter-right) bottom-(--gutter-bottom) lg:right-auto lg:left-1/2 lg:-translate-x-1/2">
         <LanguageSwitch href={AUTH.PAGE.SIGN_IN} label={t("language")} />
         <AOFControlBarSeparator />
         <AOFThemeToggle label={t("theme")} />

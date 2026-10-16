@@ -8,6 +8,7 @@
     "./tests/browser": "./tests/browser/vitest.browser.config.ts",
     "./tests/browser/msw": "./tests/browser/msw.ts",
     "./tests/e2e": "./tests/e2e/playwright.config.ts",
+    "./tests/e2e/run": "./tests/e2e/run.ts",
     "./tests/run/test-run": "./tests/run/test-run.ts",
     "./tests/vitest": "./tests/vitest/vitest.config.ts",
     "./typescript/*": "./typescript/*"

@@ -1,3 +1,5 @@
+import type { ColorScheme } from "@allonfire/core/features/metadata/constants/metadata";
+
 /** A scheme's colours where CSS variables cannot reach. */
 type SchemeColors = {
   background: string;
@@ -29,5 +31,5 @@ export const JAPAN_IMAGE_COLOR = {
   },
   /** The yellow tactile paving. */
   TACTILE: "#f2c200",
-} as const satisfies Record<"dark" | "light", SchemeColors> &
+} as const satisfies Record<ColorScheme, SchemeColors> &
   Record<string, unknown>;

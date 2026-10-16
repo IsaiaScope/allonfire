@@ -4,6 +4,9 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 /**
  * The one MSW worker of a browser test run. A test overrides an answer with
  * `worker.use(...)`; the next test starts from the App's own handlers again.
+ * Its service worker script, `/mockServiceWorker.js`, is served by Vitest's
+ * browser mode from the installed `msw`: no App keeps a copy in `public/`,
+ * where it would ship to production.
  */
 export const worker = setupWorker();
 

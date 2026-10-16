@@ -4,6 +4,7 @@ import { env } from "../../../environment/environment";
 import { ENV } from "../../../shared/constants/env";
 import { HTTP } from "../../http/constants/http";
 import { type Indexing, METADATA } from "../../metadata/constants/metadata";
+import { PWA } from "../pwa/constants/pwa";
 import { tailnetHosts } from "./tailnet-hosts";
 
 /** core ships TypeScript source, so every App transpiles it. */
@@ -62,6 +63,8 @@ export const AOFCreateNextConfig = (
     ...config,
     /** Dev only: every name on this machine's tailnet (the Apps' Tailscale Services) can load the dev server's assets and HMR; no other tailnet can. */
     allowedDevOrigins: [...devOrigins(), ...(config.allowedDevOrigins ?? [])],
+    /** A navigation or Server Action the network fails waits and retries once it is back (`useOffline` reads it), instead of throwing. */
+    experimental: { ...config.experimental, useOffline: true },
     /** Every path gets the security headers, an unindexed App's also `X-Robots-Tag`; the App's rules come after them, so they win. */
     headers: async () => [
       {
@@ -76,6 +79,16 @@ export const AOFCreateNextConfig = (
                 },
               ],
         source: "/(.*)",
+      },
+      /** The service worker, asked for again on every visit (Next's PWA guide), so a new build's reaches the browser. */
+      {
+        headers: [
+          {
+            key: HTTP.HEADER.CACHE_CONTROL,
+            value: HTTP.CACHE_CONTROL.NO_CACHE,
+          },
+        ],
+        source: PWA.PATH.SERVICE_WORKER,
       },
       ...((await config.headers?.()) ?? []),
     ],

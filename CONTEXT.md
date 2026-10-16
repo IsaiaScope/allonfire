@@ -19,6 +19,11 @@ admins enter it.
 _Avoid_: dashboard, admin panel, console — Laura's `(dashboard)` is only a
 route-group name, not this App.
 
+**Section**:
+An area of an App reached from its main menu. The Back Office's are Home,
+Users and Storage; Home is the one a User lands on after Sign in.
+_Avoid_: page (a page is a route, and a Section can hold several), tab, module
+
 **Design system**:
 Everything an App draws its interface from: shadcn components, AOF components,
 and the Designs. Apps reach shadcn only through AOF components, never
@@ -67,6 +72,23 @@ Whether search engines may list an App's pages: indexed (listed, with its
 language alternates and a sitemap) or unindexed (kept out; link previews still
 work). Each App declares it among its settings.
 _Avoid_: visibility, public/private (an Image's), SEO mode
+
+**Offline page**:
+The page an App shows, in the visitor's language, when a page cannot load
+because there is no network. It is shown at the address that failed, and
+retrying reloads that address. Losing the network in the middle of using an
+App does not show it: the App waits and carries on once the connection
+returns.
+_Avoid_: offline screen, fallback page, error page (an error is the App's,
+not the network's)
+
+**Install hint**:
+The dismissible card offering to install an App: an Install button where
+the browser has its own install dialog, else the browser's steps (iPhone,
+macOS Safari). Never on a first visit, never once installed; once dismissed
+it stays away for a year on that device.
+_Avoid_: install prompt (the browser's own dialog, which the hint's Install
+button opens), install banner
 
 **Image**:
 A picture in one or more Apps, stored once. In each App it is public, shown

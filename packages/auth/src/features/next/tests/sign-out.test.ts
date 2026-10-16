@@ -34,6 +34,15 @@ vi.mock("next/headers", () => ({
   }),
   headers: async () => new Headers(),
 }));
+// Core may resolve its own copy of `next`, which the mock above never
+// reaches; the visitor's headers come from here instead.
+vi.mock("@allonfire/core/features/next/api/forwarded-for", () => ({
+  readVisitorHeaders: async () => ({
+    cookie: visit.cookies
+      .map(({ name, value }) => `${name}=${value}`)
+      .join("; "),
+  }),
+}));
 
 const fetchMock = vi.fn(
   async (_url: string | URL | Request, _init?: RequestInit) =>

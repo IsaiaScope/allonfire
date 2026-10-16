@@ -13,6 +13,28 @@
     },
     "Loading": {
       "label": "Loading"
+    },
+    "Offline": {
+      "title": "No connection",
+      "description": "This page needs the network. Check your connection and try again.",
+      "retry": "Try again",
+      "banner": {
+        "title": "No connection",
+        "description": "Waiting for the network"
+      }
+    },
+    "Install": {
+      "title": "Keep it one tap away",
+      "dismiss": "Not now",
+      "cta": "Install {app}",
+      "install": "Install",
+      "installing": "Installing…",
+      "error": "Not installed. Try again.",
+      "step": {
+        "ios-share": "Tap Share (or ···, then Share)",
+        "ios-add": "Choose Add to Home Screen, then Add",
+        "mac-add-to-dock": "Choose File, then Add to Dock"
+      }
     }
   }
 }

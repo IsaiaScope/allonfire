@@ -2,9 +2,11 @@ import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { API_PATH, LOCAL } from "../../local/addresses";
 import { testRunStamp } from "../run/test-run";
-import { E2E_CLI, E2E_LABEL } from "./run";
+import { E2E_CLI, E2E_LABEL, E2E_TAG } from "./run";
 
 const isCi = Boolean(process.env.CI);
+/** Tests tagged for Chromium only, which the WebKit projects leave out. */
+const CHROMIUM_ONLY = new RegExp(E2E_TAG.CHROMIUM_ONLY);
 
 /**
  * `next build` runs before the App answers; the API waits for its Test
@@ -69,9 +71,17 @@ export const aofPlaywrightConfig = ({
     // one Test database serve all four.
     projects: [
       { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-      { name: "webkit", use: { ...devices["Desktop Safari"] } },
+      {
+        grepInvert: CHROMIUM_ONLY,
+        name: "webkit",
+        use: { ...devices["Desktop Safari"] },
+      },
       { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
-      { name: "mobile-safari", use: { ...devices["iPhone 15"] } },
+      {
+        grepInvert: CHROMIUM_ONLY,
+        name: "mobile-safari",
+        use: { ...devices["iPhone 15"] },
+      },
     ],
     use: { baseURL },
     webServer: [

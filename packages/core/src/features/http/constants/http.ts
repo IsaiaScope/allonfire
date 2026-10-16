@@ -152,8 +152,14 @@ const SECURITY_HEADERS: { key: HttpHeader; value: string }[] = [
   },
 ];
 
-/** Everything HTTP names: `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, and the `SECURITY_HEADERS` every app sends. */
+/** `Cache-Control` values: `NO_CACHE` asks the server again on every use. */
+const CACHE_CONTROL = {
+  NO_CACHE: "no-cache, no-store, must-revalidate",
+} as const;
+
+/** Everything HTTP names: `HTTP.CACHE_CONTROL.*`, `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, and the `SECURITY_HEADERS` every app sends. */
 export const HTTP = {
+  CACHE_CONTROL,
   CONTENT_TYPE: CONTENT_TYPES,
   HEADER,
   METHOD,

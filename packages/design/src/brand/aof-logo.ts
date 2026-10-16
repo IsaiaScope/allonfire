@@ -1,3 +1,10 @@
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  type ColorScheme,
+  type LogoLayout,
+  type LogoScheme,
+  METADATA,
+} from "@allonfire/core/features/metadata/constants/metadata";
 import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
 import { BRAND } from "./aof-monogram";
 
@@ -78,7 +85,7 @@ const LAYOUT = {
     RADIUS: 72,
     WIDTH: 512,
   },
-} as const satisfies Record<string, Geometry>;
+} as const satisfies Record<LogoLayout, Geometry>;
 
 /** The ground and letters of each scheme; the flame and banner never change. */
 const SCHEME = {
@@ -86,12 +93,9 @@ const SCHEME = {
   // The dark scheme's shadow would read as a grey halo on white.
   light: { ground: "#ffffff", letter: "#3a3a3a", shadow: 0.12 },
 } as const satisfies Record<
-  string,
+  ColorScheme,
   { ground: string; letter: string; shadow: number }
 >;
-
-export type LogoLayout = keyof typeof LAYOUT;
-export type LogoScheme = keyof typeof SCHEME;
 
 /** Each layout's geometry and each scheme's colours, for a renderer drawing the logo itself. */
 export const AOF_LOGO = { LAYOUT, SCHEME } as const;
@@ -117,7 +121,7 @@ const classedMonogramMarkup = () =>
   );
 
 /** The monogram alone in a scheme, as a data URL an image renderer loads. */
-export const monogramDataUrl = (scheme: LogoScheme) =>
+export const monogramDataUrl = (scheme: ColorScheme) =>
   svgDataUrl(
     BRAND.MONOGRAM_SVG.replace(
       BRAND.MONOGRAM_MARKUP,
@@ -132,7 +136,7 @@ export const monogramDataUrl = (scheme: LogoScheme) =>
  * so a client component (an error boundary) can build it too.
  */
 export const aofLogoDataUrl = (options: LogoSvgOptions) =>
-  `data:image/svg+xml,${encodeURIComponent(aofLogoSvg(options))}`;
+  `data:${HTTP.CONTENT_TYPE.SVG},${encodeURIComponent(aofLogoSvg(options))}`;
 
 /** Where the monogram's 512 square lands for a centre and scale. */
 export const monogramBox = ({ SCALE, X, Y }: Geometry["MONOGRAM"]) => ({
@@ -148,7 +152,7 @@ type LogoSvgOptions = {
   app: AppLogo;
   layout: LogoLayout;
   /** `auto` follows the viewer's theme (a favicon, an `<img>` on a page). */
-  scheme: LogoScheme | "auto";
+  scheme: LogoScheme;
 };
 
 /**
@@ -158,8 +162,8 @@ type LogoSvgOptions = {
  * with ui's `AOFBrandLogo`, in the face they load.
  */
 export const aofLogoSvg = ({ app, layout, scheme }: LogoSvgOptions) => {
-  const auto = scheme === "auto";
-  const colors = SCHEME[auto ? "dark" : scheme];
+  const auto = scheme === METADATA.LOGO.SCHEME.AUTO;
+  const colors = SCHEME[auto ? METADATA.LOGO.SCHEME.DARK : scheme];
   const { ground, letter } = colors;
   const geometry: Geometry = LAYOUT[layout];
   const { BANNER, DIVIDER, HEIGHT, RADIUS, WIDTH } = geometry;

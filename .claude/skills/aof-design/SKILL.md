@@ -102,6 +102,31 @@ it in their tab; a declined look is reverted.
     (`pnpm --filter <app> test`), its `tsc --noEmit`, and
     `pnpm exec biome check --write` on the files the run touched.
 
+## Library survey
+
+Before building a new piece of interface that shadcn's generated components do
+not already cover (an app shell, a navigation pattern, a complex menu), survey
+the libraries the owner uses for something already built:
+
+1. Official shadcn (`ui.shadcn.com/blocks`, the `base-nova` builds), Shadcn
+   Studio, Shadcnblocks, React Bits, Ui-Layouts, Shadcn UI Kit, Shadcn UI
+   Blocks (shadcnui-blocks), Aceternity UI.
+2. Free options only: the owner does not buy blocks, so a paid one gets one
+   line at most. For each: the matching blocks (names and links), Radix or
+   Base UI, how it installs (registry namespace or copy, extra npm packages), its
+   fit with the owner's taste, and a verdict (`use`, `idea only`, `skip`).
+   Write it as `docs/superpowers/specs/<date>-<topic>-library-survey.md`.
+3. **Show, don't only list.** Through `/iso-browser` with the owner driving:
+   open every free candidate's own page in their browser with `open <url>`
+   (the full-screen preview when there is one, such as shadcn's
+   `ui.shadcn.com/view/<style>/<block>`), check each URL answers 200 first,
+   then say which tab is which. A page that mixes free and paid items (Shadcn
+   Studio's) is opened on the free item's own anchor, and a block counts as
+   free only when its registry JSON answers 200 without a key. Never the browser tool's new-page call, which opens windows.
+4. Ask the owner to pick, recommendation first. Nothing is installed before
+   the pick; a Radix block goes through `migrate-radix-to-base`, and anything
+   installed lands through the shadcn CLI and is wrapped as an AOF component.
+
 ## live
 
 Live mode needs the App's dev server, resolves its root from `next.config`,
@@ -205,6 +230,11 @@ for reduced motion (WCAG 2.2.2).
 - Station furniture stays night in both themes through a scoped `.dark`.
 - Language and theme controls share one capsule: bottom right on a phone,
   bottom left of the form column on desktop.
+- The signed-in frame: on desktop a sidebar drawn as the App's line (after
+  React Bits' Branched Menu): a trunk, each Section a curved branch, the way
+  to the current Section drawn in the line colour (410ms, `motion-safe`); on
+  a phone a tab bar, the current tab marked by the line along its top. The
+  account menu opens from an initial on a black tile.
 
 **Server-first, client at the leaf.** Pages and their components stay Server
 Components. When
@@ -244,8 +274,8 @@ since every language is shipped. A form validated by the browser shows its bubbl
 language, not the page's: server-validated forms set `noValidate`.
 
 **Auth is shared.** All auth logic lives in `@allonfire/auth/features/next/*`
-for every App: the `signIn`/`signOut` server actions, `requireAppSession` for
-pages and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` in its
+for every App: the `signIn`/`signOut` server actions, `withAppSession` for
+pages (the Session check runs before the page renders, inside the page's own `<Suspense>`) and `withSessionRefresh` for the proxy. An App sets `AUTH_APP` in its
 env (its floor and Registration live in `APP_SETTINGS`) and keeps only its components, styles and translations.
 
 **Forms.** Next's pattern (forms guide, "Validation errors"): the action

@@ -10,6 +10,11 @@ vi.mock("next/headers", () => ({
   headers: async () => new Headers({ cookie: COOKIE }),
 }));
 vi.mock("next-intl/server", () => ({ getLocale: async () => "it" }));
+// Core may resolve its own copy of `next`, which the mock above never
+// reaches; the visitor's headers come from here instead.
+vi.mock("@allonfire/core/features/next/api/forwarded-for", () => ({
+  readVisitorHeaders: async () => ({ cookie: COOKIE }),
+}));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`redirect ${url}`);

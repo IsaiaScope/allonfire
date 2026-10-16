@@ -3,6 +3,7 @@ import {
   StationNotice,
   type StationSignage,
 } from "@/shared/components/station-notice";
+import { SectionPage } from "./section-page";
 
 /** The waiting room's signage, decoration only: the status says it in words. */
 const LOADING_SIGNAGE = {
@@ -17,18 +18,19 @@ const LOADING_SIGNAGE = {
 /** The board's lamps after the status, lit one after the other: its ellipsis. */
 const LAMP_DELAYS = ["0ms", "200ms", "400ms"];
 
-// The Suspense fallback while a signed-in page waits (home checks the
-// Session). In this group, not at `[locale]`: a loading file above the
-// catch-all would stream a 200 shell before its `notFound()`, and every
-// unknown page would answer 200 instead of 404. The stamp lands only after
-// half a second, its status on a small LED board just after, so a quick
-// check shows nothing. The board's lamps pulse as long as the wait lasts:
-// a loading indicator, which WCAG 2.2.2 counts as essential, standing still
-// for reduced motion.
-const Loading = () => {
+/**
+ * What a signed-in page shows while its Session check waits: the fallback
+ * `signedInPage` hands `withAppSession`, inside the page's own `<Suspense>`,
+ * so it fills the frame's page area on every navigation. The stamp lands
+ * only after half a second, its status on a small LED board just after, so a
+ * quick check shows nothing. The board's lamps pulse as long as the wait
+ * lasts: a loading indicator, which WCAG 2.2.2 counts as essential, standing
+ * still for reduced motion.
+ */
+export const SectionLoading = () => {
   const t = useTranslations("Common.Loading");
   return (
-    <StationNotice signage={LOADING_SIGNAGE}>
+    <StationNotice page={SectionPage} signage={LOADING_SIGNAGE}>
       <div className="led-board flex items-baseline gap-2 px-4 py-2 text-lg leading-tight">
         <p role="status">{t("label")}</p>
         <span aria-hidden className="flex gap-1">
@@ -44,5 +46,3 @@ const Loading = () => {
     </StationNotice>
   );
 };
-
-export default Loading;

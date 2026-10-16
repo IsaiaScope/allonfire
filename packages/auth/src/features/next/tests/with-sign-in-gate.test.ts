@@ -9,6 +9,8 @@ const ORIGIN = "http://back-office.test";
 const TOKEN = "__Secure-better-auth.session_token=t";
 const IT = "it";
 const { HOME, SIGN_IN } = AUTH.PAGE;
+/** A page only the App knows: the gate must take it as a plain path. */
+const APP_PAGE = { REPORTS: "/reports" } as const;
 
 const proxy = vi.fn(() => new Response());
 const gate = withSignInGate(proxy, { locales: ["en", IT], pages: [HOME] });
@@ -29,6 +31,19 @@ describe("withSignInGate", () => {
 
   it("keeps the language the visit asked for", async () => {
     const response = await visit(`/${IT}${HOME}`);
+    expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
+      `${ORIGIN}/${IT}${SIGN_IN}`
+    );
+  });
+
+  it("gates any page the App lists, not only the shared ones", async () => {
+    const appGate = withSignInGate(proxy, {
+      locales: ["en", IT],
+      pages: [HOME, APP_PAGE.REPORTS],
+    });
+    const response = await appGate(
+      new NextRequest(`${ORIGIN}/${IT}${APP_PAGE.REPORTS}`)
+    );
     expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
       `${ORIGIN}/${IT}${SIGN_IN}`
     );

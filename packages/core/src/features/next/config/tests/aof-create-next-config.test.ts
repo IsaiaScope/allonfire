@@ -3,6 +3,7 @@
 import { ENV } from "../../../../shared/constants/env";
 import { HTTP } from "../../../http/constants/http";
 import { METADATA } from "../../../metadata/constants/metadata";
+import { PWA } from "../../pwa/constants/pwa";
 import { AOFCreateNextConfig } from "../aof-create-next-config";
 import { tailnetHosts } from "../tailnet-hosts";
 
@@ -84,12 +85,21 @@ describe("AOFCreateNextConfig", () => {
     expect(AOFCreateNextConfig({ typedRoutes: false }).typedRoutes).toBe(false);
   });
 
-  it("sends the security headers first and the App's after, so the App's win", async () => {
+  it("sends the base headers first and the App's after, so the App's win", async () => {
     const config = AOFCreateNextConfig({
       headers: async () => [{ headers: [APP_HEADER], source: "/embed" }],
     });
     expect(await config.headers?.()).toEqual([
       { headers: UNINDEXED_HEADERS, source: "/(.*)" },
+      {
+        headers: [
+          {
+            key: HTTP.HEADER.CACHE_CONTROL,
+            value: HTTP.CACHE_CONTROL.NO_CACHE,
+          },
+        ],
+        source: PWA.PATH.SERVICE_WORKER,
+      },
       { headers: [APP_HEADER], source: "/embed" },
     ]);
   });
@@ -130,5 +140,21 @@ describe("AOFCreateNextConfig", () => {
 
   it("leaves the disk cache to Next elsewhere", () => {
     expect(onPlatform("linux", () => AOFCreateNextConfig()).images).toEqual({});
+  });
+
+  it("keeps a failed navigation pending until the network is back", () => {
+    expect(AOFCreateNextConfig().experimental).toMatchObject({
+      useOffline: true,
+    });
+  });
+
+  // Next's PWA guide: the browser must fetch a new worker on every visit.
+  it("serves the service worker uncached", async () => {
+    const rules = (await AOFCreateNextConfig().headers?.()) ?? [];
+    expect(
+      rules.find(({ source }) => source === PWA.PATH.SERVICE_WORKER)?.headers
+    ).toEqual([
+      { key: HTTP.HEADER.CACHE_CONTROL, value: HTTP.CACHE_CONTROL.NO_CACHE },
+    ]);
   });
 });

@@ -22,11 +22,15 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Page information (the `<head>`, icons, link previews, iOS launch screens) comes from `@allonfire/core/features/next/metadata/*` and core's `METADATA` (`features/metadata/constants/metadata`: Indexing, the metadata paths, the icon sizes, the logo variants, the iOS launch devices). An App's Indexing lives in `ACCESS.APP_SETTINGS`; its own values in one object (`BACK_OFFICE`, `src/shared/constants/back-office`). In the Back Office:
   - the layout spreads `baseMetadata(locale)`; a page adds only `title`, `description` and `openGraph: pageOpenGraph(path, locale)` (`features/metadata/utils`), never `openGraph` or `robots` by hand: Next replaces them whole, and `"./"` as `og:url` resolves to `/en/...`, not the public path
   - a URL no language owns (one with a dot, `/api/...`) gets the localized 404 through `AOFWithLocalizedNotFound` in `next.config.ts`; core's own routes (launch screens, manifest icons, logos) are kept already; any other dynamic route outside `[locale]` goes in its `keep` list. A path is matched case-sensitively, so `/IT/x.png` gets the 404 too. There is no `global-not-found`: under a top-level `[locale]` every URL matches a route. A 404's HTML, in dev and production alike, is Next's empty `__next_error__` shell (status 404, `noindex`): with Cache Components a `notFound()` at request time comes before any shell, and the browser renders `not-found.tsx` from the RSC payload. Expected; a test reading the raw HTML finds no title
-  - a `loading.tsx` goes in a route group (`[locale]/(signed-in)/`), never at `[locale]`: above the catch-all it turns every 404 into a 200
+  - a signed-in page is `export default signedInPage(Page)` (`features/navigation/utils/signed-in-page`): `withAppSession(Page, <SectionLoading />)` from `@allonfire/auth/features/next/components/with-app-session`. The Session check runs first, inside the page's own `<Suspense>` (the loading screen as its fallback), and the page renders only once it passes, so nothing of the page's body reaches a visitor the App keeps out. Each page needs its own boundary: a route group's `loading.tsx` sits above where sibling pages diverge, so a soft navigation between them would block. Its `generateMetadata` runs outside the check, so it stays static (translations and `pageOpenGraph`, never request-time data). Data the page reads still comes through the API, which checks the Session itself
+  - the signed-in frame is `(signed-in)/layout.tsx` (ADR 0024): static, drawn from the App's Sections (`features/navigation/constants/sections`, an explicit tuple: Biome sorts object keys), which the proxy's sign-in gate and a guard test also read. A new Section is one row there plus its page; its UI state is a typed nuqs param read on the client, never a cookie the server reads
+  - no `loading.tsx` under `[locale]`: above the catch-all it turns every 404 into a 200
   - the logo is the Brand's (`@allonfire/design/brand/aof-logo`), given `BACK_OFFICE.LOGO` (name, banner, face). As SVG it is `aofLogoSvg`: the favicon in `auto`, `/logo/<layout>-<scheme>.svg` through core's `AOFLogoRoute` for a file other sites link to, and `aofLogoDataUrl` for a page's own logo (`AOFImage` with a data URL: painted with the HTML, no request of its own). In an `ImageResponse` it is ui's `AOFBrandLogo` (`components/aof-brand-logo`)
   - icons go through core's `AOFIconImage` and `AOFManifestIconRoute`; launch screens through `AOFLaunchScreenRoute`, where the App says only how its mark looks per color scheme (ground, mark, fonts)
   - the preview card is ui's `AOFShareCard` dressed in the Japan Design's `JAPAN_SHARE_CARD` (`designs/japan/share-card-look`: colours, image face, tactile edge), with `BACK_OFFICE.LINE` as its band
   - fonts for generated images come from `imageFonts()` (`features/metadata/utils/image-fonts`): `loadJapanImageFonts` under `"use cache"` and `cacheLife("max")`. A shorter life re-renders every prerendered image when it runs out
+  - the viewport is core's `AOFBaseViewport({ schemeColors })` (`features/next/metadata/aof-base-viewport`: both colour schemes, a theme colour per scheme from the App's ground, and `viewport-fit=cover`, without which iOS reports every safe-area inset as 0); a page keeps to ui base.css's edges, `--gutter-top/right/bottom/left` (the larger of `--page-gutter`, 1.5rem, and that side's inset): every `AOFPage` pads itself to them by default (`edges="safe"`; `edges="none"` for a page drawn to the screen's edges; override one side, `pb-24`, never the whole `p-*`, which drops them all), a fixed control sits at `bottom-(--gutter-bottom)`, `AOFToaster` offsets toasts by them; the body is never padded
+  - the PWA comes from core's `features/next/pwa` (ADR 0023): the App's `build` runs `pwa:build` after `next build`, writing `public/sw.js` (gitignored, a turbo build output; Workbox: Next's static files and each language's Offline page precached, page loads network only with the Offline page as fallback, nothing else cached); the layout wraps its pages in core's `AOFPwa` (`enabled` in production only), handing it the App's own `hint` and `banner`, which send toasts drawn in its Design through ui's `AOFToaster` (shadcn's Sonner, mounted once in the layout; ids in `PWA.TOAST`), sent from a client component with `useAOFToast(id, content | null, options)` (`@allonfire/ui/lib/use-aof-toast`: a frame late, since a toast sent before the toaster hydrates is lost, and dismissing only what it sent) (`features/pwa/components/install-hint` and `offline-banner`: the hint a toast at the bottom, from `useInstallHint`: an Install button opening the browser's dialog (`beforeinstallprompt`, held by core from page load) where offered, else iPhone's or macOS Safari's steps, never on a first visit; the offline notice a red toast centred at the top; the manifest is `display: "standalone"` (ADR 0025); the banner shown while `useOffline`), and it registers the worker; an e2e test Playwright drives in Chromium only takes `E2E_TAG.CHROMIUM_ONLY` (`@allonfire/config/tests/e2e/run`); the Offline page is `[locale]/offline`, which the proxy skips at `/<lang>/offline` so the precache meets no redirect
 
 ## Context7 Usage
 
@@ -73,6 +77,17 @@ that is not JSON, at any depth, interfaces included) returns `JsonText<T>`, and
 `unknown`, or the `T` passed as `parseJson<T>` (a claim, not a check).
 `parseJsonWith(text, schema)` parses and validates text from outside;
 `jsonFrom<T>(message)` is the zod step for a field that holds JSON text.
+
+## Storage Helpers (`@allonfire/core/shared/utils/storage`)
+
+Never touch `localStorage` / `sessionStorage` directly outside a test (which may clear them). `storageItem(key,
+schema, area?)` keeps one value as JSON, typed by its zod schema both ways:
+`write` takes the schema's type (and only JSON, through `stringifyJson`),
+`read` gives it back checked, or `null`. The globals are loose and they
+throw: a private window or a full quota refuses, and with site data blocked
+merely reading `window.localStorage` throws. Every call is guarded, so what
+is kept there is a convenience a visitor can lose, never state that must
+survive. A schema crosses no package: a package's `storageItem` takes its own zod's schema (the Apps and core can resolve different zod versions, and tsc runs out of memory comparing them), so a test seeds a value through the owner's function (`firstLoad()`), never its own `storageItem`.
 
 ## Forms (`@allonfire/ui/lib/form`)
 
@@ -321,7 +336,9 @@ in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `vitest.browser.config.ts`, with MSW answering the API: the worker and its
 guard are shared (`@allonfire/config/tests/browser/msw`: `startMsw`,
 `worker`), the handlers are the App's own (`src/shared/tests/msw/handlers.ts`),
-and a request no handler answers fails the test; e2e
+and a request no handler answers fails the test. Vitest serves MSW's
+`mockServiceWorker.js` from the installed `msw`; no App keeps one in
+`public/`, where it would ship to production; e2e
 tests are Playwright's, under the App's `e2e/`, against the API plus the App
 (`aofPlaywrightConfig`), each spec once per project: `chromium`, `webkit`,
 `mobile-chrome` (Pixel 7) and `mobile-safari` (iPhone 15). Both layers are

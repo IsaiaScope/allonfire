@@ -9,15 +9,14 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 const LIGHT = JAPAN_IMAGE_COLOR[METADATA.COLOR_SCHEME.LIGHT];
 
 // Only discovered at the app root, so it is not localized: the default
-// language. `display: "browser"`: Android adds a shortcut that opens a tab;
-// iOS 26+ opens its own window by default anyway. Members Chrome uses only
-// for installable apps (screenshots, shortcuts, display_override) would do
-// nothing here.
+// language. `display: "standalone"` (ADR 0025): installed, the App opens in
+// its own window, and Chrome, Edge and Android offer their install dialog,
+// which the Install hint's button opens.
 const manifest = (): MetadataRoute.Manifest => ({
   background_color: LIGHT.background,
   description: metadataText(I18N.DEFAULT_LANGUAGE)("description"),
   dir: "ltr",
-  display: "browser",
+  display: "standalone",
   icons: AOFManifestIcons(),
   id: METADATA.PATH.ROOT,
   lang: I18N.DEFAULT_LANGUAGE,

@@ -25,6 +25,7 @@
     "./features/next/i18n/shared-translations": "./src/features/next/i18n/shared-translations.ts",
     "./features/next/instrumentation/guard-performance-measure": "./src/features/next/instrumentation/guard-performance-measure.ts",
     "./features/next/metadata/aof-base-metadata": "./src/features/next/metadata/aof-base-metadata.ts",
+    "./features/next/metadata/aof-base-viewport": "./src/features/next/metadata/aof-base-viewport.ts",
     "./features/next/metadata/aof-icon-images": "./src/features/next/metadata/aof-icon-images.tsx",
     "./features/next/metadata/aof-indexed": "./src/features/next/metadata/aof-indexed.ts",
     "./features/next/metadata/aof-launch-screen-route": "./src/features/next/metadata/aof-launch-screen-route.ts",
@@ -34,6 +35,15 @@
     "./features/next/providers/aof-query-client-provider": "./src/features/next/providers/aof-query-client-provider.tsx",
     "./features/next/providers/aof-react-query-devtools": "./src/features/next/providers/aof-react-query-devtools.tsx",
     "./features/next/providers/aof-theme-provider": "./src/features/next/providers/aof-theme-provider.tsx",
+    "./features/next/pwa/aof-pwa": "./src/features/next/pwa/aof-pwa.tsx",
+    "./features/next/pwa/aof-service-worker": "./src/features/next/pwa/aof-service-worker.tsx",
+    "./features/next/pwa/build-service-worker": "./src/features/next/pwa/build-service-worker.ts",
+    "./features/next/pwa/constants/pwa": "./src/features/next/pwa/constants/pwa.ts",
+    "./features/next/pwa/install-hint-state": "./src/features/next/pwa/install-hint-state.ts",
+    "./features/next/pwa/install-platform": "./src/features/next/pwa/install-platform.ts",
+    "./features/next/pwa/install-prompt": "./src/features/next/pwa/install-prompt.ts",
+    "./features/next/pwa/offline-fallback": "./src/features/next/pwa/offline-fallback.ts",
+    "./features/next/pwa/use-install-hint": "./src/features/next/pwa/use-install-hint.ts",
     "./features/next/query/aof-get-query-client": "./src/features/next/query/aof-get-query-client.ts",
     "./shared/constants/env": "./src/shared/constants/env.ts",
     "./shared/constants/patterns": "./src/shared/constants/patterns.ts",
@@ -41,15 +51,18 @@
     "./shared/constants/units": "./src/shared/constants/units.ts",
     "./shared/utils/json": "./src/shared/utils/json.ts",
     "./shared/utils/object": "./src/shared/utils/object.ts",
+    "./shared/utils/storage": "./src/shared/utils/storage.ts",
     "./shared/utils/svg-data-url": "./src/shared/utils/svg-data-url.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "i18n:check": "i18n-check --locales src/features/next/i18n/translations --source en",
+    "pwa:build": "tsx src/features/next/pwa/cli.ts",
     "test": "vitest run"
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.10",
+    "workbox-window": "^7.4.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -67,7 +80,8 @@
     "react-dom": "^19.3.0",
     "tsx": "^4.19.0",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "workbox-build": "^7.4.1"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",

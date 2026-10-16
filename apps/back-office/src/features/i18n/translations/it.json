@@ -3,8 +3,7 @@
     "description": "Dove si gestiscono i contenuti, gli utenti e i dati della famiglia AllOnFire."
   },
   "Home": {
-    "description": "Ancora niente qui.",
-    "signOut": "Esci"
+    "description": "Ancora niente qui."
   },
   "SignIn": {
     "email": "Email",
@@ -28,5 +27,33 @@
     "submit": "Accedi",
     "submitting": "Accesso in corso…",
     "theme": "Cambia tema"
+  },
+  "Navigation": {
+    "account": "Account",
+    "home": "Home",
+    "language": "Lingua",
+    "menu": "Menu principale",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "Utente",
+      "VIEWER": "Visualizzatore"
+    },
+    "signOut": "Esci",
+    "storage": "Archivio",
+    "theme": "Cambia tema",
+    "toggleMenu": "Comprimi o espandi il menu",
+    "users": "Utenti"
+  },
+  "Storage": {
+    "empty": {
+      "description": "Immagini e altri file arriveranno qui con l'API di Archivio.",
+      "title": "Ancora nessun file"
+    }
+  },
+  "Users": {
+    "empty": {
+      "description": "L'elenco degli Utenti e dei loro Ruoli arriverà con l'API degli Utenti.",
+      "title": "Ancora nessun Utente"
+    }
   }
 }

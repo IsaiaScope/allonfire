@@ -23,6 +23,11 @@ export const BACK_OFFICE = {
     name: NAME,
   },
   NAME,
+  /** The Back Office's own Sections' paths, after the locale. */
+  PAGE: {
+    STORAGE: "/storage",
+    USERS: "/users",
+  },
   /** The link-preview image's alt, the same in every language: two names. */
   SHARE_IMAGE_ALT: `${NAME}, ${BRAND.NAME}`,
 } as const satisfies { LOGO: AppLogo } & Record<string, unknown>;

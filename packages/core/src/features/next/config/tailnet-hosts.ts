@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { z } from "zod";
+import { UNIT } from "../../../shared/constants/units";
 import { parseJsonWith } from "../../../shared/utils/json";
 
 /** Long enough for a running daemon to answer, short enough not to stall `next dev`. */
-const STATUS_TIMEOUT_MS = 2000;
+const STATUS_TIMEOUT_MS = 2 * UNIT.MS_PER_SECOND;
 
 /** The part of `tailscale status --json` read here; the suffix is empty until signed in. */
 const tailscaleStatusSchema = z.object({ MagicDNSSuffix: z.string() });

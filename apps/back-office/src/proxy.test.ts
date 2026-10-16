@@ -2,6 +2,7 @@
 // @vitest-environment node
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { config } from "./proxy";
 
@@ -25,6 +26,8 @@ describe("proxy matcher", () => {
     // A page whose name only starts like a metadata file is still a page.
     `${PATH.ICON}s`,
     `${PATH.ICON}ic`,
+    // With no language, the proxy picks the visitor's.
+    PWA.PATH.OFFLINE,
   ])("routes the page %s", (url) => {
     expect(matches(url)).toBe(true);
   });
@@ -44,6 +47,10 @@ describe("proxy matcher", () => {
     PATH.FAVICON,
     `${PATH.LAUNCH_SCREEN}/any-screen.png`,
     "/_next/static/chunk.js",
+    // The worker precaches each language's Offline page at its prefixed
+    // address; the locale proxy would redirect `/en/offline` to `/offline`.
+    `/en${PWA.PATH.OFFLINE}`,
+    `${IT}${PWA.PATH.OFFLINE}`,
     "/api/health",
   ])("leaves the file %s to Next", (url) => {
     expect(matches(url)).toBe(false);

@@ -3,6 +3,8 @@
   "compilerOptions": {
     // features/next reads FormData and Headers, typed by the DOM lib.
     "lib": ["dom", "dom.iterable", "ES2022"],
+    // features/next/components holds the signed-in page wrapper.
+    "jsx": "react-jsx",
     "paths": {
       "@allonfire/database": ["../database/src/index.ts"],
       "@allonfire/core/*": ["../core/src/*"]

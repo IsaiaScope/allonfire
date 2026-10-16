@@ -23,4 +23,4 @@ curl -s -A "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/126 Safari/537.36"
 then fetch the `woff2` URL the CSS names.
 
 Yuji Syuku is subset the same way (`family=Yuji+Syuku`) to the kanji it
-paints: `改札入迷子戻到着運休再`. A kanji outside it falls back to the system serif.
+paints: `改札入迷子戻到着運休再圏外`. A kanji outside it falls back to the system serif.

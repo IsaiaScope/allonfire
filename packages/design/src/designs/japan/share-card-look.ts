@@ -1,3 +1,4 @@
+import type { ColorScheme } from "@allonfire/core/features/metadata/constants/metadata";
 import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
 import { JAPAN_IMAGE_COLOR } from "./image-colors";
 import { JAPAN_IMAGE_FONT } from "./image-font";
@@ -17,7 +18,7 @@ const TACTILE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${TACTILE.WI
 
 const EDGE = { height: TACTILE.HEIGHT, image: svgDataUrl(TACTILE_SVG) };
 
-const look = (scheme: "dark" | "light") => {
+const look = (scheme: ColorScheme) => {
   const { background, foreground, mutedForeground } = JAPAN_IMAGE_COLOR[scheme];
   return {
     colors: { background, foreground, mutedForeground },

@@ -20,6 +20,9 @@ const COLOR_SCHEMES = objectValues(METADATA.COLOR_SCHEME).length;
 /** iOS must not turn a number into a phone link. */
 const NO_TELEPHONE = /telephone=no/;
 
+/** The viewport drawn edge to edge, so the safe-area insets are real. */
+const EDGE_TO_EDGE = /viewport-fit=cover/;
+
 test("gives Sign in a complete head", async ({ page }) => {
   const response = await page.goto(SIGN_IN);
   expect(response?.headers()[HTTP.HEADER.X_ROBOTS_TAG]).toBe(
@@ -60,7 +63,11 @@ test("gives Sign in a complete head", async ({ page }) => {
   );
   await expect(meta('meta[name="color-scheme"]')).toHaveAttribute(
     "content",
-    "light dark"
+    METADATA.PAGE_COLOR_SCHEME
+  );
+  await expect(meta('meta[name="viewport"]')).toHaveAttribute(
+    "content",
+    EDGE_TO_EDGE
   );
   await expect(
     meta('meta[name="apple-mobile-web-app-capable"]')
@@ -173,7 +180,7 @@ test("serves the manifest and links it with the icons", async ({
 }) => {
   const manifest = await (await request.get(METADATA.PATH.MANIFEST)).json();
   expect(manifest).toMatchObject({
-    display: "browser",
+    display: "standalone",
     id: METADATA.PATH.ROOT,
     name: BACK_OFFICE.NAME,
     scope: METADATA.PATH.ROOT,

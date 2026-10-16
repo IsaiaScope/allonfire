@@ -1,10 +1,12 @@
-import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
+import { AOFBaseViewport } from "@allonfire/core/features/next/metadata/aof-base-viewport";
 import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/aof-nuqs-adapter";
 import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/aof-query-client-provider";
 import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
-import { objectValues } from "@allonfire/core/shared/utils/object";
+import { AOFPwa } from "@allonfire/core/features/next/pwa/aof-pwa";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
+import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
@@ -13,6 +15,8 @@ import { env } from "@/environment/environment";
 import { routing } from "@/features/i18n/routing";
 import { baseMetadata } from "@/features/metadata/utils/base-metadata";
 import { metadataText } from "@/features/metadata/utils/metadata-text";
+import { InstallHint } from "@/features/pwa/components/install-hint";
+import { OfflineBanner } from "@/features/pwa/components/offline-banner";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import "../globals.css";
 
@@ -36,15 +40,9 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-// Installed-app chrome and form controls follow the OS theme. Safari 26+
-// tints its tabs from the page background instead, which the Design sets.
-export const viewport: Viewport = {
-  colorScheme: "light dark",
-  themeColor: objectValues(METADATA.COLOR_SCHEME).map((scheme) => ({
-    color: JAPAN_IMAGE_COLOR[scheme].background,
-    media: `(prefers-color-scheme: ${scheme})`,
-  })),
-};
+export const viewport: Viewport = AOFBaseViewport({
+  schemeColors: JAPAN_IMAGE_COLOR,
+});
 
 // The locale comes from next/root-params via src/features/i18n/request.ts, which also
 // 404s an unknown one.
@@ -57,7 +55,22 @@ const LocaleLayout = async ({ children }: { children: ReactNode }) => {
         <NextIntlClientProvider>
           <AOFQueryClientProvider>
             <AOFThemeProvider>
-              <AOFNuqsAdapter>{children}</AOFNuqsAdapter>
+              <AOFNuqsAdapter>
+                {/* Every toast the App sends, the Install hint and the
+                    offline notice included; above an iPhone's home
+                    indicator. */}
+                <AOFToaster />
+                {/* The PWA (ADR 0023): the Install hint and the offline
+                    notice, both sent as toasts in the Japan Design, and in
+                    production the service worker. */}
+                <AOFPwa
+                  banner={<OfflineBanner />}
+                  enabled={env.NODE_ENV === ENV.NODE.PRODUCTION}
+                  hint={<InstallHint />}
+                >
+                  {children}
+                </AOFPwa>
+              </AOFNuqsAdapter>
             </AOFThemeProvider>
             {/* ponytail: TanStack Query devtools hidden until a page queries
                 anything; mount AOFReactQueryDevtools here to bring them back. */}

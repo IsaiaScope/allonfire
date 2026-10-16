@@ -19,3 +19,13 @@
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* Toasts as wide as the Install hint's one-row layout needs (Sonner's own
+   356px is narrower). Sonner's stylesheet is unlayered, so a utility class
+   loses to it: this rule outranks it by one attribute instead. On a phone
+   Sonner's own full-width rule applies. */
+@media (min-width: 601px) {
+  [data-sonner-toaster][data-x-position] {
+    width: 28rem;
+  }
+}

@@ -29,7 +29,12 @@
         "BACK_OFFICE_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "public/sw.js"
+      ]
     },
     "dev": {
       "cache": false,

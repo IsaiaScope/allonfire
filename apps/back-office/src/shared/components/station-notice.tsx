@@ -1,8 +1,8 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { AOFPage } from "@allonfire/ui/components/aof-page";
+import { AOFPage, type AOFPageProps } from "@allonfire/ui/components/aof-page";
 import { cn } from "@allonfire/ui/lib/utils";
 import { cva } from "class-variance-authority";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { BrushKanji } from "./brush-kanji";
 import { EkiStamp } from "./eki-stamp";
@@ -48,6 +48,9 @@ export type StationNoticeProps = {
   /** The page's `h1`, which also names the tab: a special page takes no
    *  metadata exports. */
   heading?: string;
+  /** What frames the notice: the whole screen (`AOFPage`) unless it fills
+   *  another frame's page area. */
+  page?: ComponentType<AOFPageProps>;
   signage: StationSignage;
 };
 
@@ -62,9 +65,10 @@ export const StationNotice = ({
   children,
   description,
   heading,
+  page: Page = AOFPage,
   signage,
 }: StationNoticeProps) => (
-  <AOFPage className="overflow-hidden px-3 sm:px-4" layout="centered">
+  <Page className="overflow-hidden" layout="centered">
     {heading ? <title>{pageTitle(heading, BACK_OFFICE.NAME)}</title> : null}
     <BrushKanji kanji={signage.WALL_KANJI} />
     <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
@@ -89,5 +93,5 @@ export const StationNotice = ({
       </div>
       {action ? <div className={rise({ after: "text" })}>{action}</div> : null}
     </div>
-  </AOFPage>
+  </Page>
 );

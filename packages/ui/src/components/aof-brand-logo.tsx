@@ -1,9 +1,11 @@
+import type {
+  ColorScheme,
+  LogoLayout,
+} from "@allonfire/core/features/metadata/constants/metadata";
 import {
   AOF_LOGO,
   type AppLogo,
   type Geometry,
-  type LogoLayout,
-  type LogoScheme,
   monogramBox,
   monogramDataUrl,
 } from "@allonfire/design/brand/aof-logo";
@@ -11,7 +13,7 @@ import {
 export type AOFBrandLogoProps = {
   app: AppLogo;
   layout: LogoLayout;
-  scheme: LogoScheme;
+  scheme: ColorScheme;
   /** Height in pixels; the width follows the layout's proportions. */
   height: number;
   /** Rounded corners, for a logo set on a page or card; an icon fills its square. */
