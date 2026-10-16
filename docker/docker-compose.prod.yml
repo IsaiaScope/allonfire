@@ -44,9 +44,8 @@ services:
       db-backup:
         condition: service_completed_successfully
 
-  # Then: the Images' bucket with its read-only policy, and the Images the
-  # Apps show by key before any upload (the sign-in photo), each only when
-  # missing. Runs from the API's image, which holds the storage package.
+  # Then: the Images' bucket with its read-only policy, only when missing.
+  # Runs from the API's image, which holds the storage package.
   storage-setup:
     image: ghcr.io/isaiascope/allonfire-api:prod
     pull_policy: always
@@ -101,7 +100,8 @@ services:
       - "traefik.http.routers.allonfire-api.tls.certresolver=letsencrypt"
       - "traefik.http.services.allonfire-api.loadbalancer.server.port=3000"
 
-  # STORAGE_ENDPOINT and NEXT_PUBLIC_API_URL are baked in at build (deploy.yml).
+  # STORAGE_ENDPOINT, NEXT_PUBLIC_API_URL and BACK_OFFICE_URL are baked in at
+  # build (deploy.yml); BACK_OFFICE_URL is also read at runtime, the same value.
   back-office:
     image: ghcr.io/isaiascope/allonfire-back-office:prod
     pull_policy: always
@@ -112,6 +112,7 @@ services:
     environment:
       - API_AUTH_URL=http://api:3000/v1/auth
       - AUTH_APP=BACK_OFFICE
+      - BACK_OFFICE_URL=${BACK_OFFICE_URL}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]

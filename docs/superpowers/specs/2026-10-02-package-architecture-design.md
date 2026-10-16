@@ -118,7 +118,7 @@ optional peer, so a host that is not that framework never loads it.
 6. **Content languages:** `core` keeps the list of every extra language any Host
    speaks (`CONTENT_LANGUAGES = [...BASE_LANGUAGES, ...extras]`); a Host's
    extras must be in it. Stored per-language data (`Image.alt`) requires the base
-   languages and allows the other content languages, so the Back office shows a
+   languages and allows the other content languages, so the Back Office shows a
    field for each and a new language needs no data migration. A Host reading an
    alt it lacks falls back to English.
 
@@ -163,7 +163,7 @@ import path), surprising without context (why `core` has a `features/next`, why
   `AOFDefineRouting(languages, options?)` routes the Host's list;
   `AOFGetRequestConfig` takes one loader per language and, for a language
   beyond the base ones, the shared text in it (`SharedTranslationsFor`). The
-  Back office's catalogue `satisfies Record<Language, () => Promise<typeof EN>>`;
+  Back Office's catalogue `satisfies Record<Language, () => Promise<typeof EN>>`;
   `global-error.tsx` reads the shared `Common.Error` in `DEFAULT_LANGUAGE`.
   Image alt (`database/features/image/alt`) requires the base languages,
   allows extras, and reads a missing one as English; `AOFStorageImage` takes

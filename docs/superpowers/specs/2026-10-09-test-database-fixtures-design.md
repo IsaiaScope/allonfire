@@ -14,7 +14,7 @@ stack. Test data and local addresses are each written once.
 
 | # | Question | Decision |
 |---|---|---|
-| 1 | How are Images tested "with the real Apps"? | Through the real API over HTTP, in process (`createApp` with real dependencies). The Back office side covers what exists: the sign-in photo. Image pages get e2e when they are built. |
+| 1 | How are Images tested "with the real Apps"? | Through the real API over HTTP, in process (`createApp` with real dependencies). The Back Office side covers what exists: the sign-in photo. Image pages get e2e when they are built. |
 | 2 | How small is a throwaway database? | One per package per run, and one per Playwright run. |
 | 3 | Naming | `allonfire_test_<package>_<epoch>_<random>`, template `allonfire_test_template`: lowercase and underscores, never quoted, like `allonfire_changelog_*`. Buckets `allonfire-test-<package>-<epoch>-<random>` (S3 names allow no underscore). |
 | 4 | Where do helpers and test data live? | In the packages that own them: `@allonfire/database` (databases, fixture Users, Image rows), `@allonfire/storage` (buckets, Image files). No new package. |
@@ -121,7 +121,7 @@ them from there.
     touched; visibility switches.
   - Delete: with `app` the placement goes and the Image stays; the last
     placement takes the row and the object; without `app`, Admin everywhere.
-- **Back office e2e:** the sign-in photo loads through the rewrite from the
+- **Back Office e2e:** the sign-in photo loads through the rewrite from the
   run's bucket.
 
 ## 4. Sign-in use cases
@@ -130,7 +130,7 @@ On the run's database and its own Redis key prefix.
 
 **API integration** (real Better Auth, Postgres, Redis):
 
-- Sign-in into the Back office (floor Admin): the Admin enters; a User, a
+- Sign-in into the Back Office (floor Admin): the Admin enters; a User, a
   Viewer and the User with no Membership get 403 `APP_FORBIDDEN` and no Session
   is left. Wrong password and unknown email answer 401.
 - Session: `get-session` returns the Memberships; nothing after sign-out.
@@ -142,7 +142,7 @@ On the run's database and its own Redis key prefix.
 - Join-app pinned to its current rules with fixture Users.
 - Rate limit: the 11th sign-in in the window answers 429 from real Redis.
 
-**Back office e2e** (production App plus API): Admin signs in and lands home;
+**Back Office e2e** (production App plus API): Admin signs in and lands home;
 the Session survives a reload; sign-out closes home; the User, the Viewer and
 the User with no Membership each see the "cannot enter" message; a wrong
 password shows its message; Italian sign-in shows translated errors. The rate
@@ -155,7 +155,7 @@ Browser tests keep the mocked action.
 
 - `packages/config/local/addresses.ts`, export `@allonfire/config/local/addresses`:
   `LOCAL_PORT` (Postgres 5432, Redis 6379, MinIO 9000 and console 9001, API
-  3300, API e2e 3310, Back office 3400, Back office e2e 3410, Laura 3200),
+  3300, API e2e 3310, Back Office 3400, Back Office e2e 3410, Laura 3200),
   `LOCAL_URL` derived from it (Postgres with user, password and database
   `allonfire`, Redis, MinIO, each App and the API), `TEST_API_URL`
   (`http://api.test`).
@@ -181,5 +181,5 @@ Browser tests keep the mocked action.
 
 ## Out of scope
 
-Back office Image pages and their e2e; Laura's tests; generating env files
+Back Office Image pages and their e2e; Laura's tests; generating env files
 from the addresses module; uploading the sign-in photo to production.

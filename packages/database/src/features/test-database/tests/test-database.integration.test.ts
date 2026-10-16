@@ -14,6 +14,7 @@ import { ensureTemplate, templateFingerprint } from "../template";
 import {
   createTestDatabase,
   dropTestDatabase,
+  dropTestDatabasesOf,
   sweepTestDatabases,
 } from "../test-database";
 
@@ -70,5 +71,24 @@ describe("Test databases", { timeout: DOCKER_TIMEOUT }, () => {
     const left = await databasesOnServer(SERVER);
     expect(left).not.toContain(testDatabaseName("selftest", oldClone));
     expect(left).toContain(template);
+  });
+
+  it("drops every earlier run of a label, however young, and no other label's", async () => {
+    const mine = testDatabaseName("solotest", `${EPOCH}_young1`);
+    const other = testDatabaseName("solotest_two", `${EPOCH}_young2`);
+    await Promise.all([
+      createDatabase(SERVER, mine),
+      createDatabase(SERVER, other),
+    ]);
+    try {
+      const dropped = await dropTestDatabasesOf(SERVER, "solotest");
+      expect(dropped).toContain(mine);
+      expect(dropped).not.toContain(other);
+      const left = await databasesOnServer(SERVER);
+      expect(left).not.toContain(mine);
+      expect(left).toContain(other);
+    } finally {
+      await dropDatabase(SERVER, other);
+    }
   });
 });

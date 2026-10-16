@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move every Next App's repeated wiring (Query client and provider, Devtools, theme, nuqs, next-intl request config and proxy, `next.config` base) and the `LOCALE` list into `@allonfire/utils`, one AOF-prefixed piece per file, and switch Back office onto them.
+**Goal:** Move every Next App's repeated wiring (Query client and provider, Devtools, theme, nuqs, next-intl request config and proxy, `next.config` base) and the `LOCALE` list into `@allonfire/utils`, one AOF-prefixed piece per file, and switch Back Office onto them.
 
 **Status:** implemented (uncommitted) @ 2026-09-30T15:46:47Z
 
-**Architecture:** `packages/utils/src/next/<topic>/` holds the App scaffolding; React, Next and the provider libraries are optional `peerDependencies`, so the API (which imports utils but never `src/next/`) is untouched at runtime. `LOCALE` moves to `packages/utils/src/constants/locales.ts`; the API keeps `DEFAULT_LOCALE` and its catalogue. Back office composes the four providers in its layout and deletes its own copies.
+**Architecture:** `packages/utils/src/next/<topic>/` holds the App scaffolding; React, Next and the provider libraries are optional `peerDependencies`, so the API (which imports utils but never `src/next/`) is untouched at runtime. `LOCALE` moves to `packages/utils/src/constants/locales.ts`; the API keeps `DEFAULT_LOCALE` and its catalogue. Back Office composes the four providers in its layout and deletes its own copies.
 
 **Tech Stack:** Next 16, React 19, next-intl 4, next-themes, nuqs 2, TanStack Query 5, zod 4, Vitest 4 (globals, `renderToStaticMarkup`, no DOM), Playwright.
 
@@ -18,14 +18,14 @@
 - One piece per file, one export line per file in `packages/utils/package.json`; keys mirror the path without `src/` and the extension.
 - Every test file's first line is `// @module-tag unit`; type tests (`*.test-d.ts`) take no tag. Vitest globals: no `from "vitest"` import for `describe`/`it`/`expect`/`vi`.
 - No `as` casts (tests too); no new `biome-ignore`; never `Object.keys/entries/...` directly.
-- Framework libraries are optional peer dependencies of utils (`peerDependenciesMeta.<name>.optional: true`), and devDependencies at Back office's versions.
+- Framework libraries are optional peer dependencies of utils (`peerDependenciesMeta.<name>.optional: true`), and devDependencies at Back Office's versions.
 - The API never imports `@allonfire/utils/next/*`.
 - An App's `proxy.ts` keeps its `config.matcher` literal.
 - Never commit (the user commits with `/iso-commit`). Finish with `pnpm exec biome check --write <touched files>` only.
 
 ## Review Focus
 
-1. `next.config.ts` importing TypeScript source from `@allonfire/utils` at config load: Back office's `pnpm build` must pass (Task 6, Step 5).
+1. `next.config.ts` importing TypeScript source from `@allonfire/utils` at config load: Back Office's `pnpm build` must pass (Task 6, Step 5).
 2. `AOFGetQueryClient` in the browser returns the first client forever, so options on a later call are ignored: pinned by a test and a doc comment (Task 2).
 3. An unknown locale segment (`/xx`) must 404, not render the default language: unit test in Task 4, e2e "unknown path" in Task 6.
 4. An App header with a key the security headers also set must win: Next sends the last matching rule, so the App's rules come after the base rule (test in Task 5).
@@ -861,7 +861,7 @@ Expected: every utils test PASS (5 new here); type check PASS.
 
 ---
 
-### Task 6: Back office adopts the scaffolding; docs
+### Task 6: Back Office adopts the scaffolding; docs
 
 **Files:**
 - Modify: `apps/back-office/package.json`, `apps/back-office/next.config.ts`, `apps/back-office/src/proxy.ts`, `apps/back-office/src/features/i18n/routing.ts`, `apps/back-office/src/features/i18n/request.ts`, `apps/back-office/src/app/[locale]/layout.tsx`, `packages/utils/README.md`, `CLAUDE.md`
@@ -1047,12 +1047,12 @@ reserved `Common` namespace.
 - [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @allonfire/utils test -- src/next && pnpm --filter @allonfire/utils check-types`
-Expected: FAIL, missing modules; Back office's translations still define `NotFound`/`Error` but not `Common`, so the App check passes until Step 3's move.
+Expected: FAIL, missing modules; Back Office's translations still define `NotFound`/`Error` but not `Common`, so the App check passes until Step 3's move.
 
-- [x] **Step 3: Implement and wire Back office**
+- [x] **Step 3: Implement and wire Back Office**
 
-- The three utils files and the two JSON files (`Common.NotFound.{title,back}`, `Common.Error.{title,retry}`, moved verbatim from Back office's `en.json`/`it.json`), the merge in `AOFGetRequestConfig`, the exports, `"i18n:check": "i18n-check --locales src/next/i18n/translations --source en"`, and `turbo.json` `i18n:check` inputs `["src/**/i18n/translations/**"]`.
-- Back office: `routing.ts` is `export const routing = AOFDefineRouting();`; `navigation.ts` is `AOFCreateNavigation(routing)`; `NotFound` and `Error` leave its JSON; `not-found.tsx` reads `getTranslations("Common.NotFound")`, `error.tsx` reads `useTranslations("Common.Error")`.
+- The three utils files and the two JSON files (`Common.NotFound.{title,back}`, `Common.Error.{title,retry}`, moved verbatim from Back Office's `en.json`/`it.json`), the merge in `AOFGetRequestConfig`, the exports, `"i18n:check": "i18n-check --locales src/next/i18n/translations --source en"`, and `turbo.json` `i18n:check` inputs `["src/**/i18n/translations/**"]`.
+- Back Office: `routing.ts` is `export const routing = AOFDefineRouting();`; `navigation.ts` is `AOFCreateNavigation(routing)`; `NotFound` and `Error` leave its JSON; `not-found.tsx` reads `getTranslations("Common.NotFound")`, `error.tsx` reads `useTranslations("Common.Error")`.
 
 - [x] **Step 4: Verify**
 
@@ -1064,4 +1064,4 @@ Expected: all PASS; e2e 3/3 (the 404 page still reads "Page not found").
 - Workspace: current-branch — feat/design-package
 - Committed: no — awaiting user review
 - Task 7 (shared routing, navigation, messages) added and implemented: 2026-09-30T15:46:47Z
-- Back office env moved to src/environment/environment.ts on utils NODE_ENV/nodeEnvSchema (user request): 2026-09-30T15:55:52Z
+- Back Office env moved to src/environment/environment.ts on utils NODE_ENV/nodeEnvSchema (user request): 2026-09-30T15:55:52Z

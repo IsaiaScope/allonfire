@@ -1,7 +1,8 @@
 import { App } from "../../../../generated/prisma/enums";
 
+/** An Image Fixture: one Image every Test bucket holds. */
 export type FixtureImage = {
-  /** `<uuid>.avif`, fixed so tests and the sign-in page can name it. */
+  /** `<uuid>.avif`, fixed so tests can name it. */
   key: string;
   /** File name under `@allonfire/storage`'s Image Fixture files. */
   source: string;
@@ -89,21 +90,5 @@ export const IMAGE = {
     key: "a0ee02c3-9a8d-4950-a4ae-5974d3a7a1ec.avif",
     source: "photo.jpg",
     width: 640,
-  },
-  /**
-   * The sign-in photograph: 'A train traveling through a city at night' by
-   * mos design on Unsplash (Unsplash License),
-   * https://unsplash.com/photos/R1OKYQkalRc. Decorative, so its alt is empty.
-   */
-  SIGN_IN: {
-    alt: { en: "", it: "" },
-    apps: [{ app: App.BACK_OFFICE, public: true }],
-    blurDataUrl:
-      "data:image/webp;base64,UklGRlYAAABXRUJQVlA4IEoAAAAQAgCdASoQAAsAAsBMJYgCdAEN+PWn3UWAAP71obQjvzeEd6uwHcUKX254u07HBOc8fZFIcNkxtiR95zSB6hzG4Y1t6Aa5FuAAAA==",
-    bytes: 279_308,
-    height: 1600,
-    key: "507f5c8a-c98e-44ae-a9be-287b3ea0c4ff.avif",
-    source: "sign-in.jpg",
-    width: 2400,
   },
 } as const satisfies Record<string, FixtureImage>;

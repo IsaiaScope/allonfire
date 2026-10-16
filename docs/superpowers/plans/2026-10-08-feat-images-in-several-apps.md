@@ -23,7 +23,7 @@
 - `exactOptionalPropertyTypes` is on: an optional field that may hold `undefined` is typed `x?: T | undefined`, and object literals spread a field in (`...(alt && { alt })`) instead of setting it to `undefined`.
 - `ImageLink` is `{ app: App; public: boolean }` everywhere: the access rules, `ImageRecord.apps`, the Image body. A request's `public` is optional; the route fills it in (upload: `false`; PATCH: the existing placement's, else `false`).
 - The Image body carries every placement of the Image, not only the ones the caller sees: a PATCH sends the full new list, so an Admin of one App must see the other Apps' placements to keep them. Files were already public by key (ADR 0020).
-- Rewriting `0003-image-schema.sql` changes its checksum: the Local database is dropped and rebuilt in Task 1 (approved in the spec; `origin/dev` stops at `0002`). Image files already in the Local MinIO stay; their rows go. The Back office sign-in page reads its Image by key, so it still shows.
+- Rewriting `0003-image-schema.sql` changes its checksum: the Local database is dropped and rebuilt in Task 1 (approved in the spec; `origin/dev` stops at `0002`). Image files already in the Local MinIO stay; their rows go. The Back Office sign-in page reads its Image by key, so it still shows.
 - Between Tasks 3 and 7, `@allonfire/storage` and `@allonfire/api` fail `check-types`: the services change shape first. Each task's own `Run:` lines are its gate; the packages are green again at the end of Task 6 (storage) and Task 7 (API).
 - End of every task: `pnpm exec biome check --write <files the task touched>` (per file if a multi-file call fails with "No such file or directory": exFAT `._*` sidecars). End of the plan: `pnpm check-types`, `pnpm lint`, `pnpm test` (Postgres up), all green.
 - `apps/back-office/src/features/auth/constants/sign-in-image.ts` (its "until the page can look an Image up by name without a session" comment) is out of scope: leave it.
@@ -33,7 +33,7 @@
 - A write batch mixing an Image the User cannot see with one they see but cannot manage must answer 404 and write nothing, never 403: a 403 would tell them which ids exist. Pinned in Task 6 (`"answers 404 before 403 across the batch"`, recap rows `PATCH R` and `DELETE { [Q, R] }`).
 - A PATCH that leaves `public` out must keep an existing public placement public, and a placement it adds starts private; flipping P's Laura placement private would hide a share page. Pinned in Task 6 (`"keeps a public placement public when public is left out"`).
 - Removing an Image's last placement must delete its row and its file; removing one placement of several must keep both. Pinned in Task 3 (`removeImagesFromApp` integration) and Task 6 (recap `DELETE { [P], LAURA }` / `DELETE { [Q], LAURA }`, the orphan's key reaching `deleteObjects`).
-- An anonymous list (with or without `app`) must return only Images with a public placement in the App asked for: the `app` filter and the public/enterable test must hold on the same placement, or P (public in Laura, private in the Back office) leaks into `?app=BACK_OFFICE` for a visitor. Pinned in Task 3 (`"lists the Images visible in an App, or in any"`) and Task 6 (recap `GET ?app=BACK_OFFICE`).
+- An anonymous list (with or without `app`) must return only Images with a public placement in the App asked for: the `app` filter and the public/enterable test must hold on the same placement, or P (public in Laura, private in the Back Office) leaks into `?app=BACK_OFFICE` for a visitor. Pinned in Task 3 (`"lists the Images visible in an App, or in any"`) and Task 6 (recap `GET ?app=BACK_OFFICE`).
 - A list naming the same App twice must answer 400 before any write; let through, `createMany` hits the `ImageApp` primary key and answers 500 after the files are stored. Pinned in Task 4 (schema tests) and Task 6 (upload and PATCH 400 tests).
 
 ---
@@ -582,7 +582,7 @@ describe("image.service", () => {
 
   it("lists the Images visible in an App, or in any, newest first", async () => {
     // One call each, oldest first: Q (Laura, private), P (Laura public and
-    // Back office private), R (Back office, private).
+    // Back Office private), R (Back Office, private).
     const [q] = await createImages([image("q", [LAURA_PRIVATE])]);
     const [p] = await createImages([image("p", [LAURA_PUBLIC, OFFICE_PRIVATE])]);
     const [r] = await createImages([image("r", [OFFICE_PRIVATE])]);
@@ -591,7 +591,7 @@ describe("image.service", () => {
 
     expect(await seen(App.LAURA, [])).toEqual([p?.id]);
     expect(await seen(App.LAURA, IN_LAURA)).toEqual([p?.id, q?.id]);
-    // P is public in Laura, not in the Back office: the filter and the
+    // P is public in Laura, not in the Back Office: the filter and the
     // public test hold on the same placement.
     expect(await seen(App.BACK_OFFICE, [])).toEqual([]);
     expect(await seen(App.BACK_OFFICE, IN_LAURA)).toEqual([]);
@@ -1772,7 +1772,7 @@ const lauraAdmin = sessionFor({
 const lauraUser = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.USER }],
 });
-/** An Admin of the Back office only. */
+/** An Admin of the Back Office only. */
 const officeAdmin = sessionFor({
   memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
 });
@@ -1971,8 +1971,8 @@ describe("PATCH /v1/images", () => {
   });
 
   it("needs no Admin in an App whose placement stays as it is", async () => {
-    // Public in Laura, private in the Back office: a Back office Admin
-    // switches only the Back office placement, and Laura's stays.
+    // Public in Laura, private in the Back Office: a Back Office Admin
+    // switches only the Back Office placement, and Laura's stays.
     const updateImages = vi.fn<ImageDeps["updateImages"]>(async () => []);
     const res = await app(officeAdmin, {
       linksOf: placedIn(LAURA_PUBLIC, OFFICE_PRIVATE),
@@ -2154,7 +2154,7 @@ import { testHost } from "./test-host";
 
 /**
  * The recap agreed for ADR 0020, one test per row. P is public in Laura and
- * private in the Back office, Q private in Laura, R private in the Back
+ * private in the Back Office, Q private in Laura, R private in the Back
  * office. Giulia is a Laura Viewer, Mario a Laura Admin outside the Back
  * office, Admin an Admin in every App.
  */
@@ -2334,7 +2334,7 @@ describe("recap: reads", () => {
 describe("recap: writes", () => {
   /** Each write row: its request, and what a visitor, Giulia, Mario and an Admin get. */
   const writes: [string, () => RequestInit, [number, number, number, number]][] = [
-    ["Upload to Laura + Back office", uploadToLauraAndBackOffice, [401, 403, 403, 201]],
+    ["Upload to Laura + Back Office", uploadToLauraAndBackOffice, [401, 403, 403, 201]],
     [
       "PATCH Q switch public in Laura",
       () => json("PATCH", [{ apps: [{ app: App.LAURA, public: true }], id: "Q" }]),
@@ -2375,7 +2375,7 @@ describe("recap: writes", () => {
     );
   });
 
-  it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back office placement private", async () => {
+  it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back Office placement private", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
       IMAGE_PATH,
@@ -2386,7 +2386,7 @@ describe("recap: writes", () => {
     ]);
   });
 
-  it("DELETE { [P], LAURA } by Mario leaves P stored: it is still in the Back office", async () => {
+  it("DELETE { [P], LAURA } by Mario leaves P stored: it is still in the Back Office", async () => {
     const { app, writes: done } = host(mario);
     await app.request(IMAGE_PATH, json("DELETE", { app: App.LAURA, ids: ["P"] }));
     expect(done.removeImagesFromApp).toHaveBeenCalledWith(["P"], App.LAURA);

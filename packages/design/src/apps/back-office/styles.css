@@ -1,13 +1,21 @@
-/* Back office's single stylesheet: ui's base layer, the Design it wears, and
-   where Tailwind finds any prototype under review. The App imports only this
-   file and adds its own `@source`. A Design is worn by importing its
-   theme.css here (`/aof-design new` adds it). */
-@import "@allonfire/ui/styles/base.css";
+/* Back Office's own layer over ui's base: the Design it wears and the App's
+   few rules. The App imports ui's base.css, then this file, and adds its own
+   `@source`. A Design is worn by importing its theme.css here
+   (`/aof-design new` adds it). */
 @import "../../designs/japan/theme.css";
 
-@source "./prototypes";
-
-/* Back office's line (the Line Rule). */
+/* Back Office's line (the Line Rule). */
 :root {
   --line: var(--line-green);
+}
+
+/* No scrollbars anywhere in the App; every area still scrolls by wheel,
+   touch and keyboard. Overscroll stays the browser's: turning it off also
+   turns off pull to refresh. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }

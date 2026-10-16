@@ -28,7 +28,10 @@ const SHADOWING_DIRS = [
 // impeccable prefers this sidecar over the App folder's DESIGN.json.
 const PACKAGE_SIDECAR = `${DESIGN_PACKAGE}/.impeccable/design.json`;
 
-export type SyncOptions = { check?: boolean; from?: string };
+export type SyncOptions = {
+  check?: boolean | undefined;
+  from?: string | undefined;
+};
 export type SyncResult = { changed: string[] };
 
 const header = (design: string) =>

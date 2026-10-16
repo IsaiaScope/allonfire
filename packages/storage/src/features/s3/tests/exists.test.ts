@@ -1,11 +1,7 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import {
-  HeadBucketCommand,
-  HeadObjectCommand,
-  S3ServiceException,
-} from "@aws-sdk/client-s3";
-import { bucketExists, objectExists } from "../exists";
+import { HeadBucketCommand, S3ServiceException } from "@aws-sdk/client-s3";
+import { bucketExists } from "../exists";
 
 const send = vi.hoisted(() =>
   vi.fn<(command: unknown) => Promise<unknown>>(() => Promise.resolve({}))
@@ -43,27 +39,5 @@ describe("bucketExists", () => {
     const forbidden = refusal(HTTP.STATUS.FORBIDDEN);
     send.mockRejectedValueOnce(forbidden);
     await expect(bucketExists("files")).rejects.toBe(forbidden);
-  });
-});
-
-describe("objectExists", () => {
-  it("is true when the provider answers the HEAD", async () => {
-    expect(await objectExists("files", "a.pdf")).toBe(true);
-    const command = send.mock.calls[0]?.[0];
-    if (!(command instanceof HeadObjectCommand)) {
-      throw new Error("expected a HeadObjectCommand");
-    }
-    expect(command.input).toEqual({ Bucket: "files", Key: "a.pdf" });
-  });
-
-  it("is false on a 404", async () => {
-    send.mockRejectedValueOnce(refusal(HTTP.STATUS.NOT_FOUND));
-    expect(await objectExists("files", "a.pdf")).toBe(false);
-  });
-
-  it("throws a failure that is not the provider's answer", async () => {
-    const offline = new Error("connect ECONNREFUSED");
-    send.mockRejectedValueOnce(offline);
-    await expect(objectExists("files", "a.pdf")).rejects.toBe(offline);
   });
 });

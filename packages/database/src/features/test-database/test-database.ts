@@ -1,21 +1,24 @@
+import { isTestRunOf } from "@allonfire/config/tests/run/test-run";
 import { databaseUrl, staleTestDatabases, testDatabaseName } from "./names";
 import { databasesOnServer, dropDatabase, onServer } from "./server";
 import { ensureTemplate } from "./template";
 
+/** Drops the databases `pick` chooses from the server's list; returns their names. */
+async function dropPicked(
+  serverUrl: string,
+  pick: (names: string[]) => string[]
+): Promise<string[]> {
+  const picked = pick(await databasesOnServer(serverUrl));
+  await Promise.all(picked.map((name) => dropDatabase(serverUrl, name)));
+  return picked;
+}
+
 /** Drops what `staleTestDatabases` lists; `keep` is the template this run clones. */
-export async function sweepTestDatabases(
+export const sweepTestDatabases = (
   serverUrl: string,
   keep: string,
   now = new Date()
-): Promise<string[]> {
-  const stale = staleTestDatabases(
-    await databasesOnServer(serverUrl),
-    keep,
-    now
-  );
-  await Promise.all(stale.map((name) => dropDatabase(serverUrl, name)));
-  return stale;
-}
+) => dropPicked(serverUrl, (names) => staleTestDatabases(names, keep, now));
 
 /**
  * A Test database for one run: the template for this tree (built when
@@ -41,3 +44,14 @@ export const dropTestDatabase = (
   label: string,
   stamp: string
 ) => dropDatabase(serverUrl, testDatabaseName(label, stamp));
+
+/**
+ * Drops every run of `label`, whatever its age; returns their names. Only for
+ * a label one run at a time holds (e2e: its API's port lets no second run
+ * start), where an earlier run's clone is always a leftover: Playwright runs
+ * no global teardown when a web server fails to start.
+ */
+export const dropTestDatabasesOf = (serverUrl: string, label: string) =>
+  dropPicked(serverUrl, (names) =>
+    names.filter((name) => isTestRunOf(name, label))
+  );

@@ -15,20 +15,7 @@ export type SeedSettings = Pick<
   | "DATABASE_SEED_ADMIN_EMAIL"
   | "DATABASE_SEED_ADMIN_NAME"
   | "DATABASE_SEED_ADMIN_PASSWORD"
-  | "DATABASE_SEED_LAURA_VIEWER_EMAIL"
-  | "DATABASE_SEED_LAURA_VIEWER_PASSWORD"
-  | "DATABASE_SEED_MODE"
 >;
-
-/**
- * What an App adds to the seed: users seeded in every mode, their password
- * from the env. Listed in `features/apps/seeds.ts`; the shared seed never
- * names an App.
- */
-export type AppSeed = {
-  users: (settings: SeedSettings) => SeedUser[];
-  password: (settings: SeedSettings) => string;
-};
 
 /** The main admin: Admin of every App there is today; a new App's changeset adds its row. */
 export const adminSeedUser = (email: string, name: string): SeedUser => ({

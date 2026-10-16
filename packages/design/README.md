@@ -3,20 +3,20 @@
 <p align="center">
   <img src="https://img.shields.io/badge/impeccable-4-111111" alt="impeccable" />
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black" alt="React" />
 </p>
 
-<p align="center">What the Apps share visually: the Designs, each App's product context and stylesheet, prototypes under review, and impeccable's state. No real components.</p>
+<p align="center">What the Apps share visually, as fonts, CSS, Markdown and constants: the Designs, the Brand, each App's product context and stylesheet, and impeccable's state. No components.</p>
 
 ## What it is
 
 A **Design** is a named visual world that one or more Apps wear (Japan is the
-first): its rules, tokens and fonts. A **prototype** is a draft page tried
-here with impeccable; once approved it moves into its App and is deleted.
-Every real component lives in an App, under `src/features/<topic>/components/`
-(the Back office's station pieces sit in `features/auth/components/`), or in
-`@allonfire/ui` when it is a generic AOF component. An App imports only its
-stylesheet from here. See ADR 0011 and ADR 0014.
+first): its rules, tokens and fonts. Every component lives in an App, under
+`src/features/<topic>/components/`, or in `@allonfire/ui` when Apps share it,
+the generated-image ones included (`AOFBrandLogo`, `AOFShareCard`), which
+read this package's constants: the Brand's logo geometry and a Design's image
+fonts, colours and card look. An App's `globals.css` imports ui's
+`base.css`, then its stylesheet from here. This package depends only on `@allonfire/core`.
+See ADR 0011, ADR 0014 and ADR 0022.
 
 Every change goes through `/aof-design`, which runs impeccable against this
 package. Plain `/impeccable` finds no product context here on purpose.
@@ -26,17 +26,25 @@ package. Plain `/impeccable` finds no product context here on purpose.
 ```
 .impeccable/            impeccable state: config.json and surfaces/ are tracked
 scripts/sync.ts         design:sync
-src/designs/<name>/     DESIGN.md, DESIGN.json, theme.css, fonts/ (the source)
-src/apps/<app>/         PRODUCT.md, styles.css, prototypes/ (drafts only),
-                        DESIGN.md + DESIGN.json (generated copies)
+src/brand/              the AOF monogram (BRAND) and every App's logo around it
+src/designs/<name>/     DESIGN.md, DESIGN.json, theme.css, fonts/ (the source),
+                        image-font(s).ts, image-colors.ts, share-card-look.ts
+                        (what generated images read)
+src/apps/<app>/         PRODUCT.md, styles.css, DESIGN.md + DESIGN.json
+                        (generated copies)
 ```
 
 ## Exports
 
 | Export | Contents |
 |--------|----------|
-| `./apps/back-office/styles.css` | ui's base, the worn Design's tokens, `@source` for prototypes |
-| `./apps/back-office/prototypes/*` | a draft page while it is under review (none today) |
+| `./apps/back-office/styles.css` | the worn Design's tokens and the App's own rules, imported after ui's base |
+| `./brand/aof-monogram` | `BRAND`: the brand's name, the monogram as markup, SVG and data URL, its dark ground and letter colour |
+| `./brand/aof-logo` | `aofLogoSvg` (an App's logo as SVG: square or horizontal, dark, light or `auto`), `AOF_LOGO` geometry, `AppLogo` |
+| `./designs/japan/image-colors` | `JAPAN_IMAGE_COLOR`: the Design's colours for what cannot read CSS variables |
+| `./designs/japan/image-font` | `JAPAN_IMAGE_FONT.FAMILY`: the face's name, safe in a browser bundle |
+| `./designs/japan/image-fonts` | `loadJapanImageFonts`, the face's files for `ImageResponse` (server only: reads files) |
+| `./designs/japan/share-card-look` | `JAPAN_SHARE_CARD`: how ui's `AOFShareCard` looks in Japan, per scheme (colours, face, tactile edge) |
 
 ## design:sync
 

@@ -1,7 +1,4 @@
-import {
-  CodedError,
-  invalidHook,
-} from "@allonfire/core/features/errors/coded-error";
+import { CodedError } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
@@ -187,9 +184,3 @@ export function notFound(context: Context): Response {
     status: HTTP.STATUS.NOT_FOUND,
   });
 }
-
-/**
- * A validator hook: a failed parse throws the coded 400, which `onError`
- * renders like any module's.
- */
-export const validationHook = invalidHook;

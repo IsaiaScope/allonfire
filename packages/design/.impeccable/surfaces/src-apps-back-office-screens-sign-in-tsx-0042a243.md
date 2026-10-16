@@ -5,17 +5,17 @@ primary_target: "packages/design/src/apps/back-office/screens/sign-in.tsx"
 related_targets: []
 ---
 
-# Sign-in (Back office)
+# Sign-in (Back Office)
 
-Scope: the Back office sign-in Screen, `packages/design/src/apps/back-office/screens/sign-in.tsx`, rendered by the App's `/sign-in` route. Visitor mode: Operate.
+Scope: the Back Office sign-in Screen, `packages/design/src/apps/back-office/screens/sign-in.tsx`, rendered by the App's `/sign-in` route. Visitor mode: Operate.
 
 Audience and job: the owner and technical colleagues signing in with email and password before changing access across the AllOnFire Apps. Frequent, fast, often on a phone. Sign-up does not exist; only Admins enter; a wrong password is rate limited by the API (10 per 15 minutes).
 
-Constraints: EN and IT copy of equal length budget; WCAG 2.2 AA; no generic SaaS admin look; nothing that slows the task. `app` is the App's name (Back office), `repository` is the repository name (AllOnFire); neither is a brand.
+Constraints: EN and IT copy of equal length budget; WCAG 2.2 AA; no generic SaaS admin look; nothing that slows the task. `app` is the App's name (Back Office), `repository` is the repository name (AllOnFire); neither is a brand.
 
 ## Direction contract
 
-THESIS: Signing in is arriving at a Tokyo station at night. The Back office is a station on its own line; the visitor reads the station sign, passes the gate, and the train arrives. It refuses the centred card on a blank page, and the first build's flat sign on an empty ground.
+THESIS: Signing in is arriving at a Tokyo station at night. The Back Office is a station on its own line; the visitor reads the station sign, passes the gate, and the train arrives. It refuses the centred card on a blank page, and the first build's flat sign on an empty ground.
 
 OWN-WORLD: Night only, whatever the OS theme: a real Tokyo night-rail photograph as the full-bleed backdrop under a night scrim; a JR-style enamel station-name sign (katakana バックオフィス large in a heavy Japanese gothic, the App name beneath, the green line band with the BO 01 badge, the operator's line name AllOnFire and a Transfer chip to Laura's orange LA line); an amber LED dot-matrix departure board in DotGothic16 with kana and a standing notice (never scrolling: WCAG 2.2.2; kana half from sm up); the yellow tactile paving strip as the platform edge; an automatic ticket gate (entry indicator, glowing IC reader, steel flaps; red only for the error ×) housing the form; the train dimmed below the lit sign; lucide icons in one stroke; Information Blue for the one action.
 

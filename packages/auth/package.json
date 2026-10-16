@@ -24,6 +24,7 @@
     "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
     "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",
     "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
+    "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
     "./features/server/auth": "./src/features/server/auth.ts",
     "./shared/constants/errors": "./src/shared/constants/errors.ts",

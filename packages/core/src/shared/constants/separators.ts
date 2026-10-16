@@ -7,6 +7,8 @@ export const SEPARATOR = {
   PAIR: "=",
   /** Joins a zod issue path into `a.b.c`. */
   PATH: ".",
+  /** Between a page's own title and its App's name in a tab title. */
+  TITLE: " – ",
 } as const;
 
 export const separatorSchema = z.enum(SEPARATOR);

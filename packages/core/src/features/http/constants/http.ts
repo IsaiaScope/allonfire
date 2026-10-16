@@ -81,12 +81,14 @@ const CONTENT_TYPES = {
   JSON: "application/json",
   MULTIPART_FORM_DATA: "multipart/form-data",
   OCTET_STREAM: "application/octet-stream",
+  PNG: "image/png",
   /**
    * RFC 9457 requires its own media type; a problem document served as plain
    * `application/json` is not one, and a client keying off the content type
    * will not recognise it.
    */
   PROBLEM_JSON: "application/problem+json",
+  SVG: "image/svg+xml",
   TEXT: "text/plain",
 } as const;
 
@@ -122,6 +124,8 @@ const HEADER = {
   X_FORWARDED_FOR: "x-forwarded-for",
   X_FRAME_OPTIONS: "x-frame-options",
   X_REQUEST_ID: "x-request-id",
+  /** Robots directives for any response, images and JSON included. */
+  X_ROBOTS_TAG: "x-robots-tag",
 } as const;
 
 export const httpHeaderSchema = z.enum(HEADER);

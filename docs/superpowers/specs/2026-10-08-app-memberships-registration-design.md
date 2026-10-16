@@ -3,7 +3,7 @@
 ## Goal
 
 A User's Role belongs to an App, not to the User: someone can be a Viewer in
-Laura and an Admin in the Back office (ADR 0019). Each App declares, in one
+Laura and an Admin in the Back Office (ADR 0019). Each App declares, in one
 table, the lowest Role it lets in and whether a visitor may register; the API
 enforces both. Nothing spans every App any more: `ALL` leaves Users and Images.
 Today every App stays sign-in only: the mechanism ships, no App opens
@@ -47,7 +47,7 @@ Registration, and no sign-up form is built.
 - **Images follow their App.** Managing an Image needs the Admin Role in the
   Image's App; moving it needs the Admin Role in both Apps.
 - **A new App's Admins.** The changeset that adds an App to the `App` enum
-  also inserts an Admin Membership in it for every Back office Admin.
+  also inserts an Admin Membership in it for every Back Office Admin.
 - **Changesets are rewritten, not appended.** No changeset after
   `0000-baseline` has run in Production (`origin/prod` has none), so `0002` to
   `0004` are rewritten into the final shape and Local databases are rebuilt.
@@ -263,7 +263,7 @@ Not built here, required first:
   address);
 - a sign-up and join form, and a shared `signUp` action in
   `@allonfire/auth/features/next`;
-- a Users section in the Back office to grant further Apps and Roles.
+- a Users section in the Back Office to grant further Apps and Roles.
 
 Laura is outside the workspace build until it is rebuilt; its code reading
 `user.role` changes then.

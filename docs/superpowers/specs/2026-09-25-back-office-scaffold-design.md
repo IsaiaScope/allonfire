@@ -1,21 +1,21 @@
-# Back office scaffold + shadcn/AOF Design system split — design
+# Back Office scaffold + shadcn/AOF Design system split — design
 
 Date: 2026-09-25
 Status: approved in chat, grilled against CONTEXT.md and docs/adr
 
 ## Intent
 
-allonfire needs its internal App, the **Back office** (`apps/back-office`), where
+allonfire needs its internal App, the **Back Office** (`apps/back-office`), where
 the family's content, users and data are managed. This plan builds only the empty
 shell — the visual design comes later with the impeccable skill. At the same time
 the Design system is reset: `@allonfire/shadcn` holds shadcn components exactly
 as the CLI generates them, and `@allonfire/ui` is rebuilt to hold AOF components
 composed on top, plus one Theme per App. See ADR 0010 and the terms in
-`CONTEXT.md` (Back office, Design system, shadcn component, AOF component, Theme).
+`CONTEXT.md` (Back Office, Design system, shadcn component, AOF component, Theme).
 
-**Success looks like:** `pnpm dev` starts the Back office on port 3400, `/` renders
+**Success looks like:** `pnpm dev` starts the Back Office on port 3400, `/` renders
 English, `/it` renders Italian, the AOF `Button` (wrapping the shadcn one) renders
-with the Back office Theme, and the pre-commit gate (Biome + check-types + tests)
+with the Back Office Theme, and the pre-commit gate (Biome + check-types + tests)
 is green across the workspace.
 
 ## Decisions
@@ -23,7 +23,7 @@ is green across the workspace.
 | Question | Decision |
 |---|---|
 | Audience | Internal admins; an App like any other, entry via Allowed apps (later) |
-| Name | `apps/back-office`, `@allonfire/back-office`, term **Back office** |
+| Name | `apps/back-office`, `@allonfire/back-office`, term **Back Office** |
 | Old `packages/ui` | Moved to `packages/ui-old`, untracked, out of the workspace (like `auth-old`) |
 | `apps/laura` | Paused: out of the pnpm workspace; folder stays tracked |
 | Auth | Out of scope — ADR 0009 (auth in the API) is not merged yet |
@@ -72,7 +72,7 @@ here was checked at >1M weekly downloads (lowest: @t3-oss/env-nextjs ~2.2M).
 - Depends on `@allonfire/shadcn`.
 - Exports `./components/*` (AOF components) and `./styles/*`.
 - `src/styles/base.css` imports `@allonfire/shadcn/styles/globals.css` and holds
-  the shared base layer. `src/styles/theme-back-office.css` is the Back office
+  the shared base layer. `src/styles/theme-back-office.css` is the Back Office
   Theme — base-nova defaults for now; impeccable reshapes it later.
 - First AOF component: `AOFButton` in `src/components/aof-button.tsx`, a thin wrapper over the
   shadcn `Button` (same props, re-exported variants). It proves the
@@ -82,7 +82,7 @@ here was checked at >1M weekly downloads (lowest: @t3-oss/env-nextjs ~2.2M).
 
 ### Docs (done during grilling)
 
-- `CONTEXT.md`: App updated; Back office, Design system, shadcn component, AOF
+- `CONTEXT.md`: App updated; Back Office, Design system, shadcn component, AOF
   component, Theme added.
 - ADR `docs/adr/0010-shadcn-generated-aof-components-on-top.md`.
 
@@ -144,18 +144,18 @@ here was checked at >1M weekly downloads (lowest: @t3-oss/env-nextjs ~2.2M).
 
 ### Tests
 
-- Back office vitest: `messages/en.json` and `messages/it.json` have identical
+- Back Office vitest: `messages/en.json` and `messages/it.json` have identical
   key sets.
-- Back office Playwright smoke (`test:e2e`): `/` shows the English title, `/it`
+- Back Office Playwright smoke (`test:e2e`): `/` shows the English title, `/it`
   the Italian one, the AOF button is visible, no console errors.
 - `packages/ui` vitest: AOF `Button` test above.
 - Gate: `pnpm check-types`, `pnpm test`, `pnpm biome check .` green.
 
 ### Dev
 
-- Root `dev` script unchanged; turbo picks up the Back office's `dev` task.
+- Root `dev` script unchanged; turbo picks up the Back Office's `dev` task.
 
 ## Out of scope
 
 Auth and Allowed-apps gating, API calls, real pages, visual design (impeccable),
-Dockerfile and deploy for the Back office, laura migration, laura's Docker build.
+Dockerfile and deploy for the Back Office, laura migration, laura's Docker build.

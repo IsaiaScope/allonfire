@@ -85,7 +85,7 @@ describe("sign-in against Postgres", () => {
     { status: 403, user: FIXTURE.USER.NO_MEMBERSHIP },
     { status: 403, user: LAURA_VIEWER },
   ])(
-    "signs $user.email into the Back office: $status",
+    "signs $user.email into the Back Office: $status",
     async ({ status, user }) => {
       const userAgent = randomUUID();
       const res = await signIn(app, user, {

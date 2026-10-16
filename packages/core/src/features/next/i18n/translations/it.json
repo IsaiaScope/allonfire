@@ -2,11 +2,17 @@
   "Common": {
     "NotFound": {
       "title": "Pagina non trovata",
+      "lost": "Sembra che tu abbia perso la strada.",
       "back": "Torna all'inizio"
     },
     "Error": {
       "title": "Qualcosa è andato storto",
-      "retry": "Riprova"
+      "description": "Questa pagina si è fermata all'improvviso. Riprova tra un attimo.",
+      "retry": "Riprova",
+      "reference": "Riferimento {digest}"
+    },
+    "Loading": {
+      "label": "Caricamento"
     }
   }
 }

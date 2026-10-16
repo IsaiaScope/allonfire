@@ -52,6 +52,7 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/next/constants/paths` | `appPathSchema`, `AppPath` (the values of `AUTH.PAGE`) |
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
+| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307) |
 | `./features/next/constants/api` | `signInErrorSchema`, `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
 | `./features/next/utils/auth-client` | `createApiAuthClient()` — Better Auth's own client (`better-auth/client`) for the API's auth routes, typed from `Auth`; `ApiAuthClient`, `Session` |
 | `./features/next/utils/refresh-session` | `refreshSession(request)` — for an App's proxy: the renewed cookies once the cookie cache has expired |
@@ -87,7 +88,7 @@ src/
     next/        a Next App's side, through the API: actions/{sign-in,sign-out},
                  constants/{paths,api},
                  utils/{auth-client,redirect-to,refresh-session,session,
-                 with-session-refresh,set-cookie,sign-in,sign-out}, tests/
+                 with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), tests/
     server/      auth (createAuth, toAuthLike), routes/join-app,
                  utils/registration, tests/

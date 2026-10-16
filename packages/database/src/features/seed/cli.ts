@@ -5,7 +5,7 @@ import { seed } from "./seed";
 
 try {
   await seed(prisma, seedEnv);
-  console.log(`Seeded (${seedEnv.DATABASE_SEED_MODE} mode)`);
+  console.log("Seeded");
 } catch (error) {
   console.error(error);
   process.exitCode = 1;

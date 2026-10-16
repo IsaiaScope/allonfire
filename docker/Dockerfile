@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 
 # Stage 1: Prune monorepo to only the target app's dependency tree
 FROM node:${NODE_VERSION}-alpine AS pruner
@@ -31,14 +31,18 @@ ARG APP_NAME
 # Next.js bakes them in at build (STORAGE_ENDPOINT is the /storage/images
 # rewrite target, NEXT_PUBLIC_API_URL the API the browser calls). The Back
 # office's build fails without STORAGE_ENDPOINT or NEXT_PUBLIC_API_URL.
+# BACK_OFFICE_URL is the Back Office's metadataBase, baked into prerendered
+# pages; it must equal the runtime value.
 # Other values are placeholders that never reach the runner stage.
 ARG STORAGE_ENDPOINT
 ARG NEXT_PUBLIC_API_URL
+ARG BACK_OFFICE_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
     AUTH_URL="http://build.placeholder" \
     STORAGE_ENDPOINT=${STORAGE_ENDPOINT} \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    BACK_OFFICE_URL=${BACK_OFFICE_URL} \
     STORAGE_ACCESS_KEY="build" \
     STORAGE_SECRET_KEY="build-placeholder"
 RUN pnpm --filter @allonfire/database db:generate

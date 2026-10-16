@@ -15,7 +15,7 @@ Apps, then leave.
 
 ## Product Purpose
 
-The Back office is the internal App of AllOnFire, a family of small products
+The Back Office is the internal App of AllOnFire, a family of small products
 that share one user base and one database. It is where that shared user base
 and each App's content and data are managed. Success is an access change made
 correctly on the first try: the right User, the right Role, the right Apps,
@@ -24,7 +24,7 @@ with nothing else touched.
 ## Positioning
 
 One place governs every App's users. A User belongs to one or more Apps, with
-a Role in each (Viewer, User, Admin, ranked), so the Back office edits access
+a Role in each (Viewer, User, Admin, ranked), so the Back Office edits access
 for the whole family of Apps, not for a single product.
 
 ## Operating Context
@@ -34,7 +34,7 @@ for the whole family of Apps, not for a single product.
 - Signing in goes through the API's Auth module; Sessions live in Postgres. A
   Role change counts at once; a revoked Session reaches the guards up to five
   minutes late through the cookie cache.
-- The Back office is sign-in only: nobody registers there.
+- The Back Office is sign-in only: nobody registers there.
 
 ## Capabilities and Constraints
 
@@ -52,7 +52,7 @@ for the whole family of Apps, not for a single product.
 ## Brand Commitments
 
 - The product carries the AllOnFire name.
-- The Back office wears the Japan Design. This is fixed.
+- The Back Office wears the Japan Design. This is fixed.
 
 ## Evidence on Hand
 

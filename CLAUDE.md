@@ -19,6 +19,14 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Use Server Actions for mutations — keep form logic in client components but action definitions server-side
 - Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
 - Providers must be client: an App composes the AOF providers from `@allonfire/core/features/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
+- Page information (the `<head>`, icons, link previews, iOS launch screens) comes from `@allonfire/core/features/next/metadata/*` and core's `METADATA` (`features/metadata/constants/metadata`: Indexing, the metadata paths, the icon sizes, the logo variants, the iOS launch devices). An App's Indexing lives in `ACCESS.APP_SETTINGS`; its own values in one object (`BACK_OFFICE`, `src/shared/constants/back-office`). In the Back Office:
+  - the layout spreads `baseMetadata(locale)`; a page adds only `title`, `description` and `openGraph: pageOpenGraph(path, locale)` (`features/metadata/utils`), never `openGraph` or `robots` by hand: Next replaces them whole, and `"./"` as `og:url` resolves to `/en/...`, not the public path
+  - a URL no language owns (one with a dot, `/api/...`) gets the localized 404 through `AOFWithLocalizedNotFound` in `next.config.ts`; core's own routes (launch screens, manifest icons, logos) are kept already; any other dynamic route outside `[locale]` goes in its `keep` list. A path is matched case-sensitively, so `/IT/x.png` gets the 404 too. There is no `global-not-found`: under a top-level `[locale]` every URL matches a route. A 404's HTML, in dev and production alike, is Next's empty `__next_error__` shell (status 404, `noindex`): with Cache Components a `notFound()` at request time comes before any shell, and the browser renders `not-found.tsx` from the RSC payload. Expected; a test reading the raw HTML finds no title
+  - a `loading.tsx` goes in a route group (`[locale]/(signed-in)/`), never at `[locale]`: above the catch-all it turns every 404 into a 200
+  - the logo is the Brand's (`@allonfire/design/brand/aof-logo`), given `BACK_OFFICE.LOGO` (name, banner, face). As SVG it is `aofLogoSvg`: the favicon in `auto`, `/logo/<layout>-<scheme>.svg` through core's `AOFLogoRoute` for a file other sites link to, and `aofLogoDataUrl` for a page's own logo (`AOFImage` with a data URL: painted with the HTML, no request of its own). In an `ImageResponse` it is ui's `AOFBrandLogo` (`components/aof-brand-logo`)
+  - icons go through core's `AOFIconImage` and `AOFManifestIconRoute`; launch screens through `AOFLaunchScreenRoute`, where the App says only how its mark looks per color scheme (ground, mark, fonts)
+  - the preview card is ui's `AOFShareCard` dressed in the Japan Design's `JAPAN_SHARE_CARD` (`designs/japan/share-card-look`: colours, image face, tactile edge), with `BACK_OFFICE.LINE` as its band
+  - fonts for generated images come from `imageFonts()` (`features/metadata/utils/image-fonts`): `loadJapanImageFonts` under `"use cache"` and `cacheLife("max")`. A shorter life re-renders every prerendered image when it runs out
 
 ## Context7 Usage
 
@@ -99,15 +107,15 @@ A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
 
 ## Database Schema Quick Reference
 
-Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services and seed live in `src/features/apps/<app>/`; `src/features/apps/seeds.ts` lists each App's seed, and the shared seed (`src/features/seed/`) holds the real Admin and, with `DATABASE_SEED_MODE=local`, the Fixtures (`src/features/seed/fixtures/`: `FIXTURE.USER`, `FIXTURE.PASSWORD`, `FIXTURE.IMAGE`); `pnpm --filter @allonfire/storage db:seed:images` puts the Image Fixtures' files in the Local bucket.
+Schema folder: `packages/database/prisma/schema/` (`schema.prisma`, `auth.prisma`, `image.prisma`, and one file per App under `apps/`: `apps/laura.prisma`). An App's services live in `src/features/apps/<app>/`. The seed (`src/features/seed/`, `pnpm db:seed`) writes only the real Admin (`DATABASE_SEED_ADMIN_*`), Admin in every App: Local holds what Production holds. The Fixtures (`src/features/seed/fixtures/`: `FIXTURE.USER`, `FIXTURE.PASSWORD`, `FIXTURE.IMAGE`) go only into the Test template; `pnpm --filter @allonfire/storage image:setup` gives the Local `image` bucket what Production's `storage-setup` gives it (the bucket and its policy, no Images).
 Changelog: `packages/database/changelog/changesets/` — Liquibase owns every change (ADR 0008).
 
 - **`auth` schema (shared):** `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App`
 - **`image` schema (shared):** `Image` and `ImageApp`: the Images every App shows, each placed in one or more Apps, public or private in each (ADR 0013, ADR 0020)
 - **`laura` schema:** `GameScore`, enum `GameType`
 - Change a model: edit the `.prisma` file, `pnpm db:changeset <name>`, review the SQL, `pnpm db:update`, `pnpm db:drift`. Never `prisma db push` or `prisma migrate`. Never edit an applied changeset.
-- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ACCESS.ROLE_RANK`, `ACCESS.APP_SETTINGS` and `AppSettings` (`constants/access` and `constants/app-settings`: each App's `minRole` and `registration`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `ACCESS.APP_SETTINGS`.
-- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `ACCESS.APP_SETTINGS`.
+- Services import per file: `@allonfire/database/features/image/image.service`, `@allonfire/database/features/apps/laura/game-score.service`; the root exports only `prisma` and generated types. Enum values (`Role.VIEWER`, `App.LAURA`) come from `@allonfire/database/enums`; never copy an enum into a constant. A User's Role is per App, one `Membership` row per User and App (ADR 0019). Every rule about them lives beside them in `@allonfire/database/features/auth/access`: the schemas (`roleSchema`, `appSchema`, `App`), `ACCESS.ROLE_RANK`, `ACCESS.APP_SETTINGS` and `AppSettings` (`constants/access` and `constants/app-settings`: each App's `minRole`, `registration` and `indexing`), `AccessUser`, and `hasRole`, `roleIn`, `canEnterApp(user, app)` (a Membership in the App whose Role reaches its floor), `ImageLink`, `canSeeImage(user, links)` (a placement public, or in an App the User enters; `user` null for a visitor), `canManageImage(user, app)` (Admin in that App), `canManageEverywhere(user, links)` (Admin in every App the Image is in), `enterableApps(user)`, `accessUserFrom` (Memberships read as strings, narrowed). Never `z.enum(Role)` or a Role check by hand; an App declares its floor and Registration only in `ACCESS.APP_SETTINGS`.
+- Adding an App to `App`: its changeset also inserts an `ADMIN` Membership in it for every Back Office Admin (`INSERT INTO auth."Membership" ("userId", app, role) SELECT "userId", '<new>', 'ADMIN' FROM auth."Membership" WHERE app = 'back-office' AND role = 'ADMIN'`), and the App gets its row in `ACCESS.APP_SETTINGS`.
 - Raw SQL names the schema: `image."Image"`.
 - Liquibase runs only in Docker (the `db-migrate` image, `packages/database/liquibase/`); Production runs `backup` then `deploy` before the Apps start.
 
@@ -212,9 +220,9 @@ enforces it. A package is a module any host can mount: the Auth module knows
 full address (`API_AUTH_URL`).
 
 Env var names start with their owner: a package's with the package name
-(`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_MODE`, `AUTH_SECRET`), the
+(`STORAGE_ENDPOINT`, `DATABASE_URL`, `DATABASE_SEED_ADMIN_EMAIL`, `AUTH_SECRET`), the
 API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
-another service carries that service's name (`API_AUTH_URL` in the Back office). A
+another service carries that service's name (`API_AUTH_URL` in the Back Office). A
 name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
 `OTEL_*`. Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
@@ -225,10 +233,9 @@ own key (`@allonfire/database/enums`). A package that serves HTTP for any host
 takes its dependencies as arguments, and throws `CodedError` from
 `@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015;
 routes Better Auth serves throw its `APIError`, which its handler answers).
-`packages/shadcn`, `packages/ui`,
-`packages/hooks` and `packages/design` are exempt: the first three follow
-shadcn's `components/` and `lib/` so `shadcn add` works; `packages/design`
-holds Designs and Apps (ADR 0011).
+`packages/shadcn`, `packages/ui` and `packages/design` are exempt: the
+first two follow shadcn's `components/` and `lib/` so `shadcn add` works;
+`packages/design` holds Designs and Apps (ADR 0011).
 
 ## API App Structure (`apps/api/src/`)
 
@@ -300,8 +307,10 @@ queue, external API) and are named
 (`allonfire_test_template_<epoch>_<fingerprint>`: the changelog plus the
 Fixtures, a new one when `changelog/`, `liquibase/` or `src/features/seed/`
 change) and a bucket per run holding the
-Image Fixtures, and drops both when the run ends; e2e does the same per
-Playwright run. A test signs in as a Fixture (`FIXTURE.USER.BACK_OFFICE.ADMIN`
+Image Fixtures, and drops both when the run ends (`dropWhenRunEnds`); a
+run killed first leaves them, named with its process id, and the next run
+drops those whose process is gone (`isStaleTestRun`); e2e does the same per Playwright run, and drops an
+earlier e2e run's leftovers when it starts. A test signs in as a Fixture (`FIXTURE.USER.BACK_OFFICE.ADMIN`
 with `FIXTURE.PASSWORD`) and points at an Image Fixture, never a retyped
 email or key; local addresses come from `@allonfire/config/local/addresses`
 (`LOCAL.URL`, `LOCAL.PORT`, `TEST_API_URL`), checked against compose, CI and
@@ -443,8 +452,8 @@ many, and `middlewares/` reads wrong.
 - Orchestrator: Dokploy runs one compose project of GHCR images; `.github/workflows/deploy.yml` builds only the affected Deploy units on a push to `prod` and redeploys it (ADR 0018).
 - DB: Shared PostgreSQL 16 (database: allonfire)
 - Proxy: Traefik with Let's Encrypt SSL
-- Back office build needs `STORAGE_ENDPOINT` (Docker build arg, CI secret); it is baked into the `/storage/images` rewrite.
-- Before the API starts, the one-shot `storage-setup` service (the API's image) creates the `image` bucket with its read-only policy and uploads the Images the Apps show by key (the sign-in photo), each only when missing.
+- Back Office build needs `STORAGE_ENDPOINT` (Docker build arg, CI secret); it is baked into the `/storage/images` rewrite. It also needs `BACK_OFFICE_URL`, its own public address (`metadataBase`): a Docker build arg (`PROD_BACK_OFFICE_URL` in `deploy.yml`), a CI secret for the `build` job, and the same value at runtime (`docker-compose.prod.yml`).
+- Before the API starts, the one-shot `storage-setup` service (the API's image) creates the `image` bucket with its read-only policy, only when missing; it uploads no Images.
 - CI runs check-types, test and build with `turbo --affected`; lint and the repo-wide checks always run. Affected is Turbo's (`futureFlags.affectedUsingTaskInputs`): every task's `inputs` excludes `**/*.md`, so a Markdown-only change affects nothing, and a root `package.json`, `turbo.json` or lockfile change affects everything; a new task needs the same exclusion. `pnpm ci:affected <base>` (`@allonfire/core/features/ci/affected`) reads `turbo query affected --packages` as the affected Apps (packages under `apps/`) and Deploy units; `docker/`, `.dockerignore` and `pnpm-workspace.yaml`, which no task reads, reach every unit. A push to `prod` diffs against the `deployed/prod` tag, the last commit that deployed.
 
 ## Agent skills
@@ -475,10 +484,10 @@ MCP servers in `.mcp.json`: `shadcn` (browse and add registry components) and `n
 
 ### Design system
 
-`packages/design` holds what Apps share visually and no real components (ADR 0011, ADR 0014): the Designs (`src/designs/<name>/`: `DESIGN.md`, `DESIGN.json`, `theme.css`, fonts), each App's `PRODUCT.md` and stylesheet (`src/apps/<app>/`), prototypes under review (`src/apps/<app>/prototypes/`), and impeccable's state. Pages and their components are built in the App, under `apps/<app>/src/features/<topic>/components/`, using next-intl directly. Build or edit any page with `/aof-design` (prototype or direct), never plain `/impeccable`. An App imports only `@allonfire/design/apps/<app>/styles.css` from it. `pnpm design:sync` copies a Design into the Apps wearing it; CI runs `--check`.
+`packages/design` holds no components and no React (ADR 0011, ADR 0014, ADR 0022): only fonts, CSS, Markdown and constants. That is the Designs (`src/designs/<name>/`: `DESIGN.md`, `DESIGN.json`, `theme.css`, fonts), each App's `PRODUCT.md` and stylesheet (`src/apps/<app>/`), the Brand's constants and impeccable's state. Every component lives in an App, under `apps/<app>/src/features/<topic>/components/` using next-intl directly, or in `packages/ui` when Apps share it, the generated-image ones included (`AOFBrandLogo`, `AOFShareCard`). Build or edit any page directly in its App with `/aof-design`, never plain `/impeccable`. An App's `globals.css` imports `@allonfire/ui/styles/base.css`, then `@allonfire/design/apps/<app>/styles.css`; generated images also read the Brand (`brand/aof-monogram`, `brand/aof-logo`) and a Design's image fonts, colours and card look (`designs/<name>/image-fonts`, `image-colors`, `share-card-look`). `ui` depends on `design`, never the reverse. `pnpm design:sync` copies a Design into the Apps wearing it; CI runs `--check`.
 
 `packages/shadcn` is written only by tools: run `npx shadcn@4.21.0 add <name>` from `apps/back-office` and it lands there, then `pnpm --filter @allonfire/shadcn canonicalize`, which rewrites the CLI's classes to their canonical Tailwind spelling (`rounded-[4px]` to `rounded-lg`, what the editor's `suggestCanonicalClasses` asks for) against the package's own theme. Never edit it by hand. AOF components live in `packages/ui`, the only package that imports `@allonfire/shadcn` (Biome enforces it). An AOF component is named with the `AOF` prefix, `AOFButton` in `packages/ui/src/components/aof-button.tsx`, so it never reads as the shadcn one it wraps. See ADR 0010.
 
 ### exFAT volume
 
-The repo lives on an exFAT drive, where macOS writes a `._<name>` sidecar next to every file it touches. Turbopack's file cache stays on: a Next app's `dev` and `build` scripts delete `._*` under `.next` before starting, since Turbopack fails to open a cache folder holding them (laura still turns its dev cache off until it is migrated). The the vitest and Playwright presets ignore `**/._*`; a new tool that scans directories needs the same exclusion.
+The repo lives on an exFAT drive, where macOS writes a `._<name>` sidecar next to every file it touches. Turbopack's file cache stays on: a Next app's `dev` and `build` scripts delete `._*` under `.next` before starting, since Turbopack fails to open a cache folder holding them (laura still turns its dev cache off until it is migrated). Next keeps no optimized image on disk on macOS (`AOFCreateNextConfig`): its image cache serves a folder's first file, which on exFAT is the `._` sidecar. The vitest and Playwright presets ignore `**/._*`; a new tool that scans directories needs the same exclusion.

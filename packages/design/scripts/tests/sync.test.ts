@@ -35,7 +35,7 @@ const design = (name: string, json: string | null = '{"ramp":1}\n') => {
 const wear = (app: string, name: string) =>
   write(
     `${APPS}/${app}/styles.css`,
-    `@import "@allonfire/ui/styles/base.css";\n@import "../../designs/${name}/theme.css";\n@source "./prototypes";\n`
+    `@import "../../designs/${name}/theme.css";\n`
   );
 
 beforeEach(() => {
@@ -54,10 +54,7 @@ describe("wornDesigns", () => {
 
   it("skips an App with no Design import or no styles.css", () => {
     design("japan");
-    write(
-      `${APPS}/plain/styles.css`,
-      '@import "@allonfire/ui/styles/base.css";\n'
-    );
+    write(`${APPS}/plain/styles.css`, ":root {}\n");
     mkdirSync(join(root, APPS, "half-made"), { recursive: true });
     expect(wornDesigns(root).size).toBe(0);
   });

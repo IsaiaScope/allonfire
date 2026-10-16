@@ -31,7 +31,7 @@
 1. A moved file whose relative import still points at its old place: `tsc` of `image` must pass (Task 2 Step 5).
 2. `putObject` dropping `CacheControl` or `ContentType`: Next's optimizer and the browser cache rely on them (Task 1 test asserts the exact command input; Task 2 asserts the Image values).
 3. An empty delete list sending a request MinIO rejects: `deleteObjects(bucket, [])` sends nothing (Task 1 test).
-4. The Back office build losing the `/storage/images/:key` rewrite after the move: its config is loaded and printed (Task 3 Step 5).
+4. The Back Office build losing the `/storage/images/:key` rewrite after the move: its config is loaded and printed (Task 3 Step 5).
 5. A Next App that cannot transpile `@allonfire/image` (or `@allonfire/storage`, which image's paths file imports): both stay in back office's `transpile` list and dependencies (Task 3 Step 3).
 
 ---
@@ -518,7 +518,7 @@ Expected: exit 0.
 Run: `pnpm turbo run check-types --continue; pnpm turbo run test --continue`
 Expected: every check-types task passes; every unit suite passes. Integration tests need Docker (`pnpm docker:up`); if it is down, say so in the ledger.
 
-- [x] **Step 5: The Back office still proxies Images**
+- [x] **Step 5: The Back Office still proxies Images**
 
 Run:
 ```bash
@@ -559,4 +559,4 @@ Expected: exit 0.
   - Revision (user): no `@allonfire/image`. Its files moved to `packages/storage/src/features/image/` (`shared/constants/{paths,bucket}` became `features/image/constants/`), self-imports became relative, the package and its dependencies were deleted, hosts were rewritten to `@allonfire/storage/features/image/...`, and `ui` depends on `storage` again.
   - Kept from the plan: generic `putObject`/`deleteObjects` in `features/s3/objects`, `IMAGE_PROXY_PATH`, Image module under `hono/`, Next proxy under `next/`.
   - Docs: ADR 0016's package list and both specs revised; `packages/storage/README.md` rewritten for the new layout; ADR 0015's module path updated. No `packages/image/README.md` and no root README row.
-- Verified: check-types 10/10, tests 10/10 (Docker up, integration included), Back office rewrite `/storage/images/:key -> http://minio:9000/image/:key`.
+- Verified: check-types 10/10, tests 10/10 (Docker up, integration included), Back Office rewrite `/storage/images/:key -> http://minio:9000/image/:key`.

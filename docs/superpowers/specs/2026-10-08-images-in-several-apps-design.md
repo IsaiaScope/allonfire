@@ -9,7 +9,7 @@ An Image belongs to exactly one App today (ADR 0019), so a picture two Apps
 show is stored twice. Each App's Admins curate their own App (the case agreed
 in chat): one Image can now be linked to several Apps, an App's Admin adds or
 removes it in their App only, and the Image stays stored as long as any App
-still holds it. The Back office manages everything because its Admins hold
+still holds it. The Back Office manages everything because its Admins hold
 the Admin Role in every App (the add-an-App rule in CLAUDE.md), not through a
 new super Role.
 
@@ -96,9 +96,9 @@ as today).
 Every batch stays all or nothing. 404 is checked before 403 across the whole
 batch, so a refused batch never tells which ids exist.
 
-The recap agreed in chat, with P (Laura public, Back office private), Q
-(Laura private), R (Back office private); Giulia a Laura Viewer, Mario a
-Laura Admin outside the Back office, Admin in every App:
+The recap agreed in chat, with P (Laura public, Back Office private), Q
+(Laura private), R (Back Office private); Giulia a Laura Viewer, Mario a
+Laura Admin outside the Back Office, Admin in every App:
 
 | Request | Visitor | Giulia | Mario | Admin |
 |---|---|---|---|---|
@@ -106,7 +106,7 @@ Laura Admin outside the Back office, Admin in every App:
 | `GET ?app=BACK_OFFICE` | none | none | none | P, R |
 | `GET` (no app) | P | P, Q | P, Q | P, Q, R |
 | `GET {Q}` / `GET {R}` | 404 / 404 | Q / 404 | Q / 404 | Q / R |
-| Upload to Laura + Back office | 401 | 403 | 403 | done |
+| Upload to Laura + Back Office | 401 | 403 | 403 | done |
 | PATCH Q switch public in Laura | 401 | 403 | done | done |
 | PATCH P `apps: [BACK_OFFICE]` | 401 | 403 | done | done |
 | PATCH P `alt` | 401 | 403 | 403 | done |
@@ -166,8 +166,8 @@ Split into `read-handlers.ts` and `write-handlers.ts` if it still crosses 300.
 ## Out of scope
 
 - A whole public App (`APP_SETTINGS` flag) and share links.
-- A Back office UI for Images.
+- A Back Office UI for Images.
 - Serving private Image files behind a Membership check: files stay public by
   key, as today.
 - The sign-in page looking its Image up without a Session: now possible (make
-  it public in the Back office), left for its own change.
+  it public in the Back Office), left for its own change.

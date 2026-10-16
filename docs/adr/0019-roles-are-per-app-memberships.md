@@ -3,7 +3,7 @@
 A User carried one Role and a list of Allowed apps, so being an Admin anywhere
 meant being an Admin everywhere they were let in, and the value `ALL` let one
 row reach every App, future ones included. Apps are about to differ: some let
-visitors register, the Back office never does, and someone who registers in
+visitors register, the Back Office never does, and someone who registers in
 one App must not become anything in another. The Role moves into a
 `Membership` table, one row per User and App (`auth."Membership"`, key
 `(userId, app)`), and nothing spans every App any more: `ALL` is gone from
@@ -30,7 +30,7 @@ rules in `@allonfire/database`, which the API enforces and every App reads.
   so a changed Role or a removed Membership counts at once, unlike the
   five-minute cookie cache ADR 0009 accepted for the rest of the Session.
 - A new App starts with no Members: the changeset that adds it to the `App`
-  enum also gives every Back office Admin an Admin Membership in it.
+  enum also gives every Back Office Admin an Admin Membership in it.
 - An Image belonged to exactly one App (amends ADR 0013); ADR 0020 replaced
   this with an Image in one or more Apps.
 - The changesets after `0000-baseline` were rewritten into this shape before

@@ -1,6 +1,6 @@
 # Images live in a shared `image` schema, resized by each App's Next
 
-Images are managed in the Back office and shown by one App or by all of them,
+Images are managed in the Back Office and shown by one App or by all of them,
 so their rows cannot sit in any one App's schema (ADR 0007). They live in a
 shared `image` schema beside `auth`, one `image."Image"` table (the Apps an
 Image is in are `image."ImageApp"` rows, ADR 0020), and their files in one public MinIO bucket, `image`, under keys that

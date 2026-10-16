@@ -211,7 +211,7 @@ Expected: exit 0.
 Add to the `describe("GET /v1/images")` block in `read.test.ts`:
 
 ```ts
-  it("lists the Back office's Images", async () => {
+  it("lists the Back Office's Images", async () => {
     const listImages = vi.fn<ImageDeps["listImages"]>(async () => []);
     const res = await app(sessionFor({ allowedApps: [AllowedApp.ALL] }), {
       listImages,
@@ -254,7 +254,7 @@ The file must read exactly as below. Add the `--comment:` line; replace Prisma's
 --liquibase formatted sql logicalFilePath:changesets/0004-allowed-app-back-office.sql
 
 --changeset isaia:0004-allowed-app-back-office
---comment: The Back office becomes an Allowed app, so Images and Users can name it. Postgres cannot drop an enum value, so the rollback rebuilds the type; it fails while any row still uses back-office, which is the safe outcome.
+--comment: The Back Office becomes an Allowed app, so Images and Users can name it. Postgres cannot drop an enum value, so the rollback rebuilds the type; it fails while any row still uses back-office, which is the safe outcome.
 -- AlterEnum
 ALTER TYPE "auth"."AllowedApp" ADD VALUE 'back-office';
 --rollback ALTER TYPE "auth"."AllowedApp" RENAME TO "AllowedApp_old";
@@ -1028,7 +1028,7 @@ Expected: build succeeds; the grep prints `"destination":"http://minio:9000/imag
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
 # collection. STORAGE_ENDPOINT and BETTER_AUTH_URL must match runtime values:
 # Next.js bakes them in at build (STORAGE_ENDPOINT is the /storage/images
-# rewrite target). The Back office's build fails without STORAGE_ENDPOINT.
+# rewrite target). The Back Office's build fails without STORAGE_ENDPOINT.
 # Other values are placeholders that never reach the runner stage.
 ARG BETTER_AUTH_URL="http://localhost:3000"
 ARG STORAGE_ENDPOINT
@@ -1058,7 +1058,7 @@ Expected: the turbo build passes (turbo now passes `STORAGE_ENDPOINT` through); 
 - [x] **Step 5: Docs**
 
 In `CLAUDE.md` Deployment section, add one line:
-`- Back office build needs \`STORAGE_ENDPOINT\` (Docker build arg, CI secret); it is baked into the \`/storage/images\` rewrite.`
+`- Back Office build needs \`STORAGE_ENDPOINT\` (Docker build arg, CI secret); it is baked into the \`/storage/images\` rewrite.`
 
 - [x] **Step 6: Whole workspace**
 
@@ -1070,7 +1070,7 @@ Expected: exit 0, every task passes.
 ## Watch out (outside the repo)
 
 - GitHub environment `dev`: add `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY` secrets before pushing, or the CI build fails on env validation.
-- Dokploy: pass `STORAGE_ENDPOINT` as a build arg to the Back office image.
+- Dokploy: pass `STORAGE_ENDPOINT` as a build arg to the Back Office image.
 - Changeset 0004's rollback only works while no row uses `back-office`.
 
 ## Implementation Log

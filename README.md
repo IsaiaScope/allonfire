@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/Turborepo-2-EF4444?logo=turborepo&logoColor=white" alt="Turborepo" />
   <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Biome-linter-60A5FA?logo=biome&logoColor=white" alt="Biome" />
-  <img src="https://img.shields.io/badge/Node-22-339933?logo=node.js&logoColor=white" alt="Node" />
+  <img src="https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white" alt="Node" />
 </p>
 
 ---
@@ -60,7 +60,6 @@ Shared libraries consumed by all apps in the monorepo.
 | 🔐 | **[@allonfire/auth](packages/auth/)** | Shared BetterAuth config, session guards, login UI |
 | 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
 | 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
-| 🪝 | **[@allonfire/hooks](packages/hooks/)** | Responsive breakpoint hooks |
 | 🔧 | **[@allonfire/core](packages/core/)** | Shared constants, helpers and the Next scaffolding |
 | ⚙️ | **[@allonfire/config](packages/config/)** | Shared TypeScript configuration |
 
@@ -84,7 +83,6 @@ allonfire/
     database/             Prisma ORM + services
     storage/              S3/MinIO uploads + image processing
     ui/                   Shared UI components
-    hooks/                React hooks
     core/                 Shared constants, helpers, Next scaffolding
     config/               TypeScript config
   docker/                 Docker Compose + Dockerfile
@@ -119,7 +117,7 @@ One-time setup:
 3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
 4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
 
-Before the API starts, the one-shot `storage-setup` service creates the `image` bucket with its read-only policy and uploads the sign-in photo as AVIF, each only when missing; nothing is uploaded by hand.
+Before the API starts, the one-shot `storage-setup` service creates the `image` bucket with its read-only policy, only when missing; nothing is uploaded by hand.
 
 Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
 
@@ -128,12 +126,51 @@ Laura is out of Production until its rebuild.
 ### 💻 Local
 
 `pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
-database and uploads the Image Fixtures' files. `packages/database/.env` sets
-`DATABASE_SEED_MODE="local"` so the seed adds every Fixture User (password
-`FIXTURE.PASSWORD`); a `.env` from before the Fixtures drops
-`DATABASE_SEED_TEST_PASSWORD` and changes `dev` to `local`.
+real Admin (`DATABASE_SEED_ADMIN_*` in `packages/database/.env`, Admin in
+every App) and creates the `image` bucket with its policy: Local holds what
+Production holds. The Fixtures live only in Test databases; remove
+`DATABASE_SEED_MODE` and `DATABASE_SEED_LAURA_VIEWER_*` from an older `.env`.
 `packages/storage/.env` (from its `.env.example`) holds the Local MinIO
-login the upload and the e2e run's bucket use.
+login the setup and the e2e run's bucket use.
+
+`pnpm dev:tailscale` serves each dev App over Tailscale as its own Tailscale
+Service, with HTTPS: the Back Office at `https://back-office.<tailnet>.ts.net`,
+Laura at `https://laura.<tailnet>.ts.net`. Tailscale must be running on the
+Mac and on each device that opens them, with MagicDNS and HTTPS Certificates
+on in the tailnet's DNS settings. Tailscale keeps serving them across
+restarts; `pnpm dev:tailscale:off` stops it. `next dev` accepts only names
+on this tailnet, which it reads from `tailscale status` at start: sign in to
+Tailscale before `pnpm dev`, or restart `pnpm dev` after.
+
+One-time setup, in the admin console:
+
+1. Access controls: add the tag, let it host the Services, and let members
+   reach them:
+
+   ```json
+   "tagOwners": { "tag:dev": ["autogroup:admin"] },
+   "autoApprovers": {
+     "services": {
+       "svc:back-office": ["tag:dev"],
+       "svc:laura": ["tag:dev"]
+     }
+   },
+   "grants": [
+     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura"], "ip": ["443"] }
+   ]
+   ```
+
+   Merge into the existing `tagOwners` and `grants`, and keep the default
+   allow-all grant.
+2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
+   `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
+   so the Mac then belongs to the tag, not to a user.
+3. Services: define `back-office` and `laura`, each on `tcp:443`.
+4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
+   defined stays pending: `tailscale serve clear svc:<name>`, then run it
+   again, and the auto-approval applies.
+
+Why Services, and what a new App needs: ADR 0021.
 
 ---
 

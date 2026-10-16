@@ -2,12 +2,17 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { CreateBucketCommand, ListBucketsCommand } from "@aws-sdk/client-s3";
+import {
+  CreateBucketCommand,
+  DeleteBucketCommand,
+  ListBucketsCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { env } from "../../../environment/environment";
 import { storedObjectUrl } from "../../../shared/utils/stored-object-url";
 import { IMAGE } from "../../image/constants/image";
 import { s3 } from "../../s3/client";
-import { sweepTestBuckets } from "../bucket";
+import { dropTestBucketsOf, sweepTestBuckets } from "../bucket";
 import { testBucketName } from "../names";
 
 const RUN_BUCKET = /^allonfire-test-storage-/;
@@ -36,4 +41,25 @@ it("lets two runs sweep the same crashed run's bucket at once", async () => {
   await Promise.all([sweepTestBuckets(), sweepTestBuckets()]);
   const { Buckets = [] } = await s3.send(new ListBucketsCommand({}));
   expect(Buckets.map(({ Name }) => Name)).not.toContain(stale);
+});
+
+it("drops every earlier run of a label, however young and whatever it holds, and no other label's", async () => {
+  const now = Math.floor(Date.now() / UNIT.MS_PER_SECOND);
+  const mine = testBucketName("solotest", `${now}_young1`);
+  const other = testBucketName("solotest-two", `${now}_young2`);
+  await Promise.all(
+    [mine, other].map((Bucket) => s3.send(new CreateBucketCommand({ Bucket })))
+  );
+  await s3.send(new PutObjectCommand({ Body: "x", Bucket: mine, Key: "left" }));
+  try {
+    const dropped = await dropTestBucketsOf("solotest");
+    expect(dropped).toContain(mine);
+    expect(dropped).not.toContain(other);
+    const { Buckets = [] } = await s3.send(new ListBucketsCommand({}));
+    const left = Buckets.map(({ Name }) => Name);
+    expect(left).not.toContain(mine);
+    expect(left).toContain(other);
+  } finally {
+    await s3.send(new DeleteBucketCommand({ Bucket: other }));
+  }
 });

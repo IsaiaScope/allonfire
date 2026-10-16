@@ -310,7 +310,7 @@ Expected: lockfile updated, exit 0.
 Run: `pnpm --filter @allonfire/storage exec vitest run && pnpm --filter @allonfire/utils exec vitest run && grep -rn "@allonfire/storage" packages/utils/src packages/utils/package.json`
 Expected: both suites PASS; the grep prints nothing.
 
-- [x] **Step 5: Type-check and build the Back office**
+- [x] **Step 5: Type-check and build the Back Office**
 
 Run: `pnpm turbo run check-types --filter=@allonfire/storage --filter=@allonfire/utils --filter=@allonfire/back-office && cd apps/back-office && STORAGE_ENDPOINT=http://minio:9000/ pnpm build && node -e 'const m=require("./.next/routes-manifest.json");const r=m.rewrites;console.log([...(Array.isArray(r)?r:[...r.beforeFiles,...r.afterFiles,...r.fallback])].map(x=>x.source+" -> "+x.destination))'`
 Expected: exit 0; prints `[ '/storage/images/:key -> http://minio:9000/images/:key' ]`.

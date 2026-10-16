@@ -2,6 +2,7 @@
 
 > Partly superseded by ADR 0014: pages and their components are now built in
 > their App; the package keeps the Designs, Design components and prototypes.
+> Then by ADR 0022: the package holds no components and no prototypes.
 
 Every page is designed with impeccable, and a Design (Japan first) is meant to
 be worn by more than one App. impeccable v4 keeps its state in `.impeccable/`

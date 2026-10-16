@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T08:23:36.890Z",
+  "title": "Design System: Japan",
+  "extensions": {
+    "colorMeta": {
+      "information-blue": {
+        "role": "primary",
+        "displayName": "Information Blue",
+        "canonical": "#006fb3",
+        "tonalRamp": [
+          "oklch(15% 0.135 246.1)",
+          "oklch(26% 0.135 246.1)",
+          "oklch(38% 0.135 246.1)",
+          "oklch(50% 0.135 246.1)",
+          "oklch(62% 0.135 246.1)",
+          "oklch(74% 0.135 246.1)",
+          "oklch(85% 0.135 246.1)",
+          "oklch(95% 0.135 246.1)"
+        ]
+      },
+      "information-blue-night": {
+        "role": "primary",
+        "displayName": "Information Blue Night",
+        "canonical": "#3a9ee0",
+        "tonalRamp": [
+          "oklch(15% 0.134 241.9)",
+          "oklch(26% 0.134 241.9)",
+          "oklch(38% 0.134 241.9)",
+          "oklch(50% 0.134 241.9)",
+          "oklch(62% 0.134 241.9)",
+          "oklch(74% 0.134 241.9)",
+          "oklch(85% 0.134 241.9)",
+          "oklch(95% 0.134 241.9)"
+        ]
+      },
+      "enamel-white": {
+        "role": "neutral",
+        "displayName": "Enamel White",
+        "canonical": "#f6f7f8",
+        "tonalRamp": [
+          "oklch(15% 0.002 247.8)",
+          "oklch(26% 0.002 247.8)",
+          "oklch(38% 0.002 247.8)",
+          "oklch(50% 0.002 247.8)",
+          "oklch(62% 0.002 247.8)",
+          "oklch(74% 0.002 247.8)",
+          "oklch(85% 0.002 247.8)",
+          "oklch(95% 0.002 247.8)"
+        ]
+      },
+      "card-white": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26% 0 89.9)",
+          "oklch(38% 0 89.9)",
+          "oklch(50% 0 89.9)",
+          "oklch(62% 0 89.9)",
+          "oklch(74% 0 89.9)",
+          "oklch(85% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ]
+      },
+      "sign-black": {
+        "role": "neutral",
+        "displayName": "Sign Black",
+        "canonical": "#1a1a1a",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26% 0 89.9)",
+          "oklch(38% 0 89.9)",
+          "oklch(50% 0 89.9)",
+          "oklch(62% 0 89.9)",
+          "oklch(74% 0 89.9)",
+          "oklch(85% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ]
+      },
+      "concourse-grey": {
+        "role": "neutral",
+        "displayName": "Concourse Grey",
+        "canonical": "#e7eaee",
+        "tonalRamp": [
+          "oklch(15% 0.006 255.5)",
+          "oklch(26% 0.006 255.5)",
+          "oklch(38% 0.006 255.5)",
+          "oklch(50% 0.006 255.5)",
+          "oklch(62% 0.006 255.5)",
+          "oklch(74% 0.006 255.5)",
+          "oklch(85% 0.006 255.5)",
+          "oklch(95% 0.006 255.5)"
+        ]
+      },
+      "platform-grey": {
+        "role": "neutral",
+        "displayName": "Platform Grey",
+        "canonical": "#5c6570",
+        "tonalRamp": [
+          "oklch(15% 0.021 253.5)",
+          "oklch(26% 0.021 253.5)",
+          "oklch(38% 0.021 253.5)",
+          "oklch(50% 0.021 253.5)",
+          "oklch(62% 0.021 253.5)",
+          "oklch(74% 0.021 253.5)",
+          "oklch(85% 0.021 253.5)",
+          "oklch(95% 0.021 253.5)"
+        ]
+      },
+      "rail-border": {
+        "role": "neutral",
+        "displayName": "Rail Border",
+        "canonical": "#d9dde2",
+        "tonalRamp": [
+          "oklch(15% 0.008 253.9)",
+          "oklch(26% 0.008 253.9)",
+          "oklch(38% 0.008 253.9)",
+          "oklch(50% 0.008 253.9)",
+          "oklch(62% 0.008 253.9)",
+          "oklch(74% 0.008 253.9)",
+          "oklch(85% 0.008 253.9)",
+          "oklch(95% 0.008 253.9)"
+        ]
+      },
+      "rail-input": {
+        "role": "neutral",
+        "displayName": "Rail Input",
+        "canonical": "#c9ced5",
+        "tonalRamp": [
+          "oklch(15% 0.011 256.7)",
+          "oklch(26% 0.011 256.7)",
+          "oklch(38% 0.011 256.7)",
+          "oklch(50% 0.011 256.7)",
+          "oklch(62% 0.011 256.7)",
+          "oklch(74% 0.011 256.7)",
+          "oklch(85% 0.011 256.7)",
+          "oklch(95% 0.011 256.7)"
+        ]
+      },
+      "night-panel": {
+        "role": "neutral",
+        "displayName": "Night Panel",
+        "canonical": "#16191d",
+        "tonalRamp": [
+          "oklch(15% 0.009 255.6)",
+          "oklch(26% 0.009 255.6)",
+          "oklch(38% 0.009 255.6)",
+          "oklch(50% 0.009 255.6)",
+          "oklch(62% 0.009 255.6)",
+          "oklch(74% 0.009 255.6)",
+          "oklch(85% 0.009 255.6)",
+          "oklch(95% 0.009 255.6)"
+        ]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "#1c2025",
+        "tonalRamp": [
+          "oklch(15% 0.011 254.1)",
+          "oklch(26% 0.011 254.1)",
+          "oklch(38% 0.011 254.1)",
+          "oklch(50% 0.011 254.1)",
+          "oklch(62% 0.011 254.1)",
+          "oklch(74% 0.011 254.1)",
+          "oklch(85% 0.011 254.1)",
+          "oklch(95% 0.011 254.1)"
+        ]
+      },
+      "night-concourse": {
+        "role": "neutral",
+        "displayName": "Night Concourse",
+        "canonical": "#242a31",
+        "tonalRamp": [
+          "oklch(15% 0.015 252.4)",
+          "oklch(26% 0.015 252.4)",
+          "oklch(38% 0.015 252.4)",
+          "oklch(50% 0.015 252.4)",
+          "oklch(62% 0.015 252.4)",
+          "oklch(74% 0.015 252.4)",
+          "oklch(85% 0.015 252.4)",
+          "oklch(95% 0.015 252.4)"
+        ]
+      },
+      "night-text": {
+        "role": "neutral",
+        "displayName": "Night Text",
+        "canonical": "#eef0f2",
+        "tonalRamp": [
+          "oklch(15% 0.003 247.9)",
+          "oklch(26% 0.003 247.9)",
+          "oklch(38% 0.003 247.9)",
+          "oklch(50% 0.003 247.9)",
+          "oklch(62% 0.003 247.9)",
+          "oklch(74% 0.003 247.9)",
+          "oklch(85% 0.003 247.9)",
+          "oklch(95% 0.003 247.9)"
+        ]
+      },
+      "night-muted": {
+        "role": "neutral",
+        "displayName": "Night Muted",
+        "canonical": "#9aa3ad",
+        "tonalRamp": [
+          "oklch(15% 0.018 250.9)",
+          "oklch(26% 0.018 250.9)",
+          "oklch(38% 0.018 250.9)",
+          "oklch(50% 0.018 250.9)",
+          "oklch(62% 0.018 250.9)",
+          "oklch(74% 0.018 250.9)",
+          "oklch(85% 0.018 250.9)",
+          "oklch(95% 0.018 250.9)"
+        ]
+      },
+      "night-border": {
+        "role": "neutral",
+        "displayName": "Night Border",
+        "canonical": "#2c323a",
+        "tonalRamp": [
+          "oklch(15% 0.017 255.6)",
+          "oklch(26% 0.017 255.6)",
+          "oklch(38% 0.017 255.6)",
+          "oklch(50% 0.017 255.6)",
+          "oklch(62% 0.017 255.6)",
+          "oklch(74% 0.017 255.6)",
+          "oklch(85% 0.017 255.6)",
+          "oklch(95% 0.017 255.6)"
+        ]
+      },
+      "night-input": {
+        "role": "neutral",
+        "displayName": "Night Input",
+        "canonical": "#3a414a",
+        "tonalRamp": [
+          "oklch(15% 0.018 254.8)",
+          "oklch(26% 0.018 254.8)",
+          "oklch(38% 0.018 254.8)",
+          "oklch(50% 0.018 254.8)",
+          "oklch(62% 0.018 254.8)",
+          "oklch(74% 0.018 254.8)",
+          "oklch(85% 0.018 254.8)",
+          "oklch(95% 0.018 254.8)"
+        ]
+      },
+      "signal-red": {
+        "role": "error",
+        "displayName": "Signal Red",
+        "canonical": "#c8102e",
+        "tonalRamp": [
+          "oklch(15% 0.2 22.3)",
+          "oklch(26% 0.2 22.3)",
+          "oklch(38% 0.2 22.3)",
+          "oklch(50% 0.2 22.3)",
+          "oklch(62% 0.2 22.3)",
+          "oklch(74% 0.2 22.3)",
+          "oklch(85% 0.2 22.3)",
+          "oklch(95% 0.2 22.3)"
+        ]
+      },
+      "signal-red-night": {
+        "role": "error",
+        "displayName": "Signal Red Night",
+        "canonical": "#f0605a",
+        "tonalRamp": [
+          "oklch(15% 0.179 25.5)",
+          "oklch(26% 0.179 25.5)",
+          "oklch(38% 0.179 25.5)",
+          "oklch(50% 0.179 25.5)",
+          "oklch(62% 0.179 25.5)",
+          "oklch(74% 0.179 25.5)",
+          "oklch(85% 0.179 25.5)",
+          "oklch(95% 0.179 25.5)"
+        ]
+      },
+      "line-green": {
+        "role": "secondary",
+        "displayName": "Line Green",
+        "canonical": "#00a650",
+        "tonalRamp": [
+          "oklch(15% 0.171 150.9)",
+          "oklch(26% 0.171 150.9)",
+          "oklch(38% 0.171 150.9)",
+          "oklch(50% 0.171 150.9)",
+          "oklch(62% 0.171 150.9)",
+          "oklch(74% 0.171 150.9)",
+          "oklch(85% 0.171 150.9)",
+          "oklch(95% 0.171 150.9)"
+        ]
+      },
+      "line-orange": {
+        "role": "secondary",
+        "displayName": "Line Orange",
+        "canonical": "#f39700",
+        "tonalRamp": [
+          "oklch(15% 0.166 67.4)",
+          "oklch(26% 0.166 67.4)",
+          "oklch(38% 0.166 67.4)",
+          "oklch(50% 0.166 67.4)",
+          "oklch(62% 0.166 67.4)",
+          "oklch(74% 0.166 67.4)",
+          "oklch(85% 0.166 67.4)",
+          "oklch(95% 0.166 67.4)"
+        ]
+      },
+      "led-amber": {
+        "role": "tertiary",
+        "displayName": "LED Amber",
+        "canonical": "#ffb21a",
+        "tonalRamp": [
+          "oklch(15% 0.167 76.5)",
+          "oklch(26% 0.167 76.5)",
+          "oklch(38% 0.167 76.5)",
+          "oklch(50% 0.167 76.5)",
+          "oklch(62% 0.167 76.5)",
+          "oklch(74% 0.167 76.5)",
+          "oklch(85% 0.167 76.5)",
+          "oklch(95% 0.167 76.5)"
+        ]
+      },
+      "led-dim": {
+        "role": "tertiary",
+        "displayName": "LED Dim",
+        "canonical": "#6b4a0a",
+        "tonalRamp": [
+          "oklch(15% 0.086 77.6)",
+          "oklch(26% 0.086 77.6)",
+          "oklch(38% 0.086 77.6)",
+          "oklch(50% 0.086 77.6)",
+          "oklch(62% 0.086 77.6)",
+          "oklch(74% 0.086 77.6)",
+          "oklch(85% 0.086 77.6)",
+          "oklch(95% 0.086 77.6)"
+        ]
+      },
+      "led-panel": {
+        "role": "tertiary",
+        "displayName": "LED Panel",
+        "canonical": "#0d0d0d",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26% 0 89.9)",
+          "oklch(38% 0 89.9)",
+          "oklch(50% 0 89.9)",
+          "oklch(62% 0 89.9)",
+          "oklch(74% 0 89.9)",
+          "oklch(85% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ]
+      },
+      "tactile-yellow": {
+        "role": "tertiary",
+        "displayName": "Tactile Yellow",
+        "canonical": "#f2c200",
+        "tonalRamp": [
+          "oklch(15% 0.17 90.6)",
+          "oklch(26% 0.17 90.6)",
+          "oklch(38% 0.17 90.6)",
+          "oklch(50% 0.17 90.6)",
+          "oklch(62% 0.17 90.6)",
+          "oklch(74% 0.17 90.6)",
+          "oklch(85% 0.17 90.6)",
+          "oklch(95% 0.17 90.6)"
+        ]
+      },
+      "hanko-vermilion": {
+        "role": "tertiary",
+        "displayName": "Hanko Vermilion",
+        "canonical": "#e04a32",
+        "tonalRamp": [
+          "oklch(15% 0.19 31.7)",
+          "oklch(26% 0.19 31.7)",
+          "oklch(38% 0.19 31.7)",
+          "oklch(50% 0.19 31.7)",
+          "oklch(62% 0.19 31.7)",
+          "oklch(74% 0.19 31.7)",
+          "oklch(85% 0.19 31.7)",
+          "oklch(95% 0.19 31.7)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The eki stamp's figure only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "An error page's h1."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The gate button's label."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions and field values."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Primary field labels; the stamp's station name, capitals tracked 0.3em."
+      },
+      "led": {
+        "displayName": "LED",
+        "purpose": "Everything on a departure board, and the current language."
+      },
+      "brush": {
+        "displayName": "Brush",
+        "purpose": "The one kanji on the wall (10%) or in a button's corner (20%)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sign-lift",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "The station sign only."
+      },
+      {
+        "name": "capsule-float",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "The floating control bar only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "stamp",
+        "value": "stamp 360ms 500ms cubic-bezier(0.2, 1.4, 0.4, 1) both",
+        "purpose": "A hanko or eki stamp pressed on once, from 1.8x scale and transparent."
+      },
+      {
+        "name": "marquee",
+        "value": "marquee 24s linear infinite",
+        "purpose": "A board's notice running right to left; pausable, still for reduced motion."
+      },
+      {
+        "name": "lamp",
+        "value": "lamp 1.2s ease-in-out infinite",
+        "purpose": "A board's lamps lighting and fading, 200ms apart: the loading ellipsis."
+      },
+      {
+        "name": "enter",
+        "value": "fade-in + slide-in 500ms",
+        "purpose": "A board, a sign or an error page's words entering once, behind motion-safe."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Gate Button",
+      "kind": "button",
+      "refersTo": "button-gate",
+      "description": "The Sign in's one action, the gate's card reader, a kanji brushed in its corner.",
+      "html": "<button class=\"ds-btn-gate\"><span class=\"ds-btn-gate-kanji\" aria-hidden=\"true\" lang=\"ja\">入</span><svg aria-hidden=\"true\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 8.32a7.43 7.43 0 0 1 0 7.36\"/><path d=\"M9.46 6.21a11.76 11.76 0 0 1 0 11.58\"/><path d=\"M12.91 4.1a15.91 15.91 0 0 1 .01 15.8\"/><path d=\"M16.37 2a20.16 20.16 0 0 1 0 20\"/></svg>Sign in</button>",
+      "css": ".ds-btn-gate { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 64px; border: 1px solid transparent; border-radius: var(--radius); background: var(--primary); color: var(--primary-foreground); font: 700 1.125rem/1 'Atkinson Hyperlegible Next', sans-serif; cursor: pointer; transition: background 0.15s; } .ds-btn-gate:hover { background: color-mix(in srgb, var(--primary) 80%, transparent); } .ds-btn-gate:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); } .ds-btn-gate:active { transform: translateY(1px); } .ds-btn-gate-kanji { position: absolute; z-index: -1; right: 12px; top: 50%; transform: translateY(-50%) rotate(-12deg); font: 400 6rem/1 'Yuji Syuku', serif; color: color-mix(in srgb, var(--primary-foreground) 20%, transparent); pointer-events: none; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The default action button.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius); background: var(--primary); color: var(--primary-foreground); font: 500 0.875rem/1 'Atkinson Hyperlegible Next', sans-serif; cursor: pointer; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary) 80%, transparent); } .ds-btn-primary:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Primary Field",
+      "kind": "input",
+      "refersTo": "input-primary",
+      "description": "The tall field a page leads with, opening on a night icon tile.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Email</span><span class=\"ds-field-box\"><span class=\"ds-field-tile\" aria-hidden=\"true\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/></svg></span><input class=\"ds-field-input\" type=\"email\" placeholder=\"name@example.com\"></span></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 8px; font-family: 'Atkinson Hyperlegible Next', sans-serif; } .ds-field-label { font-weight: 700; font-size: 0.875rem; color: var(--foreground); } .ds-field-box { position: relative; } .ds-field-tile { position: absolute; top: 6px; bottom: 6px; left: 6px; width: 36px; display: flex; align-items: center; justify-content: center; border-radius: calc(var(--radius) * 0.6); background: #16191d; color: #eef0f2; } .ds-field-input { width: 100%; height: 48px; padding: 0 12px 0 52px; border: 1px solid var(--input); border-radius: var(--radius); background: transparent; color: var(--foreground); font: inherit; font-size: 1rem; transition: border-color 0.15s, box-shadow 0.15s; } .ds-field-input:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); } .ds-field-input[aria-invalid='true'] { border-color: var(--destructive); }"
+    },
+    {
+      "name": "Departure Board",
+      "kind": "custom",
+      "refersTo": "departure-board",
+      "description": "Amber LED board: platform, status in kana and in the visitor's language, a running notice.",
+      "html": "<div class=\"ds-board\"><div class=\"ds-board-row\"><span lang=\"ja\" aria-hidden=\"true\" class=\"ds-board-dim\">1番線</span><span lang=\"ja\" aria-hidden=\"true\">改札</span><span class=\"ds-board-status\">Sign in</span></div></div>",
+      "css": ".ds-board { overflow: hidden; border: 2px solid var(--led-dim); border-radius: calc(var(--radius) * 0.8); background-color: var(--led-panel); background-image: radial-gradient(var(--led-dim) 0.75px, transparent 1px); background-size: 4px 4px; color: var(--led); font: 400 1.125rem/1.25 'DotGothic16', monospace; } .ds-board-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; padding: 8px 12px; } .ds-board-dim { color: color-mix(in srgb, var(--led) 80%, transparent); } .ds-board-status { margin-left: auto; }"
+    },
+    {
+      "name": "Station Sign",
+      "kind": "card",
+      "refersTo": "station-sign",
+      "description": "The Back Office's card: a night band with the logo and a seal, the body on the theme.",
+      "html": "<div class=\"ds-sign\"><div class=\"ds-sign-band\"><strong class=\"ds-sign-name\">AllOnFire Back Office</strong><span class=\"ds-hanko\" aria-hidden=\"true\" lang=\"ja\"><span>認</span><span>証</span></span></div><div class=\"ds-sign-body\">Body</div></div>",
+      "css": ".ds-sign { display: flex; flex-direction: column; width: 100%; max-width: 28rem; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--card-foreground); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: 'Atkinson Hyperlegible Next', sans-serif; } .ds-sign-band { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--led-panel); color: #eef0f2; border-bottom: 1px solid var(--led); } .ds-sign-name { font-size: 1.25rem; } .ds-sign-body { padding: 12px; } .ds-hanko { margin-left: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 48px; height: 48px; border: 2px solid var(--hanko); border-radius: 50%; color: var(--hanko); font-weight: 700; font-size: 0.875rem; line-height: 1; transform: rotate(-6deg); }"
+    },
+    {
+      "name": "Eki Stamp",
+      "kind": "custom",
+      "refersTo": "eki-stamp",
+      "description": "A vermilion double ring leading an error or loading page.",
+      "html": "<div class=\"ds-eki\" aria-hidden=\"true\"><span class=\"ds-eki-ring\"></span><span class=\"ds-eki-station\">Back Office</span><span class=\"ds-eki-code\">404</span><span class=\"ds-eki-rule\"></span><span class=\"ds-eki-kana\" lang=\"ja\">回送</span></div>",
+      "css": ".ds-eki { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 224px; height: 224px; border: 4px solid var(--hanko); border-radius: 50%; color: var(--hanko); transform: rotate(-6deg); font-family: 'Atkinson Hyperlegible Next', sans-serif; } .ds-eki-ring { position: absolute; inset: 8px; border: 2px solid var(--hanko); border-radius: 50%; } .ds-eki-station { font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3em; } .ds-eki-code { font-weight: 800; font-size: 4.5rem; line-height: 1; font-variant-numeric: tabular-nums; } .ds-eki-rule { width: 96px; height: 2px; background: var(--hanko); } .ds-eki-kana { font-weight: 700; font-size: 1.5rem; letter-spacing: 0.4em; }"
+    },
+    {
+      "name": "Control Bar",
+      "kind": "nav",
+      "refersTo": "control-bar",
+      "description": "The floating capsule with the language switch and the theme toggle.",
+      "html": "<div class=\"ds-bar\"><a class=\"ds-lang ds-lang-current\" aria-current=\"true\" href=\"#\">EN</a><a class=\"ds-lang\" href=\"#\">IT</a><span class=\"ds-bar-sep\"></span><button class=\"ds-ghost\" aria-label=\"Theme\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/></svg></button></div>",
+      "css": ".ds-bar { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); font-size: 0.875rem; } .ds-lang { padding: 4px 12px; border-radius: calc(var(--radius) * 0.8); font-family: 'DotGothic16', monospace; color: var(--muted-foreground); text-decoration: none; transition: background 0.15s, color 0.15s; } .ds-lang:hover { background: var(--muted); color: var(--foreground); } .ds-lang:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ring); } .ds-lang-current, .ds-lang-current:hover { background: var(--led-panel); color: var(--led); } .ds-bar-sep { width: 1px; height: 20px; margin: 0 4px; background: var(--border); } .ds-ghost { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: var(--radius); background: transparent; color: var(--muted-foreground); cursor: pointer; } .ds-ghost:hover { background: var(--muted); color: var(--foreground); } .ds-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Station",
+    "overview": "Japan borrows the grammar of Japanese railway wayfinding (JR and Tokyo Metro signage), seen at night: enamel sign panels, an amber LED departure board, vermilion ink stamps and line colours. Each AllOnFire App is a line with its own colour, and an interface built in Japan reads like a station: you always know which line you are on, where you are, and where the exit is. Density is welcome, decoration is not; a colour appears because it names a line, a state or a piece of station furniture.\n Every page so far is a station moment rather than a tool: the Sign in is the ticket gate (改札), the loading page the platform as a train comes in, the error pages a line that has stopped or a station that is not on it. Each is one centred column on the theme's ground, with one Japanese word brushed huge and faint across the wall behind it. Japanese is signage, never a translation the visitor has to read: the page's own words carry the meaning, and every Japanese mark is hidden from assistive tech.\n It rejects the generic SaaS admin (grey sidebar, white cards, blue buttons that could belong to any product) and anything that slows the task.",
+    "keyCharacteristics": [
+      "One centred column of sign-width content on a quiet ground.",
+      "Station furniture (the LED board, the sign band, the field tiles) stays night in both themes.",
+      "Vermilion ink for what is pressed on: the hanko seal, the eki stamp.",
+      "One brushed kanji, huge and faint, on the wall behind a page.",
+      "Day (enamel white) and night (backlit sign black) grounds, following the OS."
+    ],
+    "rules": [
+      {
+        "name": "The Line Rule",
+        "body": "A line colour means an App. Never use one for decoration or for a state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Band Rule",
+        "body": "Colour commits at band or panel scale; a line colour that would appear smaller than a badge is left out.",
+        "section": "colors"
+      },
+      {
+        "name": "The Furniture Rule",
+        "body": "A piece of station furniture (a board, a sign's band, a field's icon tile) is night by day too: it scopes `.dark` on itself instead of following the theme.",
+        "section": "colors"
+      },
+      {
+        "name": "The Signage Rule",
+        "body": "Japanese is signage: kana and kanji appear on a board, a stamp, a seal or the wall, always `aria-hidden` with `lang=\"ja\"`, and the page says the same in its own language. A board pairs them on one row, the way a real board does; a field never carries a second-language label.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Voice per Face Rule",
+        "body": "DotGothic16 is the board's voice and Yuji Syuku the wall's; neither sets a sentence the visitor must read in the page's language.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hung Sign Rule",
+        "body": "Only a sign or a floating control casts a shadow; boards, stamps and fields never do.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do mark an App with its line colour and station badge wherever Apps are listed.",
+      "Do keep one Information Blue action per view.",
+      "Do give every access state (allowed, denied, pending, revoked) its own shape and label, never colour alone.",
+      "Do make browse and edit one keypress apart: records open in place.",
+      "Do keep motion short (300 to 700ms), once on entry or on a state change, behind `motion-safe:`; only a board's notice or a loading lamp runs on, and a notice ships its pause.",
+      "Do hide every Japanese mark from assistive tech (`aria-hidden`, `lang=\"ja\"`) and say it in the page's own words."
+    ],
+    "donts": [
+      "Don't build a generic SaaS admin: grey sidebar, white cards, blue buttons.",
+      "Don't add costume Japan: cherry blossoms, torii, rising suns, or a brush face for anything but the one kanji on a wall or in a button.",
+      "Don't trade speed for beauty: no motion or ornament that delays a task.",
+      "Don't ship pure white or pure black grounds.",
+      "Don't shade a board, a stamp or a field: only a sign or a floating control lifts."
+    ]
+  }
+}

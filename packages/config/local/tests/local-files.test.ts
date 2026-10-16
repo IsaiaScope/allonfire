@@ -10,6 +10,15 @@ const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
 /** The files that cannot import the addresses, and the lines each must hold. */
 const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
   [
+    // `pnpm dev:tailscale` serves each dev App as its own Tailscale Service
+    // (ADR 0021).
+    "package.json",
+    [
+      `--service=svc:back-office --https=443 ${LOCAL.URL.BACK_OFFICE} `,
+      `--service=svc:laura --https=443 ${LOCAL.URL.LAURA} `,
+    ],
+  ],
+  [
     ".github/workflows/ci.yml",
     [
       `DATABASE_URL: ${LOCAL.URL.DATABASE}`,
@@ -34,6 +43,7 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
     "apps/back-office/.env.example",
     [
       `NEXT_PUBLIC_API_URL="${LOCAL.URL.API}"`,
+      `BACK_OFFICE_URL="${LOCAL.URL.BACK_OFFICE}"`,
       `API_AUTH_URL="${LOCAL.URL.API}${API_PATH.AUTH}"`,
       `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
     ],

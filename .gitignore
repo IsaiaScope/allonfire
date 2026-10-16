@@ -54,7 +54,7 @@ yarn-error.log*
 # Worktrees
 .worktrees
 *.tsbuildinfo
-.next-mobile
+.next-tailscale
 
 TODO.*
 
@@ -85,3 +85,7 @@ apps/*/.impeccable/
 apps/*/PRODUCT.md
 apps/*/DESIGN.md
 /.impeccable/
+
+# A local recap of the Back Office's generated assets (icons, logos, share cards,
+# launch screens), kept for reference and never shipped.
+apps/back-office/public/assets-recap.png

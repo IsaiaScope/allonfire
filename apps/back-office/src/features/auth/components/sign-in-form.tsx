@@ -9,6 +9,8 @@ import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
 import { KeyRound, LoaderCircle, Mail, Nfc, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type SubmitEvent, useActionState, useCallback } from "react";
+import { BrushKanji } from "@/shared/components/brush-kanji";
+import { SIGN_IN } from "../constants/sign-in";
 import { signInSchema } from "../utils/sign-in-schema";
 
 /**
@@ -58,7 +60,7 @@ export const SignInForm = ({
     <form
       action={action}
       aria-label={t("submit")}
-      className="flex flex-col gap-4 px-3 py-4 sm:px-4 lg:p-6"
+      className="flex flex-col gap-4 p-3"
       noValidate
       onSubmit={submit}
     >
@@ -105,8 +107,9 @@ export const SignInForm = ({
           />
         )}
       </form.AppField>
+      {/* The gate's card reader: the one action, touched to pass. */}
       <AOFSubmitButton
-        className="mt-1 h-12 w-full gap-2 font-bold text-base"
+        className="relative isolate mt-2 h-16 w-full gap-3 overflow-hidden font-bold text-lg"
         pending={pending}
         pendingChildren={
           <>
@@ -115,7 +118,8 @@ export const SignInForm = ({
           </>
         }
       >
-        <Nfc aria-hidden />
+        <BrushKanji kanji={SIGN_IN.ENTER_KANJI} placement="button" />
+        <Nfc aria-hidden className="size-6" />
         {t("submit")}
       </AOFSubmitButton>
     </form>

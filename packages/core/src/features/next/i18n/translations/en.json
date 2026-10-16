@@ -2,11 +2,17 @@
   "Common": {
     "NotFound": {
       "title": "Page not found",
+      "lost": "Looks like you lost your way.",
       "back": "Back to the start"
     },
     "Error": {
       "title": "Something went wrong",
-      "retry": "Try again"
+      "description": "This page stopped unexpectedly. Try again in a moment.",
+      "retry": "Try again",
+      "reference": "Reference {digest}"
+    },
+    "Loading": {
+      "label": "Loading"
     }
   }
 }

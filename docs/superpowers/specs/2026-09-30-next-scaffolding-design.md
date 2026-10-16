@@ -4,7 +4,7 @@
 
 Every Next App repeats the same wiring: TanStack Query's client and provider,
 next-themes, nuqs, the dev-only Query Devtools, next-intl's request config and
-proxy, and the same `next.config` base. Back office and Laura already carry two
+proxy, and the same `next.config` base. Back Office and Laura already carry two
 drifting copies. A new App should compose shared pieces instead of rewriting
 them, and drop any piece it does not need.
 
@@ -16,7 +16,7 @@ locale list moves to utils so both read one file.
 - The scaffolding lives in `packages/utils`, under `src/next/`. Its framework
   libraries are optional `peerDependencies` of utils, so the API, which never
   imports `src/next/`, gains nothing at runtime.
-- Only Back office adopts it now. Laura adopts it in its own refactor (it runs
+- Only Back Office adopts it now. Laura adopts it in its own refactor (it runs
   `auth-old`, `requestLocale`, webpack, a session guard, and `messages/`).
 - Visible UI stays in `packages/design` (ADR 0011): no root layout shell, no
   `global-error`. `env.ts` stays per App (`createEnv` + `extends` already share).
@@ -120,7 +120,7 @@ and gains a second assertion: every `Language` is in `LANGUAGES`.
   `features/i18n/constants/locales.ts`" line says `LOCALE` now lives in utils;
   a line under Package Layout names `src/next/` as utils' Next scaffolding.
 
-## Back office after
+## Back Office after
 
 - `next.config.ts`:
   `export default AOFCreateNextConfig({}, { transpile: ["@allonfire/design", "@allonfire/shadcn", "@allonfire/ui"], intl: { requestConfig: "./src/features/i18n/request.ts" } })`.
@@ -150,5 +150,5 @@ like the design package (no DOM):
   defaults; `AOFReactQueryDevtools` renders nothing unless `enabled`.
 - Locales: both type assertions.
 
-Then the API's suite, `pnpm lint`, `check-types`, `test`, Back office's build
+Then the API's suite, `pnpm lint`, `check-types`, `test`, Back Office's build
 and its e2e (3/3).

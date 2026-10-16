@@ -2,6 +2,7 @@
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { objectValues } from "@allonfire/core/shared/utils/object";
+import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -9,17 +10,24 @@ import en from "../../../i18n/translations/en.json" with { type: "json" };
 import itMessages from "../../../i18n/translations/it.json" with {
   type: "json",
 };
+import { SIGN_IN } from "../../constants/sign-in";
 import { SignIn } from "../sign-in";
 import { SignInForm } from "../sign-in-form";
 
-// next/image needs Next's loader; the photograph is decoration here.
-vi.mock("next/image", () => ({ default: () => <div data-backdrop="night" /> }));
+// next/image needs Next's loader; its alt and src are all the markup reads.
+vi.mock("next/image", () => ({
+  default: ({ alt, src }: { alt: string; src: string }) => (
+    <span data-alt={alt} data-src={src} />
+  ),
+}));
 // The server action reaches the API; the markup only needs a function.
 vi.mock("@allonfire/auth/features/next/actions/sign-in", () => ({
   signIn: vi.fn(),
 }));
 
-const HEADING = /<h1[^>]*>Back office<\/h1>/;
+// The logo rides in the HTML as a data URL: no request, no wait.
+const HEADING =
+  /<h1[^>]*><span data-alt="Back Office" data-src="data:image\/svg\+xml/;
 const BOARD_SIGN_IN = /aria-live="polite"[^>]*>Sign in</;
 const CURRENT_LANGUAGE = new RegExp(
   `<a aria-current="true"[^>]*href="/en${AUTH.PAGE.SIGN_IN}"`
@@ -42,7 +50,20 @@ describe("SignIn", () => {
     const html = render(<SignIn />);
     expect(html).toMatch(HEADING);
     expect(html).toMatch(BOARD_SIGN_IN);
-    expect(html).toContain('data-backdrop="night"');
+  });
+
+  it("stands at the ticket gate: no photograph, its name brushed behind", () => {
+    const html = render(<SignIn />);
+    expect(html).not.toContain(STORAGE.PATH.IMAGE_PROXY);
+    expect(html).toContain("font-brush");
+  });
+
+  it("sets the kanji for enter behind the submit, hidden from assistive tech", () => {
+    const html = render(<SignInForm />);
+    expect(html).toContain(
+      `<span aria-hidden="true" class="pointer-events-none absolute`
+    );
+    expect(html).toContain(`lang="ja">${SIGN_IN.ENTER_KANJI}<`);
   });
 
   it("links to the page in each language, marking the current one", () => {

@@ -1,17 +1,15 @@
 {
   "Metadata": {
-    "title": "Back office"
+    "description": "Where the AllOnFire family's content, users and data are managed."
   },
   "Home": {
-    "title": "Back office",
     "description": "Nothing here yet.",
     "signOut": "Sign out"
   },
   "SignIn": {
-    "app": "Back office",
     "email": "Email",
     "error": {
-      "forbidden": "This account cannot enter the Back office.",
+      "forbidden": "This account cannot enter the Back Office.",
       "invalid": "Email or password is wrong.",
       "missing": "Enter your email and password.",
       "rateLimited": "Too many attempts. Try again in a few minutes.",
