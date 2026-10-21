@@ -51,6 +51,10 @@ const TEXT_PAIRS = [
   ["primary-foreground", "primary"],
   ["destructive", "background"],
   ["led", "led-panel"],
+  // A row's second line in the sidebar (the switcher's brand), at rest and
+  // lit (hovered, or its menu open).
+  ["muted-foreground", "sidebar"],
+  ["muted-foreground", "sidebar-accent"],
   // A button filled with the line's colour (the Install hint), labelled in
   // the LED board's black.
   ["led-panel", "line-green"],

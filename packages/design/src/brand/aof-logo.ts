@@ -148,8 +148,18 @@ export const monogramBox = ({ SCALE, X, Y }: Geometry["MONOGRAM"]) => ({
 /** Swaps the dark logo for the light one when the viewer's theme is light. */
 const LIGHT_STYLE = `<style>@media (prefers-color-scheme: light){.aof-ground{fill:${SCHEME.light.ground}}.aof-letter{fill:${SCHEME.light.letter}}.aof-letter[stroke]{stroke:${SCHEME.light.letter}}.aof-divider{fill:${SCHEME.light.letter}}.aof-shadow{flood-opacity:${SCHEME.light.shadow}}}</style>`;
 
+/** Where the monogram's shadow and glow are applied. */
+const FILTER_USE = / filter="url\(#[^)]+\)"/g;
+
 type LogoSvgOptions = {
   app: AppLogo;
+  /**
+   * Without the letters' shadow and the flame's glow, for a logo a few dozen
+   * pixels wide: there they are under a pixel, and Safari draws an SVG
+   * filter inside an `<img>` at one pixel per pixel, blurring what it covers
+   * on a high-density screen.
+   */
+  flat?: boolean;
   layout: LogoLayout;
   /** `auto` follows the viewer's theme (a favicon, an `<img>` on a page). */
   scheme: LogoScheme;
@@ -161,13 +171,19 @@ type LogoSvgOptions = {
  * viewer has it, a sans-serif otherwise; generated images draw the same logo
  * with ui's `AOFBrandLogo`, in the face they load.
  */
-export const aofLogoSvg = ({ app, layout, scheme }: LogoSvgOptions) => {
+export const aofLogoSvg = ({
+  app,
+  flat = false,
+  layout,
+  scheme,
+}: LogoSvgOptions) => {
   const auto = scheme === METADATA.LOGO.SCHEME.AUTO;
   const colors = SCHEME[auto ? METADATA.LOGO.SCHEME.DARK : scheme];
   const { ground, letter } = colors;
   const geometry: Geometry = LAYOUT[layout];
   const { BANNER, DIVIDER, HEIGHT, RADIUS, WIDTH } = geometry;
   const box = monogramBox(geometry.MONOGRAM);
+  const monogram = auto ? classedMonogramMarkup() : monogramMarkup(colors);
   const [from, middle, to] = app.banner;
   const divider = DIVIDER
     ? `<rect class="aof-divider" x="${DIVIDER.X}" y="${DIVIDER.Y}" width="${DIVIDER.WIDTH}" height="${DIVIDER.HEIGHT}" rx="${DIVIDER.WIDTH / 2}" fill="${letter}" opacity="${DIVIDER.OPACITY}"/>`
@@ -182,7 +198,7 @@ export const aofLogoSvg = ({ app, layout, scheme }: LogoSvgOptions) => {
   </defs>
   <rect class="aof-ground" width="${WIDTH}" height="${HEIGHT}" rx="${RADIUS}" fill="${ground}"/>
   <g transform="translate(${box.left}, ${box.top}) scale(${geometry.MONOGRAM.SCALE})">
-${auto ? classedMonogramMarkup() : monogramMarkup(colors)}
+${flat ? monogram.replaceAll(FILTER_USE, "") : monogram}
   </g>
   ${divider}
   <g transform="translate(${BANNER.LEFT}, ${BANNER.TOP})">

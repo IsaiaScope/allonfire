@@ -8,7 +8,7 @@
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis openobserve minio minio-init",
+    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis telemetry storage storage-init",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
     "start": "tsx --env-file-if-exists=.env src/index.ts",

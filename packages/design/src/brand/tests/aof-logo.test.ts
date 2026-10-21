@@ -67,6 +67,22 @@ describe("aofLogoSvg", () => {
     expect(square).not.toContain("aof-divider");
     expect(horizontal).toContain("aof-divider");
   });
+
+  // Safari draws an SVG filter inside an <img> at one pixel per pixel, so on
+  // a phone the shadowed letters of a small logo came out blurred.
+  it("draws a flat logo without its shadow and glow, for a small size", () => {
+    const shaded = aofLogoSvg({ app: APP, layout: "square", scheme: "dark" });
+    const flat = aofLogoSvg({
+      app: APP,
+      flat: true,
+      layout: "square",
+      scheme: "dark",
+    });
+    expect(shaded).toContain('filter="url(#');
+    expect(flat).not.toContain('filter="url(#');
+    expect(flat).toContain(`fill="${DARK.letter}"`);
+    expect(flat).toContain(`>${APP.name.toUpperCase()}<`);
+  });
 });
 
 describe("monogramDataUrl", () => {

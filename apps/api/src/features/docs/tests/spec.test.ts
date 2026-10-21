@@ -2,6 +2,13 @@
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  objectFromEntries,
+  objectKeys,
+  objectValues,
+} from "@allonfire/core/shared/utils/object";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -59,9 +66,23 @@ async function spec(): Promise<Spec> {
   return specSchema.parse(await res.json());
 }
 
-const bodySchema = (document: Spec, path: string, status: string) =>
-  document.paths[path]?.get?.responses?.[status]?.content?.["application/json"]
-    ?.schema;
+const SCHEMA_REF = "#/components/schemas/";
+
+/** The whole API's spec, for a test to parse with its own schema. */
+const fullSpec = async (): Promise<unknown> =>
+  (await createApp(appDeps()).request(API.PATH.OPENAPI)).json();
+
+/** A response body's schema, followed through its `$ref` to the Model. */
+const bodySchema = (document: Spec, path: string, status: string) => {
+  const schema =
+    document.paths[path]?.get?.responses?.[status]?.content?.[
+      HTTP.CONTENT_TYPE.JSON
+    ]?.schema;
+  const ref = schema?.$ref;
+  return typeof ref === "string"
+    ? document.components?.schemas?.[ref.replace(SCHEMA_REF, "")]
+    : schema;
+};
 
 describe("GET /openapi.json", () => {
   it("types the probe bodies from their zod schemas", async () => {
@@ -83,6 +104,83 @@ describe("GET /openapi.json", () => {
         status: { const: "unavailable" },
       },
     });
+  });
+
+  it("lists every body the API sends or reads as a Model", async () => {
+    const document = specSchema.parse(await fullSpec());
+
+    expect(objectKeys(document.components?.schemas ?? {})).toEqual(
+      expect.arrayContaining([
+        "App",
+        "Health",
+        "Image",
+        "ImageAlt",
+        "ImageChange",
+        "ImageDelete",
+        "ImageLink",
+        "ImageList",
+        "ImageUpload",
+        "Ready",
+        "ReadyUnavailable",
+      ])
+    );
+  });
+
+  it("leaves every Model untagged, so the docs list them apart", async () => {
+    const schemas =
+      specSchema.parse(await fullSpec()).components?.schemas ?? {};
+
+    for (const schema of objectValues(schemas)) {
+      expect(schema).not.toHaveProperty("x-tags");
+    }
+  });
+
+  it("documents what each Image route reads", async () => {
+    const operation = z.looseObject({
+      parameters: z.array(z.looseObject({ name: z.string() })).optional(),
+      requestBody: z
+        .looseObject({
+          content: z.record(z.string(), z.looseObject({ schema: z.unknown() })),
+        })
+        .optional(),
+    });
+    const { paths } = z
+      .object({ paths: z.record(z.string(), z.record(z.string(), operation)) })
+      .parse(await fullSpec());
+    const images = paths[API.PATH.IMAGES];
+    const json = (method: string) =>
+      images?.[method]?.requestBody?.content[HTTP.CONTENT_TYPE.JSON]?.schema;
+
+    expect(images?.get?.parameters?.map(({ name }) => name)).toEqual([
+      "app",
+      "cursor",
+      "limit",
+    ]);
+    expect(images?.post?.requestBody?.content).toHaveProperty(
+      [
+        HTTP.CONTENT_TYPE.MULTIPART_FORM_DATA,
+        "schema",
+        "properties",
+        "meta",
+        "items",
+      ],
+      { $ref: `${SCHEMA_REF}ImageUpload` }
+    );
+    expect(images?.post?.requestBody?.content).toHaveProperty(
+      [
+        HTTP.CONTENT_TYPE.MULTIPART_FORM_DATA,
+        "schema",
+        "properties",
+        "file",
+        "items",
+        "format",
+      ],
+      "binary"
+    );
+    expect(json("patch")).toMatchObject({
+      items: { $ref: `${SCHEMA_REF}ImageChange` },
+    });
+    expect(json("delete")).toEqual({ $ref: `${SCHEMA_REF}ImageDelete` });
   });
 });
 
@@ -113,22 +211,26 @@ describe("GET /openapi.json error responses", () => {
   const problemSpecSchema = z.object({
     components: z.object({
       responses: z.record(z.string(), z.unknown()),
-      schemas: z.record(
-        z.string(),
-        z.looseObject({
-          properties: z.looseObject({
-            code: z.looseObject({ enum: z.array(z.string()) }),
-            status: z.looseObject({}),
-          }),
-        })
+      schemas: z.looseObject(
+        objectFromEntries(
+          API.ERROR.STATUS.map(
+            (status) =>
+              [
+                problemResponseName(status),
+                z.looseObject({
+                  properties: z.looseObject({
+                    code: z.looseObject({ enum: z.array(z.string()) }),
+                    status: z.looseObject({}),
+                  }),
+                }),
+              ] as const
+          )
+        )
       ),
     }),
     paths: z.record(z.string(), z.record(z.string(), z.unknown())),
   });
-  const document = async () =>
-    problemSpecSchema.parse(
-      await (await createApp(appDeps()).request(API.PATH.OPENAPI)).json()
-    );
+  const document = async () => problemSpecSchema.parse(await fullSpec());
 
   it("lists, for each status, only the codes sent with it", async () => {
     const { components } = await document();

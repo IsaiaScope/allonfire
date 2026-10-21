@@ -4,6 +4,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import {
+  currentSection,
   isCurrentSection,
   SECTION,
   SECTIONS,
@@ -52,5 +53,13 @@ describe("Sections", () => {
     expect(isCurrentSection(users, SECTION.USERS.path)).toBe(true);
     expect(isCurrentSection(users, SECTION.HOME.path)).toBe(false);
     expect(isCurrentSection(METADATA.PATH.ROOT, SECTION.HOME.path)).toBe(true);
+  });
+
+  it("finds the Section you are on, Home for any other path", () => {
+    expect(currentSection(sectionHref(SECTION.USERS.path))).toBe(SECTION.USERS);
+    expect(currentSection(METADATA.PATH.ROOT)).toBe(SECTION.HOME);
+    expect(currentSection(`${SECTION.USERS.path}${SECTION.STORAGE.path}`)).toBe(
+      SECTION.HOME
+    );
   });
 });

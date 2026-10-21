@@ -44,6 +44,7 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
     [
       `NEXT_PUBLIC_API_URL="${LOCAL.URL.API}"`,
       `BACK_OFFICE_URL="${LOCAL.URL.BACK_OFFICE}"`,
+      `LAURA_URL="${LOCAL.URL.LAURA}"`,
       `API_AUTH_URL="${LOCAL.URL.API}${API_PATH.AUTH}"`,
       `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
     ],

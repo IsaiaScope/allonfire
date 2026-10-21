@@ -23,7 +23,7 @@ the VPS and nothing costs money.
 | OpenObserve UI | `observe.isaiariva.com`, behind the `admin-gate@file` Traefik middleware |
 | OTLP ingest | internal docker network only, never published |
 | OpenObserve storage | MinIO bucket, 14-day retention |
-| Umami | `analytics.isaiariva.com`, `umami` database on the Dokploy Postgres |
+| Umami | `analytics.isaiariva.com`, `analytics` database on the Dokploy Postgres |
 | Memory caps | OpenObserve 768 MB, Umami 384 MB |
 | Images | pinned, same tags as Local |
 
@@ -37,9 +37,9 @@ docs:
   ```yaml
   ZO_LOCAL_MODE_STORAGE: s3
   ZO_S3_PROVIDER: minio
-  ZO_S3_SERVER_URL: http://minio:9000
+  ZO_S3_SERVER_URL: http://storage:9000
   ZO_S3_REGION_NAME: us-east-1
-  ZO_S3_BUCKET_NAME: openobserve
+  ZO_S3_BUCKET_NAME: telemetry
   ZO_S3_ACCESS_KEY: ${OO_S3_ACCESS_KEY}
   ZO_S3_SECRET_KEY: ${OO_S3_SECRET_KEY}
   ZO_COMPACT_DATA_RETENTION_DAYS: "14"
@@ -63,13 +63,13 @@ docs:
   `cf-connecting-ip` first and a client can send those.
 - **Umami secrets and role.** A random `APP_SECRET` (unset, Umami derives it from
   `DATABASE_URL`), a 64-hex-character `TWO_FACTOR_ENCRYPTION_KEY`, and a
-  dedicated `umami` Postgres role instead of the superuser. `DISABLE_TELEMETRY`,
+  dedicated `analytics` Postgres role instead of the superuser. `DISABLE_TELEMETRY`,
   `DISABLE_UPDATES` and `PRIVATE_MODE`, as in Local.
 - **Umami admin.** No official env var or CLI sets the first login. Local renames
-  it by SQL (`umami-user-init`); Production changes the password in Settings →
+  it by SQL (`analytics-init`); Production changes the password in Settings →
   Profile instead of committing a bcrypt hash.
 - **Upgrades.** Umami runs `prisma migrate deploy` on every start, so bumping its
-  tag migrates the database: `pg_dump umami` first.
+  tag migrates the database: `pg_dump analytics` first.
 
 ## Consequences
 

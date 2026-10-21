@@ -30,6 +30,8 @@
   },
   "Navigation": {
     "account": "Account",
+    "apps": "App",
+    "breadcrumb": "Percorso",
     "home": "Home",
     "language": "Lingua",
     "menu": "Menu principale",
@@ -40,7 +42,10 @@
     },
     "signOut": "Esci",
     "storage": "Archivio",
-    "theme": "Cambia tema",
+    "switchApp": "Cambia App",
+    "theme": "Tema",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
     "toggleMenu": "Comprimi o espandi il menu",
     "users": "Utenti"
   },

@@ -1,20 +1,18 @@
 import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import {
-  invalidHook,
-  validationError,
-} from "@allonfire/core/features/errors/coded-error";
+import { invalidHook } from "@allonfire/core/features/errors/coded-error";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { ImageLinksById } from "@allonfire/database/features/image/image.service";
-import { sValidator } from "@hono/standard-validator";
 import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
+import { validator } from "hono-openapi";
 import { IMAGE } from "../../constants/image";
 import { toImageBody } from "../../constants/schemas";
 import {
   deleteBodySchema,
   patchBodySchema,
+  toUploadItems,
   uploadFormSchema,
 } from "../constants/schemas";
 import {
@@ -54,17 +52,12 @@ export const uploadHandlers = (deps: ImageDeps) =>
         throw tooLarge(IMAGE.LIMIT.UPLOAD_BYTES);
       },
     }),
+    // `meta` is JSON text on the wire; the docs show what it holds.
+    validator("form", uploadFormSchema, invalidHook, {
+      options: { io: "output" },
+    }),
     async (c) => {
-      const form = await c.req.parseBody({ all: true });
-      // One `file` part parses to a File, several to an array.
-      const parsed = uploadFormSchema.safeParse({
-        file: [form.file].flat(),
-        meta: form.meta,
-      });
-      if (!parsed.success) {
-        throw validationError(parsed.error.issues);
-      }
-      const items = parsed.data;
+      const items = toUploadItems(c.req.valid("form"));
       const { user } = c.get(AUTH.VAR.SESSION);
       authoriseUpload(user, items);
       if (items.some(({ file }) => file.size > IMAGE.LIMIT.FILE_BYTES)) {
@@ -109,7 +102,7 @@ export const patchHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     patchRoute,
     requireSession(),
-    sValidator("json", patchBodySchema, invalidHook),
+    validator("json", patchBodySchema, invalidHook),
     async (c) => {
       const changes = c.req.valid("json");
       const { user } = c.get(AUTH.VAR.SESSION);
@@ -129,7 +122,7 @@ export const deleteHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     deleteRoute,
     requireSession(),
-    sValidator("json", deleteBodySchema, invalidHook),
+    validator("json", deleteBodySchema, invalidHook),
     async (c) => {
       const { app, ids } = c.req.valid("json");
       const { user } = c.get(AUTH.VAR.SESSION);

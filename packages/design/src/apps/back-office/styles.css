@@ -20,6 +20,13 @@
   display: none;
 }
 
+/* Japanese is only ever decoration here (the App ships no Japanese), so a
+   drag or a long press never selects a kanji. Safari still needs the prefix. */
+[lang="ja"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Toasts as wide as the Install hint's one-row layout needs (Sonner's own
    356px is narrower). Sonner's stylesheet is unlayered, so a utility class
    loses to it: this rule outranks it by one attribute instead. On a phone

@@ -16,8 +16,8 @@ export type Section = {
 };
 
 /**
- * The Back Office's Sections, in menu order: the sidebar, the tab bar and the
- * proxy's sign-in gate all read this one list, and a test checks that every
+ * The Back Office's Sections, in menu order: the sidebar and the proxy's
+ * sign-in gate both read this one list, and a test checks that every
  * page under `(signed-in)` is in it and gates itself. A path follows the
  * locale; Home's is empty (`AUTH.PAGE.HOME`).
  */
@@ -44,3 +44,7 @@ export const sectionHref = (path: string) => path || METADATA.PATH.ROOT;
  */
 export const isCurrentSection = (pathname: string, path: string) =>
   pathname === sectionHref(path);
+
+/** The Section `pathname` is on; Home when it is none of them. */
+export const currentSection = (pathname: string): Section =>
+  SECTIONS.find(({ path }) => isCurrentSection(pathname, path)) ?? SECTION.HOME;

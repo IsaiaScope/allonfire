@@ -2,7 +2,7 @@
 
 import { AOFButton } from "@allonfire/ui/components/aof-button";
 import type { ReactNode } from "react";
-import { STATION_NOTICE_ACTION } from "@/shared/components/station-notice";
+import { stationNoticeAction } from "@/shared/components/station-notice";
 
 const reload = () => location.reload();
 
@@ -11,7 +11,7 @@ const reload = () => location.reload();
  * Offline page at the address that failed, so a reload is the retry.
  */
 export const ReloadButton = ({ children }: { children: ReactNode }) => (
-  <AOFButton className={STATION_NOTICE_ACTION} onClick={reload} type="button">
+  <AOFButton className={stationNoticeAction()} onClick={reload} type="button">
     {children}
   </AOFButton>
 );

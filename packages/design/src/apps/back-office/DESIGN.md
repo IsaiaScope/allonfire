@@ -202,7 +202,9 @@ they name.
 - **Hanko Vermilion** (朱肉, seal ink): the hanko and the eki stamp, nothing
   else.
 - **Tactile Yellow**: the raised tactile paving, with its dot pattern
-  (`pattern-tactile-dots`). Defined, unused by the shipped pages.
+  (`pattern-tactile-dots`). In the Back Office's sidebar it marks only the
+  current Section, a bar along its left edge and a faint wash behind the
+  row; the sidebar's own edge stays a neutral border.
 
 ### Neutral
 

@@ -45,8 +45,18 @@ describe("authOpenApi", () => {
   it("carries every component group so $refs still resolve", async () => {
     const fragment = await authOpenApi(auth);
     expect(fragment.components).toEqual({
-      schemas: { User: { type: "object" } },
+      schemas: { User: expect.objectContaining({ type: "object" }) },
       securitySchemes: { bearerAuth: { type: "http" } },
     });
+  });
+
+  it("leaves every Model untagged, so the docs list them apart", async () => {
+    const fragment = await authOpenApi(auth);
+    expect(fragment.components).toHaveProperty(["schemas", "User"]);
+    expect(fragment.components).not.toHaveProperty([
+      "schemas",
+      "User",
+      "x-tags",
+    ]);
   });
 });

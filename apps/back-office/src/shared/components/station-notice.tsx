@@ -21,10 +21,11 @@ const rise = cva(
 );
 
 /** A notice's action (a button or a link) with a kanji brushed inside it. */
-export const STATION_NOTICE_ACTION =
-  "relative isolate h-11 min-w-64 overflow-hidden px-8 font-bold text-base";
+export const stationNoticeAction = cva(
+  "relative isolate h-11 min-w-64 overflow-hidden px-8 font-bold text-base"
+);
 
-/** The kanji brushed in a notice's action (`STATION_NOTICE_ACTION`). */
+/** The kanji brushed in a notice's action (`stationNoticeAction`). */
 export const StationNoticeKanji = ({ kanji }: { kanji: string }) => (
   <BrushKanji className="right-2 text-6xl" kanji={kanji} placement="button" />
 );

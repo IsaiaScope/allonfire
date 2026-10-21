@@ -102,7 +102,7 @@ the setup Production runs. After changing a source file, run
 
 Locally, `image:setup` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
 
-The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket (the Back Office reads it at build, for the rewrite). It is readable by key and never listable: `minio-init` sets a `s3:GetObject`-only anonymous policy in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket with that policy, only when missing. Do not use `mc anonymous set download`: it also allows listing every key.
+The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket (the Back Office reads it at build, for the rewrite). It is readable by key and never listable: `storage-init` sets a `s3:GetObject`-only anonymous policy in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket with that policy, only when missing. Do not use `mc anonymous set download`: it also allows listing every key.
 
 ## 🔧 Usage
 
@@ -124,6 +124,7 @@ await putImageObject(`${crypto.randomUUID()}${IMAGE.FORMAT.EXTENSION}`, image.bu
 | `sharp` | Decoding, orienting, resizing, AVIF and WebP encoding |
 | `heic-decode` | HEIC decoding (libheif in WebAssembly): the prebuilt sharp leaves HEVC out |
 | `@allonfire/auth`, `@allonfire/database`, `@allonfire/core` | Guards and Session, the Image rows, shared constants and `CodedError` |
-| `hono` (peer), `hono-openapi`, `@hono/standard-validator` | The Image module |
+| `hono` (peer), `hono-openapi` | The Image module: its routes, and the validators that check each request and document it |
+| `@hono/standard-validator` | hono-openapi's peer: its `validator` wraps `sValidator`, which it imports even though its manifest calls it optional |
 | `next` (optional peer, types only) | `withStorageImages` |
 | `@t3-oss/env-core`, `zod` | Environment validation |

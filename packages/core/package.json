@@ -58,6 +58,7 @@
     "check-types": "tsc --noEmit",
     "i18n:check": "i18n-check --locales src/features/next/i18n/translations --source en",
     "pwa:build": "tsx src/features/next/pwa/cli.ts",
+    "tailwind:canonicalize": "tsx src/features/tailwind/canonicalize.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -68,6 +69,8 @@
   "devDependencies": {
     "@allonfire/config": "workspace:*",
     "@lingual/i18n-check": "^0.9.5",
+    "@tailwindcss/node": "^4.3.3",
+    "@tailwindcss/oxide": "^4.3.3",
     "@tanstack/react-query": "^5.103.2",
     "@tanstack/react-query-devtools": "^5.103.2",
     "@types/react": "^19.3.0",

@@ -10,9 +10,8 @@
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
-    "canonicalize": "tsx scripts/canonicalize.ts",
-    "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "canonicalize": "pnpm --filter @allonfire/core tailwind:canonicalize --css packages/shadcn/src/styles/globals.css --dir packages/shadcn/src/components --dir packages/shadcn/src/hooks --dir packages/shadcn/src/lib",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -34,15 +33,11 @@
   },
   "devDependencies": {
     "@allonfire/config": "workspace:*",
-    "@tailwindcss/node": "^4.3.3",
-    "@tailwindcss/oxide": "^4.3.3",
     "@types/node": "^22.13.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.19.0",
-    "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "typescript": "~6.0.3"
   },
   "peerDependencies": {
     "react": "^19.0.0",

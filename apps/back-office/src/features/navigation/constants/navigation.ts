@@ -1,5 +1,6 @@
 // nuqs/server: the parsers without nuqs' "use client" entry, so a Server
 // Component (the frame's layout) can read them too.
+import { Role } from "@allonfire/database/enums";
 import { createParser } from "nuqs/server";
 
 /** The frame's state in the address. */
@@ -12,6 +13,15 @@ export const NAVIGATION = {
     /** `false` when the desktop sidebar is collapsed to its icons. */
     SIDEBAR: "sidebar",
   },
+  /**
+   * The seal pressed beside the User in the account menu: their Role in the
+   * Back Office as an office stamp (管理 manage, 利用 use, 閲覧 view).
+   */
+  ROLE_SEAL: {
+    [Role.ADMIN]: "管理",
+    [Role.USER]: "利用",
+    [Role.VIEWER]: "閲覧",
+  } satisfies Record<Role, string>,
 } as const;
 
 /** The only values the address may hold for the sidebar. */

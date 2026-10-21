@@ -170,7 +170,7 @@ and reads `PRODUCT.md`/`DESIGN.md` only by walking up from the App, ignoring
   `packages/ui/src/components/aof-<name>.tsx` with a test, composing shadcn
   components. Never import `@allonfire/shadcn` outside `packages/ui`, never
   edit `packages/shadcn`: a missing primitive is `npx shadcn@4.21.0 add <name>`
-  from `apps/back-office`, then `pnpm --filter @allonfire/shadcn canonicalize`.
+  from `apps/back-office`, then `pnpm --filter @allonfire/shadcn canonicalize` (core's Tailwind rewrite).
 - Mobile-first. Every image carries width and height (a static import gives
   both). Framer Motion for anything beyond a CSS transition.
 
@@ -230,11 +230,31 @@ for reduced motion (WCAG 2.2.2).
 - Station furniture stays night in both themes through a scoped `.dark`.
 - Language and theme controls share one capsule: bottom right on a phone,
   bottom left of the form column on desktop.
-- The signed-in frame: on desktop a sidebar drawn as the App's line (after
-  React Bits' Branched Menu): a trunk, each Section a curved branch, the way
-  to the current Section drawn in the line colour (410ms, `motion-safe`); on
-  a phone a tab bar, the current tab marked by the line along its top. The
-  account menu opens from an initial on a black tile.
+- The signed-in frame is shadcn's `sidebar-07` dressed as a station line,
+  following light and dark (2026-10-21; the earlier branched-line sidebar
+  and phone tab bar were rejected): the App switcher headed like a station
+  sign (the App's tile, the line colour as a rule under it), the current
+  Section marked by the tactile paving's yellow along its left edge and a
+  faint wash of it (the frame's only yellow: a yellow sidebar edge read too
+  strong, so the edge is shadcn's plain border), the account's initial on a
+  foreground tile. On a phone the same sidebar is a drawer from the header's
+  menu button, padded to the notch and the home indicator. Text and icons a
+  little larger than shadcn's for every pointer (the owner asked): labels
+  16px, second lines 14px, sidebar rows 40px, the header's menu button
+  36px with a 20px icon, but icons and the segmented switches stay shadcn's (16px icons, 14px
+  segment text: larger read too heavy); on any touch screen (`pointer-coarse:`, phone and tablet
+  alike) rows and menu items grow to 44px and icons to 20px. Folded to
+  icons the rail is 52px (`AOFSidebarProvider`), every square 36px with an
+  18px icon, the logo and avatar 36px too. The account's
+  initial sits on a primary tile. The sidebar's wall carries faint brush kanji (線 乗 着 駅) down
+  its whole height, cut by its edges. The account menu repeats no avatar
+  (its trigger shows one): the name, the email, the Role on a chip
+  (`AOFBadge`, the Design's primary) and its seal (管理), then language and
+  theme as segmented choices, the current one in the primary colour, kept
+  under the pointer. Every menu row shows the pointer cursor. `?sidebar=false` paints collapsed from the first frame
+  (`AOFSidebar`'s `collapsedBy` pre-paint script), never open then shut.
+  Classes are never a bare string constant: a `cva` (its states as variants)
+  or inline in `cn`.
 
 **Server-first, client at the leaf.** Pages and their components stay Server
 Components. When

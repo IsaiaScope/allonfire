@@ -8,7 +8,7 @@ The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
 
 ```bash
 cp .env.example .env
-pnpm --filter @allonfire/api dev      # starts Redis, OpenObserve and MinIO via predev, then tsx watch
+pnpm --filter @allonfire/api dev      # starts the redis, telemetry and storage services via predev, then tsx watch
 ```
 
 Then: `http://localhost:3300/health`, `/ready`, `/reference`.
@@ -82,7 +82,7 @@ rewrite.
   otherwise). A batch with one Image the User cannot see answers 404, before
   any 403, and writes nothing.
 - **Readable by key, never listable.** The `image` bucket carries an anonymous
-  policy allowing only `s3:GetObject` on `image/*`: Locally `minio-init`
+  policy allowing only `s3:GetObject` on `image/*`: Locally `storage-init`
   applies it with `mc anonymous set-json`, in Production the one-shot
   `storage-setup` does (`setupImageBucket`), as does every test run's bucket. Never
   `mc anonymous set download`: it also grants `ListBucket`, which would list

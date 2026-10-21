@@ -1,7 +1,7 @@
 // @module-tag unit
 import { renderToStaticMarkup } from "react-dom/server";
+import { Hanko } from "@/shared/components/hanko";
 import { DepartureBoard } from "../departure-board";
-import { Hanko } from "../hanko";
 
 const STATUS = /aria-live="polite"[^>]*>Signing in…</;
 

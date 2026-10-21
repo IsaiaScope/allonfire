@@ -25,7 +25,7 @@
     "db:status": "pnpm --filter @allonfire/database db:status",
     "db:update": "pnpm --filter @allonfire/database db:update",
     "design:sync": "pnpm --filter @allonfire/design design:sync",
-    "dev": "pnpm docker:up && turbo run dev test //#test:ui --continue --ui=tui",
+    "dev": "pnpm docker:up && { pnpm -s dev:tailscale || echo \"Tailscale is off: the Apps answer on localhost only\"; } && trap \"pnpm -s dev:tailscale:off >/dev/null 2>&1\" EXIT INT TERM && turbo run dev test //#test:ui --continue --ui=tui",
     "dev:setup": "pnpm docker:up && pnpm db:generate && pnpm db:update && pnpm db:seed && pnpm --filter @allonfire/storage image:setup",
     "dev:tailscale": "tailscale serve --service=svc:back-office --https=443 http://localhost:3400 && tailscale serve --service=svc:laura --https=443 http://localhost:3200 && tailscale serve status",
     "dev:tailscale:off": "tailscale serve reset",
@@ -36,6 +36,7 @@
     "lint": "ultracite check --error-on-warnings && oxlint --type-aware",
     "lint:fix": "ultracite fix",
     "prepare": "husky",
+    "tailwind:check": "turbo run tailwind:check",
     "test": "turbo run test",
     "test:browser": "turbo run test:browser",
     "test:browser:headed": "pnpm -r --workspace-concurrency=1 run test:browser:headed",
@@ -68,6 +69,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}": [
+      "pnpm --filter @allonfire/back-office tailwind:canonicalize",
       "biome check --write --no-errors-on-unmatched --error-on-warnings --files-ignore-unknown=true"
     ]
   },

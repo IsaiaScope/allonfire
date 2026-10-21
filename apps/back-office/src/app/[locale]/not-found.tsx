@@ -5,9 +5,9 @@ import { getTranslations } from "next-intl/server";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
 import { Link } from "@/features/i18n/navigation";
 import {
-  STATION_NOTICE_ACTION,
   StationNotice,
   StationNoticeKanji,
+  stationNoticeAction,
 } from "@/shared/components/station-notice";
 
 // not-found.js takes no metadata exports (only global-not-found does), so
@@ -20,7 +20,7 @@ const NotFound = async () => {
     <StationNotice
       action={
         <Link
-          className={cn(aofButtonVariants(), STATION_NOTICE_ACTION)}
+          className={cn(aofButtonVariants(), stationNoticeAction())}
           href={METADATA.PATH.ROOT}
         >
           <StationNoticeKanji kanji={ERROR_SIGNAGE.NOT_FOUND.BACK_KANJI} />

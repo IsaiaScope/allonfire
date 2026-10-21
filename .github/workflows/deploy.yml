@@ -84,9 +84,9 @@ jobs:
           target: ${{ matrix.unit == 'api' && 'node-runner' || '' }}
           build-args: |
             APP_NAME=${{ matrix.unit }}
-            STORAGE_ENDPOINT=${{ secrets.PROD_STORAGE_ENDPOINT }}
-            NEXT_PUBLIC_API_URL=${{ secrets.PROD_NEXT_PUBLIC_API_URL }}
-            BACK_OFFICE_URL=${{ secrets.PROD_BACK_OFFICE_URL }}
+            STORAGE_ENDPOINT=${{ secrets.STORAGE_ENDPOINT }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            BACK_OFFICE_URL=${{ secrets.BACK_OFFICE_URL }}
           push: true
           provenance: false
           sbom: false

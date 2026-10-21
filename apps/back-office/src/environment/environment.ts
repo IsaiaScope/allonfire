@@ -11,6 +11,8 @@ export const env = createEnv({
      */
     NEXT_PUBLIC_API_URL: z.url(),
   },
+  // An empty value reads as unset, so `LAURA_URL=` hides Laura.
+  emptyStringAsUndefined: true,
   experimental__runtimeEnv: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NODE_ENV: process.env.NODE_ENV,
@@ -24,6 +26,11 @@ export const env = createEnv({
      * request), so both must carry the same value.
      */
     BACK_OFFICE_URL: z.url(),
+    /**
+     * Laura's public address, for the App switcher. Unset (or empty), Laura
+     * is not listed: it is not deployed yet.
+     */
+    LAURA_URL: z.url().optional(),
   },
   shared: runtimeEnvSchema,
 });

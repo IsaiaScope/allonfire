@@ -2,9 +2,9 @@
 import { STORAGE } from "../../../../shared/constants/paths";
 import { withStorageImages } from "../with-storage-images";
 
-const ORIGIN = { origin: "http://minio:9000" };
+const ORIGIN = { origin: "http://storage:9000" };
 const IMAGE_REWRITE = {
-  destination: "http://minio:9000/image/:key",
+  destination: "http://storage:9000/image/:key",
   source: `${STORAGE.PATH.IMAGE_PROXY}/:key`,
 };
 const IMAGE_PATTERN = {
@@ -56,13 +56,13 @@ describe("withStorageImages", () => {
     expect(await config.rewrites?.()).toEqual([
       {
         ...IMAGE_REWRITE,
-        destination: "http://minio:9000/allonfire-test-x/:key",
+        destination: "http://storage:9000/allonfire-test-x/:key",
       },
     ]);
   });
 
   it("ignores trailing slashes on the origin", async () => {
-    const config = withStorageImages({}, { origin: "http://minio:9000//" });
+    const config = withStorageImages({}, { origin: "http://storage:9000//" });
     expect(await config.rewrites?.()).toEqual([IMAGE_REWRITE]);
   });
 

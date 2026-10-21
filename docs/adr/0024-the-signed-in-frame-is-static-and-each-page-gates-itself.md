@@ -1,11 +1,12 @@
 # The signed-in frame is static, and each page gates itself
 
-An App's signed-in Sections share one frame: the main menu, the top bar and
-the phone tab bar, drawn by the `(signed-in)` route group's layout. The frame
-is static: built at build time, the same for everyone, holding no data and
-reading no Session. Each page then checks the Session itself
-(`withAppSession`) and renders only once it passes. The account menu in the
-frame reads the Session on its own, behind its own `<Suspense>`.
+An App's signed-in Sections share one frame: the main menu (a sidebar that
+collapses to icons, a drawer on a phone) and the header, drawn by the
+`(signed-in)` route group's layout. The frame is static: built at build time,
+the same for everyone, holding no data and reading no Session. Each page then
+checks the Session itself (`withAppSession`) and renders only once it passes.
+The App switcher and the account menu in the frame each read the Session on
+their own, behind their own `<Suspense>`.
 
 ## Why
 

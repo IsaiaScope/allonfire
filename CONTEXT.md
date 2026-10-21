@@ -24,6 +24,11 @@ An area of an App reached from its main menu. The Back Office's are Home,
 Users and Storage; Home is the one a User lands on after Sign in.
 _Avoid_: page (a page is a route, and a Section can hold several), tab, module
 
+**App switcher**:
+The menu at the top of an App's main menu that names the App you are in and
+lists the other Apps you are allowed into, each a link to that App.
+_Avoid_: team switcher, workspace switcher
+
 **Design system**:
 Everything an App draws its interface from: shadcn components, AOF components,
 and the Designs. Apps reach shadcn only through AOF components, never
@@ -215,3 +220,8 @@ _Avoid_: monitoring, APM
 **Analytics**:
 Events describing what people do in an App.
 _Avoid_: tracking, telemetry
+
+**Workflow**:
+An automation that runs outside the Apps and the API, on a schedule or when
+something happens.
+_Avoid_: n8n, job, cron (for the concept)

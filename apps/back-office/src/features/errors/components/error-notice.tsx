@@ -3,9 +3,9 @@ import { AOFButton } from "@allonfire/ui/components/aof-button";
 import type { createTranslator } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
 import {
-  STATION_NOTICE_ACTION,
   StationNotice,
   StationNoticeKanji,
+  stationNoticeAction,
 } from "@/shared/components/station-notice";
 
 /** The boundary's `Common.Error` translator: `useTranslations` or `createTranslator`. */
@@ -33,7 +33,7 @@ export const ErrorNotice = ({ error, retry, t }: ErrorNoticeProps) => (
   <StationNotice
     action={
       <AOFButton
-        className={STATION_NOTICE_ACTION}
+        className={stationNoticeAction()}
         onClick={retry}
         type="button"
       >

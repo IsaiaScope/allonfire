@@ -30,6 +30,8 @@
   },
   "Navigation": {
     "account": "Account",
+    "apps": "Apps",
+    "breadcrumb": "Breadcrumb",
     "home": "Home",
     "language": "Language",
     "menu": "Main menu",
@@ -40,7 +42,10 @@
     },
     "signOut": "Sign out",
     "storage": "Storage",
-    "theme": "Switch theme",
+    "switchApp": "Switch App",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
     "toggleMenu": "Collapse or expand the menu",
     "users": "Users"
   },
