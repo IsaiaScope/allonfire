@@ -11,11 +11,11 @@ import {
   AOFSidebarMenuButton,
   AOFSidebarMenuItem,
 } from "@allonfire/ui/components/aof-sidebar";
-import { ArrowUpRight, ChevronsUpDown } from "lucide-react";
+import { IconArrowUpRight, IconCaretUpDown } from "@tabler/icons-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import type { SwitcherApp } from "../constants/apps";
 import { AppTile } from "./app-tile";
-import { CurrentAppMark } from "./current-app-mark";
+import { CurrentAppMark, switcherButton } from "./current-app-mark";
 
 export type AppSwitcherMenuProps = {
   /** The other Apps the User is allowed into; at least one. */
@@ -37,14 +37,13 @@ export const AppSwitcherMenu = ({ apps, labels }: AppSwitcherMenuProps) => (
           render={
             <AOFSidebarMenuButton
               aria-label={`${labels.switchApp}, ${BACK_OFFICE.NAME}`}
-              // 56px, so the 44px tile keeps 6px above and below.
-              className="h-14 gap-3"
+              className={switcherButton()}
               size="lg"
             />
           }
         >
           <CurrentAppMark />
-          <ChevronsUpDown aria-hidden className="ml-auto" />
+          <IconCaretUpDown aria-hidden className="ml-auto" />
         </AOFDropdownMenuTrigger>
         <AOFSidebarDropdownContent align="start">
           <AOFDropdownMenuGroup>
@@ -62,7 +61,7 @@ export const AppSwitcherMenu = ({ apps, labels }: AppSwitcherMenuProps) => (
                   <span className="font-medium">{name}</span>
                   <span className="text-muted-foreground text-xs">{host}</span>
                 </span>
-                <ArrowUpRight
+                <IconArrowUpRight
                   aria-hidden
                   className="ml-2 text-muted-foreground"
                 />

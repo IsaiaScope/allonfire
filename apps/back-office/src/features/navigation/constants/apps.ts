@@ -1,24 +1,6 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
-import type { AppLogo } from "@allonfire/design/brand/aof-logo";
-import { Images, type LucideIcon } from "lucide-react";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
-
-/** An App's mark: its Brand logo, or a pictogram. */
-export type AppMark = { icon: LucideIcon } | { logo: AppLogo };
-
-/**
- * How the App switcher draws each App: its name and its mark. Keyed by
- * `App`, so a new App fails here until it is listed.
- * ponytail: Laura's pictogram until its rebuild brings a Brand logo.
- */
-export const APP_ENTRY = {
-  [App.BACK_OFFICE]: {
-    mark: { logo: BACK_OFFICE.LOGO },
-    name: BACK_OFFICE.NAME,
-  },
-  [App.LAURA]: { mark: { icon: Images }, name: "Laura" },
-} as const satisfies Record<App, { mark: AppMark; name: string }>;
+import { APP_ENTRY } from "@/shared/constants/apps";
 
 /** One entry of the switcher's menu. */
 export type SwitcherApp = {

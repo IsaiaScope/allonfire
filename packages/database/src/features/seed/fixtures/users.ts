@@ -11,7 +11,8 @@ import type { SeedUser } from "../seed-user";
  */
 export const PASSWORD = "fixture-password-1";
 
-const DOMAIN = "allonfire.test";
+/** The Fixtures' email domain; nothing else in a Test database uses it. */
+export const DOMAIN = "allonfire.test";
 const slug = (value: string) => value.toLowerCase().replaceAll("_", "-");
 
 const gridUser = (app: App, role: Role): SeedUser => {

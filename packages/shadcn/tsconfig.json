@@ -15,5 +15,11 @@
     },
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Vendor files not written for strict TypeScript, checked instead by the
+  // lenient src/components/tsconfig.json, which lists the same files. Their
+  // importers read each one's generated .d.ts (`pnpm vendor:types`, the
+  // `types` condition of the components export) and stay strict. A guard test
+  // (packages/ui shadcn-compat) fails when the two lists drift.
+  "exclude": ["src/components/GooeyNav.tsx"]
 }

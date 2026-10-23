@@ -4,7 +4,8 @@
 // undefined, which is where the Back Office's server runs.
 
 import { readFileSync } from "node:fs";
-import { API_PATH, LOCAL } from "@allonfire/config/local/addresses";
+import { API } from "@allonfire/api/shared/constants/api";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { parseJson } from "@allonfire/core/shared/utils/json";
 import { App } from "@allonfire/database/enums";
 import { z } from "zod";
@@ -17,6 +18,7 @@ const turboSchema = z.object({
 });
 /** Every variable `next build` validates: Turbo drops any it does not list. */
 const BUILD_VARIABLES = [
+  "API_URL",
   "BACK_OFFICE_URL",
   "NEXT_PUBLIC_API_URL",
   "STORAGE_ENDPOINT",
@@ -26,9 +28,10 @@ beforeEach(() => {
   vi.resetModules();
   vi.stubEnv("STORAGE_ENDPOINT", undefined);
   vi.stubEnv("AUTH_APP", App.BACK_OFFICE);
-  vi.stubEnv("API_AUTH_URL", `${LOCAL.URL.API}${API_PATH.AUTH}`);
+  vi.stubEnv("API_AUTH_URL", `${LOCAL.URL.API}${API.PATH.AUTH}`);
   vi.stubEnv("NEXT_PUBLIC_API_URL", LOCAL.URL.API);
   vi.stubEnv("BACK_OFFICE_URL", LOCAL.URL.BACK_OFFICE);
+  vi.stubEnv("API_URL", LOCAL.URL.API);
 });
 
 describe("environment", () => {
@@ -50,6 +53,16 @@ describe("environment", () => {
     );
   });
 
+  it.each([
+    ["without the API's server address", undefined],
+    ["with an API address that is not a URL", "not-a-url"],
+  ])("refuses to start %s", async (_, value) => {
+    vi.stubEnv("API_URL", value);
+    await expect(import("../environment")).rejects.toThrow(
+      "Invalid environment variables"
+    );
+  });
+
   it("lets Turbo hand the build every variable it validates", () => {
     // The App's zod parses: a schema crosses no package (CLAUDE.md).
     const turbo = turboSchema.parse(
@@ -62,6 +75,16 @@ describe("environment", () => {
   it("refuses a build without STORAGE_ENDPOINT", async () => {
     await expect(import("../build-environment")).rejects.toThrow(
       "Invalid environment variables"
+    );
+  });
+
+  it("points .env.example at the API's own Auth path", () => {
+    const example = readFileSync(
+      new URL("../../../.env.example", import.meta.url),
+      "utf8"
+    );
+    expect(example).toContain(
+      `API_AUTH_URL="${LOCAL.URL.API}${API.PATH.AUTH}"`
     );
   });
 });

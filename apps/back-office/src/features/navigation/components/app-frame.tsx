@@ -14,10 +14,13 @@ import {
 } from "@allonfire/ui/components/aof-sidebar";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
+import { Torii } from "@/shared/components/torii";
 import { NAVIGATION, sidebarParam } from "../constants/navigation";
 import { SECTIONS } from "../constants/sections";
+
 import { CloseDrawerOnNavigate } from "./close-drawer-on-navigate";
 import { FrameBreadcrumb } from "./frame-breadcrumb";
+import { HeaderKanji } from "./header-kanji";
 import { SidebarSectionLink } from "./section-link";
 import { SidebarKanji } from "./sidebar-kanji";
 import { SidebarParam } from "./sidebar-param";
@@ -53,13 +56,14 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
           param: NAVIGATION.PARAM.SIDEBAR,
           value: sidebarParam.serialize(false),
         }}
+        label={t("menu")}
       >
         <SidebarKanji />
         {/* The station sign's band: the App's line under its name, level
               with the page header's line. On a phone the drawer runs to the
               screen's edges: keep clear of the notch above and the home
               indicator below. */}
-        <AOFSidebarHeader className="relative justify-center border-line border-b-2 max-md:pt-[max(--spacing(3),env(safe-area-inset-top))] max-md:pb-3 md:h-18 md:py-0">
+        <AOFSidebarHeader className="relative justify-center border-line/50 border-b-2 max-md:pt-[max(--spacing(3),env(safe-area-inset-top))] max-md:pb-3 md:h-16 md:py-0">
           {switcher}
         </AOFSidebarHeader>
         <AOFSidebarContent className="relative">
@@ -85,13 +89,17 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
         <AOFSidebarRail aria-hidden title={t("toggleMenu")} />
       </AOFSidebar>
       <AOFSidebarInset>
-        <header className="flex h-18 shrink-0 items-center gap-2 border-b px-4">
+        {/* The sidebar header's line runs on across the page's: one station
+            sign, the App's line under it. */}
+        <header className="relative isolate flex h-16 shrink-0 items-center gap-2 border-line/50 border-b-2 px-4">
+          <HeaderKanji />
           <AOFSidebarTrigger aria-label={t("toggleMenu")} className="-ml-1" />
           <AOFSeparator
             className="mr-2 data-vertical:h-4 data-vertical:self-auto"
             orientation="vertical"
           />
           <FrameBreadcrumb />
+          <Torii className="ml-auto" />
         </header>
         {children}
       </AOFSidebarInset>

@@ -3,6 +3,11 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@allonfire/shadcn/components/sheet";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -14,11 +19,15 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
-  SidebarTrigger,
   useSidebar,
 } from "@allonfire/shadcn/components/sidebar";
+import {
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+} from "@tabler/icons-react";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "../lib/utils";
+import { AOFButton, type AOFButtonProps } from "./aof-button";
 import { AOFDropdownMenuContent } from "./aof-dropdown-menu";
 
 type Collapsible = NonNullable<ComponentProps<typeof Sidebar>["collapsible"]>;
@@ -84,7 +93,36 @@ const CollapsedOnArrival = ({
   );
 };
 
+/**
+ * The phone's drawer, as shadcn draws it, but named by the App: shadcn's
+ * own sheet is titled "Sidebar" in English whatever the page's language.
+ */
+const AOFSidebarSheet = ({
+  children,
+  label,
+  side = "left",
+}: Pick<AOFSidebarProps, "children" | "label" | "side">) => {
+  const { openMobile, setOpenMobile } = useSidebar();
+  return (
+    <Sheet onOpenChange={setOpenMobile} open={openMobile}>
+      <SheetContent
+        // shadcn's phone width, 18rem.
+        className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [--sidebar-width:18rem] [&>button]:hidden"
+        data-mobile="true"
+        data-sidebar="sidebar"
+        data-slot="sidebar"
+        side={side}
+      >
+        <SheetTitle className="sr-only">{label}</SheetTitle>
+        <div className="flex h-full w-full flex-col">{children}</div>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
 export type AOFSidebarProps = ComponentProps<typeof Sidebar> & {
+  /** The menu's name, in the page's language: the phone drawer's title. */
+  label: string;
   /**
    * The App's address param for the sidebar's state: given, a page loaded
    * with it collapsed draws the sidebar collapsed from the first paint. The
@@ -102,9 +140,17 @@ export type AOFSidebarProps = ComponentProps<typeof Sidebar> & {
 export const AOFSidebar = ({
   collapsedBy,
   collapsible = "icon",
+  label,
   ...props
 }: AOFSidebarProps) => {
-  const sidebar = <Sidebar collapsible={collapsible} {...props} />;
+  const { isMobile } = useSidebar();
+  const sidebar = isMobile ? (
+    <AOFSidebarSheet label={label} side={props.side}>
+      {props.children}
+    </AOFSidebarSheet>
+  ) : (
+    <Sidebar collapsible={collapsible} {...props} />
+  );
   return collapsedBy ? (
     <CollapsedOnArrival by={collapsedBy} collapsible={collapsible}>
       {sidebar}
@@ -145,19 +191,49 @@ export const AOFSidebarMenuButton = ({
   />
 );
 
-/** The menu's button: 36px with a 20px icon for a mouse, the tap target on a touch screen. */
+/**
+ * The menu's button: 36px with a 20px icon for a mouse, the tap target on a
+ * touch screen. It says whether the menu is open (`aria-expanded`): the
+ * drawer on a phone, the expanded sidebar on desktop, and its icon points
+ * the way a click moves the sidebar. shadcn's
+ * `SidebarTrigger` with the frame's own icon, which shadcn's hard-codes
+ * beside an English "Toggle Sidebar"; the App names it in its language.
+ */
 export const AOFSidebarTrigger = ({
   className,
+  onClick,
   ...props
-}: ComponentProps<typeof SidebarTrigger>) => (
-  <SidebarTrigger
-    className={cn(
-      "pointer-coarse:size-(--tap-target) size-9 [&_svg:not([class*='size-'])]:size-5",
-      className
-    )}
-    {...props}
-  />
-);
+}: AOFButtonProps & { "aria-label": string }) => {
+  const { isMobile, open, openMobile, toggleSidebar } = useSidebar();
+  // ponytail: React state, so a page opened folded (`collapsedBy`) shows
+  // the collapse icon until hydration; CSS on the wrapper's data-state if
+  // that frame ever shows.
+  const expanded = isMobile ? openMobile : open;
+  const Icon = expanded
+    ? IconLayoutSidebarLeftCollapse
+    : IconLayoutSidebarLeftExpand;
+  const toggle: AOFButtonProps["onClick"] = (event) => {
+    onClick?.(event);
+    toggleSidebar();
+  };
+  return (
+    <AOFButton
+      aria-expanded={expanded}
+      className={cn(
+        "pointer-coarse:size-(--tap-target) size-9 [&_svg:not([class*='size-'])]:size-5",
+        className
+      )}
+      data-sidebar="trigger"
+      data-slot="sidebar-trigger"
+      onClick={toggle}
+      size="icon-sm"
+      variant="ghost"
+      {...props}
+    >
+      <Icon aria-hidden />
+    </AOFButton>
+  );
+};
 
 /**
  * The rail the sidebar folds to: 52px (shadcn's is 48px), room for its 36px

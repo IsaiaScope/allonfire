@@ -2,10 +2,15 @@
 import { canonicalizeSource } from "../canonicalize-source";
 
 const CANONICAL: Record<string, string> = {
+  "!animate": "animate!",
+  "!flex": "flex!",
+  "!list": "list!",
   "data-open:rounded-[4px]": "data-open:rounded-lg",
   "rounded-[4px]": "rounded-lg",
   "w-[16px]": "w-4",
 };
+/** A template literal's placeholder, as source text. */
+const HOLE = ["$", "{a}"].join("");
 const canonicalize = (candidate: string) => CANONICAL[candidate] ?? candidate;
 
 describe("canonicalizeSource", () => {
@@ -21,6 +26,21 @@ describe("canonicalizeSource", () => {
         'const a = <div className="p-2 rounded-lg" />;',
         'const b = cn("w-4", open && "data-open:rounded-lg");',
         'const c = cva("flex", { variants: { size: { sm: "w-4" } } });',
+      ].join("\n")
+    );
+  });
+
+  it("rewrites only inside strings: `!list` in code is a negation, not a class", () => {
+    const source = [
+      "if (!stage || !list || !animate || !ready) return;",
+      'const a = "!flex";',
+      `const b = \`${HOLE} !flex\`;`,
+    ].join("\n");
+    expect(canonicalizeSource(source, "tsx", canonicalize)).toBe(
+      [
+        "if (!stage || !list || !animate || !ready) return;",
+        'const a = "flex!";',
+        `const b = \`${HOLE} flex!\`;`,
       ].join("\n")
     );
   });

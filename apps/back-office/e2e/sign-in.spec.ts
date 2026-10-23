@@ -33,6 +33,17 @@ test("an Admin signs in, lands home, and stays signed in after a reload", async 
   await expect(page).toHaveURL(HOME_URL);
 });
 
+test("a signed-in Admin who opens Sign in is sent home", async ({ page }) => {
+  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
+  await expect(page).toHaveURL(HOME_URL);
+  await page.goto(AUTH.PAGE.SIGN_IN);
+  await expect(page).toHaveURL(HOME_URL);
+  // The redirect lands client-side: Next may keep a hidden copy of Home.
+  await expect(
+    page.getByText(EN.Home.description).filter({ visible: true })
+  ).toBeVisible();
+});
+
 for (const user of [
   FIXTURE.USER.BACK_OFFICE.USER,
   FIXTURE.USER.BACK_OFFICE.VIEWER,
@@ -64,6 +75,9 @@ test("signing out returns to sign-in and keeps home closed", async ({
     .filter({ visible: true })
     .click();
   await page.getByRole("menuitem", { name: EN.Navigation.signOut }).click();
+  await expect(page).toHaveURL(SIGN_IN_URL);
+  // The browser kept the signed-in pages a while: Back must not show them.
+  await page.goBack();
   await expect(page).toHaveURL(SIGN_IN_URL);
   await page.goto("/");
   await expect(page).toHaveURL(SIGN_IN_URL);

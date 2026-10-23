@@ -1,5 +1,6 @@
 "use client";
 
+import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import {
   AOFAvatar,
@@ -23,7 +24,13 @@ import {
   AOFSidebarMenuItem,
 } from "@allonfire/ui/components/aof-sidebar";
 import { useAOFColorScheme } from "@allonfire/ui/lib/use-aof-theme-switch";
-import { ChevronsUpDown, LogOut, Moon, Sun } from "lucide-react";
+import {
+  IconCaretUpDown,
+  IconLogout,
+  IconMoonStars,
+  IconSun,
+} from "@tabler/icons-react";
+import { useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
 import { languageLinks, usePathname } from "@/features/i18n/navigation";
@@ -70,7 +77,7 @@ type IdentityProps = { email: string; name: string };
 const Identity = ({ email, name }: IdentityProps) => (
   <>
     {/* The name's initial on a tile in the Design's primary colour. */}
-    <AOFAvatar className="rounded-lg after:hidden group-data-[collapsible=icon]:size-9">
+    <AOFAvatar className="rounded-lg after:hidden group-data-[collapsible=icon]:mx-0.5 group-data-[collapsible=icon]:size-8">
       <AOFAvatarFallback className="rounded-lg bg-primary font-semibold text-primary-foreground">
         {name.charAt(0).toUpperCase()}
       </AOFAvatarFallback>
@@ -98,7 +105,12 @@ export const AccountMenu = ({
   seal,
 }: AccountMenuProps) => {
   const locale = useLocale();
-  const links = languageLinks(usePathname(), locale);
+  // The query too: switching language keeps a filtered list filtered.
+  const links = languageLinks(
+    usePathname(),
+    locale,
+    useSearchParams().toString()
+  );
   const { scheme, setScheme } = useAOFColorScheme();
   return (
     <AOFSidebarMenu>
@@ -113,7 +125,7 @@ export const AccountMenu = ({
             }
           >
             <Identity email={email} name={name} />
-            <ChevronsUpDown aria-hidden className="ml-auto size-4" />
+            <IconCaretUpDown aria-hidden className="ml-auto size-4" />
           </AOFDropdownMenuTrigger>
           <AOFSidebarDropdownContent align="end">
             <AOFDropdownMenuGroup>
@@ -143,6 +155,8 @@ export const AccountMenu = ({
                 {links.map(({ attributes, language }) => (
                   <AOFDropdownMenuSegment
                     key={language}
+                    // Named in its own language, never read as two letters.
+                    label={languageName(language)}
                     render={<a {...attributes} />}
                     value={language}
                   >
@@ -157,26 +171,22 @@ export const AccountMenu = ({
                 onValueChange={setScheme}
                 value={scheme}
               >
-                <AOFDropdownMenuSegment
-                  aria-label={labels.themeLight}
-                  value={LIGHT}
-                >
-                  <Sun aria-hidden />
+                <AOFDropdownMenuSegment label={labels.themeLight} value={LIGHT}>
+                  <IconSun aria-hidden />
                 </AOFDropdownMenuSegment>
-                <AOFDropdownMenuSegment
-                  aria-label={labels.themeDark}
-                  value={DARK}
-                >
-                  <Moon aria-hidden />
+                <AOFDropdownMenuSegment label={labels.themeDark} value={DARK}>
+                  <IconMoonStars aria-hidden />
                 </AOFDropdownMenuSegment>
               </AOFDropdownMenuSegments>
             </ChoiceRow>
             <AOFDropdownMenuSeparator />
+            {/* Sign out on the right: where the menu ends. */}
             <AOFDropdownMenuItem
+              className="ml-auto w-fit"
               nativeButton
               render={<button form={NAVIGATION.FORM.SIGN_OUT} type="submit" />}
             >
-              <LogOut aria-hidden />
+              <IconLogout aria-hidden />
               {labels.signOut}
             </AOFDropdownMenuItem>
           </AOFSidebarDropdownContent>

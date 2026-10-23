@@ -1,5 +1,6 @@
 // @module-tag integration
 
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
@@ -12,8 +13,6 @@ import { SECTION, SECTIONS, sectionHref } from "../../constants/sections";
 import { AppFrame } from "../app-frame";
 
 const t = EN.Navigation;
-const DESKTOP = { HEIGHT: 800, WIDTH: 1280 } as const;
-const PHONE = { HEIGHT: 844, WIDTH: 390 } as const;
 
 /** The address the mocked router reports; a test moves it to navigate. */
 const at = { pathname: sectionHref(SECTION.USERS.path) };
@@ -46,7 +45,10 @@ afterEach(() => document.removeEventListener("click", stayPut));
 beforeEach(() => {
   document.addEventListener("click", stayPut);
   at.pathname = sectionHref(SECTION.USERS.path);
-  return page.viewport(DESKTOP.WIDTH, DESKTOP.HEIGHT);
+  return page.viewport(
+    SCREEN.VIEWPORT.DESKTOP.WIDTH,
+    SCREEN.VIEWPORT.DESKTOP.HEIGHT
+  );
 });
 
 describe("FrameBreadcrumb", () => {
@@ -58,6 +60,14 @@ describe("FrameBreadcrumb", () => {
     await expect
       .element(breadcrumb().getByText(t.users))
       .toHaveAttribute("aria-current", "page");
+  });
+
+  it("links the Section from a page under it, back to the Section", async () => {
+    at.pathname = `${sectionHref(SECTION.USERS.path)}/new`;
+    await render(frame());
+    await expect
+      .element(breadcrumb().getByRole("link", { name: t.users }))
+      .toHaveAttribute("href", sectionHref(SECTION.USERS.path));
   });
 
   it("shows one crumb on Home", async () => {
@@ -90,8 +100,37 @@ describe("AppFrame", () => {
     );
   });
 
+  it("names the phone drawer and says when it is open", async () => {
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
+    const screen = await render(frame());
+    const toggle = screen.getByRole("button", { name: t.toggleMenu });
+    await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
+    // The drawer is modal: once open, the page behind it, the button
+    // included, leaves the accessibility tree, so hold the button itself.
+    const button = toggle.element();
+    await toggle.click();
+    await expect
+      .element(page.getByRole("dialog", { exact: true, name: t.menu }))
+      .toBeVisible();
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("says whether the desktop sidebar is expanded", async () => {
+    await render(frame());
+    const toggle = page.getByRole("button", { name: t.toggleMenu });
+    await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
+    await toggle.click();
+    await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("closes the phone drawer on navigation", async () => {
-    await page.viewport(PHONE.WIDTH, PHONE.HEIGHT);
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
     const screen = await render(frame());
     await screen.getByRole("button", { name: t.toggleMenu }).click();
     await expect.element(page.getByRole("dialog")).toBeVisible();
@@ -101,7 +140,10 @@ describe("AppFrame", () => {
   });
 
   it("closes the phone drawer when the Section you are on is tapped", async () => {
-    await page.viewport(PHONE.WIDTH, PHONE.HEIGHT);
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
     const screen = await render(frame());
     await screen.getByRole("button", { name: t.toggleMenu }).click();
     // The keyboard, not a pointer: without the App's styles Base UI's

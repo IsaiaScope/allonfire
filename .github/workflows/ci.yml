@@ -204,6 +204,8 @@ jobs:
       STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       BACK_OFFICE_URL: ${{ secrets.BACK_OFFICE_URL }}
+      # The Back Office's server address of the API: validated at build, never called.
+      API_URL: http://build.placeholder
       STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
       STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
     steps:

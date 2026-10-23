@@ -56,9 +56,98 @@
     }
   },
   "Users": {
+    "column": {
+      "created": "Created",
+      "email": "Email"
+    },
     "empty": {
-      "description": "The list of Users and their Roles arrives with the Users API.",
-      "title": "No Users yet"
+      "description": "Try another email, App or Role.",
+      "title": "No Users match"
+    },
+    "error": {
+      "description": "Check the connection, then try again.",
+      "retry": "Try again",
+      "title": "The Users could not be loaded"
+    },
+    "filter": {
+      "anyApp": "All Apps",
+      "anyRole": "All Roles",
+      "app": "App",
+      "empty": "No match",
+      "reset": "Reset",
+      "role": "Role",
+      "search": "Search"
+    },
+    "list": "Users",
+    "loading": "Loading Users",
+    "noMembership": "Not a member",
+    "pagination": {
+      "first": "Go to first page",
+      "last": "Go to last page",
+      "next": "Go to next page",
+      "page": "Page {page} of {pageCount}",
+      "previous": "Go to previous page",
+      "rowsPerPage": "Rows per page"
+    },
+    "search": {
+      "label": "Search by email"
+    },
+    "detail": {
+      "description": "A User's Memberships and details arrive in a later version.",
+      "title": "User details are on their way"
+    },
+    "pastEnd": {
+      "description": "There are fewer pages than this one; the last page has the Users.",
+      "title": "This page is past the end"
+    },
+    "delete": {
+      "action": "Delete",
+      "cancel": "Cancel",
+      "clear": "Clear selection",
+      "confirm": "Delete",
+      "description": "Each User leaves every App, with their Sessions and Laura scores. This cannot be undone.",
+      "done": "{count, plural, one {# User deleted} other {# Users deleted}}",
+      "failed": "The Users could not be deleted. Try again.",
+      "select": "Select {email}",
+      "selectAll": "Select every User on this page",
+      "selected": "{count, plural, one {# selected} other {# selected}}",
+      "title": "{count, plural, one {Delete # User?} other {Delete # Users?}}"
+    },
+    "add": {
+      "button": "Add",
+      "cancel": "Cancel",
+      "confirmPassword": "Confirm password",
+      "email": "Email",
+      "error": {
+        "failed": "The User could not be added. Try again.",
+        "invalid": "Check the fields and try again.",
+        "taken": "This email already has an account"
+      },
+      "field": {
+        "emailInvalid": "Enter a valid email",
+        "emailRequired": "Enter an email",
+        "nameRequired": "Enter a name",
+        "passwordMismatch": "The passwords differ",
+        "passwordWeak": "Not every rule below is met yet"
+      },
+      "name": "Name",
+      "noRole": "Not a member",
+      "password": "Password",
+      "role": "Role in {app}",
+      "roles": "Roles",
+      "rule": {
+        "length": "At least {min} characters",
+        "lowercase": "A lowercase letter",
+        "match": "Both passwords match",
+        "number": "A number",
+        "symbol": "A symbol",
+        "uppercase": "An uppercase letter"
+      },
+      "rules": "The password needs",
+      "showPassword": "Show password",
+      "submit": "Add User",
+      "submitting": "Adding…",
+      "title": "Add a User"
     }
   }
 }

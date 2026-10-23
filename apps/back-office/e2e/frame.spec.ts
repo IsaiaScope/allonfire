@@ -1,4 +1,6 @@
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -14,6 +16,10 @@ import { onPhone, openSidebar, SIGN_IN_URL, signIn } from "./pages";
 
 const t = EN.Navigation;
 const ITALIAN = "it";
+/** Named in itself; WebKit capitalises it ("Italiano"). */
+const ITALIAN_NAME = new RegExp(`^${languageName(ITALIAN)}$`, "i");
+/** A filtered list's address, which switching language must keep. */
+const QUERY = `${USER.PARAM.SEARCH}=isa`;
 
 /** The menu on screen: the sidebar, or the drawer on a phone. */
 const menuOf = (page: Page) =>
@@ -57,14 +63,16 @@ test("moves between the Sections and marks the one you are on", async ({
   await visit(page, SECTION.HOME);
 });
 
-test("switching language stays on the Section", async ({ page }) => {
+test("switching language stays on the Section, query included", async ({
+  page,
+}) => {
   await signInAsAdmin(page);
-  await page.goto(SECTION.USERS.path);
+  await page.goto(`${SECTION.USERS.path}?${QUERY}`);
   await openAccountMenu(page);
-  await page
-    .getByRole("menuitemradio", { exact: true, name: ITALIAN.toUpperCase() })
-    .click();
-  await expect(page).toHaveURL(new RegExp(`/${ITALIAN}${SECTION.USERS.path}$`));
+  await page.getByRole("menuitemradio", { name: ITALIAN_NAME }).click();
+  await expect(page).toHaveURL(
+    new RegExp(`/${ITALIAN}${SECTION.USERS.path}\\?${QUERY}$`)
+  );
 });
 
 test("the sidebar's header names the Back Office as the App you are in", async ({

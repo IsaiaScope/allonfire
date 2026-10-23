@@ -12,6 +12,7 @@ import {
   shutdownTelemetry,
   startTelemetry,
 } from "./features/telemetry/telemetry";
+import { userDeps } from "./features/users/user-deps";
 import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
 
@@ -30,6 +31,7 @@ const app = createApp({
   checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
   images: imageDeps(logger),
   store: createRedisStore(redis),
+  users: userDeps(),
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>

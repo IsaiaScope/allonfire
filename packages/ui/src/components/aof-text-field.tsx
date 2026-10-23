@@ -1,7 +1,6 @@
 "use client";
 
 import { useSelector } from "@tanstack/react-form";
-import { cva, type VariantProps } from "class-variance-authority";
 import { Eye, EyeOff } from "lucide-react";
 import {
   type ChangeEvent,
@@ -19,52 +18,9 @@ import { AOFButton } from "./aof-button";
 import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
 
-// primary: the tall field a page leads with, its icon white on a dark tile
-// like station signage. Built on shadcn's tokens only, so any Design wears it.
-// Text longer than the box ends in an ellipsis while the field is not focused.
-const inputVariants = cva("text-ellipsis", {
-  defaultVariants: { variant: "default" },
-  variants: {
-    variant: { default: "", primary: "h-12 text-base md:text-base" },
-  },
-});
-const labelVariants = cva("", {
-  defaultVariants: { variant: "default" },
-  variants: { variant: { default: "", primary: "font-bold" } },
-});
-const iconVariants = cva(
-  "pointer-events-none absolute flex items-center justify-center",
-  {
-    defaultVariants: { variant: "default" },
-    variants: {
-      variant: {
-        default: "inset-y-0 left-0 w-8 text-muted-foreground *:size-4",
-        primary:
-          "dark inset-y-1.5 left-1.5 w-9 rounded-sm bg-background text-foreground *:size-5",
-      },
-    },
-  }
-);
-
-export type AOFTextFieldVariant = NonNullable<
-  VariantProps<typeof inputVariants>["variant"]
->;
-
-// Room for the icon tile, per variant.
-const ICON_PADDING = {
-  default: "pl-8",
-  primary: "pl-13",
-} as const satisfies Record<AOFTextFieldVariant, string>;
-
-// The reveal button sits at the input's end, its box matching the icon tile.
-const REVEAL_PADDING = {
-  default: "pr-8",
-  primary: "pr-12",
-} as const satisfies Record<AOFTextFieldVariant, string>;
-const REVEAL_BUTTON = {
-  default: "top-0 right-0",
-  primary: "top-1.5 right-1.5 size-9 *:size-5",
-} as const satisfies Record<AOFTextFieldVariant, string>;
+// The tall field of every AOF form, its icon white on a dark tile like station
+// signage. Built on shadcn's tokens only, so any Design wears it. Text longer
+// than the box ends in an ellipsis while the field is not focused.
 
 export type AOFTextFieldProps = Omit<
   AOFInputProps,
@@ -88,7 +44,6 @@ export type AOFTextFieldProps = Omit<
    * `aria-pressed` says which.
    */
   reveal?: string;
-  variant?: AOFTextFieldVariant;
 };
 
 /**
@@ -105,7 +60,6 @@ export const AOFTextField = ({
   label,
   reveal,
   type,
-  variant = "default",
   ...input
 }: AOFTextFieldProps) => {
   const [revealed, setRevealed] = useState(false);
@@ -143,12 +97,15 @@ export const AOFTextField = ({
   return (
     // One input needs no group: `role="none"` drops shadcn's unnamed one.
     <AOFField data-invalid={marked || undefined} role="none">
-      <AOFFieldLabel className={labelVariants({ variant })} htmlFor={inputId}>
+      <AOFFieldLabel className="font-bold" htmlFor={inputId}>
         {label}
       </AOFFieldLabel>
       <div className="relative">
         {icon ? (
-          <span aria-hidden="true" className={iconVariants({ variant })}>
+          <span
+            aria-hidden="true"
+            className="dark pointer-events-none absolute inset-y-1 left-1 flex w-9 items-center justify-center rounded-sm bg-background text-foreground *:size-5"
+          >
             {icon}
           </span>
         ) : null}
@@ -157,9 +114,9 @@ export const AOFTextField = ({
           aria-describedby={showsErrors ? errorId : undefined}
           aria-invalid={marked || undefined}
           className={cn(
-            inputVariants({ variant }),
-            icon && ICON_PADDING[variant],
-            reveal && REVEAL_PADDING[variant],
+            "h-11 text-ellipsis text-base md:text-base",
+            icon && "pl-13",
+            reveal && "pr-12",
             className
           )}
           id={inputId}
@@ -176,8 +133,7 @@ export const AOFTextField = ({
             aria-label={reveal}
             aria-pressed={revealed}
             className={cn(
-              "absolute text-muted-foreground",
-              REVEAL_BUTTON[variant]
+              "absolute top-1 right-1 size-9 text-muted-foreground *:size-5"
             )}
             onClick={toggleRevealed}
             size="icon"
@@ -188,7 +144,7 @@ export const AOFTextField = ({
           </AOFButton>
         ) : null}
       </div>
-      <div className="min-h-5">
+      <div className="min-h-6">
         <AOFFieldError errors={errors} id={errorId} />
       </div>
     </AOFField>

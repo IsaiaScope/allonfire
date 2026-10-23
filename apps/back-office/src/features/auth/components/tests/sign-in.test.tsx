@@ -35,6 +35,7 @@ const CURRENT_LANGUAGE = new RegExp(
 const EMAIL_LABEL = /<label[^>]*for="sign-in-email"[^>]*>Email</;
 const EMAIL_AUTOCOMPLETE = /<input[^>]*autoComplete="username"/;
 const PASSWORD_AUTOCOMPLETE = /<input[^>]*autoComplete="current-password"/;
+const EMPTY_ALERT = /role="alert"[^>]*><\/div>/;
 const ERROR_ALERT = /role="alert"[^>]*>.*Email or password is wrong\./;
 const INVALID_FIELD = /aria-invalid="true"/g;
 
@@ -88,7 +89,8 @@ describe("SignInForm", () => {
     expect(html).toMatch(EMAIL_AUTOCOMPLETE);
     expect(html).toMatch(PASSWORD_AUTOCOMPLETE);
     expect(html).toContain('type="submit"');
-    expect(html).not.toContain('role="alert"');
+    // The line stays, empty, so a refusal moves nothing.
+    expect(html).toMatch(EMPTY_ALERT);
   });
 
   it("shows an error as an alert and marks both fields", () => {

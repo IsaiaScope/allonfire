@@ -40,6 +40,7 @@ ARG BACK_OFFICE_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
     AUTH_URL="http://build.placeholder" \
+    API_URL="http://build.placeholder" \
     STORAGE_ENDPOINT=${STORAGE_ENDPOINT} \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     BACK_OFFICE_URL=${BACK_OFFICE_URL} \

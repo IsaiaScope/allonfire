@@ -3,7 +3,7 @@
 import { Role } from "@allonfire/database/enums";
 import { createParser } from "nuqs/server";
 
-/** The frame's state in the address. */
+/** The frame's own values: its forms, its state in the address, the Role seals. */
 export const NAVIGATION = {
   FORM: {
     /** The account menu's Sign out submits this form, outside its popup. */

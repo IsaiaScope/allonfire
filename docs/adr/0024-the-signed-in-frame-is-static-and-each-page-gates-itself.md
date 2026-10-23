@@ -37,3 +37,19 @@ their own, behind their own `<Suspense>`.
   boundary.
 - Every signed-in page is listed once by the App (its Sections), and a test
   checks that each page gates itself and that the proxy gates its path.
+
+## Amended 2026-10-23: the check runs beside the page
+
+With Cache Components every page behind the check waited on it, so each
+visit showed the loading screen first. Following Next's guide to
+authentication with Cache Components, `withAppSession` now runs the check
+beside the page, behind its own `<Suspense fallback={null}>`, and the check
+is `use cache: private`: the browser keeps a passed one for 30 minutes
+(`AUTH.SESSION.PAGE_CHECK_STALE_S`), never the server, and a redirect is never
+kept. A page with no request-time data of its own is in the static shell and
+paints at once; the page keeps its own `<Suspense>` for the data it reads.
+What changes: a visitor with a cookie the App refuses (an expired Session, a
+Role under the floor) can see a page's static frame for a moment before the
+redirect, as they already saw the frame's. Never its data: that still comes
+through the API, which checks every request. A Role taken away still shows
+pages for up to 30 minutes, with no data.

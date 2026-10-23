@@ -4,17 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./components/*": "./src/components/*.tsx",
+    "./components/*": {
+      "types": "./src/components/*.d.ts",
+      "default": "./src/components/*.tsx"
+    },
     "./hooks/*": "./src/hooks/*.ts",
     "./lib/*": "./src/lib/*.ts",
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
     "canonicalize": "pnpm --filter @allonfire/core tailwind:canonicalize --css packages/shadcn/src/styles/globals.css --dir packages/shadcn/src/components --dir packages/shadcn/src/hooks --dir packages/shadcn/src/lib",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit && tsc --noEmit -p src/components/tsconfig.json",
+    "vendor:types": "tsc -p src/components/tsconfig.json --noEmit false --declaration --emitDeclarationOnly --outDir src/components"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@base-ui/utils": "^0.5.0",
     "@shadcn/react": "^0.3.1",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",

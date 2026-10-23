@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { type AbstractIntlMessages, hasLocale } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
+import { DATE } from "../../i18n/constants/dates";
 import type { ContentLanguage, Language } from "../../i18n/constants/locales";
 import {
   SHARED_TRANSLATIONS,
@@ -27,7 +28,8 @@ type Options<L extends ContentLanguage> = {
 
 /**
  * next-intl's request config: the root-param locale, 404 on one not routed,
- * and the shared `Common` translations under the App's own. next-intl calls
+ * the shared `Common` translations under the App's own, and the date time
+ * zone and formats every App prints with (`DATE`). next-intl calls
  * them `messages`; that key is its API, every other name here says
  * translations.
  */
@@ -49,11 +51,13 @@ export const AOFGetRequestConfig = <L extends ContentLanguage>({
       notFound();
     }
     return {
+      formats: DATE.FORMATS,
       locale: requested,
       messages: {
         ...sharedText[requested],
         ...(await translations[requested]()),
       },
+      timeZone: DATE.TIME_ZONE,
     };
   });
 };

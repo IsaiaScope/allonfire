@@ -5,7 +5,7 @@ import {
   useAOFSidebar,
 } from "@allonfire/ui/components/aof-sidebar";
 import { cva } from "class-variance-authority";
-import { type ReactNode, useCallback } from "react";
+import { type ReactNode, Suspense, useCallback } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";
 import { isCurrentSection, sectionHref } from "../constants/sections";
 
@@ -40,12 +40,12 @@ export type SectionLinkProps = {
  * tooltip. A tap closes the phone's drawer, the Section you are on
  * included, where no navigation would close it.
  */
-export const SidebarSectionLink = ({
+const SectionRow = ({
   children,
+  current,
   label,
   path,
-}: SectionLinkProps) => {
-  const current = isCurrentSection(usePathname(), path);
+}: SectionLinkProps & { current: boolean }) => {
   const { setOpenMobile } = useAOFSidebar();
   const closeDrawer = useCallback(() => setOpenMobile(false), [setOpenMobile]);
   return (
@@ -66,3 +66,21 @@ export const SidebarSectionLink = ({
     </AOFSidebarMenuButton>
   );
 };
+
+const CurrentSectionLink = (props: SectionLinkProps) => (
+  <SectionRow
+    current={isCurrentSection(usePathname(), props.path)}
+    {...props}
+  />
+);
+
+/**
+ * The Section's row, marked when you are on it. Under a page whose address
+ * the build cannot know (`/users/<id>`), the pathname waits for the request:
+ * the row is prerendered unmarked and marked once it arrives.
+ */
+export const SidebarSectionLink = (props: SectionLinkProps) => (
+  <Suspense fallback={<SectionRow current={false} {...props} />}>
+    <CurrentSectionLink {...props} />
+  </Suspense>
+);

@@ -7,6 +7,8 @@ export type TranslationValues = {
   VALIDATION_FAILED: { count: number };
   UNAUTHORIZED: never;
   FORBIDDEN: never;
+  CANNOT_DELETE_SELF: never;
+  EMAIL_TAKEN: never;
   NOT_FOUND: never;
   RATE_LIMITED: { seconds: number };
   TIMEOUT: { seconds: number };

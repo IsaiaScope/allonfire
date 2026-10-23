@@ -128,6 +128,12 @@ today, any other kind of file later. Which provider holds them (MinIO today)
 is a detail only Storage knows.
 _Avoid_: MinIO, bucket, S3 (for the concept), media library
 
+**User module**:
+The part of the Auth module that lists, adds and deletes Users. Any Host
+mounts it and says who may list them and who may change them; the API lets in
+only Back Office Admins. Nobody can delete themselves through it.
+_Avoid_: Users module, user service, user admin
+
 **Image module**:
 The shared package that stores, lists, edits and deletes Images. Any Host
 mounts it and decides how its errors read; the API is the only one that does
@@ -155,6 +161,14 @@ paths, keys and file names, `signIn` / `SIGN_IN` in code — the names Better
 Auth uses for its own routes.
 _Avoid_: log in, log out, login, logout
 
+**User**:
+A person with one account in the shared user base, whatever Apps they belong
+to. A User with no Membership left still exists and is still listed.
+Deleting a User removes them from every App at once, with everything they
+hold there, and cannot be undone; removing them from one App ends a
+Membership and leaves the User.
+_Avoid_: account, member, customer
+
 **Membership**:
 A User's place in one App, with their Role there. A User holds one per App
 they belong to; nothing spans every App.
@@ -163,12 +177,15 @@ _Avoid_: Allowed apps, permissions, entitlements, account
 **Registration**:
 Becoming a User through an App that allows it, which gives a Membership in that
 App only. An existing User joins another such App the same way, once signed in.
-Each App says whether it allows it; the Back Office never does.
+Each App says whether it allows it; the Back Office never does. A User an
+Admin adds by hand did not register: they were added, with the Memberships the
+Admin chose.
 _Avoid_: sign-up (except in Better Auth's route names), enrolment, invite
 
 **Role**:
 What a User may do inside one App: Admin, User or Viewer. It belongs to a
-Membership, never to the User as a whole.
+Membership, never to the User as a whole. The Role named User is always
+written as a Role ("the User Role"), never as the person.
 _Avoid_: permission level, rank
 
 **Viewer**:

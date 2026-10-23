@@ -1,7 +1,8 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { App } from "@allonfire/database/enums";
-import { APP_ENTRY, switcherApps } from "../constants/apps";
+import { APP_ENTRY } from "@/shared/constants/apps";
+import { switcherApps } from "../constants/apps";
 
 const LAURA_ADDRESS = { [App.LAURA]: LOCAL.URL.LAURA };
 

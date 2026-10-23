@@ -1,6 +1,5 @@
-import { problemResponseRef } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponses } from "@allonfire/core/features/errors/constants/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { describeRoute, resolver } from "hono-openapi";
 import { z } from "zod";
 import { IMAGE } from "../../constants/image";
@@ -19,17 +18,6 @@ const imagesBody = {
   [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(z.array(imageBodySchema)) },
 };
 
-/**
- * Every error is the host's problem document (ADR 0015), one per status, so
- * the docs list only the codes that status carries.
- */
-const problems = <S extends number>(...statuses: S[]) =>
-  objectFromEntries(
-    statuses.map(
-      (status) => [status, { $ref: problemResponseRef(status) }] as const
-    )
-  );
-
 export const listRoute = describeRoute({
   description: IMAGE.DOC.LIST_DESCRIPTION,
   responses: {
@@ -37,7 +25,7 @@ export const listRoute = describeRoute({
       content: imageListBody,
       description: IMAGE.DOC.LIST_200,
     },
-    ...problems(HTTP.STATUS.BAD_REQUEST),
+    ...problemResponses(HTTP.STATUS.BAD_REQUEST),
   },
   summary: IMAGE.DOC.LIST_SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
@@ -50,7 +38,7 @@ export const getRoute = describeRoute({
       content: imageBody,
       description: IMAGE.DOC.GET_200,
     },
-    ...problems(HTTP.STATUS.NOT_FOUND),
+    ...problemResponses(HTTP.STATUS.NOT_FOUND),
   },
   summary: IMAGE.DOC.GET_SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
@@ -63,7 +51,7 @@ export const uploadRoute = describeRoute({
       content: imagesBody,
       description: IMAGE.DOC.UPLOAD_201,
     },
-    ...problems(
+    ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
@@ -83,7 +71,7 @@ export const patchRoute = describeRoute({
       content: imagesBody,
       description: IMAGE.DOC.PATCH_200,
     },
-    ...problems(
+    ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
@@ -98,7 +86,7 @@ export const deleteRoute = describeRoute({
   description: IMAGE.DOC.DELETE_DESCRIPTION,
   responses: {
     [HTTP.STATUS.NO_CONTENT]: { description: IMAGE.DOC.DELETE_204 },
-    ...problems(
+    ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,

@@ -11,6 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@allonfire/shadcn/components/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@allonfire/shadcn/components/tooltip";
 import type { ComponentProps } from "react";
 import { cn } from "../lib/utils";
 
@@ -61,22 +66,35 @@ export const AOFDropdownMenuSegments = ({
  * pointer; another one lifts a little. Every choice is the same 36 × 28px
  * (the tap target on a touch screen), a word or an icon alike, so rows of choices line
  * up. Render it as a link (`render={<a href=... />}`) when choosing it
- * navigates.
+ * navigates. `label` names it in full, for assistive tech and in a tooltip
+ * under the pointer: a choice shows only a short word or an icon.
  */
 export const AOFDropdownMenuSegment = ({
   className,
+  label,
   ...props
-}: ComponentProps<typeof DropdownMenuRadioItem>) => (
-  <DropdownMenuRadioItem
-    className={cn(
-      // 36 × 28px, the tap target on a touch screen.
-      "pointer-coarse:size-(--tap-target) h-7 w-9 cursor-pointer justify-center rounded-md px-0 pointer-coarse:text-base text-muted-foreground text-sm pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
-      // Another choice lifts under the pointer.
-      "focus:bg-background/60 focus:text-foreground focus:**:text-foreground",
-      // The current one, in primary, under the pointer too; no check mark.
-      "data-checked:bg-primary data-checked:text-primary-foreground data-checked:focus:bg-primary data-checked:focus:text-primary-foreground *:data-[slot=dropdown-menu-radio-item-indicator]:hidden data-checked:focus:**:text-primary-foreground",
-      className
-    )}
-    {...props}
-  />
-);
+}: ComponentProps<typeof DropdownMenuRadioItem> & { label?: string }) => {
+  const segment = (
+    <DropdownMenuRadioItem
+      aria-label={label}
+      className={cn(
+        // 36 × 28px, the tap target on a touch screen.
+        "pointer-coarse:size-(--tap-target) h-7 w-9 cursor-pointer justify-center rounded-md px-0 pointer-coarse:text-base text-muted-foreground text-sm pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
+        // Another choice darkens a little under the pointer, both themes.
+        "focus:bg-foreground/8 focus:text-foreground focus:**:text-foreground",
+        // The current one, in primary, under the pointer too; no check mark.
+        "data-checked:bg-primary data-checked:text-primary-foreground data-checked:focus:bg-primary data-checked:focus:text-primary-foreground *:data-[slot=dropdown-menu-radio-item-indicator]:hidden data-checked:focus:**:text-primary-foreground",
+        className
+      )}
+      {...props}
+    />
+  );
+  return label ? (
+    <Tooltip>
+      <TooltipTrigger render={segment} />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  ) : (
+    segment
+  );
+};

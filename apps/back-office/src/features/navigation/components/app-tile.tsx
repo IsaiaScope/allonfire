@@ -4,14 +4,14 @@ import { type AppLogo, aofLogoDataUrl } from "@allonfire/design/brand/aof-logo";
 import { AOFImage } from "@allonfire/ui/components/aof-image";
 import { cn } from "@allonfire/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import { APP_ENTRY } from "../constants/apps";
+import { APP_ENTRY } from "@/shared/constants/apps";
 
 const tile = cva("flex shrink-0 items-center justify-center", {
   defaultVariants: { size: "md" },
   variants: {
     size: {
       /** On the switcher's button. */
-      lg: "size-11 rounded-lg group-data-[collapsible=icon]:size-9",
+      lg: "size-12 rounded-lg group-data-[collapsible=icon]:size-9",
       /** In the switcher's menu, as the block's team rows. */
       md: "size-8 rounded-md border [&_svg]:size-4.5",
     },
@@ -19,10 +19,10 @@ const tile = cva("flex shrink-0 items-center justify-center", {
 });
 
 /**
- * The logo's side on the largest tile (`size-11`), drawn 1.2 times larger
+ * The logo's side on the largest tile (`size-12`), drawn 1.2 times larger
  * and cut by the tile: the square logo's empty frame would shrink its mark.
  */
-const LOGO_SIZE = 52;
+const LOGO_SIZE = 58;
 
 // One logo per theme, shown by the theme toggle's `.dark` class: `auto`
 // would follow the system.
@@ -41,20 +41,12 @@ const logoImage = cva("size-full max-w-none scale-120", {
 });
 
 /**
- * Each logo's images, built once per logo: inlined in the HTML, so the logo
- * paints with the frame. Flat: at this size the shadow is under a pixel, and
- * Safari blurred it.
+ * A logo's images, one per scheme: inlined in the HTML, so the logo paints
+ * with the frame. Flat: at this size the shadow is under a pixel, and Safari
+ * blurred it.
  */
-const LOGOS = new Map<
-  AppLogo,
-  { scheme: (typeof SCHEMES)[number]; src: string }[]
->();
-const logoImages = (logo: AppLogo) => {
-  const built = LOGOS.get(logo);
-  if (built) {
-    return built;
-  }
-  const images = SCHEMES.map((scheme) => ({
+const logoImages = (logo: AppLogo) =>
+  SCHEMES.map((scheme) => ({
     scheme,
     src: aofLogoDataUrl({
       app: logo,
@@ -63,9 +55,6 @@ const logoImages = (logo: AppLogo) => {
       scheme,
     }),
   }));
-  LOGOS.set(logo, images);
-  return images;
-};
 
 export type AppTileProps = VariantProps<typeof tile> & { app: App };
 

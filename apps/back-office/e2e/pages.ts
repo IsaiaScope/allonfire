@@ -1,4 +1,5 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -11,8 +12,8 @@ import IT from "../src/features/i18n/translations/it.json" with {
 /** Any locale's Sign in page. */
 export const SIGN_IN_URL = new RegExp(`${AUTH.PAGE.SIGN_IN}$`);
 
-/** Tailwind's `md`: below it the sidebar is a drawer behind the menu button. */
-const DESKTOP_WIDTH = 768;
+/** Below Tailwind's `md` the sidebar is a drawer behind the menu button. */
+const DESKTOP_WIDTH = SCREEN.BREAKPOINT.MD;
 
 /** Whether the page is as narrow as a phone, where the sidebar is a drawer. */
 export const onPhone = (page: Page) =>

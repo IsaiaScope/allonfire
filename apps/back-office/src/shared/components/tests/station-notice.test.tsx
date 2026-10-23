@@ -45,4 +45,16 @@ describe("StationNotice", () => {
   it("renders no action wrapper without an action", () => {
     expect(notice({})).not.toContain("motion-safe:delay-1000");
   });
+
+  it("stands still from the first frame without its entrance: a wait shows it all at once", () => {
+    const html = renderToStaticMarkup(
+      <StationNotice
+        action={<span>Back</span>}
+        entrance={false}
+        signage={SIGNAGE}
+      />
+    );
+    expect(html).not.toContain("motion-safe:animate-in");
+    expect(html).not.toContain("motion-safe:animate-stamp");
+  });
 });

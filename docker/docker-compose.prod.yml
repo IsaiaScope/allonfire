@@ -111,6 +111,7 @@ services:
         condition: service_healthy
     environment:
       - API_AUTH_URL=http://api:3000/v1/auth
+      - API_URL=http://api:3000
       - AUTH_APP=BACK_OFFICE
       - BACK_OFFICE_URL=${BACK_OFFICE_URL}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}

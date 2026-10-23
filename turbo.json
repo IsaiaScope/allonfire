@@ -26,7 +26,8 @@
         "STORAGE_ENDPOINT",
         "STORAGE_BUCKET",
         "NEXT_PUBLIC_API_URL",
-        "BACK_OFFICE_URL"
+        "BACK_OFFICE_URL",
+        "API_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],
       "outputs": [

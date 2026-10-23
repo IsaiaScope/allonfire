@@ -24,4 +24,11 @@ describe("AOFButton", () => {
     expect(classes).toContain("border-border");
     expect(classes).toContain("cursor-pointer");
   });
+
+  it("draws `field` at a field's height, so a form's buttons line up with its inputs", () => {
+    const html = renderToStaticMarkup(<AOFButton size="field">Save</AOFButton>);
+    expect(html).toContain("h-11");
+    expect(html).not.toContain("h-8");
+    expect(aofButtonVariants({ size: "field" })).toContain("h-11");
+  });
 });

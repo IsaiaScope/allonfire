@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./shared/constants/api": "./src/shared/constants/api.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

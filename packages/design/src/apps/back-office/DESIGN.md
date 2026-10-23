@@ -191,8 +191,10 @@ they name.
 - **Line colours**, one per App, from a palette: Line Green and Line Orange.
   Each App picks its own as `--line` in its styles.css (`bg-line`); the Back
   Office's is green. Used as bands, badges and route markers; never as text on
-  the ground, and green never carries white body text (3.2:1). No shipped Back
-  Office surface paints its line yet.
+  the ground, and green never carries white body text (3.2:1); near-black text
+  reads on it (5.5:1). **Line Green Deep** (`--line-green-deep`, #2e7a4f) is
+  the green calmer and deeper, for a filled control labelled in white (5.2:1):
+  the Back Office's chosen Role.
 
 ### Tertiary
 

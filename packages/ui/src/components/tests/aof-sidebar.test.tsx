@@ -15,7 +15,7 @@ describe("AOFSidebar", () => {
   it("opens expanded and collapses to icons", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebar>
+        <AOFSidebar label="Menu">
           <AOFSidebarContent>Sections</AOFSidebarContent>
         </AOFSidebar>
         <AOFSidebarInset>Page</AOFSidebarInset>
@@ -30,7 +30,7 @@ describe("AOFSidebar", () => {
   it("groups its menu and draws the rail that toggles it", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebar>
+        <AOFSidebar label="Menu">
           <AOFSidebarGroup>Sections</AOFSidebarGroup>
           <AOFSidebarRail />
         </AOFSidebar>
@@ -55,7 +55,7 @@ describe("AOFSidebar", () => {
   it("grows the menu button to a finger's size on a touch screen", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebarTrigger />
+        <AOFSidebarTrigger aria-label="Toggle menu" />
       </AOFSidebarProvider>
     );
     expect(html).toContain("pointer-coarse:size-(--tap-target)");
@@ -86,7 +86,10 @@ describe("AOFSidebar", () => {
   it("draws the sidebar collapsed from the first paint when the address says so", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebar collapsedBy={{ param: "sidebar", value: "false" }}>
+        <AOFSidebar
+          collapsedBy={{ param: "sidebar", value: "false" }}
+          label="Menu"
+        >
           Sections
         </AOFSidebar>
       </AOFSidebarProvider>
@@ -104,7 +107,7 @@ describe("AOFSidebar", () => {
   it("adds no wrapper or script without an address to follow", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebar>Sections</AOFSidebar>
+        <AOFSidebar label="Menu">Sections</AOFSidebar>
       </AOFSidebarProvider>
     );
     expect(html).not.toContain("<script");

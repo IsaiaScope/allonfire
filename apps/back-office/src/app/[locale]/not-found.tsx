@@ -4,11 +4,8 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { getTranslations } from "next-intl/server";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
 import { Link } from "@/features/i18n/navigation";
-import {
-  StationNotice,
-  StationNoticeKanji,
-  stationNoticeAction,
-} from "@/shared/components/station-notice";
+import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { StationNotice } from "@/shared/components/station-notice";
 
 // not-found.js takes no metadata exports (only global-not-found does), so
 // the notice names the tab. A station the line does not have: its eki stamp
@@ -20,10 +17,10 @@ const NotFound = async () => {
     <StationNotice
       action={
         <Link
-          className={cn(aofButtonVariants(), stationNoticeAction())}
+          className={cn(aofButtonVariants({ size: "field" }), kanjiAction())}
           href={METADATA.PATH.ROOT}
         >
-          <StationNoticeKanji kanji={ERROR_SIGNAGE.NOT_FOUND.BACK_KANJI} />
+          <ActionKanji kanji={ERROR_SIGNAGE.NOT_FOUND.BACK_KANJI} />
           {t("back")}
         </Link>
       }

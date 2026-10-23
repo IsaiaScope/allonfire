@@ -1,5 +1,6 @@
 // @module-tag unit
 import { App, Role } from "@allonfire/database/enums";
+import { cacheLife } from "next/cache";
 import { AUTH } from "../../../shared/constants/auth";
 import { requireAppSession } from "../utils/session";
 
@@ -15,6 +16,7 @@ vi.mock("next-intl/server", () => ({ getLocale: async () => "it" }));
 vi.mock("@allonfire/core/features/next/api/forwarded-for", () => ({
   readVisitorHeaders: async () => ({ cookie: COOKIE }),
 }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`redirect ${url}`);
@@ -39,6 +41,14 @@ describe("requireAppSession", () => {
   it("hands the page the Session of someone this App lets in", async () => {
     apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
     expect((await requireAppSession()).user.email).toBe("someone@example.com");
+  });
+
+  it("is kept in the browser for the page check's stale time", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    await requireAppSession();
+    expect(cacheLife).toHaveBeenCalledWith({
+      stale: AUTH.SESSION.PAGE_CHECK_STALE_S,
+    });
   });
 
   it("sends someone this App refuses to Sign in", async () => {

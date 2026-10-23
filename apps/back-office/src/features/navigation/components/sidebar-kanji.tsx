@@ -21,14 +21,14 @@ const stroke = cva("", {
 });
 
 /**
- * The sidebar's wall: a layer behind its rows, clipped to the sidebar, gone
- * once it folds to its icons. The rows paint above it because they come
- * after it and are positioned (`relative`).
+ * The sidebar's wall: a layer behind its rows, clipped to the sidebar; folded
+ * to its icons, the rail keeps slivers of the same strokes. The rows paint
+ * above it because they come after it and are positioned (`relative`).
  */
 export const SidebarKanji = () => (
   <div
     aria-hidden
-    className="pointer-events-none absolute inset-0 overflow-hidden group-data-[collapsible=icon]:hidden"
+    className="pointer-events-none absolute inset-0 overflow-hidden"
   >
     {KANJI.map((kanji) => (
       <BrushKanji

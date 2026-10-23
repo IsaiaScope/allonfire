@@ -67,6 +67,10 @@
      never text on the ground. Each App picks its own as `--line` in its
      styles.css; the Design names no App. */
   --line-green: #00a650;
+  /* The green calmer and deeper, for a filled control that carries white
+     text (the chosen Role): white on --line-green is 3.2:1. */
+  --line-green-deep: #2e7a4f;
+  --line-green-deep-foreground: #ffffff;
   --line-orange: #f39700;
 
   /* Station furniture, the same by day and night (declared once, so `.dark`

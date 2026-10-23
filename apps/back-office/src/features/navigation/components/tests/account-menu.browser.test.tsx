@@ -1,4 +1,7 @@
 // @module-tag integration
+import { USER } from "@allonfire/auth/features/users/constants/users";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { AOFSidebarProvider } from "@allonfire/ui/components/aof-sidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { page, userEvent } from "vitest/browser";
@@ -8,9 +11,17 @@ import { NAVIGATION } from "../../constants/navigation";
 import { SECTION } from "../../constants/sections";
 import { AccountMenu } from "../account-menu";
 
+/** The page's query, which every language link keeps. */
+const QUERY = `${USER.PARAM.SEARCH}=isa`;
+
 vi.mock("@/features/i18n/navigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/i18n/navigation")>()),
   usePathname: () => SECTION.USERS.path,
+}));
+
+vi.mock("next/navigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/navigation")>()),
+  useSearchParams: () => new URLSearchParams(QUERY),
 }));
 
 const t = EN.Navigation;
@@ -21,7 +32,7 @@ const ITALIAN = "it";
 
 const renderMenu = () =>
   render(
-    <NextIntlClientProvider locale="en" messages={EN}>
+    <NextIntlClientProvider locale={I18N.DEFAULT_LANGUAGE} messages={EN}>
       <AOFSidebarProvider>
         <AccountMenu
           email={EMAIL}
@@ -57,20 +68,39 @@ describe("AccountMenu", () => {
     await expect.element(menu.getByText(t.role.ADMIN)).toBeVisible();
   });
 
-  it("links each language to the same Section, the current one checked", async () => {
+  it("links each language to the same Section and query, the current one checked", async () => {
     const screen = await renderMenu();
     await screen.getByRole("button", { name: t.account }).click();
+    // Each named in its own language, not read out as two letters.
     const italian = page.getByRole("menuitemradio", {
       exact: true,
-      name: ITALIAN.toUpperCase(),
+      name: languageName(ITALIAN),
     });
     await expect
       .element(italian)
-      .toHaveAttribute("href", `/${ITALIAN}${SECTION.USERS.path}`);
+      .toHaveAttribute("href", `/${ITALIAN}${SECTION.USERS.path}?${QUERY}`);
     await expect.element(italian).not.toBeChecked();
     await expect
-      .element(page.getByRole("menuitemradio", { exact: true, name: "EN" }))
+      .element(
+        page.getByRole("menuitemradio", {
+          exact: true,
+          name: languageName(I18N.DEFAULT_LANGUAGE),
+        })
+      )
       .toBeChecked();
+  });
+
+  it("names each choice in a tooltip under the pointer", async () => {
+    const screen = await renderMenu();
+    await screen.getByRole("button", { name: t.account }).click();
+    await page
+      .getByRole("group", { name: t.theme })
+      .getByRole("menuitemradio", { name: t.themeDark })
+      .hover();
+    // Base UI's tooltip popup carries no role: find it by its words.
+    await expect
+      .element(page.getByText(t.themeDark, { exact: true }))
+      .toBeVisible();
   });
 
   it("offers light and dark as one choice", async () => {

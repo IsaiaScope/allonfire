@@ -1,54 +1,38 @@
 // @module-tag unit
 import { renderToReadableStream, renderToStaticMarkup } from "react-dom/server";
+import { AUTH } from "../../../shared/constants/auth";
 import { withAppSession } from "../components/with-app-session";
 import { requireAppSession } from "../utils/session";
 
 vi.mock("../utils/session", () => ({ requireAppSession: vi.fn() }));
 
-const FALLBACK = "Waiting";
-const HEADING = "Home";
-/** How many times the page rendered: never before the check lets it. */
-const rendered = { count: 0 };
-const Page = ({ heading }: { heading: string }) => {
-  rendered.count += 1;
-  return <h1>{heading}</h1>;
-};
-const SignedInPage = withAppSession(Page, <p>{FALLBACK}</p>);
+const PAGE = "Add a User";
+const LOADING = "Loading";
+const REFUSED = new Error(`redirect /it${AUTH.PAGE.SIGN_IN}`);
 
-/** The page's HTML once everything it waits for has settled. */
-const renderSettled = async () => {
-  const stream = await renderToReadableStream(
-    <SignedInPage heading={HEADING} />,
-    { onError: () => undefined }
-  );
-  await stream.allReady;
-  return new Response(stream).text();
-};
-
-beforeEach(() => {
-  rendered.count = 0;
-});
+const Page = () => <h1>{PAGE}</h1>;
+const SignedInPage = withAppSession(Page, <p>{LOADING}</p>);
 
 describe("withAppSession", () => {
-  it("shows the fallback, never the page, while the check waits", () => {
+  it("draws the page while the Session check waits: it is in the static shell", () => {
     vi.mocked(requireAppSession).mockReturnValueOnce(
       new Promise(() => undefined)
     );
-    const html = renderToStaticMarkup(<SignedInPage heading={HEADING} />);
-    expect(html).toContain(FALLBACK);
-    expect(rendered.count).toBe(0);
+    const html = renderToStaticMarkup(<SignedInPage />);
+    expect(html).toContain(PAGE);
+    expect(html).not.toContain(LOADING);
   });
 
-  it("renders the page, with its props, once the check lets the visitor in", async () => {
-    vi.mocked(requireAppSession).mockResolvedValueOnce(Object.create(null));
-    expect(await renderSettled()).toContain(HEADING);
-  });
-
-  it("never renders the page when the check redirects", async () => {
-    vi.mocked(requireAppSession).mockRejectedValueOnce(
-      new Error("NEXT_REDIRECT")
-    );
-    await renderSettled();
-    expect(rendered.count).toBe(0);
+  it("runs the check on every render, and its refusal reaches the page's render", async () => {
+    vi.mocked(requireAppSession).mockRejectedValueOnce(REFUSED);
+    const errors: unknown[] = [];
+    const stream = await renderToReadableStream(<SignedInPage />, {
+      onError: (error) => {
+        errors.push(error);
+      },
+    });
+    await stream.allReady;
+    expect(requireAppSession).toHaveBeenCalled();
+    expect(errors).toEqual([REFUSED]);
   });
 });

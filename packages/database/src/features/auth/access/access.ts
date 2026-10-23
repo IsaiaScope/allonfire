@@ -24,14 +24,33 @@ export const roleIn = (user: AccessUser, app: App): Role | undefined =>
   user.memberships.find((membership) => membership.app === app)?.role;
 
 /**
+ * Whether a User holds at least `min` in `app`: a Membership there whose Role
+ * reaches it. `hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN)`.
+ */
+export const hasRoleIn = (user: AccessUser, app: App, min: Role): boolean => {
+  const role = roleIn(user, app);
+  return role !== undefined && hasRole(role, min);
+};
+
+/**
  * Whether a User is allowed into an App: they belong to it and their Role
  * there reaches the App's floor. The API's `requireApp` and sign-in check, a
  * Next App's `canAccess` and the Image module's reads all apply it.
  */
 export const canEnterApp = (user: AccessUser, app: App): boolean => {
   const settings: AppSettingsTable = ACCESS.APP_SETTINGS;
-  const role = roleIn(user, app);
-  return role !== undefined && hasRole(role, settings[app].minRole);
+  return hasRoleIn(user, app, settings[app].minRole);
+};
+
+/**
+ * The Roles that let someone into `app`, those reaching its floor, in the
+ * order the enum declares them: what a form offers for a Membership there.
+ */
+export const entryRoles = (app: App): Role[] => {
+  const settings: AppSettingsTable = ACCESS.APP_SETTINGS;
+  return objectValues(Role).filter((role) =>
+    hasRole(role, settings[app].minRole)
+  );
 };
 
 /** Whether a User places Images in `app`, takes them out or switches them public there: Admin in that App. */

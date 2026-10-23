@@ -1,7 +1,7 @@
 // @module-tag unit
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { API_PATH, LOCAL } from "../addresses";
+import { LOCAL } from "../addresses";
 
 const REPO = resolve(import.meta.dirname, "../../../..");
 const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
@@ -45,7 +45,7 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `NEXT_PUBLIC_API_URL="${LOCAL.URL.API}"`,
       `BACK_OFFICE_URL="${LOCAL.URL.BACK_OFFICE}"`,
       `LAURA_URL="${LOCAL.URL.LAURA}"`,
-      `API_AUTH_URL="${LOCAL.URL.API}${API_PATH.AUTH}"`,
+      `API_URL="${LOCAL.URL.API}"`,
       `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
     ],
   ],

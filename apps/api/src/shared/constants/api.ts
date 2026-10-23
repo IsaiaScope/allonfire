@@ -1,3 +1,4 @@
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
@@ -95,6 +96,8 @@ export const API = {
     REFERENCE: "/reference",
     /** Where sub-routers mount onto the base app. */
     ROOT: "/",
+    /** Where the User module mounts. */
+    USERS: `${VERSION_PATH}${USER.PATH.BASE}`,
     /** The version prefix every domain route mounts under. */
     VERSION: VERSION_PATH,
   },

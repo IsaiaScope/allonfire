@@ -15,6 +15,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
+// Someone already signed in never gets here: the proxy sends them Home.
 const SignInPage = () => <SignIn />;
 
 export default SignInPage;

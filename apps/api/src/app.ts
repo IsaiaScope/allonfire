@@ -1,5 +1,7 @@
 import { authRoutes } from "@allonfire/auth/features/hono/routes";
 import { sessionLoader } from "@allonfire/auth/features/hono/session/middleware/session-loader";
+import { userRoutes } from "@allonfire/auth/features/users/hono/routes";
+import type { UserDeps } from "@allonfire/auth/features/users/hono/utils/deps";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { imageRoutes } from "@allonfire/storage/features/image/hono/routes";
@@ -40,6 +42,8 @@ export type AppDeps = HealthDeps & {
   auth: AuthLike;
   /** Image storage and rows; tests stub them. */
   images: ImageDeps;
+  /** The User module's list and who may read it; tests stub them. */
+  users: UserDeps;
   /** Optional so tests can capture log output. Defaults to the shared logger. */
   logger?: Logger;
 };
@@ -84,7 +88,8 @@ export const createApp = (deps: AppDeps) => {
     .route(API.PATH.ROOT, authRoutes(deps.auth))
     // After the limiters, so a flood of requests never reaches the Session read.
     .use(sessionLoader(deps.auth))
-    .route(API.PATH.IMAGES, imageRoutes(deps.images));
+    .route(API.PATH.IMAGES, imageRoutes(deps.images))
+    .route(API.PATH.USERS, userRoutes(deps.users));
 
   return app
     .route(API.PATH.ROOT, docsRoutes(app, deps.auth))
