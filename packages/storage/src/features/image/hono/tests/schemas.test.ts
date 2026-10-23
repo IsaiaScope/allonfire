@@ -1,9 +1,12 @@
 // @module-tag unit
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App } from "@allonfire/database/enums";
 import {
   deleteBodySchema,
   listQuerySchema,
   patchBodySchema,
+  toUploadItems,
+  uploadFormSchema,
   uploadItemSchema,
 } from "../constants/schemas";
 
@@ -12,11 +15,17 @@ const LAURA_TWICE = [{ app: App.LAURA }, { app: App.LAURA, public: true }];
 
 describe("uploadItemSchema", () => {
   it("makes a placement sent without `public` private, and keeps one sent public", () => {
-    expect(
-      uploadItemSchema.parse({
+    const file = new File(["x"], "sea.jpg");
+    const meta = [
+      {
         alt: ALT,
         apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE, public: true }],
-      }).apps
+      },
+    ];
+    expect(
+      toUploadItems(
+        uploadFormSchema.parse({ file, meta: stringifyJson(meta) })
+      )[0]?.apps
     ).toEqual([
       { app: App.LAURA, public: false },
       { app: App.BACK_OFFICE, public: true },

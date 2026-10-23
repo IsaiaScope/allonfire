@@ -6,8 +6,8 @@ import {
   canSeeImage,
   enterableApps,
 } from "@allonfire/database/features/auth/access/access";
-import { sValidator } from "@hono/standard-validator";
 import { createFactory } from "hono/factory";
+import { validator } from "hono-openapi";
 import { toImageBody } from "../../constants/schemas";
 import {
   type ImageListBody,
@@ -29,7 +29,7 @@ const factory = createFactory<AuthEnv>();
 export const listHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     listRoute,
-    sValidator("query", listQuerySchema, invalidHook),
+    validator("query", listQuerySchema, invalidHook),
     async (c) => {
       const query = c.req.valid("query");
       const images = await deps.listImages({
@@ -50,7 +50,7 @@ export const listHandlers = (deps: ImageDeps) =>
 export const getHandlers = (deps: ImageDeps) =>
   factory.createHandlers(
     getRoute,
-    sValidator("param", idParamSchema, invalidHook),
+    validator("param", idParamSchema, invalidHook),
     async (c) => {
       const image = await deps.getImage(c.req.valid("param").id);
       const user = c.get(AUTH.VAR.SESSION)?.user ?? null;

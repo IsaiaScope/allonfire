@@ -15,7 +15,7 @@ config/
     node.json              Node code (extends base + Node types, ES2022 lib, no emit)
     nextjs.json            Next.js app config (extends base + DOM lib, JSX, plugin, Node types)
   local/
-    addresses.ts           LOCAL (PORT, URL, DATABASE, STORAGE), API_PATH, TEST_API_URL: every Local and test address, once
+    addresses.ts           LOCAL (PORT, URL, DATABASE, STORAGE), TEST_API_URL: every Local and test address, once
     tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it
   tests/                   One folder per test layer
     vitest/

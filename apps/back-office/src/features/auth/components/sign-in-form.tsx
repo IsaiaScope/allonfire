@@ -6,10 +6,12 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { KeyRound, LoaderCircle, Mail, Nfc, TriangleAlert } from "lucide-react";
+import { cn } from "@allonfire/ui/lib/utils";
+import { KeyRound, LoaderCircle, Mail, Nfc } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type SubmitEvent, useActionState, useCallback } from "react";
-import { BrushKanji } from "@/shared/components/brush-kanji";
+import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { FormAlert } from "@/shared/components/form-alert";
 import { SIGN_IN } from "../constants/sign-in";
 import { signInSchema } from "../utils/sign-in-schema";
 
@@ -60,22 +62,11 @@ export const SignInForm = ({
     <form
       action={action}
       aria-label={t("submit")}
-      className="flex flex-col gap-4 p-3"
+      // The form rhythm: each field leaves 32px below itself (its error line).
+      className="flex flex-col p-3"
       noValidate
       onSubmit={submit}
     >
-      {error ? (
-        <p
-          className="flex items-start gap-3 rounded-md border border-destructive bg-destructive/10 px-3 py-3 text-sm"
-          role="alert"
-        >
-          <TriangleAlert
-            aria-hidden
-            className="mt-0.5 size-4 shrink-0 text-destructive"
-          />
-          {t(`error.${error}`)}
-        </p>
-      ) : null}
       <form.AppField name="email">
         {(email) => (
           <email.TextField
@@ -88,7 +79,6 @@ export const SignInForm = ({
             required
             spellCheck={false}
             type="email"
-            variant="primary"
           />
         )}
       </form.AppField>
@@ -103,13 +93,16 @@ export const SignInForm = ({
             required
             reveal={t("showPassword")}
             type="password"
-            variant="primary"
           />
         )}
       </form.AppField>
+      {/* Why the last try failed, in its kept place above the button. */}
+      <FormAlert className="mb-2">
+        {error ? t(`error.${error}`) : null}
+      </FormAlert>
       {/* The gate's card reader: the one action, touched to pass. */}
       <AOFSubmitButton
-        className="relative isolate mt-2 h-16 w-full gap-3 overflow-hidden font-bold text-lg"
+        className={cn(kanjiAction(), "w-full")}
         pending={pending}
         pendingChildren={
           <>
@@ -117,9 +110,10 @@ export const SignInForm = ({
             {t("submitting")}
           </>
         }
+        size="field"
       >
-        <BrushKanji kanji={SIGN_IN.ENTER_KANJI} placement="button" />
-        <Nfc aria-hidden className="size-6" />
+        <ActionKanji kanji={SIGN_IN.ENTER_KANJI} />
+        <Nfc aria-hidden />
         {t("submit")}
       </AOFSubmitButton>
     </form>

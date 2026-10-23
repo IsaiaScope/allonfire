@@ -53,3 +53,8 @@ export const useAOFToast = (
     [id]
   );
 };
+
+/** A one-off notice, read once and gone: a success or a failure. */
+export const aofToast = (message: string, kind: "error" | "success") => {
+  toast[kind](message);
+};

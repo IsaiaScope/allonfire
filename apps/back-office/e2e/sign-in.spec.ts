@@ -8,7 +8,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import { SIGN_IN_URL, signIn } from "./pages";
+import { openSidebar, SIGN_IN_URL, signIn } from "./pages";
 
 // Home is `/`; the locale middleware can answer it as `/en`.
 const HOME_URL = new RegExp(
@@ -31,6 +31,17 @@ test("an Admin signs in, lands home, and stays signed in after a reload", async 
   await expect(page.getByText(EN.Home.description)).toBeVisible();
   await page.reload();
   await expect(page).toHaveURL(HOME_URL);
+});
+
+test("a signed-in Admin who opens Sign in is sent home", async ({ page }) => {
+  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
+  await expect(page).toHaveURL(HOME_URL);
+  await page.goto(AUTH.PAGE.SIGN_IN);
+  await expect(page).toHaveURL(HOME_URL);
+  // The redirect lands client-side: Next may keep a hidden copy of Home.
+  await expect(
+    page.getByText(EN.Home.description).filter({ visible: true })
+  ).toBeVisible();
 });
 
 for (const user of [
@@ -57,13 +68,16 @@ test("signing out returns to sign-in and keeps home closed", async ({
 }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(page).toHaveURL(HOME_URL);
-  // Sign out is in the account menu: the sidebar's on desktop, the top
-  // bar's on a phone.
+  // Sign out is in the account menu, in the sidebar: a drawer on a phone.
+  await openSidebar(page);
   await page
     .getByRole("button", { name: EN.Navigation.account })
     .filter({ visible: true })
     .click();
   await page.getByRole("menuitem", { name: EN.Navigation.signOut }).click();
+  await expect(page).toHaveURL(SIGN_IN_URL);
+  // The browser kept the signed-in pages a while: Back must not show them.
+  await page.goBack();
   await expect(page).toHaveURL(SIGN_IN_URL);
   await page.goto("/");
   await expect(page).toHaveURL(SIGN_IN_URL);

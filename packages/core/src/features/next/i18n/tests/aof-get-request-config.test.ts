@@ -1,4 +1,5 @@
 // @module-tag unit
+import { DATE } from "../../../i18n/constants/dates";
 import { AOFGetRequestConfig } from "../aof-get-request-config";
 import { SHARED_TRANSLATIONS } from "../shared-translations";
 
@@ -24,9 +25,16 @@ const config = (locale: string | undefined) =>
 
 describe("AOFGetRequestConfig", () => {
   it("loads the shared translations, then the App's, for a routed locale", async () => {
-    await expect(config("it")).resolves.toEqual({
+    await expect(config("it")).resolves.toMatchObject({
       locale: "it",
       messages: { ...SHARED_TRANSLATIONS.it, hello: "it" },
+    });
+  });
+
+  it("prints dates in one time zone and the shared formats, server and browser alike", async () => {
+    await expect(config("en")).resolves.toMatchObject({
+      formats: DATE.FORMATS,
+      timeZone: DATE.TIME_ZONE,
     });
   });
 

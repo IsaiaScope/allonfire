@@ -22,7 +22,13 @@ export const JAPAN_IMAGE_COLOR = {
     primary: "#3a9ee0",
   },
   /** The line palette: each App picks its own (the Line Rule). */
-  LINE: { GREEN: "#00a650", ORANGE: "#f39700" },
+  LINE: {
+    GREEN: "#00a650",
+    /** Calmer and deeper, for a filled control labelled in white. */
+    GREEN_DEEP: "#2e7a4f",
+    GREEN_DEEP_FOREGROUND: "#ffffff",
+    ORANGE: "#f39700",
+  },
   light: {
     background: "#f6f7f8",
     foreground: "#1a1a1a",

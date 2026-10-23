@@ -1,7 +1,15 @@
 // @module-tag unit
 
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  objectFromEntries,
+  objectKeys,
+  objectValues,
+} from "@allonfire/core/shared/utils/object";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -40,6 +48,7 @@ const specSchema = z.object({
   paths: z.record(
     z.string(),
     z.object({
+      delete: operationSchema.optional(),
       get: operationSchema.optional(),
       post: operationSchema.optional(),
     })
@@ -59,9 +68,23 @@ async function spec(): Promise<Spec> {
   return specSchema.parse(await res.json());
 }
 
-const bodySchema = (document: Spec, path: string, status: string) =>
-  document.paths[path]?.get?.responses?.[status]?.content?.["application/json"]
-    ?.schema;
+const SCHEMA_REF = "#/components/schemas/";
+
+/** The whole API's spec, for a test to parse with its own schema. */
+const fullSpec = async (): Promise<unknown> =>
+  (await createApp(appDeps()).request(API.PATH.OPENAPI)).json();
+
+/** A response body's schema, followed through its `$ref` to the Model. */
+const bodySchema = (document: Spec, path: string, status: string) => {
+  const schema =
+    document.paths[path]?.get?.responses?.[status]?.content?.[
+      HTTP.CONTENT_TYPE.JSON
+    ]?.schema;
+  const ref = schema?.$ref;
+  return typeof ref === "string"
+    ? document.components?.schemas?.[ref.replace(SCHEMA_REF, "")]
+    : schema;
+};
 
 describe("GET /openapi.json", () => {
   it("types the probe bodies from their zod schemas", async () => {
@@ -84,11 +107,115 @@ describe("GET /openapi.json", () => {
       },
     });
   });
+
+  it("lists every body the API sends or reads as a Model", async () => {
+    const document = specSchema.parse(await fullSpec());
+
+    expect(objectKeys(document.components?.schemas ?? {})).toEqual(
+      expect.arrayContaining([
+        "App",
+        "Health",
+        "Image",
+        "ImageAlt",
+        "ImageChange",
+        "ImageDelete",
+        "ImageLink",
+        "ImageList",
+        "ImageUpload",
+        "Ready",
+        "ReadyUnavailable",
+        "User",
+        "UserList",
+      ])
+    );
+  });
+
+  it("leaves every Model untagged, so the docs list them apart", async () => {
+    const schemas =
+      specSchema.parse(await fullSpec()).components?.schemas ?? {};
+
+    for (const schema of objectValues(schemas)) {
+      expect(schema).not.toHaveProperty("x-tags");
+    }
+  });
+
+  it("documents what each Image route reads", async () => {
+    const operation = z.looseObject({
+      parameters: z.array(z.looseObject({ name: z.string() })).optional(),
+      requestBody: z
+        .looseObject({
+          content: z.record(z.string(), z.looseObject({ schema: z.unknown() })),
+        })
+        .optional(),
+    });
+    const { paths } = z
+      .object({ paths: z.record(z.string(), z.record(z.string(), operation)) })
+      .parse(await fullSpec());
+    const images = paths[API.PATH.IMAGES];
+    const json = (method: string) =>
+      images?.[method]?.requestBody?.content[HTTP.CONTENT_TYPE.JSON]?.schema;
+
+    expect(images?.get?.parameters?.map(({ name }) => name)).toEqual([
+      "app",
+      "cursor",
+      "limit",
+    ]);
+    expect(images?.post?.requestBody?.content).toHaveProperty(
+      [
+        HTTP.CONTENT_TYPE.MULTIPART_FORM_DATA,
+        "schema",
+        "properties",
+        "meta",
+        "items",
+      ],
+      { $ref: `${SCHEMA_REF}ImageUpload` }
+    );
+    expect(images?.post?.requestBody?.content).toHaveProperty(
+      [
+        HTTP.CONTENT_TYPE.MULTIPART_FORM_DATA,
+        "schema",
+        "properties",
+        "file",
+        "items",
+        "format",
+      ],
+      "binary"
+    );
+    expect(json("patch")).toMatchObject({
+      items: { $ref: `${SCHEMA_REF}ImageChange` },
+    });
+    expect(json("delete")).toEqual({ $ref: `${SCHEMA_REF}ImageDelete` });
+  });
 });
+
+const problemSpecSchema = z.object({
+  components: z.object({
+    responses: z.record(z.string(), z.unknown()),
+    schemas: z.looseObject(
+      objectFromEntries(
+        API.ERROR.STATUS.map(
+          (status) =>
+            [
+              problemResponseName(status),
+              z.looseObject({
+                properties: z.looseObject({
+                  code: z.looseObject({ enum: z.array(z.string()) }),
+                  status: z.looseObject({}),
+                }),
+              }),
+            ] as const
+        )
+      )
+    ),
+  }),
+  paths: z.record(z.string(), z.record(z.string(), z.unknown())),
+});
+/** The served document, its problem schemas typed. */
+const problemDocument = async () => problemSpecSchema.parse(await fullSpec());
 
 describe("GET /openapi.json error responses", () => {
   it("documents the Image reads with no sign-in errors, the writes with them", async () => {
-    const { paths } = await document();
+    const { paths } = await problemDocument();
     expect(paths[API.PATH.IMAGES]).not.toHaveProperty([
       "get",
       "responses",
@@ -110,28 +237,8 @@ describe("GET /openapi.json error responses", () => {
     );
   });
 
-  const problemSpecSchema = z.object({
-    components: z.object({
-      responses: z.record(z.string(), z.unknown()),
-      schemas: z.record(
-        z.string(),
-        z.looseObject({
-          properties: z.looseObject({
-            code: z.looseObject({ enum: z.array(z.string()) }),
-            status: z.looseObject({}),
-          }),
-        })
-      ),
-    }),
-    paths: z.record(z.string(), z.record(z.string(), z.unknown())),
-  });
-  const document = async () =>
-    problemSpecSchema.parse(
-      await (await createApp(appDeps()).request(API.PATH.OPENAPI)).json()
-    );
-
   it("lists, for each status, only the codes sent with it", async () => {
-    const { components } = await document();
+    const { components } = await problemDocument();
     expect(components.schemas.Problem400?.properties.code.enum).toEqual([
       ERROR.CODE.BAD_REQUEST,
       ERROR.CODE.VALIDATION_FAILED,
@@ -145,8 +252,21 @@ describe("GET /openapi.json error responses", () => {
     expect(components.responses).toHaveProperty(["Problem404", "content"]);
   });
 
+  it("documents the User list under Users, refusing without a Session or the right", async () => {
+    const { paths } = specSchema.parse(await fullSpec());
+    const operation = paths[API.PATH.USERS]?.get;
+    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+    expect(objectKeys(operation?.responses ?? {})).toEqual(
+      expect.arrayContaining(
+        [HTTP.STATUS.OK, HTTP.STATUS.UNAUTHORIZED, HTTP.STATUS.FORBIDDEN].map(
+          String
+        )
+      )
+    );
+  });
+
   it("points each Image route's error at its own status", async () => {
-    const { paths } = await document();
+    const { paths } = await problemDocument();
     expect(paths[API.PATH.IMAGES]).toHaveProperty(
       ["post", "responses", "413", "$ref"],
       "#/components/responses/Problem413"
@@ -209,5 +329,48 @@ describe("GET /openapi.json after a failed build", () => {
 
     expect((await app.request(API.PATH.OPENAPI)).status).toBe(500);
     expect((await app.request(API.PATH.OPENAPI)).status).toBe(200);
+  });
+});
+
+describe("GET /openapi.json User writes", () => {
+  it("documents deleting Users, and the code a deletion of yourself answers", async () => {
+    const { paths } = specSchema.parse(await fullSpec());
+    const operation = paths[API.PATH.USERS]?.delete;
+    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+    expect(objectKeys(operation?.responses ?? {})).toEqual(
+      expect.arrayContaining(
+        [
+          HTTP.STATUS.OK,
+          HTTP.STATUS.BAD_REQUEST,
+          HTTP.STATUS.UNAUTHORIZED,
+          HTTP.STATUS.FORBIDDEN,
+        ].map(String)
+      )
+    );
+    const { components } = await problemDocument();
+    expect(components.schemas.Problem403?.properties.code.enum).toContain(
+      USER.ERROR_CODE.CANNOT_DELETE_SELF
+    );
+  });
+
+  it("documents adding a User, and the code a taken email answers", async () => {
+    const { paths } = specSchema.parse(await fullSpec());
+    const operation = paths[API.PATH.USERS]?.post;
+    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+    expect(objectKeys(operation?.responses ?? {})).toEqual(
+      expect.arrayContaining(
+        [
+          HTTP.STATUS.CREATED,
+          HTTP.STATUS.BAD_REQUEST,
+          HTTP.STATUS.UNAUTHORIZED,
+          HTTP.STATUS.FORBIDDEN,
+          HTTP.STATUS.CONFLICT,
+        ].map(String)
+      )
+    );
+    const { components } = await problemDocument();
+    expect(components.schemas.Problem409?.properties.code.enum).toEqual([
+      USER.ERROR_CODE.EMAIL_TAKEN,
+    ]);
   });
 });

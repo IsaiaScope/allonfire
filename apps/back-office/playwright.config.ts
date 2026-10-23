@@ -1,8 +1,10 @@
+import { API } from "@allonfire/api/shared/constants/api";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { aofPlaywrightConfig } from "@allonfire/config/tests/e2e";
 import { App } from "@allonfire/database/enums";
 
 export default aofPlaywrightConfig({
+  apiPath: API.PATH,
   app: "back-office",
   env: {
     AUTH_APP: App.BACK_OFFICE,

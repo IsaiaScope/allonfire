@@ -22,29 +22,35 @@ const CHECK_STATUS = {
 export const checkStatusSchema = z.enum(CHECK_STATUS);
 export type CheckStatus = z.infer<typeof checkStatusSchema>;
 
-export const healthBodySchema = z.object({
-  status: z.literal(READY_STATUS.OK),
-  uptime: z.number(),
-  version: z.string(),
-});
+export const healthBodySchema = z
+  .object({
+    status: z.literal(READY_STATUS.OK),
+    uptime: z.number(),
+    version: z.string(),
+  })
+  .meta({ ref: "Health" });
 
 /** 200: Postgres answers; Redis down only degrades. */
-export const readyServingBodySchema = z.object({
-  checks: z.object({
-    database: z.literal(CHECK_STATUS.OK),
-    redis: checkStatusSchema,
-  }),
-  status: z.enum([READY_STATUS.DEGRADED, READY_STATUS.OK]),
-});
+export const readyServingBodySchema = z
+  .object({
+    checks: z.object({
+      database: z.literal(CHECK_STATUS.OK),
+      redis: checkStatusSchema,
+    }),
+    status: z.enum([READY_STATUS.DEGRADED, READY_STATUS.OK]),
+  })
+  .meta({ ref: "Ready" });
 
 /** 503: Postgres is unreachable, whatever Redis says. */
-export const readyUnavailableBodySchema = z.object({
-  checks: z.object({
-    database: z.literal(CHECK_STATUS.UNREACHABLE),
-    redis: checkStatusSchema,
-  }),
-  status: z.literal(READY_STATUS.UNAVAILABLE),
-});
+export const readyUnavailableBodySchema = z
+  .object({
+    checks: z.object({
+      database: z.literal(CHECK_STATUS.UNREACHABLE),
+      redis: checkStatusSchema,
+    }),
+    status: z.literal(READY_STATUS.UNAVAILABLE),
+  })
+  .meta({ ref: "ReadyUnavailable" });
 
 export type HealthBody = z.infer<typeof healthBodySchema>;
 export type ReadyServingBody = z.infer<typeof readyServingBodySchema>;

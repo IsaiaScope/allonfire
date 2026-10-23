@@ -66,8 +66,8 @@ jobs:
         run: pnpm lint
       - name: Design copies in sync
         run: pnpm design:sync --check
-      - name: i18n placeholders and generated types
-        run: pnpm turbo run i18n:check
+      - name: i18n placeholders, generated types and Tailwind classes
+        run: pnpm turbo run i18n:check tailwind:check
       # ShellCheck ships on GitHub's Ubuntu runners.
       - name: Shell scripts
         run: shellcheck -x packages/database/liquibase/*.sh packages/database/scripts/*.sh
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: dev
     services:
-      postgres:
+      database:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: allonfire
@@ -130,9 +130,9 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
       # Each package's integration tests make their own Test database and
-      # bucket; MinIO comes from the dev compose file, as Local runs it.
-      - name: Start MinIO
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait minio
+      # bucket; Storage comes from the dev compose file, as Local runs it.
+      - name: Start Storage
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait storage
       - name: Run tests
         run: pnpm turbo run test --affected
       # The Test database template is the changelog plus the Fixtures: the
@@ -141,7 +141,7 @@ jobs:
         run: DATABASE_URL="$(pnpm -s -C packages/database test-database template)" pnpm db:drift
 
   # Browser and end-to-end tests for the affected Apps, on the stack Local
-  # runs: Postgres, Redis and MinIO from the dev compose file, the API and the
+  # runs: the database, Redis and Storage from the dev compose file, the API and the
   # App as production builds.
   e2e:
     runs-on: ubuntu-24.04
@@ -169,8 +169,8 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Start Postgres, Redis and MinIO
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait postgres redis minio
+      - name: Start the database, Redis and Storage
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage
       - name: Generate Prisma client
         run: pnpm db:generate
       - name: Playwright version
@@ -204,6 +204,8 @@ jobs:
       STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       BACK_OFFICE_URL: ${{ secrets.BACK_OFFICE_URL }}
+      # The Back Office's server address of the API: validated at build, never called.
+      API_URL: http://build.placeholder
       STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
       STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
     steps:

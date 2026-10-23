@@ -11,23 +11,20 @@ import { EkiStamp } from "./eki-stamp";
  * What rises in as the stamp lands, then the action: once, short, never for
  * reduced motion. `fill-mode-both` keeps each hidden until its turn.
  */
-const rise = cva(
-  "motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:animate-in motion-safe:fill-mode-both motion-safe:duration-500",
-  {
-    variants: {
-      after: { stamp: "motion-safe:delay-700", text: "motion-safe:delay-1000" },
+const rise = cva("", {
+  compoundVariants: [
+    { after: "stamp", class: "motion-safe:delay-700", entrance: true },
+    { after: "text", class: "motion-safe:delay-1000", entrance: true },
+  ],
+  defaultVariants: { entrance: true },
+  variants: {
+    after: { stamp: "", text: "" },
+    entrance: {
+      false: "",
+      true: "motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:animate-in motion-safe:fill-mode-both motion-safe:duration-500",
     },
-  }
-);
-
-/** A notice's action (a button or a link) with a kanji brushed inside it. */
-export const STATION_NOTICE_ACTION =
-  "relative isolate h-11 min-w-64 overflow-hidden px-8 font-bold text-base";
-
-/** The kanji brushed in a notice's action (`STATION_NOTICE_ACTION`). */
-export const StationNoticeKanji = ({ kanji }: { kanji: string }) => (
-  <BrushKanji className="right-2 text-6xl" kanji={kanji} placement="button" />
-);
+  },
+});
 
 /** A notice's signage, decoration only: the page says it in words. */
 export type StationSignage = {
@@ -45,6 +42,10 @@ export type StationNoticeProps = {
   /** More words under the description (a reference, a status). */
   children?: ReactNode;
   description?: string;
+  /** Whether the stamp lands and the words rise in (the default), or all of
+   *  it stands from the first frame: a wait is often over before an
+   *  entrance would end, leaving only the wall kanji on screen. */
+  entrance?: boolean;
   /** The page's `h1`, which also names the tab: a special page takes no
    *  metadata exports. */
   heading?: string;
@@ -64,6 +65,7 @@ export const StationNotice = ({
   action,
   children,
   description,
+  entrance = true,
   heading,
   page: Page = AOFPage,
   signage,
@@ -74,13 +76,14 @@ export const StationNotice = ({
     <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
       <EkiStamp
         code={signage.CODE}
+        entrance={entrance}
         kana={signage.KANA}
         station={BACK_OFFICE.NAME}
       />
       <div
         className={cn(
           "flex flex-col items-center gap-3",
-          rise({ after: "stamp" })
+          rise({ after: "stamp", entrance })
         )}
       >
         {heading ? (
@@ -91,7 +94,9 @@ export const StationNotice = ({
         ) : null}
         {children}
       </div>
-      {action ? <div className={rise({ after: "text" })}>{action}</div> : null}
+      {action ? (
+        <div className={rise({ after: "text", entrance })}>{action}</div>
+      ) : null}
     </div>
   </Page>
 );

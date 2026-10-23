@@ -1,0 +1,294 @@
+// @module-tag integration
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App, GameType, Role } from "../../../../generated/prisma/enums";
+import { prisma } from "../../prisma/client";
+import { FIXTURE } from "../../seed/fixtures/fixtures";
+import {
+  accessUserById,
+  createUser,
+  deleteUsers,
+  EmailTakenError,
+  listUsers,
+  type UserListQuery,
+} from "../user.service";
+
+// The Fixtures share this domain; other files in the run may add Users to
+// it, so counts are "at least the Fixtures".
+const FIXTURES = FIXTURE.DOMAIN;
+/** A User made here, outside the Fixtures' domain so their counts hold. */
+const MIXED = {
+  email: "mixed-roles@list-users.test",
+  memberships: [
+    { app: App.LAURA, role: Role.ADMIN },
+    { app: App.BACK_OFFICE, role: Role.VIEWER },
+  ],
+};
+const MIXED_DOMAIN = "list-users.test";
+/** Small, so the Fixtures span several pages. */
+const PAGE_SIZE = 3;
+const PAST_THE_END = 999;
+
+const query = (overrides: Partial<UserListQuery> = {}): UserListQuery => ({
+  page: 1,
+  perPage: 100,
+  text: FIXTURES,
+  ...overrides,
+});
+const emailsOf = async (overrides: Partial<UserListQuery> = {}) =>
+  (await listUsers(query(overrides))).users.map(({ email }) => email);
+
+beforeAll(async () => {
+  await prisma.user.create({
+    data: {
+      email: MIXED.email,
+      memberships: { create: MIXED.memberships },
+    },
+  });
+});
+
+afterAll(async () => {
+  await prisma.user.deleteMany({ where: { email: MIXED.email } });
+});
+
+describe("listUsers", () => {
+  it("lists every User, one with no Membership too", async () => {
+    const { total, users } = await listUsers(query());
+    expect(total).toBe(users.length);
+    expect(users.map(({ email }) => email)).toEqual(
+      expect.arrayContaining(FIXTURE.USERS.map(({ email }) => email))
+    );
+  });
+
+  it("matches an App and a Role on one Membership", async () => {
+    const emails = await emailsOf({ app: App.LAURA, role: Role.ADMIN });
+    expect(emails).toEqual(
+      expect.arrayContaining([
+        FIXTURE.USER.LAURA.ADMIN.email,
+        FIXTURE.USER.ADMIN_EVERYWHERE.email,
+      ])
+    );
+    expect(emails).not.toContain(FIXTURE.USER.BACK_OFFICE.ADMIN.email);
+    expect(emails).not.toContain(FIXTURE.USER.LAURA.VIEWER.email);
+  });
+
+  it("never pairs an App with a Role held in another App", async () => {
+    const text = MIXED_DOMAIN;
+    expect(
+      await emailsOf({ app: App.BACK_OFFICE, role: Role.ADMIN, text })
+    ).toEqual([]);
+    expect(await emailsOf({ role: Role.ADMIN, text })).toEqual([MIXED.email]);
+  });
+
+  it("matches exactly the Role asked for", async () => {
+    const { users } = await listUsers(query({ role: Role.USER }));
+    expect(users.length).toBeGreaterThan(0);
+    for (const user of users) {
+      expect(user.memberships.map(({ role }) => role)).toContain(Role.USER);
+    }
+  });
+
+  it("leaves out a User with no Membership once an App is asked for", async () => {
+    expect(await emailsOf({ app: App.LAURA })).not.toContain(
+      FIXTURE.USER.NO_MEMBERSHIP.email
+    );
+  });
+
+  it("finds part of an email, whatever its case", async () => {
+    expect(await emailsOf({ text: "NO-MEMBERSHIP@" })).toEqual([
+      FIXTURE.USER.NO_MEMBERSHIP.email,
+    ]);
+  });
+
+  it("pages newest first in a stable order", async () => {
+    const all = (await listUsers(query())).users;
+    const pageNumbers = Array.from(
+      { length: Math.ceil(all.length / PAGE_SIZE) },
+      (_, index) => index + 1
+    );
+    const pages = (
+      await Promise.all(
+        pageNumbers.map((page) =>
+          listUsers(query({ page, perPage: PAGE_SIZE }))
+        )
+      )
+    ).flatMap(({ users }) => users.map(({ id }) => id));
+    expect(pages).toEqual(all.map(({ id }) => id));
+    expect(new Set(pages).size).toBe(pages.length);
+    const sorted = [...all].sort(
+      (a, b) =>
+        b.createdAt.getTime() - a.createdAt.getTime() ||
+        b.id.localeCompare(a.id)
+    );
+    expect(all.map(({ id }) => id)).toEqual(sorted.map(({ id }) => id));
+  });
+
+  it("answers a page past the end with no Users and the real total", async () => {
+    const { total } = await listUsers(query());
+    expect(await listUsers(query({ page: PAST_THE_END }))).toEqual({
+      total,
+      users: [],
+    });
+  });
+
+  it("orders each User's Memberships as the App enum declares them", async () => {
+    const [user] = (await listUsers(query({ text: MIXED_DOMAIN }))).users;
+    const order = objectValues(App);
+    expect(user?.memberships).toEqual(
+      [...MIXED.memberships].sort(
+        (a, b) => order.indexOf(a.app) - order.indexOf(b.app)
+      )
+    );
+  });
+});
+
+// Users made for deletion live in their own domain, so the list's counts hold.
+const DELETABLE = "delete-users.test";
+const MISSING_ID = "missing-id";
+const SIZE = 1;
+
+/** A User holding something in every table a deletion reaches. */
+const holder = (name: string) =>
+  prisma.user.create({
+    data: {
+      accounts: {
+        create: { accountId: name, providerId: "credential" },
+      },
+      email: `${name}@${DELETABLE}`,
+      gameScores: { create: { gameType: GameType.MEMORY, score: SIZE } },
+      images: {
+        create: {
+          alt: {},
+          blurDataUrl: "",
+          bytes: SIZE,
+          height: SIZE,
+          key: `${name}.avif`,
+          width: SIZE,
+        },
+      },
+      memberships: { create: { app: App.LAURA, role: Role.USER } },
+      sessions: {
+        create: { expiresAt: new Date(Date.now() + 60_000), token: name },
+      },
+    },
+    select: { id: true, images: { select: { id: true } } },
+  });
+
+afterAll(async () => {
+  await prisma.image.deleteMany({
+    where: { key: { endsWith: ".avif", startsWith: "holder-" } },
+  });
+  await prisma.user.deleteMany({ where: { email: { endsWith: DELETABLE } } });
+});
+
+describe("deleteUsers", () => {
+  it("deletes the Users named and everything they hold", async () => {
+    const { id, images } = await holder("holder-all");
+    expect(await deleteUsers([id])).toBe(1);
+    const where = { where: { userId: id } };
+    expect(await prisma.membership.count(where)).toBe(0);
+    expect(await prisma.session.count(where)).toBe(0);
+    expect(await prisma.account.count(where)).toBe(0);
+    expect(await prisma.gameScore.count(where)).toBe(0);
+    const image = await prisma.image.findUnique({
+      where: { id: images[0]?.id ?? "" },
+    });
+    expect(image?.uploadedBy).toBeNull();
+  });
+
+  it("skips ids that do not exist", async () => {
+    const { id } = await holder("holder-skip");
+    expect(await deleteUsers([id, MISSING_ID])).toBe(1);
+    expect(await deleteUsers([MISSING_ID])).toBe(0);
+  });
+
+  it("leaves every other User alone", async () => {
+    const admin = await prisma.user.findUnique({
+      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
+    });
+    expect(admin).not.toBeNull();
+  });
+});
+
+describe("accessUserById", () => {
+  it("reads a User's access fresh", async () => {
+    const { id } = await holder("holder-access");
+    expect(await accessUserById(id)).toEqual({
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+    });
+    await prisma.membership.update({
+      data: { role: Role.VIEWER },
+      where: { userId_app: { app: App.LAURA, userId: id } },
+    });
+    expect(await accessUserById(id)).toEqual({
+      memberships: [{ app: App.LAURA, role: Role.VIEWER }],
+    });
+    await deleteUsers([id]);
+    expect(await accessUserById(id)).toBeNull();
+  });
+});
+
+// Users added here live in their own domain, so the list's counts hold.
+const ADDED = "add-users.test";
+const HASH = "hash";
+
+describe("createUser", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: ADDED } } });
+  });
+
+  it("creates the User, a credential Account and the Memberships", async () => {
+    const { id } = await createUser(
+      {
+        email: `added@${ADDED}`,
+        memberships: [{ app: App.LAURA, role: Role.USER }],
+        name: "Added",
+      },
+      HASH
+    );
+    const user = await prisma.user.findUniqueOrThrow({
+      include: { accounts: true, memberships: true },
+      where: { id },
+    });
+    expect(user.emailVerified).toBe(true);
+    expect(user.name).toBe("Added");
+    expect(
+      user.accounts.map(({ accountId, password, providerId }) => ({
+        accountId,
+        password,
+        providerId,
+      }))
+    ).toEqual([{ accountId: id, password: HASH, providerId: "credential" }]);
+    expect(user.memberships.map(({ app, role }) => ({ app, role }))).toEqual([
+      { app: App.LAURA, role: Role.USER },
+    ]);
+  });
+
+  it("creates a User in no App", async () => {
+    const { id } = await createUser(
+      { email: `nowhere@${ADDED}`, memberships: [], name: "Nowhere" },
+      HASH
+    );
+    expect(await prisma.membership.count({ where: { userId: id } })).toBe(0);
+  });
+
+  it("refuses an email taken in another case, and writes nothing", async () => {
+    await createUser(
+      { email: ` Mixed@${ADDED} `, memberships: [], name: "First" },
+      HASH
+    );
+    await expect(
+      createUser(
+        { email: `MiXeD@${ADDED}`, memberships: [], name: "Second" },
+        HASH
+      )
+    ).rejects.toBeInstanceOf(EmailTakenError);
+    expect(
+      await prisma.user.count({ where: { email: `mixed@${ADDED}` } })
+    ).toBe(1);
+    expect(
+      await prisma.account.count({
+        where: { user: { email: `mixed@${ADDED}` } },
+      })
+    ).toBe(1);
+  });
+});

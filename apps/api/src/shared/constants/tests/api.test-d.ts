@@ -1,7 +1,9 @@
-import type { API_PATH } from "@allonfire/config/local/addresses";
+import type { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { rateLimitKey } from "../../../features/rate-limit/constants/limits";
 import { API } from "../api";
 
-// A literal, not `string`: the two cannot drift without failing the build.
-expectTypeOf(API.PATH.AUTH).toEqualTypeOf<typeof API_PATH.AUTH>();
+// A literal, not `string`: the Apps compose their addresses from it.
+expectTypeOf(
+  API.PATH.AUTH
+).toEqualTypeOf<`${typeof API.PATH.VERSION}${typeof AUTH.PATH.BASE}`>();
 expectTypeOf(rateLimitKey("1.2.3.4")).toEqualTypeOf<`ratelimit:${string}`>();

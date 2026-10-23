@@ -8,6 +8,7 @@
     "./enums": "./generated/prisma/enums.ts",
     "./environment/environment": "./src/environment/environment.ts",
     "./features/apps/laura/game-score.service": "./src/features/apps/laura/game-score.service.ts",
+    "./features/auth/user.service": "./src/features/auth/user.service.ts",
     "./features/auth/access/access": "./src/features/auth/access/access.ts",
     "./features/auth/access/constants/app-settings": "./src/features/auth/access/constants/app-settings.ts",
     "./features/auth/access/constants/access": "./src/features/auth/access/constants/access.ts",

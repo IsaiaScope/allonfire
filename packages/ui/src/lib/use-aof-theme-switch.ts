@@ -17,3 +17,12 @@ export const useAOFThemeSwitch = () => {
     [resolvedTheme, setTheme]
   );
 };
+
+/**
+ * The scheme on screen (`undefined` until the browser has read it) and a
+ * setter: what a choice between light and dark reads and calls.
+ */
+export const useAOFColorScheme = () => {
+  const { resolvedTheme, setTheme } = useTheme();
+  return { scheme: resolvedTheme, setScheme: setTheme };
+};

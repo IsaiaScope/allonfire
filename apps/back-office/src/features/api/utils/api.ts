@@ -13,3 +13,6 @@ import { env } from "@/environment/environment";
 export const api = hc<ApiType>(env.NEXT_PUBLIC_API_URL, {
   init: { credentials: "include" },
 });
+
+/** The API's typed client: the browser's `api`, or the server's `serverApi()`. */
+export type ApiClient = typeof api;

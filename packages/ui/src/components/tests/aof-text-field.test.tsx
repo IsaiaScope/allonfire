@@ -8,13 +8,11 @@ const EmailForm = ({
   invalid,
   reveal,
   type = "email",
-  variant,
 }: {
   icon?: ReactNode;
   invalid?: boolean;
   reveal?: string;
   type?: string;
-  variant?: "default" | "primary";
 }) => {
   const form = useAOFForm({ defaultValues: { email: "ada@example.com" } });
   return (
@@ -28,17 +26,16 @@ const EmailForm = ({
           label="Email"
           reveal={reveal}
           type={type}
-          variant={variant}
         />
       )}
     </form.AppField>
   );
 };
 
-const ERROR_LINE = /<div class="min-h-5"><\/div>/;
+const ERROR_LINE = /<div class="min-h-6"><\/div>/;
 const BUTTON = /<button[^>]*>/;
 const BOLD_LABEL = /<label[^>]*class="[^"]*font-bold/;
-const TALL_INPUT_WITH_ICON = /<input[^>]*class="[^"]*h-12[^"]*pl-13/;
+const TALL_INPUT_WITH_ICON = /<input[^>]*class="[^"]*h-11[^"]*pl-13/;
 const TILE =
   /<span aria-hidden="true" class="[^"]*dark[^"]*bg-background[^"]*"><svg data-icon/;
 
@@ -84,18 +81,10 @@ describe("AOFTextField", () => {
     expect(renderToStaticMarkup(<EmailForm />)).not.toContain('role="group"');
   });
 
-  it("draws the primary variant tall, with a bold label and its icon on a dark tile", () => {
-    const html = renderToStaticMarkup(
-      <EmailForm icon={<svg data-icon />} variant="primary" />
-    );
+  it("draws every field tall, with a bold label and its icon on a dark tile", () => {
+    const html = renderToStaticMarkup(<EmailForm icon={<svg data-icon />} />);
     expect(html).toMatch(TILE);
     expect(html).toMatch(BOLD_LABEL);
     expect(html).toMatch(TALL_INPUT_WITH_ICON);
-  });
-
-  it("draws the default variant at shadcn's size", () => {
-    const html = renderToStaticMarkup(<EmailForm />);
-    expect(html).not.toContain("h-12");
-    expect(html).not.toContain("font-bold");
   });
 });

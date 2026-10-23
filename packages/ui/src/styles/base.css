@@ -7,6 +7,25 @@
 @source "../../../shadcn/src";
 @source "../components";
 
+/* Anything clickable shows the pointer. Tailwind v4's preflight dropped
+   `cursor: pointer` from buttons, so shadcn's buttons (the sidebar's toggle,
+   a menu's trigger) showed the arrow; this is the upgrade guide's fix. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* A control's size on a touch screen (`pointer-coarse:`): a finger's 44px,
+   Apple's minimum target, its icon 20px. Every touch-sized AOF component
+   reads these (`pointer-coarse:size-(--tap-target)`), so the size is set
+   here once. */
+:root {
+  --tap-target: 2.75rem;
+  --tap-icon: 1.25rem;
+}
+
 /* How far a page keeps from the screen's edges: clear of a phone's rounded
    corners, and of its notch, Dynamic Island or home indicator where they
    reach further. The insets are real only under core's AOFBaseViewport
@@ -20,13 +39,11 @@
   --gutter-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
   --gutter-bottom: max(var(--page-gutter), env(safe-area-inset-bottom, 0px));
   --gutter-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
-  /* The phone's tab bar (AOFTabBar), standing on the home indicator. */
-  --tab-bar-height: calc(4rem + env(safe-area-inset-bottom, 0px));
 }
 
-/* While a tab bar shows (a phone), a toast at the bottom sits above it. */
-@media (width < 48rem) {
-  :root:has([data-slot="tab-bar"]) {
-    --toast-bottom: calc(var(--tab-bar-height) + var(--page-gutter));
-  }
+/* While a modal is open (the phone's menu drawer, a dialog), Base UI marks
+   everything outside it inert, the toaster included: drop the toasts under
+   the modal (z-50), or one at the bottom covers the drawer's account menu. */
+[data-base-ui-inert] [data-sonner-toaster] {
+  z-index: 40;
 }

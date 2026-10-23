@@ -1,5 +1,6 @@
 import { setupWorker } from "msw/browser";
 import { afterAll, afterEach, beforeAll } from "vitest";
+import { server } from "vitest/browser";
 
 /**
  * The one MSW worker of a browser test run. A test overrides an answer with
@@ -49,5 +50,16 @@ export const startMsw = (...handlers: Handlers) => {
       throw new Error(`No MSW handler answered: ${requests.join(", ")}`);
     }
   });
-  afterAll(() => worker.stop());
+  afterAll(async () => {
+    worker.stop();
+    // WebKit can drop the stop message as the file's frame goes, so the
+    // worker keeps answering every request, the next file's modules too, and
+    // Vitest's mocks (Playwright routes, blind to a service worker's requests
+    // outside Chromium) never see them. Unregistered, the next frame starts
+    // uncontrolled. WebKit only: in Chromium the removal can land after the
+    // next file's worker started, leaving that file's first request unmocked.
+    if (server.browser === "webkit") {
+      await (await navigator.serviceWorker.getRegistration())?.unregister();
+    }
+  });
 };

@@ -1,5 +1,6 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "../../../http/constants/http";
 import { forwardedHeaders, readVisitorHeaders } from "../forwarded-for";
 
 const visitor = vi.hoisted(() => ({ cookie: "", incoming: new Headers() }));
@@ -14,19 +15,21 @@ const visit = (cookie: string, incoming: HeadersInit) => {
   visitor.incoming = new Headers(incoming);
 };
 
+/** A documentation address (RFC 5737) and a browser's agent. */
+const ADDRESS = "203.0.113.7";
+const BROWSER = "Mozilla/5.0 (Macintosh) Safari/605.1.15";
+const COOKIE = "a=1";
+const FROM_THE_BROWSER = {
+  [HTTP.HEADER.ORIGIN]: LOCAL.URL.BACK_OFFICE,
+  [HTTP.HEADER.USER_AGENT]: BROWSER,
+  [HTTP.HEADER.X_FORWARDED_FOR]: ADDRESS,
+};
+
 describe("forwardedHeaders", () => {
-  it("passes on the visitor's address and the page's Origin", () => {
-    expect(
-      forwardedHeaders(
-        new Headers({
-          origin: LOCAL.URL.BACK_OFFICE,
-          "x-forwarded-for": "203.0.113.7",
-        })
-      )
-    ).toEqual({
-      origin: LOCAL.URL.BACK_OFFICE,
-      "x-forwarded-for": "203.0.113.7",
-    });
+  it("passes on the visitor's address, browser and the page's Origin", () => {
+    expect(forwardedHeaders(new Headers(FROM_THE_BROWSER))).toEqual(
+      FROM_THE_BROWSER
+    );
   });
 
   it("passes on nothing that did not reach this server", () => {
@@ -35,20 +38,18 @@ describe("forwardedHeaders", () => {
 });
 
 describe("readVisitorHeaders", () => {
-  it("sends the visitor's cookies, address and Origin", async () => {
-    visit("a=1", {
-      origin: LOCAL.URL.BACK_OFFICE,
-      "x-forwarded-for": "203.0.113.7",
-    });
+  it("sends the visitor's cookies, address, browser and Origin", async () => {
+    visit(COOKIE, FROM_THE_BROWSER);
     expect(await readVisitorHeaders()).toEqual({
-      cookie: "a=1",
-      origin: LOCAL.URL.BACK_OFFICE,
-      "x-forwarded-for": "203.0.113.7",
+      [HTTP.HEADER.COOKIE]: COOKIE,
+      ...FROM_THE_BROWSER,
     });
   });
 
   it("sends no address when none reached this server", async () => {
-    visit("a=1", {});
-    expect(await readVisitorHeaders()).toEqual({ cookie: "a=1" });
+    visit(COOKIE, {});
+    expect(await readVisitorHeaders()).toEqual({
+      [HTTP.HEADER.COOKIE]: COOKIE,
+    });
   });
 });

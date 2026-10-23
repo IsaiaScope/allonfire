@@ -24,6 +24,11 @@ describe("JAPAN_IMAGE_COLOR", () => {
 
   it.each([
     ["line-green", JAPAN_IMAGE_COLOR.LINE.GREEN],
+    ["line-green-deep", JAPAN_IMAGE_COLOR.LINE.GREEN_DEEP],
+    [
+      "line-green-deep-foreground",
+      JAPAN_IMAGE_COLOR.LINE.GREEN_DEEP_FOREGROUND,
+    ],
     ["line-orange", JAPAN_IMAGE_COLOR.LINE.ORANGE],
     ["tactile", JAPAN_IMAGE_COLOR.TACTILE],
   ] as const)("matches --%s", (token, value) => {

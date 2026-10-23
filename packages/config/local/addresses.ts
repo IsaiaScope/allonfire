@@ -47,17 +47,5 @@ const ADDRESS = {
 /** The Local stack: `LOCAL.PORT.*`, `LOCAL.URL.*` and the logins compose defaults to. */
 export const LOCAL = { DATABASE, PORT, STORAGE, URL: ADDRESS } as const;
 
-/**
- * The API's paths the e2e stack and the Apps' tests reach. Config is a leaf
- * package and cannot import them from the API (`API.PATH` there);
- * `apps/api`'s routes test fails when the two disagree.
- */
-export const API_PATH = {
-  /** Where the API serves the Auth module. */
-  AUTH: "/v1/auth",
-  /** The API's liveness probe. */
-  HEALTH: "/health",
-} as const;
-
 /** A host that never resolves: MSW answers it, a leak fails. */
 export const TEST_API_URL = "http://api.test";

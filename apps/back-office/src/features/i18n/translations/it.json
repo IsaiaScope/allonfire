@@ -30,6 +30,8 @@
   },
   "Navigation": {
     "account": "Account",
+    "apps": "App",
+    "breadcrumb": "Percorso",
     "home": "Home",
     "language": "Lingua",
     "menu": "Menu principale",
@@ -40,7 +42,10 @@
     },
     "signOut": "Esci",
     "storage": "Archivio",
-    "theme": "Cambia tema",
+    "switchApp": "Cambia App",
+    "theme": "Tema",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
     "toggleMenu": "Comprimi o espandi il menu",
     "users": "Utenti"
   },
@@ -51,9 +56,98 @@
     }
   },
   "Users": {
+    "column": {
+      "created": "Creato",
+      "email": "Email"
+    },
     "empty": {
-      "description": "L'elenco degli Utenti e dei loro Ruoli arriverà con l'API degli Utenti.",
-      "title": "Ancora nessun Utente"
+      "description": "Prova un'altra email, App o Ruolo.",
+      "title": "Nessun Utente trovato"
+    },
+    "error": {
+      "description": "Controlla la connessione, poi riprova.",
+      "retry": "Riprova",
+      "title": "Impossibile caricare gli Utenti"
+    },
+    "filter": {
+      "anyApp": "Tutte le App",
+      "anyRole": "Tutti i Ruoli",
+      "app": "App",
+      "empty": "Nessun risultato",
+      "reset": "Reimposta",
+      "role": "Ruolo",
+      "search": "Cerca"
+    },
+    "list": "Utenti",
+    "loading": "Caricamento degli Utenti",
+    "noMembership": "Non iscritto",
+    "pagination": {
+      "first": "Vai alla prima pagina",
+      "last": "Vai all'ultima pagina",
+      "next": "Vai alla pagina successiva",
+      "page": "Pagina {page} di {pageCount}",
+      "previous": "Vai alla pagina precedente",
+      "rowsPerPage": "Righe per pagina"
+    },
+    "search": {
+      "label": "Cerca per email"
+    },
+    "detail": {
+      "description": "Le Iscrizioni e i dettagli di un Utente arriveranno in una prossima versione.",
+      "title": "I dettagli dell'Utente sono in arrivo"
+    },
+    "pastEnd": {
+      "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
+      "title": "Questa pagina è oltre la fine"
+    },
+    "delete": {
+      "action": "Elimina",
+      "cancel": "Annulla",
+      "clear": "Annulla la selezione",
+      "confirm": "Elimina",
+      "description": "Ogni Utente lascia tutte le App, con le sue sessioni e i punteggi di Laura. Non si può annullare.",
+      "done": "{count, plural, one {# Utente eliminato} other {# Utenti eliminati}}",
+      "failed": "Non è stato possibile eliminare gli Utenti. Riprova.",
+      "select": "Seleziona {email}",
+      "selectAll": "Seleziona tutti gli Utenti di questa pagina",
+      "selected": "{count, plural, one {# selezionato} other {# selezionati}}",
+      "title": "{count, plural, one {Eliminare # Utente?} other {Eliminare # Utenti?}}"
+    },
+    "add": {
+      "button": "Aggiungi",
+      "cancel": "Annulla",
+      "confirmPassword": "Conferma password",
+      "email": "Email",
+      "error": {
+        "failed": "Non è stato possibile aggiungere l'Utente. Riprova.",
+        "invalid": "Controlla i campi e riprova.",
+        "taken": "Questa email ha già un account"
+      },
+      "field": {
+        "emailInvalid": "Inserisci un'email valida",
+        "emailRequired": "Inserisci un'email",
+        "nameRequired": "Inserisci un nome",
+        "passwordMismatch": "Le password sono diverse",
+        "passwordWeak": "Non tutte le regole qui sotto sono rispettate"
+      },
+      "name": "Nome",
+      "noRole": "Non membro",
+      "password": "Password",
+      "role": "Ruolo in {app}",
+      "roles": "Ruoli",
+      "rule": {
+        "length": "Almeno {min} caratteri",
+        "lowercase": "Una lettera minuscola",
+        "match": "Le due password coincidono",
+        "number": "Un numero",
+        "symbol": "Un simbolo",
+        "uppercase": "Una lettera maiuscola"
+      },
+      "rules": "La password deve avere",
+      "showPassword": "Mostra password",
+      "submit": "Aggiungi Utente",
+      "submitting": "Aggiunta…",
+      "title": "Aggiungi un Utente"
     }
   }
 }

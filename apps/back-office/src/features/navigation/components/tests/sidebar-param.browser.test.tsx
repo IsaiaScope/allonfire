@@ -1,4 +1,6 @@
 // @module-tag integration
+
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import {
   AOFSidebar,
   AOFSidebarProvider,
@@ -7,14 +9,15 @@ import {
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { NAVIGATION } from "../../constants/navigation";
 import { SidebarParam } from "../sidebar-param";
 
-const TRIGGER = "Menu";
-/** A desktop window: on a phone shadcn's sidebar is a drawer, not a panel. */
-const DESKTOP = { HEIGHT: 800, WIDTH: 1280 } as const;
+const t = EN.Navigation;
 
-beforeEach(() => page.viewport(DESKTOP.WIDTH, DESKTOP.HEIGHT));
+beforeEach(() =>
+  page.viewport(SCREEN.VIEWPORT.DESKTOP.WIDTH, SCREEN.VIEWPORT.DESKTOP.HEIGHT)
+);
 
 const renderAt = (
   search: string,
@@ -24,8 +27,8 @@ const renderAt = (
     <NuqsTestingAdapter onUrlUpdate={onUrlUpdate} searchParams={search}>
       <AOFSidebarProvider>
         <SidebarParam />
-        <AOFSidebar>Sections</AOFSidebar>
-        <AOFSidebarTrigger aria-label={TRIGGER} />
+        <AOFSidebar label={t.menu}>Sections</AOFSidebar>
+        <AOFSidebarTrigger aria-label={t.toggleMenu} />
       </AOFSidebarProvider>
     </NuqsTestingAdapter>
   );
@@ -45,7 +48,7 @@ describe("SidebarParam", () => {
   it("writes the state to the address when the menu toggles", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
     const screen = await renderAt("", onUrlUpdate);
-    await screen.getByRole("button", { name: TRIGGER }).click();
+    await screen.getByRole("button", { name: t.toggleMenu }).click();
     await expect
       .poll(() => onUrlUpdate.mock.lastCall?.[0].queryString)
       .toBe(`?${NAVIGATION.PARAM.SIDEBAR}=false`);

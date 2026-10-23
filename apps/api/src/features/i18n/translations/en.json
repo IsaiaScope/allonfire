@@ -3,6 +3,8 @@
   "VALIDATION_FAILED": "{count, plural, one {# field failed validation} other {# fields failed validation}}",
   "UNAUTHORIZED": "Authentication required",
   "FORBIDDEN": "Not allowed",
+  "CANNOT_DELETE_SELF": "You cannot delete yourself",
+  "EMAIL_TAKEN": "An account with this email already exists",
   "NOT_FOUND": "Not found",
   "RATE_LIMITED": "Too many requests. Retry in {seconds, plural, one {# second} other {# seconds}}",
   "TIMEOUT": "Request timed out after {seconds, number} s",

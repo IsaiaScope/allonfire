@@ -118,6 +118,13 @@ export const AUTH = {
      * sign a User out.
      */
     EXPIRES_IN_S: 60 * UNIT.SECONDS_PER_DAY,
+    /**
+     * How long the browser keeps a page's passed Session check
+     * (`requireAppSession`, `use cache: private`): navigations within it ask
+     * the API nothing. A Role taken away shows pages that long at most; the
+     * API checks every request itself, so they show no data.
+     */
+    PAGE_CHECK_STALE_S: 30 * UNIT.SECONDS_PER_MINUTE,
     /** How often a visit extends the Session: one database write a day at most. */
     UPDATE_AGE_S: UNIT.SECONDS_PER_DAY,
   },

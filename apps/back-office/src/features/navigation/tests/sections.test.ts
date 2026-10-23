@@ -4,10 +4,12 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import {
+  currentSection,
   isCurrentSection,
   SECTION,
   SECTIONS,
   sectionHref,
+  stationNumber,
 } from "../constants/sections";
 
 const SIGNED_IN = join(
@@ -16,7 +18,6 @@ const SIGNED_IN = join(
 );
 const PAGE_FILE = "page.tsx";
 const GATED = "export default signedInPage(";
-const byPath = (a: string, b: string) => a.localeCompare(b);
 
 /** Every page under (signed-in), as the path it serves after the locale. */
 const signedInPages = () =>
@@ -28,12 +29,19 @@ const signedInPages = () =>
     }));
 
 describe("Sections", () => {
-  it("lists every signed-in page, and nothing else", () => {
-    expect(
-      signedInPages()
-        .map(({ path }) => path)
-        .sort(byPath)
-    ).toEqual(SECTIONS.map(({ path }) => path).sort(byPath));
+  it("puts every signed-in page in a Section, and gives every Section its page", () => {
+    const paths = signedInPages().map(({ path }) => path);
+    for (const path of paths) {
+      expect(
+        SECTIONS.some((section) =>
+          isCurrentSection(sectionHref(path), section.path)
+        ),
+        path
+      ).toBe(true);
+    }
+    for (const { path } of SECTIONS) {
+      expect(paths, path).toContain(path);
+    }
   });
 
   it("gates every signed-in page itself", () => {
@@ -52,5 +60,25 @@ describe("Sections", () => {
     expect(isCurrentSection(users, SECTION.USERS.path)).toBe(true);
     expect(isCurrentSection(users, SECTION.HOME.path)).toBe(false);
     expect(isCurrentSection(METADATA.PATH.ROOT, SECTION.HOME.path)).toBe(true);
+  });
+
+  it("marks a Section on the pages under it, never Home by prefix", () => {
+    const user = `${SECTION.USERS.path}/abc`;
+    expect(isCurrentSection(user, SECTION.USERS.path)).toBe(true);
+    expect(isCurrentSection(user, SECTION.HOME.path)).toBe(false);
+    expect(isCurrentSection(`${SECTION.USERS.path}x`, SECTION.USERS.path)).toBe(
+      false
+    );
+    expect(currentSection(user)).toBe(SECTION.USERS);
+  });
+
+  it("numbers each Section like a station on the line, in menu order", () => {
+    expect(SECTIONS.map(stationNumber)).toEqual(["01", "02", "03"]);
+  });
+
+  it("finds the Section you are on, Home for any other path", () => {
+    expect(currentSection(sectionHref(SECTION.USERS.path))).toBe(SECTION.USERS);
+    expect(currentSection(METADATA.PATH.ROOT)).toBe(SECTION.HOME);
+    expect(currentSection("/no-such-section")).toBe(SECTION.HOME);
   });
 });

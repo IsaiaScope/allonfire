@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { SECTIONS } from "../../constants/sections";
+import { SECTIONS, sectionHref } from "../../constants/sections";
 import { AppFrame } from "../app-frame";
 
 vi.mock("@/features/i18n/navigation", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/features/i18n/navigation", () => ({
 const renderFrame = () =>
   renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={EN}>
-      <AppFrame account={<span>Account</span>}>
+      <AppFrame account={<span>Account</span>} switcher={<span>Apps</span>}>
         <p>Page</p>
       </AppFrame>
     </NextIntlClientProvider>
@@ -25,19 +25,23 @@ const renderFrame = () =>
 const count = (html: string, text: string) => html.split(text).length - 1;
 
 describe("AppFrame", () => {
-  it("names both menus and lists every Section in each", () => {
+  it("names the menu and lists every Section once", () => {
     const html = renderFrame();
-    expect(count(html, `aria-label="${EN.Navigation.menu}"`)).toBe(2);
-    for (const { label } of SECTIONS) {
-      expect(count(html, EN.Navigation[label])).toBeGreaterThanOrEqual(2);
+    expect(count(html, `aria-label="${EN.Navigation.menu}"`)).toBe(1);
+    for (const { path } of SECTIONS) {
+      expect(count(html, `href="${sectionHref(path)}"`)).toBeGreaterThanOrEqual(
+        1
+      );
     }
   });
 
-  it("keeps the page clear of the phone's tab bar", () => {
-    expect(renderFrame()).toContain("pb-(--tab-bar-height)");
+  it("has the menu button and the breadcrumb", () => {
+    const html = renderFrame();
+    expect(html).toContain(`aria-label="${EN.Navigation.toggleMenu}"`);
+    expect(html).toContain('data-slot="breadcrumb"');
   });
 
   it("marks Home current on the root, and only Home", () => {
-    expect(count(renderFrame(), 'aria-current="page"')).toBe(2);
+    expect(renderFrame().match(/<a[^>]*aria-current="page"/g)).toHaveLength(1);
   });
 });

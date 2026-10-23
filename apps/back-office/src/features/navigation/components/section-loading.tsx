@@ -19,18 +19,21 @@ const LOADING_SIGNAGE = {
 const LAMP_DELAYS = ["0ms", "200ms", "400ms"];
 
 /**
- * What a signed-in page shows while its Session check waits: the fallback
- * `signedInPage` hands `withAppSession`, inside the page's own `<Suspense>`,
- * so it fills the frame's page area on every navigation. The stamp lands
- * only after half a second, its status on a small LED board just after, so a
- * quick check shows nothing. The board's lamps pulse as long as the wait
- * lasts: a loading indicator, which WCAG 2.2.2 counts as essential, standing
+ * What a signed-in page shows while it waits: the fallback `signedInPage`
+ * hands `withAppSession`, inside the page's own `<Suspense>`, so it fills the frame's page area while a page waits on its data. No
+ * entrance: a wait is often shorter than one, which left only the wall kanji
+ * on screen, so the stamp and its status stand from the first frame. The
+ * board's lamps pulse as long as the wait lasts: a loading indicator, which WCAG 2.2.2 counts as essential, standing
  * still for reduced motion.
  */
 export const SectionLoading = () => {
   const t = useTranslations("Common.Loading");
   return (
-    <StationNotice page={SectionPage} signage={LOADING_SIGNAGE}>
+    <StationNotice
+      entrance={false}
+      page={SectionPage}
+      signage={LOADING_SIGNAGE}
+    >
       <div className="led-board flex items-baseline gap-2 px-4 py-2 text-lg leading-tight">
         <p role="status">{t("label")}</p>
         <span aria-hidden className="flex gap-1">

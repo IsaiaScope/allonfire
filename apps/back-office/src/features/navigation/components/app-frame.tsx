@@ -1,121 +1,108 @@
-import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { aofLogoDataUrl } from "@allonfire/design/brand/aof-logo";
-import { AOFImage } from "@allonfire/ui/components/aof-image";
+import { AOFSeparator } from "@allonfire/ui/components/aof-separator";
 import {
   AOFSidebar,
   AOFSidebarContent,
   AOFSidebarFooter,
+  AOFSidebarGroup,
   AOFSidebarHeader,
   AOFSidebarInset,
   AOFSidebarMenu,
   AOFSidebarMenuItem,
   AOFSidebarProvider,
+  AOFSidebarRail,
   AOFSidebarTrigger,
 } from "@allonfire/ui/components/aof-sidebar";
-import {
-  AOF_TAB_BAR_CLEARANCE,
-  AOFTabBar,
-} from "@allonfire/ui/components/aof-tab-bar";
-import { cn } from "@allonfire/ui/lib/utils";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { Torii } from "@/shared/components/torii";
+import { NAVIGATION, sidebarParam } from "../constants/navigation";
 import { SECTIONS } from "../constants/sections";
-import { SidebarSectionLink, TabSectionLink } from "./section-link";
+
+import { CloseDrawerOnNavigate } from "./close-drawer-on-navigate";
+import { FrameBreadcrumb } from "./frame-breadcrumb";
+import { HeaderKanji } from "./header-kanji";
+import { SidebarSectionLink } from "./section-link";
+import { SidebarKanji } from "./sidebar-kanji";
 import { SidebarParam } from "./sidebar-param";
 
-/** The logo's side in the sidebar's header (`size-8`). */
-const LOGO_SIZE = 32;
-
-// Inlined in the HTML, so the logo paints with the frame. One per theme,
-// shown by the theme toggle's `.dark` class: `auto` would follow the system.
-const LOGOS = [
-  { className: "dark:hidden", scheme: METADATA.LOGO.SCHEME.LIGHT },
-  { className: "hidden dark:block", scheme: METADATA.LOGO.SCHEME.DARK },
-].map(({ className, scheme }) => ({
-  className,
-  scheme,
-  src: aofLogoDataUrl({
-    app: BACK_OFFICE.LOGO,
-    layout: METADATA.LOGO.LAYOUT.SQUARE,
-    scheme,
-  }),
-}));
-
 export type AppFrameProps = {
-  /** The account menu, rendered in the sidebar's footer and the top bar. */
+  /** The account menu, in the sidebar's footer. */
   account: ReactNode;
   children: ReactNode;
+  /** The App switcher, in the sidebar's header. */
+  switcher: ReactNode;
 };
 
 /**
- * Every signed-in page's frame (ADR 0024): the sidebar on desktop, the top
- * bar and tab bar on a phone, both menus drawn from the one Sections list.
- * Static: it reads nothing of the request, so it is in the shell; the page
- * area under it checks the Session.
+ * Every signed-in page's frame (ADR 0024), shadcn's `sidebar-07`: a sidebar
+ * that collapses to icons (a drawer on a phone, opened from the header) with
+ * the App switcher, the Sections and the account menu, and a header with the
+ * breadcrumb. Static: it reads nothing of the request, so it is in the
+ * shell; the switcher, the account menu and the page each read the Session
+ * on their own.
  */
-export const AppFrame = ({ account, children }: AppFrameProps) => {
+export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
   const t = useTranslations("Navigation");
   return (
     <AOFSidebarProvider>
       <Suspense fallback={null}>
         <SidebarParam />
       </Suspense>
-      <AOFSidebar>
-        <AOFSidebarHeader className="flex-row items-center gap-2 px-3 py-4 group-data-[collapsible=icon]:px-2">
-          {/* The square logo in the theme's scheme; the name beside it. */}
-          {LOGOS.map(({ className, scheme, src }) => (
-            <AOFImage
-              alt=""
-              className={cn("size-8 shrink-0 rounded-md", className)}
-              height={LOGO_SIZE}
-              key={scheme}
-              sizes={`${LOGO_SIZE}px`}
-              src={src}
-              width={LOGO_SIZE}
-            />
-          ))}
-          <span className="truncate font-semibold group-data-[collapsible=icon]:hidden">
-            {BACK_OFFICE.NAME}
-          </span>
+      <Suspense fallback={null}>
+        <CloseDrawerOnNavigate />
+      </Suspense>
+      <AOFSidebar
+        collapsedBy={{
+          param: NAVIGATION.PARAM.SIDEBAR,
+          value: sidebarParam.serialize(false),
+        }}
+        label={t("menu")}
+      >
+        <SidebarKanji />
+        {/* The station sign's band: the App's line under its name, level
+              with the page header's line. On a phone the drawer runs to the
+              screen's edges: keep clear of the notch above and the home
+              indicator below. */}
+        <AOFSidebarHeader className="relative justify-center border-line/50 border-b-2 max-md:pt-[max(--spacing(3),env(safe-area-inset-top))] max-md:pb-3 md:h-16 md:py-0">
+          {switcher}
         </AOFSidebarHeader>
-        <AOFSidebarContent>
-          <nav aria-label={t("menu")}>
-            <AOFSidebarMenu>
-              {SECTIONS.map(({ icon: Icon, label, path }, index) => (
-                <AOFSidebarMenuItem key={label}>
-                  <SidebarSectionLink
-                    label={t(label)}
-                    last={index === SECTIONS.length - 1}
-                    path={path}
-                  >
-                    <Icon aria-hidden />
-                  </SidebarSectionLink>
-                </AOFSidebarMenuItem>
-              ))}
-            </AOFSidebarMenu>
-          </nav>
+        <AOFSidebarContent className="relative">
+          <AOFSidebarGroup className="py-4">
+            <nav aria-label={t("menu")}>
+              <AOFSidebarMenu>
+                {SECTIONS.map(({ icon: Icon, label, path }) => (
+                  <AOFSidebarMenuItem key={label}>
+                    <SidebarSectionLink label={t(label)} path={path}>
+                      <Icon aria-hidden />
+                    </SidebarSectionLink>
+                  </AOFSidebarMenuItem>
+                ))}
+              </AOFSidebarMenu>
+            </nav>
+          </AOFSidebarGroup>
         </AOFSidebarContent>
-        <AOFSidebarFooter className="max-md:hidden">{account}</AOFSidebarFooter>
+        <AOFSidebarFooter className="relative max-md:pb-[max(--spacing(2),env(safe-area-inset-bottom))]">
+          {account}
+        </AOFSidebarFooter>
+        {/* A mouse's edge to drag or click; the header's button is the one
+              control assistive tech meets, so this duplicate stays hidden. */}
+        <AOFSidebarRail aria-hidden title={t("toggleMenu")} />
       </AOFSidebar>
-      <AOFSidebarInset className={AOF_TAB_BAR_CLEARANCE}>
-        <header className="flex h-14 items-center gap-2 border-b px-4">
-          <AOFSidebarTrigger
-            aria-label={t("toggleMenu")}
-            className="max-md:hidden"
+      <AOFSidebarInset>
+        {/* The sidebar header's line runs on across the page's: one station
+            sign, the App's line under it. */}
+        <header className="relative isolate flex h-16 shrink-0 items-center gap-2 border-line/50 border-b-2 px-4">
+          <HeaderKanji />
+          <AOFSidebarTrigger aria-label={t("toggleMenu")} className="-ml-1" />
+          <AOFSeparator
+            className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+            orientation="vertical"
           />
-          <span className="font-semibold md:hidden">{BACK_OFFICE.NAME}</span>
-          <div className="ml-auto md:hidden">{account}</div>
+          <FrameBreadcrumb />
+          <Torii className="ml-auto" />
         </header>
         {children}
       </AOFSidebarInset>
-      <AOFTabBar label={t("menu")}>
-        {SECTIONS.map(({ icon: Icon, label, path }) => (
-          <TabSectionLink key={label} label={t(label)} path={path}>
-            <Icon aria-hidden />
-          </TabSectionLink>
-        ))}
-      </AOFTabBar>
     </AOFSidebarProvider>
   );
 };

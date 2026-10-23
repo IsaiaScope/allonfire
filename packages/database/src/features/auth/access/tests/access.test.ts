@@ -1,4 +1,5 @@
 // @module-tag unit
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import {
   accessUserFrom,
@@ -8,7 +9,9 @@ import {
   canSeeImage,
   canSeeImageIn,
   enterableApps,
+  entryRoles,
   hasRole,
+  hasRoleIn,
   type ImageLink,
   roleIn,
 } from "../access";
@@ -56,6 +59,31 @@ describe("roleIn", () => {
   });
 });
 
+describe("hasRoleIn", () => {
+  it("needs a Membership in that App whose Role reaches at least the one asked", () => {
+    expect(
+      hasRoleIn(
+        member(App.BACK_OFFICE, Role.ADMIN),
+        App.BACK_OFFICE,
+        Role.ADMIN
+      )
+    ).toBe(true);
+    expect(
+      hasRoleIn(member(App.BACK_OFFICE, Role.ADMIN), App.BACK_OFFICE, Role.USER)
+    ).toBe(true);
+    expect(
+      hasRoleIn(member(App.BACK_OFFICE, Role.USER), App.BACK_OFFICE, Role.ADMIN)
+    ).toBe(false);
+  });
+
+  it("never counts a Role held in another App", () => {
+    expect(
+      hasRoleIn(member(App.LAURA, Role.ADMIN), App.BACK_OFFICE, Role.VIEWER)
+    ).toBe(false);
+    expect(hasRoleIn({ memberships: [] }, App.LAURA, Role.VIEWER)).toBe(false);
+  });
+});
+
 describe("canEnterApp", () => {
   it("needs a Membership in the App", () => {
     expect(canEnterApp(member(App.LAURA, Role.VIEWER), App.LAURA)).toBe(true);
@@ -71,6 +99,21 @@ describe("canEnterApp", () => {
     expect(
       canEnterApp(member(App.BACK_OFFICE, Role.ADMIN), App.BACK_OFFICE)
     ).toBe(true);
+  });
+});
+
+describe("entryRoles", () => {
+  it("lists the Roles that reach an App's floor, in enum order", () => {
+    expect(entryRoles(App.LAURA)).toEqual([Role.ADMIN, Role.USER, Role.VIEWER]);
+    expect(entryRoles(App.BACK_OFFICE)).toEqual([Role.ADMIN]);
+  });
+
+  it("offers only Roles that canEnterApp lets in", () => {
+    for (const app of objectValues(App)) {
+      for (const role of entryRoles(app)) {
+        expect(canEnterApp(member(app, role), app)).toBe(true);
+      }
+    }
   });
 });
 

@@ -112,9 +112,9 @@ compose project, which recreates only the services whose image changed (ADR 0018
 
 One-time setup:
 
-1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `PROD_STORAGE_ENDPOINT`, `PROD_NEXT_PUBLIC_API_URL`; variables `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`.
+1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `STORAGE_ENDPOINT`, `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variables `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`.
 2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
-3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
+3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `BACK_OFFICE_URL`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
 4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
 
 Before the API starts, the one-shot `storage-setup` service creates the `image` bucket with its read-only policy, only when missing; nothing is uploaded by hand.
@@ -133,11 +133,13 @@ Production holds. The Fixtures live only in Test databases; remove
 `packages/storage/.env` (from its `.env.example`) holds the Local MinIO
 login the setup and the e2e run's bucket use.
 
-`pnpm dev:tailscale` serves each dev App over Tailscale as its own Tailscale
-Service, with HTTPS: the Back Office at `https://back-office.<tailnet>.ts.net`,
+`pnpm dev` also serves each dev App over Tailscale as its own Tailscale
+Service, with HTTPS, and stops serving them when it stops (Ctrl+C); with
+Tailscale off it skips this and the Apps answer on localhost only.
+`pnpm dev:tailscale` does the same on its own: the Back Office at `https://back-office.<tailnet>.ts.net`,
 Laura at `https://laura.<tailnet>.ts.net`. Tailscale must be running on the
 Mac and on each device that opens them, with MagicDNS and HTTPS Certificates
-on in the tailnet's DNS settings. Tailscale keeps serving them across
+on in the tailnet's DNS settings. Started on its own, Tailscale keeps serving them across
 restarts; `pnpm dev:tailscale:off` stops it. `next dev` accepts only names
 on this tailnet, which it reads from `tailscale status` at start: sign in to
 Tailscale before `pnpm dev`, or restart `pnpm dev` after.
@@ -169,6 +171,10 @@ One-time setup, in the admin console:
 4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
    defined stays pending: `tailscale serve clear svc:<name>`, then run it
    again, and the auto-approval applies.
+5. Add each App's tailnet address to `API_CORS_ORIGINS` in `apps/api/.env`
+   (`https://back-office.<tailnet>.ts.net,https://laura.<tailnet>.ts.net`):
+   an App's server forwards the page's Origin to the API, whose Better Auth
+   refuses one it does not trust, and Sign in then reports itself unavailable.
 
 Why Services, and what a new App needs: ADR 0021.
 

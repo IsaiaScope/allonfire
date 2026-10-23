@@ -1,11 +1,12 @@
 # Dev Apps reach other devices as Tailscale Services
 
 `pnpm dev` runs every App on the Mac (`localhost:3400`, `localhost:3200`, ...).
-To open them from a phone, `pnpm dev:tailscale` advertises each App as its
-own Tailscale Service, so each one has its own HTTPS address on the tailnet:
+To open them from a phone, `pnpm dev` (or `pnpm dev:tailscale` alone)
+advertises each App as its own Tailscale Service, so each one has its own HTTPS address on the tailnet:
 `https://back-office.<tailnet>.ts.net`, `https://laura.<tailnet>.ts.net`.
 Today the tailnet is `pintail-adelie.ts.net` and the Mac is the machine
-`allonfire`. `pnpm dev:tailscale:off` stops them.
+`allonfire`. `pnpm dev` stops them when it exits; `pnpm dev:tailscale:off`
+stops them otherwise.
 
 ## Why
 
@@ -50,6 +51,9 @@ Today the tailnet is `pintail-adelie.ts.net` and the Mac is the machine
 - A host that advertised a Service before it was defined stays pending.
   Clear it (`tailscale serve clear svc:<name>`) and run `pnpm dev:tailscale`
   again, and the auto-approval applies.
+- An App's server forwards the page's Origin to the API, so each App's tailnet
+  address goes in the API's `API_CORS_ORIGINS` (`apps/api/.env`); without it
+  Better Auth refuses the Sign in (`INVALID_ORIGIN`).
 - Every App shares the API's `localhost` address only on the Mac. Once a page
   calls the API from the browser, the API needs its own Service (`svc:api`),
   its address in `API_CORS_ORIGINS` and in `NEXT_PUBLIC_API_URL`.

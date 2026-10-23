@@ -6,7 +6,8 @@ import type { AuthSession } from "../../../../shared/types/auth";
 import type { SignedInEnv } from "../../types/variables";
 
 /**
- * 401 without a Session, 403 when `allows` says no.
+ * 401 without a Session, 403 when `allows` says no. `allows` may answer
+ * later, so a Host can read the User fresh from the database.
  *
  * Typed `SignedInEnv` for what it guarantees the handlers after it. Hono's
  * `Context` is invariant, so the handler cannot take the nullable `AuthEnv`
@@ -14,13 +15,15 @@ import type { SignedInEnv } from "../../types/variables";
  * really be at this point (no loader ran, or the request is anonymous).
  */
 export const guard =
-  (allows: (session: AuthSession) => boolean): MiddlewareHandler<SignedInEnv> =>
+  (
+    allows: (session: AuthSession) => boolean | Promise<boolean>
+  ): MiddlewareHandler<SignedInEnv> =>
   async (context, next) => {
     const session: AuthSession | null = context.get(AUTH.VAR.SESSION);
     if (!session) {
       throw new HTTPException(HTTP.STATUS.UNAUTHORIZED);
     }
-    if (!allows(session)) {
+    if (!(await allows(session))) {
       throw new HTTPException(HTTP.STATUS.FORBIDDEN);
     }
     await next();

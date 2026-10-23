@@ -29,4 +29,13 @@ describe("AOFCreateNavigation", () => {
       { "aria-current": "true", href: `/${SECOND}${PAGE}`, lang: SECOND },
     ]);
   });
+
+  it("keeps the page's query, so a filtered list stays filtered", () => {
+    const query = "search=app%3Alaura&page=2";
+    expect(
+      navigation
+        .languageLinks(PAGE, SECOND, query)
+        .map(({ attributes }) => attributes.href)
+    ).toEqual([`/${FIRST}${PAGE}?${query}`, `/${SECOND}${PAGE}?${query}`]);
+  });
 });

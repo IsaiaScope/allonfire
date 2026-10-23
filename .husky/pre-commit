@@ -1,4 +1,6 @@
-# Staged files: Biome fixes what it can and fails on any error or warning.
+# Staged files: Tailwind classes rewritten to the spelling the editor's
+# suggestCanonicalClasses asks for (each App's own theme), then Biome fixes
+# what it can and fails on any error or warning.
 pnpm exec lint-staged --allow-empty
 # Deprecated APIs, members included, read from the types (.oxlintrc.json):
 # the whole repo, since a dependency upgrade deprecates code nobody staged.
@@ -8,7 +10,7 @@ pnpm exec oxlint --type-aware
 # services the tests use. Not `--wait` on the whole stack: it fails as soon as
 # a one-shot container exits, even with 0. Docker must run.
 pnpm docker:up
-docker compose -f docker/docker-compose.dev.yml up -d --wait postgres redis minio
+docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage
 # Types, unit and integration tests, browser tests. Turbo's cache replays
 # every package whose inputs did not change, so only what this commit touches
 # (and what depends on it) runs.

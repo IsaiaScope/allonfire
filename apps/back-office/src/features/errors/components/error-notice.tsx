@@ -2,11 +2,8 @@ import type { SharedTranslations } from "@allonfire/core/features/next/i18n/shar
 import { AOFButton } from "@allonfire/ui/components/aof-button";
 import type { createTranslator } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
-import {
-  STATION_NOTICE_ACTION,
-  StationNotice,
-  StationNoticeKanji,
-} from "@/shared/components/station-notice";
+import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { StationNotice } from "@/shared/components/station-notice";
 
 /** The boundary's `Common.Error` translator: `useTranslations` or `createTranslator`. */
 type ErrorTranslator = ReturnType<
@@ -33,11 +30,12 @@ export const ErrorNotice = ({ error, retry, t }: ErrorNoticeProps) => (
   <StationNotice
     action={
       <AOFButton
-        className={STATION_NOTICE_ACTION}
+        className={kanjiAction()}
         onClick={retry}
+        size="field"
         type="button"
       >
-        <StationNoticeKanji kanji={ERROR_SIGNAGE.ERROR.RETRY_KANJI} />
+        <ActionKanji kanji={ERROR_SIGNAGE.ERROR.RETRY_KANJI} />
         {t("retry")}
       </AOFButton>
     }

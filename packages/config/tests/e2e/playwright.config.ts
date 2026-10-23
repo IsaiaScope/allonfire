@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
-import { API_PATH, LOCAL } from "../../local/addresses";
+import { LOCAL } from "../../local/addresses";
 import { testRunStamp } from "../run/test-run";
 import { E2E_CLI, E2E_LABEL, E2E_TAG } from "./run";
 
@@ -50,12 +50,16 @@ export const playwrightConfig = defineConfig({
  * is the run CI would make and Turbo's remote cache can replay it; they sit
  * beside `pnpm dev`. The stack's addresses are set here, so neither CI nor
  * a local `.env` decides them; `env` adds the App's own runtime values.
+ * `apiPath` is the API's own `API.PATH`, which config, a leaf package,
+ * cannot import.
  */
 export const aofPlaywrightConfig = ({
+  apiPath,
   app,
   env,
   port,
 }: {
+  apiPath: { AUTH: string; HEALTH: string };
   app: string;
   env: Record<string, string>;
   port: number;
@@ -110,7 +114,7 @@ export const aofPlaywrightConfig = ({
           STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
         },
         timeout: START_TIMEOUT_MS,
-        url: `${apiUrl}${API_PATH.HEALTH}`,
+        url: `${apiUrl}${apiPath.HEALTH}`,
       },
       {
         // The API's address is baked into the build, so the App is built
@@ -126,7 +130,8 @@ export const aofPlaywrightConfig = ({
         ].join(" && "),
         env: {
           ...env,
-          API_AUTH_URL: `${apiUrl}${API_PATH.AUTH}`,
+          API_AUTH_URL: `${apiUrl}${apiPath.AUTH}`,
+          API_URL: apiUrl,
           NEXT_PUBLIC_API_URL: apiUrl,
           PORT: String(port),
           STORAGE_ENDPOINT: LOCAL.URL.STORAGE,

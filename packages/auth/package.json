@@ -28,6 +28,11 @@
     "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
     "./features/server/auth": "./src/features/server/auth.ts",
+    "./features/users/constants/users": "./src/features/users/constants/users.ts",
+    "./features/users/hono/constants/schemas": "./src/features/users/hono/constants/schemas.ts",
+    "./features/users/hono/routes": "./src/features/users/hono/routes/index.ts",
+    "./features/users/hono/utils/deps": "./src/features/users/hono/utils/deps.ts",
+    "./features/users/utils/password-rules": "./src/features/users/utils/password-rules.ts",
     "./shared/constants/errors": "./src/shared/constants/errors.ts",
     "./shared/constants/auth": "./src/shared/constants/auth.ts",
     "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
@@ -43,6 +48,7 @@
     "@better-auth/prisma-adapter": "^1.5.3",
     "@t3-oss/env-nextjs": "^0.13.11",
     "better-auth": "^1.5.3",
+    "hono-openapi": "^1.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

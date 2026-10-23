@@ -9,6 +9,10 @@ import { config } from "./proxy";
 vi.mock("@allonfire/auth/features/next/utils/with-session-refresh", () => ({
   withSessionRefresh: (handler: unknown) => handler,
 }));
+// The matcher is what this file checks; the gate has its own tests in auth.
+vi.mock("@allonfire/auth/features/next/utils/with-sign-in-gate", () => ({
+  withSignInGate: (handler: unknown) => handler,
+}));
 vi.mock("@allonfire/core/features/next/i18n/aof-create-middleware", () => ({
   AOFCreateMiddleware: () => () => undefined,
 }));

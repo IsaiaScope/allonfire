@@ -1,24 +1,67 @@
-import { AOFEmpty } from "@allonfire/ui/components/aof-empty";
+import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
+import { AOFGetQueryClient } from "@allonfire/core/features/next/query/aof-get-query-client";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import type { SearchParams } from "nuqs/server";
+import { Suspense } from "react";
+import { serverApi } from "@/features/api/utils/server-api";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { sectionMetadata } from "@/features/navigation/utils/section-metadata";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-
-const { icon: Icon, label } = SECTION.USERS;
+import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
+import { UsersTable } from "@/features/users/components/users-table";
+import { loadUsersParams } from "@/features/users/constants/users-params";
+import { usersQuery } from "@/features/users/utils/users-queries";
 
 export const generateMetadata = () => sectionMetadata(SECTION.USERS);
 
-const UsersPage = () => {
-  const t = useTranslations();
+const leaveToTable = () => undefined;
+
+type UsersPageProps = { searchParams: Promise<SearchParams> };
+
+/**
+ * The list's rows, read on the server from the address (cleaned, never
+ * refused) and handed to the table already filled: it reads the query back
+ * under the same key. A query the API refused is left to the table, which
+ * asks again and shows the error.
+ */
+const UsersList = async ({ searchParams }: UsersPageProps) => {
+  const [params, client] = await Promise.all([
+    loadUsersParams(searchParams),
+    serverApi(),
+  ]);
+  const queryClient = AOFGetQueryClient();
+  // The Session is the page check's own read (one per request): whose row
+  // has no checkbox. A refused query is left out of the hand-off, not
+  // thrown: the table asks again and shows the error.
+  const [session] = await Promise.all([
+    requireAppSession(),
+    queryClient.query(usersQuery(client, params)).catch(leaveToTable),
+  ]);
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <UsersTable selfId={session.user.id} />
+    </HydrationBoundary>
+  );
+};
+
+/**
+ * The Users list: the page itself is in the static shell, so a visit paints
+ * at once; only the rows, which hang on the address and the API, wait
+ * behind the list's own skeleton (Next's instant navigation: the boundary
+ * at the data it guards, never the page's loading screen).
+ */
+const UsersPage = ({ searchParams }: UsersPageProps) => {
+  const t = useTranslations("Navigation");
   return (
     <SectionPage className="gap-6">
-      <h1 className="font-semibold text-2xl">{t(`Navigation.${label}`)}</h1>
-      <AOFEmpty
-        description={t("Users.empty.description")}
-        icon={<Icon />}
-        title={t("Users.empty.title")}
-      />
+      {/* The header's breadcrumb already names the Section on screen; the
+          page keeps its h1 for screen readers. */}
+      <h1 className="sr-only">{t(SECTION.USERS.label)}</h1>
+      <Suspense fallback={<UsersListSkeleton />}>
+        <UsersList searchParams={searchParams} />
+      </Suspense>
     </SectionPage>
   );
 };

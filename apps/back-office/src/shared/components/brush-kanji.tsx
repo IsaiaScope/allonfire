@@ -12,11 +12,17 @@ const kanji = cva(
          *  label and cut by its edges. */
         button:
           "top-1/2 right-3 -translate-y-1/2 text-8xl text-primary-foreground/20",
+        /** Faint behind the page header's right end; the caller places it
+         *  in a layer under the header's controls. */
+        header: "z-auto text-foreground/6",
+        /** Faint on the sidebar's ground, above it rather than behind (the
+         *  drawer has no stacking context to sit in); the caller places it. */
+        sidebar: "z-auto text-sidebar-foreground/6",
         /** Huge across the page, behind everything: top to bottom on a
          *  phone, where a card fills the width, across from `lg` up. Sized
          *  by the screen so both kanji, tilted, stay whole inside it; the
          *  brush's ink sits low in its box, so across it is lifted a little. */
-        wall: "-translate-1/2 top-1/2 left-1/2 text-[min(76vw,48svh)] text-foreground/10 [writing-mode:vertical-rl] lg:-translate-y-[55%] lg:text-[min(44vw,80svh)] lg:[writing-mode:horizontal-tb]",
+        wall: "-translate-1/2 top-1/2 left-1/2 text-[min(76vw,48svh)] text-foreground/10 [writing-mode:vertical-rl] lg:translate-y-[-55%] lg:text-[min(44vw,80svh)] lg:[writing-mode:horizontal-tb]",
       },
     },
   }
@@ -48,4 +54,31 @@ export const BrushKanji = ({
   >
     {text}
   </span>
+);
+
+/**
+ * A page's one action (a button or a link) with a kanji brushed inside it
+ * (`ActionKanji`), as a notice, Sign in and a form end on. Drawn with the
+ * button's `field` size (`AOFButton size="field"`, `aofButtonVariants`), as
+ * tall as the fields; the label keeps clear of the kanji, which has the
+ * right end to itself.
+ */
+export const kanjiAction = cva(
+  "relative isolate min-w-40 overflow-hidden pr-12 font-bold"
+);
+
+/** The kanji brushed in a `kanjiAction`; `className` for its ink on a button
+ *  that is not the primary one (Cancel's red). */
+export const ActionKanji = ({
+  className,
+  kanji: text,
+}: {
+  className?: string;
+  kanji: string;
+}) => (
+  <BrushKanji
+    className={cn("right-1 text-5xl", className)}
+    kanji={text}
+    placement="button"
+  />
 );

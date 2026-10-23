@@ -26,7 +26,8 @@
         "STORAGE_ENDPOINT",
         "STORAGE_BUCKET",
         "NEXT_PUBLIC_API_URL",
-        "BACK_OFFICE_URL"
+        "BACK_OFFICE_URL",
+        "API_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],
       "outputs": [
@@ -47,6 +48,17 @@
     },
     "i18n:check": {
       "inputs": ["src/**/i18n/translations/**"]
+    },
+    "tailwind:check": {
+      "inputs": [
+        "src/**",
+        "!**/*.md",
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "$TURBO_ROOT$/packages/design/src/**",
+        "$TURBO_ROOT$/packages/shadcn/src/styles/**",
+        "$TURBO_ROOT$/packages/core/src/features/tailwind/**",
+        "!$TURBO_ROOT$/packages/**/*.md"
+      ]
     },
     "test": {
       "dependsOn": ["transit"],
