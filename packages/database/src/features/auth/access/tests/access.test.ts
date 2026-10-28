@@ -1,18 +1,16 @@
 // @module-tag unit
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "../../../../../generated/prisma/enums";
+import { App, ImageAccess, Role } from "../../../../../generated/prisma/enums";
 import {
   accessUserFrom,
   canEnterApp,
   canManageEverywhere,
   canManageImage,
   canSeeImage,
-  canSeeImageIn,
   enterableApps,
   entryRoles,
   hasRole,
   hasRoleIn,
-  type ImageLink,
   roleIn,
 } from "../access";
 import { appSchema } from "../constants/schemas";
@@ -21,9 +19,12 @@ const member = (app: App, role: Role) => ({
   memberships: [{ app, role }],
 });
 
-const LAURA_PRIVATE: ImageLink = { app: App.LAURA, public: false };
-const LAURA_PUBLIC: ImageLink = { app: App.LAURA, public: true };
-const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
+const PUBLIC_IN_LAURA = { access: ImageAccess.PUBLIC, apps: [App.LAURA] };
+const PRIVATE_IN_LAURA = { access: ImageAccess.PRIVATE, apps: [App.LAURA] };
+const PRIVATE_IN_BOTH = {
+  access: ImageAccess.PRIVATE,
+  apps: [App.LAURA, App.BACK_OFFICE],
+};
 const everywhereAdmin = {
   memberships: [
     { app: App.LAURA, role: Role.ADMIN },
@@ -154,51 +155,53 @@ describe("accessUserFrom", () => {
   });
 });
 
-describe("canSeeImageIn", () => {
-  it("shows a public placement to anyone, signed in or not", () => {
-    expect(canSeeImageIn(null, LAURA_PUBLIC)).toBe(true);
-    expect(canSeeImageIn({ memberships: [] }, LAURA_PUBLIC)).toBe(true);
+describe("canSeeImage", () => {
+  it("shows a public Image to anyone: a visitor, a member, an outsider", () => {
+    expect(canSeeImage(null, PUBLIC_IN_LAURA)).toBe(true);
+    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PUBLIC_IN_LAURA)).toBe(
+      true
+    );
+    expect(canSeeImage({ memberships: [] }, PUBLIC_IN_LAURA)).toBe(true);
   });
 
-  it("shows a private placement only to a User who enters its App", () => {
-    expect(canSeeImageIn(member(App.LAURA, Role.VIEWER), LAURA_PRIVATE)).toBe(
+  it("shows a private Image only to those who enter one of its Apps", () => {
+    expect(canSeeImage(null, PRIVATE_IN_LAURA)).toBe(false);
+    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PRIVATE_IN_LAURA)).toBe(
       true
     );
     expect(
-      canSeeImageIn(member(App.BACK_OFFICE, Role.ADMIN), LAURA_PRIVATE)
-    ).toBe(false);
-    expect(canSeeImageIn(null, LAURA_PRIVATE)).toBe(false);
-  });
-
-  it("hides a private placement from a User under the App's floor", () => {
-    expect(
-      canSeeImageIn(member(App.BACK_OFFICE, Role.USER), OFFICE_PRIVATE)
+      canSeeImage(member(App.BACK_OFFICE, Role.ADMIN), PRIVATE_IN_LAURA)
     ).toBe(false);
   });
-});
 
-describe("canSeeImage", () => {
-  it("is true when any placement shows the Image", () => {
-    expect(canSeeImage(null, [OFFICE_PRIVATE, LAURA_PUBLIC])).toBe(true);
-    expect(canSeeImage(null, [OFFICE_PRIVATE, LAURA_PRIVATE])).toBe(false);
+  it("lets a member of either App see a private Image in both", () => {
+    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PRIVATE_IN_BOTH)).toBe(
+      true
+    );
     expect(
-      canSeeImage(member(App.LAURA, Role.VIEWER), [
-        OFFICE_PRIVATE,
-        LAURA_PRIVATE,
-      ])
+      canSeeImage(member(App.BACK_OFFICE, Role.ADMIN), PRIVATE_IN_BOTH)
     ).toBe(true);
+  });
+
+  it("hides a private Image from a User under its App's floor", () => {
+    expect(
+      canSeeImage(member(App.BACK_OFFICE, Role.USER), {
+        access: ImageAccess.PRIVATE,
+        apps: [App.BACK_OFFICE],
+      })
+    ).toBe(false);
   });
 });
 
 describe("canManageEverywhere", () => {
   it("needs the Admin Role in every App the Image is in", () => {
     const lauraAdmin = member(App.LAURA, Role.ADMIN);
-    expect(canManageEverywhere(lauraAdmin, [LAURA_PUBLIC])).toBe(true);
+    expect(canManageEverywhere(lauraAdmin, [App.LAURA])).toBe(true);
+    expect(canManageEverywhere(lauraAdmin, [App.LAURA, App.BACK_OFFICE])).toBe(
+      false
+    );
     expect(
-      canManageEverywhere(lauraAdmin, [LAURA_PUBLIC, OFFICE_PRIVATE])
-    ).toBe(false);
-    expect(
-      canManageEverywhere(everywhereAdmin, [LAURA_PUBLIC, OFFICE_PRIVATE])
+      canManageEverywhere(everywhereAdmin, [App.LAURA, App.BACK_OFFICE])
     ).toBe(true);
   });
 });

@@ -20,6 +20,7 @@ const ROLES = { [App.BACK_OFFICE]: USERS.NO_ROLE, [App.LAURA]: Role.USER };
 /** Meets every rule: 12+ characters, each kind once at least. */
 const STRONG = "A-long-password-1";
 const VALID = {
+  avatar: null,
   confirmPassword: STRONG,
   email: "  New@Add-User.test ",
   name: "New",

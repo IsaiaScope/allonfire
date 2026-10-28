@@ -54,6 +54,10 @@ stops them otherwise.
 - An App's server forwards the page's Origin to the API, so each App's tailnet
   address goes in the API's `API_CORS_ORIGINS` (`apps/api/.env`); without it
   Better Auth refuses the Sign in (`INVALID_ORIGIN`).
+- A stored picture's link points at the image server, which the browser loads
+  directly (ADR 0027): it is the Service `svc:image-server` (localhost:9010),
+  and the API signs links with its address (`STORAGE_IMAGE_SERVER_URL` in
+  `apps/api/.env`), or a phone gets `localhost` links that reach nothing.
 - Every App shares the API's `localhost` address only on the Mac. Once a page
   calls the API from the browser, the API needs its own Service (`svc:api`),
   its address in `API_CORS_ORIGINS` and in `NEXT_PUBLIC_API_URL`.

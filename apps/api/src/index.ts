@@ -31,7 +31,7 @@ const app = createApp({
   checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
   images: imageDeps(logger),
   store: createRedisStore(redis),
-  users: userDeps(),
+  users: userDeps(logger),
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>

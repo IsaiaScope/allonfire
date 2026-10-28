@@ -29,9 +29,20 @@ const LOCAL_SERVICES = [
   "analytics-init",
   "database-init",
   "database-console",
+  "image-server",
+  "image-cache",
 ] as const;
 const STORAGE_MOVE_SERVICE = /^ {2}storage-move:$/m;
 const STORAGE_SERVICE = /^ {2}storage:$/m;
+const IMAGE_SERVER_SERVICE =
+  /^ {2}image-server:\n {4}container_name: allonfire-image-server$/m;
+const IMAGE_CACHE_SERVICE =
+  /^ {2}image-cache:\n {4}container_name: allonfire-image-cache$/m;
+/** Where each compose file keeps the image cache's nginx config, to its end. */
+const IMAGE_CACHE_CONFIG = "\nconfigs:\n  image-cache:\n";
+/** The router for the image server's public address, `IMAGE_SERVER_HOST`. */
+const IMAGE_SERVER_ROUTER =
+  "traefik.http.routers.allonfire-image-server.rule=Host(`$";
 /** Every file that names a Docker service. */
 const FILES = [
   "docker/docker-compose.dev.yml",
@@ -74,4 +85,35 @@ it("moves Production's storage data into its new volume before storage starts", 
   expect(text).toContain("STORAGE_ENDPOINT=http://storage:9000");
   // Deleted from Docker Hub: a deploy could no longer pull it.
   expect(text).not.toContain("minio/minio:latest");
+});
+
+it("serves stored pictures in Production through the image server only", () => {
+  const text = read("docker/docker-compose.prod.yml");
+  expect(text).toMatch(IMAGE_SERVER_SERVICE);
+  expect(text).toContain("IMGPROXY_USE_S3=true");
+  expect(text).toContain("IMGPROXY_S3_ENDPOINT=http://storage:9000");
+});
+
+it("answers the image server's address from the cache in front of it", () => {
+  const text = read("docker/docker-compose.prod.yml");
+  expect(text).toMatch(IMAGE_CACHE_SERVICE);
+  const cache = text.slice(text.search(IMAGE_CACHE_SERVICE));
+  const server = text.slice(
+    text.search(IMAGE_SERVER_SERVICE),
+    text.search(IMAGE_CACHE_SERVICE)
+  );
+  expect(cache).toContain(IMAGE_SERVER_ROUTER);
+  expect(cache).toContain("IMAGE_SERVER_HOST");
+  expect(server).not.toContain("traefik.enable=true");
+});
+
+it("caches pictures Locally exactly as Production does", () => {
+  const config = (file: string) => {
+    const text = read(file);
+    return text.slice(text.indexOf(IMAGE_CACHE_CONFIG));
+  };
+  expect(config("docker/docker-compose.dev.yml")).toContain("proxy_cache_key");
+  expect(config("docker/docker-compose.dev.yml")).toBe(
+    config("docker/docker-compose.prod.yml")
+  );
 });

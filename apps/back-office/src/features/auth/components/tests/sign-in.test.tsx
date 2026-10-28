@@ -2,7 +2,6 @@
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -55,7 +54,6 @@ describe("SignIn", () => {
 
   it("stands at the ticket gate: no photograph, its name brushed behind", () => {
     const html = render(<SignIn />);
-    expect(html).not.toContain(STORAGE.PATH.IMAGE_PROXY);
     expect(html).toContain("font-brush");
   });
 

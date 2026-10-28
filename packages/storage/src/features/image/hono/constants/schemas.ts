@@ -1,9 +1,10 @@
 import { jsonFrom } from "@allonfire/core/shared/utils/json";
-import type { App } from "@allonfire/database/enums";
+import { type App, ImageAccess } from "@allonfire/database/enums";
 import { z } from "zod";
 import { IMAGE } from "../../constants/image";
 import {
   appBodySchema,
+  imageAccessBodySchema,
   imageAltBodySchema,
   imageBodySchema,
 } from "../../constants/schemas";
@@ -33,25 +34,22 @@ export const listQuerySchema = z.object({
 export const idParamSchema = z.object({ id: z.string().min(1) });
 
 /** An Image is placed in an App once: a repeat is the client's 400, not a key clash. */
-const eachAppOnce = (links: readonly { app: App }[]) =>
-  new Set(links.map(({ app }) => app)).size === links.length;
+const eachAppOnce = (apps: readonly App[]) =>
+  new Set(apps).size === apps.length;
 const EACH_APP_ONCE = "names an App more than once";
 
-/**
- * An Image's placements: at least one App, each once. A `public` left out is
- * the caller's to resolve: private on upload (`toUploadItems`), the current
- * placement's on PATCH (the route).
- */
-const linksSchema = z
-  .array(z.object({ app: appBodySchema, public: z.boolean().optional() }))
+/** The Apps an Image is in: at least one, each once. */
+const appsSchema = z
+  .array(appBodySchema)
   .min(1)
   .refine(eachAppOnce, EACH_APP_ONCE);
 
-/** One entry per uploaded file, in the same order. */
+/** One entry per uploaded file, in the same order; private unless `access` says. */
 export const uploadItemSchema = z
   .object({
+    access: imageAccessBodySchema.optional(),
     alt: imageAltBodySchema,
-    apps: linksSchema,
+    apps: appsSchema,
   })
   .meta({ ref: "ImageUpload" });
 
@@ -73,24 +71,15 @@ export const uploadFormSchema = z
     path: ["meta"],
   });
 
-/** Each file with its own entry, every placement's `public` resolved. */
+/** Each file with its own entry, private when its `access` is left out. */
 export const toUploadItems = ({
   file,
   meta,
 }: z.output<typeof uploadFormSchema>) =>
-  meta.flatMap(({ alt, apps }, index) => {
+  meta.flatMap(({ access, alt, apps }, index) => {
     const one = file[index];
     return one
-      ? [
-          {
-            alt,
-            apps: apps.map((link) => ({
-              app: link.app,
-              public: link.public ?? false,
-            })),
-            file: one,
-          },
-        ]
+      ? [{ access: access ?? ImageAccess.PRIVATE, alt, apps, file: one }]
       : [];
   });
 export type UploadItem = ReturnType<typeof toUploadItems>[number];
@@ -99,8 +88,9 @@ export const patchBodySchema = z
   .array(
     z
       .object({
+        access: imageAccessBodySchema.optional(),
         alt: imageAltBodySchema.optional(),
-        apps: linksSchema.optional(),
+        apps: appsSchema.optional(),
         id: z.string().min(1),
       })
       .meta({ ref: "ImageChange" })

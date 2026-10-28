@@ -7,6 +7,7 @@ import type {
   updateImages,
 } from "@allonfire/database/features/image/image.service";
 import type {
+  copyImageObject,
   deleteImageObjects,
   putImageObject,
 } from "../../objects/image-objects";
@@ -17,6 +18,8 @@ export type ImageDeps = {
   prepare: typeof prepareImage;
   putObject: typeof putImageObject;
   deleteObjects: typeof deleteImageObjects;
+  /** A copy under a new name: a public Image made private moves to it. */
+  copyObject: typeof copyImageObject;
   createImages: typeof createImages;
   listImages: typeof listImages;
   getImage: typeof getImage;

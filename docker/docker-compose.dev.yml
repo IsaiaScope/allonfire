@@ -66,8 +66,59 @@ services:
       timeout: 5s
       retries: 5
 
-  # One-shot: the bucket Images live in (ADR 0013). Anyone can read a key,
-  # nobody can list the bucket (`download` would allow ListBucket). Safe to re-run.
+  # Every stored picture reaches a browser through it, by a link the API
+  # signed (imgproxy; ADR 0027): it reads the closed bucket with the storage's
+  # keys, resizes, and answers AVIF or WebP as the browser takes them. The key
+  # and salt below are throwaway Local values (`LOCAL.IMAGE_SERVER`).
+  image-server:
+    container_name: allonfire-image-server
+    image: ghcr.io/imgproxy/imgproxy:v4.0.20
+    restart: unless-stopped
+    environment:
+      IMGPROXY_KEY: ${STORAGE_IMAGE_SERVER_KEY:-5ac692d6a2b19f10fdcdc2f2dd03efdf413a4108bf93d08508e9c4c6656d95f1}
+      IMGPROXY_SALT: ${STORAGE_IMAGE_SERVER_SALT:-b8d9db70864d2cf60e0b5d06d04b8cb5}
+      IMGPROXY_USE_S3: "true"
+      IMGPROXY_S3_ENDPOINT: http://storage:9000
+      IMGPROXY_S3_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-allonfire}
+      AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-allonfire}
+      # Only the Apps' bucket and a test run's (`testBucketName`), never another.
+      IMGPROXY_ALLOWED_SOURCES: "s3://image/,s3://allonfire-test-"
+      IMGPROXY_AUTO_AVIF: "true"
+      IMGPROXY_AUTO_WEBP: "true"
+      IMGPROXY_MAX_SRC_RESOLUTION: "100"
+    depends_on:
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The image server's address: an nginx cache in front of it, so a link
+  # already answered is never resized again (`configs.image-cache`).
+  image-cache:
+    container_name: allonfire-image-cache
+    image: nginx:1.30.1-alpine
+    restart: unless-stopped
+    ports:
+      - "9010:8080"
+    configs:
+      - source: image-cache
+        target: /etc/nginx/conf.d/default.conf
+    depends_on:
+      image-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: the bucket every stored picture lives in (ADR 0013, ADR 0027),
+  # closed: no anonymous read; the image server reads it with the storage's
+  # keys. Safe to re-run.
   storage-init:
     container_name: allonfire-storage-init
     # The server image ships mc; minio/mc is no longer on Docker Hub.
@@ -80,8 +131,7 @@ services:
       /bin/sh -c "
       mc alias set local http://storage:9000 ${STORAGE_ACCESS_KEY:-allonfire} ${STORAGE_SECRET_KEY:-allonfire} &&
       mc mb --ignore-existing local/image &&
-      echo '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":[\"s3:GetObject\"],\"Resource\":[\"arn:aws:s3:::image/*\"]}]}' > /tmp/image-read.json &&
-      mc anonymous set-json /tmp/image-read.json local/image
+      mc anonymous set none local/image
       "
 
   # Telemetry backend. Stores on the named volume below; Production stores on
@@ -221,3 +271,45 @@ volumes:
   storage_data:
   telemetry_data:
   workflow_data:
+
+configs:
+  image-cache:
+    content: |
+      # Answers a signed image-server link it has already seen, so imgproxy
+      # resizes each picture once per link, not once per viewer (the open-source
+      # imgproxy keeps nothing itself). Kept identical in dev and prod
+      # (service-names.test.ts).
+      map $$http_accept $$image_format {
+          ~image/avif avif;
+          ~image/webp webp;
+          default     other;
+      }
+      proxy_cache_path /var/cache/nginx/images levels=1:2 keys_zone=images:10m
+                       max_size=5g inactive=30d use_temp_path=off;
+      server {
+          listen 8080;
+          location = /health {
+              access_log off;
+              return 200;
+          }
+          location / {
+              proxy_pass http://image-server:8080;
+              proxy_cache images;
+              # The whole path, signature and exp included: a hit needs the
+              # exact signed link, so a tampered one always reaches imgproxy.
+              # The format imgproxy picks from Accept is the only other part.
+              proxy_cache_key "$$request_uri|$$image_format";
+              # Every copy is checked with imgproxy before it is served (a 1 s
+              # life, then If-None-Match): imgproxy checks the link (403, 404
+              # past exp) and asks the bucket whether the file is unchanged,
+              # answering 304 without resizing, or 404 once it was deleted or
+              # renamed. The resize is what is saved; a revoked link dies at
+              # once. Only a 200 is kept. The browser still gets imgproxy's
+              # own Cache-Control.
+              proxy_ignore_headers Cache-Control Expires Vary;
+              proxy_cache_valid 200 1s;
+              proxy_cache_revalidate on;
+              proxy_cache_lock on;
+              add_header X-Cache-Status $$upstream_cache_status always;
+          }
+      }

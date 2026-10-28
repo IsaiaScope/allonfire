@@ -84,11 +84,14 @@ async function readMetadata(input: Buffer): Promise<Metadata> {
 }
 
 /**
- * Upright, metadata-free AVIF capped at `IMAGE.LIMIT.DIMENSION`, plus its WebP
- * blur. `.rotate()` applies the EXIF orientation first; sharp then writes no
- * metadata unless asked, so GPS and camera data never reach the bucket.
+ * `input` checked and ready to transform: an accepted format (else
+ * `UnsupportedImageError`) within `IMAGE.LIMIT.INPUT_PIXELS` (else
+ * `ImageTooLargeError`), read from the header before any decode, upright
+ * (`.rotate()` applies the EXIF orientation; sharp writes no metadata unless
+ * asked, so GPS and camera data never reach the bucket). An Image and an
+ * Avatar both start here.
  */
-export async function prepareImage(input: Buffer): Promise<PreparedImage> {
+export async function decodeUpright(input: Buffer): Promise<Sharp> {
   const metadata = await readMetadata(input);
   if (!isAccepted(metadata)) {
     throw new UnsupportedImageError();
@@ -99,10 +102,32 @@ export async function prepareImage(input: Buffer): Promise<PreparedImage> {
   ) {
     throw new ImageTooLargeError();
   }
+  return decode(input, metadata);
+}
+
+/**
+ * A stored picture's blur, what next/image shows while it loads: a tiny WebP
+ * as a data URL, ready for `blurDataURL`. Made from the stored file, already
+ * small, instead of the original.
+ */
+export const blurDataUrlOf = async (stored: Buffer): Promise<string> => {
+  const blur = await sharp(stored)
+    .resize({ width: BLUR_WIDTH })
+    .webp({ quality: BLUR_QUALITY })
+    .toBuffer();
+  return `data:image/webp;base64,${blur.toString("base64")}`;
+};
+
+/**
+ * Upright, metadata-free AVIF capped at `IMAGE.LIMIT.DIMENSION`, plus its WebP
+ * blur.
+ */
+export async function prepareImage(input: Buffer): Promise<PreparedImage> {
+  const upright = await decodeUpright(input);
   try {
     // The source is decoded once. The blur comes from the stored AVIF, at
     // most 2560px, instead of a second full decode of the original.
-    const { data, info } = await (await decode(input, metadata))
+    const { data, info } = await upright
       .resize({
         fit: "inside",
         height: IMAGE.LIMIT.DIMENSION,
@@ -111,12 +136,8 @@ export async function prepareImage(input: Buffer): Promise<PreparedImage> {
       })
       .avif({ quality: SOURCE_QUALITY })
       .toBuffer({ resolveWithObject: true });
-    const blur = await sharp(data)
-      .resize({ width: BLUR_WIDTH })
-      .webp({ quality: BLUR_QUALITY })
-      .toBuffer();
     return {
-      blurDataUrl: `data:image/webp;base64,${blur.toString("base64")}`,
+      blurDataUrl: await blurDataUrlOf(data),
       buffer: data,
       bytes: info.size,
       height: info.height,

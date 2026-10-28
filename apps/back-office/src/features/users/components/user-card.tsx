@@ -98,6 +98,7 @@ export const UserCard = ({
         {/* As tall as the two lines beside it (20px each and 2px between),
             so its edges meet the email's top and the name's foot. */}
         <UserAvatar
+          blurDataUrl={user.imageBlurDataUrl}
           className="size-10.5 text-lg"
           image={user.image}
           name={user.name || user.email}

@@ -26,16 +26,19 @@ const button = cva("w-(--field-height) min-w-0 px-0", {
   },
 });
 
-// As an icon button the kanji sits on the right edge, a quarter of it cut
-// away, small enough to leave the icon alone.
-const kanji = cva("right-0 left-auto translate-x-1/4 text-3xl", {
-  variants: {
-    shape: {
-      icon: "",
-      responsive: "@4xl:right-1 @4xl:translate-x-0 @4xl:text-5xl",
+/** The kanji in a toolbar action: as an icon button on the right edge, a
+ *  quarter of it cut away, small enough to leave the icon alone. */
+export const toolbarActionKanji = cva(
+  "right-0 left-auto translate-x-1/4 text-3xl",
+  {
+    variants: {
+      shape: {
+        icon: "",
+        responsive: "@4xl:right-1 @4xl:translate-x-0 @4xl:text-5xl",
+      },
     },
-  },
-});
+  }
+);
 
 const label = cva("hidden", {
   variants: { shape: { icon: "", responsive: "@4xl:inline" } },
@@ -60,7 +63,7 @@ export const tiledControl = cva(
 /** The classes of a toolbar action drawn as `variant`, in `shape`. */
 export const toolbarActionClass = (
   shape: ToolbarActionShape,
-  variant: "default" | "destructive" = "default"
+  variant: "default" | "destructive" | "outline" = "default"
 ) =>
   cn(
     aofButtonVariants({ size: "field", variant }),
@@ -86,7 +89,7 @@ export const ToolbarActionBody = ({
   <>
     <ActionKanji
       {...kanjiProps}
-      className={cn(kanji({ shape }), kanjiProps.className)}
+      className={cn(toolbarActionKanji({ shape }), kanjiProps.className)}
     />
     {icon}
     <span className={label({ shape })}>{words}</span>

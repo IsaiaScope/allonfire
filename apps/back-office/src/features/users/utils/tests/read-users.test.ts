@@ -4,6 +4,8 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { TEST_API_URL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { cacheLife, cacheTag } from "next/cache";
 import { USERS } from "../../constants/users";
 import { readUsers } from "../read-users";
@@ -31,6 +33,10 @@ describe("readUsers", () => {
     expect(await readUsers(COOKIE, PARAMS)).toEqual(BODY);
     expect(cacheTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);
+    // The rows hold Avatar links signed for an hour: never kept longer.
+    expect(USERS.CACHE.LIFE.expire).toBeLessThanOrEqual(
+      IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR
+    );
     const [, init] = fetch.mock.calls[0] ?? [];
     expect(new Headers(init?.headers).get(HTTP.HEADER.COOKIE)).toBe(COOKIE);
   });

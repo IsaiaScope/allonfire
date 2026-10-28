@@ -5,6 +5,7 @@ import { App, Role } from "@allonfire/database/enums";
 import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
+import { stubUserDeps } from "./stub-user-deps";
 import { testHost } from "./test-host";
 
 const ADMIN = sessionFor({
@@ -19,13 +20,12 @@ const depsWith = (allows = true) => {
   const asked: string[] = [];
   const deleted: string[][] = [];
   const deps: UserDeps = {
+    ...stubUserDeps(),
     canListUsers: () => true,
     canManageUsers: (userId) => {
       asked.push(userId);
       return Promise.resolve(allows);
     },
-    createUser: () =>
-      Promise.reject(new Error("createUser must not be called")),
     deleteUsers: (ids) => {
       deleted.push([...ids]);
       return Promise.resolve(DELETED);

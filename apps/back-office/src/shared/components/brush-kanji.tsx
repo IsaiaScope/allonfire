@@ -18,6 +18,9 @@ const kanji = cva(
         /** Faint on the sidebar's ground, above it rather than behind (the
          *  drawer has no stacking context to sit in); the caller places it. */
         sidebar: "z-auto text-sidebar-foreground/6",
+        /** In line after a title's words, in the line's green, a size up:
+         *  a sign's mark, not a wall's. */
+        title: "relative z-auto inline-block text-(--line-green) text-2xl",
         /** Behind a toast's words, in their colour, as tall as the toast
          *  and more (its backdrop is a container: `cqh`), cut by its edges,
          *  coming in from the left edge, cut off more the taller the toast

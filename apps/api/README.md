@@ -21,8 +21,11 @@ they get their values from `vitest.setup.ts`.
 
 Every variable is documented in `.env.example`. `DATABASE_URL`, `API_REDIS_URL`,
 `API_CORS_ORIGINS`, `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
-`STORAGE_ACCESS_KEY` and `STORAGE_SECRET_KEY` are required — the process exits
-at boot if any is missing. The `STORAGE_*` names say storage, not MinIO, so the
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_URL`,
+`STORAGE_IMAGE_SERVER_KEY` and `STORAGE_IMAGE_SERVER_SALT` are required — the
+process exits at boot if any is missing. The last three are the image server's
+(imgproxy) address and the hex key and salt the API signs every picture link
+with; the server checks them with the same pair. The `STORAGE_*` names say storage, not MinIO, so the
 server behind them can change without renaming them.
 
 ## Auth

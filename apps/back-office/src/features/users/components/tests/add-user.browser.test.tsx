@@ -5,21 +5,33 @@ import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
+import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import { Activity, type ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
+import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type AddUserState, addUser } from "../../actions/add-user";
 import { USERS } from "../../constants/users";
 import { AddUser } from "../add-user";
 
 vi.mock("../../actions/add-user", () => ({ addUser: vi.fn() }));
+const replace = vi.fn();
 vi.mock("@/features/i18n/navigation", () => ({
   Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
     <a {...props}>{children}</a>
   ),
+  useRouter: () => ({ replace }),
+}));
+vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
+  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+  aofToast: vi.fn(),
+}));
+// next/image reaches the browser as a CommonJS object, not a component.
+vi.mock("@allonfire/ui/components/aof-image", () => ({
+  AOFImage: ({ src }: { src: string }) => <span data-src={src} />,
 }));
 
 const t = EN.Users.add;
@@ -214,5 +226,28 @@ describe("AddUser", () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
       window.innerWidth
     );
+  });
+});
+
+describe("AddUser's picture", () => {
+  it("asks for the picture right under the name", async () => {
+    await renderForm();
+    const form = page.getByRole("form", { name: t.title }).element();
+    const labels = [...form.querySelectorAll("label")].map(
+      ({ textContent }) => textContent
+    );
+    expect(labels.indexOf(t.avatar.label)).toBe(labels.indexOf(t.name) + 1);
+  });
+
+  it("a picture that was not saved says so and goes to the list: the User was added", async () => {
+    const notSaved: AddUserState = { notice: USERS.ADD_NOTICE.AVATAR_FAILED };
+    vi.mocked(addUser).mockResolvedValue(notSaved);
+    await renderForm();
+    await fill();
+    await page.getByRole("button", { name: t.submit }).click();
+    await expect
+      .poll(() => vi.mocked(aofToast).mock.calls[0]?.[0])
+      .toBe(t.avatar.failed);
+    expect(replace).toHaveBeenCalledWith(BACK_OFFICE.PAGE.USERS);
   });
 });

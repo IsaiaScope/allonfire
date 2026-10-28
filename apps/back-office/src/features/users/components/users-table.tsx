@@ -25,6 +25,7 @@ import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { api } from "@/features/api/utils/api";
 import { usersParams } from "../constants/users-params";
+import { useUsersBeingDeleted } from "../utils/users-mutations";
 import { usersQuery } from "../utils/users-queries";
 import { DeleteUsers } from "./delete-users";
 import { cardCheckbox, UserCard } from "./user-card";
@@ -59,22 +60,10 @@ const useLabels = (): AOFDataTableLabels => {
   };
 };
 
-/**
- * The Users list: the toolbar, then one page of Users from the address,
- * read under the key the page prefetched it with, so it opens filled. A
- * new page keeps the previous rows on screen until it arrives. Rows can be
- * selected for deletion, all but the signed-in User's own (`selfId`); the
- * selection holds only for the page in view and clears when the address
- * changes.
- */
-export const UsersTable = ({ selfId }: { selfId: string }) => {
+/** The list's columns, a selection box first, and each row's card on a
+ *  phone, its own box at the top. */
+const useSelectableRows = () => {
   const t = useTranslations("Users");
-  const labels = useLabels();
-  const [params, setParams] = useQueryStates(usersParams);
-  const list = useQuery({
-    ...usersQuery(api, params),
-    placeholderData: keepPreviousData,
-  });
   const userColumns = useUserColumns();
   const selectLabel = useCallback(
     (row: AOFRow<UserBody>) =>
@@ -108,6 +97,31 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
     ),
     [selectLabel]
   );
+  return { columns, userCard };
+};
+
+/**
+ * The Users list: the toolbar, then one page of Users from the address,
+ * read under the key the page prefetched it with, so it opens filled. A
+ * new page keeps the previous rows on screen until it arrives. Rows can be
+ * selected for deletion, all but the signed-in User's own (`selfId`), and
+ * fade while their deletion is on its way; the selection holds only for the
+ * page in view and clears when the address changes.
+ */
+export const UsersTable = ({ selfId }: { selfId: string }) => {
+  const t = useTranslations("Users");
+  const labels = useLabels();
+  const [params, setParams] = useQueryStates(usersParams);
+  const list = useQuery({
+    ...usersQuery(api, params),
+    placeholderData: keepPreviousData,
+  });
+  const deleting = useUsersBeingDeleted();
+  const isDeleting = useCallback(
+    (row: AOFRow<UserBody>) => deleting.has(row.id),
+    [deleting]
+  );
+  const { columns, userCard } = useSelectableRows();
 
   // Selection belongs to the rows in view: a new page, page size or search
   // starts it again.
@@ -159,6 +173,7 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
     (list.data?.total ?? 0) > 0 && params[USER.PARAM.PAGE] > lastPage;
   return (
     <AOFDataTable
+      busy={isDeleting}
       card={userCard}
       fill={FILL}
       footer={

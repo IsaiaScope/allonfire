@@ -16,11 +16,12 @@ const LOCAL: StaticImageData = {
   width: 800,
 };
 
+const link = (width: number) => `https://images.test/sig/rs:fit:${width}:0/abc`;
 const STORED: AOFStorageImageSource = {
   alt: { en: "The sea", it: "Il mare" },
   blurDataUrl: "data:image/webp;base64,AAAA",
   height: 900,
-  key: "abc.webp",
+  srcSet: [640, 1080, 1920, 2560].map((width) => ({ url: link(width), width })),
   width: 1600,
 };
 
@@ -52,9 +53,18 @@ describe("AOFImage", () => {
 });
 
 describe("AOFStorageImage", () => {
-  it("serves the Image through the optimizer at its real size", () => {
+  it("loads the Image from its signed links, never the App's optimizer", () => {
     const html = stored();
-    expect(html).toContain("url=%2fstorage%2fimages%2fabc.webp");
+    for (const width of [640, 1080, 1920, 2560]) {
+      expect(html).toContain(link(width));
+    }
+    // Its fallback src, for a browser without srcset: the largest.
+    expect(html).toContain(`src="${link(2560)}"`);
+    expect(html).not.toContain("/_next/image");
+  });
+
+  it("draws the Image at its real size", () => {
+    const html = stored();
     expect(html).toContain('width="1600"');
     expect(html).toContain('height="900"');
     expect(html).toContain('sizes="100vw"');

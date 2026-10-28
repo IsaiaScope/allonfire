@@ -66,6 +66,15 @@ describe("createAuth", () => {
     expect(res.status).toBe(404);
   });
 
+  it("does not serve Better Auth's update-user: nobody sets their own picture, which names a stored file", async () => {
+    const res = await auth.handler(
+      new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.UPDATE_USER}`, {
+        method: "POST",
+      })
+    );
+    expect(res.status).toBe(404);
+  });
+
   it("does not serve the plugin's reference page", async () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.OPENAPI_REFERENCE}`)

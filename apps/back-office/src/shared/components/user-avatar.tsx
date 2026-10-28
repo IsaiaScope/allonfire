@@ -1,8 +1,10 @@
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
   AOFAvatar,
   AOFAvatarFallback,
 } from "@allonfire/ui/components/aof-avatar";
 import { AOFImage } from "@allonfire/ui/components/aof-image";
+import { tileBlur } from "@allonfire/ui/lib/tile-blur";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
 import { cn } from "@allonfire/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -19,10 +21,24 @@ const initial = cva("font-semibold", {
   },
 });
 
+/** A picture that failed (an expired link, a dead address) hides, so the
+ *  initial under it shows instead of the browser's broken-image glyph. */
+const hideOnError = ({ currentTarget }: { currentTarget: HTMLElement }) => {
+  currentTarget.hidden = true;
+};
+
+/** A sign-in provider's picture, which the App's optimizer may fetch. */
+const fromProvider = (image: string): boolean =>
+  URL.canParse(image) &&
+  AUTH.PICTURE_HOSTS.some((host) => new URL(image).hostname === host);
+
 export type UserAvatarProps = ComponentPropsWithoutChildren<typeof AOFAvatar> &
   VariantProps<typeof initial> & {
-    /** Their picture's address: a storage path (`/storage/images/...`) or a
-     *  provider's URL; none, and only the initial shows. */
+    /** The blur the API answers beside a stored Avatar, shown from 40 px. */
+    blurDataUrl?: string | null | undefined;
+    /** Their picture's address as the API answers it: a stored Avatar's
+     *  signed image-server link, or a sign-in provider's picture; none, and
+     *  only the initial shows. */
     image: string | null | undefined;
     /** Whose initial shows: their name, else their email. */
     name: string;
@@ -35,14 +51,16 @@ export type UserAvatarProps = ComponentPropsWithoutChildren<typeof AOFAvatar> &
  * A User's picture on a tile, or the first letter of their name. The tile
  * cuts both to its corner (its size and corner come from `className`; any
  * other prop goes to the avatar). The initial always sits underneath and the
- * picture is laid over it, so it shows while the picture loads and wherever it fails. The picture goes through
- * `AOFImage` (next/image): one from storage is resized and served as AVIF or
- * WebP by the App's optimizer, lazily; one from a sign-in provider (Google's)
- * loads as it is, since the optimizer only fetches storage paths, and with
- * no referrer, which such hosts can refuse. Decoration: the name beside it
- * says who it is.
+ * picture is laid over it, so it shows while the picture loads (from 40 px,
+ * the picture's blur shows instead) and wherever it fails. The picture goes through
+ * `AOFImage` (next/image), lazily: a stored Avatar as its signed link, which
+ * the image server already sized (`unoptimized`: never the App's optimizer);
+ * a sign-in provider's (`AUTH.PICTURE_HOSTS`) through the App's optimizer,
+ * resized and fetched by the App's server, so the browser never asks the
+ * provider. Decoration: the name beside it says who it is.
  */
 export const UserAvatar = ({
+  blurDataUrl,
   className,
   image,
   name,
@@ -65,11 +83,14 @@ export const UserAvatar = ({
       <AOFImage
         alt=""
         className="absolute inset-0 size-full object-cover"
+        {...tileBlur(blurDataUrl, side)}
         height={side}
-        referrerPolicy="no-referrer"
+        // A new link is a new element: `hideOnError` set `hidden` on the old.
+        key={image}
+        onError={hideOnError}
         sizes={`${side}px`}
         src={image}
-        unoptimized={!image.startsWith("/")}
+        unoptimized={!fromProvider(image)}
         width={side}
       />
     ) : null}

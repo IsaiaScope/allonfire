@@ -1,5 +1,7 @@
 # An Image is in one or more Apps, and each placement can be public
 
+> Partly superseded by ADR 0027: an Image is public or private as a whole, and every picture is served through signed links. Placements and the Admin rules below stand.
+
 ADR 0019 gave every Image exactly one App, so a picture two Apps show was
 stored twice and edited twice. Each App's Admins curate their own App, so an
 Image is now stored once and placed in any number of Apps through

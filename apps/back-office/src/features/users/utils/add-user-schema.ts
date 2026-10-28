@@ -55,6 +55,8 @@ export const passwordChecks = ({
 export const addUserSchema = (messages?: AddUserFieldMessages) =>
   z
     .object({
+      /** Its picture, cropped in the browser: the form's own, never in the action's answer. */
+      avatar: z.instanceof(File).nullable(),
       confirmPassword: z.string(),
       email: z
         .string()
@@ -86,6 +88,12 @@ export const addUserSchema = (messages?: AddUserFieldMessages) =>
     });
 
 export type AddUserValues = z.input<ReturnType<typeof addUserSchema>>;
+/** What the action reads back and returns: everything but the picture. */
+export type AddUserFields = Omit<AddUserValues, "avatar">;
+
+/** Why the action, past adding the User, still has something to say. */
+export const addUserNoticeSchema = z.enum(USERS.ADD_NOTICE);
+export type AddUserNotice = z.infer<typeof addUserNoticeSchema>;
 
 /** Every App at "Not a member": where the form starts. */
 export const NO_ROLES = objectFromEntries(

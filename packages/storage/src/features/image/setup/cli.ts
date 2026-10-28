@@ -1,4 +1,4 @@
-// The Images' bucket and its policy: the deploy's
+// The pictures' bucket, created closed: the deploy's
 // `storage-setup` service (docker/docker-compose.prod.yml) before the API
 // starts, and `pnpm --filter @allonfire/storage image:setup` (dev:setup) for
 // the Local bucket.

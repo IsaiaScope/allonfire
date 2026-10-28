@@ -9,22 +9,28 @@ import {
 } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import { updateTag } from "next/cache";
+import type { ApiClient } from "@/features/api/utils/api";
 import { serverApi } from "@/features/api/utils/server-api";
 import { redirect } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { USERS } from "../constants/users";
 import {
   type AddUserError,
-  type AddUserValues,
+  type AddUserFields,
+  type AddUserNotice,
   addUserSchema,
   membershipsOf,
   roleChoiceSchema,
 } from "../utils/add-user-schema";
 
-/** Why adding failed, and what was typed, so the form keeps it. */
+/**
+ * Why adding failed and what was typed, so the form keeps it; or, the User
+ * added, what still went wrong (their picture).
+ */
 export type AddUserState = {
   error?: AddUserError;
-  values?: AddUserValues;
+  notice?: AddUserNotice;
+  values?: AddUserFields;
 };
 
 const text = (form: FormData, key: string) => {
@@ -33,7 +39,7 @@ const text = (form: FormData, key: string) => {
 };
 
 /** The form's fields as the schema reads them; a Role row posts `roles.<app>`. */
-const valuesOf = (form: FormData): AddUserValues => ({
+const valuesOf = (form: FormData): AddUserFields => ({
   confirmPassword: text(form, "confirmPassword"),
   email: text(form, "email"),
   name: text(form, "name"),
@@ -47,11 +53,31 @@ const valuesOf = (form: FormData): AddUserValues => ({
   ),
 });
 
+/** Sends the new User's picture; whether the API kept it. */
+const savePicture = async (
+  client: ApiClient,
+  { id }: { id: string },
+  file: File
+): Promise<boolean> =>
+  (
+    await client[API.VERSION.CURRENT].users[":id"].avatar.$put({
+      form: { file },
+      param: { id },
+    })
+  ).status === HTTP.STATUS.OK;
+
+/** The picture the form posted, cropped in the browser; none when empty. */
+const pictureOf = (form: FormData): File | null => {
+  const picture = form.get("avatar");
+  return picture instanceof File && picture.size > 0 ? picture : null;
+};
+
 /**
- * Adds a User through the API as the visitor (an Admin, checked there). On
- * success goes to the Users list in the locale the form bound, where the new
- * User is first; otherwise hands back why and what was typed. The checks
- * here are the ones that count.
+ * Adds a User through the API as the visitor (an Admin, checked there), then
+ * their picture when one was posted. On success goes to the Users list in the
+ * locale the form bound, where the new User is first; a picture the API
+ * refused leaves the User added and says so (`notice`); otherwise hands back
+ * why and what was typed. The checks here are the ones that count.
  */
 export const addUser = async (
   locale: string,
@@ -59,7 +85,8 @@ export const addUser = async (
   form: FormData
 ): Promise<AddUserState> => {
   const values = valuesOf(form);
-  const parsed = addUserSchema().safeParse(values);
+  const picture = pictureOf(form);
+  const parsed = addUserSchema().safeParse({ ...values, avatar: picture });
   if (!parsed.success) {
     return { error: USERS.ADD_ERROR.INVALID, values };
   }
@@ -74,7 +101,13 @@ export const addUser = async (
   if (res.status !== HTTP.STATUS.CREATED) {
     return { error: USERS.ADD_ERROR.FAILED, values };
   }
+  const saved = picture
+    ? await savePicture(client, await res.json(), picture)
+    : true;
   // The kept lists lack the new User: dropped, so the list shows them first.
   updateTag(USERS.CACHE.TAG);
+  if (!saved) {
+    return { notice: USERS.ADD_NOTICE.AVATAR_FAILED };
+  }
   return redirect({ href: BACK_OFFICE.PAGE.USERS, locale: languageOf(locale) });
 };

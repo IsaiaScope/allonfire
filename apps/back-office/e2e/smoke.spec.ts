@@ -1,12 +1,14 @@
+import { API } from "@allonfire/api/shared/constants/api";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { App } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { STORAGE } from "@allonfire/storage/shared/constants/paths";
+import { imageListBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
 import { expect, type Page, test } from "@playwright/test";
 // Playwright loads specs as ES modules; Next ships no export map for it.
-import { getImageProps } from "next/image.js";
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
@@ -60,20 +62,26 @@ test("renders the localized 404 for an unknown path", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("serves a stored Image through the App, raw and optimized as AVIF", async ({
+test("serves a stored Image through the image server, never from the bucket", async ({
   request,
 }) => {
-  const { height, key, width } = FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE;
-  const src = `${STORAGE.PATH.IMAGE_PROXY}/${key}`;
-  expect((await request.get(src)).status()).toBe(HTTP.STATUS.OK);
-  // The URL a page's next/image asks for: the App's optimizer, reading the
-  // Image through the proxy, answering in the best format the browser takes.
-  const { props } = getImageProps({ alt: "", height, src, width });
-  const optimized = await request.get(props.src, {
+  const { alt } = FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE;
+  const list = await request.get(
+    `${LOCAL.URL.API_E2E}${API.PATH.IMAGES}?app=${App.BACK_OFFICE}`
+  );
+  const { images } = imageListBodySchema.parse(await list.json());
+  const image = images.find((one) => one.alt.en === alt.en);
+  const link = image?.srcSet.find(({ width }) => width === 1080)?.url ?? "";
+  const served = await request.get(link, {
     headers: { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE },
   });
-  expect(optimized.status()).toBe(HTTP.STATUS.OK);
-  expect(optimized.headers()[HTTP.HEADER.CONTENT_TYPE]).toBe(
+  expect(served.status()).toBe(HTTP.STATUS.OK);
+  expect(served.headers()[HTTP.HEADER.CONTENT_TYPE]).toBe(
     IMAGE.FORMAT.CONTENT_TYPE
+  );
+  // The link names the file it signs: the bucket answers nobody directly.
+  const [, stored = ""] = link.split("/plain/s3://");
+  expect((await request.get(`${LOCAL.URL.STORAGE}/${stored}`)).status()).toBe(
+    HTTP.STATUS.FORBIDDEN
   );
 });

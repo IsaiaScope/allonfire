@@ -97,11 +97,12 @@ describe("changelog on an empty database", () => {
         INSERT INTO image."ImageApp" ("imageId", app) VALUES ('placed', 'laura')
       `
     ).rejects.toThrow();
+    // Private as a whole until made public (ADR 0027).
     expect(
-      await client.$queryRaw<{ public: boolean }[]>`
-        SELECT public FROM image."ImageApp"
+      await client.$queryRaw<{ access: string }[]>`
+        SELECT access::text FROM image."Image" WHERE id = 'placed'
       `
-    ).toEqual([{ public: false }]);
+    ).toEqual([{ access: "private" }]);
     await client.$executeRaw`DELETE FROM image."Image" WHERE id = 'placed'`;
     expect(
       await client.$queryRaw<{ imageId: string }[]>`

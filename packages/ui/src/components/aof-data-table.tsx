@@ -79,6 +79,11 @@ export type AOFDataTableStatus = "pending" | "error" | "success";
 
 export type AOFDataTableProps<TData extends RowData> = ComponentProps<"div"> & {
   /**
+   * Whether a row is being changed (a deletion on its way): drawn faded,
+   * marked busy and out of reach until the change lands.
+   */
+  busy?: ((row: AOFRow<TData>) => boolean) | undefined;
+  /**
    * The columns that share the room a wide screen leaves over, by id, each
    * in proportion to what it holds; every other column (a row's checkbox)
    * stays as wide as what it holds. None: the browser shares the room among
@@ -116,6 +121,7 @@ export type AOFDataTableStates = {
  * a failure with no rows held they are `error`, and with none found `empty`.
  */
 export const AOFDataTable = <TData extends RowData>({
+  busy,
   card,
   children,
   className,
@@ -148,6 +154,7 @@ export const AOFDataTable = <TData extends RowData>({
           empty
         ) : (
           <AOFDataTableRows
+            busy={busy}
             card={card}
             fill={fill}
             label={label}
@@ -205,6 +212,21 @@ const widths = <TData extends RowData>(
       };
 
 /**
+ * A row (or its card) while it is being changed: faded, positioned so a
+ * link in it can stretch over all of it (`after:absolute after:inset-0`).
+ */
+const busyRow = cva(
+  "relative data-busy:opacity-50 motion-safe:transition-opacity"
+);
+
+/** A busy row's marks: announced busy, and `inert`, so nothing in it acts. */
+const busyProps = <TData extends RowData>(
+  row: AOFRow<TData>,
+  busy: ((row: AOFRow<TData>) => boolean) | undefined
+) =>
+  busy?.(row) ? { "aria-busy": true, "data-busy": "", inert: true } : undefined;
+
+/**
  * The rows as a table, and as cards on a phone when `card` is given. Each
  * column is as wide as what it holds, up to its `maxSize` (past it a value
  * ends in an ellipsis); on a wide screen the `fill` columns share the room
@@ -213,12 +235,16 @@ const widths = <TData extends RowData>(
  * bars hide until the table scrolls), so it shows there is more to the side.
  */
 const AOFDataTableRows = <TData extends RowData>({
+  busy,
   card,
   fill,
   label,
   rows,
   table,
-}: Pick<AOFDataTableProps<TData>, "card" | "fill" | "label" | "table"> & {
+}: Pick<
+  AOFDataTableProps<TData>,
+  "busy" | "card" | "fill" | "label" | "table"
+> & {
   rows: AOFRow<TData>[];
 }) => (
   <>
@@ -263,9 +289,11 @@ const AOFDataTableRows = <TData extends RowData>({
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                // Positioned, so a link in the row can stretch over all of it
-                // (`after:absolute after:inset-0`).
-                <TableRow className="relative" key={row.id}>
+                <TableRow
+                  className={busyRow()}
+                  key={row.id}
+                  {...busyProps(row, busy)}
+                >
                   {row.getAllCells().map((cell) => (
                     <TableCell
                       className="h-(--field-height) has-[[role=checkbox]]:px-3"
@@ -296,7 +324,9 @@ const AOFDataTableRows = <TData extends RowData>({
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
       >
         {rows.map((row) => (
-          <li key={row.id}>{card(row)}</li>
+          <li className={busyRow()} key={row.id} {...busyProps(row, busy)}>
+            {card(row)}
+          </li>
         ))}
       </ul>
     ) : null}

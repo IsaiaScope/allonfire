@@ -4,6 +4,10 @@ import {
 } from "@allonfire/database/features/auth/access/constants/schemas";
 import type { UserRecord } from "@allonfire/database/features/auth/user.service";
 import { z } from "zod";
+import {
+  type AvatarLink,
+  linkedPicture,
+} from "../../../../shared/utils/linked-picture";
 import { USER } from "../../constants/users";
 import { meetsPasswordRules } from "../../utils/password-rules";
 
@@ -39,6 +43,8 @@ export const userBodySchema = z
     id: z.string(),
     /** Their picture's address, when they have one. */
     image: z.string().nullable(),
+    /** The blur to show while `image` loads, beside a stored picture only. */
+    imageBlurDataUrl: z.string().nullable(),
     memberships: z.array(membershipSchema),
     /** What they are called, when they gave a name. */
     name: z.string().nullable(),
@@ -89,7 +95,28 @@ export const userDeleteBodySchema = z
   .meta({ ref: "UserDeletion" });
 export type UserDeleteBody = z.infer<typeof userDeleteBodySchema>;
 
-export const toUserBody = (user: UserRecord): UserBody => ({
+/** One User's id, as the path names them. */
+export const userIdParamSchema = z.object({ id: z.string().min(1) });
+
+/** An Avatar's request: one picture, as multipart/form-data `file`. */
+export const avatarFormSchema = z.object({ file: z.instanceof(File) });
+
+export const userAvatarBodySchema = z
+  .object({
+    /** The new picture's link, signed for the hour. */
+    image: z.string().nullable(),
+    /** The blur to show while it loads. */
+    imageBlurDataUrl: z.string().nullable(),
+  })
+  .meta({ ref: "UserAvatar" });
+export type UserAvatarBody = z.infer<typeof userAvatarBodySchema>;
+
+/** A User as the API answers them: their picture as a link signed for now. */
+export const toUserBody = (
+  user: UserRecord,
+  avatarLink: AvatarLink
+): UserBody => ({
   ...user,
   createdAt: user.createdAt.toISOString(),
+  ...linkedPicture(user, avatarLink),
 });

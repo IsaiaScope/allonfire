@@ -1,5 +1,5 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "../../../../generated/prisma/enums";
+import { App, ImageAccess, Role } from "../../../../generated/prisma/enums";
 import { ACCESS } from "./constants/access";
 import type { AppSettingsTable } from "./constants/app-settings";
 import { appSchema, roleSchema } from "./constants/schemas";
@@ -57,32 +57,31 @@ export const entryRoles = (app: App): Role[] => {
 export const canManageImage = (user: AccessUser, app: App): boolean =>
   roleIn(user, app) === Role.ADMIN;
 
-/** One App an Image is placed in, and whether it shows there to anyone (ADR 0020). */
-export type ImageLink = { app: App; public: boolean };
+/** What decides who sees an Image: its access and the Apps it is in (ADR 0027). */
+export type ImageVisibility = {
+  access: ImageAccess;
+  apps: readonly App[];
+};
 
 /**
- * Whether someone sees an Image through one placement: it is public, or they
- * enter its App. `null` is a visitor, not signed in.
+ * Whether someone sees an Image: a public one anyone, a private one those
+ * who enter at least one of its Apps. `null` is a visitor, not signed in.
  */
-export const canSeeImageIn = (
-  user: AccessUser | null,
-  link: ImageLink
-): boolean => link.public || (user !== null && canEnterApp(user, link.app));
-
-/** Whether someone sees an Image anywhere: through any of its placements. */
 export const canSeeImage = (
   user: AccessUser | null,
-  links: readonly ImageLink[]
-): boolean => links.some((link) => canSeeImageIn(user, link));
+  { access, apps }: ImageVisibility
+): boolean =>
+  access === ImageAccess.PUBLIC ||
+  (user !== null && apps.some((app) => canEnterApp(user, app)));
 
 /**
- * Whether a User changes what every App of an Image sees (its alt, or
- * deleting it everywhere): Admin in every App it is placed in.
+ * Whether a User changes what every App of an Image sees (its alt, its
+ * access, or deleting it everywhere): Admin in every App it is placed in.
  */
 export const canManageEverywhere = (
   user: AccessUser,
-  links: readonly ImageLink[]
-): boolean => links.every(({ app }) => canManageImage(user, app));
+  apps: readonly App[]
+): boolean => apps.every((app) => canManageImage(user, app));
 
 /** The Apps someone enters (`canEnterApp`); none for a visitor. */
 export const enterableApps = (user: AccessUser | null): App[] =>

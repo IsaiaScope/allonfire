@@ -8,7 +8,6 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-t
 import { logoFile } from "@allonfire/core/features/next/metadata/aof-logo-route";
 import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/launch-screens";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { expect, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
@@ -113,8 +112,6 @@ for (const unowned of [
   "/api/no-such-route",
   // A language's code in capitals: routes match case-sensitively.
   `/${I18N.DEFAULT_LANGUAGE.toUpperCase()}/no-such-file.png`,
-  // Under the storage proxy but not an Image key: the rewrite misses it.
-  `${STORAGE.PATH.IMAGE_PROXY}/a/no-such-file.png`,
 ]) {
   test(`styles the 404 for ${unowned}, which no language owns`, async ({
     page,

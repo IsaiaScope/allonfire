@@ -52,6 +52,7 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/next/components/with-app-session` | `withAppSession(Page, fallback)` — wraps every signed-in page: `requireAppSession` runs beside the page behind its own `<Suspense>` and redirects anyone the App keeps out; the page sits in its own `<Suspense>` showing `fallback` for its data, so a page without request-time data is in the static shell |
 | `./features/next/constants/paths` | `appPathSchema`, `AppPath` (the values of `AUTH.PAGE`) |
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
+| `./features/next/utils/with-provider-pictures` | `withProviderPictures(config)` — lets an App's next/image optimize a sign-in provider's picture (`AUTH.PICTURE_HOSTS`, Google's today, over https), added to the App's own `remotePatterns`; a new provider adds its host there first |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
 | `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` (`pages`: the App's signed-in paths after the locale, `""` for Home) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in by someone the App already lets in (asked of the API) to Home (307) |
 | `./features/next/constants/api` | `signInErrorSchema`, `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
@@ -68,13 +69,14 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
 | `./shared/constants/errors` | `authErrorCodeSchema`, `AuthErrorCode` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `REGISTRATION_CLOSED`) |
 | `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.SECRET_MIN_LENGTH`, `AUTH.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.ERROR_CODE`, `AUTH.SIGN_IN_ERROR` (an App translates each), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
+| `./features/users/hono/tests/stub-user-deps` | `stubUserDeps(overrides?)`: the User module's deps for a test (no access, writes throw, Avatars quiet) |
 | `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` (a User in every App by default), `membershipsIn(role)` (that Role in every App), `cookieOf(response)` (the cookies it set, as one `cookie` header), `HOST_AUTH_PATH` |
 | `./shared/types/auth` | `AuthSession`, `AuthLike`, `OpenApiDocument`, `OpenApiFragment` |
 | `./features/hono/types/variables` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
 
 ## Directory structure
 
-The repo's package layout (`CLAUDE.md`, Package Layout):
+The repo's package layout (`docs/agents/package-layout.md`):
 
 ```
 src/
@@ -89,7 +91,7 @@ src/
     next/        a Next App's side, through the API: actions/{sign-in,sign-out},
                  constants/{paths,api},
                  utils/{auth-client,redirect-to,refresh-session,session,
-                 with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
+                 with-provider-pictures,with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), tests/
     server/      auth (createAuth, toAuthLike), routes/join-app,
                  utils/registration, tests/

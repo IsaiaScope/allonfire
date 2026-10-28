@@ -9,6 +9,7 @@ describe("local addresses", () => {
       BACK_OFFICE: "http://localhost:3400",
       BACK_OFFICE_E2E: "http://localhost:3410",
       DATABASE: "postgresql://allonfire:allonfire@localhost:5432/allonfire",
+      IMAGE_SERVER: "http://localhost:9010",
       LAURA: "http://localhost:3200",
       REDIS: "redis://localhost:6379/0",
       REDIS_E2E: "redis://localhost:6379/15",

@@ -284,3 +284,29 @@ describe("AOFDataTable columns", () => {
     expect(html.match(HUGGING_HEAD_ALL)).toHaveLength(1);
   });
 });
+
+const BUSY_ROW =
+  /<tr[^>]*aria-busy="true"[^>]*data-busy=""[^>]*inert=""[^>]*>(?:(?!<\/tr>).)*Grace/;
+
+const isGrace = (row: { id: string }) => row.id === "2";
+const nameCard = (row: { original: Person }) => <p>card {row.original.name}</p>;
+
+const Busy = () => {
+  const table = useAOFTable({
+    columns: COLUMNS,
+    data: PEOPLE,
+    getRowId: ({ id }) => id,
+  });
+  return (
+    <AOFDataTable busy={isGrace} card={nameCard} label="People" table={table} />
+  );
+};
+
+describe("AOFDataTable busy rows", () => {
+  it("fades a busy row and its card, marks them busy and puts them out of reach", () => {
+    const html = renderToStaticMarkup(<Busy />);
+    expect(html).toMatch(BUSY_ROW);
+    expect(html.match(/aria-busy="true"/g)).toHaveLength(2);
+    expect(html).toContain("data-busy:opacity-50");
+  });
+});

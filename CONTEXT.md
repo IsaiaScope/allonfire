@@ -110,10 +110,11 @@ _Avoid_: media, asset, file, picture, photo
 **Avatar**:
 A User's own picture, shown beside their name in every App. It belongs to
 the User, not to an App, so it is not an Image: it has no alt text of its own
-and no placements. It is listed nowhere: its address reaches only those an
-App shows the User to, but anyone holding that address sees it. A User has
-at most one, set by an Admin or taken from the account they registered
-with (Google's own picture); without one, their initial stands in.
+and no placements. It is never public: only someone who shares an App with
+the User, manages Users, or is that User sees it. A User has at most one, set
+by an Admin or taken from the account they registered with (Google's own
+picture, which stays where Google keeps it); without one, their initial
+stands in.
 _Avoid_: profile picture, profile image, photo
 
 **Host**:
@@ -140,9 +141,11 @@ is a detail only Storage knows.
 _Avoid_: MinIO, bucket, S3 (for the concept), media library
 
 **User module**:
-The part of the Auth module that lists, adds and deletes Users. Any Host
-mounts it and says who may list them and who may change them; the API lets in
-only Back Office Admins. Nobody can delete themselves through it.
+The part of the Auth module that lists, adds, edits and deletes Users. Any
+Host mounts it and says who may list them and who may change them; the API
+lets in only Back Office Admins. Nobody can delete themselves through it, and
+nobody can change their own Role in the App that manages Users; an email
+never changes. A new password ends the User's other Sessions.
 _Avoid_: Users module, user service, user admin
 
 **Image module**:

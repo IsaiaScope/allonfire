@@ -67,12 +67,23 @@ const templateFor = async (serverUrl: string, fingerprint: string) =>
   );
 
 /**
+ * A template's working name while it is built: it carries the building
+ * process, so a build that died is stale at once (`isStaleTestRun`), not a
+ * day later.
+ */
+export const buildingName = (
+  fingerprint: string,
+  epoch: number,
+  pid: number = process.pid
+) => testDatabaseName("building", `${epoch}_${pid}_${fingerprint}`);
+
+/**
  * Built under a working name and renamed once seeded, so a build that dies
  * halfway is never taken for a template; the sweep drops the leftover.
  */
 async function buildTemplate(serverUrl: string, fingerprint: string) {
   const epoch = Math.floor(Date.now() / UNIT.MS_PER_SECOND);
-  const building = testDatabaseName("building", `${epoch}_${fingerprint}`);
+  const building = buildingName(fingerprint, epoch);
   const name = templateName(fingerprint, epoch);
   await createDatabase(serverUrl, building);
   const url = databaseUrl(serverUrl, building);

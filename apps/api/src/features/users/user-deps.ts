@@ -9,7 +9,16 @@ import {
   createUser,
   deleteUsers,
   listUsers,
+  setUserImage,
+  userImages,
 } from "@allonfire/database/features/auth/user.service";
+import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
+import {
+  deleteAvatarsWith,
+  saveAvatar,
+} from "@allonfire/storage/features/avatar/objects/avatar-objects";
+import type { LeftoverLog } from "@allonfire/storage/features/image/objects/delete-leftovers";
+import { avatarLinkNow } from "../../shared/utils/avatar-link";
 
 /**
  * The rule for managing Users: an Admin in the Back Office. Written as that
@@ -43,11 +52,17 @@ const canManageUsers = async (userId: string): Promise<boolean> => {
 };
 
 /** The User module on the real stack. */
-export const userDeps = (): UserDeps => ({
+export const userDeps = (log: LeftoverLog): UserDeps => ({
+  avatarLink: avatarLinkNow,
+  avatarMaxBytes: AVATAR.INPUT_BYTES,
   // The Session's User: cheap, up to 5 minutes behind (see isBackOfficeAdmin).
   canListUsers: isBackOfficeAdmin,
   canManageUsers,
   createUser,
+  deleteAvatars: deleteAvatarsWith(log),
   deleteUsers,
   listUsers,
+  saveAvatar,
+  setUserImage,
+  userImages,
 });

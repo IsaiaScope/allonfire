@@ -7,7 +7,7 @@ import {
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "@allonfire/database/enums";
+import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import {
   type ImageChange,
   type ImageLinksById,
@@ -20,26 +20,24 @@ import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
 import { json, testHost } from "./test-host";
 
 /**
- * The recap agreed for ADR 0020, one test per row. P is public in Laura and
- * private in the Back Office, Q private in Laura, R private in the Back
+ * The recap agreed for ADR 0020 and ADR 0027, one test per row. P is public,
+ * in Laura and the Back Office; Q private in Laura, R private in the Back
  * office. Giulia is a Laura Viewer, Mario a Laura Admin outside the Back
  * office, Admin an Admin in every App.
  */
 const P = imageRecord({
-  apps: [
-    { app: App.LAURA, public: true },
-    { app: App.BACK_OFFICE, public: false },
-  ],
+  access: ImageAccess.PUBLIC,
+  apps: [App.LAURA, App.BACK_OFFICE],
   id: "P",
   key: "p.avif",
 });
 const Q = imageRecord({
-  apps: [{ app: App.LAURA, public: false }],
+  apps: [App.LAURA],
   id: "Q",
   key: "q.avif",
 });
 const R = imageRecord({
-  apps: [{ app: App.BACK_OFFICE, public: false }],
+  apps: [App.BACK_OFFICE],
   id: "R",
   key: "r.avif",
 });
@@ -69,15 +67,14 @@ const row = (
 
 /**
  * The service's query over P, Q and R: placed in `app` (any App when it is
- * left out), and that placement public or in an App the caller enters.
+ * left out), and public or in an App the caller enters.
  */
 const listImages: ImageDeps["listImages"] = async ({ app, enterable }) =>
-  IMAGES.filter(({ apps }) =>
-    apps.some(
-      (link) =>
-        (app === undefined || link.app === app) &&
-        (link.public || enterable.includes(link.app))
-    )
+  IMAGES.filter(
+    ({ access, apps }) =>
+      (app === undefined || apps.includes(app)) &&
+      (access === ImageAccess.PUBLIC ||
+        apps.some((placed) => enterable.includes(placed)))
   );
 
 /** The placements a write locks, as the database finds them in P, Q and R. */
@@ -88,10 +85,9 @@ const linksOf = (ids: readonly string[]): Promise<ImageLinksById> => {
   }
   return Promise.resolve(
     new Map(
-      IMAGES.filter(({ id }) => ids.includes(id)).map(({ apps, id }) => [
-        id,
-        apps,
-      ])
+      IMAGES.filter(({ id }) => ids.includes(id)).map(
+        ({ access, apps, id }) => [id, { access, apps }]
+      )
     )
   );
 };
@@ -102,6 +98,7 @@ const keysOf = (ids: readonly string[]) =>
 /** Reads answer from P, Q and R; every write is recorded and succeeds. */
 const host = (session: AuthSession | null) => {
   const writes = {
+    copyObject: vi.fn<ImageDeps["copyObject"]>(async () => undefined),
     createImages: vi.fn<ImageDeps["createImages"]>(async (rows) =>
       rows.map((one) => imageRecord(one))
     ),
@@ -113,7 +110,7 @@ const host = (session: AuthSession | null) => {
     removeImagesFromApp: vi.fn((ids: readonly string[], fromApp: App) =>
       IMAGES.filter(
         ({ apps, id }) =>
-          ids.includes(id) && apps.every((link) => link.app === fromApp)
+          ids.includes(id) && apps.every((placed) => placed === fromApp)
       ).map(({ key }) => key)
     ),
     // The changes an update writes, worked out by the route's check.
@@ -149,9 +146,7 @@ const uploadToLauraAndBackOffice = () => {
   form.append("file", new File([new Uint8Array(10)], "a.jpg"));
   form.append(
     "meta",
-    stringifyJson([
-      { alt: ALT, apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE }] },
-    ])
+    stringifyJson([{ alt: ALT, apps: [App.LAURA, App.BACK_OFFICE] }])
   );
   return { body: form, method: "POST" };
 };
@@ -172,9 +167,9 @@ describe("recap: reads", () => {
   });
 
   it.each([
-    ["a visitor", visitor, []],
-    ["Giulia", giulia, []],
-    ["Mario", mario, []],
+    ["a visitor", visitor, ["P"]],
+    ["Giulia", giulia, ["P"]],
+    ["Mario", mario, ["P"]],
     ["an Admin", admin, ["P", "R"]],
   ])("GET ?app=BACK_OFFICE shows %s %j", async (_, session, expected) => {
     expect(await listed(session, `?app=${App.BACK_OFFICE}`)).toEqual(expected);
@@ -214,14 +209,18 @@ describe("recap: writes", () => {
       [401, 403, 403, 201],
     ],
     [
-      "PATCH Q switch public in Laura",
-      () =>
-        json("PATCH", [{ apps: [{ app: App.LAURA, public: true }], id: "Q" }]),
+      "PATCH Q make public",
+      () => json("PATCH", [{ access: ImageAccess.PUBLIC, id: "Q" }]),
       [401, 403, 200, 200],
     ],
     [
+      "PATCH P make private",
+      () => json("PATCH", [{ access: ImageAccess.PRIVATE, id: "P" }]),
+      [401, 403, 403, 200],
+    ],
+    [
       "PATCH P apps: [BACK_OFFICE]",
-      () => json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "P" }]),
+      () => json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }]),
       [401, 403, 200, 200],
     ],
     [
@@ -270,11 +269,11 @@ describe("recap: writes", () => {
     );
   });
 
-  it("PATCH P apps: [BACK_OFFICE] by Mario keeps the Back Office placement private", async () => {
+  it("PATCH P apps: [BACK_OFFICE] by Mario takes it out of Laura, P still public", async () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "P" }])
+      json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }])
     );
     expect(done.updateImages).toHaveBeenCalledWith([
       { id: "P", remove: [App.LAURA] },
@@ -289,7 +288,7 @@ describe("recap: writes", () => {
     );
     expect(done.removeImagesFromApp).toHaveBeenCalledWith(["P"], App.LAURA);
     expect(done.deleteImages).not.toHaveBeenCalled();
-    expect(done.deleteObjects).toHaveBeenCalledWith([]);
+    expect(done.deleteObjects).not.toHaveBeenCalled();
   });
 
   it("DELETE { [Q], LAURA } by Mario deletes Q and its file: Laura was its only App", async () => {

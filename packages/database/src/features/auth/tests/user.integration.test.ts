@@ -9,7 +9,9 @@ import {
   deleteUsers,
   EmailTakenError,
   listUsers,
+  setUserImage,
   type UserListQuery,
+  userImages,
 } from "../user.service";
 
 // The Fixtures share this domain; other files in the run may add Users to
@@ -316,5 +318,82 @@ describe("createUser", () => {
         where: { user: { email: `mixed@${ADDED}` } },
       })
     ).toBe(1);
+  });
+});
+
+describe("a User's picture", () => {
+  const PICTURED = "picture@set-user-image.test";
+  const BARE = "bare@set-user-image.test";
+  const FIRST = "avatar-u-first.avif";
+  const SECOND = "avatar-u-second.avif";
+  const BLUR = "data:image/webp;base64,AAAA";
+  const pictureOf = async (id: string) =>
+    await prisma.user.findUniqueOrThrow({
+      select: { image: true, imageBlurDataUrl: true },
+      where: { id },
+    });
+  let pictured = "";
+  let bare = "";
+
+  beforeAll(async () => {
+    ({ id: pictured } = await prisma.user.create({
+      data: { email: PICTURED, name: "Pictured" },
+      select: { id: true },
+    }));
+    ({ id: bare } = await prisma.user.create({
+      data: { email: BARE, name: "Bare" },
+      select: { id: true },
+    }));
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { endsWith: "@set-user-image.test" } },
+    });
+  });
+
+  it("sets it with its blur, then replaces both, answering what it held before", async () => {
+    expect(
+      await setUserImage(pictured, { blurDataUrl: BLUR, image: FIRST })
+    ).toEqual({ previous: null });
+    expect(
+      await setUserImage(pictured, { blurDataUrl: `${BLUR}2`, image: SECOND })
+    ).toEqual({ previous: FIRST });
+    expect(await pictureOf(pictured)).toEqual({
+      image: SECOND,
+      imageBlurDataUrl: `${BLUR}2`,
+    });
+  });
+
+  it("removing it clears its blur too", async () => {
+    const { id } = await prisma.user.create({
+      data: { email: "removed@set-user-image.test" },
+      select: { id: true },
+    });
+    await setUserImage(id, { blurDataUrl: BLUR, image: FIRST });
+    expect(await setUserImage(id, null)).toEqual({ previous: FIRST });
+    expect(await pictureOf(id)).toEqual({
+      image: null,
+      imageBlurDataUrl: null,
+    });
+  });
+
+  it("lists a User with their picture's blur", async () => {
+    const { users } = await listUsers(query({ text: PICTURED }));
+    expect(users.map(({ imageBlurDataUrl }) => imageBlurDataUrl)).toEqual([
+      `${BLUR}2`,
+    ]);
+  });
+
+  it("answers null for a User who does not exist", async () => {
+    expect(
+      await setUserImage("no-such-user", { blurDataUrl: BLUR, image: FIRST })
+    ).toBeNull();
+  });
+
+  it("lists the pictures the Users named hold, skipping none and unknown ids", async () => {
+    expect(await userImages([pictured, bare, "no-such-user"])).toEqual([
+      SECOND,
+    ]);
   });
 });

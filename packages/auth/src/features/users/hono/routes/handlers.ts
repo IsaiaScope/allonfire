@@ -2,28 +2,46 @@ import {
   CodedError,
   invalidHook,
 } from "@allonfire/core/features/errors/coded-error";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { EmailTakenError } from "@allonfire/database/features/auth/user.service";
 import { hashPassword } from "better-auth/crypto";
+import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
 import { validator } from "hono-openapi";
 import { AUTH } from "../../../../shared/constants/auth";
+import { linkedPicture } from "../../../../shared/utils/linked-picture";
 import { guard } from "../../../hono/guards/utils/guard";
 import type { AuthEnv } from "../../../hono/types/variables";
 import { USER, USER_SEARCH } from "../../constants/users";
 import {
+  avatarFormSchema,
   listQuerySchema,
   toUserBody,
+  type UserAvatarBody,
   type UserCreatedBody,
   type UserDeleteBody,
   type UserListBody,
   userCreateRequestSchema,
   userDeleteRequestSchema,
+  userIdParamSchema,
 } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
-import { createRoute, deleteRoute, listRoute } from "./routes";
+import {
+  avatarDeleteRoute,
+  avatarPutRoute,
+  createRoute,
+  deleteRoute,
+  listRoute,
+} from "./routes";
 
 const factory = createFactory<AuthEnv>();
+
+const userNotFound = () =>
+  new CodedError({
+    code: ERROR.CODE.NOT_FOUND,
+    status: HTTP.STATUS.NOT_FOUND,
+  });
 
 /** 401 without a Session, 403 unless the Host lets this User list Users. */
 const allowed = (deps: UserDeps) =>
@@ -50,7 +68,7 @@ export const listHandlers = (deps: UserDeps) =>
       const body = {
         pageCount: Math.ceil(total / perPage),
         total,
-        users: users.map(toUserBody),
+        users: users.map((user) => toUserBody(user, deps.avatarLink)),
       } satisfies UserListBody;
       return c.json(body, HTTP.STATUS.OK);
     }
@@ -73,9 +91,12 @@ export const deleteHandlers = (deps: UserDeps) =>
           status: HTTP.STATUS.FORBIDDEN,
         });
       }
+      // Read before the rows go: the cascade takes `User.image` with them.
+      const images = await deps.userImages(ids);
       const body = {
         deleted: await deps.deleteUsers(ids),
       } satisfies UserDeleteBody;
+      await deps.deleteAvatars(images);
       return c.json(body, HTTP.STATUS.OK);
     }
   );
@@ -109,5 +130,65 @@ export const createHandlers = (deps: UserDeps) =>
         }
         throw error;
       }
+    }
+  );
+
+/**
+ * Sets a User's Avatar: the picture processed and stored under a new name,
+ * that name written to the User, the picture it replaced deleted. An unknown
+ * User answers 404, and the file just stored is deleted.
+ */
+export const avatarPutHandlers = (deps: UserDeps) =>
+  factory.createHandlers(
+    avatarPutRoute,
+    canManage(deps),
+    bodyLimit({
+      maxSize: deps.avatarMaxBytes,
+      onError: () => {
+        throw new CodedError({
+          code: ERROR.CODE.PAYLOAD_TOO_LARGE,
+          status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
+          values: { limit: deps.avatarMaxBytes },
+        });
+      },
+    }),
+    validator("param", userIdParamSchema, invalidHook),
+    validator("form", avatarFormSchema, invalidHook),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { file } = c.req.valid("form");
+      const picture = await deps.saveAvatar(
+        id,
+        Buffer.from(await file.arrayBuffer())
+      );
+      const changed = await deps.setUserImage(id, picture);
+      if (!changed) {
+        await deps.deleteAvatars([picture.image]);
+        throw userNotFound();
+      }
+      await deps.deleteAvatars([changed.previous]);
+      return c.json(
+        linkedPicture(
+          { image: picture.image, imageBlurDataUrl: picture.blurDataUrl },
+          deps.avatarLink
+        ) satisfies UserAvatarBody,
+        HTTP.STATUS.OK
+      );
+    }
+  );
+
+/** Removes a User's Avatar and deletes its file; an unknown User answers 404. */
+export const avatarDeleteHandlers = (deps: UserDeps) =>
+  factory.createHandlers(
+    avatarDeleteRoute,
+    canManage(deps),
+    validator("param", userIdParamSchema, invalidHook),
+    async (c) => {
+      const changed = await deps.setUserImage(c.req.valid("param").id, null);
+      if (!changed) {
+        throw userNotFound();
+      }
+      await deps.deleteAvatars([changed.previous]);
+      return c.body(null, HTTP.STATUS.NO_CONTENT);
     }
   );

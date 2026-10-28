@@ -1,4 +1,8 @@
-import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  CopyObjectCommand,
+  DeleteObjectsCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { s3 } from "./client";
 
 /** What a stored object is served with. */
@@ -47,4 +51,19 @@ export async function deleteObjects(
       `Delete refused: ${refused.map(({ Code, Key }) => `${Key}: ${Code}`).join(", ")}`
     );
   }
+}
+
+/** Copies `from` to `to` within `bucket`, its type and caching kept. */
+export async function copyObject(
+  bucket: string,
+  from: string,
+  to: string
+): Promise<void> {
+  await s3.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      CopySource: `${bucket}/${from}`,
+      Key: to,
+    })
+  );
 }

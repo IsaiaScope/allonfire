@@ -1,4 +1,15 @@
-// Images, each placed in one or more Apps (ADR 0013, ADR 0020).
+// Images, each placed in one or more Apps (ADR 0013, ADR 0020), public or
+// private as a whole (ADR 0027).
+
+/// Who sees an Image, wherever it is placed (ADR 0027).
+enum ImageAccess {
+  /// Anyone, signed in or not.
+  PUBLIC  @map("public")
+  /// Only those who enter at least one of its Apps.
+  PRIVATE @map("private")
+
+  @@schema("image")
+}
 
 model Image {
   id          String     @id @default(cuid(2))
@@ -10,6 +21,8 @@ model Image {
   blurDataUrl String
   /// One alt per Language, `{ en, it }`; shape checked by imageAltSchema.
   alt         Json
+  /// Public or private in every App it is in; private until made public.
+  access      ImageAccess @default(PRIVATE)
   uploadedBy  String?
   user        User?      @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
   /// Every App the Image is in; never empty (the API refuses an empty list,
@@ -25,8 +38,6 @@ model Image {
 model ImageApp {
   imageId   String
   app       App
-  /// Shown to anyone in this App, signed in or not.
-  public    Boolean  @default(false)
   createdAt DateTime @default(now())
   image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
 

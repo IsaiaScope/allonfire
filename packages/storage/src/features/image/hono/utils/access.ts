@@ -1,11 +1,11 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App } from "@allonfire/database/enums";
+import { App, ImageAccess } from "@allonfire/database/enums";
 import {
   type AccessUser,
   canManageEverywhere,
   canManageImage,
   canSeeImage,
-  type ImageLink,
+  type ImageVisibility,
 } from "@allonfire/database/features/auth/access/access";
 import type {
   ImageChange,
@@ -23,13 +23,12 @@ import { forbidden, notFound } from "./errors";
 /** 404 unless the User sees every Image somewhere, and each is placed in `app` when one is named. */
 const assertVisible = (
   user: AccessUser,
-  links: Iterable<readonly ImageLink[]>,
+  images: Iterable<ImageVisibility>,
   app?: App
 ) => {
-  for (const placements of links) {
-    const inApp =
-      app === undefined || placements.some((link) => link.app === app);
-    if (!(inApp && canSeeImage(user, placements))) {
+  for (const image of images) {
+    const inApp = app === undefined || image.apps.includes(app);
+    if (!(inApp && canSeeImage(user, image))) {
       throw notFound();
     }
   }
@@ -47,10 +46,10 @@ const assertManages = (user: AccessUser, apps: Iterable<App>) => {
 /** 403 unless the User is an Admin in every App each Image is placed in. */
 const assertManagesEverywhere = (
   user: AccessUser,
-  links: Iterable<readonly ImageLink[]>
+  images: Iterable<ImageVisibility>
 ) => {
-  for (const placements of links) {
-    if (!canManageEverywhere(user, placements)) {
+  for (const { apps } of images) {
+    if (!canManageEverywhere(user, apps)) {
       throw forbidden();
     }
   }
@@ -70,11 +69,11 @@ export const authoriseUploader = (user: AccessUser) => {
 /** 403 unless the User is an Admin in every App each new Image goes to; checked before a file is read. */
 export const authoriseUpload = (
   user: AccessUser,
-  items: readonly { apps: readonly ImageLink[] }[]
+  items: readonly { apps: readonly App[] }[]
 ) => {
   assertManages(
     user,
-    items.flatMap(({ apps }) => apps.map(({ app }) => app))
+    items.flatMap(({ apps }) => apps)
   );
 };
 
@@ -97,59 +96,44 @@ export const authoriseDelete = (
   }
 };
 
-/** The new placements, `public` filled in: left out, an existing placement keeps its own and a new one starts private. */
-const resolveLinks = (
-  current: readonly ImageLink[],
-  next: NonNullable<PatchChange["apps"]>
-): ImageLink[] =>
-  next.map((link) => ({
-    app: link.app,
-    public:
-      link.public ??
-      current.find(({ app }) => app === link.app)?.public ??
-      false,
-  }));
-
-/** The Apps whose placement is added, removed or switched public. */
-const changedApps = (
-  current: readonly ImageLink[],
-  next: readonly ImageLink[]
-): App[] => {
-  const before = new Map(current.map((link) => [link.app, link.public]));
-  const after = new Map(next.map((link) => [link.app, link.public]));
-  return [...new Set([...before.keys(), ...after.keys()])].filter(
-    (app) => before.get(app) !== after.get(app)
-  );
-};
+/** The Apps added or taken out: in one list and not the other. */
+const changedApps = (current: readonly App[], next: readonly App[]): App[] => [
+  ...next.filter((app) => !current.includes(app)),
+  ...current.filter((app) => !next.includes(app)),
+];
 
 /**
- * A PATCH batch checked against each Image's current placements, and
- * resolved: 404 unless every Image is visible; then 403 unless the User is
- * an Admin in every App whose placement changes and, for `alt` (every App
- * shows it), in every App the Image is in now.
+ * A PATCH batch checked against each Image's current access and Apps, and
+ * resolved: 404 unless every Image is visible; then 403 unless the User is an
+ * Admin in every App placed or taken out and, for `alt` or `access` (every
+ * App shows them), in every App the Image is in now. `renamed` holds a new
+ * file name, already copied, for each Image that may turn private: used only
+ * when it really goes from public to private (ADR 0027).
  */
 export const authorisePatch = (
   user: AccessUser,
-  current: ReadonlyMap<string, readonly ImageLink[]>,
-  changes: readonly PatchChange[]
+  current: ImageLinksById,
+  changes: readonly PatchChange[],
+  renamed: ReadonlyMap<string, string> = new Map()
 ): ImageChange[] => {
   assertVisible(user, current.values());
-  return changes.map(({ alt, apps, id }) => {
-    const links = current.get(id) ?? [];
-    const next = apps && resolveLinks(links, apps);
-    const changed = next ? changedApps(links, next) : [];
+  return changes.map(({ access, alt, apps, id }) => {
+    const image = current.get(id) ?? { access: ImageAccess.PRIVATE, apps: [] };
+    const changed = apps ? changedApps(image.apps, apps) : [];
     assertManages(user, changed);
-    if (alt && !canManageEverywhere(user, links)) {
+    const newAccess = access && access !== image.access ? access : undefined;
+    if ((alt || newAccess) && !canManageEverywhere(user, image.apps)) {
       throw forbidden();
     }
     // Only what changes is written.
-    const place = next?.filter(({ app }) => changed.includes(app)) ?? [];
-    const remove = changed.filter(
-      (app) => !next?.some((link) => link.app === app)
-    );
+    const place = changed.filter((app) => !image.apps.includes(app));
+    const remove = changed.filter((app) => image.apps.includes(app));
+    const key = newAccess === ImageAccess.PRIVATE ? renamed.get(id) : undefined;
     return {
       id,
       ...(alt && { alt }),
+      ...(newAccess && { access: newAccess }),
+      ...(key && { key }),
       ...(place.length > 0 && { place }),
       ...(remove.length > 0 && { remove }),
     };

@@ -7,6 +7,9 @@ import {
   accessUserFrom,
 } from "./access/access";
 
+/** A User's stored picture: its file's name, and the blur shown while it loads. */
+export type UserPicture = { image: string; blurDataUrl: string };
+
 /** A User as a list shows them: who, since when, and their Role in each App. */
 export type UserRecord = {
   id: string;
@@ -15,6 +18,8 @@ export type UserRecord = {
   name: string | null;
   /** Their picture's address, when they have one. */
   image: string | null;
+  /** The blur shown while their stored picture loads; none for any other. */
+  imageBlurDataUrl: string | null;
   createdAt: Date;
   memberships: AccessMembership[];
 };
@@ -38,6 +43,7 @@ const userRecord = {
   email: true,
   id: true,
   image: true,
+  imageBlurDataUrl: true,
   memberships: { orderBy: { app: "asc" }, select: { app: true, role: true } },
   name: true,
 } as const satisfies Prisma.UserSelect;
@@ -93,6 +99,43 @@ export const listUsers = async ({
  */
 export const deleteUsers = async (ids: readonly string[]): Promise<number> =>
   (await prisma.user.deleteMany({ where: { id: { in: [...ids] } } })).count;
+
+/**
+ * Sets `picture` as the User's (an Avatar's file name and its blur, or null
+ * for none, which clears both) and answers the file it held before, read in
+ * the same transaction, so the caller can delete a file it replaced; null
+ * when no User has `id`.
+ */
+export const setUserImage = (
+  id: string,
+  picture: UserPicture | null
+): Promise<{ previous: string | null } | null> =>
+  prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      select: { image: true },
+      where: { id },
+    });
+    if (!user) {
+      return null;
+    }
+    await tx.user.update({
+      data: {
+        image: picture?.image ?? null,
+        imageBlurDataUrl: picture?.blurDataUrl ?? null,
+      },
+      where: { id },
+    });
+    return { previous: user.image };
+  });
+
+/** The pictures the Users named hold, skipping those with none and unknown ids. */
+export const userImages = async (ids: readonly string[]): Promise<string[]> =>
+  (
+    await prisma.user.findMany({
+      select: { image: true },
+      where: { id: { in: [...ids] }, image: { not: null } },
+    })
+  ).flatMap(({ image }) => (image ? [image] : []));
 
 /**
  * A User's Memberships as the database holds them now, never a cached

@@ -112,6 +112,11 @@ export const aofPlaywrightConfig = ({
           AUTH_URL: apiUrl,
           PORT: String(LOCAL.PORT.API_E2E),
           STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
+          // The Local image server signs nothing itself: the API signs the
+          // links it serves with the same throwaway key and salt.
+          STORAGE_IMAGE_SERVER_KEY: LOCAL.IMAGE_SERVER.KEY,
+          STORAGE_IMAGE_SERVER_SALT: LOCAL.IMAGE_SERVER.SALT,
+          STORAGE_IMAGE_SERVER_URL: LOCAL.URL.IMAGE_SERVER,
         },
         timeout: START_TIMEOUT_MS,
         url: `${apiUrl}${apiPath.HEALTH}`,

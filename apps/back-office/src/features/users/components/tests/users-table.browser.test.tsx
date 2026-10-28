@@ -682,11 +682,14 @@ describe("UsersTable selection", () => {
   });
 });
 
+/** No deletion sent yet, and the API answering each one. */
+const freshDeletions = () => {
+  deletions.length = 0;
+  deleteAnswering();
+};
+
 describe("UsersTable deletion", () => {
-  beforeEach(() => {
-    deletions.length = 0;
-    deleteAnswering();
-  });
+  beforeEach(freshDeletions);
 
   it("select-all leaves your own row out", async () => {
     const screen = await renderAsSelf();
@@ -714,18 +717,21 @@ describe("UsersTable deletion", () => {
     expect(deletions).toEqual([]);
   });
 
-  it("while deleting, Escape leaves the dialog open", async () => {
+  it("confirming closes the question at once and fades the rows on their way out", async () => {
     deleteAnswering(() => new Promise<null>(() => undefined));
     const screen = await renderAsSelf();
-    await screen
+    const box = screen
       .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) });
+    await box.click();
     await deleteButton().click();
     await dialog().getByRole("button", { name: del.confirm }).click();
     await expect.poll(() => deletions.length).toBe(1);
-    await userEvent.keyboard("{Escape}");
-    await expect.element(dialog()).toBeVisible();
+    await expect.element(dialog()).not.toBeInTheDocument();
+    const row = box.element().closest("tr");
+    expect(row?.getAttribute("aria-busy")).toBe("true");
+    expect(row?.inert).toBe(true);
+    await expect.element(deleteButton()).toBeDisabled();
   });
 
   it("confirming deletes, says how many, clears the selection and refetches the list", async () => {
@@ -742,6 +748,10 @@ describe("UsersTable deletion", () => {
     await expect.element(deleteButton()).toBeDisabled();
     await expect.poll(() => sent.length).toBeGreaterThan(asked);
   });
+});
+
+describe("UsersTable deletion, past the usual path", () => {
+  beforeEach(freshDeletions);
 
   it("says so when the User had already been deleted, then refetches", async () => {
     listAnswering(() => HttpResponse.json(USERS_PAGE));
@@ -770,6 +780,17 @@ describe("UsersTable deletion", () => {
     await expect.element(page.getByText(del.failed)).toBeVisible();
     await expect.element(dialog()).not.toBeInTheDocument();
     await expect.element(deleteButton()).toBeEnabled();
+    // The rows come back as they were: nothing was taken from the list.
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("table")
+          .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
+          .element()
+          .closest("tr")
+          ?.hasAttribute("aria-busy")
+      )
+      .toBe(false);
   });
 
   it("after deleting the last page's rows, offers the way back", async () => {

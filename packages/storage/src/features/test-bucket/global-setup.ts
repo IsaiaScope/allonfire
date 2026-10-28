@@ -19,6 +19,9 @@ export default async function setup(project: TestProject) {
   process.env.STORAGE_ENDPOINT ??= LOCAL.URL.STORAGE;
   process.env.STORAGE_ACCESS_KEY ??= LOCAL.STORAGE.ACCESS_KEY;
   process.env.STORAGE_SECRET_KEY ??= LOCAL.STORAGE.SECRET_KEY;
+  process.env.STORAGE_IMAGE_SERVER_URL ??= LOCAL.URL.IMAGE_SERVER;
+  process.env.STORAGE_IMAGE_SERVER_KEY ??= LOCAL.IMAGE_SERVER.KEY;
+  process.env.STORAGE_IMAGE_SERVER_SALT ??= LOCAL.IMAGE_SERVER.SALT;
   // The S3 client reads the env at import: load it once the env is set.
   const { createTestBucket, dropTestBucket } = await import("./bucket");
   const label = basename(project.config.root);

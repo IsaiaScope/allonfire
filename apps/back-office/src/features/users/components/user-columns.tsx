@@ -160,6 +160,7 @@ export const OpenUser = ({
 const UserIdentity = ({ user }: { user: UserBody }) => (
   <span className="flex min-w-0 items-center gap-2">
     <UserAvatar
+      blurDataUrl={user.imageBlurDataUrl}
       className={user.name ? "size-9" : "size-(--field-tile)"}
       image={user.image}
       name={user.name || user.email}

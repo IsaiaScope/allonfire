@@ -1,12 +1,17 @@
+import { resolve } from "node:path";
 import {
   USER,
   USER_SEARCH,
 } from "@allonfire/auth/features/users/constants/users";
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
@@ -292,3 +297,60 @@ for (const { path, title } of [
     ).toHaveAttribute("content", `${LOCAL.URL.BACK_OFFICE_E2E}/it${path}`);
   });
 }
+
+/** A User's picture in their row, or their card on a phone. */
+const pictureOf = (page: Page, email: string) =>
+  rowOf(page, email).locator(`img[src^="${LOCAL.URL.IMAGE_SERVER}"]`).first();
+
+/** Adds a User with a photo cropped in the dialog, and waits for the list. */
+const addUserWithPicture = async (
+  page: Page,
+  user: ReturnType<typeof addedBy>
+) => {
+  await signInAsAdmin(page);
+  await page.goto(newUserHref());
+  await addForm(page)
+    .locator('input[type="file"][name="avatar"]')
+    .setInputFiles(resolve(IMAGE_FIXTURE_FILES, "photo.jpg"));
+  await page
+    .getByRole("button", { exact: true, name: t.add.avatar.use })
+    .click();
+  await addUser(page, user);
+  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+};
+
+test("adds a User with a picture: the list shows it", async ({
+  page,
+}, info) => {
+  const user = addedBy(`${info.project.name}-pictured`);
+  await addUserWithPicture(page, user);
+  const picture = pictureOf(page, user.email);
+  await expect(picture).toBeVisible();
+  await expect
+    .poll(() =>
+      picture.evaluate((image: HTMLImageElement) => image.naturalWidth)
+    )
+    .toBeGreaterThan(0);
+});
+
+test("deleting that User removes the picture", async ({ page }, info) => {
+  const user = addedBy(`${info.project.name}-unpictured`);
+  await addUserWithPicture(page, user);
+  const link = await pictureOf(page, user.email).getAttribute("src");
+  expect((await page.request.get(link ?? "")).status()).toBe(HTTP.STATUS.OK);
+  await checkboxOf(page, user.email).click();
+  await page
+    .getByRole("button", { exact: true, name: t.delete.action })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: t.delete.confirm })
+    .click();
+  await expect(page.getByText("1 User deleted")).toBeVisible();
+  // Dead once the image cache asked imgproxy again.
+  await expect
+    .poll(async () => (await page.request.get(link ?? "")).status(), {
+      timeout: (IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * UNIT.MS_PER_SECOND,
+    })
+    .toBe(HTTP.STATUS.NOT_FOUND);
+});

@@ -3,7 +3,7 @@ import {
   Button as ShadcnButton,
 } from "@allonfire/shadcn/components/button";
 import { cva } from "class-variance-authority";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "../lib/utils";
 
 type ShadcnButtonProps = ComponentProps<typeof ShadcnButton>;
@@ -17,6 +17,15 @@ export type AOFButtonSize =
 
 export type AOFButtonProps = Omit<ShadcnButtonProps, "size"> & {
   size?: AOFButtonSize;
+};
+
+/**
+ * A button inside an AOF component that writes its own label: anything a
+ * button takes but its children, and a `decoration` drawn before the label
+ * (an App's brushed kanji), so an App dresses it without retelling it.
+ */
+export type AOFButtonPartProps = Omit<AOFButtonProps, "children"> & {
+  decoration?: ReactNode;
 };
 
 // The size shadcn has no name for: as tall as an AOF field

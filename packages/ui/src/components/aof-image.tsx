@@ -1,10 +1,12 @@
+"use client";
+
 import {
   type ContentLanguage,
   I18N,
 } from "@allonfire/core/features/i18n/constants/locales";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
-import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import Image, { type ImageProps } from "next/image";
+import { srcSetLoader } from "../lib/image-server-loader";
 
 /** next/image's loading knobs; `lcp` sets them, so callers cannot disagree. */
 type LoadingProps = "fetchPriority" | "loading" | "preload" | "priority";
@@ -44,7 +46,7 @@ export const AOFImage = ({ lcp = false, ...props }: AOFImageProps) => {
 /** What AOFStorageImage reads from an API Image: enough to size, blur and describe it. */
 export type AOFStorageImageSource = Pick<
   ImageBody,
-  "alt" | "blurDataUrl" | "height" | "key" | "width"
+  "alt" | "blurDataUrl" | "height" | "srcSet" | "width"
 >;
 
 /** The props AOFStorageImage sets itself, from the Image. */
@@ -53,6 +55,7 @@ type StoredProps =
   | "blurDataURL"
   | "fill"
   | "height"
+  | "loader"
   | "placeholder"
   | "src"
   | "width";
@@ -64,9 +67,11 @@ export type AOFStorageImageProps = Omit<AOFImageProps, StoredProps> & {
 };
 
 /**
- * An Image from storage, through the App's `/storage/images` rewrite and its
- * optimizer: its real size (no layout shift), the blur until it loads and the
- * alt in the page's language. Everything else is AOFImage's.
+ * An Image from storage, through the image server: each width next/image
+ * asks is the signed link the API answered for it (`srcSetLoader`), never the
+ * App's optimizer; its real size (no layout shift), the blur until it loads
+ * and the alt in the page's language. Everything else is AOFImage's. A client
+ * component: the loader is a function.
  */
 export const AOFStorageImage = ({
   image,
@@ -79,8 +84,10 @@ export const AOFStorageImage = ({
     alt={image.alt[language] ?? image.alt[I18N.DEFAULT_LANGUAGE]}
     blurDataURL={image.blurDataUrl}
     height={image.height}
+    loader={srcSetLoader(image.srcSet)}
     placeholder="blur"
-    src={`${STORAGE.PATH.IMAGE_PROXY}/${image.key}`}
+    // The loader picks by width; next/image needs a src all the same.
+    src={image.srcSet.at(-1)?.url ?? ""}
     width={image.width}
   />
 );

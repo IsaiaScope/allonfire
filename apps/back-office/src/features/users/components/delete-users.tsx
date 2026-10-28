@@ -5,11 +5,10 @@ import { AOFButton } from "@allonfire/ui/components/aof-button";
 import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
 import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import { IconTrashX } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { StationAlert } from "@/shared/components/station-alert";
-import { QUERY } from "@/shared/constants/query";
 import { USERS } from "../constants/users";
 import { deleteUsersMutation } from "../utils/users-mutations";
 import { ToolbarActionBody, toolbarActionClass } from "./toolbar-action";
@@ -35,9 +34,10 @@ const doneMessage = (
 
 /**
  * The toolbar's Delete button, enabled while Users are selected, and the
- * question before they are deleted. A deletion clears the selection and
- * refreshes the list; a failure keeps the selection, so trying again is one
- * click.
+ * question before they are deleted. Confirming closes the question at once
+ * and the list fades the Users on their way out (`useUsersBeingDeleted`)
+ * until the list read again has them gone; a deletion then clears the
+ * selection, a failure keeps it, so trying again is one click.
  */
 export const DeleteUsers = ({
   ids,
@@ -48,7 +48,6 @@ export const DeleteUsers = ({
   onClear: () => void;
 }) => {
   const t = useTranslations("Users.delete");
-  const queryClient = useQueryClient();
   const [asking, setAsking] = useState(false);
   // A failure is told by the App's error handler, in these words.
   const { isPending, mutate } = useMutation({
@@ -58,19 +57,15 @@ export const DeleteUsers = ({
   const count = ids.length;
 
   const ask = useCallback(() => setAsking(true), []);
-  const confirm = useCallback(
-    () =>
-      mutate(ids, {
-        onError: () => setAsking(false),
-        onSuccess: async ({ deleted }, sent) => {
-          setAsking(false);
-          onClear();
-          aofToast(doneMessage(t, sent.length, deleted), "success");
-          await queryClient.invalidateQueries({ queryKey: QUERY.USERS.ALL });
-        },
-      }),
-    [ids, mutate, onClear, queryClient, t]
-  );
+  const confirm = useCallback(() => {
+    setAsking(false);
+    mutate(ids, {
+      onSuccess: ({ deleted }, sent) => {
+        onClear();
+        aofToast(doneMessage(t, sent.length, deleted), "success");
+      },
+    });
+  }, [ids, mutate, onClear, t]);
 
   return (
     <>
@@ -78,7 +73,7 @@ export const DeleteUsers = ({
         <AOFButton
           aria-label={t("action")}
           className={toolbarActionClass("icon", "destructive")}
-          disabled={count === 0}
+          disabled={count === 0 || isPending}
           onClick={ask}
         >
           <ToolbarActionBody

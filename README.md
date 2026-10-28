@@ -154,11 +154,12 @@ One-time setup, in the admin console:
    "autoApprovers": {
      "services": {
        "svc:back-office": ["tag:dev"],
-       "svc:laura": ["tag:dev"]
+       "svc:laura": ["tag:dev"],
+       "svc:image-server": ["tag:dev"]
      }
    },
    "grants": [
-     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura"], "ip": ["443"] }
+     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:image-server"], "ip": ["443"] }
    ]
    ```
 
@@ -167,7 +168,7 @@ One-time setup, in the admin console:
 2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
    `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
    so the Mac then belongs to the tag, not to a user.
-3. Services: define `back-office` and `laura`, each on `tcp:443`.
+3. Services: define `back-office`, `laura` and `image-server`, each on `tcp:443`.
 4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
    defined stays pending: `tailscale serve clear svc:<name>`, then run it
    again, and the auto-approval applies.
@@ -175,6 +176,11 @@ One-time setup, in the admin console:
    (`https://back-office.<tailnet>.ts.net,https://laura.<tailnet>.ts.net`):
    an App's server forwards the page's Origin to the API, whose Better Auth
    refuses one it does not trust, and Sign in then reports itself unavailable.
+6. Set `STORAGE_IMAGE_SERVER_URL` in `apps/api/.env` to
+   `https://image-server.<tailnet>.ts.net`: the API signs every picture link
+   with that address and the browser loads it directly, so `localhost:9010`
+   reaches no phone. The Mac reaches it too while Tailscale is on; with
+   Tailscale off, put `http://localhost:9010` back.
 
 Why Services, and what a new App needs: ADR 0021.
 

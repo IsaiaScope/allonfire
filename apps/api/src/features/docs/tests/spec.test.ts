@@ -51,6 +51,7 @@ const specSchema = z.object({
       delete: operationSchema.optional(),
       get: operationSchema.optional(),
       post: operationSchema.optional(),
+      put: operationSchema.optional(),
     })
   ),
 });
@@ -116,18 +117,32 @@ describe("GET /openapi.json", () => {
         "App",
         "Health",
         "Image",
+        "ImageAccess",
         "ImageAlt",
         "ImageChange",
         "ImageDelete",
-        "ImageLink",
         "ImageList",
         "ImageUpload",
+        "SignedLink",
+        "UserAvatar",
         "Ready",
         "ListedUser",
         "ReadyUnavailable",
         "UserList",
       ])
     );
+  });
+
+  it("shows an Image's access and signed links, and no per-App public or file name", async () => {
+    const schemas = specSchema.parse(await fullSpec()).components?.schemas;
+    const image = z
+      .object({ properties: z.record(z.string(), z.unknown()) })
+      .parse(schemas?.Image);
+    expect(objectKeys(image.properties)).toEqual(
+      expect.arrayContaining(["access", "srcSet", "apps"])
+    );
+    expect(objectKeys(image.properties)).not.toContain("key");
+    expect(objectKeys(schemas ?? {})).not.toContain("ImageLink");
   });
 
   it("leaves every Model untagged, so the docs list them apart", async () => {
@@ -415,4 +430,26 @@ describe("GET /openapi.json User writes", () => {
       USER.ERROR_CODE.EMAIL_TAKEN,
     ]);
   });
+});
+
+describe("GET /openapi.json Avatars", () => {
+  it.each([
+    { method: "put", status: HTTP.STATUS.OK },
+    { method: "delete", status: HTTP.STATUS.NO_CONTENT },
+  ] as const)(
+    "documents $method on a User's Avatar under Users",
+    async ({ method, status }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation =
+        paths[`${API.PATH.USERS}${USER.PATH.AVATAR.replace(":id", "{id}")}`]?.[
+          method
+        ];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(
+          [status, HTTP.STATUS.FORBIDDEN, HTTP.STATUS.NOT_FOUND].map(String)
+        )
+      );
+    }
+  );
 });

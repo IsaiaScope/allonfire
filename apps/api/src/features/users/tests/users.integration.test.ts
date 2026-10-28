@@ -1,4 +1,7 @@
 // @module-tag integration
+
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   USER,
   USER_SEARCH,
@@ -8,13 +11,20 @@ import {
   userDeleteBodySchema,
   userListBodySchema,
 } from "@allonfire/auth/features/users/hono/constants/schemas";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { upsertUser } from "@allonfire/database/features/seed/upsert-user";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
+import { pictureLink } from "@allonfire/storage/features/image-server/sign";
 import { hashPassword } from "better-auth/crypto";
+import { z } from "zod";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
@@ -29,11 +39,14 @@ import { problemOf } from "../../errors/tests/problem-of";
 import { userDeps } from "../user-deps";
 
 const LIST = API.PATH.USERS;
+const BLUR_DATA_URL = /^data:image\/webp;base64,/;
 const LARGEST_PAGE = Math.max(...USER.PAGE_SIZES);
 
 let app: TestApp;
 beforeEach(() => {
-  app = createApp(appDeps({ auth, users: userDeps() }));
+  app = createApp(
+    appDeps({ auth, users: userDeps({ warn: () => undefined }) })
+  );
 });
 
 afterAll(async () => {
@@ -178,7 +191,9 @@ describe("deleting Users", () => {
   });
 
   it("canManageUsers is false for an unknown id", async () => {
-    expect(await userDeps().canManageUsers("missing-id")).toBe(false);
+    expect(
+      await userDeps({ warn: () => undefined }).canManageUsers("missing-id")
+    ).toBe(false);
   });
 });
 
@@ -249,5 +264,128 @@ describe("adding Users", () => {
     const body = newUser("never");
     expect((await add(body, cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await prisma.user.count({ where: { email: body.email } })).toBe(0);
+  });
+});
+
+describe("a User's Avatar", () => {
+  const PICTURED = "avatar.test";
+  const PHOTO = readFileSync(resolve(IMAGE_FIXTURE_FILES, "photo.jpg"));
+  const avatarPath = (id: string) =>
+    `${LIST}${USER.PATH.AVATAR.replace(":id", id)}`;
+  const put = (id: string, cookie: string) => {
+    const form = new FormData();
+    form.append("file", new File([PHOTO], "photo.jpg"));
+    return app.request(avatarPath(id), {
+      body: form,
+      headers: { cookie, origin: ORIGIN },
+      method: HTTP.METHOD.PUT,
+    });
+  };
+  const removeAvatar = (id: string, cookie: string) =>
+    app.request(avatarPath(id), {
+      headers: { cookie, origin: ORIGIN },
+      method: HTTP.METHOD.DELETE,
+    });
+  const imageOf = async (id: string) =>
+    (await prisma.user.findUniqueOrThrow({ where: { id } })).image;
+  /** Whether the image server still finds the file. */
+  const stored = async (key: string | null) =>
+    (
+      await fetch(
+        pictureLink({ key: key ?? "", width: IMAGE_SERVER.AVATAR_WIDTH })
+      )
+    ).status === HTTP.STATUS.OK;
+  const linkSchema = z.object({
+    image: z.string(),
+    imageBlurDataUrl: z.string(),
+  });
+  /** A deleted file's link is dead once the image cache asked imgproxy again. */
+  const UNTIL_CACHE_CHECKED = {
+    timeout: (IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * UNIT.MS_PER_SECOND,
+  };
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: PICTURED } } });
+  });
+
+  it("stores a picture and answers a link that loads it at the Avatar's width, for the hour", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await prisma.user.create({
+      data: { email: `first@${PICTURED}` },
+      select: { id: true },
+    });
+    const res = await put(id, cookie);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    const { image, imageBlurDataUrl } = linkSchema.parse(await res.json());
+    expect(image).toContain(`/rs:fit:${IMAGE_SERVER.AVATAR_WIDTH}:0/exp:`);
+    expect(imageBlurDataUrl).toMatch(BLUR_DATA_URL);
+    const row = await prisma.user.findUniqueOrThrow({ where: { id } });
+    expect(row.imageBlurDataUrl).toBe(imageBlurDataUrl);
+    const picture = await fetch(image, {
+      headers: { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE },
+    });
+    expect(picture.status).toBe(HTTP.STATUS.OK);
+    expect(picture.headers.get(HTTP.HEADER.CONTENT_TYPE)).toBe(
+      IMAGE.FORMAT.CONTENT_TYPE
+    );
+  });
+
+  it("deletes the file a second picture replaces, and the one removed", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await prisma.user.create({
+      data: { email: `second@${PICTURED}` },
+      select: { id: true },
+    });
+    await put(id, cookie);
+    const first = await imageOf(id);
+    await put(id, cookie);
+    const second = await imageOf(id);
+    expect(second).not.toBe(first);
+    await expect.poll(() => stored(first), UNTIL_CACHE_CHECKED).toBe(false);
+    expect(await stored(second)).toBe(true);
+    expect((await removeAvatar(id, cookie)).status).toBe(
+      HTTP.STATUS.NO_CONTENT
+    );
+    expect(await imageOf(id)).toBeNull();
+    await expect.poll(() => stored(second), UNTIL_CACHE_CHECKED).toBe(false);
+  });
+
+  it("deleting the User deletes their picture", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await prisma.user.create({
+      data: { email: `deleted@${PICTURED}` },
+      select: { id: true },
+    });
+    await put(id, cookie);
+    const key = await imageOf(id);
+    expect((await remove([id], cookie)).status).toBe(HTTP.STATUS.OK);
+    await expect.poll(() => stored(key), UNTIL_CACHE_CHECKED).toBe(false);
+  });
+
+  it("the Session answers a signed link with its blur, never the file's name", async () => {
+    const admin = FIXTURE.USER.BACK_OFFICE.ADMIN;
+    const { id } = await prisma.user.findUniqueOrThrow({
+      where: { email: admin.email },
+    });
+    try {
+      await put(id, await cookieFor(app, admin));
+      const key = await imageOf(id);
+      // A new sign-in: the cookie cache holds the User as it was signed in.
+      const session = await app.request(
+        `${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`,
+        { headers: { cookie: await cookieFor(app, admin), origin: ORIGIN } }
+      );
+      const { user } = z
+        .object({ user: linkSchema })
+        .parse(await session.json());
+      expect(user.imageBlurDataUrl).toMatch(BLUR_DATA_URL);
+      expect(user.image).not.toBe(key);
+      expect(user.image).toContain(`${key}`);
+      expect(user.image).toContain(
+        `/rs:fit:${IMAGE_SERVER.AVATAR_WIDTH}:0/exp:`
+      );
+    } finally {
+      await removeAvatar(id, await cookieFor(app, admin));
+    }
   });
 });

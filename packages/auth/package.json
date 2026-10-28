@@ -25,6 +25,7 @@
     "./features/next/utils/set-cookie": "./src/features/next/utils/set-cookie.ts",
     "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
     "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",
+    "./features/next/utils/with-provider-pictures": "./src/features/next/utils/with-provider-pictures.ts",
     "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
     "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
@@ -32,12 +33,14 @@
     "./features/users/constants/users": "./src/features/users/constants/users.ts",
     "./features/users/hono/constants/schemas": "./src/features/users/hono/constants/schemas.ts",
     "./features/users/hono/routes": "./src/features/users/hono/routes/index.ts",
+    "./features/users/hono/tests/stub-user-deps": "./src/features/users/hono/tests/stub-user-deps.ts",
     "./features/users/hono/utils/deps": "./src/features/users/hono/utils/deps.ts",
     "./features/users/utils/password-rules": "./src/features/users/utils/password-rules.ts",
     "./shared/constants/errors": "./src/shared/constants/errors.ts",
     "./shared/constants/auth": "./src/shared/constants/auth.ts",
     "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
-    "./shared/types/auth": "./src/shared/types/auth.ts"
+    "./shared/types/auth": "./src/shared/types/auth.ts",
+    "./shared/utils/linked-picture": "./src/shared/utils/linked-picture.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

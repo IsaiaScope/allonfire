@@ -6,8 +6,10 @@ import {
 } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
-import { App, Role } from "@allonfire/database/enums";
+import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import { STORAGE } from "../../../../shared/constants/paths";
+import { IMAGE_SERVER } from "../../../image-server/constants/image-server";
+import { pictureSrcSet, privateLinkExpiry } from "../../../image-server/sign";
 import { imageBodySchema } from "../../constants/schemas";
 import { imageListBodySchema } from "../constants/schemas";
 import { encodeCursor } from "../utils/cursor";
@@ -20,8 +22,15 @@ const lauraUser = sessionFor({
 });
 const otherAppUser = sessionFor({ memberships: [] });
 const visitor: AuthSession | null = null;
-const LAURA_PRIVATE = { app: App.LAURA, public: false };
-const LAURA_PUBLIC = { app: App.LAURA, public: true };
+const NOW = new Date("2026-10-28T10:05:00Z");
+const KEY = "0b9a0c3e-0000-4000-8000-000000000001.webp";
+
+beforeEach(() => {
+  vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 const noImages = () => vi.fn<ImageDeps["listImages"]>(async () => []);
 
 describe("GET /images", () => {
@@ -41,13 +50,14 @@ describe("GET /images", () => {
     expect(await res.json()).toEqual({
       images: [
         {
+          access: ImageAccess.PRIVATE,
           alt: { en: "The sea", it: "Il mare" },
-          apps: [LAURA_PRIVATE],
+          apps: [App.LAURA],
           blurDataUrl: "data:image/webp;base64,AAAA",
           createdAt: "2026-10-01T10:00:00.000Z",
           height: 600,
           id: "image-1",
-          key: "0b9a0c3e-0000-4000-8000-000000000001.webp",
+          srcSet: pictureSrcSet(KEY, privateLinkExpiry(NOW)),
           width: 800,
         },
       ],
@@ -187,19 +197,40 @@ describe("GET /images/:id", () => {
       getImage: async () => imageRecord(),
     }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(200);
-    expect(imageBodySchema.parse(await res.json()).apps).toEqual([
-      LAURA_PRIVATE,
-    ]);
+    expect(imageBodySchema.parse(await res.json()).apps).toEqual([App.LAURA]);
+  });
+
+  it("signs a private Image's links for the hour, one per width", async () => {
+    const res = await app(lauraUser, {
+      getImage: async () => imageRecord(),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    const { srcSet } = imageBodySchema.parse(await res.json());
+    expect(srcSet.map(({ width }) => width)).toEqual([...IMAGE_SERVER.WIDTHS]);
+    const expiry = privateLinkExpiry(NOW).getTime() / 1000;
+    for (const { url } of srcSet) {
+      expect(url).toContain(`/exp:${expiry}/`);
+    }
+  });
+
+  it("gives a public Image four links that never expire", async () => {
+    const res = await app(visitor, {
+      getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    const { srcSet } = imageBodySchema.parse(await res.json());
+    expect(srcSet).toHaveLength(IMAGE_SERVER.WIDTHS.length);
+    for (const { url } of srcSet) {
+      expect(url).not.toContain("/exp:");
+    }
   });
 
   it("returns a public Image to a visitor without a Session", async () => {
     const res = await app(visitor, {
-      getImage: async () => imageRecord({ apps: [LAURA_PUBLIC] }),
+      getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
     }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     expect(res.status).toBe(200);
   });
 
-  it("answers 404 to a visitor for an Image public nowhere", async () => {
+  it("answers 404 to a visitor for a private Image", async () => {
     const res = await app(visitor, {
       getImage: async () => imageRecord(),
     }).request(`${STORAGE.PATH.IMAGES}/image-1`);
