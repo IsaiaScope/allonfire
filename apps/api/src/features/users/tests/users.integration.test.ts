@@ -65,8 +65,8 @@ describe("listing Users on the Fixtures", () => {
     const query = new URLSearchParams({
       [USER.PARAM.PER_PAGE]: String(LARGEST_PAGE),
       [USER.PARAM.SEARCH]: USER_SEARCH.serialize({
-        app: App.LAURA,
-        role: Role.ADMIN,
+        app: [App.LAURA],
+        role: [Role.ADMIN],
         text: FIXTURE.DOMAIN,
       }),
     });

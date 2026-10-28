@@ -8,6 +8,7 @@ import {
   objectValues,
 } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
+import { updateTag } from "next/cache";
 import { serverApi } from "@/features/api/utils/server-api";
 import { redirect } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -73,5 +74,7 @@ export const addUser = async (
   if (res.status !== HTTP.STATUS.CREATED) {
     return { error: USERS.ADD_ERROR.FAILED, values };
   }
+  // The kept lists lack the new User: dropped, so the list shows them first.
+  updateTag(USERS.CACHE.TAG);
   return redirect({ href: BACK_OFFICE.PAGE.USERS, locale: languageOf(locale) });
 };

@@ -11,17 +11,23 @@ import {
 export type UserRecord = {
   id: string;
   email: string;
+  /** What they are called, when they gave a name. */
+  name: string | null;
+  /** Their picture's address, when they have one. */
+  image: string | null;
   createdAt: Date;
   memberships: AccessMembership[];
 };
 
 /**
- * One page of Users. `app` and `role` together match one Membership; `role`
- * alone matches it in any App. `text` is part of the email, any case.
+ * One page of Users. `app` and `role` together match one Membership, in any
+ * of the Apps with any of the Roles; `role` alone matches it in any App, and
+ * an empty list asks nothing. `text` is part of the email or of the name,
+ * any case.
  */
 export type UserListQuery = {
-  app?: App | undefined;
-  role?: Role | undefined;
+  app?: readonly App[] | undefined;
+  role?: readonly Role[] | undefined;
   text: string;
   page: number;
   perPage: number;
@@ -31,7 +37,9 @@ const userRecord = {
   createdAt: true,
   email: true,
   id: true,
+  image: true,
   memberships: { orderBy: { app: "asc" }, select: { app: true, role: true } },
+  name: true,
 } as const satisfies Prisma.UserSelect;
 
 /**
@@ -47,9 +55,19 @@ export const listUsers = async ({
   text,
 }: UserListQuery): Promise<{ users: UserRecord[]; total: number }> => {
   const where = {
-    ...(text && { email: { contains: text, mode: "insensitive" } }),
-    ...((app || role) && {
-      memberships: { some: { ...(app && { app }), ...(role && { role }) } },
+    ...(text && {
+      OR: [
+        { email: { contains: text, mode: "insensitive" } },
+        { name: { contains: text, mode: "insensitive" } },
+      ],
+    }),
+    ...((app?.length || role?.length) && {
+      memberships: {
+        some: {
+          ...(app?.length && { app: { in: [...app] } }),
+          ...(role?.length && { role: { in: [...role] } }),
+        },
+      },
     }),
   } satisfies Prisma.UserWhereInput;
   // Two reads, not a transaction: under READ COMMITTED each takes its own

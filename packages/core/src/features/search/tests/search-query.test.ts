@@ -11,11 +11,11 @@ const search = searchQuery(FIELDS);
 describe("searchQuery", () => {
   it("reads known fields in their canonical spelling, the rest as text", () => {
     expect(search.parse("app:laura role:admin isaia")).toEqual({
-      app: "laura",
-      role: "ADMIN",
+      app: ["laura"],
+      role: ["ADMIN"],
       text: "isaia",
     });
-    expect(search.parse("APP:Laura")).toEqual({ app: "laura", text: "" });
+    expect(search.parse("APP:Laura")).toEqual({ app: ["laura"], text: "" });
   });
 
   it("drops an unknown field or value and collapses whitespace", () => {
@@ -25,15 +25,22 @@ describe("searchQuery", () => {
   });
 
   it("drops an empty value", () => {
-    expect(search.parse("app: role:admin")).toEqual({
-      role: "ADMIN",
+    expect(search.parse("app: role:admin,")).toEqual({
+      role: ["ADMIN"],
       text: "",
     });
   });
 
-  it("keeps the last value of a repeated field", () => {
-    expect(search.parse("app:laura app:back-office")).toEqual({
-      app: "back-office",
+  it("reads a list of values in table order, each once", () => {
+    expect(search.parse("role:viewer,ADMIN,boss,admin")).toEqual({
+      role: ["ADMIN", "VIEWER"],
+      text: "",
+    });
+  });
+
+  it("joins the values of a repeated field", () => {
+    expect(search.parse("app:back-office app:laura")).toEqual({
+      app: ["laura", "back-office"],
       text: "",
     });
   });
@@ -46,7 +53,7 @@ describe("searchQuery", () => {
 
   it("reads the text field like any other, beside plain words", () => {
     expect(search.parse("input:isa app:laura")).toEqual({
-      app: "laura",
+      app: ["laura"],
       text: "isa",
     });
     expect(search.parse("INPUT:isa bel")).toEqual({ text: "isa bel" });
@@ -54,10 +61,18 @@ describe("searchQuery", () => {
 
   it("writes fields in table order, lower-cased, text last", () => {
     expect(
-      search.serialize({ app: "laura", role: "ADMIN", text: "isaia" })
+      search.serialize({ app: ["laura"], role: ["ADMIN"], text: "isaia" })
     ).toBe("app:laura role:admin input:isaia");
-    expect(search.serialize({ role: "VIEWER", text: "" })).toBe("role:viewer");
-    expect(search.serialize({ text: "" })).toBe("");
+    expect(search.serialize({ role: ["VIEWER"], text: "" })).toBe(
+      "role:viewer"
+    );
+    expect(search.serialize({ app: [], text: "" })).toBe("");
+  });
+
+  it("writes a list in table order, each value once", () => {
+    expect(
+      search.serialize({ role: ["VIEWER", "ADMIN", "VIEWER"], text: "" })
+    ).toBe("role:admin,viewer");
   });
 
   it("is stable through a round trip", () => {
@@ -66,6 +81,7 @@ describe("searchQuery", () => {
       "APP:Laura",
       "role:boss team:x  isa  ia ",
       "app: role:admin",
+      "role:viewer,admin app:laura,laura",
       "",
     ]) {
       const once = search.serialize(search.parse(raw));

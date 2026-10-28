@@ -21,6 +21,7 @@
     "./features/next/utils/redirect-to": "./src/features/next/utils/redirect-to.ts",
     "./features/next/utils/refresh-session": "./src/features/next/utils/refresh-session.ts",
     "./features/next/utils/session": "./src/features/next/utils/session.ts",
+    "./features/next/utils/session-cookie": "./src/features/next/utils/session-cookie.ts",
     "./features/next/utils/set-cookie": "./src/features/next/utils/set-cookie.ts",
     "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
     "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",

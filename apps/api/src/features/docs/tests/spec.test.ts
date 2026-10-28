@@ -123,8 +123,8 @@ describe("GET /openapi.json", () => {
         "ImageList",
         "ImageUpload",
         "Ready",
+        "ListedUser",
         "ReadyUnavailable",
-        "User",
         "UserList",
       ])
     );
@@ -252,18 +252,45 @@ describe("GET /openapi.json error responses", () => {
     expect(components.responses).toHaveProperty(["Problem404", "content"]);
   });
 
-  it("documents the User list under Users, refusing without a Session or the right", async () => {
-    const { paths } = specSchema.parse(await fullSpec());
-    const operation = paths[API.PATH.USERS]?.get;
-    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
-    expect(objectKeys(operation?.responses ?? {})).toEqual(
-      expect.arrayContaining(
-        [HTTP.STATUS.OK, HTTP.STATUS.UNAUTHORIZED, HTTP.STATUS.FORBIDDEN].map(
-          String
-        )
-      )
-    );
-  });
+  it.each([
+    {
+      method: "get",
+      statuses: [
+        HTTP.STATUS.OK,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+      ],
+    },
+    {
+      method: "post",
+      statuses: [
+        HTTP.STATUS.CREATED,
+        HTTP.STATUS.BAD_REQUEST,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+        HTTP.STATUS.CONFLICT,
+      ],
+    },
+    {
+      method: "delete",
+      statuses: [
+        HTTP.STATUS.OK,
+        HTTP.STATUS.BAD_REQUEST,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+      ],
+    },
+  ] as const)(
+    "documents $method /users under Users, with its refusals",
+    async ({ method, statuses }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation = paths[API.PATH.USERS]?.[method];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(statuses.map(String))
+      );
+    }
+  );
 
   it("points each Image route's error at its own status", async () => {
     const { paths } = await problemDocument();
@@ -293,6 +320,21 @@ describe("GET /openapi.json with the Auth module", () => {
     expect(document.paths).toHaveProperty([API.PATH.HEALTH]);
     expect(document.paths).not.toHaveProperty([`${API.PATH.AUTH}/*`]);
     expect(document.components?.schemas).toHaveProperty(["Session"]);
+  });
+});
+
+describe("GET /openapi.json beside Better Auth's own Models", () => {
+  it("builds the document when Better Auth describes its User", async () => {
+    const auth = apiAuth({
+      openApi: () =>
+        Promise.resolve({
+          components: { schemas: { User: { type: "object" } } },
+          paths: {},
+        }),
+    });
+    const res = await createApp(appDeps({ auth })).request(API.PATH.OPENAPI);
+
+    expect(res.status).toBe(HTTP.STATUS.OK);
   });
 });
 

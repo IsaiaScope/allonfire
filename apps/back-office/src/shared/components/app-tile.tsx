@@ -14,6 +14,8 @@ const tile = cva("flex shrink-0 items-center justify-center", {
       lg: "size-12 rounded-lg group-data-[collapsible=icon]:size-9",
       /** In the switcher's menu, as the block's team rows. */
       md: "size-8 rounded-md border [&_svg]:size-4.5",
+      /** Beside an App's name in a list (a User's card). */
+      sm: "size-6 rounded-sm border [&_svg]:size-3.5",
     },
   },
 });
@@ -58,7 +60,8 @@ const logoImages = (logo: AppLogo) =>
 
 export type AppTileProps = VariantProps<typeof tile> & { app: App };
 
-/** An App's mark in the App switcher, as `APP_ENTRY` gives it. */
+/** An App's mark (the App switcher, a User's card), as `APP_ENTRY` gives
+ *  it. */
 export const AppTile = ({ app, size }: AppTileProps) => {
   const { mark } = APP_ENTRY[app];
   if ("icon" in mark) {

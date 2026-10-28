@@ -2,6 +2,9 @@ import { searchQuery } from "@allonfire/core/features/search/search-query";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 
+/** The sizes a list's page comes in. */
+const PAGE_SIZES = [25, 50, 100] as const;
+
 /** The User module's own values: its paths, its list's params and its docs. */
 export const USER = {
   /** The page a list opens on, and the furthest it reads. */
@@ -19,7 +22,7 @@ export const USER = {
     DELETE_SUMMARY: "Delete Users",
     LIST_200: "One page of Users, newest first, with the total that match",
     LIST_DESCRIPTION:
-      "Users with their Memberships, newest first. `search` holds `app:<App>` and `role:<Role>` pairs plus free text matched against the email; an unknown field or value is dropped, and a bad `page` or `perPage` falls back to its default, never a 400. Only a User the Host lets list Users.",
+      "Users with their Memberships, newest first. `search` holds `app:<App>` and `role:<Role>` pairs, each naming one value or several comma-separated (`role:admin,user`, any of them), plus free text matched against the email and the name; an unknown field or value is dropped, and a bad `page` or `perPage` falls back to its default, never a 400. Only a User the Host lets list Users.",
     LIST_SUMMARY: "List Users",
   },
   /** Codes the module throws beyond core's standard ones. */
@@ -34,10 +37,10 @@ export const USER = {
    *  hands out. */
   LIMIT: { EMAIL_MAX: 254, NAME_MAX: 100, PASSWORD_MAX: 128, PASSWORD_MIN: 12 },
   /** The most Users one deletion names: the largest page. */
-  MAX_DELETE: 100,
+  MAX_DELETE: Math.max(...PAGE_SIZES),
   MAX_PAGE: 100_000,
   OPENAPI_TAG: "Users",
-  PAGE_SIZES: [25, 50, 100],
+  PAGE_SIZES,
   PARAM: { PAGE: "page", PER_PAGE: "perPage", SEARCH: "search" },
   /** The module's routes; a Host mounts it at `BASE` under its own prefix. */
   PATH: {
@@ -48,7 +51,7 @@ export const USER = {
   },
 } as const;
 
-/** How a Users list's `search` reads: `app:laura role:admin isa` (ADR 0026). */
+/** How a Users list's `search` reads: `app:laura role:admin,user isa` (ADR 0026). */
 export const USER_SEARCH = searchQuery({
   app: objectValues(App),
   role: objectValues(Role),

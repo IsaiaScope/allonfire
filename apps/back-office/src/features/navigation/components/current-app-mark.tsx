@@ -1,8 +1,8 @@
 import { App } from "@allonfire/database/enums";
 import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { cva } from "class-variance-authority";
+import { AppTile } from "@/shared/components/app-tile";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { AppTile } from "./app-tile";
 
 /**
  * The switcher's button box: 52px, the hover hugging the 48px tile 2px

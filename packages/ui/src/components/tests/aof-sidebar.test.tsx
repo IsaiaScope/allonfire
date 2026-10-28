@@ -61,6 +61,22 @@ describe("AOFSidebar", () => {
     expect(html).toContain("pointer-coarse:size-(--tap-target)");
   });
 
+  it("draws both menu icons and lets the sidebar's marks pick one, so a fold shows from the first paint", () => {
+    const html = renderToStaticMarkup(
+      <AOFSidebarProvider>
+        <AOFSidebarTrigger aria-label="Toggle menu" />
+      </AOFSidebarProvider>
+    );
+    expect(html).toContain("tabler-icon-layout-sidebar-left-collapse");
+    expect(html).toContain("tabler-icon-layout-sidebar-left-expand");
+    expect(html).toContain(
+      "group-has-[[data-state=collapsed][data-collapsible]]/sidebar-wrapper:block"
+    );
+    // Not lit as a menu left open while the HTML still says open.
+    expect(html).toContain("aria-expanded:bg-transparent");
+    expect(html).not.toContain("aria-expanded:bg-muted");
+  });
+
   it("keeps a row lit while the menu it opens is open", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>

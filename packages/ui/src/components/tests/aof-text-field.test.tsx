@@ -35,7 +35,8 @@ const EmailForm = ({
 const ERROR_LINE = /<div class="min-h-6"><\/div>/;
 const BUTTON = /<button[^>]*>/;
 const BOLD_LABEL = /<label[^>]*class="[^"]*font-bold/;
-const TALL_INPUT_WITH_ICON = /<input[^>]*class="[^"]*h-11[^"]*pl-13/;
+const TALL_INPUT_WITH_ICON =
+  /<input[^>]*class="[^"]*h-\(--field-height\)[^"]*pl-13/;
 const TILE =
   /<span aria-hidden="true" class="[^"]*dark[^"]*bg-background[^"]*"><svg data-icon/;
 

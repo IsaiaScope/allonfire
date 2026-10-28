@@ -26,6 +26,7 @@ import {
   navVariants,
   optionVariants,
 } from "../lib/gooey-nav/variants";
+import type { ComponentPropsWithoutChildren } from "../lib/types";
 import { cn } from "../lib/utils";
 
 // Forked from React Bits' Gooey Nav (packages/shadcn/src/components/GooeyNav.tsx,
@@ -43,13 +44,17 @@ export type AOFGooeyNavItem = {
   label?: string;
 };
 
-export type AOFGooeyNavProps = {
+/** The `<nav>`'s own props (its `color`, `onChange` and `style` are the
+ *  engine's; its `ref` drives the engine), plus the engine's knobs. */
+export type AOFGooeyNavProps = Omit<
+  ComponentPropsWithoutChildren<"nav">,
+  "color" | "onChange" | "ref" | "style"
+> & {
   activeIndex?: number;
   /** The active label's colour; by default dark or white, whichever reads on the pill. */
   activeTextColor?: string;
   /** A drop's flight, in ms. */
   animationTime?: number;
-  className?: string;
   /** The pill's colour, as hex or rgb(): WebGL paints it, so no CSS variable. */
   color?: string;
   /** The drops' colours, one picked at random per drop; the pill's by default. */
@@ -178,6 +183,7 @@ export const AOFGooeyNav = ({
   radius,
   className,
   style,
+  ...props
 }: AOFGooeyNavProps) => {
   const [innerIndex, setInnerIndex] = useState(initialActiveIndex);
   const current = Math.min(
@@ -275,6 +281,7 @@ export const AOFGooeyNav = ({
 
   return (
     <nav
+      {...props}
       className={cn(navVariants({ frame }), className)}
       ref={navRef}
       style={{

@@ -1,3 +1,4 @@
+import { IconRefresh } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
 import { ActionKanji } from "@/shared/components/brush-kanji";
@@ -16,6 +17,7 @@ export const OfflineNotice = () => {
       action={
         <ReloadButton>
           <ActionKanji kanji={PWA_SIGNAGE.OFFLINE.RETRY_KANJI} />
+          <IconRefresh aria-hidden />
           {t("retry")}
         </ReloadButton>
       }

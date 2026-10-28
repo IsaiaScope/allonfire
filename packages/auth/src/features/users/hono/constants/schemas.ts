@@ -28,14 +28,22 @@ export const listQuerySchema = z.object({
 /** One App a User belongs to, and their Role there. */
 const membershipSchema = z.object({ app: appSchema, role: roleSchema });
 
+/**
+ * A User as the list shows them. Named `ListedUser` in the docs: Better Auth
+ * already calls its own Model `User`, and the API's document holds both.
+ */
 export const userBodySchema = z
   .object({
     createdAt: z.iso.datetime(),
     email: z.string(),
     id: z.string(),
+    /** Their picture's address, when they have one. */
+    image: z.string().nullable(),
     memberships: z.array(membershipSchema),
+    /** What they are called, when they gave a name. */
+    name: z.string().nullable(),
   })
-  .meta({ ref: "User" });
+  .meta({ ref: "ListedUser" });
 export type UserBody = z.infer<typeof userBodySchema>;
 
 export const userListBodySchema = z

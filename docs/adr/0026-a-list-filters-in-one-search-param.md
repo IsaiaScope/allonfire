@@ -3,7 +3,8 @@
 A list page (the Back Office's Users first, Storage's Images next) keeps every
 filter and its free text in one URL param, `search`, as `field:value` pairs,
 the free words a field like any other (`input:`): `?search=app:laura
-role:admin input:isaia` (`+` in the address). A plain word still reads as text,
+role:admin input:isaia` (`+` in the address). A field holds one value or
+several, comma-separated, any of which matches (`role:admin,user`). A plain word still reads as text,
 so a hand-typed `?search=isaia` works. Page and page size stay params of their
 own. Core's search parser reads and writes the string for every
 Host from a table of fields and their allowed values; a field or value it does

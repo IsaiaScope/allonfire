@@ -37,6 +37,11 @@ export const AUTH = {
      * expires. The Session itself is read with Better Auth's `getSessionCookie`.
      */
     SESSION_DATA: `${COOKIE_MARKER}session_data`,
+    /**
+     * Better Auth's Session token, matched past any `__Secure-` prefix: the
+     * same for the whole Session, unlike the cookie cache renewed beside it.
+     */
+    SESSION_TOKEN: `${COOKIE_MARKER}session_token`,
   },
   /**
    * What the docs say about the routes this module adds to Better Auth's. No

@@ -11,6 +11,13 @@
       "retry": "Try again",
       "reference": "Reference {digest}"
     },
+    "Request": {
+      "failed": "Something went wrong."
+    },
+    "Toast": {
+      "close": "Close notification",
+      "region": "Notifications"
+    },
     "Loading": {
       "label": "Loading"
     },

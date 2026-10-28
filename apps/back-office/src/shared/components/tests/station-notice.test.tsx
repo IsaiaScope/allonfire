@@ -1,5 +1,4 @@
 // @module-tag unit
-import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { StationNotice } from "../station-notice";
@@ -24,13 +23,21 @@ describe("StationNotice", () => {
     expect(html).toContain(`>${BACK_OFFICE.NAME}<`);
   });
 
-  it("heads the page and names the tab after its heading", () => {
-    const html = notice({ heading: HEADING });
-    expect(html).toMatch(new RegExp(`<h1[^>]*>${HEADING}</h1>`));
-    expect(html).toContain(
-      `<title>${pageTitle(HEADING, BACK_OFFICE.NAME)}</title>`
+  // The tab's title waits for the page to show (`NoticeTitle`, its own
+  // browser test), so no markup carries it.
+  it("heads the page with an h1", () => {
+    expect(notice({ heading: HEADING })).toMatch(
+      new RegExp(`<h1[^>]*>${HEADING}</h1>`)
     );
-    expect(notice({})).not.toContain("<title>");
+  });
+
+  it("in a part of a page, heads it with an h2 and leaves the tab alone", () => {
+    const html = renderToStaticMarkup(
+      <StationNotice heading={HEADING} scope="part" signage={SIGNAGE} />
+    );
+    expect(html).toMatch(new RegExp(`<h2[^>]*>${HEADING}</h2>`));
+    expect(html).not.toContain("<h1");
+    expect(html).not.toContain("<title>");
   });
 
   it("raises the words after the stamp, then the action after the words", () => {

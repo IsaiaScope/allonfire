@@ -17,6 +17,7 @@ import { cn } from "../lib/utils";
 import { AOFButton } from "./aof-button";
 import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
+import { aofInputEndButton } from "./aof-input-clear";
 
 // The tall field of every AOF form, its icon white on a dark tile like station
 // signage. Built on shadcn's tokens only, so any Design wears it. Text longer
@@ -104,7 +105,7 @@ export const AOFTextField = ({
         {icon ? (
           <span
             aria-hidden="true"
-            className="dark pointer-events-none absolute inset-y-1 left-1 flex w-9 items-center justify-center rounded-sm bg-background text-foreground *:size-5"
+            className="dark pointer-events-none absolute inset-y-1 left-1 flex w-(--field-tile) items-center justify-center rounded-sm bg-background text-foreground *:size-5"
           >
             {icon}
           </span>
@@ -114,7 +115,7 @@ export const AOFTextField = ({
           aria-describedby={showsErrors ? errorId : undefined}
           aria-invalid={marked || undefined}
           className={cn(
-            "h-11 text-ellipsis text-base md:text-base",
+            "h-(--field-height) text-ellipsis text-base md:text-base",
             icon && "pl-13",
             reveal && "pr-12",
             className
@@ -132,9 +133,7 @@ export const AOFTextField = ({
             aria-controls={inputId}
             aria-label={reveal}
             aria-pressed={revealed}
-            className={cn(
-              "absolute top-1 right-1 size-9 text-muted-foreground *:size-5"
-            )}
+            className={aofInputEndButton()}
             onClick={toggleRevealed}
             size="icon"
             type="button"

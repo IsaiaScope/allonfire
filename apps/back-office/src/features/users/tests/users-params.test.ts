@@ -61,7 +61,7 @@ describe("loadUsersParams", () => {
     ).toEqual({
       ...DEFAULTS,
       [USER.PARAM.SEARCH]: USER_SEARCH.serialize({
-        app: App.LAURA,
+        app: [App.LAURA],
         text: TEXT,
       }),
     });

@@ -9,15 +9,23 @@ const kanji = cva(
     variants: {
       placement: {
         /** Inside a button (`relative isolate overflow-hidden`), behind its
-         *  label and cut by its edges. */
-        button:
-          "top-1/2 right-3 -translate-y-1/2 text-8xl text-primary-foreground/20",
+         *  label and cut by its edges, in its label's colour: every variant
+         *  tints its own. */
+        button: "top-1/2 right-3 -translate-y-1/2 text-8xl text-current/20",
         /** Faint behind the page header's right end; the caller places it
          *  in a layer under the header's controls. */
         header: "z-auto text-foreground/6",
         /** Faint on the sidebar's ground, above it rather than behind (the
          *  drawer has no stacking context to sit in); the caller places it. */
         sidebar: "z-auto text-sidebar-foreground/6",
+        /** Behind a toast's words, in their colour, as tall as the toast
+         *  and more (its backdrop is a container: `cqh`), cut by its edges,
+         *  coming in from the left edge, cut off more the taller the toast
+         *  (by `cqh`: about a tenth on one line, a third on five), under the pictogram's band (translucent, so it shows
+         *  through) and the start of the words; a long message gets a big
+         *  one (`AOFToaster`'s backdrop). */
+        toast:
+          "top-1/2 left-[calc(1.625rem-60cqh)] -translate-y-1/2 text-[max(4.5rem,140cqh)] text-current/15",
         /** Huge across the page, behind everything: top to bottom on a
          *  phone, where a card fills the width, across from `lg` up. Sized
          *  by the screen so both kanji, tilted, stay whole inside it; the
@@ -69,16 +77,12 @@ export const kanjiAction = cva(
 
 /** The kanji brushed in a `kanjiAction`; `className` for its ink on a button
  *  that is not the primary one (Cancel's red). */
-export const ActionKanji = ({
-  className,
-  kanji: text,
-}: {
-  className?: string;
-  kanji: string;
-}) => (
+export type ActionKanjiProps = Omit<BrushKanjiProps, "placement">;
+
+export const ActionKanji = ({ className, ...props }: ActionKanjiProps) => (
   <BrushKanji
     className={cn("right-1 text-5xl", className)}
-    kanji={text}
     placement="button"
+    {...props}
   />
 );

@@ -205,13 +205,7 @@ export const AOFSidebarTrigger = ({
   ...props
 }: AOFButtonProps & { "aria-label": string }) => {
   const { isMobile, open, openMobile, toggleSidebar } = useSidebar();
-  // ponytail: React state, so a page opened folded (`collapsedBy`) shows
-  // the collapse icon until hydration; CSS on the wrapper's data-state if
-  // that frame ever shows.
   const expanded = isMobile ? openMobile : open;
-  const Icon = expanded
-    ? IconLayoutSidebarLeftCollapse
-    : IconLayoutSidebarLeftExpand;
   const toggle: AOFButtonProps["onClick"] = (event) => {
     onClick?.(event);
     toggleSidebar();
@@ -220,7 +214,10 @@ export const AOFSidebarTrigger = ({
     <AOFButton
       aria-expanded={expanded}
       className={cn(
-        "pointer-coarse:size-(--tap-target) size-9 [&_svg:not([class*='size-'])]:size-5",
+        // Never lit for `aria-expanded`, which the ghost button paints as a
+        // menu left open: the page's HTML says open until the page runs, so
+        // a page opened folded would flash lit. Its icon tells the state.
+        "pointer-coarse:size-(--tap-target) size-9 aria-expanded:bg-transparent aria-expanded:hover:bg-muted dark:aria-expanded:hover:bg-muted/50 [&_svg:not([class*='size-'])]:size-5",
         className
       )}
       data-sidebar="trigger"
@@ -230,16 +227,28 @@ export const AOFSidebarTrigger = ({
       variant="ghost"
       {...props}
     >
-      <Icon aria-hidden />
+      {/* Both icons, chosen by CSS from the sidebar's own marks (the
+          wrapper `collapsedBy` folds before the first paint, then shadcn's):
+          a page opened folded shows the unfold icon from its first frame,
+          not after hydration. On a phone the button only ever opens the
+          drawer. */}
+      <IconLayoutSidebarLeftCollapse
+        aria-hidden
+        className="group-has-[[data-state=collapsed][data-collapsible]]/sidebar-wrapper:hidden max-md:hidden"
+      />
+      <IconLayoutSidebarLeftExpand
+        aria-hidden
+        className="hidden group-has-[[data-state=collapsed][data-collapsible]]/sidebar-wrapper:block max-md:block"
+      />
     </AOFButton>
   );
 };
 
 /**
- * The rail the sidebar folds to: 52px (shadcn's is 48px), room for its 36px
- * squares and the group's 8px either side.
+ * The rail the sidebar folds to: 54px (shadcn's is 48px), room for its 36px
+ * squares, the group's 8px either side and 1px more each side to breathe.
  */
-const RAIL = { "--sidebar-width-icon": "3.25rem" };
+const RAIL = { "--sidebar-width-icon": "3.375rem" };
 
 export const AOFSidebarProvider = ({
   style,

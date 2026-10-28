@@ -50,6 +50,7 @@
     "./features/next/pwa/offline-fallback": "./src/features/next/pwa/offline-fallback.ts",
     "./features/next/pwa/use-install-hint": "./src/features/next/pwa/use-install-hint.ts",
     "./features/next/query/aof-get-query-client": "./src/features/next/query/aof-get-query-client.ts",
+    "./features/next/query/aof-query-errors": "./src/features/next/query/aof-query-errors.ts",
     "./shared/constants/env": "./src/shared/constants/env.ts",
     "./shared/constants/patterns": "./src/shared/constants/patterns.ts",
     "./shared/constants/separators": "./src/shared/constants/separators.ts",

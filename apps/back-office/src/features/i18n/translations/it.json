@@ -62,7 +62,8 @@
     },
     "empty": {
       "description": "Prova un'altra email, App o Ruolo.",
-      "title": "Nessun Utente trovato"
+      "title": "Nessun Utente trovato",
+      "clear": "Azzera la ricerca"
     },
     "error": {
       "description": "Controlla la connessione, poi riprova.",
@@ -70,13 +71,14 @@
       "title": "Impossibile caricare gli Utenti"
     },
     "filter": {
-      "anyApp": "Tutte le App",
-      "anyRole": "Tutti i Ruoli",
       "app": "App",
+      "button": "Filtri",
       "empty": "Nessun risultato",
       "reset": "Reimposta",
+      "resetAll": "Azzera",
       "role": "Ruolo",
-      "search": "Cerca"
+      "search": "Cerca",
+      "selected": "{count} selezionati"
     },
     "list": "Utenti",
     "loading": "Caricamento degli Utenti",
@@ -85,32 +87,35 @@
       "first": "Vai alla prima pagina",
       "last": "Vai all'ultima pagina",
       "next": "Vai alla pagina successiva",
-      "page": "Pagina {page} di {pageCount}",
+      "page": "Pagina <n>{page}</n> di <n>{pageCount}</n>",
       "previous": "Vai alla pagina precedente",
       "rowsPerPage": "Righe per pagina"
     },
     "search": {
-      "label": "Cerca per email"
+      "label": "Cerca per email o nome",
+      "clear": "Cancella il testo"
     },
     "detail": {
       "description": "Le Iscrizioni e i dettagli di un Utente arriveranno in una prossima versione.",
+      "page": "Utente",
       "title": "I dettagli dell'Utente sono in arrivo"
     },
     "pastEnd": {
       "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
-      "title": "Questa pagina è oltre la fine"
+      "title": "Questa pagina è oltre la fine",
+      "last": "Vai all'ultima pagina"
     },
     "delete": {
       "action": "Elimina",
       "cancel": "Annulla",
-      "clear": "Annulla la selezione",
       "confirm": "Elimina",
-      "description": "Ogni Utente lascia tutte le App, con le sue sessioni e i punteggi di Laura. Non si può annullare.",
+      "description": "Ogni Utente lascia tutte le App ed esce ovunque. Non si può annullare.",
       "done": "{count, plural, one {# Utente eliminato} other {# Utenti eliminati}}",
-      "failed": "Non è stato possibile eliminare gli Utenti. Riprova.",
+      "failed": "Non è stato possibile eliminare gli Utenti.",
+      "gone": "{count, plural, one {Questo Utente era già stato eliminato} other {Questi Utenti erano già stati eliminati}}",
+      "partly": "{deleted, plural, one {# Utente eliminato} other {# Utenti eliminati}}; {gone, plural, one {# era già stato eliminato} other {# erano già stati eliminati}}",
       "select": "Seleziona {email}",
       "selectAll": "Seleziona tutti gli Utenti di questa pagina",
-      "selected": "{count, plural, one {# selezionato} other {# selezionati}}",
       "title": "{count, plural, one {Eliminare # Utente?} other {Eliminare # Utenti?}}"
     },
     "add": {
@@ -148,6 +153,13 @@
       "submit": "Aggiungi Utente",
       "submitting": "Aggiunta…",
       "title": "Aggiungi un Utente"
+    },
+    "open": "Apri {email}",
+    "copy": {
+      "done": "Email copiata",
+      "failed": "Non è stato possibile copiare l'email",
+      "label": "Copia {email}",
+      "tip": "Copia email"
     }
   }
 }

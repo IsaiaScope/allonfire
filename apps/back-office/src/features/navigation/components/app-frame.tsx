@@ -88,18 +88,25 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
               control assistive tech meets, so this duplicate stays hidden. */}
         <AOFSidebarRail aria-hidden title={t("toggleMenu")} />
       </AOFSidebar>
-      <AOFSidebarInset>
+      {/* On a wider screen the page area is the screen's height and scrolls
+          itself, so a list's table fills what is left and keeps its own
+          scroll bars on screen; a phone scrolls the page, pull to refresh
+          included. */}
+      <AOFSidebarInset className="md:h-svh md:overflow-y-auto">
         {/* The sidebar header's line runs on across the page's: one station
             sign, the App's line under it. */}
         <header className="relative isolate flex h-16 shrink-0 items-center gap-2 border-line/50 border-b-2 px-4">
           <HeaderKanji />
-          <AOFSidebarTrigger aria-label={t("toggleMenu")} className="-ml-1" />
+          <AOFSidebarTrigger
+            aria-label={t("toggleMenu")}
+            className="-ml-1 size-9.5 [&_svg:not([class*='size-'])]:size-5.5"
+          />
           <AOFSeparator
-            className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+            className="mr-2 data-vertical:h-4.5 data-vertical:self-auto"
             orientation="vertical"
           />
           <FrameBreadcrumb />
-          <Torii className="ml-auto" />
+          <Torii className="ml-auto h-10.5 w-12.5" />
         </header>
         {children}
       </AOFSidebarInset>

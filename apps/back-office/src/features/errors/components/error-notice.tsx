@@ -1,5 +1,6 @@
 import type { SharedTranslations } from "@allonfire/core/features/next/i18n/shared-translations";
 import { AOFButton } from "@allonfire/ui/components/aof-button";
+import { IconRefresh } from "@tabler/icons-react";
 import type { createTranslator } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
@@ -36,6 +37,7 @@ export const ErrorNotice = ({ error, retry, t }: ErrorNoticeProps) => (
         type="button"
       >
         <ActionKanji kanji={ERROR_SIGNAGE.ERROR.RETRY_KANJI} />
+        <IconRefresh aria-hidden />
         {t("retry")}
       </AOFButton>
     }

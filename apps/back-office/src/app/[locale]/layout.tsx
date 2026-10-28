@@ -1,12 +1,11 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { AOFBaseViewport } from "@allonfire/core/features/next/metadata/aof-base-viewport";
 import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/aof-nuqs-adapter";
-import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/aof-query-client-provider";
 import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
 import { AOFPwa } from "@allonfire/core/features/next/pwa/aof-pwa";
 import { ENV } from "@allonfire/core/shared/constants/env";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
-import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
+import { AOFQueryProvider } from "@allonfire/ui/components/aof-query-provider";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
@@ -17,6 +16,7 @@ import { baseMetadata } from "@/features/metadata/utils/base-metadata";
 import { metadataText } from "@/features/metadata/utils/metadata-text";
 import { InstallHint } from "@/features/pwa/components/install-hint";
 import { OfflineBanner } from "@/features/pwa/components/offline-banner";
+import { StationToaster } from "@/shared/components/station-toaster";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import "../globals.css";
 
@@ -53,13 +53,13 @@ const LocaleLayout = async ({ children }: { children: ReactNode }) => {
     <html lang={locale} suppressHydrationWarning translate="no">
       <body className="min-h-dvh bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider>
-          <AOFQueryClientProvider>
+          <AOFQueryProvider>
             <AOFThemeProvider>
               <AOFNuqsAdapter>
                 {/* Every toast the App sends, the Install hint and the
                     offline notice included; above an iPhone's home
                     indicator. */}
-                <AOFToaster />
+                <StationToaster />
                 {/* The PWA (ADR 0023): the Install hint and the offline
                     notice, both sent as toasts in the Japan Design, and in
                     production the service worker. */}
@@ -74,7 +74,7 @@ const LocaleLayout = async ({ children }: { children: ReactNode }) => {
             </AOFThemeProvider>
             {/* ponytail: TanStack Query devtools hidden until a page queries
                 anything; mount AOFReactQueryDevtools here to bring them back. */}
-          </AOFQueryClientProvider>
+          </AOFQueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>

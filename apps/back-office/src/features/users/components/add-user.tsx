@@ -66,10 +66,7 @@ const AddUserActions = ({ pending }: { pending: boolean }) => {
         )}
         href={BACK_OFFICE.PAGE.USERS}
       >
-        <ActionKanji
-          className="text-destructive/20"
-          kanji={USERS.CANCEL_KANJI}
-        />
+        <ActionKanji kanji={USERS.CANCEL_KANJI} />
         <IconArrowBackUp aria-hidden />
         {t("Users.add.cancel")}
       </Link>

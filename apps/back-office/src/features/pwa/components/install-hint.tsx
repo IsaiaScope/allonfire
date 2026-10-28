@@ -24,20 +24,19 @@ export const InstallHint = () => {
     PWA.TOAST.INSTALL_HINT,
     hint ? (
       <InstallHintCard
+        aria-label={t("title")}
         cta={t("cta", { app: BACK_OFFICE.NAME })}
-        dismissLabel={t("dismiss")}
+        dismissProps={{ "aria-label": t("dismiss"), onClick: hint.dismiss }}
         error={button?.failed ? t("error") : undefined}
-        install={
+        installProps={
           button
             ? {
-                label: t(button.installing ? "installing" : "install"),
-                onInstall: button.onInstall,
+                children: t(button.installing ? "installing" : "install"),
+                onClick: button.onInstall,
                 pending: button.installing,
               }
             : undefined
         }
-        label={t("title")}
-        onDismiss={hint.dismiss}
         steps={
           "steps" in hint
             ? hint.steps.map((step) => ({ step, text: t(`step.${step}`) }))

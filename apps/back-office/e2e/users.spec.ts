@@ -2,6 +2,8 @@ import {
   USER,
   USER_SEARCH,
 } from "@allonfire/auth/features/users/constants/users";
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
@@ -9,17 +11,20 @@ import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
+import IT from "../src/features/i18n/translations/it.json" with {
+  type: "json",
+};
 import {
   SECTION,
   sectionHref,
 } from "../src/features/navigation/constants/sections";
-import { USERS as USERS_CONSTANTS } from "../src/features/users/constants/users";
+import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
+import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { openSidebar, SIGN_IN_URL, signIn } from "./pages";
 
 const t = EN.Users;
 const USERS = sectionHref(SECTION.USERS.path);
-const USERS_NEW = USERS_CONSTANTS.PATH.NEW;
 
 /** Signs in as the Back Office Admin and waits for the frame. */
 const signInAsAdmin = async (page: Page) => {
@@ -31,7 +36,16 @@ const signInAsAdmin = async (page: Page) => {
 
 /** A User's email as drawn on screen: a table row, or a card on a phone. */
 const emailOf = (page: Page, email: string) =>
-  page.getByRole("link", { name: email }).filter({ visible: true });
+  page
+    .getByRole("button", { name: t.copy.label.replace("{email}", email) })
+    .filter({ visible: true });
+
+/** The row, or the card on a phone, that holds a User. */
+const rowOf = (page: Page, email: string) =>
+  page
+    .getByRole("row")
+    .or(page.getByRole("listitem"))
+    .filter({ has: emailOf(page, email) });
 
 test("sends the first page with the HTML, already filled", async ({ page }) => {
   await signInAsAdmin(page);
@@ -42,7 +56,7 @@ test("sends the first page with the HTML, already filled", async ({ page }) => {
 test("filters by App and Role from the address", async ({ page }) => {
   await signInAsAdmin(page);
   const search = encodeURIComponent(
-    USER_SEARCH.serialize({ app: App.LAURA, role: Role.ADMIN, text: "" })
+    USER_SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN], text: "" })
   );
   await page.goto(`${USERS}?${USER.PARAM.SEARCH}=${search}`);
   await expect(emailOf(page, FIXTURE.USER.LAURA.ADMIN.email)).toBeVisible();
@@ -66,8 +80,11 @@ test("reads a hand-edited page and page size as the defaults", async ({
 test("opens a User's page, still under Users", async ({ page }) => {
   await signInAsAdmin(page);
   await page.goto(USERS);
-  await emailOf(page, FIXTURE.USER.NO_MEMBERSHIP.email).click();
-  await expect(page).toHaveURL(new RegExp(`${USERS}/[^/]+$`));
+  const row = rowOf(page, FIXTURE.USER.NO_MEMBERSHIP.email);
+  const href = await row.getByRole("link").getAttribute("href");
+  // Off the email, which copies: the row's link covers the rest of it.
+  await row.click();
+  await expect(page).toHaveURL((url) => url.pathname === href);
   await expect(page.getByText(t.detail.title)).toBeVisible();
   await openSidebar(page);
   await expect(
@@ -102,22 +119,18 @@ test("your own row has no checkbox", async ({ page }) => {
   ).toHaveCount(0);
 });
 
-test("selecting a User shows the bar; Delete asks first and Cancel deletes nobody", async ({
+test("selecting a User enables Delete; it asks first and Cancel deletes nobody", async ({
   page,
 }) => {
   await signInAsAdmin(page);
-  // Safari's install hint sits where the bar does; a visitor closes it.
-  await page.addLocatorHandler(
-    page.getByRole("button", {
-      name: SHARED_TRANSLATIONS.en.Common.Install.dismiss,
-    }),
-    (dismiss) => dismiss.click()
-  );
   await page.goto(USERS);
+  const remove = page.getByRole("button", {
+    exact: true,
+    name: t.delete.action,
+  });
+  await expect(remove).toBeDisabled();
   await checkboxOf(page, FIXTURE.USER.NO_MEMBERSHIP.email).click();
-  const bar = page.getByRole("toolbar");
-  await expect(bar.getByText("1 selected")).toBeVisible();
-  await bar.getByRole("button", { name: t.delete.action }).click();
+  await remove.click();
   const dialog = page.getByRole("alertdialog");
   await expect(dialog.getByText(t.delete.description)).toBeVisible();
   await dialog.getByRole("button", { name: t.delete.cancel }).click();
@@ -126,9 +139,10 @@ test("selecting a User shows the bar; Delete asks first and Cancel deletes nobod
   await expect(emailOf(page, FIXTURE.USER.NO_MEMBERSHIP.email)).toBeVisible();
 });
 
-test("filters by App through its searchable list", async ({ page }) => {
+test("filters by App through the Filter panel's list", async ({ page }) => {
   await signInAsAdmin(page);
   await page.goto(USERS);
+  await page.getByRole("button", { name: t.filter.button }).click();
   await page.getByRole("button", { name: t.filter.app }).click();
   const laura = APP_ENTRY[App.LAURA].name;
   await page
@@ -137,7 +151,7 @@ test("filters by App through its searchable list", async ({ page }) => {
   await page.getByRole("option", { name: laura }).click();
   await expect
     .poll(() => new URL(page.url()).searchParams.get(USER.PARAM.SEARCH))
-    .toBe(USER_SEARCH.serialize({ app: App.LAURA, text: "" }));
+    .toBe(USER_SEARCH.serialize({ app: [App.LAURA], text: "" }));
   await expect(emailOf(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email)).toHaveCount(
     0
   );
@@ -198,7 +212,7 @@ test("adds a User from the list's Add button; they sign in with the password the
 
 test("a taken email says so on the email field", async ({ page }) => {
   await signInAsAdmin(page);
-  await page.goto(`${USERS}${USERS_NEW}`);
+  await page.goto(newUserHref());
   await addUser(page, {
     ...addedBy("taken"),
     email: FIXTURE.USER.LAURA.ADMIN.email,
@@ -213,7 +227,7 @@ test("leaving Add a User and coming back opens it empty, the last answer gone", 
   page,
 }) => {
   await signInAsAdmin(page);
-  await page.goto(`${USERS}${USERS_NEW}`);
+  await page.goto(newUserHref());
   await addUser(page, {
     ...addedBy("left"),
     email: FIXTURE.USER.LAURA.ADMIN.email,
@@ -238,14 +252,17 @@ test("deletes a User it added: confirmed, they leave the list", async ({
     }),
     (dismiss) => dismiss.click()
   );
-  await page.goto(`${USERS}${USERS_NEW}`);
+  await page.goto(newUserHref());
   const user = addedBy(`${info.project.name}-deleted`);
   await addUser(page, user);
   await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  // A visit of its own keeps the list on the server: only the deletion's
+  // `updateTag` drops it, so the reload below shows the User gone.
+  await page.reload();
+  await expect(emailOf(page, user.email).first()).toBeVisible();
   await checkboxOf(page, user.email).click();
   await page
-    .getByRole("toolbar")
-    .getByRole("button", { name: t.delete.action })
+    .getByRole("button", { exact: true, name: t.delete.action })
     .click();
   await page
     .getByRole("alertdialog")
@@ -258,3 +275,20 @@ test("deletes a User it added: confirmed, they leave the list", async ({
   await expect(emailOf(page, FIXTURE.USER.NO_MEMBERSHIP.email)).toBeVisible();
   await expect(emailOf(page, user.email)).toHaveCount(0);
 });
+
+// A route param, not a real User: the page's title and address need none.
+const SOME_USER = "some-id";
+
+for (const { path, title } of [
+  { path: newUserHref(), title: IT.Users.add.title },
+  { path: userHref(SOME_USER), title: IT.Users.detail.page },
+]) {
+  test(`gives ${path} its own title and link preview`, async ({ page }) => {
+    await signInAsAdmin(page);
+    await page.goto(`/it${path}`);
+    await expect(page).toHaveTitle(pageTitle(title, BACK_OFFICE.NAME));
+    await expect(
+      page.locator('meta[property="og:url"]').first()
+    ).toHaveAttribute("content", `${LOCAL.URL.BACK_OFFICE_E2E}/it${path}`);
+  });
+}

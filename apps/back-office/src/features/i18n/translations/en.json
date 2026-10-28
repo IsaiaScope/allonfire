@@ -62,7 +62,8 @@
     },
     "empty": {
       "description": "Try another email, App or Role.",
-      "title": "No Users match"
+      "title": "No Users match",
+      "clear": "Clear the search"
     },
     "error": {
       "description": "Check the connection, then try again.",
@@ -70,13 +71,14 @@
       "title": "The Users could not be loaded"
     },
     "filter": {
-      "anyApp": "All Apps",
-      "anyRole": "All Roles",
       "app": "App",
+      "button": "Filters",
       "empty": "No match",
       "reset": "Reset",
+      "resetAll": "Clear",
       "role": "Role",
-      "search": "Search"
+      "search": "Search",
+      "selected": "{count} selected"
     },
     "list": "Users",
     "loading": "Loading Users",
@@ -85,32 +87,35 @@
       "first": "Go to first page",
       "last": "Go to last page",
       "next": "Go to next page",
-      "page": "Page {page} of {pageCount}",
+      "page": "Page <n>{page}</n> of <n>{pageCount}</n>",
       "previous": "Go to previous page",
       "rowsPerPage": "Rows per page"
     },
     "search": {
-      "label": "Search by email"
+      "label": "Search by email or name",
+      "clear": "Clear the text"
     },
     "detail": {
       "description": "A User's Memberships and details arrive in a later version.",
+      "page": "User",
       "title": "User details are on their way"
     },
     "pastEnd": {
       "description": "There are fewer pages than this one; the last page has the Users.",
-      "title": "This page is past the end"
+      "title": "This page is past the end",
+      "last": "Go to the last page"
     },
     "delete": {
       "action": "Delete",
       "cancel": "Cancel",
-      "clear": "Clear selection",
       "confirm": "Delete",
-      "description": "Each User leaves every App, with their Sessions and Laura scores. This cannot be undone.",
+      "description": "Each User leaves every App and is signed out everywhere. This cannot be undone.",
       "done": "{count, plural, one {# User deleted} other {# Users deleted}}",
-      "failed": "The Users could not be deleted. Try again.",
+      "failed": "The Users could not be deleted.",
+      "gone": "{count, plural, one {This User had already been deleted} other {These Users had already been deleted}}",
+      "partly": "{deleted, plural, one {# User deleted} other {# Users deleted}}; {gone, plural, one {# had already been deleted} other {# had already been deleted}}",
       "select": "Select {email}",
       "selectAll": "Select every User on this page",
-      "selected": "{count, plural, one {# selected} other {# selected}}",
       "title": "{count, plural, one {Delete # User?} other {Delete # Users?}}"
     },
     "add": {
@@ -148,6 +153,13 @@
       "submit": "Add User",
       "submitting": "Adding…",
       "title": "Add a User"
+    },
+    "open": "Open {email}",
+    "copy": {
+      "done": "Email copied",
+      "failed": "The email could not be copied",
+      "label": "Copy {email}",
+      "tip": "Copy email"
     }
   }
 }

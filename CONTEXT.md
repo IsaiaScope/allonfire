@@ -96,14 +96,25 @@ _Avoid_: install prompt (the browser's own dialog, which the hint's Install
 button opens), install banner
 
 **Image**:
-A picture in one or more Apps, stored once. In each App it is public, shown
-to anyone even when not signed in, or private, shown to those the App lets in.
-An App's Admin adds it to their App or removes it from there; it is deleted
-when it is in no App any more, or by someone with the Admin Role in every App
-it is in. It carries its alt text in the Base languages and, optionally, the other Content
+A picture in one or more Apps, stored once. It is public, shown to anyone
+even when not signed in, or private, shown only to those who enter at least
+one of its Apps; that is the Image's own, never set per App. An App's Admin
+adds it to their App or removes it from there; making it public or private,
+which every one of its Apps shows, takes the Admin Role in every App it is
+in. It is deleted when it is in no App any more, or by someone with the
+Admin Role in every App it is in. It carries its alt text in the Base languages and, optionally, the other Content
 languages. App content that shows a picture points to an Image rather than
 holding the picture itself.
 _Avoid_: media, asset, file, picture, photo
+
+**Avatar**:
+A User's own picture, shown beside their name in every App. It belongs to
+the User, not to an App, so it is not an Image: it has no alt text of its own
+and no placements. It is listed nowhere: its address reaches only those an
+App shows the User to, but anyone holding that address sees it. A User has
+at most one, set by an Admin or taken from the account they registered
+with (Google's own picture); without one, their initial stands in.
+_Avoid_: profile picture, profile image, photo
 
 **Host**:
 Anything deployed from the monorepo that composes the shared packages: every

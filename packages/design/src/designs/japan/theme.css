@@ -82,6 +82,23 @@
   /* Seal vermilion (朱肉), the ink of a hanko. */
   --hanko: #e04a32;
 
+  /* How a notice went (a toast's edge and pictogram), beside shadcn's
+     `--destructive` for a failure: the line green, a JR orange deepened to
+     read on white, the primary blue. Each is AA on a popover, so it can
+     carry text too. */
+  --success: #2e7a4f;
+  --warning: #a35c00;
+  --info: #006fb3;
+
+  /* A toast filled with how its notice went, the same in both themes:
+     deepened until white on it reaches 7:1 (AAA), so the words read at a
+     glance on a light page and on a dark one. */
+  --toast-foreground: #ffffff;
+  --toast-success: #226140;
+  --toast-warning: #854400;
+  --toast-info: #005a94;
+  --toast-error: #a50d26;
+
   --chart-1: #006fb3;
   --chart-2: #00a650;
   --chart-3: #f39700;
@@ -102,32 +119,38 @@
 .dark {
   --background: #16191d;
   --foreground: #eef0f2;
-  --card: #1c2025;
+  /* Each raised surface a clear step above the one under it (popover 1.14:1
+     on the ground, a chosen row or badge 1.27:1 on it, an edge 1.54:1, a
+     field's edge 2.4:1): closer steps read as one flat sheet at night. */
+  --card: #20252b;
   --card-foreground: #eef0f2;
-  --popover: #1c2025;
+  --popover: #20252b;
   --popover-foreground: #eef0f2;
   /* Lighter blue at night so links read on the dark ground; text on it goes
      dark to keep AA. */
   --primary: #3a9ee0;
   --primary-foreground: #16191d;
-  --secondary: #242a31;
+  --secondary: #2f3640;
   --secondary-foreground: #eef0f2;
-  --muted: #242a31;
-  --muted-foreground: #9aa3ad;
-  --accent: #242a31;
+  --muted: #2f3640;
+  --muted-foreground: #a3acb6;
+  --accent: #2f3640;
   --accent-foreground: #eef0f2;
   --destructive: #f0605a;
-  --border: #2c323a;
-  --input: #3a414a;
+  --border: #3b434d;
+  --input: #56606c;
   --ring: #3a9ee0;
+  --success: #3cc27a;
+  --warning: #f39700;
+  --info: #3a9ee0;
 
-  --sidebar: #1c2025;
+  --sidebar: #20252b;
   --sidebar-foreground: #eef0f2;
   --sidebar-primary: #3a9ee0;
   --sidebar-primary-foreground: #16191d;
-  --sidebar-accent: #242a31;
+  --sidebar-accent: #2f3640;
   --sidebar-accent-foreground: #eef0f2;
-  --sidebar-border: #2c323a;
+  --sidebar-border: #3b434d;
   --sidebar-ring: #3a9ee0;
   color-scheme: dark;
 }
@@ -149,6 +172,14 @@
   --color-led-panel: var(--led-panel);
   --color-tactile: var(--tactile);
   --color-hanko: var(--hanko);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-toast-foreground: var(--toast-foreground);
+  --color-toast-success: var(--toast-success);
+  --color-toast-warning: var(--toast-warning);
+  --color-toast-info: var(--toast-info);
+  --color-toast-error: var(--toast-error);
   --font-led: "DotGothic16", ui-monospace, monospace;
   --font-brush: "Yuji Syuku", serif;
   /* A seal pressed onto the card once it has landed. */

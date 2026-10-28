@@ -21,7 +21,9 @@ const USER_ROW: UserRecord = {
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
   email: FIXTURE.USER.LAURA.ADMIN.email,
   id: "user-2",
+  image: null,
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
+  name: FIXTURE.USER.LAURA.ADMIN.name,
 };
 
 /** Deps that record each list query and let in whom `allows` says. */
@@ -79,10 +81,10 @@ describe("User module", () => {
       )
     ).toEqual({
       query: {
-        app: App.LAURA,
+        app: [App.LAURA],
         page: 2,
         perPage: MIDDLE_PAGE_SIZE,
-        role: Role.ADMIN,
+        role: [Role.ADMIN],
         text: "isa",
       },
       status: HTTP.STATUS.OK,

@@ -12,12 +12,12 @@ colors:
   rail-border: "#d9dde2"
   rail-input: "#c9ced5"
   night-panel: "#16191d"
-  night-card: "#1c2025"
-  night-concourse: "#242a31"
+  night-card: "#20252b"
+  night-concourse: "#2f3640"
   night-text: "#eef0f2"
-  night-muted: "#9aa3ad"
-  night-border: "#2c323a"
-  night-input: "#3a414a"
+  night-muted: "#a3acb6"
+  night-border: "#3b434d"
+  night-input: "#56606c"
   signal-red: "#c8102e"
   signal-red-night: "#f0605a"
   line-green: "#00a650"
@@ -325,7 +325,8 @@ Plain and sure, the shadcn button through `AOFButton`, with a pointer cursor.
   hover drops it to 80%.
 - **Gate:** the Sign in's one action as the gate's card reader: full width,
   64px tall, bold 1.125rem label with a contactless icon and the kanji 入
-  brushed in its corner. An error page's button is the same idea at 44px,
+  brushed in its corner. An error page's button is the same idea at a field's height (40px under a
+  mouse, 44px on touch),
   at least 16rem wide.
 - **Hover / Focus:** a 3px ring in the ring colour at 50%; pressed it sinks
   1px. Disabled at 50% while pending, with a spinning loader and its own label.

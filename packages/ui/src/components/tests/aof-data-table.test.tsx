@@ -4,13 +4,15 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   AOFDataTable,
-  type AOFDataTableLabels,
-  AOFDataTablePagination,
   type AOFDataTableStatus,
   type AOFTable,
   aofColumnHelper,
   useAOFTable,
 } from "../aof-data-table";
+import {
+  type AOFDataTableLabels,
+  AOFDataTablePagination,
+} from "../aof-data-table-pagination";
 import { aofSelectColumn } from "../aof-data-table-select";
 
 type Person = { id: string; name: string; role: string };
@@ -160,7 +162,7 @@ describe("AOFDataTable status", () => {
     );
     expect(html).toContain("toolbar");
     expect(html).toContain('role="status"');
-    expect(html.match(/data-slot="skeleton"/g)?.length).toBe(
+    expect(html.match(/data-skeleton="cell"/g)?.length).toBe(
       COLUMNS.length * 10
     );
     expect(html).not.toContain("<table");
@@ -242,5 +244,43 @@ describe("aofSelectColumn", () => {
     renderToStaticMarkup(<Selectable />);
     built?.toggleAllPageRowsSelected(true);
     expect(asked).toEqual({ "2": true, "3": true });
+  });
+});
+
+const HUGGING_HEAD = /<th[^>]*w-px/;
+const HUGGING_HEAD_ALL = /<th[^>]*w-px/g;
+
+const SIZED = helper.columns([
+  helper.accessor("name", { header: "Name", maxSize: 300 }),
+  helper.accessor("role", { header: "Role", maxSize: 90, minSize: 90 }),
+]);
+
+const Sized = ({ fill }: { fill?: readonly string[] }) => {
+  const table = useAOFTable({
+    columns: SIZED,
+    data: PEOPLE,
+    getRowId: ({ id }) => id,
+  });
+  return <AOFDataTable fill={fill} label="People" table={table} />;
+};
+
+describe("AOFDataTable columns", () => {
+  it("draws each value as wide as it is, up to its column's max width", () => {
+    const html = renderToStaticMarkup(<Sized />);
+    expect(html).toContain("max-width:300px");
+    expect(html).toContain("truncate");
+  });
+
+  it("keeps a column at least its min width; the same min and max fix it", () => {
+    expect(renderToStaticMarkup(<Sized />)).toContain(
+      "max-width:90px;min-width:90px"
+    );
+  });
+
+  it("lets the fill columns share the room left over, the rest hugging", () => {
+    expect(renderToStaticMarkup(<Sized />)).not.toMatch(HUGGING_HEAD);
+    const html = renderToStaticMarkup(<Sized fill={["name"]} />);
+    expect(html).toContain("min-width:min-content;width:100%");
+    expect(html.match(HUGGING_HEAD_ALL)).toHaveLength(1);
   });
 });

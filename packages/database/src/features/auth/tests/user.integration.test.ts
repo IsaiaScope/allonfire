@@ -22,6 +22,7 @@ const MIXED = {
     { app: App.LAURA, role: Role.ADMIN },
     { app: App.BACK_OFFICE, role: Role.VIEWER },
   ],
+  name: "Mischa Rolando",
 };
 const MIXED_DOMAIN = "list-users.test";
 /** Small, so the Fixtures span several pages. */
@@ -42,6 +43,7 @@ beforeAll(async () => {
     data: {
       email: MIXED.email,
       memberships: { create: MIXED.memberships },
+      name: MIXED.name,
     },
   });
 });
@@ -60,7 +62,7 @@ describe("listUsers", () => {
   });
 
   it("matches an App and a Role on one Membership", async () => {
-    const emails = await emailsOf({ app: App.LAURA, role: Role.ADMIN });
+    const emails = await emailsOf({ app: [App.LAURA], role: [Role.ADMIN] });
     expect(emails).toEqual(
       expect.arrayContaining([
         FIXTURE.USER.LAURA.ADMIN.email,
@@ -74,13 +76,33 @@ describe("listUsers", () => {
   it("never pairs an App with a Role held in another App", async () => {
     const text = MIXED_DOMAIN;
     expect(
-      await emailsOf({ app: App.BACK_OFFICE, role: Role.ADMIN, text })
+      await emailsOf({ app: [App.BACK_OFFICE], role: [Role.ADMIN], text })
     ).toEqual([]);
-    expect(await emailsOf({ role: Role.ADMIN, text })).toEqual([MIXED.email]);
+    expect(await emailsOf({ role: [Role.ADMIN], text })).toEqual([MIXED.email]);
+  });
+
+  it("matches any of the Apps and any of the Roles asked for", async () => {
+    const text = MIXED_DOMAIN;
+    expect(
+      await emailsOf({
+        app: [App.BACK_OFFICE, App.LAURA],
+        role: [Role.VIEWER, Role.USER],
+        text,
+      })
+    ).toEqual([MIXED.email]);
+    expect(
+      await emailsOf({ role: [Role.USER, Role.VIEWER], text: FIXTURES })
+    ).toEqual(expect.arrayContaining([FIXTURE.USER.LAURA.VIEWER.email]));
+  });
+
+  it("asks nothing of an empty list", async () => {
+    expect(await emailsOf({ app: [], role: [] })).toContain(
+      FIXTURE.USER.NO_MEMBERSHIP.email
+    );
   });
 
   it("matches exactly the Role asked for", async () => {
-    const { users } = await listUsers(query({ role: Role.USER }));
+    const { users } = await listUsers(query({ role: [Role.USER] }));
     expect(users.length).toBeGreaterThan(0);
     for (const user of users) {
       expect(user.memberships.map(({ role }) => role)).toContain(Role.USER);
@@ -88,7 +110,7 @@ describe("listUsers", () => {
   });
 
   it("leaves out a User with no Membership once an App is asked for", async () => {
-    expect(await emailsOf({ app: App.LAURA })).not.toContain(
+    expect(await emailsOf({ app: [App.LAURA] })).not.toContain(
       FIXTURE.USER.NO_MEMBERSHIP.email
     );
   });
@@ -97,6 +119,10 @@ describe("listUsers", () => {
     expect(await emailsOf({ text: "NO-MEMBERSHIP@" })).toEqual([
       FIXTURE.USER.NO_MEMBERSHIP.email,
     ]);
+  });
+
+  it("finds part of a name, whatever its case", async () => {
+    expect(await emailsOf({ text: "mischa ROL" })).toEqual([MIXED.email]);
   });
 
   it("pages newest first in a stable order", async () => {

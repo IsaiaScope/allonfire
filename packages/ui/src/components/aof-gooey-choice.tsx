@@ -2,6 +2,7 @@
 
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { type ReactNode, useCallback } from "react";
+import type { ComponentPropsWithoutChildren } from "../lib/types";
 import { useAOFColorScheme } from "../lib/use-aof-theme-switch";
 import { cn } from "../lib/utils";
 import { AOFGooeyNav } from "./aof-gooey-nav";
@@ -12,8 +13,11 @@ export type AOFGooeyOption<V extends string> = {
   value: V;
 };
 
-export type AOFGooeyChoiceProps<V extends string> = {
-  className?: string | undefined;
+/** The radio group's `<div>` (named by `label`), plus the choice. */
+export type AOFGooeyChoiceProps<V extends string> = Omit<
+  ComponentPropsWithoutChildren<"div">,
+  "role"
+> & {
   /** The chosen option's text and icon colour, as hex. */
   ink: string;
   /** The group's accessible name. */
@@ -63,6 +67,7 @@ export const AOFGooeyChoice = <V extends string>({
   options,
   pill,
   value,
+  ...props
 }: AOFGooeyChoiceProps<V>) => {
   const { scheme } = useAOFColorScheme();
   const choose = useCallback(
@@ -79,6 +84,7 @@ export const AOFGooeyChoice = <V extends string>({
     // spill into, which would widen a phone's page.
     <div
       aria-label={label}
+      {...props}
       className={cn("min-w-0 max-w-full overflow-x-clip", className)}
       role="radiogroup"
     >
