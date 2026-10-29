@@ -35,7 +35,7 @@ import { AOFDataTableSkeleton } from "./aof-data-table-skeleton";
  * the rest join when a list needs them; module scope, so TanStack never sees
  * a new set.
  */
-export const AOF_TABLE_FEATURES = tableFeatures({
+const AOF_TABLE_FEATURES = tableFeatures({
   columnSizingFeature,
   rowPaginationFeature,
   rowSelectionFeature,

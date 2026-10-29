@@ -8,7 +8,13 @@ const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
 /** The Back Office's Users list: its tunables, each written once. */
 export const USERS = {
   /** Why the Add a User action refused, each with its message over the form. */
-  ADD_ERROR: { FAILED: "failed", INVALID: "invalid", TAKEN: "taken" },
+  ADD_ERROR: {
+    FAILED: "failed",
+    INVALID: "invalid",
+    /** No Session, or one the API no longer lets change Users: sign in again. */
+    REFUSED: "refused",
+    TAKEN: "taken",
+  },
   /** Brushed in the Add button: 乗, to board (the brush face carries it). */
   ADD_KANJI: "乗",
   /**
@@ -16,6 +22,11 @@ export const USERS = {
    * their picture was not saved (the form toasts it and opens the list).
    */
   ADD_NOTICE: { AVATAR_FAILED: "avatarFailed" },
+  /**
+   * The form name the picture field posts, as `"true"`, once the User's
+   * current picture is removed and none replaces it.
+   */
+  AVATAR_REMOVED: "avatarRemoved",
   /**
    * The list's rows, kept on this server per Session and address
    * (`readUsers`) until a change to Users calls `updateTag(TAG)`, which drops
@@ -48,6 +59,20 @@ export const USERS = {
   CROP_USE_KANJI: "決",
   /** Brushed in Delete's button: 消, to erase (the brush face carries it). */
   DELETE_KANJI: "消",
+  /** Why the Edit a User action refused, each with its message over the form. */
+  EDIT_ERROR: {
+    FAILED: "failed",
+    GONE: "gone",
+    INVALID: "invalid",
+    OWN_ROLE: "ownRole",
+    /** No Session, or one the API no longer lets change Users: sign in again. */
+    REFUSED: "refused",
+  },
+  /**
+   * What the Edit a User action answers once the User is saved: all of it,
+   * or all but their picture. The form toasts either and opens the list.
+   */
+  EDIT_NOTICE: { AVATAR_FAILED: "avatarFailed", SAVED: "saved" },
   /**
    * How the address changes: a search replaces the history entry (Back should
    * not walk through each keystroke); a page or page size pushes one.
@@ -68,6 +93,8 @@ export const USERS = {
   RESET_KANJI: "戻",
   /** Asks again this many times after a server or network failure. */
   RETRIES: 1,
+  /** Brushed in Save: 済, settled (the brush face carries it). */
+  SAVE_KANJI: "済",
   /**
    * The list's notices where its rows stand, decoration only (the brush face
    * carries each wall kanji): nobody matches, the stamp reads 0 and 該当なし

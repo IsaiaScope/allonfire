@@ -8,7 +8,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 // so a wide row (a long email) scrolls inside its table instead of pushing
 // the frame past the screen.
 const sectionPage = cva(
-  "min-h-0 flex-1 pb-[calc(var(--gutter-bottom)*2)] contain-inline-size",
+  "flex-1 pb-[calc(var(--gutter-bottom)*2)] contain-inline-size",
   {
     defaultVariants: { width: "full" },
     variants: {
@@ -16,11 +16,15 @@ const sectionPage = cva(
         /**
          * A form: centred and capped, laid out by its own width (a container,
          * `@2xl:` for two columns), never the screen's: the sidebar decides
-         * how much room the page really has.
+         * how much room the page really has. As tall as the form: the
+         * frame's `<main>` scrolls it, the padding after its buttons.
          */
         form: "@container mx-auto w-full max-w-4xl",
-        /** The whole page area, as a list or a table wants. */
-        full: "",
+        /**
+         * The whole page area, as a list or a table wants: held to what the
+         * header leaves (`min-h-0`), so a long table scrolls in place.
+         */
+        full: "min-h-0",
       },
     },
   }

@@ -1,12 +1,19 @@
-import { AOFEmpty } from "@allonfire/ui/components/aof-empty";
-import { IconUser } from "@tabler/icons-react";
+import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
+import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
+import { App } from "@allonfire/database/enums";
+import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
+import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { pageOpenGraph } from "@/features/metadata/utils/page-open-graph";
+import { SectionLoading } from "@/features/navigation/components/section-loading";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
+import { EditUser } from "@/features/users/components/edit-user";
+import { readUser } from "@/features/users/utils/read-user";
 import { userHref } from "@/features/users/utils/user-href";
+import { usersVisitorOf } from "@/features/users/utils/users-visitor";
 
 type UserPageProps = { params: Promise<{ id: string }> };
 
@@ -29,18 +36,45 @@ export const generateMetadata = async ({
   };
 };
 
-/** One User's page; its content arrives in a later plan. */
-const UserPage = () => {
-  const t = useTranslations("Users.detail");
+/**
+ * The User, read on the server through `readUser` (kept until a change to
+ * Users), and the form on them; an unknown id is the 404. The Session is the
+ * page check's own read: whose page it is, so their own Back Office Role
+ * stays locked, and with that Role the kept User's key.
+ */
+const UserForm = async ({ params }: UserPageProps) => {
+  const [{ id }, sessionCookie, session] = await Promise.all([
+    params,
+    readSessionCookie(),
+    requireAppSession(),
+  ]);
+  const user = await readUser(usersVisitorOf(session.user, sessionCookie), id);
+  if (!user) {
+    notFound();
+  }
   return (
-    <SectionPage>
-      <AOFEmpty
-        description={t("description")}
-        icon={<IconUser />}
-        title={t("title")}
-      />
+    <SectionPage width="form">
+      {/* Opens fresh on every visit: no typed password kept in the page
+          Next hides on leaving. */}
+      <AOFFreshOnReturn>
+        <EditUser
+          manageApp={App.BACK_OFFICE}
+          selfId={session.user.id}
+          user={user}
+        />
+      </AOFFreshOnReturn>
     </SectionPage>
   );
 };
+
+/**
+ * One User's page, opening straight on the edit form. The id and the User
+ * wait for the request, behind the page's own boundary.
+ */
+const UserPage = ({ params }: UserPageProps) => (
+  <Suspense fallback={<SectionLoading />}>
+    <UserForm params={params} />
+  </Suspense>
+);
 
 export default signedInPage(UserPage);

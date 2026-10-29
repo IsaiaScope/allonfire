@@ -96,9 +96,24 @@
       "clear": "Cancella il testo"
     },
     "detail": {
-      "description": "Le Iscrizioni e i dettagli di un Utente arriveranno in una prossima versione.",
-      "page": "Utente",
-      "title": "I dettagli dell'Utente sono in arrivo"
+      "page": "Utente"
+    },
+    "edit": {
+      "avatarFailed": "Salvato; la foto no.",
+      "confirmPassword": "Conferma la nuova password",
+      "email": "Email",
+      "error": {
+        "failed": "Non riesco a salvare. Riprova.",
+        "gone": "Questo Utente non esiste più.",
+        "invalid": "Controlla i campi e riprova.",
+        "ownRole": "Non puoi cambiare il tuo Ruolo nel Back Office.",
+        "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo."
+      },
+      "ownRoleLocked": "Nessuno cambia il proprio Ruolo in {app}.",
+      "password": "Nuova password",
+      "saved": "Salvato",
+      "submit": "Salva",
+      "submitting": "Salvo…"
     },
     "pastEnd": {
       "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
@@ -124,6 +139,7 @@
         "change": "Cambia",
         "choose": "Scegli una foto",
         "cropAgain": "Ritaglia di nuovo",
+        "current": "Foto attuale",
         "dialogTitle": "Ritaglia la foto",
         "drop": "Trascina qui la tua foto",
         "failed": "Utente aggiunto; la foto non è stata salvata.",
@@ -144,6 +160,7 @@
       "error": {
         "failed": "Non è stato possibile aggiungere l'Utente. Riprova.",
         "invalid": "Controlla i campi e riprova.",
+        "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo.",
         "taken": "Questa email ha già un account"
       },
       "field": {

@@ -6,11 +6,13 @@ import { useAOFForm } from "../../lib/form";
 const EmailForm = ({
   icon,
   invalid,
+  required,
   reveal,
   type = "email",
 }: {
   icon?: ReactNode;
   invalid?: boolean;
+  required?: boolean;
   reveal?: string;
   type?: string;
 }) => {
@@ -24,6 +26,7 @@ const EmailForm = ({
           id="email"
           invalid={invalid}
           label="Email"
+          required={required}
           reveal={reveal}
           type={type}
         />
@@ -87,5 +90,20 @@ describe("AOFTextField", () => {
     expect(html).toMatch(TILE);
     expect(html).toMatch(BOLD_LABEL);
     expect(html).toMatch(TALL_INPUT_WITH_ICON);
+  });
+});
+
+const REQUIRED_MARK =
+  /<label[^>]*>Email<\/label><span aria-hidden="true" class="[^"]*text-destructive[^"]*">\*<\/span>/;
+
+describe("AOFTextField when required", () => {
+  it("marks its label with an asterisk, hidden from screen readers (the input says required)", () => {
+    const html = renderToStaticMarkup(<EmailForm required />);
+    expect(html).toMatch(REQUIRED_MARK);
+    expect(html).toContain("required");
+  });
+
+  it("an optional field has no asterisk", () => {
+    expect(renderToStaticMarkup(<EmailForm />)).not.toContain(">*<");
   });
 });

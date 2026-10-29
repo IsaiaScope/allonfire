@@ -33,6 +33,12 @@ export const fetchUsers = (client: ApiClient, params: UsersParams) =>
     })
   );
 
+/** One User from the API; an error throws `DetailedError`. */
+export const fetchUser = (client: ApiClient, id: string) =>
+  parseResponse(
+    client[API.VERSION.CURRENT].users[":id"].$get({ param: { id } })
+  );
+
 /**
  * One page's key, tagged with the body it holds: the page hydrates under it,
  * so a wrong body or wrong params fail to compile, never a skipped hydration.

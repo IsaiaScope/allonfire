@@ -4,6 +4,7 @@ import { describeRoute, resolver } from "hono-openapi";
 import { USER } from "../../constants/users";
 import {
   userAvatarBodySchema,
+  userBodySchema,
   userCreatedBodySchema,
   userDeleteBodySchema,
   userListBodySchema,
@@ -103,5 +104,38 @@ export const avatarDeleteRoute = describeRoute({
     ),
   },
   summary: USER.DOC.AVATAR_DELETE_SUMMARY,
+  tags: [USER.OPENAPI_TAG],
+});
+
+const userBody = {
+  content: { [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(userBodySchema) } },
+};
+
+export const readRoute = describeRoute({
+  description: USER.DOC.READ_DESCRIPTION,
+  responses: {
+    [HTTP.STATUS.OK]: { ...userBody, description: USER.DOC.READ_200 },
+    ...problemResponses(
+      HTTP.STATUS.UNAUTHORIZED,
+      HTTP.STATUS.FORBIDDEN,
+      HTTP.STATUS.NOT_FOUND
+    ),
+  },
+  summary: USER.DOC.READ_SUMMARY,
+  tags: [USER.OPENAPI_TAG],
+});
+
+export const updateRoute = describeRoute({
+  description: USER.DOC.UPDATE_DESCRIPTION,
+  responses: {
+    [HTTP.STATUS.OK]: { ...userBody, description: USER.DOC.UPDATE_200 },
+    ...problemResponses(
+      HTTP.STATUS.BAD_REQUEST,
+      HTTP.STATUS.UNAUTHORIZED,
+      HTTP.STATUS.FORBIDDEN,
+      HTTP.STATUS.NOT_FOUND
+    ),
+  },
+  summary: USER.DOC.UPDATE_SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });

@@ -7,6 +7,7 @@ import {
   USER_SEARCH,
 } from "@allonfire/auth/features/users/constants/users";
 import {
+  userBodySchema,
   userCreatedBodySchema,
   userDeleteBodySchema,
   userListBodySchema,
@@ -190,10 +191,40 @@ describe("deleting Users", () => {
     expect(await exists(id)).toBe(true);
   });
 
-  it("canManageUsers is false for an unknown id", async () => {
+  it("canManageUsers is false for an unknown User or Session", async () => {
+    const admin = await prisma.user.findUniqueOrThrow({
+      select: { id: true, sessions: { select: { id: true }, take: 1 } },
+      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
+    });
+    const { canManageUsers } = userDeps({ warn: () => undefined });
     expect(
-      await userDeps({ warn: () => undefined }).canManageUsers("missing-id")
+      await canManageUsers({
+        sessionId: admin.sessions[0]?.id ?? "missing-session",
+        userId: "missing-id",
+      })
     ).toBe(false);
+    expect(
+      await canManageUsers({ sessionId: "missing-session", userId: admin.id })
+    ).toBe(false);
+  });
+
+  it("a deleted Session stops writing at once", async () => {
+    const signedOut = { email: `signed-out@${DELETABLE}` };
+    await upsertUser(
+      prisma,
+      {
+        ...signedOut,
+        memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
+        name: "signed out",
+      },
+      await hashPassword(FIXTURE.PASSWORD)
+    );
+    const cookie = await cookieFor(app, signedOut);
+    // As a new password ends it; the cookie keeps its signed copy.
+    await prisma.session.deleteMany({ where: { user: signedOut } });
+    const { id } = await throwaway("outlived");
+    expect((await remove([id], cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(await exists(id)).toBe(true);
   });
 });
 
@@ -387,5 +418,85 @@ describe("a User's Avatar", () => {
     } finally {
       await removeAvatar(id, await cookieFor(app, admin));
     }
+  });
+});
+
+// Users edited here, in their own domain so the list's counts hold.
+const EDITED = "edit-users-api.test";
+const NEW_PASSWORD = "Another-long-password-2";
+const onePath = (id: string) => `${LIST}${USER.PATH.ONE.replace(":id", id)}`;
+const edit = <T>(id: string, body: T & Json<T>, cookie: string) =>
+  app.request(onePath(id), {
+    body: stringifyJson(body),
+    headers: {
+      [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
+      cookie,
+      origin: ORIGIN,
+    },
+    method: HTTP.METHOD.PATCH,
+  });
+/** A User with a password and a Laura Membership, signed in once. */
+const editable = async (name: string) => {
+  const email = `${name}@${EDITED}`;
+  await upsertUser(
+    prisma,
+    { email, memberships: [{ app: App.LAURA, role: Role.USER }], name },
+    await hashPassword(FIXTURE.PASSWORD)
+  );
+  const { id } = await prisma.user.findUniqueOrThrow({
+    select: { id: true },
+    where: { email },
+  });
+  return { email, id };
+};
+
+describe("editing Users", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
+  });
+
+  it("renames a User and reads them back", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await editable("renamed");
+    expect((await edit(id, { name: "Renamed" }, cookie)).status).toBe(
+      HTTP.STATUS.OK
+    );
+    const res = await get(onePath(id), cookie);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(userBodySchema.parse(await res.json()).name).toBe("Renamed");
+  });
+
+  it("a new password signs the User in with it and ends their Sessions", async () => {
+    const admin = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const user = await editable("new-password");
+    await cookieFor(app, user);
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
+    expect(
+      (await edit(user.id, { password: NEW_PASSWORD }, admin)).status
+    ).toBe(HTTP.STATUS.OK);
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect((await signIn(app, user, { password: NEW_PASSWORD })).status).toBe(
+      HTTP.STATUS.OK
+    );
+  });
+
+  it("answers 403 CANNOT_CHANGE_OWN_ROLE for your own Back Office Role", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const self = await prisma.user.findUniqueOrThrow({
+      select: { id: true },
+      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
+    });
+    const res = await edit(self.id, { memberships: [] }, cookie);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
+    const problem = await problemOf(res);
+    expect(problem.code).toBe(API.ERROR.CODE.CANNOT_CHANGE_OWN_ROLE);
+    expect(problem.detail).toBe("You cannot change your own Role here");
+  });
+
+  it("answers 404 for an unknown id", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    expect((await get(onePath("missing-id"), cookie)).status).toBe(
+      HTTP.STATUS.NOT_FOUND
+    );
   });
 });

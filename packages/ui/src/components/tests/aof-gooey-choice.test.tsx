@@ -47,4 +47,22 @@ describe("AOFGooeyChoice", () => {
   it("draws the frame in the Design's tokens, so it follows the scheme with no script", () => {
     expect(html()).toContain("--gn-frame:var(--muted)");
   });
+
+  // A value none of the options offers (a Role below the App's floor) shows
+  // as the first option, so it posts that too: what is seen is what saves.
+  it("posts the option it shows when the value is not offered", () => {
+    const stored: string = "VIEWER";
+    const markup = renderToStaticMarkup(
+      <AOFGooeyChoice
+        ink={INK}
+        label="Laura"
+        name="roles.laura"
+        onValueChange={nothing}
+        options={OPTIONS}
+        pill={PILL}
+        value={stored}
+      />
+    );
+    expect(markup).toContain('name="roles.laura" value="none"');
+  });
 });

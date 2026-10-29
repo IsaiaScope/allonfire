@@ -9,7 +9,10 @@ import {
   createUser,
   deleteUsers,
   listUsers,
+  readUser,
+  sessionAlive,
   setUserImage,
+  updateUser,
   userImages,
 } from "@allonfire/database/features/auth/user.service";
 import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
@@ -30,25 +33,36 @@ import { avatarLinkNow } from "../../shared/utils/avatar-link";
  *   keeps in a signed cookie for `AUTH.SESSION.COOKIE_CACHE_MAX_AGE_S`
  *   (5 minutes) before asking the database again: no query, but up to 5
  *   minutes behind;
- * - adding and deleting (`canManageUsers`) read the User from the database
- *   at the time of the request: one query, never behind.
+ * - adding, editing and deleting (`canManageUsers`) read the User and their
+ *   Session from the database at the time of the request: two queries side
+ *   by side, never behind.
  * Say an Admin's Role is taken away at 10:00. Until their cookie copy runs
  * out, at 10:05 at most, they can still see the list; from 10:00 they can
- * no longer add or delete anyone. Seeing the list a few minutes too long is
+ * no longer add, edit or delete anyone. Seeing the list a few minutes too long is
  * a small risk; changing Users with a Role already gone cannot be undone,
- * so only those requests pay for the query.
+ * so only those requests pay for the queries.
  */
 export const isBackOfficeAdmin = (user: AccessUser): boolean =>
   hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN);
 
 /**
- * Who may add or delete Users: `isBackOfficeAdmin` on the User read from the
- * database now, never on the Session's cookie copy, which may still hold a
- * Role since taken away.
+ * Who may add, edit or delete Users: `isBackOfficeAdmin` on the User read
+ * from the database now, and their Session still there, never the Session's
+ * cookie copy, which may still hold a Role since taken away or outlive a
+ * Session a new password deleted.
  */
-const canManageUsers = async (userId: string): Promise<boolean> => {
-  const user = await accessUserById(userId);
-  return user !== null && isBackOfficeAdmin(user);
+const canManageUsers = async ({
+  sessionId,
+  userId,
+}: {
+  sessionId: string;
+  userId: string;
+}): Promise<boolean> => {
+  const [user, alive] = await Promise.all([
+    accessUserById(userId),
+    sessionAlive(sessionId),
+  ]);
+  return alive && user !== null && isBackOfficeAdmin(user);
 };
 
 /** The User module on the real stack. */
@@ -62,7 +76,11 @@ export const userDeps = (log: LeftoverLog): UserDeps => ({
   deleteAvatars: deleteAvatarsWith(log),
   deleteUsers,
   listUsers,
+  // The App isBackOfficeAdmin checks: nobody changes their own Role there.
+  manageApp: App.BACK_OFFICE,
+  readUser,
   saveAvatar,
   setUserImage,
+  updateUser,
   userImages,
 });

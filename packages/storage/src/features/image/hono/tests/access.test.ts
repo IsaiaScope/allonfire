@@ -150,4 +150,17 @@ describe("authorisePatch", () => {
       )
     ).toEqual([{ access: ImageAccess.PRIVATE, id: "a", key: "new.avif" }]);
   });
+
+  // Read public under the lock but private when the copies were made: another
+  // request opened it in between, and its public links must not outlive this.
+  it("refuses a public Image turning private with no new name ready", () => {
+    const open = new Map([["a", publicly(App.LAURA)]]);
+    expect(
+      statusOf(() =>
+        authorisePatch(lauraAdmin, open, [
+          { access: ImageAccess.PRIVATE, id: "a" },
+        ])
+      )
+    ).toBe(HTTP.STATUS.CONFLICT);
+  });
 });

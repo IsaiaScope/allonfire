@@ -79,6 +79,12 @@ export const AOFGooeyChoice = <V extends string>({
     },
     [onValueChange, options]
   );
+  // A value no option offers shows as the first one, and posts it: what the
+  // form shows is what it saves.
+  const shown = Math.max(
+    0,
+    options.findIndex((option) => option.value === value)
+  );
   return (
     // Clipped sideways: Gooey Nav's canvas runs past the row for the goo to
     // spill into, which would widen a phone's page.
@@ -88,12 +94,9 @@ export const AOFGooeyChoice = <V extends string>({
       className={cn("min-w-0 max-w-full overflow-x-clip", className)}
       role="radiogroup"
     >
-      <input name={name} type="hidden" value={value} />
+      <input name={name} type="hidden" value={options[shown]?.value ?? value} />
       <AOFGooeyNav
-        activeIndex={Math.max(
-          0,
-          options.findIndex((option) => option.value === value)
-        )}
+        activeIndex={shown}
         activeTextColor={ink}
         // On a phone, two options to a row, each filling its half.
         className={cn(

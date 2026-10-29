@@ -57,6 +57,7 @@ const LABELS = {
   change: "Change",
   choose: "Select a picture",
   cropAgain: "Crop again",
+  current: "Current picture",
   dialogTitle: "Crop the picture",
   drop: "Drop your picture here",
   formats: "JPEG, PNG, WebP, AVIF or HEIC, up to 20 MB",
@@ -97,7 +98,16 @@ const iphonePhoto = async () =>
 
 const NO_AVATAR: { avatar: File | null } = { avatar: null };
 
-const AvatarForm = ({ onSubmit }: { onSubmit: () => void }) => {
+const STORED = "/stored-avatar.avif";
+const REMOVED = "avatarRemoved";
+
+const AvatarForm = ({
+  current,
+  onSubmit,
+}: {
+  current?: string;
+  onSubmit: () => void;
+}) => {
   const form = useAOFForm({ defaultValues: NO_AVATAR });
   const submit = useCallback(
     (event: { preventDefault: () => void }) => {
@@ -109,7 +119,14 @@ const AvatarForm = ({ onSubmit }: { onSubmit: () => void }) => {
   return (
     <form onSubmit={submit}>
       <form.AppField name="avatar">
-        {(field) => <field.AvatarField label="Picture" labels={LABELS} />}
+        {(field) => (
+          <field.AvatarField
+            current={current}
+            label="Picture"
+            labels={LABELS}
+            removedName={REMOVED}
+          />
+        )}
       </form.AppField>
       <button type="submit">Save</button>
     </form>
@@ -125,6 +142,9 @@ const pick = async (file: File) => {
   }
 };
 const dialog = () => page.getByRole("dialog", { name: LABELS.dialogTitle });
+/** The removal the form posts, when there is one. */
+const removal = () =>
+  document.querySelector<HTMLInputElement>(`input[name="${REMOVED}"]`)?.value;
 
 describe("AOFAvatarField", () => {
   it("shows where to drop a picture, the formats it takes and a button to select one", async () => {
@@ -221,6 +241,40 @@ describe("AOFAvatarField", () => {
     expect(dialog().query()).toBeNull();
     await page.getByRole("button", { name: "Save" }).click();
     expect(onSubmit).toHaveBeenCalledOnce();
+  });
+});
+
+describe("AOFAvatarField with a current picture", () => {
+  it("removing the current picture posts the removal and draws the empty drop area", async () => {
+    await render(<AvatarForm current={STORED} onSubmit={vi.fn()} />);
+    await expect.element(page.getByText(LABELS.current)).toBeVisible();
+    expect(removal()).toBeUndefined();
+    await page.getByRole("button", { name: LABELS.remove }).click();
+    await expect
+      .element(page.getByText(LABELS.current))
+      .not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("button", { name: LABELS.choose }))
+      .toBeVisible();
+    expect(removal()).toBe("true");
+  });
+
+  it("a new picture after removing posts the file and no removal", async () => {
+    await render(<AvatarForm current={STORED} onSubmit={vi.fn()} />);
+    await page.getByRole("button", { name: LABELS.remove }).click();
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    await expect.poll(() => fileInput()?.files?.length).toBe(1);
+    expect(removal()).toBeUndefined();
+  });
+
+  it("removing a new pick goes back to the current picture", async () => {
+    await render(<AvatarForm current={STORED} onSubmit={vi.fn()} />);
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    await page.getByRole("button", { name: LABELS.remove }).click();
+    await expect.element(page.getByText(LABELS.current)).toBeVisible();
+    expect(removal()).toBeUndefined();
   });
 });
 

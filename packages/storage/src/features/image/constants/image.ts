@@ -77,6 +77,8 @@ export const IMAGE = {
    * codes, so a new one fails the host's build until it has a message.
    */
   ERROR_CODE: {
+    /** Made public by another request while this one was turning it private. */
+    IMAGE_CHANGED: "IMAGE_CHANGED",
     IMAGE_TOO_LARGE: "IMAGE_TOO_LARGE",
     UNSUPPORTED_IMAGE: "UNSUPPORTED_IMAGE",
   },

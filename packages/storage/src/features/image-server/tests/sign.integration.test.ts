@@ -22,8 +22,7 @@ const WIDTH = 640;
 const SIGNATURE = /\/[\w-]{43}\//;
 const AVIF = { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE };
 const WEBP = { [HTTP.HEADER.ACCEPT]: "image/webp" };
-const A_YEAR_S = 365 * 24 * 60 * 60;
-const AN_HOUR_MS = 60 * 60 * 1000;
+const AN_HOUR_MS = UNIT.SECONDS_PER_HOUR * UNIT.MS_PER_SECOND;
 /** A link signed for this test alone: no earlier run left it in the cache. */
 const freshLink = (lifeMs: number) =>
   pictureLink({ expiresAt: new Date(Date.now() + lifeMs), key, width: WIDTH });
@@ -36,7 +35,7 @@ const maxAgeOf = (response: Response) => {
 };
 /** What the image cache says it did with a request. */
 const CACHE_STATUS = "X-Cache-Status";
-const AN_HOUR_AGO = new Date(Date.now() - 60 * 60 * 1000);
+const AN_HOUR_AGO = new Date(Date.now() - AN_HOUR_MS);
 /** A bucket outside the image server's allowed sources: neither the Apps' nor a test run's. */
 const OUTSIDE = `allonfire-outside-${process.pid}`;
 
@@ -97,9 +96,9 @@ describe("the image server, through signed links", () => {
   it("tells the browser to keep a public picture a year, a private one only until its link expires", async () => {
     const forever = await fetch(pictureLink({ key, width: WIDTH }));
     const forAnHour = await fetch(freshLink(AN_HOUR_MS));
-    expect(maxAgeOf(forever)).toBe(A_YEAR_S);
-    expect(maxAgeOf(forAnHour)).toBeLessThanOrEqual(AN_HOUR_MS / 1000);
-    expect(maxAgeOf(forAnHour)).toBeGreaterThan(AN_HOUR_MS / 1000 - 60);
+    expect(maxAgeOf(forever)).toBe(IMAGE.CACHE.TTL_SECONDS);
+    expect(maxAgeOf(forAnHour)).toBeLessThanOrEqual(UNIT.SECONDS_PER_HOUR);
+    expect(maxAgeOf(forAnHour)).toBeGreaterThan(UNIT.SECONDS_PER_HOUR - 60);
   });
 
   it("answers WebP to a browser without AVIF, even once the AVIF is cached", async () => {

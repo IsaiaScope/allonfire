@@ -12,8 +12,9 @@ User so the two forms read as one.
 ## Goals
 
 - `users/[id]` opens straight on an edit form (no read-only view first):
-  heading the User's name (their email when they have none), the email shown
-  read-only, then the same blocks as Add a User.
+  headed by the User's email (it never changes; the name is a field), the
+  email shown in a field nobody can reach, then the same blocks as Add a
+  User.
 - Editable: the name, the Avatar, the password (typed twice, the same live
   rules as Add a User), and the Role in each App.
 - Never editable, by anyone: the email.

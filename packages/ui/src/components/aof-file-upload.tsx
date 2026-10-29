@@ -35,7 +35,8 @@ export type AOFFileUploadLabels = {
 export type AOFFileUploadItem = {
   id: string;
   name: string;
-  size: number;
+  /** Its size in bytes; none for a file only linked, such as a stored picture. */
+  size?: number | undefined;
   /** A picture's `blob:` URL for its thumbnail; none, and `icon` stands in. */
   preview?: string | null | undefined;
   /** What stands in for a thumbnail; a file's icon when left out. */
@@ -108,7 +109,9 @@ const FileRow = ({
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="truncate font-medium text-sm">{item.name}</p>
-        <p className="text-muted-foreground text-xs">{sizeOf(item.size)}</p>
+        {item.size === undefined ? null : (
+          <p className="text-muted-foreground text-xs">{sizeOf(item.size)}</p>
+        )}
       </div>
       {item.actions}
       <AOFButton

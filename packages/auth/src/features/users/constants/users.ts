@@ -33,9 +33,19 @@ export const USER = {
     LIST_DESCRIPTION:
       "Users with their Memberships, newest first. `search` holds `app:<App>` and `role:<Role>` pairs, each naming one value or several comma-separated (`role:admin,user`, any of them), plus free text matched against the email and the name; an unknown field or value is dropped, and a bad `page` or `perPage` falls back to its default, never a 400. Only a User the Host lets list Users.",
     LIST_SUMMARY: "List Users",
+    READ_200: "The User, their Avatar's link signed for the hour",
+    READ_DESCRIPTION:
+      "One User with their Memberships, as a list row shows them; an unknown id answers 404. Only a User the Host lets change Users, read from the database at the time of the request.",
+    READ_SUMMARY: "Read a User",
+    UPDATE_200: "The User as edited",
+    UPDATE_DESCRIPTION:
+      "Edits a User: their name, their Memberships (the whole set, replacing theirs) and their password, any of them; the email never changes. A new password ends every Session of theirs, but the caller's own when they edit themselves. Nobody changes their own Membership in the App that manages Users: that answers 403 `CANNOT_CHANGE_OWN_ROLE` and changes nothing. An unknown id answers 404. Only a User the Host lets change Users, read from the database at the time of the request.",
+    UPDATE_SUMMARY: "Edit a User",
   },
   /** Codes the module throws beyond core's standard ones. */
   ERROR_CODE: {
+    /** An edit changed the caller's own Role in the App that manages Users. */
+    CANNOT_CHANGE_OWN_ROLE: "CANNOT_CHANGE_OWN_ROLE",
     /** A deletion named the caller's own User. */
     CANNOT_DELETE_SELF: "CANNOT_DELETE_SELF",
     /** An added User's email already belongs to someone. */
@@ -59,6 +69,8 @@ export const USER = {
     CREATE: "/",
     DELETE: "/",
     LIST: "/",
+    /** One User: `GET` reads them, `PATCH` edits them. */
+    ONE: "/:id",
   },
 } as const;
 

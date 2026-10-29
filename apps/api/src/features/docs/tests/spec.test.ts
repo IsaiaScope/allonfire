@@ -50,6 +50,7 @@ const specSchema = z.object({
     z.object({
       delete: operationSchema.optional(),
       get: operationSchema.optional(),
+      patch: operationSchema.optional(),
       post: operationSchema.optional(),
       put: operationSchema.optional(),
     })
@@ -426,9 +427,44 @@ describe("GET /openapi.json User writes", () => {
       )
     );
     const { components } = await problemDocument();
-    expect(components.schemas.Problem409?.properties.code.enum).toEqual([
-      USER.ERROR_CODE.EMAIL_TAKEN,
-    ]);
+    expect(components.schemas.Problem409?.properties.code.enum).toContain(
+      USER.ERROR_CODE.EMAIL_TAKEN
+    );
+  });
+});
+
+describe("GET /openapi.json one User", () => {
+  it.each([
+    { method: "get", statuses: [] },
+    { method: "patch", statuses: [HTTP.STATUS.BAD_REQUEST] },
+  ] as const)(
+    "documents $method on one User under Users",
+    async ({ method, statuses }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation =
+        paths[`${API.PATH.USERS}${USER.PATH.ONE.replace(":id", "{id}")}`]?.[
+          method
+        ];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(
+          [
+            HTTP.STATUS.OK,
+            HTTP.STATUS.UNAUTHORIZED,
+            HTTP.STATUS.FORBIDDEN,
+            HTTP.STATUS.NOT_FOUND,
+            ...statuses,
+          ].map(String)
+        )
+      );
+    }
+  );
+
+  it("lists the code a change of your own Role answers", async () => {
+    const { components } = await problemDocument();
+    expect(components.schemas.Problem403?.properties.code.enum).toContain(
+      USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE
+    );
   });
 });
 

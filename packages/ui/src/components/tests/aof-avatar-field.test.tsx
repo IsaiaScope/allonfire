@@ -11,6 +11,7 @@ const LABELS = {
   change: "Change",
   choose: "Choose a picture",
   cropAgain: "Crop again",
+  current: "Current picture",
   dialogTitle: "Crop the picture",
   drop: "Drop your picture here",
   formats: "JPEG, PNG, WebP, AVIF or HEIC, up to 20 MB",
@@ -54,5 +55,45 @@ describe("AOFAvatarField", () => {
 
   it("holds a file input named as the field, so a post sends the picture", () => {
     expect(html).toMatch(FILE_INPUT);
+  });
+});
+
+const CURRENT = "https://images.test/avatar-u-1.avif";
+const REMOVED_INPUT = /name="avatarRemoved"/;
+
+const CurrentForm = ({ current }: { current?: string | null }) => {
+  const form = useAOFForm({ defaultValues: NO_AVATAR });
+  return (
+    <form.AppField name="avatar">
+      {(field) => (
+        <field.AvatarField
+          current={current}
+          label="Picture"
+          labels={LABELS}
+          removedName="avatarRemoved"
+        />
+      )}
+    </form.AppField>
+  );
+};
+
+describe("AOFAvatarField with a current picture", () => {
+  it("draws the current picture while no file is picked", () => {
+    const html = renderToStaticMarkup(<CurrentForm current={CURRENT} />);
+    expect(html).toContain(CURRENT);
+    expect(html).toContain(LABELS.current);
+    expect(html).toContain(LABELS.change);
+  });
+
+  it("posts no removal while the current picture stays, nor without one", () => {
+    expect(renderToStaticMarkup(<CurrentForm current={CURRENT} />)).not.toMatch(
+      REMOVED_INPUT
+    );
+    expect(renderToStaticMarkup(<CurrentForm current={null} />)).not.toMatch(
+      REMOVED_INPUT
+    );
+    expect(renderToStaticMarkup(<CurrentForm current={null} />)).not.toContain(
+      LABELS.current
+    );
   });
 });

@@ -23,8 +23,9 @@ that answers only links the API signed.
   goes, `Image.access` arrives.
 - A private Image's file reaches only those who enter one of its Apps, and an
   Avatar's only those who share an App with its User, manage Users, or are
-  that User, both through links that expire within the hour; a public Image's
-  links never expire.
+  that User, both through links that expire at the end of the hour after the
+  next (one to two hours, so a link stays the same for a whole hour); a public
+  Image's links never expire.
 - Pages keep `next/image` (srcset, lazy loading, blur), through a loader that
   picks the signed link for each width.
 
@@ -56,16 +57,16 @@ that answers only links the API signed.
 | picture | link handed out by | to whom | lifetime |
 |---|---|---|---|
 | public Image | the API (list, get) | anyone, signed out included | never expires |
-| private Image | the API (list, get) | those who enter at least one of its Apps (`canEnterApp`) | one hour, rounded up to the next hour |
-| Avatar | the API each time it returns a User (the Users list, the Session through `customSession`) | those who share an App with the User, manage Users, or are the User | one hour, rounded up to the next hour |
+| private Image | the API (list, get) | those who enter at least one of its Apps (`canEnterApp`) | one to two hours: the end of the hour after the next |
+| Avatar | the API each time it returns a User (the Users list, the Session through `customSession`) | those who share an App with the User, manage Users, or are the User | one to two hours: the end of the hour after the next |
 
 | event | effect on links already given |
 |---|---|
 | private Image made public | the hour-long ones lapse; new ones never expire |
 | public Image made private | its file is renamed: never-expiring links answer 404 at once |
-| Image removed from an App, or a Membership ended | no new links for those who lost access; theirs lapse within the hour |
+| Image removed from an App, or a Membership ended | no new links for those who lost access; theirs lapse within two hours |
 | Image deleted; Avatar replaced or removed; User deleted | file deleted: 404 |
-| a viewer stops sharing an App with a User | no new links to that Avatar; theirs lapse within the hour |
+| a viewer stops sharing an App with a User | no new links to that Avatar; theirs lapse within two hours |
 | signing key rotated | imgproxy accepts several key pairs: sign with the new one, retire the old later |
 
 Who may change an Image's access: the Admin Role in every App it is in

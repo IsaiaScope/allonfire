@@ -1,4 +1,5 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { App } from "@allonfire/database/enums";
 import type { UserDeps } from "../utils/deps";
 
 const unexpected = (name: string) => () =>
@@ -19,8 +20,11 @@ export const stubUserDeps = (overrides: Partial<UserDeps> = {}): UserDeps => ({
   deleteAvatars: () => Promise.resolve(),
   deleteUsers: unexpected("deleteUsers"),
   listUsers: unexpected("listUsers"),
+  manageApp: App.BACK_OFFICE,
+  readUser: unexpected("readUser"),
   saveAvatar: unexpected("saveAvatar"),
   setUserImage: unexpected("setUserImage"),
+  updateUser: unexpected("updateUser"),
   userImages: () => Promise.resolve([]),
   ...overrides,
 });

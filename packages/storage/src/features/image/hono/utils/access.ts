@@ -12,7 +12,7 @@ import type {
   ImageLinksById,
 } from "@allonfire/database/features/image/image.service";
 import type { PatchChange } from "../constants/schemas";
-import { forbidden, notFound } from "./errors";
+import { forbidden, imageChanged, notFound } from "./errors";
 
 /**
  * How the Image module authorises a write (ADR 0020). Every check over a
@@ -96,11 +96,18 @@ export const authoriseDelete = (
   }
 };
 
-/** The Apps added or taken out: in one list and not the other. */
-const changedApps = (current: readonly App[], next: readonly App[]): App[] => [
-  ...next.filter((app) => !current.includes(app)),
-  ...current.filter((app) => !next.includes(app)),
-];
+/**
+ * The new file a public Image turning private moves to. Public when the
+ * copies were made would have one: none means another request made it public
+ * since, and turning it private in place would keep its links alive (409).
+ */
+const renamedKey = (renamed: ReadonlyMap<string, string>, id: string) => {
+  const key = renamed.get(id);
+  if (!key) {
+    throw imageChanged();
+  }
+  return key;
+};
 
 /**
  * A PATCH batch checked against each Image's current access and Apps, and
@@ -119,16 +126,16 @@ export const authorisePatch = (
   assertVisible(user, current.values());
   return changes.map(({ access, alt, apps, id }) => {
     const image = current.get(id) ?? { access: ImageAccess.PRIVATE, apps: [] };
-    const changed = apps ? changedApps(image.apps, apps) : [];
-    assertManages(user, changed);
+    // Only what changes is written, and checked.
+    const place = apps?.filter((app) => !image.apps.includes(app)) ?? [];
+    const remove = apps ? image.apps.filter((app) => !apps.includes(app)) : [];
+    assertManages(user, [...place, ...remove]);
     const newAccess = access && access !== image.access ? access : undefined;
     if ((alt || newAccess) && !canManageEverywhere(user, image.apps)) {
       throw forbidden();
     }
-    // Only what changes is written.
-    const place = changed.filter((app) => !image.apps.includes(app));
-    const remove = changed.filter((app) => image.apps.includes(app));
-    const key = newAccess === ImageAccess.PRIVATE ? renamed.get(id) : undefined;
+    const key =
+      newAccess === ImageAccess.PRIVATE ? renamedKey(renamed, id) : undefined;
     return {
       id,
       ...(alt && { alt }),

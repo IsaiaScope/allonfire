@@ -153,8 +153,7 @@ const copiesForPrivate = async (
       return [[id, { from: image.key, to }] as const];
     })
   );
-  const copies = new Map(copied.flat());
-  return copies;
+  return new Map(copied.flat());
 };
 
 export const patchHandlers = (deps: ImageDeps) =>
@@ -190,10 +189,11 @@ export const patchHandlers = (deps: ImageDeps) =>
       // Any copy not used, then the old file of each Image now private:
       // asked twice, since its public links answer until it is gone.
       const used = new Set(resolved.flatMap(({ key }) => key ?? []));
-      const moved = [...copies.values()].filter(({ to }) => used.has(to));
+      const made = [...copies.values()];
+      const moved = made.filter(({ to }) => used.has(to));
       await cleanUp(
         deps,
-        [...copies.values()].flatMap(({ to }) => (used.has(to) ? [] : [to]))
+        made.flatMap(({ to }) => (used.has(to) ? [] : [to]))
       );
       await deleteLeftovers({
         keys: moved.map(({ from }) => from),

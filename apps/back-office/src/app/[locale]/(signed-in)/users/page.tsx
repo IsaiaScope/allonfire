@@ -14,6 +14,7 @@ import { UsersTable } from "@/features/users/components/users-table";
 import { loadUsersParams } from "@/features/users/constants/users-params";
 import { readUsers } from "@/features/users/utils/read-users";
 import { usersListKey } from "@/features/users/utils/users-queries";
+import { usersVisitorOf } from "@/features/users/utils/users-visitor";
 
 export const generateMetadata = () => sectionMetadata(SECTION.USERS);
 
@@ -29,16 +30,17 @@ type UsersPageProps = { searchParams: Promise<SearchParams> };
  * and shows the error.
  */
 const UsersList = async ({ searchParams }: UsersPageProps) => {
-  const [params, sessionCookie] = await Promise.all([
+  // The Session is the page check's own read (one per request): whose row
+  // has no checkbox, and with their Role the kept rows' key.
+  const [params, sessionCookie, session] = await Promise.all([
     loadUsersParams(searchParams),
     readSessionCookie(),
-  ]);
-  // The Session is the page check's own read (one per request): whose row
-  // has no checkbox.
-  const [session, users] = await Promise.all([
     requireAppSession(),
-    readUsers(sessionCookie, params).catch(leaveToTable),
   ]);
+  const users = await readUsers(
+    usersVisitorOf(session.user, sessionCookie),
+    params
+  ).catch(leaveToTable);
   const queryClient = AOFGetQueryClient();
   queryClient.setQueryData(usersListKey(params), users);
   return (

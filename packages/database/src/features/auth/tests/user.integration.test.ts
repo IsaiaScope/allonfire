@@ -9,8 +9,11 @@ import {
   deleteUsers,
   EmailTakenError,
   listUsers,
+  readUser,
+  sessionAlive,
   setUserImage,
   type UserListQuery,
+  updateUser,
   userImages,
 } from "../user.service";
 
@@ -365,6 +368,24 @@ describe("a User's picture", () => {
     });
   });
 
+  // Each replaced file is answered once, so it is deleted once: two pictures
+  // set at the same time never both answer the first and leave the loser's
+  // file behind with no row pointing at it.
+  it("answers each replaced file once when two pictures land together", async () => {
+    const { id } = await prisma.user.create({
+      data: { email: "together@set-user-image.test" },
+      select: { id: true },
+    });
+    await setUserImage(id, { blurDataUrl: BLUR, image: FIRST });
+    const answers = await Promise.all(
+      ["a", "b", "c", "d"].map((tag) =>
+        setUserImage(id, { blurDataUrl: BLUR, image: `${SECOND}-${tag}` })
+      )
+    );
+    const previous = answers.map((answer) => answer?.previous);
+    expect(new Set(previous).size).toBe(previous.length);
+  });
+
   it("removing it clears its blur too", async () => {
     const { id } = await prisma.user.create({
       data: { email: "removed@set-user-image.test" },
@@ -395,5 +416,163 @@ describe("a User's picture", () => {
     expect(await userImages([pictured, bare, "no-such-user"])).toEqual([
       SECOND,
     ]);
+  });
+});
+
+// Users edited here live in their own domain, so the list's counts hold.
+const EDITED = "edit-users.test";
+const NEW_HASH = "new-hash";
+
+describe("readUser and updateUser", () => {
+  let count = 0;
+  /** A User with a password, a Laura Membership and two Sessions. */
+  const edited = async () => {
+    count += 1;
+    const { id } = await createUser(
+      {
+        email: `edited-${count}@${EDITED}`,
+        memberships: [{ app: App.LAURA, role: Role.USER }],
+        name: "Edited",
+      },
+      HASH
+    );
+    const sessions = await Promise.all(
+      ["a", "b"].map((tag) =>
+        prisma.session.create({
+          data: {
+            expiresAt: new Date(Date.now() + 60_000),
+            token: `edit-${count}-${tag}`,
+            userId: id,
+          },
+          select: { id: true },
+        })
+      )
+    );
+    return { id, sessions: sessions.map((session) => session.id) };
+  };
+  const passwordOf = async (userId: string) =>
+    (
+      await prisma.account.findFirst({
+        where: { providerId: "credential", userId },
+      })
+    )?.password;
+  const sessionsOf = (userId: string) =>
+    prisma.session.findMany({ select: { id: true }, where: { userId } });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
+  });
+
+  it("reads one User with their Memberships", async () => {
+    const { id } = await edited();
+    expect(await readUser(id)).toMatchObject({
+      id,
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+      name: "Edited",
+    });
+  });
+
+  it("answers null for an unknown id", async () => {
+    expect(await readUser(MISSING_ID)).toBeNull();
+  });
+
+  it("renames, leaving the rest", async () => {
+    const { id } = await edited();
+    const after = await updateUser(id, { name: "Renamed" });
+    expect(after?.name).toBe("Renamed");
+    expect(after?.memberships).toEqual([{ app: App.LAURA, role: Role.USER }]);
+    expect(await passwordOf(id)).toBe(HASH);
+    expect(await sessionsOf(id)).toHaveLength(2);
+  });
+
+  it("replaces the Memberships with the set given", async () => {
+    const { id } = await edited();
+    await updateUser(id, {
+      memberships: [{ app: App.BACK_OFFICE, role: Role.VIEWER }],
+    });
+    expect((await readUser(id))?.memberships).toEqual([
+      { app: App.BACK_OFFICE, role: Role.VIEWER },
+    ]);
+  });
+
+  it("sets the password on the credential Account and ends every Session", async () => {
+    const { id } = await edited();
+    await updateUser(id, { hashedPassword: NEW_HASH });
+    expect(await passwordOf(id)).toBe(NEW_HASH);
+    expect(await sessionsOf(id)).toHaveLength(0);
+  });
+
+  it("keeps the Session named in keepSessionId", async () => {
+    const { id, sessions } = await edited();
+    await updateUser(
+      id,
+      { hashedPassword: NEW_HASH },
+      { keepSessionId: sessions[0] }
+    );
+    expect(await sessionsOf(id)).toEqual([{ id: sessions[0] }]);
+  });
+
+  it("creates the credential Account for a User who has none", async () => {
+    const { id } = await prisma.user.create({
+      data: {
+        accounts: { create: { accountId: "google-sub", providerId: "google" } },
+        email: `google@${EDITED}`,
+      },
+      select: { id: true },
+    });
+    await updateUser(id, { hashedPassword: NEW_HASH });
+    const credentials = await prisma.account.findMany({
+      where: { providerId: "credential", userId: id },
+    });
+    expect(
+      credentials.map(({ accountId, password }) => ({ accountId, password }))
+    ).toEqual([{ accountId: id, password: NEW_HASH }]);
+  });
+
+  it("leaves Sessions alone without a password", async () => {
+    const { id } = await edited();
+    await updateUser(id, { memberships: [] });
+    expect(await sessionsOf(id)).toHaveLength(2);
+  });
+
+  it("answers null and writes nothing for an unknown id", async () => {
+    expect(await updateUser(MISSING_ID, { name: "Nobody" })).toBeNull();
+    expect(await prisma.user.count({ where: { id: MISSING_ID } })).toBe(0);
+  });
+});
+
+describe("sessionAlive", () => {
+  const OWNER = `session-owner@${EDITED}`;
+  const sessionOf = async (token: string, expiresInMs: number) => {
+    const { id: userId } = await prisma.user.upsert({
+      create: { email: OWNER },
+      select: { id: true },
+      update: {},
+      where: { email: OWNER },
+    });
+    return prisma.session.create({
+      data: { expiresAt: new Date(Date.now() + expiresInMs), token, userId },
+      select: { id: true },
+    });
+  };
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: OWNER } });
+  });
+
+  it("is true for a live Session", async () => {
+    const { id } = await sessionOf("alive-live", 60_000);
+    expect(await sessionAlive(id)).toBe(true);
+  });
+
+  it("is false once deleted", async () => {
+    const { id } = await sessionOf("alive-deleted", 60_000);
+    await prisma.session.delete({ where: { id } });
+    expect(await sessionAlive(id)).toBe(false);
+  });
+
+  it("is false once expired", async () => {
+    const { id } = await sessionOf("alive-expired", -1000);
+    expect(await sessionAlive(id)).toBe(false);
   });
 });

@@ -22,4 +22,14 @@ describe("SectionPage", () => {
     expect(html).toContain("mx-auto");
     expect(html).toContain("max-w-4xl");
   });
+
+  it("lets a form page grow past the screen, so its padding stays under the buttons", () => {
+    const html = renderToStaticMarkup(
+      <SectionPage width="form">Add a User</SectionPage>
+    );
+    expect(html).not.toContain("min-h-");
+    expect(renderToStaticMarkup(<SectionPage>Users</SectionPage>)).toContain(
+      "min-h-0"
+    );
+  });
 });

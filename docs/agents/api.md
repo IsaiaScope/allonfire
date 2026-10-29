@@ -50,7 +50,7 @@ feature reads it. `API` (its paths, context keys, limits, log messages and shutd
 shared, so it stays in `shared/constants/api.ts`. Anything not API-specific —
 `HTTP.STATUS`, `HTTP.METHOD`, `HTTP.HEADER`, `HTTP.CONTENT_TYPE`, `LOG.LEVEL`, the
 redaction list, `ENV.BOOLEAN`, `SEPARATOR`, `PATTERN.TRAILING_SLASHES`, `UNIT` (time and size), `HTTP.SECURITY_HEADERS` — lives in
-`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`), and so do the standard error codes, core's `ERROR.CODE` (`features/errors/constants/error-codes`: `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_FAILED`, …), which every Host and module throws. A module adds only its own (`IMAGE.ERROR_CODE`: `IMAGE_TOO_LARGE`, `UNSUPPORTED_IMAGE`; `AUTH.ERROR_CODE`). `API.ERROR` (every code the API answers with, built from those and never retyped, and the statuses it answers with a problem document) is the API's own,
+`@allonfire/core` (`features/http`, `features/logger`, `shared/constants`), and so do the standard error codes, core's `ERROR.CODE` (`features/errors/constants/error-codes`: `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_FAILED`, …), which every Host and module throws. A module adds only its own (`IMAGE.ERROR_CODE`: `IMAGE_CHANGED`, `IMAGE_TOO_LARGE`, `UNSUPPORTED_IMAGE`; `AUTH.ERROR_CODE`). `API.ERROR` (every code the API answers with, built from those and never retyped, and the statuses it answers with a problem document) is the API's own,
 in `shared/constants/error.ts`. An error code is never a string literal, tests included; only core's own test types them, as the contract clients switch on. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
@@ -103,10 +103,14 @@ many, and `middlewares/` reads wrong.
 
 - **Auth guards** come from `@allonfire/auth/features/hono/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand. `guard(allows)` may await `allows`: a
-  route that changes Users reads the caller fresh, as the User module's `POST` and `DELETE` do
-  through the Host's `canManageUsers(userId)` (`accessUserById`), since the Session's 5-minute cookie
-  cache may hold a Role since taken away. Nobody deletes themselves: a list holding the
-  caller's id answers 403 `USER.ERROR_CODE.CANNOT_DELETE_SELF` and deletes nobody.
+  route that changes Users reads the caller fresh, as the User module's `POST`, `PATCH`,
+  `DELETE` and Avatar routes do through the Host's `canManageUsers({ sessionId, userId })`
+  (`accessUserById` and `sessionAlive` side by side), since the Session's 5-minute cookie
+  cache may hold a Role since taken away, or outlive a Session a new password deleted.
+  Nobody deletes themselves: a list holding the caller's id answers 403
+  `USER.ERROR_CODE.CANNOT_DELETE_SELF` and deletes nobody. Nobody changes their own Role in
+  the Host's `manageApp` (the API: `App.BACK_OFFICE`): 403
+  `USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE`, nothing changed.
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
 - **Required env:** `DATABASE_URL`, `API_REDIS_URL`, `API_CORS_ORIGINS`,

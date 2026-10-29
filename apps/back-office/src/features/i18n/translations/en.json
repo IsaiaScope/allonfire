@@ -96,9 +96,24 @@
       "clear": "Clear the text"
     },
     "detail": {
-      "description": "A User's Memberships and details arrive in a later version.",
-      "page": "User",
-      "title": "User details are on their way"
+      "page": "User"
+    },
+    "edit": {
+      "avatarFailed": "Saved; the picture was not.",
+      "confirmPassword": "Confirm the new password",
+      "email": "Email",
+      "error": {
+        "failed": "Could not save. Try again.",
+        "gone": "This User no longer exists.",
+        "invalid": "Check the fields and try again.",
+        "ownRole": "You cannot change your own Role in the Back Office.",
+        "refused": "You can no longer change Users. Sign in again."
+      },
+      "ownRoleLocked": "Nobody changes their own Role in {app}.",
+      "password": "New password",
+      "saved": "Saved",
+      "submit": "Save",
+      "submitting": "Saving…"
     },
     "pastEnd": {
       "description": "There are fewer pages than this one; the last page has the Users.",
@@ -124,6 +139,7 @@
         "change": "Change",
         "choose": "Select a picture",
         "cropAgain": "Crop again",
+        "current": "Current picture",
         "dialogTitle": "Crop the picture",
         "drop": "Drop your picture here",
         "failed": "User added; the picture was not saved.",
@@ -144,6 +160,7 @@
       "error": {
         "failed": "The User could not be added. Try again.",
         "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Users. Sign in again.",
         "taken": "This email already has an account"
       },
       "field": {

@@ -75,7 +75,8 @@ export const patchRoute = describeRoute({
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.CONFLICT
     ),
   },
   summary: IMAGE.DOC.PATCH_SUMMARY,

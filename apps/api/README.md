@@ -60,11 +60,11 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 
 The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
 ADR 0015). Its errors are `CodedError`s the API renders as its own localized
-problem documents. Files go to the public
+problem documents. Files go to the closed
 `image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
 decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
-`image."Image"`, placements in `image."ImageApp"`. Apps render them with `AOFStorageImage` through their `/storage/images/*`
-rewrite.
+`image."Image"`, placements in `image."ImageApp"`. Apps show them through the
+image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
 
 | Endpoint | Guard | Does |
 |---|---|---|

@@ -20,6 +20,16 @@ export const forbidden = () =>
     status: HTTP.STATUS.FORBIDDEN,
   });
 
+/**
+ * 409: another request changed the Image while this one was working on it
+ * (made it public while it was turning private); asking again settles it.
+ */
+export const imageChanged = () =>
+  new CodedError({
+    code: IMAGE.ERROR_CODE.IMAGE_CHANGED,
+    status: HTTP.STATUS.CONFLICT,
+  });
+
 /** 413 naming the limit that was actually crossed, not a host-wide one. */
 export const tooLarge = (limit: number) =>
   new CodedError({

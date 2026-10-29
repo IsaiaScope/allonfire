@@ -1,10 +1,13 @@
+import type { App } from "@allonfire/database/enums";
 import type { AccessUser } from "@allonfire/database/features/auth/access/access";
 import type {
   createUser,
   deleteUsers,
   listUsers,
+  readUser,
   setUserImage,
   UserPicture,
+  updateUser,
   userImages,
 } from "@allonfire/database/features/auth/user.service";
 import type { AvatarLink } from "../../../../shared/utils/linked-picture";
@@ -16,12 +19,22 @@ export type UserDeps = {
   canListUsers: (user: AccessUser) => boolean;
   createUser: typeof createUser;
   deleteUsers: typeof deleteUsers;
+  readUser: typeof readUser;
+  updateUser: typeof updateUser;
   /**
-   * Who may add or delete Users, asked with the caller's id so the Host
-   * reads them fresh: a cached Session may hold a Role the User no longer
-   * has.
+   * The App whose Role lets a User change Users: nobody changes their own
+   * Role there, so the one editing stays able to.
    */
-  canManageUsers: (userId: string) => Promise<boolean>;
+  manageApp: App;
+  /**
+   * Who may add, edit or delete Users, asked with the caller's Session and
+   * User ids so the Host reads both fresh: a cached Session may hold a Role
+   * the User no longer has, or outlive its row, deleted by a new password.
+   */
+  canManageUsers: (caller: {
+    sessionId: string;
+    userId: string;
+  }) => Promise<boolean>;
   setUserImage: typeof setUserImage;
   userImages: typeof userImages;
   /**

@@ -4,6 +4,7 @@ import {
 } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { roleIn } from "@allonfire/database/features/auth/access/access";
 import { EmailTakenError } from "@allonfire/database/features/auth/user.service";
 import { hashPassword } from "better-auth/crypto";
 import { bodyLimit } from "hono/body-limit";
@@ -25,6 +26,7 @@ import {
   userCreateRequestSchema,
   userDeleteRequestSchema,
   userIdParamSchema,
+  userUpdateRequestSchema,
 } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
 import {
@@ -33,6 +35,8 @@ import {
   createRoute,
   deleteRoute,
   listRoute,
+  readRoute,
+  updateRoute,
 } from "./routes";
 
 const factory = createFactory<AuthEnv>();
@@ -47,9 +51,17 @@ const userNotFound = () =>
 const allowed = (deps: UserDeps) =>
   guard((session) => deps.canListUsers(session.user));
 
-/** 401 without a Session, 403 unless the Host, reading the caller fresh, lets them change Users. */
+/**
+ * 401 without a Session, 403 unless the Host, reading the caller and their
+ * Session fresh, lets them change Users.
+ */
 const canManage = (deps: UserDeps) =>
-  guard((session) => deps.canManageUsers(session.user.id));
+  guard((session) =>
+    deps.canManageUsers({
+      sessionId: session.session.id,
+      userId: session.user.id,
+    })
+  );
 
 /** One page of Users, newest first, with how many match in all. */
 export const listHandlers = (deps: UserDeps) =>
@@ -190,5 +202,68 @@ export const avatarDeleteHandlers = (deps: UserDeps) =>
       }
       await deps.deleteAvatars([changed.previous]);
       return c.body(null, HTTP.STATUS.NO_CONTENT);
+    }
+  );
+
+/** One User, their Avatar signed for now; an unknown id answers 404. */
+export const readHandlers = (deps: UserDeps) =>
+  factory.createHandlers(
+    readRoute,
+    canManage(deps),
+    validator("param", userIdParamSchema, invalidHook),
+    async (c) => {
+      const user = await deps.readUser(c.req.valid("param").id);
+      if (!user) {
+        throw userNotFound();
+      }
+      return c.json(toUserBody(user, deps.avatarLink), HTTP.STATUS.OK);
+    }
+  );
+
+/**
+ * Edits a User. The caller is read fresh by the Host; their own Role in the
+ * Host's `manageApp` stays as it is (403 otherwise, nothing changed), and a
+ * new password, hashed as Better Auth hashes it, ends every Session of the
+ * User but the caller's own.
+ */
+export const updateHandlers = (deps: UserDeps) =>
+  factory.createHandlers(
+    updateRoute,
+    canManage(deps),
+    validator("param", userIdParamSchema, invalidHook),
+    validator("json", userUpdateRequestSchema, invalidHook),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { memberships, name, password } = c.req.valid("json");
+      const session = c.get(AUTH.VAR.SESSION);
+      const self = id === session.user.id;
+      if (self && memberships) {
+        const stored = await deps.readUser(id);
+        if (
+          stored &&
+          roleIn({ memberships }, deps.manageApp) !==
+            roleIn(stored, deps.manageApp)
+        ) {
+          throw new CodedError({
+            code: USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE,
+            status: HTTP.STATUS.FORBIDDEN,
+          });
+        }
+      }
+      const user = await deps.updateUser(
+        id,
+        {
+          ...(name !== undefined && { name }),
+          ...(memberships && { memberships }),
+          ...(password !== undefined && {
+            hashedPassword: await hashPassword(password),
+          }),
+        },
+        self ? { keepSessionId: session.session.id } : {}
+      );
+      if (!user) {
+        throw userNotFound();
+      }
+      return c.json(toUserBody(user, deps.avatarLink), HTTP.STATUS.OK);
     }
   );

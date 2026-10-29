@@ -34,6 +34,8 @@ export type AOFAvatarFieldLabels = AOFAvatarCropLabels & {
   change: string;
   choose: string;
   cropAgain: string;
+  /** The row of the picture the User already holds. */
+  current: string;
   /** The drop area's title: "Drop your picture here". */
   drop: string;
   /** The formats taken and the largest size, under the title. */
@@ -49,6 +51,16 @@ export type AOFAvatarFieldLabels = AOFAvatarCropLabels & {
 
 export type AOFAvatarFieldProps = {
   label: string;
+  /**
+   * The picture the User already holds, drawn while no file is picked; the X
+   * removes it.
+   */
+  current?: string | null | undefined;
+  /**
+   * The form name posted as `"true"` once `current` is removed and no file
+   * replaces it; nothing is posted otherwise.
+   */
+  removedName?: string | undefined;
   labels: AOFAvatarFieldLabels;
   /** The choose button, dressed by the App. */
   triggerProps?: AOFFileUploadProps["triggerProps"];
@@ -93,45 +105,69 @@ const useObjectUrl = (file: File | null) => {
   return url;
 };
 
+/** The row id of the picture the User already holds. */
+const CURRENT_ID = "current";
+
+/** The field's own refusal first, then its schema's errors once shown. */
+const useFieldErrors = (
+  field: ReturnType<typeof useFieldContext<File | null>>,
+  refusal: string | null
+) => {
+  const submissionAttempts = useSelector(
+    field.form.store,
+    (state) => state.submissionAttempts
+  );
+  return [
+    ...(refusal ? [{ message: refusal }] : []),
+    ...shownErrors(field.state.meta.errors, {
+      isBlurred: field.state.meta.isBlurred,
+      submissionAttempts,
+    }),
+  ];
+};
+
 /**
- * The picture in use as the upload's one row: the name picked (an iPhone's
+ * The picture in use as the upload's one row (or, with none picked, the
+ * picture the User already holds): the name picked (an iPhone's
  * HEIC keeps its own), the cropped file's size, and Crop again while the
  * original is at hand.
  */
 const heldItems = ({
   cropAgain,
   cropAgainLabel,
+  current,
   pickedName,
   preview,
   value,
 }: {
   cropAgain: (() => void) | null;
   cropAgainLabel: string;
+  /** The picture the User holds, while kept, and its row's name. */
+  current: { label: string; src: string } | null;
   pickedName: string;
   preview: string | null;
   value: File | null;
-}): AOFFileUploadItem[] =>
-  value
-    ? [
-        {
-          actions: cropAgain ? (
-            <AOFButton
-              onClick={cropAgain}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              <IconCrop aria-hidden />
-              {cropAgainLabel}
-            </AOFButton>
-          ) : null,
-          id: value.name,
-          name: pickedName || value.name,
-          preview,
-          size: value.size,
-        },
-      ]
-    : [];
+}): AOFFileUploadItem[] => {
+  if (!value) {
+    return current
+      ? [{ id: CURRENT_ID, name: current.label, preview: current.src }]
+      : [];
+  }
+  return [
+    {
+      actions: cropAgain ? (
+        <AOFButton onClick={cropAgain} size="sm" type="button" variant="ghost">
+          <IconCrop aria-hidden />
+          {cropAgainLabel}
+        </AOFButton>
+      ) : null,
+      id: value.name,
+      name: pickedName || value.name,
+      preview,
+      size: value.size,
+    },
+  ];
+};
 
 /**
  * A picture in an AOF form (ADR 0017), bound to its TanStack field as a
@@ -141,12 +177,17 @@ const heldItems = ({
  * input, named as the field, so the form's post sends it. The picture in use
  * is listed under the area: Crop again reopens the same original, the X
  * removes it. A file too large, or one it cannot read, is refused in the
- * field's error line.
+ * field's error line. Given the picture a User already holds (`current`), it
+ * lists that one while no file is picked: removing a new pick goes back to
+ * it, and removing it posts `removedName`, so the form's action tells
+ * "unchanged", "new" and "removed" apart.
  */
 export const AOFAvatarField = ({
   cropProps,
+  current,
   label,
   labels,
+  removedName,
   triggerProps,
 }: AOFAvatarFieldProps) => {
   const field = useFieldContext<File | null>();
@@ -155,21 +196,13 @@ export const AOFAvatarField = ({
   const [cropping, setCropping] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
+  // The current picture removed; a new pick then replaces nothing.
+  const [removed, setRemoved] = useState(false);
   const { holdInInput, rootRef } = useHeldFile(field.name);
   const errorId = useId();
   const preview = useObjectUrl(field.state.value);
   const originalUrl = useObjectUrl(original);
-  const submissionAttempts = useSelector(
-    field.form.store,
-    (state) => state.submissionAttempts
-  );
-  const errors = [
-    ...(refusal ? [{ message: refusal }] : []),
-    ...shownErrors(field.state.meta.errors, {
-      isBlurred: field.state.meta.isBlurred,
-      submissionAttempts,
-    }),
-  ];
+  const errors = useFieldErrors(field, refusal);
 
   const refuse = useCallback(
     (_: File, message: string) => {
@@ -206,6 +239,10 @@ export const AOFAvatarField = ({
   const cancel = useCallback(() => setCropping(false), []);
   const cropAgain = useCallback(() => setCropping(true), []);
   const remove = useCallback(() => {
+    if (!field.state.value) {
+      setRemoved(true);
+      return;
+    }
     field.handleChange(null);
     setOriginal(null);
     setRefusal(null);
@@ -215,6 +252,8 @@ export const AOFAvatarField = ({
   const items = heldItems({
     cropAgain: original ? cropAgain : null,
     cropAgainLabel: labels.cropAgain,
+    current:
+      current && !removed ? { label: labels.current, src: current } : null,
     pickedName,
     preview,
     value: field.state.value,
@@ -252,6 +291,9 @@ export const AOFAvatarField = ({
         ref={rootRef}
         triggerProps={triggerProps}
       />
+      {removedName && removed && !field.state.value ? (
+        <input name={removedName} type="hidden" value="true" />
+      ) : null}
       <div className="min-h-6">
         <AOFFieldError errors={errors} id={errorId} />
       </div>
