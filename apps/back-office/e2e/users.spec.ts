@@ -7,7 +7,6 @@ import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
@@ -176,6 +175,10 @@ const addedBy = (project: string) => ({
  * page it has left, which a label query would also find.
  */
 const addForm = (page: Page) => page.getByRole("form", { name: t.add.title });
+/** The picture field's drop area input, the one a visitor picks with: the
+ *  field posts through its own input, named as the field. */
+const picturePicker = (page: Page) =>
+  addForm(page).locator('input[type="file"]:not([name])');
 
 /** Fills the Add page and adds the User as a Back Office Admin. */
 const addUser = async (page: Page, user: ReturnType<typeof addedBy>) => {
@@ -293,6 +296,11 @@ const userPathOf = async (page: Page, email: string) => {
 
 for (const { name, path, title } of [
   {
+    name: "the Users list",
+    path: () => Promise.resolve(USERS),
+    title: IT.Navigation.users,
+  },
+  {
     name: "Add a User",
     path: () => Promise.resolve(newUserHref()),
     title: IT.Users.add.title,
@@ -325,9 +333,9 @@ const addUserWithPicture = async (
 ) => {
   await signInAsAdmin(page);
   await page.goto(newUserHref());
-  await addForm(page)
-    .locator('input[type="file"][name="avatar"]')
-    .setInputFiles(resolve(IMAGE_FIXTURE_FILES, "photo.jpg"));
+  await picturePicker(page).setInputFiles(
+    resolve(IMAGE_FIXTURE_FILES, "photo.jpg")
+  );
   await page
     .getByRole("button", { exact: true, name: t.add.avatar.use })
     .click();
@@ -366,7 +374,7 @@ test("deleting that User removes the picture", async ({ page }, info) => {
   // Dead once the image cache asked imgproxy again.
   await expect
     .poll(async () => (await page.request.get(link ?? "")).status(), {
-      timeout: (IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * UNIT.MS_PER_SECOND,
+      timeout: IMAGE_SERVER.GONE_WITHIN_MS,
     })
     .toBe(HTTP.STATUS.NOT_FOUND);
 });
@@ -530,13 +538,11 @@ test("a file that is not a picture is refused in the picture field", async ({
 }) => {
   await signInAsAdmin(page);
   await page.goto(newUserHref());
-  await addForm(page)
-    .locator('input[type="file"][name="avatar"]')
-    .setInputFiles({
-      buffer: Buffer.from("not a picture"),
-      mimeType: "image/jpeg",
-      name: "photo.jpg",
-    });
+  await picturePicker(page).setInputFiles({
+    buffer: Buffer.from("not a picture"),
+    mimeType: "image/jpeg",
+    name: "photo.jpg",
+  });
   await expect(page.getByText(t.add.avatar.unreadable)).toBeVisible();
 });
 

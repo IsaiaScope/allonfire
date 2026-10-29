@@ -21,10 +21,12 @@ const sectionPage = cva(
          */
         form: "@container mx-auto w-full max-w-4xl",
         /**
-         * The whole page area, as a list or a table wants: held to what the
-         * header leaves (`min-h-0`), so a long table scrolls in place.
+         * The whole page area, as a list or a table wants: what the header
+         * leaves, and taller only when its table's minimum needs it, so the
+         * padding stays under the pager. A long table still scrolls in
+         * place: its rows never size its box.
          */
-        full: "min-h-0",
+        full: "",
       },
     },
   }

@@ -149,7 +149,15 @@ export const AOFSidebar = ({
       {props.children}
     </AOFSidebarSheet>
   ) : (
-    <Sidebar collapsible={collapsible} {...props} />
+    <Sidebar
+      collapsible={collapsible}
+      {...props}
+      // Its content clear of a notch on the left; its colour runs to the edge.
+      className={cn(
+        "md:*:data-[sidebar=sidebar]:pl-[env(safe-area-inset-left,0px)]",
+        props.className
+      )}
+    />
   );
   return collapsedBy ? (
     <CollapsedOnArrival by={collapsedBy} collapsible={collapsible}>
@@ -161,11 +169,11 @@ export const AOFSidebar = ({
 };
 
 /**
- * A row a little larger than shadcn's: 40px with a 16px label for a mouse,
- * the tap target (`--tap-target`, `--tap-icon`) on a touch screen; the icon
- * stays shadcn's 16px otherwise. Folded to icons every row is a 36px square
+ * A row a little larger than shadcn's: 40px with a 16px label and an 18px
+ * icon for a mouse, the tap target (`--tap-target`, `--tap-icon`) on a touch
+ * screen. Folded to icons every row is a 36px square
  * (shadcn's is 32px): an 18px icon with 9px around it, in the rail
- * `AOFSidebarProvider` widens to match. The `lg` rows are 48px. A row that
+ * `AOFSidebarProvider` widens to match (plus the left inset). The `lg` rows are 48px. A row that
  * opens a menu stays lit while it is open (Base UI marks its trigger
  * `data-popup-open`; `data-open` is the popup's own). Its highlight fades:
  * on a touch screen the menu opens once the finger lifts, so the pressed
@@ -181,10 +189,10 @@ export const AOFSidebarMenuButton = ({
       "transition-[width,height,padding,background-color,color]",
       // Lit while its menu is open.
       "data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground",
-      // 40px with a 16px label; the tap target on a touch screen.
-      "data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-(--tap-target) data-[size=default]:text-base pointer-coarse:data-[size=default]:[&_svg]:size-(--tap-icon)",
-      // Folded: a 36px square, an 18px icon with 9px around it.
-      "group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:data-[size=default]:p-2.25! group-data-[collapsible=icon]:data-[size=default]:[&_svg]:size-4.5",
+      // 40px with a 16px label and an 18px icon; the tap target on a touch screen.
+      "data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-(--tap-target) data-[size=default]:text-base data-[size=default]:[&_svg]:size-4.5 pointer-coarse:data-[size=default]:[&_svg]:size-(--tap-icon)",
+      // Folded: a 36px square, the 18px icon with 9px around it.
+      "group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:data-[size=default]:p-2.25!",
       className
     )}
     {...props}
@@ -245,10 +253,16 @@ export const AOFSidebarTrigger = ({
 };
 
 /**
- * The rail the sidebar folds to: 54px (shadcn's is 48px), room for its 36px
- * squares, the group's 8px either side and 1px more each side to breathe.
+ * The sidebar's widths, each plus the screen's left inset: shadcn's 16rem
+ * open, and the rail it folds to 54px (shadcn's is 48px), room for its 36px
+ * squares, the group's 8px either side and 1px more each side to breathe. A
+ * phone turned sideways puts its notch there; `AOFSidebar` pads its content
+ * by the same inset, so its colour fills behind the notch.
  */
-const RAIL = { "--sidebar-width-icon": "3.375rem" };
+const RAIL = {
+  "--sidebar-width": "calc(16rem + env(safe-area-inset-left, 0px))",
+  "--sidebar-width-icon": "calc(3.375rem + env(safe-area-inset-left, 0px))",
+};
 
 export const AOFSidebarProvider = ({
   style,

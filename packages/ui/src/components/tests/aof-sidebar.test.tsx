@@ -128,4 +128,29 @@ describe("AOFSidebar", () => {
     );
     expect(html).not.toContain("<script");
   });
+
+  it("widens the sidebar and its rail by the left inset", () => {
+    const html = renderToStaticMarkup(
+      <AOFSidebarProvider>
+        <AOFSidebar label="Menu">Sections</AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    expect(html).toContain(
+      "--sidebar-width:calc(16rem + env(safe-area-inset-left, 0px))"
+    );
+    expect(html).toContain(
+      "--sidebar-width-icon:calc(3.375rem + env(safe-area-inset-left, 0px))"
+    );
+  });
+
+  it("pads the sidebar's content, not its colour, by the left inset", () => {
+    const html = renderToStaticMarkup(
+      <AOFSidebarProvider>
+        <AOFSidebar label="Menu">Sections</AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    expect(html).toContain(
+      "md:*:data-[sidebar=sidebar]:pl-[env(safe-area-inset-left,0px)]"
+    );
+  });
 });

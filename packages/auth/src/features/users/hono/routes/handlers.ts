@@ -148,7 +148,8 @@ export const createHandlers = (deps: UserDeps) =>
 /**
  * Sets a User's Avatar: the picture processed and stored under a new name,
  * that name written to the User, the picture it replaced deleted. An unknown
- * User answers 404, and the file just stored is deleted.
+ * User answers 404, and the file just stored is deleted, as it is when the
+ * write fails.
  */
 export const avatarPutHandlers = (deps: UserDeps) =>
   factory.createHandlers(
@@ -173,17 +174,20 @@ export const avatarPutHandlers = (deps: UserDeps) =>
         id,
         Buffer.from(await file.arrayBuffer())
       );
-      const changed = await deps.setUserImage(id, picture);
+      // The file just stored is deleted unless the User's row now names it.
+      const changed = await deps
+        .setUserImage(id, picture)
+        .catch(async (error: unknown) => {
+          await deps.deleteAvatars([picture.image]);
+          throw error;
+        });
       if (!changed) {
         await deps.deleteAvatars([picture.image]);
         throw userNotFound();
       }
       await deps.deleteAvatars([changed.previous]);
       return c.json(
-        linkedPicture(
-          { image: picture.image, imageBlurDataUrl: picture.blurDataUrl },
-          deps.avatarLink
-        ) satisfies UserAvatarBody,
+        linkedPicture(picture, deps.avatarLink) satisfies UserAvatarBody,
         HTTP.STATUS.OK
       );
     }

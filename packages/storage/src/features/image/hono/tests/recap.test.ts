@@ -86,7 +86,7 @@ const linksOf = (ids: readonly string[]): Promise<ImageLinksById> => {
   return Promise.resolve(
     new Map(
       IMAGES.filter(({ id }) => ids.includes(id)).map(
-        ({ access, apps, id }) => [id, { access, apps }]
+        ({ access, apps, id, key }) => [id, { access, apps, key }]
       )
     )
   );

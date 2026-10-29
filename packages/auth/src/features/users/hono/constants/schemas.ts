@@ -122,13 +122,10 @@ export const userIdParamSchema = z.object({ id: z.string().min(1) });
 /** An Avatar's request: one picture, as multipart/form-data `file`. */
 export const avatarFormSchema = z.object({ file: z.instanceof(File) });
 
-export const userAvatarBodySchema = z
-  .object({
-    /** The new picture's link, signed for the hour. */
-    image: z.string().nullable(),
-    /** The blur to show while it loads. */
-    imageBlurDataUrl: z.string().nullable(),
-  })
+/** A User's new picture, as the listed User holds it: its link signed for
+ *  the hour, and the blur to show while it loads. */
+export const userAvatarBodySchema = userBodySchema
+  .pick({ image: true, imageBlurDataUrl: true })
   .meta({ ref: "UserAvatar" });
 export type UserAvatarBody = z.infer<typeof userAvatarBodySchema>;
 

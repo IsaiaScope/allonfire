@@ -16,6 +16,7 @@ export const imageAccessBodySchema = imageAccessSchema.meta({
 export const signedLinkSchema = z
   .object({ url: z.string(), width: z.number().int() })
   .meta({ ref: "SignedLink" });
+export type SignedLink = z.infer<typeof signedLinkSchema>;
 
 /**
  * One Image as it travels: the stored record, minus what only the server

@@ -4,6 +4,7 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
+import { avatarRemoval } from "@allonfire/ui/lib/avatar-change";
 import { updateTag } from "next/cache";
 import { USERS } from "../../constants/users";
 import { editUser } from "../edit-user";
@@ -16,6 +17,9 @@ vi.mock("@/features/api/utils/server-api", async () => ({
   serverApi: (await import("./fake-api")).fakeServerApi,
 }));
 vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+
+/** The removal the picture field posts. */
+const REMOVAL = avatarRemoval(USERS.AVATAR_FIELD);
 
 const formOf = (fields: Record<string, string | File>) => {
   const form = new FormData();
@@ -103,7 +107,7 @@ describe("editUser", () => {
     const state = await editUser(
       ID,
       {},
-      formOf({ [USERS.AVATAR_REMOVED]: "true" })
+      formOf({ [REMOVAL.name]: REMOVAL.value })
     );
     expect(
       FAKE_API.sent.map(({ method, path }) => `${method} ${path}`)
@@ -115,6 +119,19 @@ describe("editUser", () => {
     expect(state).toEqual({ notice: USERS.EDIT_NOTICE.SAVED });
   });
 
+  it("says so when the picture's call never reaches the API, the list still dropped", async () => {
+    FAKE_API.unreachable.add(HTTP.METHOD.PUT);
+    const state = await editUser(
+      ID,
+      {},
+      formOf({
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+      })
+    );
+    expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.AVATAR_FAILED });
+  });
+
   it("sends a new picture, and says so when the API refuses it", async () => {
     FAKE_API.answers.set(HTTP.METHOD.PUT, {
       status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
@@ -123,8 +140,8 @@ describe("editUser", () => {
       ID,
       {},
       formOf({
-        avatar: new File(["x"], "a.webp", { type: "image/webp" }),
-        [USERS.AVATAR_REMOVED]: "true",
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+        [REMOVAL.name]: REMOVAL.value,
       })
     );
     expect(FAKE_API.sent.map(({ method }) => method)).toEqual([
@@ -142,7 +159,7 @@ describe("editUser", () => {
     const state = await editUser(
       ID,
       {},
-      formOf({ [USERS.AVATAR_REMOVED]: "true" })
+      formOf({ [REMOVAL.name]: REMOVAL.value })
     );
     expect(state.error).toBe(USERS.EDIT_ERROR.GONE);
     expect(state.values?.name).toBe("Edited");

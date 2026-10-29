@@ -152,7 +152,7 @@ export const AddUser = () => {
                 />
               )}
             </form.AppField>
-            <form.AppField name="avatar">
+            <form.AppField name={USERS.AVATAR_FIELD}>
               {(field) => (
                 <field.AvatarField
                   {...AVATAR_DRESS}

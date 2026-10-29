@@ -2,18 +2,15 @@ import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
 import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
 import { App } from "@allonfire/database/enums";
 import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale, getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { pageOpenGraph } from "@/features/metadata/utils/page-open-graph";
+import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionLoading } from "@/features/navigation/components/section-loading";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { EditUser } from "@/features/users/components/edit-user";
 import { readUser } from "@/features/users/utils/read-user";
 import { userHref } from "@/features/users/utils/user-href";
-import { usersVisitorOf } from "@/features/users/utils/users-visitor";
 
 type UserPageProps = { params: Promise<{ id: string }> };
 
@@ -22,25 +19,13 @@ type UserPageProps = { params: Promise<{ id: string }> };
  * route param, known only at request time: the page's Session check already
  * waits for the request, so Next streams this with it.
  */
-export const generateMetadata = async ({
-  params,
-}: UserPageProps): Promise<Metadata> => {
-  const [{ id }, t, locale] = await Promise.all([
-    params,
-    getTranslations("Users.detail"),
-    getLocale(),
-  ]);
-  return {
-    openGraph: pageOpenGraph(userHref(id), locale),
-    title: t("page"),
-  };
-};
+export const generateMetadata = async ({ params }: UserPageProps) =>
+  pageMetadata(userHref((await params).id), "Users.detail.page");
 
 /**
- * The User, read on the server through `readUser` (kept until a change to
- * Users), and the form on them; an unknown id is the 404. The Session is the
- * page check's own read: whose page it is, so their own Back Office Role
- * stays locked, and with that Role the kept User's key.
+ * The User, read afresh on the server through `readUser`, and the form on
+ * them; an unknown id is the 404. The Session is the page check's own read:
+ * whose page it is, so their own Back Office Role stays locked.
  */
 const UserForm = async ({ params }: UserPageProps) => {
   const [{ id }, sessionCookie, session] = await Promise.all([
@@ -48,7 +33,7 @@ const UserForm = async ({ params }: UserPageProps) => {
     readSessionCookie(),
     requireAppSession(),
   ]);
-  const user = await readUser(usersVisitorOf(session.user, sessionCookie), id);
+  const user = await readUser(sessionCookie, id);
   if (!user) {
     notFound();
   }

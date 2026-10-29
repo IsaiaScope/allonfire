@@ -1,0 +1,36 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": ["**/._*", ".claude/**"],
+  "ignoreBinaries": ["tailscale", "test-bucket", "test-database"],
+  "ignoreDependencies": ["pino-opentelemetry-transport", "pino-pretty"],
+  "ignoreIssues": {
+    "**/*.test-d.{ts,tsx}": ["exports", "types"]
+  },
+  "includeEntryExports": true,
+  "workspaces": {
+    "apps/*": {
+      "entry": ["src/**/*.test-d.{ts,tsx}"]
+    },
+    "packages/*": {
+      "entry": ["src/**/*.test-d.{ts,tsx}"]
+    },
+    "packages/core": {
+      "entry": ["src/**/*.test-d.{ts,tsx}", "src/features/ci/print-affected.ts"]
+    },
+    "packages/database": {
+      "entry": [
+        "src/**/*.test-d.{ts,tsx}",
+        "src/features/seed/cli.ts",
+        "src/features/test-database/cli.ts",
+        "scripts/*.ts"
+      ]
+    },
+    "packages/storage": {
+      "entry": [
+        "src/**/*.test-d.{ts,tsx}",
+        "src/features/image/setup/cli.ts",
+        "src/features/image/fixtures/scripts/describe-fixtures.ts"
+      ]
+    }
+  }
+}

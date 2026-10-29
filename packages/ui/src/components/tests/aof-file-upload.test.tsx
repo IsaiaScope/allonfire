@@ -1,7 +1,7 @@
 // @module-tag unit
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AOFFileUpload } from "../aof-file-upload";
+import { AOFFileUpload, fileRefusal } from "../aof-file-upload";
 
 const LABELS = {
   choose: "Select a file",
@@ -9,6 +9,7 @@ const LABELS = {
   formats: "PDF or PNG, up to 5 MB",
   remove: "Remove",
   tooLarge: "Too large",
+  wrongType: "Not a PDF or PNG",
 };
 const render = (items: Parameters<typeof AOFFileUpload>[0]["items"] = []) =>
   renderToStaticMarkup(
@@ -54,5 +55,70 @@ describe("AOFFileUpload", () => {
     const html = render([{ id: "a", name: "scan.png", size: 1 }]);
     expect(html).toContain("rounded-lg");
     expect(html).not.toContain("rounded-full");
+  });
+});
+
+/** The drop area's opening tag. */
+const DROPZONE_TAG = /<[^>]*data-slot="file-upload-dropzone"[^>]*>/;
+
+describe("AOFFileUpload for assistive tech", () => {
+  it("names its drop area, the one stop a keyboard reaches, and links its error to it", () => {
+    const html = renderToStaticMarkup(
+      <AOFFileUpload
+        aria-describedby="attachment-error"
+        items={[]}
+        label="Attachment"
+        labels={LABELS}
+        maxBytes={5_000_000}
+        onFileAccept={vi.fn()}
+        onRemove={vi.fn()}
+      />
+    );
+    const dropzone = html.match(DROPZONE_TAG)?.[0] ?? "";
+    expect(dropzone).toContain('aria-label="Attachment"');
+    expect(dropzone).toContain('aria-describedby="attachment-error"');
+  });
+});
+
+describe("fileRefusal", () => {
+  const rules = {
+    accept: "application/pdf,.heic",
+    labels: LABELS,
+    maxBytes: 5_000_000,
+  };
+  const file = (name: string, type: string, bytes = 10) =>
+    new File([new Uint8Array(bytes)], name, { type });
+
+  it("takes a file by its type or its extension, whatever the extension's case", () => {
+    expect(fileRefusal(rules, file("notes.pdf", "application/pdf"))).toBeNull();
+    // An iPhone's photo, as some browsers hand it over: no type.
+    expect(fileRefusal(rules, file("IMG_0001.HEIC", ""))).toBeNull();
+  });
+
+  it("refuses another type, and a file too large, in the caller's words", () => {
+    expect(fileRefusal(rules, file("photo.png", "image/png"))).toBe(
+      LABELS.wrongType
+    );
+    expect(
+      fileRefusal(
+        { ...rules, maxBytes: 5 },
+        file("notes.pdf", "application/pdf")
+      )
+    ).toBe(LABELS.tooLarge);
+  });
+
+  it("lets the drop area's own check pass an extension in capitals too", () => {
+    const html = renderToStaticMarkup(
+      <AOFFileUpload
+        accept={rules.accept}
+        items={[]}
+        label="Attachment"
+        labels={LABELS}
+        maxBytes={rules.maxBytes}
+        onFileAccept={vi.fn()}
+        onRemove={vi.fn()}
+      />
+    );
+    expect(html).toContain('accept="application/pdf,.heic,.HEIC"');
   });
 });

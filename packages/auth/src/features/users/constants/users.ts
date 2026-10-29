@@ -6,6 +6,9 @@ import { App, Role } from "@allonfire/database/enums";
 const PAGE_SIZES = [25, 50, 100] as const;
 
 /** The User module's own values: its paths, its list's params and its docs. */
+/** One User's route, under the module's base. */
+const ONE_USER = "/:id";
+
 export const USER = {
   /** The page a list opens on, and the furthest it reads. */
   DEFAULT_PAGE: 1,
@@ -64,13 +67,13 @@ export const USER = {
   /** The module's routes; a Host mounts it at `BASE` under its own prefix. */
   PATH: {
     /** One User's Avatar: `PUT` sets it, `DELETE` removes it. */
-    AVATAR: "/:id/avatar",
+    AVATAR: `${ONE_USER}/avatar`,
     BASE: "/users",
     CREATE: "/",
     DELETE: "/",
     LIST: "/",
     /** One User: `GET` reads them, `PATCH` edits them. */
-    ONE: "/:id",
+    ONE: ONE_USER,
   },
 } as const;
 

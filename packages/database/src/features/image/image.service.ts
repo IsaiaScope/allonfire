@@ -88,8 +88,11 @@ const lockImages = async (
   await tx.$queryRaw`SELECT "id" FROM image."Image" WHERE "id" = ANY(${[...ids]}) ORDER BY "id" FOR UPDATE`;
 };
 
-/** Each Image's access and Apps, by id. */
-export type ImageLinksById = ReadonlyMap<string, ImageVisibility>;
+/** A locked Image's access and Apps, and the file its row names now. */
+export type ImageLink = ImageVisibility & { key: string };
+
+/** Each locked Image's access, Apps and file name, by id. */
+export type ImageLinksById = ReadonlyMap<string, ImageLink>;
 
 /**
  * The caller's check on a delete, run inside its transaction against the
@@ -119,9 +122,9 @@ const lockedAndChecked = async <T>(
   return {
     checked: check(
       new Map(
-        found.map(({ access, apps, id }) => [
+        found.map(({ access, apps, id, key }) => [
           id,
-          { access, apps: apps.map(({ app }) => app) },
+          { access, apps: apps.map(({ app }) => app), key },
         ])
       )
     ),

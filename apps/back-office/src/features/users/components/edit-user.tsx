@@ -173,14 +173,13 @@ export const EditUser = ({
                 />
               )}
             </form.AppField>
-            <form.AppField name="avatar">
+            <form.AppField name={USERS.AVATAR_FIELD}>
               {(field) => (
                 <field.AvatarField
                   {...AVATAR_DRESS}
                   current={user.image}
                   label={t("Users.add.avatar.label")}
                   labels={avatarLabels}
-                  removedName={USERS.AVATAR_REMOVED}
                 />
               )}
             </form.AppField>

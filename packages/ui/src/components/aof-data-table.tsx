@@ -27,7 +27,11 @@ import {
 import { cva } from "class-variance-authority";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { cn } from "../lib/utils";
-import { AOFDataTableSkeleton } from "./aof-data-table-skeleton";
+import {
+  AOFDataTableSkeleton,
+  aofDataTableBox,
+  aofDataTableFrame,
+} from "./aof-data-table-skeleton";
 
 /**
  * An AOF table's features: pages, row selection, and its columns' widths
@@ -158,7 +162,6 @@ export const AOFDataTable = <TData extends RowData>({
             card={card}
             fill={fill}
             label={label}
-            rows={rows}
             table={table}
           />
         )}
@@ -168,7 +171,7 @@ export const AOFDataTable = <TData extends RowData>({
   }
   return (
     <div
-      className={cn("flex min-h-0 flex-1 flex-col gap-3", className)}
+      className={cn(aofDataTableFrame(), className)}
       data-slot="aof-data-table"
       {...props}
     >
@@ -199,17 +202,12 @@ const valueBox = cva(
 const widths = <TData extends RowData>(
   column: Column<AOFTableFeatures, TData>,
   fill: readonly string[] | undefined
-): CSSProperties =>
-  fill?.includes(column.id)
-    ? {
-        maxWidth: column.columnDef.maxSize,
-        minWidth: column.columnDef.minSize || "min-content",
-        width: "100%",
-      }
-    : {
-        maxWidth: column.columnDef.maxSize,
-        minWidth: column.columnDef.minSize,
-      };
+): CSSProperties => {
+  const { maxSize, minSize } = column.columnDef;
+  return fill?.includes(column.id)
+    ? { maxWidth: maxSize, minWidth: minSize || "min-content", width: "100%" }
+    : { maxWidth: maxSize, minWidth: minSize };
+};
 
 /**
  * A row (or its card) while it is being changed: faded, positioned so a
@@ -239,96 +237,114 @@ const AOFDataTableRows = <TData extends RowData>({
   card,
   fill,
   label,
-  rows,
   table,
 }: Pick<
   AOFDataTableProps<TData>,
   "busy" | "card" | "fill" | "label" | "table"
-> & {
-  rows: AOFRow<TData>[];
-}) => (
-  <>
-    {/* Base UI's scroll area (shadcn's `scroll-area` is built on it): the
-        viewport is the only scroller, both ways, so the header sticks to
-        it; its own bars stay hidden. Only a horizontal bar is drawn, at the
-        bottom whenever the columns need more room than the box has, never
-        fading, its thumb a hand to grab; up and down scrolls by wheel,
-        touch and keys alone. */}
-    <ScrollAreaPrimitive.Root
-      className={cn(
-        "relative min-h-0 flex-1 overflow-hidden rounded-lg border",
-        card && "hidden md:block"
-      )}
-    >
-      <ScrollAreaPrimitive.Viewport className="size-full overscroll-x-contain outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-        <ScrollAreaPrimitive.Content className="**:data-[slot=table-container]:overflow-visible">
-          <Table aria-label={label} className="text-base">
-            <TableHeader className="sticky top-0 z-10 bg-background">
-              {table.getHeaderGroups().map((group) => (
-                <TableRow key={group.id}>
-                  {group.headers.map((header) => (
-                    <TableHead
-                      className={cn(
-                        "h-(--field-height) has-[[role=checkbox]]:px-3",
-                        fill && !fill.includes(header.column.id) && "w-px"
-                      )}
-                      key={header.id}
-                    >
-                      <div
-                        className={valueBox()}
-                        style={widths(header.column, fill)}
-                      >
-                        {header.isPlaceholder ? null : (
-                          <table.FlexRender header={header} />
-                        )}
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  className={busyRow()}
-                  key={row.id}
-                  {...busyProps(row, busy)}
-                >
-                  {row.getAllCells().map((cell) => (
-                    <TableCell
-                      className="h-(--field-height) has-[[role=checkbox]]:px-3"
-                      key={cell.id}
-                    >
-                      <div
-                        className={valueBox()}
-                        style={widths(cell.column, fill)}
-                      >
-                        <table.FlexRender cell={cell} />
-                      </div>
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollAreaPrimitive.Content>
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar
-        className="cursor-pointer **:data-[slot=scroll-area-thumb]:cursor-grab **:data-[slot=scroll-area-thumb]:rounded-sm **:data-[slot=scroll-area-thumb]:bg-input **:data-[slot=scroll-area-thumb]:active:cursor-grabbing"
-        orientation="horizontal"
-      />
-    </ScrollAreaPrimitive.Root>
-    {card ? (
-      <ul
-        aria-label={label}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
+>) => {
+  const { rows } = table.getRowModel();
+  return (
+    <>
+      {/* Two boxes, one axis each, inside Base UI's scroll area (shadcn's
+        `scroll-area` is built on it). iOS pans a box that scrolls both ways
+        freely on a diagonal drag (WebKit bug 209486), so the table came
+        loose: the viewport scrolls only sideways and holds the columns'
+        full width, and inside it a box scrolls only up and down, the header
+        sticking to it, so it moves sideways with its columns. Neither
+        bounces sideways (`overscroll-behavior` `none`; `contain` still
+        bounces); at the rows' end a swipe up or down carries on to the
+        page. The box keeps a header and eight rows of height: on a shorter
+        screen the page grows and scrolls instead, its padding still under
+        the pager. The viewport is laid over the box (`absolute`), so the
+        rows never make the box, or the page, taller than that. Each box is a scroll area of its
+        own, so Base UI makes each a keyboard stop while it overflows, its
+        arrows scrolling it, and leaves it out otherwise. Only a horizontal bar is
+        drawn, at the bottom whenever the columns need more room than the
+        box has, never fading, its thumb a hand to grab. */}
+      <ScrollAreaPrimitive.Root
+        className={cn(aofDataTableBox(), card && "hidden md:block")}
       >
-        {rows.map((row) => (
-          <li className={busyRow()} key={row.id} {...busyProps(row, busy)}>
-            {card(row)}
-          </li>
-        ))}
-      </ul>
-    ) : null}
-  </>
-);
+        {/* `!`: Base UI sets `overflow: scroll` inline. */}
+        <ScrollAreaPrimitive.Viewport
+          className="overflow-y-hidden! absolute inset-0 overscroll-x-none outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          data-slot="data-table-viewport"
+        >
+          <ScrollAreaPrimitive.Content className="h-full **:data-[slot=table-container]:overflow-visible">
+            <ScrollAreaPrimitive.Root className="h-full">
+              <ScrollAreaPrimitive.Viewport
+                className="overflow-x-hidden! size-full overscroll-y-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                data-slot="data-table-rows"
+              >
+                <Table aria-label={label} className="text-base">
+                  <TableHeader className="sticky top-0 z-10 bg-background">
+                    {table.getHeaderGroups().map((group) => (
+                      <TableRow key={group.id}>
+                        {group.headers.map((header) => (
+                          <TableHead
+                            className={cn(
+                              "h-(--field-height) has-[[role=checkbox]]:px-3",
+                              fill && !fill.includes(header.column.id) && "w-px"
+                            )}
+                            key={header.id}
+                          >
+                            <div
+                              className={valueBox()}
+                              style={widths(header.column, fill)}
+                            >
+                              {header.isPlaceholder ? null : (
+                                <table.FlexRender header={header} />
+                              )}
+                            </div>
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow
+                        className={busyRow()}
+                        key={row.id}
+                        {...busyProps(row, busy)}
+                      >
+                        {row.getAllCells().map((cell) => (
+                          <TableCell
+                            className="h-(--data-table-row) has-[[role=checkbox]]:px-3"
+                            key={cell.id}
+                          >
+                            <div
+                              className={valueBox()}
+                              style={widths(cell.column, fill)}
+                            >
+                              <table.FlexRender cell={cell} />
+                            </div>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollAreaPrimitive.Viewport>
+            </ScrollAreaPrimitive.Root>
+          </ScrollAreaPrimitive.Content>
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar
+          className="cursor-pointer **:data-[slot=scroll-area-thumb]:cursor-grab **:data-[slot=scroll-area-thumb]:rounded-sm **:data-[slot=scroll-area-thumb]:bg-input **:data-[slot=scroll-area-thumb]:active:cursor-grabbing"
+          orientation="horizontal"
+        />
+      </ScrollAreaPrimitive.Root>
+      {card ? (
+        <ul
+          aria-label={label}
+          className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
+        >
+          {rows.map((row) => (
+            <li className={busyRow()} key={row.id} {...busyProps(row, busy)}>
+              {card(row)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
+};

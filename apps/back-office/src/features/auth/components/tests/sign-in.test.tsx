@@ -35,6 +35,8 @@ const EMAIL_LABEL = /<label[^>]*for="sign-in-email"[^>]*>Email</;
 const EMAIL_AUTOCOMPLETE = /<input[^>]*autoComplete="username"/;
 const PASSWORD_AUTOCOMPLETE = /<input[^>]*autoComplete="current-password"/;
 const EMPTY_ALERT = /role="alert"[^>]*><\/div>/;
+const REQUIRED_MARK = /aria-hidden="true"[^>]*>\*</;
+const ARIA_REQUIRED = /<input[^>]*aria-required="true"/g;
 const ERROR_ALERT = /role="alert"[^>]*>.*Email or password is wrong\./;
 const INVALID_FIELD = /aria-invalid="true"/g;
 
@@ -89,6 +91,12 @@ describe("SignInForm", () => {
     expect(html).toContain('type="submit"');
     // The line stays, empty, so a refusal moves nothing.
     expect(html).toMatch(EMPTY_ALERT);
+  });
+
+  it("marks no field with an asterisk: both are needed, and the inputs say so", () => {
+    const html = render(<SignInForm />);
+    expect(html).not.toMatch(REQUIRED_MARK);
+    expect(html.match(ARIA_REQUIRED)).toHaveLength(2);
   });
 
   it("shows an error as an alert and marks both fields", () => {

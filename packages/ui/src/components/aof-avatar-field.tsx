@@ -4,18 +4,15 @@ import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IconCrop, IconPhotoSquareRounded } from "@tabler/icons-react";
 import { useSelector } from "@tanstack/react-form";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { canDraw } from "../lib/crop-image";
+import { useCallback, useId, useState } from "react";
+import { avatarRemoval } from "../lib/avatar-change";
 import { useFieldContext } from "../lib/form-context";
 import { shownErrors } from "../lib/form-errors";
-import { heicToJpeg } from "../lib/heic-to-jpeg";
+import {
+  useCropPictures,
+  useHeldFile,
+  useObjectUrl,
+} from "../lib/use-avatar-pictures";
 import {
   AOFAvatarCropDialog,
   type AOFAvatarCropDialogProps,
@@ -26,28 +23,23 @@ import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
 import {
   AOFFileUpload,
   type AOFFileUploadItem,
+  type AOFFileUploadLabels,
   type AOFFileUploadProps,
 } from "./aof-file-upload";
 
-/** The field's words, in the page's language. */
-export type AOFAvatarFieldLabels = AOFAvatarCropLabels & {
-  change: string;
-  choose: string;
-  cropAgain: string;
-  /** The row of the picture the User already holds. */
-  current: string;
-  /** The drop area's title: "Drop your picture here". */
-  drop: string;
-  /** The formats taken and the largest size, under the title. */
-  formats: string;
-  /** While an iPhone's HEIC is turned into a JPEG. */
-  preparing: string;
-  remove: string;
-  /** Refused: over `AVATAR.INPUT_BYTES`. */
-  tooLarge: string;
-  /** Refused: not a picture it can read, even converted. */
-  unreadable: string;
-};
+/**
+ * The field's words, in the page's language: the drop area's own (`busy`
+ * while an iPhone's HEIC is turned into a JPEG), the crop dialog's, and its
+ * own three.
+ */
+export type AOFAvatarFieldLabels = AOFAvatarCropLabels &
+  Required<AOFFileUploadLabels> & {
+    cropAgain: string;
+    /** The row of the picture the User already holds. */
+    current: string;
+    /** Refused: not a picture it can read, even converted. */
+    unreadable: string;
+  };
 
 export type AOFAvatarFieldProps = {
   label: string;
@@ -56,11 +48,6 @@ export type AOFAvatarFieldProps = {
    * removes it.
    */
   current?: string | null | undefined;
-  /**
-   * The form name posted as `"true"` once `current` is removed and no file
-   * replaces it; nothing is posted otherwise.
-   */
-  removedName?: string | undefined;
   labels: AOFAvatarFieldLabels;
   /** The choose button, dressed by the App. */
   triggerProps?: AOFFileUploadProps["triggerProps"];
@@ -71,38 +58,6 @@ export type AOFAvatarFieldProps = {
         "labels" | "onCancel" | "onUse" | "open" | "src"
       >
     | undefined;
-};
-
-/**
- * The field's file input, the one the form posts: `holdInInput` puts the
- * cropped square in it, or nothing, without a change event.
- */
-const useHeldFile = (name: string) => {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const holdInInput = useCallback(
-    (file: File | null) => {
-      const input = rootRef.current?.querySelector<HTMLInputElement>(
-        `input[type="file"][name="${name}"]`
-      );
-      if (!input) {
-        return;
-      }
-      const held = new DataTransfer();
-      if (file) {
-        held.items.add(file);
-      }
-      input.files = held.files;
-    },
-    [name]
-  );
-  return { holdInInput, rootRef };
-};
-
-/** An object URL for `file` while it is shown, revoked after. */
-const useObjectUrl = (file: File | null) => {
-  const url = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
-  useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
-  return url;
 };
 
 /** The row id of the picture the User already holds. */
@@ -173,88 +128,74 @@ const heldItems = ({
  * A picture in an AOF form (ADR 0017), bound to its TanStack field as a
  * `File`: a click, a drop or a paste on its drop area opens the crop dialog
  * (an iPhone's HEIC is turned into a JPEG first, so it crops in every
- * browser), and Use keeps the square both in the field and in its file
+ * browser), and Use keeps the square both in the field and in its own file
  * input, named as the field, so the form's post sends it. The picture in use
  * is listed under the area: Crop again reopens the same original, the X
  * removes it. A file too large, or one it cannot read, is refused in the
  * field's error line. Given the picture a User already holds (`current`), it
  * lists that one while no file is picked: removing a new pick goes back to
- * it, and removing it posts `removedName`, so the form's action tells
- * "unchanged", "new" and "removed" apart.
+ * it, and removing it posts the removal (`avatarRemoval`): the form's action
+ * reads which of the three it got with `avatarChangeOf`.
  */
 export const AOFAvatarField = ({
   cropProps,
   current,
   label,
   labels,
-  removedName,
   triggerProps,
 }: AOFAvatarFieldProps) => {
   const field = useFieldContext<File | null>();
-  const [original, setOriginal] = useState<File | null>(null);
-  const [pickedName, setPickedName] = useState("");
-  const [cropping, setCropping] = useState(false);
-  const [preparing, setPreparing] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   // The current picture removed; a new pick then replaces nothing.
   const [removed, setRemoved] = useState(false);
-  const { holdInInput, rootRef } = useHeldFile(field.name);
+  const { holdInInput, inputRef } = useHeldFile();
   const errorId = useId();
   const preview = useObjectUrl(field.state.value);
-  const originalUrl = useObjectUrl(original);
   const errors = useFieldErrors(field, refusal);
+  const unreadable = useCallback(
+    () => setRefusal(labels.unreadable),
+    [labels.unreadable]
+  );
+  const crop = useCropPictures(unreadable);
+  const { forget, keep, pick } = crop;
 
   const refuse = useCallback(
-    (_: File, message: string) => {
-      setRefusal(message);
-      holdInInput(field.state.value);
-    },
-    [field.state.value, holdInInput]
+    (_: File, message: string) => setRefusal(message),
+    []
   );
   const accept = useCallback(
     async (file: File) => {
-      holdInInput(field.state.value);
-      setPreparing(true);
-      const drawable = await heicToJpeg(file).catch(() => null);
-      setPreparing(false);
-      if (!(drawable && (await canDraw(drawable)))) {
-        setRefusal(labels.unreadable);
-        return;
+      if (await pick(file)) {
+        setRefusal(null);
       }
-      setRefusal(null);
-      setOriginal(drawable);
-      setPickedName(file.name);
-      setCropping(true);
     },
-    [field.state.value, holdInInput, labels.unreadable]
+    [pick]
   );
   const use = useCallback(
     (file: File) => {
-      setCropping(false);
+      keep();
       field.handleChange(file);
       holdInInput(file);
     },
-    [field, holdInInput]
+    [field, holdInInput, keep]
   );
-  const cancel = useCallback(() => setCropping(false), []);
-  const cropAgain = useCallback(() => setCropping(true), []);
   const remove = useCallback(() => {
     if (!field.state.value) {
       setRemoved(true);
       return;
     }
     field.handleChange(null);
-    setOriginal(null);
+    forget();
     setRefusal(null);
     holdInInput(null);
-  }, [field, holdInInput]);
+  }, [field, forget, holdInInput]);
 
   const items = heldItems({
-    cropAgain: original ? cropAgain : null,
+    cropAgain: crop.cropAgain,
     cropAgainLabel: labels.cropAgain,
     current:
       current && !removed ? { label: labels.current, src: current } : null,
-    pickedName,
+    pickedName: crop.pickedName,
     preview,
     value: field.state.value,
   });
@@ -265,7 +206,7 @@ export const AOFAvatarField = ({
       <AOFFileUpload
         accept={IMAGE.INPUT_ACCEPT}
         aria-describedby={errors.length > 0 ? errorId : undefined}
-        busy={preparing}
+        busy={crop.preparing}
         icon={
           <IconPhotoSquareRounded
             aria-hidden
@@ -274,37 +215,37 @@ export const AOFAvatarField = ({
         }
         items={items}
         label={label}
-        labels={{
-          busy: labels.preparing,
-          change: labels.change,
-          choose: labels.choose,
-          drop: labels.drop,
-          formats: labels.formats,
-          remove: labels.remove,
-          tooLarge: labels.tooLarge,
-        }}
+        labels={labels}
         maxBytes={AVATAR.INPUT_BYTES}
-        name={field.name}
         onFileAccept={accept}
         onFileReject={refuse}
         onRemove={remove}
-        ref={rootRef}
         triggerProps={triggerProps}
       />
-      {removedName && removed && !field.state.value ? (
-        <input name={removedName} type="hidden" value="true" />
+      <input
+        aria-hidden
+        className="hidden"
+        name={field.name}
+        ref={inputRef}
+        tabIndex={-1}
+        type="file"
+      />
+      {removed && !field.state.value ? (
+        <input type="hidden" {...avatarRemoval(field.name)} />
       ) : null}
       <div className="min-h-6">
         <AOFFieldError errors={errors} id={errorId} />
       </div>
-      {originalUrl ? (
+      {crop.cropUrl ? (
         <AOFAvatarCropDialog
           {...cropProps}
+          // A new picture starts its own crop, never the last one's zoom.
+          key={crop.cropUrl}
           labels={labels}
-          onCancel={cancel}
+          onCancel={crop.cancel}
           onUse={use}
-          open={cropping}
-          src={originalUrl}
+          open={crop.cropping}
+          src={crop.cropUrl}
         />
       ) : null}
     </AOFField>

@@ -26,8 +26,8 @@ describe("saveAvatar", () => {
   it("stores the prepared file under a new name and answers the name with its blur", async () => {
     const picture = await saveAvatar("u1", Buffer.from("photo"));
     expect(picture).toEqual({
-      blurDataUrl: BLUR,
       image: expect.stringMatching(AVATAR_OF_U1),
+      imageBlurDataUrl: BLUR,
     });
     expect(putImageObject).toHaveBeenCalledWith(
       picture.image,

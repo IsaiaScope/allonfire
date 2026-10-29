@@ -8,7 +8,7 @@ import {
 } from "./access/access";
 
 /** A User's stored picture: its file's name, and the blur shown while it loads. */
-export type UserPicture = { image: string; blurDataUrl: string };
+export type UserPicture = { image: string; imageBlurDataUrl: string };
 
 /** A User as a list shows them: who, since when, and their Role in each App. */
 export type UserRecord = {
@@ -121,7 +121,7 @@ export const setUserImage = (
     await tx.user.update({
       data: {
         image: picture?.image ?? null,
-        imageBlurDataUrl: picture?.blurDataUrl ?? null,
+        imageBlurDataUrl: picture?.imageBlurDataUrl ?? null,
       },
       where: { id },
     });

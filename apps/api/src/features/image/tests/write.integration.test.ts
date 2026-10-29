@@ -1,6 +1,5 @@
 // @module-tag integration
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
 import { App, ImageAccess } from "@allonfire/database/enums";
@@ -119,7 +118,7 @@ describe("changing Images on the real stack", () => {
     // Dead once the image cache asked imgproxy again.
     await expect
       .poll(async () => (await fetch(publicLink?.url ?? "")).status, {
-        timeout: (IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * UNIT.MS_PER_SECOND,
+        timeout: IMAGE_SERVER.GONE_WITHIN_MS,
       })
       .toBe(HTTP.STATUS.NOT_FOUND);
     const [privateLink] = changed?.srcSet ?? [];

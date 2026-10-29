@@ -39,6 +39,26 @@ const tidy = (text: string) =>
   text.trim().split(PATTERN.WHITESPACE).join(SEPARATOR.WORD);
 
 /**
+ * What the box keeps of `typed` once typing rests: its words, and each
+ * `field:value` part that reads as no filter yet (`app:`, `app:lau`, a field
+ * it does not know), so a field still being typed never vanishes. A whole
+ * field (`app:laura`) leaves the box for its filter.
+ */
+const keptInBox = (typed: string) =>
+  [
+    USER_SEARCH.parse(typed).text,
+    ...tidy(typed)
+      .split(SEPARATOR.WORD)
+      .filter(
+        (part) =>
+          part.includes(SEPARATOR.FIELD) &&
+          USER_SEARCH.serialize(USER_SEARCH.parse(part)) === ""
+      ),
+  ]
+    .filter(Boolean)
+    .join(SEPARATOR.WORD);
+
+/**
  * The list's controls: an email search box, then the Filter button
  * (`UsersFilters`), all written into the one `search` param (ADR 0026), any change going back to the first page;
  * on the far right, the actions on the selection (`children`), then the
@@ -51,11 +71,11 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
   const search = useMemo(() => USER_SEARCH.parse(raw), [raw]);
   const [draft, setDraft] = useState(search.text);
   // The address changed under the box (Back, a link): the box follows it,
-  // unless it already says the same.
+  // unless its words already say the same (a field still being typed stays).
   const [seen, setSeen] = useState(search.text);
   if (search.text !== seen) {
     setSeen(search.text);
-    if (tidy(draft) !== search.text) {
+    if (USER_SEARCH.parse(draft).text !== search.text) {
       setDraft(search.text);
     }
   }
@@ -81,9 +101,8 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
     // A field typed in the box (`app:laura`) becomes its filter, and the
     // box keeps only the words.
     const timer = setTimeout(() => {
-      const typed = USER_SEARCH.parse(draft);
-      write({ ...search, ...typed });
-      setDraft(typed.text);
+      write({ ...search, ...USER_SEARCH.parse(draft) });
+      setDraft(keptInBox(draft));
     }, USERS.TYPING_REST_MS);
     return () => clearTimeout(timer);
   }, [draft, search, write]);

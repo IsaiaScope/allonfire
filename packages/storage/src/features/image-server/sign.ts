@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../environment/environment";
+import type { SignedLink } from "../image/constants/schemas";
 import { IMAGE_SERVER } from "./constants/image-server";
 
 const MS_PER_HOUR = UNIT.SECONDS_PER_HOUR * UNIT.MS_PER_SECOND;
@@ -61,10 +62,7 @@ export const privateLinkExpiry = (now: Date): Date =>
   );
 
 /** One signed link per `IMAGE_SERVER.WIDTHS`, for next/image's `srcset`. */
-export const pictureSrcSet = (
-  key: string,
-  expiresAt?: Date
-): { width: number; url: string }[] =>
+export const pictureSrcSet = (key: string, expiresAt?: Date): SignedLink[] =>
   IMAGE_SERVER.WIDTHS.map((width) => ({
     url: pictureLink({ expiresAt, key, width }),
     width,

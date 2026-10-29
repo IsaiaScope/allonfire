@@ -44,7 +44,7 @@ that answers only links the API signed.
 - An Avatar is not an Image: no `image` schema row, no placements, no alt.
 - No picture readable straight from storage; no Next optimizer for stored
   pictures (it caches one copy for everyone and fetches without the cookie).
-- No round avatar: a square tile with the Design's corners (`rounded-lg`).
+- No round avatar: a square tile with rounded corners (`rounded-md`, kept as built 2026-10-29).
 
 ## Access (the whole logic)
 
@@ -103,15 +103,23 @@ limits), stores it under a new key every time, and writes the file's name
 (`avatar-<userId>-<uuid>.avif`) into `User.image`, never a link: the API
 signs an hour-long link each time it returns that User (the Users list, the
 Session's `customSession`), and passes a provider's `https://` picture through
-unchanged. A file the browser cannot draw (HEIC in Chrome) is
-refused in the field with a translated message. The Add a User action calls
+unchanged. An iPhone's HEIC is turned into a JPEG in the browser first
+(`heic-to`, a libheif build loaded only when needed; about 1.9M weekly
+downloads), so it crops in every browser **(owner, kept as built
+2026-10-29; first refused in Chrome)**. A file the browser still cannot
+draw is refused in the field with a translated message. The Add a User action calls
 `POST /v1/users`, then `PUT /v1/users/:id/avatar` when a picture was chosen;
 if that fails, the User stays, the list opens and a toast says the picture was
 not saved.
 
-**Form.** The Avatar field is the first block of the left column: a 96px
-square tile (`rounded-lg`) with the preview, "Choose a picture" beside it,
-click, drop or paste, an X to remove. Built on DiceUI File Upload and Cropper
+**Form.** The Avatar field sits in the left column after the email and the
+name **(owner, kept as built 2026-10-29; first the column's first block)**,
+since the fields to type come first. It is a
+dashed drop area (click, drop or paste) saying what it takes, with a
+"Select a picture" button; the picture in use is listed under it, a row
+with its 40px thumbnail, name and size, Crop again and an X to remove
+(kept as built 2026-10-29; first a 96px tile with "Choose a picture" beside
+it). Built on DiceUI File Upload and Cropper
 (Base UI) through the shadcn CLI, wrapped as AOF components; Origin UI's
 comp-543 is the visual reference (survey:
 `2026-10-27-avatar-upload-library-survey.md`).

@@ -127,7 +127,8 @@ export const uploadHandlers = (deps: ImageDeps) =>
 /**
  * New file names, already copied, for each public Image the batch makes
  * private: its never-expiring links must die with the change, so the change
- * points it at the copy (`authorisePatch`) and the old file goes after. Only
+ * points it at the copy (`authorisePatch`) and the file the locked row named
+ * goes after (another change may have renamed it since this read). Only
  * for an Image the User may change everywhere, as read now: a refused change
  * copies nothing; one refused later, under the lock, has its copy deleted.
  */
@@ -135,7 +136,7 @@ const copiesForPrivate = async (
   deps: ImageDeps,
   user: AccessUser,
   changes: readonly PatchChange[]
-): Promise<Map<string, { from: string; to: string }>> => {
+): Promise<Map<string, string>> => {
   const turning = changes.filter(
     ({ access }) => access === ImageAccess.PRIVATE
   );
@@ -150,7 +151,7 @@ const copiesForPrivate = async (
       }
       const to = imageKey();
       await deps.copyObject(image.key, to);
-      return [[id, { from: image.key, to }] as const];
+      return [[id, to] as const];
     })
   );
   return new Map(copied.flat());
@@ -164,39 +165,38 @@ export const patchHandlers = (deps: ImageDeps) =>
     async (c) => {
       const changes = c.req.valid("json");
       const { user } = c.get(AUTH.VAR.SESSION);
-      const copies = await copiesForPrivate(deps, user, changes);
-      const renamed = new Map(
-        [...copies].map(([id, { to }]) => [id, to] as const)
-      );
+      const renamed = await copiesForPrivate(deps, user, changes);
       // Worked out inside the write, against the Images it locks, as a
       // delete checks: a placement added since nobody read it is checked too.
       const resolved: ImageChange[] = [];
+      // The file each renamed Image's locked row named, now replaced.
+      const replaced: string[] = [];
       const images = await deps
         .updateImages(
           changes.map(({ id }) => id),
           (current) => {
             resolved.push(...authorisePatch(user, current, changes, renamed));
+            replaced.push(
+              ...resolved.flatMap(({ id, key }) =>
+                key ? (current.get(id)?.key ?? []) : []
+              )
+            );
             return resolved;
           }
         )
         .catch(async (error: unknown) => {
-          await cleanUp(
-            deps,
-            [...copies.values()].map(({ to }) => to)
-          );
+          await cleanUp(deps, [...renamed.values()]);
           return notFoundOnUnknownIds(error);
         });
       // Any copy not used, then the old file of each Image now private:
       // asked twice, since its public links answer until it is gone.
       const used = new Set(resolved.flatMap(({ key }) => key ?? []));
-      const made = [...copies.values()];
-      const moved = made.filter(({ to }) => used.has(to));
       await cleanUp(
         deps,
-        made.flatMap(({ to }) => (used.has(to) ? [] : [to]))
+        [...renamed.values()].filter((to) => !used.has(to))
       );
       await deleteLeftovers({
-        keys: moved.map(({ from }) => from),
+        keys: replaced,
         log: deps.log,
         reason: LOG_MESSAGE.PUBLIC_FILE_LEFT,
         remove: deps.deleteObjects,

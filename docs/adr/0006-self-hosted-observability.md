@@ -85,3 +85,17 @@ are not traced; adding them means `instrumentation-ioredis` plus
 `@opentelemetry/instrumentation/hook.mjs` preloaded as plain JS, which the
 Node 24 + tsx combination makes fragile. Revisit if Redis latency ever needs
 explaining.
+
+## Amendment (2026-10-29): the Back Office emits too, on the API's stack
+
+The Back Office's server side reports what the API can never see: calls that
+never reached the API, and Next's own render, action and proxy errors. It joins
+the same stack rather than Next's recommended `@vercel/otel`. Its
+`src/instrumentation.ts` starts the OpenTelemetry NodeSDK on the Node runtime
+only, and its `onRequestError` logs uncaught server errors. Logs go through the
+same pino logger factory as the API's, which now lives in core, and on to the
+collector through `pino-opentelemetry-transport`. `@vercel/otel` was considered
+and rejected: it would mean a second OpenTelemetry setup beside the API's
+NodeSDK, and log lines in a different shape from the API's pino ones. Telemetry
+is mandatory: both Apps refuse to boot without the OTLP endpoint and
+headers, and production runs the `telemetry` service described above.

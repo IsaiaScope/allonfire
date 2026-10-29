@@ -106,7 +106,9 @@ many, and `middlewares/` reads wrong.
   route that changes Users reads the caller fresh, as the User module's `POST`, `PATCH`,
   `DELETE` and Avatar routes do through the Host's `canManageUsers({ sessionId, userId })`
   (`accessUserById` and `sessionAlive` side by side), since the Session's 5-minute cookie
-  cache may hold a Role since taken away, or outlive a Session a new password deleted.
+  cache can outlive a Session a new password deleted. Its Roles are never behind: auth's
+  `customSession` reads the Memberships on every `getSession`, cache hits included, so
+  `accessUserById` repeats that read.
   Nobody deletes themselves: a list holding the caller's id answers 403
   `USER.ERROR_CODE.CANNOT_DELETE_SELF` and deletes nobody. Nobody changes their own Role in
   the Host's `manageApp` (the API: `App.BACK_OFFICE`): 403

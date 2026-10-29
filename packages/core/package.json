@@ -35,6 +35,7 @@
     "./features/next/metadata/aof-indexed": "./src/features/next/metadata/aof-indexed.ts",
     "./features/next/metadata/aof-launch-screen-route": "./src/features/next/metadata/aof-launch-screen-route.ts",
     "./features/next/metadata/aof-logo-route": "./src/features/next/metadata/aof-logo-route.ts",
+    "./features/next/metadata/aof-page-metadata": "./src/features/next/metadata/aof-page-metadata.ts",
     "./features/next/metadata/launch-screens": "./src/features/next/metadata/launch-screens.ts",
     "./features/next/providers/aof-nuqs-adapter": "./src/features/next/providers/aof-nuqs-adapter.tsx",
     "./features/next/providers/aof-query-client-provider": "./src/features/next/providers/aof-query-client-provider.tsx",

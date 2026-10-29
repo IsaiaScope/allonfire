@@ -86,8 +86,10 @@ once.
 
 ## Back Office
 
-- `readUser(sessionCookie, id)` under `"use cache"` with `USERS.CACHE.TAG`
-  and `USERS.CACHE.LIFE` (it carries signed Avatar links, like `readUsers`).
+- `readUser(sessionCookie, id)`, read afresh on every request (changed
+  2026-10-29 from `"use cache"` under `USERS.CACHE.TAG`: the form saves the
+  whole set of Memberships, and a kept copy missed one gained by joining an
+  App, which Save then deleted).
   The update's action calls `updateTag(USERS.CACHE.TAG)`, dropping the list
   and the page together.
 - The page (`users/[id]`) stays `signedInPage`, `SectionPage width="form"`,

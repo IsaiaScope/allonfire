@@ -18,6 +18,8 @@ import { pictureLink } from "../sign";
 
 const { key } = FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE;
 const WIDTH = 640;
+/** A private link short enough to watch expire. */
+const LINK_MS = 2 * UNIT.MS_PER_SECOND;
 /** The signature segment of a link. */
 const SIGNATURE = /\/[\w-]{43}\//;
 const AVIF = { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE };
@@ -112,13 +114,13 @@ describe("the image server, through signed links", () => {
   });
 
   it("never serves a cached private picture once its link has expired", async () => {
-    const link = freshLink(2 * 1000);
+    const link = freshLink(LINK_MS);
     expect((await fetch(link, { headers: AVIF })).status).toBe(HTTP.STATUS.OK);
     expect((await fetch(link, { headers: AVIF })).status).toBe(HTTP.STATUS.OK);
     await expect
       .poll(async () => (await fetch(link, { headers: AVIF })).status, {
         interval: 250,
-        timeout: (2 + IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * 1000,
+        timeout: LINK_MS + IMAGE_SERVER.GONE_WITHIN_MS,
       })
       .toBe(HTTP.STATUS.NOT_FOUND);
   }, 10_000);

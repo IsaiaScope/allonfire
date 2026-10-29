@@ -30,7 +30,7 @@ loose, and the frame clear of the screen's edges.
   diagonal drag never moves it both ways at once. Nothing bounces past an
   edge: no gap above the header or beside the first column.
 - **A minimum table height.** On a short screen the table box never shrinks
-  below its header plus three rows; below that the page scrolls as a whole,
+  below its header plus eight rows; below that the page scrolls as a whole,
   as Add User's page does.
 
 ## Non-goals
@@ -84,17 +84,24 @@ loose, and the frame clear of the screen's edges.
   auto`), so a finger on the table reaches the pager. The page may give its
   own bounce at its ends, as any page does; the table's header never parts
   from its rows.
-- **Minimum height: header plus three rows** (my call): four
-  `--field-height` rows plus the rows' borders.
+- **Minimum height: header plus eight rows** (owner, 2026-10-29; first my
+  call of three, too compact on a short screen): each row as tall as the
+  list sets it (`--data-table-row`, a field's height by default; Users'
+  rows are 3.5rem), with its 1px line.
 - **No doubled inset beside the sidebar** (my call): from `md` the sidebar
   covers the left edge, so the frame sets the page's `--gutter-left` to
   `--page-gutter` alone; `--gutter-right` keeps the inset (the notch can be
   on the right). Set in the Back Office's frame, not in ui's tokens. The
   breadcrumb header's right end pads `px-4` plus
   `env(safe-area-inset-right)`.
-- **One keyboard stop** (my call): the up-and-down box is focusable, with
-  the focus ring and `aria-label`; left and right arrows chain to the
-  sideways box. A WebKit browser test proves the arrows move both.
+- **A keyboard stop per box, while it can scroll** (my call; changed
+  2026-10-29 from one stop): each box is a Base UI scroll area, which puts
+  its viewport in the tab order only while it overflows, with the focus
+  ring; the table keeps its `aria-label`. One stop could not be built: a
+  `tabIndex` on a plain box fails Biome's `noNoninteractiveTabindex`, and
+  arrows never reach a box inside the focused one. WebKit scrolls no focused
+  box by arrow keys (a plain one neither), so the browser test pins the
+  stops, not the arrows.
 
 - **Every table** (owner): the two scrollers, the bounce rule and the
   minimum height live in ui's `AOFDataTable`, so every list built on it

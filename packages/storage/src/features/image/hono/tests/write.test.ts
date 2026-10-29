@@ -7,10 +7,10 @@ import {
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
-import type { ImageVisibility } from "@allonfire/database/features/auth/access/access";
 import {
   type AuthoriseLinks,
   type ImageChange,
+  type ImageLink,
   type ImageLinksById,
   ImageNotFoundError,
 } from "@allonfire/database/features/image/image.service";
@@ -41,6 +41,9 @@ const officeAdmin = sessionFor({
   memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
 });
 
+/** The file name a locked Image row holds, in these tests. */
+const lockedKey = (id: string) => `${id}.avif`;
+
 /** The placements a write locks, as the database would find them. */
 type Links = (ids: readonly string[]) => Promise<ImageLinksById>;
 
@@ -50,9 +53,9 @@ const placedIn =
   (ids) =>
     Promise.resolve(
       new Map(
-        ids.map((id): [string, ImageVisibility] => [
+        ids.map((id): [string, ImageLink] => [
           id,
-          { access: ImageAccess.PRIVATE, apps },
+          { access: ImageAccess.PRIVATE, apps, key: lockedKey(id) },
         ])
       )
     );
@@ -62,9 +65,9 @@ const publicIn =
   (ids) =>
     Promise.resolve(
       new Map(
-        ids.map((id): [string, ImageVisibility] => [
+        ids.map((id): [string, ImageLink] => [
           id,
-          { access: ImageAccess.PUBLIC, apps },
+          { access: ImageAccess.PUBLIC, apps, key: lockedKey(id) },
         ])
       )
     );
@@ -452,7 +455,7 @@ describe("PATCH /images", () => {
   });
 
   it("making a public Image private moves it to a copy, then deletes the old file", async () => {
-    const OLD = "old.avif";
+    const OLD = lockedKey("image-1");
     const copyObject = vi.fn<ImageDeps["copyObject"]>(async () => undefined);
     const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
       async () => undefined
@@ -479,9 +482,32 @@ describe("PATCH /images", () => {
   });
 });
 
+describe("PATCH /images making an Image private, raced", () => {
+  it("deletes the file the locked row names, not the one read before the lock", async () => {
+    // Read as "old.avif"; meanwhile another PATCH made it private (a new
+    // name) and a third public again, so the locked row names that file.
+    const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
+      async () => undefined
+    );
+    const { updateImages } = updates(publicIn(App.LAURA));
+    const res = await app(lauraAdmin, {
+      copyObject: async () => undefined,
+      deleteObjects,
+      getImage: async () =>
+        imageRecord({ access: ImageAccess.PUBLIC, key: "old.avif" }),
+      updateImages,
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    expect(deleteObjects).toHaveBeenCalledWith([lockedKey("image-1")]);
+  });
+});
+
 describe("PATCH /images making an Image private, with storage failing", () => {
   it("asks again to delete the old file: its public links must not outlive the change", async () => {
-    const OLD = "old.avif";
+    const OLD = lockedKey("image-1");
     const deleteObjects = vi
       .fn<ImageDeps["deleteObjects"]>()
       .mockRejectedValueOnce(new Error("storage hiccup"))
@@ -561,8 +587,22 @@ describe("PATCH /images refusals", () => {
     const { updateImages, written } = updates(
       async () =>
         new Map([
-          ["image-1", { access: ImageAccess.PRIVATE, apps: [App.LAURA] }],
-          ["image-2", { access: ImageAccess.PRIVATE, apps: [App.BACK_OFFICE] }],
+          [
+            "image-1",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.LAURA],
+              key: lockedKey("image-1"),
+            },
+          ],
+          [
+            "image-2",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.BACK_OFFICE],
+              key: lockedKey("image-2"),
+            },
+          ],
         ])
     );
     const res = await app(lauraUser, { updateImages }).request(
@@ -603,8 +643,22 @@ describe("DELETE /images", () => {
     const { services, written } = deletes(
       async () =>
         new Map([
-          ["image-1", { access: ImageAccess.PRIVATE, apps: [App.LAURA] }],
-          ["image-2", { access: ImageAccess.PRIVATE, apps: [App.BACK_OFFICE] }],
+          [
+            "image-1",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.LAURA],
+              key: lockedKey("image-1"),
+            },
+          ],
+          [
+            "image-2",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.BACK_OFFICE],
+              key: lockedKey("image-2"),
+            },
+          ],
         ])
     );
     const res = await app(lauraUser, services).request(

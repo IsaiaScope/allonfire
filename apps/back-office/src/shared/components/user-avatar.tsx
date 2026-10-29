@@ -28,9 +28,10 @@ const hideOnError = ({ currentTarget }: { currentTarget: HTMLElement }) => {
 };
 
 /** A sign-in provider's picture, which the App's optimizer may fetch. */
-const fromProvider = (image: string): boolean =>
-  URL.canParse(image) &&
-  AUTH.PICTURE_HOSTS.some((host) => new URL(image).hostname === host);
+const fromProvider = (image: string): boolean => {
+  const host = URL.parse(image)?.hostname;
+  return AUTH.PICTURE_HOSTS.some((picture) => picture === host);
+};
 
 export type UserAvatarProps = ComponentPropsWithoutChildren<typeof AOFAvatar> &
   VariantProps<typeof initial> & {

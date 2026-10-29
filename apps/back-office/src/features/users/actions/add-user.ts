@@ -15,11 +15,12 @@ import {
   addUserSchema,
 } from "../utils/add-user-schema";
 import {
-  avatarChangeOf,
+  pictureOf,
   refusalOf,
   rolesOf,
   sendAvatarChange,
   textOf,
+  userAvatarChangeOf,
 } from "../utils/user-form-data";
 import { membershipsOf } from "../utils/user-form-schema";
 
@@ -55,10 +56,10 @@ export const addUser = async (
   form: FormData
 ): Promise<AddUserState> => {
   const values = valuesOf(form);
-  const avatar = avatarChangeOf(form);
+  const avatar = userAvatarChangeOf(form);
   const parsed = addUserSchema().safeParse({
     ...values,
-    avatar: avatar.picture,
+    avatar: pictureOf(avatar),
   });
   if (!parsed.success) {
     return { error: USERS.ADD_ERROR.INVALID, values };

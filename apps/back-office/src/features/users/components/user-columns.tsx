@@ -3,14 +3,15 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
+import { AOFBadge } from "@allonfire/ui/components/aof-badge";
 import { AOFButton } from "@allonfire/ui/components/aof-button";
 import { aofColumnHelper } from "@allonfire/ui/components/aof-data-table";
 import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
 import { cn } from "@allonfire/ui/lib/utils";
-import { IconChevronRight } from "@tabler/icons-react";
+import { IconBarrierBlockOff, IconChevronRight } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
 import { useFormatter, useTranslations } from "next-intl";
 import {
@@ -180,24 +181,40 @@ const UserIdentity = ({ user }: { user: UserBody }) => (
   </span>
 );
 
-/** Where a User has no Membership: a dash that says "not a member" aloud. */
-export const NoMembership = (props: ComponentPropsWithoutChildren<"span">) => {
+/** Where a User has no Membership: a closed barrier that says "not a member"
+ *  aloud. */
+export const NoMembership = () => {
   const t = useTranslations("Users");
   return (
     <>
-      <span aria-hidden="true" {...props}>
-        —
+      <span aria-hidden="true" className="inline-flex text-muted-foreground">
+        <IconBarrierBlockOff className="size-5" />
       </span>
       <span className="sr-only">{t("noMembership")}</span>
     </>
   );
 };
 
-/** A User's Role in `app`, or `NoMembership`. */
+/** A Role's chip, louder the more it allows: Admin in the primary, User
+ *  filled quietly, Viewer outlined. */
+const ROLE_BADGE = {
+  [Role.ADMIN]: "default",
+  [Role.USER]: "secondary",
+  [Role.VIEWER]: "outline",
+} as const satisfies Record<Role, "default" | "outline" | "secondary">;
+
+/** A User's Role in `app` on its chip, or `NoMembership`: the table's cell
+ *  and the phone's card alike. */
 export const RoleIn = ({ app, user }: { app: App; user: UserBody }) => {
   const t = useTranslations("Navigation");
   const role = roleIn(user, app);
-  return role ? t(`role.${role}`) : <NoMembership />;
+  return role ? (
+    <AOFBadge className="h-6 px-2 text-sm" variant={ROLE_BADGE[role]}>
+      {t(`role.${role}`)}
+    </AOFBadge>
+  ) : (
+    <NoMembership />
+  );
 };
 
 /**
@@ -222,8 +239,15 @@ export const useUserColumns = () => {
         }),
         ...objectValues(App).map((app) =>
           helper.display({
-            cell: ({ row }) => <RoleIn app={app} user={row.original} />,
-            header: APP_ENTRY[app].name,
+            // Chip, barrier and heading centred in the column.
+            cell: ({ row }) => (
+              <div className="text-center">
+                <RoleIn app={app} user={row.original} />
+              </div>
+            ),
+            header: () => (
+              <div className="text-center">{APP_ENTRY[app].name}</div>
+            ),
             id: app,
           })
         ),

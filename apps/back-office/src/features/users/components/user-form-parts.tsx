@@ -166,6 +166,7 @@ export const UserFormActions = ({
 export const useAvatarLabels = (): AOFAvatarFieldLabels => {
   const t = useTranslations("Users.add.avatar");
   return {
+    busy: t("preparing"),
     cancel: t("cancel"),
     change: t("change"),
     choose: t("choose"),
@@ -176,11 +177,11 @@ export const useAvatarLabels = (): AOFAvatarFieldLabels => {
     formats: t("formats", {
       size: AVATAR.INPUT_BYTES / UNIT.BYTES_PER_MIB,
     }),
-    preparing: t("preparing"),
     remove: t("remove"),
     tooLarge: t("tooLarge"),
     unreadable: t("unreadable"),
     use: t("use"),
+    wrongType: t("wrongType"),
     zoomIn: t("zoomIn"),
     zoomOut: t("zoomOut"),
   };

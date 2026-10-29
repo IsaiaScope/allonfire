@@ -24,7 +24,7 @@ const SAVED = "avatar-user-2-new.avif";
 const PREVIOUS = "avatar-user-2-old.avif";
 const GOOGLE = `https://${AUTH.PICTURE_HOSTS[0]}/a/x=s96-c`;
 const BLUR = "data:image/webp;base64,AAAA";
-const SAVED_PICTURE: UserPicture = { blurDataUrl: BLUR, image: SAVED };
+const SAVED_PICTURE: UserPicture = { image: SAVED, imageBlurDataUrl: BLUR };
 const signed = (image: string | null) => image && `signed:${image}`;
 /** A bad picture as the Host's saveAvatar throws it (the storage's 415). */
 const UNSUPPORTED = new CodedError({
@@ -130,6 +130,18 @@ describe("User module: PUT avatar", () => {
     const { deleted, deps } = depsWith({ exists: false });
     const res = await upload(testHost(ADMIN, deps));
     expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
+    expect(deleted).toEqual([[SAVED]]);
+  });
+
+  it("deletes the file just stored when the User's row cannot be written", async () => {
+    const { deleted, deps } = depsWith();
+    const res = await upload(
+      testHost(ADMIN, {
+        ...deps,
+        setUserImage: () => Promise.reject(new Error("database down")),
+      })
+    );
+    expect(res.status).toBe(HTTP.STATUS.INTERNAL_SERVER_ERROR);
     expect(deleted).toEqual([[SAVED]]);
   });
 

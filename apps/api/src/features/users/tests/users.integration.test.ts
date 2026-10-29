@@ -14,7 +14,6 @@ import {
 } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
@@ -332,7 +331,7 @@ describe("a User's Avatar", () => {
   });
   /** A deleted file's link is dead once the image cache asked imgproxy again. */
   const UNTIL_CACHE_CHECKED = {
-    timeout: (IMAGE_SERVER.CACHE_CHECK_SECONDS + 1) * UNIT.MS_PER_SECOND,
+    timeout: IMAGE_SERVER.GONE_WITHIN_MS,
   };
 
   afterAll(async () => {

@@ -1,12 +1,12 @@
 import { createAuth, toAuthLike } from "@allonfire/auth/features/server/auth";
+import { avatarLink } from "@allonfire/storage/features/avatar/utils/avatar-key";
 import { env } from "../../environment/environment";
 import { API } from "../../shared/constants/api";
-import { avatarLinkNow } from "../../shared/utils/avatar-link";
 
 /** Built once at import. Tests never import this; they pass a stub to `createApp`. */
 export const auth = toAuthLike(
   createAuth({
-    avatarLink: avatarLinkNow,
+    avatarLink,
     basePath: API.PATH.AUTH,
     baseURL: env.AUTH_URL,
     cookieDomain: env.AUTH_COOKIE_DOMAIN,

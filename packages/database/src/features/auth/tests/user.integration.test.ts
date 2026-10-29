@@ -357,10 +357,13 @@ describe("a User's picture", () => {
 
   it("sets it with its blur, then replaces both, answering what it held before", async () => {
     expect(
-      await setUserImage(pictured, { blurDataUrl: BLUR, image: FIRST })
+      await setUserImage(pictured, { image: FIRST, imageBlurDataUrl: BLUR })
     ).toEqual({ previous: null });
     expect(
-      await setUserImage(pictured, { blurDataUrl: `${BLUR}2`, image: SECOND })
+      await setUserImage(pictured, {
+        image: SECOND,
+        imageBlurDataUrl: `${BLUR}2`,
+      })
     ).toEqual({ previous: FIRST });
     expect(await pictureOf(pictured)).toEqual({
       image: SECOND,
@@ -376,10 +379,10 @@ describe("a User's picture", () => {
       data: { email: "together@set-user-image.test" },
       select: { id: true },
     });
-    await setUserImage(id, { blurDataUrl: BLUR, image: FIRST });
+    await setUserImage(id, { image: FIRST, imageBlurDataUrl: BLUR });
     const answers = await Promise.all(
       ["a", "b", "c", "d"].map((tag) =>
-        setUserImage(id, { blurDataUrl: BLUR, image: `${SECOND}-${tag}` })
+        setUserImage(id, { image: `${SECOND}-${tag}`, imageBlurDataUrl: BLUR })
       )
     );
     const previous = answers.map((answer) => answer?.previous);
@@ -391,7 +394,7 @@ describe("a User's picture", () => {
       data: { email: "removed@set-user-image.test" },
       select: { id: true },
     });
-    await setUserImage(id, { blurDataUrl: BLUR, image: FIRST });
+    await setUserImage(id, { image: FIRST, imageBlurDataUrl: BLUR });
     expect(await setUserImage(id, null)).toEqual({ previous: FIRST });
     expect(await pictureOf(id)).toEqual({
       image: null,
@@ -408,7 +411,10 @@ describe("a User's picture", () => {
 
   it("answers null for a User who does not exist", async () => {
     expect(
-      await setUserImage("no-such-user", { blurDataUrl: BLUR, image: FIRST })
+      await setUserImage("no-such-user", {
+        image: FIRST,
+        imageBlurDataUrl: BLUR,
+      })
     ).toBeNull();
   });
 

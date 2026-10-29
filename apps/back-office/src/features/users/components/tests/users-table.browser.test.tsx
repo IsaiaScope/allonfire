@@ -161,6 +161,16 @@ describe("UsersTable", () => {
     await expect
       .element(table.getByText(t.noMembership).first())
       .toBeInTheDocument();
+    // No Membership is a closed barrier, not a dash.
+    expect(
+      table.element().querySelector(".tabler-icon-barrier-block-off")
+    ).not.toBeNull();
+    // A Role on its chip, as on a phone's card.
+    await expect
+      .element(
+        table.getByText(EN.Navigation.role.ADMIN, { exact: true }).first()
+      )
+      .toHaveAttribute("data-slot", "badge");
     const [laura] = USERS_PAGE.users;
     await expect
       .element(
@@ -243,6 +253,40 @@ describe("UsersTable", () => {
   });
 });
 
+describe("UsersTable columns", () => {
+  it("centres each App's heading, Role chips and barriers in its column", async () => {
+    const screen = await renderAt();
+    const table = screen.getByRole("table", { name: t.list });
+    await expect.element(table).toBeVisible();
+    const middle = (box: DOMRect) => box.left + box.width / 2;
+    /** How far `box` sits from the middle of its cell's value box. */
+    const offCentre = (box: DOMRect, inside: Element) => {
+      const valueBox = inside.closest("td, th")?.firstElementChild;
+      return valueBox
+        ? Math.abs(middle(box) - middle(valueBox.getBoundingClientRect()))
+        : Number.POSITIVE_INFINITY;
+    };
+    // A heading's words, not the block that holds them.
+    const headings = [LAURA, APP_ENTRY[App.BACK_OFFICE].name].map((name) => {
+      const heading = table.getByText(name, { exact: true }).element();
+      const words = document.createRange();
+      words.selectNodeContents(heading);
+      return offCentre(words.getBoundingClientRect(), heading);
+    });
+    const marks = [
+      ...table
+        .element()
+        .querySelectorAll(
+          '[data-slot="badge"], .tabler-icon-barrier-block-off'
+        ),
+    ].map((mark) => offCentre(mark.getBoundingClientRect(), mark));
+    expect(marks.length).toBeGreaterThan(0);
+    for (const offset of [...headings, ...marks]) {
+      expect(offset).toBeLessThan(1);
+    }
+  });
+});
+
 describe("UsersTable controls", () => {
   it("searches by email once typing rests, back on the first page", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
@@ -256,6 +300,22 @@ describe("UsersTable controls", () => {
       .toBe(WORDS);
     expect(lastQuery(onUrlUpdate).get(USER.PARAM.PAGE)).toBeNull();
     await expect.poll(() => sent.at(-1)?.get(USER.PARAM.SEARCH)).toBe(WORDS);
+  });
+
+  it("keeps a field still being typed in the box, the words searched", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    const screen = await renderAt("", onUrlUpdate);
+    const box = screen.getByRole("searchbox", { name: t.search.label });
+    // Half a field: no App starts the search yet, and the box keeps it.
+    const halfTyped = `${TEXT} app:lau`;
+    await box.fill(halfTyped);
+    await expect
+      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH), {
+        timeout: WAIT_MS,
+      })
+      .toBe(WORDS);
+    await new Promise((settle) => setTimeout(settle, USERS.TYPING_REST_MS));
+    await expect.element(box).toHaveValue(halfTyped);
   });
 
   it("turns a field typed in the box into its filter, which then clears", async () => {

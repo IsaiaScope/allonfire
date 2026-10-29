@@ -42,7 +42,7 @@ covered for real by e2e. CI runs browser and e2e tests only for affected Apps.
 
 The pre-commit hook (`.husky/pre-commit`) runs Biome on the staged files
 (errors and warnings fail), `oxlint --type-aware` over the repo, starts the
-Local stack (`pnpm docker:up`, then waits for the database, Redis and storage; Docker must be running) for the
+Local stack (`pnpm docker:up`, then waits for the database, Redis, storage, the image server and its cache; Docker must be running) for the
 integration tests, then `turbo run check-types test test:browser`, then
 `turbo run test:e2e`: the App's production build, served like the Docker
 image (standalone server), plus the API, on their own ports (3310 and the

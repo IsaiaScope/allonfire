@@ -7,12 +7,12 @@ import {
   canSeeImage,
   type ImageVisibility,
 } from "@allonfire/database/features/auth/access/access";
-import type {
-  ImageChange,
-  ImageLinksById,
-} from "@allonfire/database/features/image/image.service";
+import type { ImageChange } from "@allonfire/database/features/image/image.service";
 import type { PatchChange } from "../constants/schemas";
 import { forbidden, imageChanged, notFound } from "./errors";
+
+/** Each Image's access and Apps, by id: what a write's checks read. */
+type Placements = ReadonlyMap<string, ImageVisibility>;
 
 /**
  * How the Image module authorises a write (ADR 0020). Every check over a
@@ -85,7 +85,7 @@ export const authoriseUpload = (
  */
 export const authoriseDelete = (
   user: AccessUser,
-  current: ImageLinksById,
+  current: Placements,
   app?: App
 ) => {
   assertVisible(user, current.values(), app);
@@ -119,7 +119,7 @@ const renamedKey = (renamed: ReadonlyMap<string, string>, id: string) => {
  */
 export const authorisePatch = (
   user: AccessUser,
-  current: ImageLinksById,
+  current: Placements,
   changes: readonly PatchChange[],
   renamed: ReadonlyMap<string, string> = new Map()
 ): ImageChange[] => {

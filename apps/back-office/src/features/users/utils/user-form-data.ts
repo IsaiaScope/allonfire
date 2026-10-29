@@ -1,5 +1,9 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  type AOFAvatarChange,
+  avatarChangeOf,
+} from "@allonfire/ui/lib/avatar-change";
 import { z } from "zod";
 import type { ApiClient } from "@/features/api/utils/api";
 import { USERS } from "../constants/users";
@@ -17,36 +21,34 @@ export const rolesOf = (form: FormData) =>
     roleChoiceSchema.catch(USERS.NO_ROLE).parse(textOf(form, `roles.${app}`))
   );
 
-/**
- * The picture's change as the field posts it: a new one, cropped in the
- * browser (`picture`), the current one removed with none replacing it
- * (`removed`), or neither.
- */
-export type AvatarChange = { picture: File | null; removed: boolean };
+/** The picture's change as both User forms post it (`USERS.AVATAR_FIELD`). */
+export const userAvatarChangeOf = (form: FormData) =>
+  avatarChangeOf(form, USERS.AVATAR_FIELD);
 
-export const avatarChangeOf = (form: FormData): AvatarChange => {
-  const picture = form.get("avatar");
-  return {
-    picture: picture instanceof File && picture.size > 0 ? picture : null,
-    removed: textOf(form, USERS.AVATAR_REMOVED) === "true",
-  };
-};
+/** The new picture a change brings, for the form's schema; none otherwise. */
+export const pictureOf = (change: AOFAvatarChange) =>
+  change.kind === "picture" ? change.file : null;
 
 /**
- * Sends the picture's change once the User is saved: the API's answer, or
+ * Sends the picture's change once the User is saved: the API's answer (a
+ * network error when it never got there, so the action still answers), or
  * null when there was nothing to send.
  */
 export const sendAvatarChange = async (
   client: ApiClient,
   id: string,
-  { picture, removed }: AvatarChange
+  change: AOFAvatarChange
 ): Promise<Response | null> => {
   const { avatar } = client[API.VERSION.CURRENT].users[":id"];
-  if (picture) {
-    return await avatar.$put({ form: { file: picture }, param: { id } });
+  if (change.kind === "picture") {
+    return await avatar
+      .$put({ form: { file: change.file }, param: { id } })
+      .catch(() => Response.error());
   }
-  if (removed) {
-    return await avatar.$delete({ param: { id } });
+  if (change.kind === "removed") {
+    return await avatar
+      .$delete({ param: { id } })
+      .catch(() => Response.error());
   }
   return null;
 };

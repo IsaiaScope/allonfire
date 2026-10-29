@@ -1,7 +1,8 @@
+import type { SignedLink } from "@allonfire/storage/features/image/constants/schemas";
 import type { ImageLoader } from "next/image";
 
 /** One signed link per width, as the API answers a stored picture. */
-export type SignedSrcSet = readonly { width: number; url: string }[];
+export type SignedSrcSet = readonly SignedLink[];
 
 /**
  * A next/image loader over a stored Image's signed links: for each width
@@ -11,15 +12,11 @@ export type SignedSrcSet = readonly { width: number; url: string }[];
 export const srcSetLoader =
   (srcSet: SignedSrcSet): ImageLoader =>
   ({ width }) => {
-    const fitting = srcSet
-      .filter((link) => link.width >= width)
-      .reduce<SignedSrcSet[number] | undefined>(
-        (best, link) => (best && best.width <= link.width ? best : link),
-        undefined
-      );
-    const largest = srcSet.reduce<SignedSrcSet[number] | undefined>(
-      (best, link) => (best && best.width >= link.width ? best : link),
-      undefined
+    const narrowestFirst = [...srcSet].sort((a, b) => a.width - b.width);
+    return (
+      (
+        narrowestFirst.find((link) => link.width >= width) ??
+        narrowestFirst.at(-1)
+      )?.url ?? ""
     );
-    return (fitting ?? largest)?.url ?? "";
   };

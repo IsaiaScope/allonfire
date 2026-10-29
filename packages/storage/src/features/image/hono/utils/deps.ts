@@ -6,6 +6,7 @@ import type {
   removeImagesFromApp,
   updateImages,
 } from "@allonfire/database/features/image/image.service";
+import type { LeftoverLog } from "../../objects/delete-leftovers";
 import type {
   copyImageObject,
   deleteImageObjects,
@@ -28,5 +29,5 @@ export type ImageDeps = {
   /** Takes Images out of one App, deleting those left in none; returns their keys. */
   removeImagesFromApp: typeof removeImagesFromApp;
   /** Where best-effort cleanup failures go; pino's shape. */
-  log: { warn: (details: object, message: string) => void };
+  log: LeftoverLog;
 };

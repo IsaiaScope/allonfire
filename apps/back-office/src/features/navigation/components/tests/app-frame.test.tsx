@@ -44,4 +44,18 @@ describe("AppFrame", () => {
   it("marks Home current on the root, and only Home", () => {
     expect(renderFrame().match(/<a[^>]*aria-current="page"/g)).toHaveLength(1);
   });
+
+  it("keeps the frame clear of the screen's edges at every width", () => {
+    const html = renderFrame();
+    expect(
+      count(html, "pb-[max(--spacing(2),env(safe-area-inset-bottom))]")
+    ).toBe(1);
+    expect(
+      count(html, "max-md:pb-[max(--spacing(2),env(safe-area-inset-bottom))]")
+    ).toBe(0);
+    expect(
+      count(html, "pr-[calc(--spacing(4)+env(safe-area-inset-right,0px))]")
+    ).toBe(1);
+    expect(count(html, "md:[--gutter-left:var(--page-gutter)]")).toBe(1);
+  });
 });

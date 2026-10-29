@@ -5,9 +5,9 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
+import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { SECTION } from "@/features/navigation/constants/sections";
-import { sectionMetadata } from "@/features/navigation/utils/section-metadata";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
 import { UsersTable } from "@/features/users/components/users-table";
@@ -16,7 +16,8 @@ import { readUsers } from "@/features/users/utils/read-users";
 import { usersListKey } from "@/features/users/utils/users-queries";
 import { usersVisitorOf } from "@/features/users/utils/users-visitor";
 
-export const generateMetadata = () => sectionMetadata(SECTION.USERS);
+export const generateMetadata = () =>
+  pageMetadata(SECTION.USERS.path, `Navigation.${SECTION.USERS.label}`);
 
 const leaveToTable = () => undefined;
 

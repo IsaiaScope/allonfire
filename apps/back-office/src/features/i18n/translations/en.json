@@ -150,6 +150,7 @@
         "tooLarge": "That picture is too large",
         "unreadable": "That picture could not be read. Try another one.",
         "use": "Use",
+        "wrongType": "That file is not a picture. Try a JPEG, PNG, WebP, AVIF or HEIC.",
         "zoomIn": "Zoom in",
         "zoomOut": "Zoom out"
       },

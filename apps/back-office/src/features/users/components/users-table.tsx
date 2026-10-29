@@ -25,6 +25,7 @@ import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { api } from "@/features/api/utils/api";
 import { usersParams } from "../constants/users-params";
+import { userRow } from "../utils/user-row";
 import { useUsersBeingDeleted } from "../utils/users-mutations";
 import { usersQuery } from "../utils/users-queries";
 import { DeleteUsers } from "./delete-users";
@@ -175,6 +176,7 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
     <AOFDataTable
       busy={isDeleting}
       card={userCard}
+      className={userRow()}
       fill={FILL}
       footer={
         <AOFDataTablePagination

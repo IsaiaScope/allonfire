@@ -4,6 +4,23 @@ import type { ReactNode } from "react";
 import type { ComponentPropsWithoutChildren } from "../lib/types";
 import { cn } from "../lib/utils";
 
+/**
+ * A list's frame, the table's and its skeleton's alike: a row is a field's
+ * height (`--data-table-row`) unless the list sets its own.
+ */
+export const aofDataTableFrame = cva(
+  "flex flex-1 flex-col gap-3 [--data-table-row:var(--field-height)]"
+);
+
+/**
+ * The rows' box, the table's and its skeleton's alike, so nothing moves when
+ * the rows arrive: at least the header and eight rows, each with its 1px
+ * line, and the border.
+ */
+export const aofDataTableBox = cva(
+  "relative min-h-[calc(var(--field-height)+(var(--data-table-row)+1px)*8+2px)] flex-1 overflow-hidden rounded-lg border"
+);
+
 /** A column of the skeleton: its share of the width and what it holds. */
 export type AOFDataTableSkeletonColumn = {
   /** A selection column: a checkbox's box instead of a bar. */
@@ -70,8 +87,9 @@ const stepOf = (row: number, column: number) =>
 
 /**
  * The table's shape while its first rows load, as `AOFDataTable` draws it, so
- * nothing moves when they arrive: a header and rows as tall as a field
- * (`--field-height`) in a bordered box, a box for a selection column, text
+ * nothing moves when they arrive: a header as tall as a field and rows as
+ * tall as the table's (`--data-table-row`) in a bordered box, a box for a
+ * selection column, text
  * bars of varied lengths; with `cards`, cards on a phone instead; with
  * `pager`, the pager under it.
  */
@@ -107,7 +125,7 @@ export const AOFDataTableSkeleton = ({
     ));
   return (
     <div
-      className={cn("flex min-h-0 flex-1 flex-col gap-3", className)}
+      className={cn(aofDataTableFrame(), className)}
       data-slot="aof-data-table-skeleton"
       role="status"
       {...props}
@@ -115,46 +133,47 @@ export const AOFDataTableSkeleton = ({
       <span className="sr-only">{label}</span>
       <div
         aria-hidden="true"
-        className={cn(
-          "min-h-0 flex-1 overflow-hidden rounded-lg border",
-          cards && "hidden md:block"
-        )}
+        className={cn(aofDataTableBox(), cards && "hidden md:block")}
       >
-        <div
-          className="grid h-(--field-height) border-b"
-          style={{ gridTemplateColumns }}
-        >
-          {line((column) => (
-            <Skeleton
-              className={ink({ shape: column.check ? "box" : "head" })}
-              data-skeleton={column.check ? "check" : "head"}
-            />
-          ))}
-        </div>
-        {placeholders("row", rows).map((row, rowIndex) => (
+        {/* Laid over the box, as the table's rows are: however many there
+            are, the box is the table's size. */}
+        <div className="absolute inset-0">
           <div
-            className="grid h-(--field-height) border-b last:border-b-0"
-            key={row}
+            className="grid h-(--field-height) border-b"
             style={{ gridTemplateColumns }}
           >
-            {line((column, index) =>
-              column.check ? (
-                <Skeleton
-                  className={ink({ shape: "box" })}
-                  data-skeleton="check"
-                />
-              ) : (
-                <Skeleton
-                  className={cn(
-                    ink({ shape: "text" }),
-                    width({ step: stepOf(rowIndex, index) })
-                  )}
-                  data-skeleton="cell"
-                />
-              )
-            )}
+            {line((column) => (
+              <Skeleton
+                className={ink({ shape: column.check ? "box" : "head" })}
+                data-skeleton={column.check ? "check" : "head"}
+              />
+            ))}
           </div>
-        ))}
+          {placeholders("row", rows).map((row, rowIndex) => (
+            <div
+              className="grid h-(--data-table-row) border-b last:border-b-0"
+              key={row}
+              style={{ gridTemplateColumns }}
+            >
+              {line((column, index) =>
+                column.check ? (
+                  <Skeleton
+                    className={ink({ shape: "box" })}
+                    data-skeleton="check"
+                  />
+                ) : (
+                  <Skeleton
+                    className={cn(
+                      ink({ shape: "text" }),
+                      width({ step: stepOf(rowIndex, index) })
+                    )}
+                    data-skeleton="cell"
+                  />
+                )
+              )}
+            </div>
+          ))}
+        </div>
       </div>
       {cards ? (
         <ul

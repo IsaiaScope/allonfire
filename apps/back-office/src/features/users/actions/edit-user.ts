@@ -13,11 +13,12 @@ import {
   editUserSchema,
 } from "../utils/edit-user-schema";
 import {
-  avatarChangeOf,
+  pictureOf,
   refusalOf,
   rolesOf,
   sendAvatarChange,
   textOf,
+  userAvatarChangeOf,
 } from "../utils/user-form-data";
 import { membershipsOf } from "../utils/user-form-schema";
 
@@ -52,10 +53,10 @@ export const editUser = async (
   form: FormData
 ): Promise<EditUserState> => {
   const values = valuesOf(form);
-  const avatar = avatarChangeOf(form);
+  const avatar = userAvatarChangeOf(form);
   const parsed = editUserSchema().safeParse({
     ...values,
-    avatar: avatar.picture,
+    avatar: pictureOf(avatar),
   });
   if (!parsed.success) {
     return { error: USERS.EDIT_ERROR.INVALID, values };
@@ -82,7 +83,7 @@ export const editUser = async (
     return { error, values };
   }
   const sent = await sendAvatarChange(client, id, avatar);
-  // The kept list and this User's page hold the old values.
+  // The kept list holds the old values.
   updateTag(USERS.CACHE.TAG);
   // Deleted by another Admin between the save and their picture.
   if (sent?.status === HTTP.STATUS.NOT_FOUND) {

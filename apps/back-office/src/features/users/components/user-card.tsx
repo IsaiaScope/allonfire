@@ -2,9 +2,7 @@
 
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "@allonfire/database/enums";
-import { roleIn } from "@allonfire/database/features/auth/access/access";
-import { AOFBadge } from "@allonfire/ui/components/aof-badge";
+import { App } from "@allonfire/database/enums";
 import {
   AOFCard,
   AOFCardContent,
@@ -22,7 +20,7 @@ import { BrushKanji } from "@/shared/components/brush-kanji";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
-import { CopyEmail, NoMembership, OpenUser, useCreated } from "./user-columns";
+import { CopyEmail, OpenUser, RoleIn, useCreated } from "./user-columns";
 
 /**
  * The card's selection checkbox, a small tile (24px; its hit area still a
@@ -34,28 +32,6 @@ import { CopyEmail, NoMembership, OpenUser, useCreated } from "./user-columns";
 export const cardCheckbox = cva(
   "size-6 rounded-sm bg-muted data-checked:border-destructive data-checked:bg-destructive data-checked:text-white dark:bg-background dark:data-checked:bg-destructive dark:data-checked:text-background **:data-[slot=checkbox-indicator]:[&>svg]:size-3.5 **:data-[slot=checkbox-indicator]:[&>svg]:stroke-3"
 );
-
-/** A Role's chip, louder the more it allows: Admin in the primary, User
- *  filled quietly, Viewer outlined. */
-const ROLE_BADGE = {
-  [Role.ADMIN]: "default",
-  [Role.USER]: "secondary",
-  [Role.VIEWER]: "outline",
-} as const satisfies Record<Role, "default" | "outline" | "secondary">;
-
-/** A User's Role in `app` on its chip, or a dash that says "not a member"
- *  aloud. */
-const RoleBadge = ({ app, user }: { app: App; user: UserBody }) => {
-  const t = useTranslations("Navigation");
-  const role = roleIn(user, app);
-  return role ? (
-    <AOFBadge className="h-6 px-2 text-sm" variant={ROLE_BADGE[role]}>
-      {t(`role.${role}`)}
-    </AOFBadge>
-  ) : (
-    <NoMembership className="text-muted-foreground" />
-  );
-};
 
 /**
  * A User on a phone, as a platform sign: the line's colour along its foot and
@@ -129,7 +105,7 @@ export const UserCard = ({
                 <span className="truncate">{APP_ENTRY[app].name}</span>
               </dt>
               <dd className="shrink-0">
-                <RoleBadge app={app} user={user} />
+                <RoleIn app={app} user={user} />
               </dd>
             </div>
           ))}

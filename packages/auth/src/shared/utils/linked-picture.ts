@@ -1,8 +1,10 @@
+import type { UserRecord } from "@allonfire/database/features/auth/user.service";
+
 /** What a browser gets for `User.image`, from the Host: our file signed, anything else as it is. */
 export type AvatarLink = (image: string | null) => string | null;
 
 /** A User's picture as the database holds it. */
-type StoredPicture = { image: string | null; imageBlurDataUrl: string | null };
+type StoredPicture = Pick<UserRecord, "image" | "imageBlurDataUrl">;
 
 /**
  * A User's picture as a browser gets it, wherever the module answers one (the

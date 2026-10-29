@@ -23,10 +23,10 @@ export const USERS = {
    */
   ADD_NOTICE: { AVATAR_FAILED: "avatarFailed" },
   /**
-   * The form name the picture field posts, as `"true"`, once the User's
-   * current picture is removed and none replaces it.
+   * The picture field's name in both User forms; its removal posts under
+   * `avatarRemoval(AVATAR_FIELD)` (ui's `avatar-change`).
    */
-  AVATAR_REMOVED: "avatarRemoved",
+  AVATAR_FIELD: "avatar",
   /**
    * The list's rows, kept on this server per Session and address
    * (`readUsers`) until a change to Users calls `updateTag(TAG)`, which drops

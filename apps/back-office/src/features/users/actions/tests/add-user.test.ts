@@ -3,6 +3,7 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
+import { updateTag } from "next/cache";
 import { redirect } from "@/features/i18n/navigation";
 import { USERS } from "../../constants/users";
 import { addUser } from "../add-user";
@@ -76,6 +77,20 @@ describe("addUser", () => {
     expect(redirect).toHaveBeenCalledOnce();
   });
 
+  it("says so when the picture's call never reaches the API, the list still dropped", async () => {
+    FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
+    FAKE_API.unreachable.add(HTTP.METHOD.PUT);
+    const state = await addUser(
+      "en",
+      {},
+      formOf({
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+      })
+    );
+    expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+    expect(state).toEqual({ notice: USERS.ADD_NOTICE.AVATAR_FAILED });
+  });
+
   it("sends the picture once added, and says so when the API refuses it", async () => {
     FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
     FAKE_API.answers.set(HTTP.METHOD.PUT, {
@@ -84,7 +99,9 @@ describe("addUser", () => {
     const state = await addUser(
       "en",
       {},
-      formOf({ avatar: new File(["x"], "a.webp", { type: "image/webp" }) })
+      formOf({
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+      })
     );
     expect(FAKE_API.sent.map(({ method }) => method)).toEqual([
       HTTP.METHOD.POST,

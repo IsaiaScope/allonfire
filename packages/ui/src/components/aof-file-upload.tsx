@@ -1,5 +1,6 @@
 "use client";
 
+import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import {
   FileUpload,
@@ -29,6 +30,8 @@ export type AOFFileUploadLabels = {
   remove: string;
   /** Refused: over `maxBytes`. */
   tooLarge: string;
+  /** Refused: neither a type nor an extension `accept` names. */
+  wrongType: string;
 };
 
 /** A file the caller holds, as a row under the area. */
@@ -37,10 +40,9 @@ export type AOFFileUploadItem = {
   name: string;
   /** Its size in bytes; none for a file only linked, such as a stored picture. */
   size?: number | undefined;
-  /** A picture's `blob:` URL for its thumbnail; none, and `icon` stands in. */
+  /** A picture's `blob:` URL for its thumbnail; none, and a file's icon
+   *  stands in. */
   preview?: string | null | undefined;
-  /** What stands in for a thumbnail; a file's icon when left out. */
-  icon?: ReactNode;
   /** More buttons before the remove one (Crop again). */
   actions?: ReactNode;
 };
@@ -102,9 +104,7 @@ const FileRow = ({
             width={40}
           />
         ) : (
-          (item.icon ?? (
-            <IconFile aria-hidden className="size-5 text-muted-foreground" />
-          ))
+          <IconFile aria-hidden className="size-5 text-muted-foreground" />
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -127,21 +127,77 @@ const FileRow = ({
   );
 };
 
+/** What `accept` names, lowercased: types (`image/png`, `image/*`) and
+ *  extensions (`.heic`). */
+const acceptedOf = (accept: string | undefined) =>
+  accept?.split(SEPARATOR.LIST).map((entry) => entry.trim().toLowerCase()) ??
+  [];
+
+/**
+ * Why `file` is refused, in the caller's words, or null: a type or an
+ * extension `accept` does not name, whatever the extension's case (an
+ * iPhone's `IMG_0001.HEIC`, which some browsers hand over with no type),
+ * else a size over `maxBytes`. DiceUI's own check is case-sensitive and
+ * answers in English, so this one runs first.
+ */
+export const fileRefusal = (
+  {
+    accept,
+    labels,
+    maxBytes,
+  }: {
+    accept?: string | undefined;
+    labels: AOFFileUploadLabels;
+    maxBytes: number;
+  },
+  file: File
+): string | null => {
+  const type = file.type.toLowerCase();
+  const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
+  const accepted = acceptedOf(accept);
+  const takes =
+    accepted.length === 0 ||
+    accepted.some(
+      (entry) =>
+        entry === type ||
+        entry === extension ||
+        (entry.endsWith("/*") && type.startsWith(entry.slice(0, -1)))
+    );
+  if (!takes) {
+    return labels.wrongType;
+  }
+  return file.size > maxBytes ? labels.tooLarge : null;
+};
+
+/** `accept` with each extension in capitals too, for DiceUI's own check,
+ *  which a file `fileRefusal` took must pass. */
+const acceptBothCases = (accept: string | undefined) =>
+  accept &&
+  acceptedOf(accept)
+    .flatMap((entry) =>
+      entry.startsWith(".") ? [entry, entry.toUpperCase()] : [entry]
+    )
+    .join(SEPARATOR.LIST);
+
 /**
  * A file upload for any form (DiceUI's File Upload, Origin UI's look): a
  * dashed drop area (a click, a drop or a paste) with what it takes and a
- * button to choose, a file over `maxBytes` refused with `tooLarge`, and the
+ * button to choose, a file `accept` does not name refused with `wrongType`,
+ * one over `maxBytes` with `tooLarge` (`fileRefusal`), and the
  * files the caller holds listed under it, each with its size and a remove
  * button. It keeps no files itself: `onFileAccept` hands each one over, the
  * caller prepares it (converts, crops) and passes it back in `items`. Any
  * other prop goes to DiceUI's root (`accept`, `name`, `multiple`, `ref`).
  */
 export const AOFFileUpload = ({
+  accept,
+  "aria-describedby": describedBy,
   busy = false,
   className,
   disabled,
   icon,
   items,
+  label,
   labels,
   maxBytes,
   multiple,
@@ -153,21 +209,25 @@ export const AOFFileUpload = ({
   } = {},
   ...props
 }: AOFFileUploadProps) => {
-  const validate = useCallback(
-    (file: File) => (file.size > maxBytes ? labels.tooLarge : null),
-    [labels.tooLarge, maxBytes]
-  );
+  const validate = (file: File) =>
+    fileRefusal({ accept, labels, maxBytes }, file);
   const held = items.length > 0 && !multiple;
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <FileUpload
+        accept={acceptBothCases(accept)}
         disabled={busy || disabled}
+        label={label}
         multiple={multiple}
         onFileValidate={validate}
         {...props}
       >
+        {/* The one stop a keyboard reaches, so it carries the name and
+            what the field says (its error). */}
         <FileUploadDropzone
           aria-busy={busy || undefined}
+          aria-describedby={describedBy}
+          aria-label={label}
           // The whole area opens the chooser, not only its button.
           className="min-h-52 cursor-pointer gap-0 rounded-lg border border-input border-dashed px-4 py-6 text-center"
         >

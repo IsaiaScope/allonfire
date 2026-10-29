@@ -3,10 +3,12 @@ import { App } from "@allonfire/database/enums";
 import {
   AOFDataTableSkeleton,
   type AOFDataTableSkeletonColumn,
+  aofDataTableFrame,
 } from "@allonfire/ui/components/aof-data-table-skeleton";
 import { cn } from "@allonfire/ui/lib/utils";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
+import { userRow } from "../utils/user-row";
 import { tiledControl } from "./toolbar-action";
 
 /** The table's columns as the list lays them out: the selection box, the
@@ -52,6 +54,7 @@ export const UsersRowsSkeleton = () => {
   return (
     <AOFDataTableSkeleton
       cards={CARDS}
+      className={userRow()}
       columns={COLUMNS}
       label={t("loading")}
       pager
@@ -66,7 +69,7 @@ export const UsersRowsSkeleton = () => {
  * the address (nuqs) and so would hold the page back with it.
  */
 export const UsersListSkeleton = () => (
-  <div className="flex min-h-0 flex-1 flex-col gap-3">
+  <div className={aofDataTableFrame()}>
     <div aria-hidden className="@container">
       <div className="flex flex-wrap items-center gap-2">
         <div

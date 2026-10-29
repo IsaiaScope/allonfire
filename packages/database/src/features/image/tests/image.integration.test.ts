@@ -246,7 +246,9 @@ describe("image.service writes", () => {
     const seen = vi.fn((): ImageChange[] => [{ id, place: [LAURA] }]);
     const [changed] = await updateImages([id, id], seen);
     expect(seen).toHaveBeenCalledWith(
-      new Map([[id, { access: ImageAccess.PRIVATE, apps: [OFFICE] }]])
+      new Map([
+        [id, { access: ImageAccess.PRIVATE, apps: [OFFICE], key: one?.key }],
+      ])
     );
     expect(changed?.apps).toEqual([LAURA, OFFICE]);
   });
@@ -378,7 +380,10 @@ describe("image.service deletes", () => {
       "refused"
     );
     const placed = new Map([
-      [id, { access: ImageAccess.PRIVATE, apps: [LAURA, OFFICE] }],
+      [
+        id,
+        { access: ImageAccess.PRIVATE, apps: [LAURA, OFFICE], key: one?.key },
+      ],
     ]);
     expect(seen).toEqual([placed, placed]);
     expect((await getImage(id))?.apps).toEqual([LAURA, OFFICE]);

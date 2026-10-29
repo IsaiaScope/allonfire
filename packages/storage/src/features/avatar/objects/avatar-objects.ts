@@ -24,7 +24,7 @@ export const saveAvatar = async (
   const image = avatarKey(userId);
   const { blurDataUrl, buffer } = await prepareAvatar(file).catch(asImageError);
   await putImageObject(image, buffer);
-  return { blurDataUrl, image };
+  return { image, imageBlurDataUrl: blurDataUrl };
 };
 
 const LOG_MESSAGE = {

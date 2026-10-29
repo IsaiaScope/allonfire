@@ -1,11 +1,15 @@
 // @module-tag integration
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
+import { avatarChangeOf } from "@allonfire/ui/lib/avatar-change";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { useCallback } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { UserAvatar } from "@/shared/components/user-avatar";
+import { USERS } from "../../constants/users";
 
 /** The storage's HEIC Fixture, served by Vite to the browser under test. */
 const HEIC_URL = new URL(
@@ -53,6 +57,7 @@ vi.mock("@allonfire/ui/components/aof-image", async () => {
 });
 
 const LABELS = {
+  busy: "Preparing the picture",
   cancel: "Cancel",
   change: "Change",
   choose: "Select a picture",
@@ -61,16 +66,15 @@ const LABELS = {
   dialogTitle: "Crop the picture",
   drop: "Drop your picture here",
   formats: "JPEG, PNG, WebP, AVIF or HEIC, up to 20 MB",
-  preparing: "Preparing the picture",
   remove: "Remove the picture",
   tooLarge: "That picture is too large",
   unreadable: "That picture could not be read",
   use: "Use",
+  wrongType: "That is not a picture",
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
 };
-const SIGNED =
-  "http://localhost:9010/signature/rs:fit:256:0/plain/s3://image/avatar-u-1.avif";
+const SIGNED = `${LOCAL.URL.IMAGE_SERVER}/signature/rs:fit:256:0/plain/s3://image/avatar-u-1.avif`;
 const GOOGLE = `https://${AUTH.PICTURE_HOSTS[0]}/a/picture=s96-c`;
 
 /** A picture the browser can draw: a PNG drawn here, 800x600 unless told. */
@@ -84,9 +88,11 @@ const photo = async (width = 800, height = 600) => {
     context.fillRect(0, 0, width, height);
   }
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/png")
+    canvas.toBlob(resolve, HTTP.CONTENT_TYPE.PNG)
   );
-  return new File([blob ?? new Blob()], "photo.png", { type: "image/png" });
+  return new File([blob ?? new Blob()], "photo.png", {
+    type: HTTP.CONTENT_TYPE.PNG,
+  });
 };
 const unreadable = () =>
   new File([new Uint8Array([1, 2, 3])], "photo.heic", { type: "image/heic" });
@@ -97,9 +103,10 @@ const iphonePhoto = async () =>
   });
 
 const NO_AVATAR: { avatar: File | null } = { avatar: null };
+/** The field's label, and so its drop area's name. */
+const LABEL = "Picture";
 
 const STORED = "/stored-avatar.avif";
-const REMOVED = "avatarRemoved";
 
 const AvatarForm = ({
   current,
@@ -118,14 +125,9 @@ const AvatarForm = ({
   );
   return (
     <form onSubmit={submit}>
-      <form.AppField name="avatar">
+      <form.AppField name={USERS.AVATAR_FIELD}>
         {(field) => (
-          <field.AvatarField
-            current={current}
-            label="Picture"
-            labels={LABELS}
-            removedName={REMOVED}
-          />
+          <field.AvatarField current={current} label={LABEL} labels={LABELS} />
         )}
       </form.AppField>
       <button type="submit">Save</button>
@@ -133,18 +135,27 @@ const AvatarForm = ({
   );
 };
 
+/** The input the form posts: the field's own, under the field's name. */
 const fileInput = () =>
-  document.querySelector<HTMLInputElement>('input[type="file"][name="avatar"]');
-const pick = async (file: File) => {
-  const input = fileInput();
-  if (input) {
-    await userEvent.upload(input, file);
-  }
-};
+  document.querySelector<HTMLInputElement>(
+    `input[type="file"][name="${USERS.AVATAR_FIELD}"]`
+  );
+/** The input a visitor picks with: the drop area's, which posts nothing. */
+const picker = () =>
+  document.querySelector<HTMLInputElement>('input[type="file"]:not([name])');
+/** Picks `file` through the drop area's input, found by its exact name
+ *  ("Remove the picture" holds the word too): the drop area carries the same
+ *  name, and the input follows it. */
+const pick = (file: File) =>
+  userEvent.upload(page.getByLabelText(LABEL, { exact: true }).last(), file);
 const dialog = () => page.getByRole("dialog", { name: LABELS.dialogTitle });
-/** The removal the form posts, when there is one. */
-const removal = () =>
-  document.querySelector<HTMLInputElement>(`input[name="${REMOVED}"]`)?.value;
+/** What the form posts about the picture, read as an action reads it. */
+const posted = () => {
+  const form = document.querySelector("form");
+  return form
+    ? avatarChangeOf(new FormData(form), USERS.AVATAR_FIELD).kind
+    : null;
+};
 
 describe("AOFAvatarField", () => {
   it("shows where to drop a picture, the formats it takes and a button to select one", async () => {
@@ -158,11 +169,11 @@ describe("AOFAvatarField", () => {
 
   it("takes every format the storage takes, HEIC included", async () => {
     await render(<AvatarForm onSubmit={vi.fn()} />);
-    const accepted = fileInput()?.accept.split(",") ?? [];
+    const accepted = picker()?.accept.split(",") ?? [];
     expect(accepted).toEqual(
       expect.arrayContaining([
         "image/jpeg",
-        "image/png",
+        HTTP.CONTENT_TYPE.PNG,
         "image/webp",
         "image/avif",
         "image/heic",
@@ -244,11 +255,93 @@ describe("AOFAvatarField", () => {
   });
 });
 
+describe("AOFAvatarField's picks", () => {
+  // The browser fills in the type from the name here; a file handed over
+  // with none is fileRefusal's unit test.
+  it("takes an iPhone's HEIC named in capitals", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    const heic = await iphonePhoto();
+    await pick(new File([heic], "IMG_0001.HEIC", { type: "" }));
+    await expect.element(dialog(), { timeout: 15_000 }).toBeVisible();
+  });
+
+  it("refuses a file that is no picture, in the field's own words", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    await pick(
+      new File(["%PDF-1.7"], "notes.pdf", { type: "application/pdf" })
+    );
+    await expect.element(page.getByText(LABELS.wrongType)).toBeVisible();
+    expect(dialog().query()).toBeNull();
+  });
+
+  it("keeps the cropped picture posted when a second pick is refused", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    await pick(unreadable());
+    await expect.element(page.getByText(LABELS.unreadable)).toBeVisible();
+    await expect.poll(posted).toBe("picture");
+  });
+
+  it("a cancelled second pick leaves the first picture listed, name and all", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    await pick(
+      new File([await photo()], "second.png", { type: HTTP.CONTENT_TYPE.PNG })
+    );
+    await page.getByRole("button", { name: LABELS.cancel }).click();
+    await expect.element(dialog()).not.toBeInTheDocument();
+    await expect.element(page.getByText("photo.png")).toBeVisible();
+    expect(page.getByText("second.png").query()).toBeNull();
+  });
+
+  it("a second pick opens the dialog on the new picture, never the first one", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    // The kept original's own link, as Crop again shows it.
+    await page.getByRole("button", { name: LABELS.cropAgain }).click();
+    await expect.element(dialog()).toBeVisible();
+    const first = dialog().element().querySelector("img")?.src;
+    await page.getByRole("button", { name: LABELS.cancel }).click();
+    await expect.element(dialog()).not.toBeInTheDocument();
+    const shown = new Set<string>();
+    const watch = new MutationObserver(() => {
+      for (const image of document.querySelectorAll('[role="dialog"] img')) {
+        if (image instanceof HTMLImageElement) {
+          shown.add(image.src);
+        }
+      }
+    });
+    watch.observe(document.body, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+    await pick(await photo(600, 800));
+    await expect.element(dialog()).toBeVisible();
+    watch.disconnect();
+    expect(first).toBeTruthy();
+    expect([...shown]).not.toContain(first);
+  });
+
+  it("keeps the cropped picture posted when a second pick is cancelled", async () => {
+    await render(<AvatarForm onSubmit={vi.fn()} />);
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.use }).click();
+    await pick(await photo());
+    await page.getByRole("button", { name: LABELS.cancel }).click();
+    await expect.element(dialog()).not.toBeInTheDocument();
+    await expect.poll(posted).toBe("picture");
+  });
+});
+
 describe("AOFAvatarField with a current picture", () => {
   it("removing the current picture posts the removal and draws the empty drop area", async () => {
     await render(<AvatarForm current={STORED} onSubmit={vi.fn()} />);
     await expect.element(page.getByText(LABELS.current)).toBeVisible();
-    expect(removal()).toBeUndefined();
+    expect(posted()).toBe("unchanged");
     await page.getByRole("button", { name: LABELS.remove }).click();
     await expect
       .element(page.getByText(LABELS.current))
@@ -256,7 +349,7 @@ describe("AOFAvatarField with a current picture", () => {
     await expect
       .element(page.getByRole("button", { name: LABELS.choose }))
       .toBeVisible();
-    expect(removal()).toBe("true");
+    expect(posted()).toBe("removed");
   });
 
   it("a new picture after removing posts the file and no removal", async () => {
@@ -265,7 +358,7 @@ describe("AOFAvatarField with a current picture", () => {
     await pick(await photo());
     await page.getByRole("button", { name: LABELS.use }).click();
     await expect.poll(() => fileInput()?.files?.length).toBe(1);
-    expect(removal()).toBeUndefined();
+    expect(posted()).toBe("picture");
   });
 
   it("removing a new pick goes back to the current picture", async () => {
@@ -274,7 +367,7 @@ describe("AOFAvatarField with a current picture", () => {
     await page.getByRole("button", { name: LABELS.use }).click();
     await page.getByRole("button", { name: LABELS.remove }).click();
     await expect.element(page.getByText(LABELS.current)).toBeVisible();
-    expect(removal()).toBeUndefined();
+    expect(posted()).toBe("unchanged");
   });
 });
 

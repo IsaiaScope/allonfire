@@ -150,6 +150,7 @@
         "tooLarge": "La foto è troppo grande",
         "unreadable": "Non riesco a leggere la foto. Provane un'altra.",
         "use": "Usa",
+        "wrongType": "Il file non è una foto. Prova con JPEG, PNG, WebP, AVIF o HEIC.",
         "zoomIn": "Ingrandisci",
         "zoomOut": "Rimpicciolisci"
       },

@@ -155,6 +155,36 @@ describe("AOFDataTable", () => {
   });
 });
 
+describe("AOFDataTable scrolling", () => {
+  it("scrolls sideways outside and up and down inside, one axis each", () => {
+    const html = renderToStaticMarkup(<People pageIndex={0} />);
+    const rows = html.indexOf('data-slot="data-table-rows"');
+    expect(rows).toBeGreaterThan(-1);
+    const rowsTag = html.slice(
+      html.lastIndexOf("<div", rows),
+      html.indexOf(">", rows)
+    );
+    expect(rowsTag).toContain("overflow-x-hidden!");
+    expect(rowsTag).toContain("overscroll-y-auto");
+    expect(html).toContain("overflow-y-hidden!");
+    expect(html).toContain("overscroll-x-none");
+    expect(html).not.toContain("overscroll-x-contain");
+    // The header sticks to the up-and-down box, so it moves sideways with
+    // its columns.
+    expect(html.indexOf("sticky top-0")).toBeGreaterThan(rows);
+  });
+
+  it("keeps a header and eight rows of height, each row as tall as the list says", () => {
+    const html = renderToStaticMarkup(<People pageIndex={0} />);
+    // A field's height unless the list sets its own.
+    expect(html).toContain("[--data-table-row:var(--field-height)]");
+    expect(html).toContain(
+      "min-h-[calc(var(--field-height)+(var(--data-table-row)+1px)*8+2px)]"
+    );
+    expect(html).toContain("h-(--data-table-row)");
+  });
+});
+
 describe("AOFDataTable status", () => {
   it("while pending, draws the skeleton under the toolbar, one column per column", () => {
     const html = renderToStaticMarkup(
