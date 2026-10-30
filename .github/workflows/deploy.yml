@@ -188,9 +188,13 @@ jobs:
       matrix:
         unit: ${{ fromJSON(needs.changes.outputs.deploy) }}
     steps:
+      # gh, not actions/delete-package-versions: that action is unmaintained
+      # and still on Node 20. GHCR lists versions newest first.
       - name: Keep the last 10 images
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: allonfire-${{ matrix.unit }}
-          package-type: container
-          min-versions-to-keep: 10
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSIONS: users/${{ github.repository_owner }}/packages/container/allonfire-${{ matrix.unit }}/versions
+        run: |
+          gh api --paginate "$VERSIONS" --jq '.[].id' \
+            | tail -n +11 \
+            | xargs -r -I{} gh api -X DELETE "$VERSIONS/{}"

@@ -63,6 +63,7 @@ This plan runs **before** Quality Fixes A and B.
 - Task 7 Steps 1-2 (done 2026-10-30, owner's yes, no dump): the owner ran the drop (the permission check blocks agents from Production's database): schema `public` of `allonfire` dropped with Laura's 9 tables and 2 types, recreated empty, owned by pg_database_owner with USAGE for everyone.
 - Purpose names outside AllOnFire (owner's call, 2026-10-30): Dokploy services `multica`, `n8n`, `Adminer`, `Beszel`, `monorepoonfire` are `board`, `workflow`, `database-console`, `monitor`, `portfolio`, with generic descriptions (display names only: appNames, env, containers and volumes unchanged). Multica's Traefik files are `board-routes.yml` and `board-noindex.yml` (routers `board-*`). Not changed: the entrypoint-wide `security-headers-base` sets `X-Robots-Tag: index, follow` last, so board's `noindex` never reaches a browser.
 - Task 7 Step 3, first try (2026-10-30): cascade #92 → dev (v0.6.0, #93) → test (#94) → prod (#95) went green, but deploy run 41036007656 failed building the images: the Dockerfile's `npx turbo prune` fetched npm's latest turbo (2.11.10), whose pruned turbo.json carries `futureFlags.experimentalSetup`, which the builder's locked turbo 2.11.7 cannot parse. Nothing reached Dokploy. Fix: turbo pinned exactly in package.json, the prune runs that version, `local-files.test.ts` guards it; both images build locally.
+- Task 7 Steps 3-5 (done 2026-10-30): two more fixes before the deploy went green: images built natively for arm64 (the VPS is aarch64; v0.6.2) and storage-setup given the image server's keys (v0.6.3). Deploy run 41048583052 succeeded; `deployed/prod` is f77a2a0. The seed ran on the VPS, not the Mac (DATABASE_URL's host resolves only on dokploy-network): a one-off `allonfire-api:prod` container, owner-run.
 - Telemetry keys: `OTEL_EXPORTER_OTLP_ENDPOINT`/`_HEADERS`/`OTEL_SERVICE_NAME` are `TELEMETRY_ENDPOINT`/`TELEMETRY_HEADERS`/`TELEMETRY_SERVICE_NAME` (the API passes them to its exporters itself, so they are ours to name, generic across Apps). The ingest password was regenerated after its header was pasted in chat.
 - Delivery host (owner's call): the nginx service `image-cache` is `cdn`, the one public delivery address (`cdn.isaiariva.com`, Task 5's DNS record); pictures live under `/image` (links `https://cdn.isaiariva.com/image/…`), any other path is a 404 until something lives there. Its compose key is `CDN_HOST` (was `IMAGE_SERVER_HOST`), its volume `allonfire-cdn-data`. Local: Tailscale Service `svc:cdn` replaced `svc:image-server` (policy, Service and serve config done 2026-10-29).
 - Env files: every `.env.example` is in blocks by owner with keys in alphabetical order, and names exactly the keys its reader takes (`local/tests/env-examples.test.ts`); every env file follows its example.
@@ -185,6 +186,7 @@ This task takes over Plan A Task 3a.
     - root and S3 secrets as `${X:?X is required}`;
     - no published port;
     - Traefik labels routing `observe.isaiariva.com` through `admin-gate@file` on websecure with `letsencrypt`.
+      - Drift (2026-10-30): `admin-gate` dropped for `noindex@file` alone. The console signs in through the `Authorization` header, so the gate looped on its login.
   - a `telemetry-init` one-shot on the storage image's `mc`. It depends on `storage` being healthy. It runs `mc mb --ignore-existing local/telemetry`, then creates the user `OO_S3_ACCESS_KEY` with a policy that allows only `s3:*` on `telemetry` and `telemetry/*`. `telemetry` depends on it.
   - the API's and the Back Office's `TELEMETRY_ENDPOINT=http://telemetry:5080/api/default`, `TELEMETRY_HEADERS=${…_OTEL_HEADERS:-}` and `TELEMETRY_SERVICE_NAME`. They are optional here; Plan A makes them required.
   - a `redis` service (`redis:7-alpine`, `mem_limit` 128m, internal network only, an append-only volume), **only if** Task 3 found none. `API_REDIS_URL` then points at `redis://redis:6379`.
@@ -228,13 +230,13 @@ This task takes over Plan A Task 3a.
 
 - [x] **Step 1: Ask the owner for a yes**, naming exactly what is lost: every schema of the `allonfire` database on the Dokploy Postgres, Laura-era Users and Laura's data included, with no backup.
 - [x] **Step 2: Drop the schemas**, over SSH. Run `docker exec` with psql on the `allonfire` database: `DROP SCHEMA` for every schema the inventory listed, then `CREATE SCHEMA public`. Verify with `\dn`. Expected: only `public`, empty.
-- [ ] **Step 3: Cascade.** With the owner's yes at each push, run `/iso-push --cascade test`, then `/iso-push --cascade prod`. Watch `deploy.yml` with `gh run watch`. Expected: success.
-- [ ] **Step 4: Watch Dokploy's deploy.** Expected, in this order:
+- [x] **Step 3: Cascade.** With the owner's yes at each push, run `/iso-push --cascade test`, then `/iso-push --cascade prod`. Watch `deploy.yml` with `gh run watch`. Expected: success.
+- [x] **Step 4: Watch Dokploy's deploy.** Expected, in this order:
   1. `db-backup` exits 0;
   2. `db-migrate` exits 0;
   3. `storage-move` exits 0, or is skipped as already moved;
   4. `storage-setup`, `telemetry-init`, then `telemetry`, `api`, `back-office`, `image-server` and `image-cache` run, all healthy.
-- [ ] **Step 5: Seed the Admin.** Run once, against production's `DATABASE_URL`, from the owner's Mac, with the values read by the script:
+- [x] **Step 5: Seed the Admin.** Run once, against production's `DATABASE_URL`, from the owner's Mac, with the values read by the script:
   ```
   pnpm --filter @allonfire/database exec tsx --env-file=.env.production src/features/seed/cli.ts
   ```
@@ -246,8 +248,9 @@ This task takes over Plan A Task 3a.
 
 ### Task 8: Telemetry's ingest account and the first log lines
 
-- [ ] **Step 1: Guided, right after Task 7's deploy.** `TELEMETRY_HEADERS` is already filled (`docker/.env.production`, `apps/api/.env.production`): the Basic auth of the user `telemetry-ingest@allonfire.com`, password generated, so telemetry is on from the first deploy and its exports answer 401 until this step. The owner signs in at `https://observe.isaiariva.com` as the root user (`TELEMETRY_ROOT_*`) and adds that user. Its password goes to the clipboard, never the terminal: `grep '^TELEMETRY_HEADERS=' docker/.env.production | sed 's/.*Basic%20//' | python3 -c 'import sys,urllib.parse,base64; print(base64.b64decode(urllib.parse.unquote(sys.stdin.read().strip())).decode().split(":",1)[1], end="")' | pbcopy`.
-- [ ] **Step 2: No redeploy.** The header was in Dokploy's env from Task 5; exports succeed as soon as the user exists.
+- Drift (2026-10-30): OpenObserve v1.0.3 offers only an `Admin` role and no password field for a new user, so no `telemetry-ingest@` user was made. An ingestion token named `api` (IAM → Ingestion Tokens) replaced it: its ready `Basic` header went from the clipboard into both `.env.production` files and Dokploy's env, never printed. That needs a redeploy, which the cascade carrying the `observe.` gate change gives.
+- [x] **Step 1: Guided, right after Task 7's deploy.** `TELEMETRY_HEADERS` is already filled (`docker/.env.production`, `apps/api/.env.production`): the Basic auth of the user `telemetry-ingest@allonfire.com`, password generated, so telemetry is on from the first deploy and its exports answer 401 until this step. The owner signs in at `https://observe.isaiariva.com` as the root user (`TELEMETRY_ROOT_*`) and adds that user. Its password goes to the clipboard, never the terminal: `grep '^TELEMETRY_HEADERS=' docker/.env.production | sed 's/.*Basic%20//' | python3 -c 'import sys,urllib.parse,base64; print(base64.b64decode(urllib.parse.unquote(sys.stdin.read().strip())).decode().split(":",1)[1], end="")' | pbcopy`.
+- [x] **Step 2: No redeploy.** (Drift: redeploy needed, see above.) The header was in Dokploy's env from Task 5; exports succeed as soon as the user exists.
 - [ ] **Step 3: Verify.** In OpenObserve's logs stream, a line from `allonfire-api` appears within a minute of `curl https://api.isaiariva.com/health`.
 
 ### Task 9: Laura leaves the VPS

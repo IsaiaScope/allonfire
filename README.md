@@ -114,7 +114,7 @@ One-time setup:
 
 1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
 2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
-3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `BACK_OFFICE_URL`, `STORAGE_IMAGE_SERVER_HOST`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT`.
+3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds every key of `docker/.env.example` except `POSTGRES_*` and `DOKPLOY_*`, filled from `docker/.env.production` (`pnpm env:prod`).
 4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
 
 Before the API starts, the one-shot `storage-setup` service creates the `image` bucket when missing and leaves it closed to anonymous reads (no bucket policy); nothing is uploaded by hand.
