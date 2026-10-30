@@ -18,6 +18,7 @@ const BROAD_GRANT = /arn:aws:s3:::\*|arn:aws:s3:::image/;
 /** A service key, or a top-level key such as `volumes:`. */
 const NEXT_KEY = /^ {2}[a-z-]+:$|^[a-z]+:$/m;
 const REQUIRED_KEY = /\$\{([A-Z_]+):\?/g;
+const STORAGE_KEY = /- (STORAGE_[A-Z_]+)=/g;
 
 /** One service's block: from its key to the next top-level service key. */
 const service = (name: string) => {
@@ -166,3 +167,11 @@ it.each(REQUIRED)(
     expect(EXAMPLES.some((text) => exampleLine(key).test(text))).toBe(true);
   }
 );
+
+it("gives storage-setup every storage key the API gets: both load the storage package's env", () => {
+  const keys = (name: string) =>
+    [...service(name).matchAll(STORAGE_KEY)]
+      .map(([, key]) => key)
+      .sort((a, b) => a.localeCompare(b));
+  expect(keys("storage-setup")).toEqual(keys("api"));
+});

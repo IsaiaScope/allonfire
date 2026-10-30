@@ -55,10 +55,14 @@ services:
     depends_on:
       storage:
         condition: service_healthy
+    # The storage package's env is loaded whole: the image server's keys too.
     environment:
       - STORAGE_ENDPOINT=http://storage:9000
       - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
       - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+      - STORAGE_IMAGE_SERVER_URL=https://${CDN_HOST:?CDN_HOST is required}/image
+      - STORAGE_IMAGE_SERVER_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
+      - STORAGE_IMAGE_SERVER_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
     networks:
       - allonfire
 
