@@ -45,7 +45,7 @@ importers:
         specifier: ^7.0.2003
         version: 7.0.2003
       turbo:
-        specifier: ^2.11.7
+        specifier: 2.11.7
         version: 2.11.7
       typescript:
         specifier: ~6.0.3
