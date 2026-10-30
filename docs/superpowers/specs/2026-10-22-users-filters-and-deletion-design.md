@@ -14,12 +14,12 @@ An Admin who finds a User in the list should be able to remove them there. Today
 
 The App and Role selects become DiceUI's **Faceted** (Base UI build) **(owner)**:
 
-- a trigger showing the chosen option, or "All Apps" / "All Roles" when none is chosen;
+- a trigger naming the filter ("App", "Role") whatever is chosen; the picks show as badges in the Filters panel **(owner, kept as built 2026-10-29; first the chosen option, or "All Apps" / "All Roles" when none is chosen)**;
 - a popup with a search box, the options, a check beside the chosen one, and a **Reset** row at the bottom that clears the filter.
 
 Details:
 
-- Each filter stays **single choice**, as ADR 0026 has it. DiceUI's `Faceted` has a `multiple` switch, off by default, so single choice needs no patch: choosing an option replaces the previous one, and Reset or choosing the same option again clears it **(my call)**.
+- Each filter takes **several values**, any of them matching (`app:laura,back-office`), as ADR 0026 now has it **(owner, kept as built 2026-10-29; first single choice)**. DiceUI's `Faceted` runs with `multiple`; choosing an option again unpicks it. Both filters sit in one Filters panel (`AOFFilterPanel`), which shows each pick as a badge and clears them all.
 - The "All Apps" / "All Roles" options are removed from the list, since Reset does their job **(my call)**.
 - Every word is translated: the placeholder, the search box's placeholder, "No results", and Reset.
 - Installation: `npx shadcn@4.21.0 add https://diceui.com/r/base-nova/faceted.json` from `apps/back-office`, which lands in `packages/shadcn`. Then canonicalize, and wrap it as `AOFFaceted` in `packages/ui`.
@@ -31,11 +31,9 @@ Details:
   - a checkbox on each card on a phone;
   - built on TanStack Table's `rowSelectionFeature`, added to the AOF table's features;
   - the checkbox is shadcn's `checkbox`, through an AOF wrapper.
-- **Action Bar (owner):** DiceUI's **Action Bar** (Base UI build), wrapped as `AOFActionBar`.
-  - It shows while at least one row is selected, at the bottom of the page.
-  - It holds the count ("3 selected"), **Delete**, and a close button that clears the selection.
+- **Delete in the toolbar (owner, kept as built 2026-10-29; first an Action Bar):** a Delete button among the toolbar's actions, enabled while at least one row is selected. No Action Bar.
 - **Confirmation (owner):** Delete opens shadcn's `alert-dialog` (already installed), wrapped as `AOFAlertDialog`.
-  - It names the count and says what goes: "each User leaves every App, with their Sessions and Laura scores. This cannot be undone."
+  - It names the count and says what goes in general words, naming no App: "Each User leaves every App and is signed out everywhere. This cannot be undone." **(owner, 2026-10-29)**
   - Confirm deletes; Cancel closes it and keeps the selection.
 - **What is deleted (owner):** the whole User (CONTEXT.md: deleting a User, not removing them from an App). The User row goes, and the database's cascades remove:
   - every Membership;
@@ -50,7 +48,7 @@ Details:
 - **Who can delete:** the same rule as listing, at least Admin in the Back Office (`hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN)`), passed by the Host.
 - **Selection lifetime (owner):** cleared whenever the page, the page size, the search or a filter changes. You only ever delete rows you can see.
 - **Selection is keyed by User id** (`getRowId`), shared by the table and the cards, which draw the same rows **(my call)**.
-- **While deleting (my call):** the dialog's Confirm shows its pending state and both buttons are disabled; the bar stays. A double submit would be harmless anyway, since unknown ids are skipped.
+- **While deleting (owner, kept as built 2026-10-29; first a pending Confirm):** Confirm closes the dialog at once, and the Users fade and are out of reach until the list read again has them gone; Delete stays disabled meanwhile. A double submit would be harmless anyway, since unknown ids are skipped.
 - **After deleting (my call):**
   - a success toast ("3 Users deleted") through `useAOFToast`;
   - the selection clears;
@@ -80,17 +78,15 @@ Details:
 ## Back Office
 
 - The page reads the signed-in User with `getSession()` (cached per request, already read by the page's check) and hands `selfId` to `UsersTable` **(my call)**.
-- The mutation is TanStack Query's `useMutation` through the typed `hc` client. Its key goes in the shared `MUTATION` (`MUTATION.USERS.DELETE`), as the owner asked for keys.
-- The `client[API.VERSION.CURRENT].users.$delete` call follows the list query's pattern.
+- The mutation is TanStack Query's `useMutation` calling the `deleteUsers` server action, which sends `DELETE /v1/users` through the server's typed `hc` client and then drops the kept Users list (`updateTag`) in the same request **(owner, kept as built 2026-10-29; first the browser's `hc` client)**. Its key goes in the shared `MUTATION` (`MUTATION.USERS.DELETE`), as the owner asked for keys.
 - New translations go in `Users.select`, `Users.delete.*` and `Users.filter.*` (search, reset, no results), in `en.json` and `it.json`.
 
 ## Non-goals
 
 - Removing a User from one App (it belongs to the User detail page, later) **(owner)**.
 - Undo, soft delete, an audit log.
-- A row menu (⋯) with Delete **(owner chose checkboxes + bar only)**.
+- A row menu (⋯) with Delete **(owner chose checkboxes + the toolbar's Delete only)**.
 - Selecting across pages.
-- Picking more than one App or Role in a filter.
 
 ## Anti-goals
 

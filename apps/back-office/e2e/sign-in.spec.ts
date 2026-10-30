@@ -87,3 +87,24 @@ test("Italian sign-in shows the refusal in Italian", async ({ page }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.USER, { locale: "it" });
   await expect(formAlert(page, IT)).toHaveText(IT.SignIn.error.forbidden);
 });
+
+test("an empty Sign in says what each field needs, and stays", async ({
+  page,
+}) => {
+  await page.goto(AUTH.PAGE.SIGN_IN);
+  await page.getByRole("button", { name: EN.SignIn.submit }).click();
+  await expect(page.getByText(EN.SignIn.field.emailRequired)).toBeVisible();
+  await expect(page.getByText(EN.SignIn.field.passwordRequired)).toBeVisible();
+  await expect(page).toHaveURL(SIGN_IN_URL);
+});
+
+test("an email that is not one says so, and stays", async ({ page }) => {
+  await page.goto(AUTH.PAGE.SIGN_IN);
+  await page.getByLabel(EN.SignIn.email, { exact: true }).fill("not-an-email");
+  await page
+    .getByLabel(EN.SignIn.password, { exact: true })
+    .fill(FIXTURE.PASSWORD);
+  await page.getByRole("button", { name: EN.SignIn.submit }).click();
+  await expect(page.getByText(EN.SignIn.field.emailInvalid)).toBeVisible();
+  await expect(page).toHaveURL(SIGN_IN_URL);
+});

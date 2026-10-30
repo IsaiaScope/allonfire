@@ -15,12 +15,19 @@ export const AOFBreadcrumb = Breadcrumb;
 export const AOFBreadcrumbItem = BreadcrumbItem;
 export const AOFBreadcrumbLink = BreadcrumbLink;
 export const AOFBreadcrumbPage = BreadcrumbPage;
-export const AOFBreadcrumbSeparator = BreadcrumbSeparator;
 
-/** The trail reads at body size, 16px, in place of shadcn's 14px. */
+/** The trail reads at 18px, in place of shadcn's 14px. */
 export const AOFBreadcrumbList = ({
   className,
   ...props
 }: ComponentProps<typeof BreadcrumbList>) => (
-  <BreadcrumbList className={cn("text-base", className)} {...props} />
+  <BreadcrumbList className={cn("text-lg", className)} {...props} />
+);
+
+/** Its chevron at 16px, in step with the larger trail (shadcn's is 14px). */
+export const AOFBreadcrumbSeparator = ({
+  className,
+  ...props
+}: ComponentProps<typeof BreadcrumbSeparator>) => (
+  <BreadcrumbSeparator className={cn("[&>svg]:size-4", className)} {...props} />
 );

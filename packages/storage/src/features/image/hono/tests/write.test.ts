@@ -6,11 +6,11 @@ import {
 } from "@allonfire/auth/shared/tests/stub-auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { App, Role } from "@allonfire/database/enums";
-import type { ImageLink } from "@allonfire/database/features/auth/access/access";
+import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import {
   type AuthoriseLinks,
   type ImageChange,
+  type ImageLink,
   type ImageLinksById,
   ImageNotFoundError,
 } from "@allonfire/database/features/image/image.service";
@@ -40,21 +40,39 @@ const lauraUser = sessionFor({
 const officeAdmin = sessionFor({
   memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
 });
-const LAURA_PRIVATE: ImageLink = { app: App.LAURA, public: false };
-const LAURA_PUBLIC: ImageLink = { app: App.LAURA, public: true };
-const OFFICE_PRIVATE: ImageLink = { app: App.BACK_OFFICE, public: false };
-const OFFICE_PUBLIC: ImageLink = { app: App.BACK_OFFICE, public: true };
+
+/** The file name a locked Image row holds, in these tests. */
+const lockedKey = (id: string) => `${id}.avif`;
 
 /** The placements a write locks, as the database would find them. */
 type Links = (ids: readonly string[]) => Promise<ImageLinksById>;
 
-/** Every Image of the batch placed as given. */
+/** Every Image of the batch private in the Apps given. */
 const placedIn =
-  (...links: ImageLink[]): Links =>
+  (...apps: App[]): Links =>
   (ids) =>
-    Promise.resolve(new Map(ids.map((id) => [id, links])));
+    Promise.resolve(
+      new Map(
+        ids.map((id): [string, ImageLink] => [
+          id,
+          { access: ImageAccess.PRIVATE, apps, key: lockedKey(id) },
+        ])
+      )
+    );
+/** Every Image of the batch public in the Apps given. */
+const publicIn =
+  (...apps: App[]): Links =>
+  (ids) =>
+    Promise.resolve(
+      new Map(
+        ids.map((id): [string, ImageLink] => [
+          id,
+          { access: ImageAccess.PUBLIC, apps, key: lockedKey(id) },
+        ])
+      )
+    );
 /** Every Image in these tests is private in Laura unless a test says otherwise. */
-const inLaura = placedIn(LAURA_PRIVATE);
+const inLaura = placedIn(App.LAURA);
 
 /**
  * The delete services as the database runs them: the route's check against
@@ -100,19 +118,25 @@ const updates = (
 const imagesBody = z.array(imageBodySchema);
 const IMAGE_KEY = /^[0-9a-f-]{36}\.avif$/;
 
-/** A placement as upload meta and PATCH send it: `public` may be left out. */
-type LinkInput = { app: App; public?: boolean };
-const NO_APPS: LinkInput[] = [];
-const LAURA_TWICE: LinkInput[] = [
-  { app: App.LAURA },
-  { app: App.LAURA, public: true },
-];
+const NO_APPS: App[] = [];
+const LAURA_TWICE: App[] = [App.LAURA, App.LAURA];
+
+/** What an upload sends beside its files; one meta entry per file unless `metaCount` says. */
+type UploadOptions = {
+  access?: ImageAccess;
+  apps?: App[];
+  metaCount?: number;
+  size?: number;
+};
 
 const upload = (
   count: number,
-  metaCount = count,
-  size = 10,
-  apps: LinkInput[] = [{ app: App.LAURA }]
+  {
+    access,
+    apps = [App.LAURA],
+    metaCount = count,
+    size = 10,
+  }: UploadOptions = {}
 ) => {
   const form = new FormData();
   for (let index = 0; index < count; index += 1) {
@@ -120,7 +144,13 @@ const upload = (
   }
   form.append(
     "meta",
-    stringifyJson(Array.from({ length: metaCount }, () => ({ alt: ALT, apps })))
+    stringifyJson(
+      Array.from({ length: metaCount }, () => ({
+        alt: ALT,
+        apps,
+        ...(access && { access }),
+      }))
+    )
   );
   return { body: form, method: "POST" };
 };
@@ -151,8 +181,9 @@ describe("POST /images", () => {
     expect(key).toMatch(IMAGE_KEY);
     expect(createImages).toHaveBeenCalledWith([
       {
+        access: ImageAccess.PRIVATE,
         alt: ALT,
-        apps: [LAURA_PRIVATE],
+        apps: [App.LAURA],
         blurDataUrl: PREPARED.blurDataUrl,
         bytes: 4,
         height: 600,
@@ -164,7 +195,7 @@ describe("POST /images", () => {
     expect(imagesBody.parse(await res.json())).toHaveLength(1);
   });
 
-  it("keeps a placement uploaded public, and makes one sent without `public` private", async () => {
+  it("keeps an Image uploaded public public, in every App it goes to", async () => {
     const createImages = vi.fn<ImageDeps["createImages"]>(async (rows) =>
       rows.map((row) => imageRecord(row))
     );
@@ -174,16 +205,16 @@ describe("POST /images", () => {
       putObject: async () => undefined,
     }).request(
       STORAGE.PATH.IMAGES,
-      upload(1, 1, 10, [
-        { app: App.LAURA, public: true },
-        { app: App.BACK_OFFICE },
-      ])
+      upload(1, {
+        access: ImageAccess.PUBLIC,
+        apps: [App.LAURA, App.BACK_OFFICE],
+      })
     );
     expect(res.status).toBe(201);
-    expect(createImages.mock.calls[0]?.[0][0]?.apps).toEqual([
-      LAURA_PUBLIC,
-      OFFICE_PRIVATE,
-    ]);
+    expect(createImages.mock.calls[0]?.[0][0]).toMatchObject({
+      access: ImageAccess.PUBLIC,
+      apps: [App.LAURA, App.BACK_OFFICE],
+    });
   });
 
   it("refuses a USER", async () => {
@@ -204,7 +235,7 @@ describe("POST /images", () => {
     const prepare = vi.fn();
     const res = await app(lauraAdmin, { prepare }).request(
       STORAGE.PATH.IMAGES,
-      upload(1, 1, 10, [{ app: App.LAURA }, { app: App.BACK_OFFICE }])
+      upload(1, { apps: [App.LAURA, App.BACK_OFFICE] })
     );
     expect(res.status).toBe(403);
     expect(prepare).not.toHaveBeenCalled();
@@ -219,7 +250,7 @@ describe("POST /images", () => {
       const prepare = vi.fn();
       const res = await app(admin, { prepare }).request(
         STORAGE.PATH.IMAGES,
-        upload(1, 1, 10, apps)
+        upload(1, { apps })
       );
       expect(res.status).toBe(400);
       expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
@@ -228,7 +259,10 @@ describe("POST /images", () => {
   );
 
   it("refuses meta that does not match the files", async () => {
-    const res = await app(admin, {}).request(STORAGE.PATH.IMAGES, upload(2, 1));
+    const res = await app(admin, {}).request(
+      STORAGE.PATH.IMAGES,
+      upload(2, { metaCount: 1 })
+    );
     expect(res.status).toBe(400);
     expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
@@ -250,7 +284,7 @@ describe("POST /images refusals", () => {
   it("refuses a file over the per-file limit, naming that limit", async () => {
     const res = await app(admin, {}).request(
       STORAGE.PATH.IMAGES,
-      upload(1, 1, IMAGE.LIMIT.FILE_BYTES + 1)
+      upload(1, { size: IMAGE.LIMIT.FILE_BYTES + 1 })
     );
     expect(res.status).toBe(413);
     const body = await errorOf(res);
@@ -369,66 +403,128 @@ describe("POST /images failures", () => {
 });
 
 describe("PATCH /images", () => {
-  it("replaces the placements of a batch", async () => {
+  it("replaces the Apps of a batch", async () => {
     const { updateImages, written } = updates(inLaura, (id) =>
-      imageRecord({ apps: [OFFICE_PRIVATE], id })
+      imageRecord({ apps: [App.BACK_OFFICE], id })
     );
     const res = await app(admin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [{ app: App.BACK_OFFICE }], id: "image-1" }])
+      json("PATCH", [{ apps: [App.BACK_OFFICE], id: "image-1" }])
     );
     expect(res.status).toBe(200);
     expect(written).toHaveBeenCalledWith([
-      { id: "image-1", place: [OFFICE_PRIVATE], remove: [App.LAURA] },
+      { id: "image-1", place: [App.BACK_OFFICE], remove: [App.LAURA] },
     ]);
     expect(imagesBody.parse(await res.json())[0]?.apps).toEqual([
-      OFFICE_PRIVATE,
+      App.BACK_OFFICE,
     ]);
   });
 
-  it("keeps a public placement public when `public` is left out, and starts a new one private", async () => {
-    const { updateImages, written } = updates(placedIn(LAURA_PUBLIC));
-    const res = await app(admin, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [
-        { apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE }], id: "image-1" },
-      ])
-    );
-    expect(res.status).toBe(200);
-    expect(written).toHaveBeenCalledWith([
-      { id: "image-1", place: [OFFICE_PRIVATE] },
-    ]);
-  });
-
-  it("needs no Admin in an App whose placement stays as it is", async () => {
-    // Public in Laura, private in the Back Office: a Back Office Admin
-    // switches only the Back Office placement, and Laura's stays.
-    const { updateImages, written } = updates(
-      placedIn(LAURA_PUBLIC, OFFICE_PRIVATE)
-    );
+  it("answers 404 to an Admin of another App for an Image they cannot see", async () => {
+    const { updateImages, written } = updates(placedIn(App.LAURA));
     const res = await app(officeAdmin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [
-        {
-          apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE, public: true }],
-          id: "image-1",
-        },
-      ])
+      json("PATCH", [{ apps: [App.LAURA, App.BACK_OFFICE], id: "image-1" }])
     );
-    expect(res.status).toBe(200);
-    expect(written).toHaveBeenCalledWith([
-      { id: "image-1", place: [OFFICE_PUBLIC] },
-    ]);
+    expect(res.status).toBe(404);
+    expect(written).not.toHaveBeenCalled();
   });
 
-  it("sends no placement to write when the list is unchanged", async () => {
-    const { updateImages, written } = updates(placedIn(LAURA_PRIVATE));
+  it("sends nothing to write when the list is unchanged", async () => {
+    const { updateImages, written } = updates(placedIn(App.LAURA));
     const res = await app(lauraUser, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [{ app: App.LAURA }], id: "image-1" }])
+      json("PATCH", [{ apps: [App.LAURA], id: "image-1" }])
     );
     expect(res.status).toBe(200);
     expect(written).toHaveBeenCalledWith([{ id: "image-1" }]);
+  });
+
+  it("makes an Image public for an Admin of every App it is in", async () => {
+    const { updateImages, written } = updates(
+      placedIn(App.LAURA, App.BACK_OFFICE)
+    );
+    const res = await app(admin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PUBLIC, id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    expect(written).toHaveBeenCalledWith([
+      { access: ImageAccess.PUBLIC, id: "image-1" },
+    ]);
+  });
+
+  it("making a public Image private moves it to a copy, then deletes the old file", async () => {
+    const OLD = lockedKey("image-1");
+    const copyObject = vi.fn<ImageDeps["copyObject"]>(async () => undefined);
+    const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
+      async () => undefined
+    );
+    const { updateImages, written } = updates(publicIn(App.LAURA));
+    const res = await app(lauraAdmin, {
+      copyObject,
+      deleteObjects,
+      getImage: async () =>
+        imageRecord({ access: ImageAccess.PUBLIC, key: OLD }),
+      updateImages,
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    const [from, to] = copyObject.mock.calls[0] ?? [];
+    expect(from).toBe(OLD);
+    expect(to).toMatch(IMAGE_KEY);
+    expect(written).toHaveBeenCalledWith([
+      { access: ImageAccess.PRIVATE, id: "image-1", key: to },
+    ]);
+    expect(deleteObjects).toHaveBeenCalledWith([OLD]);
+  });
+});
+
+describe("PATCH /images making an Image private, raced", () => {
+  it("deletes the file the locked row names, not the one read before the lock", async () => {
+    // Read as "old.avif"; meanwhile another PATCH made it private (a new
+    // name) and a third public again, so the locked row names that file.
+    const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
+      async () => undefined
+    );
+    const { updateImages } = updates(publicIn(App.LAURA));
+    const res = await app(lauraAdmin, {
+      copyObject: async () => undefined,
+      deleteObjects,
+      getImage: async () =>
+        imageRecord({ access: ImageAccess.PUBLIC, key: "old.avif" }),
+      updateImages,
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    expect(deleteObjects).toHaveBeenCalledWith([lockedKey("image-1")]);
+  });
+});
+
+describe("PATCH /images making an Image private, with storage failing", () => {
+  it("asks again to delete the old file: its public links must not outlive the change", async () => {
+    const OLD = lockedKey("image-1");
+    const deleteObjects = vi
+      .fn<ImageDeps["deleteObjects"]>()
+      .mockRejectedValueOnce(new Error("storage hiccup"))
+      .mockResolvedValue(undefined);
+    const { updateImages } = updates(publicIn(App.LAURA));
+    const res = await app(lauraAdmin, {
+      copyObject: async () => undefined,
+      deleteObjects,
+      getImage: async () =>
+        imageRecord({ access: ImageAccess.PUBLIC, key: OLD }),
+      updateImages,
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
+    );
+    expect(res.status).toBe(200);
+    expect(deleteObjects.mock.calls).toEqual([[[OLD]], [[OLD]]]);
   });
 });
 
@@ -438,6 +534,18 @@ describe("PATCH /images refusals", () => {
       updateImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
     }).request(STORAGE.PATH.IMAGES, json("PATCH", [{ id: "missing" }]));
     expect(res.status).toBe(404);
+  });
+
+  it("refuses an access change by an Admin of only one of the Image's Apps", async () => {
+    const { updateImages, written } = updates(
+      placedIn(App.LAURA, App.BACK_OFFICE)
+    );
+    const res = await app(lauraAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json("PATCH", [{ access: ImageAccess.PUBLIC, id: "image-1" }])
+    );
+    expect(res.status).toBe(403);
+    expect(written).not.toHaveBeenCalled();
   });
 
   it("refuses an alt-only edit by a User below Admin in one of the Image's Apps", async () => {
@@ -454,7 +562,7 @@ describe("PATCH /images refusals", () => {
     // Laura's Admin read it in Laura only; by the time the write locks it, a
     // Back Office Admin has placed it there too, so it is no longer theirs alone.
     const { updateImages, written } = updates(
-      placedIn(LAURA_PRIVATE, OFFICE_PRIVATE)
+      placedIn(App.LAURA, App.BACK_OFFICE)
     );
     const res = await app(lauraAdmin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
@@ -465,7 +573,7 @@ describe("PATCH /images refusals", () => {
   });
 
   it("answers 404 for an Image in an App the User cannot enter", async () => {
-    const { updateImages, written } = updates(placedIn(OFFICE_PRIVATE));
+    const { updateImages, written } = updates(placedIn(App.BACK_OFFICE));
     const res = await app(lauraAdmin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
       json("PATCH", [{ alt: ALT, id: "image-1" }])
@@ -479,8 +587,22 @@ describe("PATCH /images refusals", () => {
     const { updateImages, written } = updates(
       async () =>
         new Map([
-          ["image-1", [LAURA_PRIVATE]],
-          ["image-2", [OFFICE_PRIVATE]],
+          [
+            "image-1",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.LAURA],
+              key: lockedKey("image-1"),
+            },
+          ],
+          [
+            "image-2",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.BACK_OFFICE],
+              key: lockedKey("image-2"),
+            },
+          ],
         ])
     );
     const res = await app(lauraUser, { updateImages }).request(
@@ -521,8 +643,22 @@ describe("DELETE /images", () => {
     const { services, written } = deletes(
       async () =>
         new Map([
-          ["image-1", [LAURA_PRIVATE]],
-          ["image-2", [OFFICE_PRIVATE]],
+          [
+            "image-1",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.LAURA],
+              key: lockedKey("image-1"),
+            },
+          ],
+          [
+            "image-2",
+            {
+              access: ImageAccess.PRIVATE,
+              apps: [App.BACK_OFFICE],
+              key: lockedKey("image-2"),
+            },
+          ],
         ])
     );
     const res = await app(lauraUser, services).request(
@@ -592,7 +728,7 @@ describe("DELETE /images", () => {
   });
 
   it("answers 404 for an Image not placed in the App named", async () => {
-    const { services, written } = deletes(placedIn(OFFICE_PRIVATE));
+    const { services, written } = deletes(placedIn(App.BACK_OFFICE));
     const res = await app(admin, services).request(
       STORAGE.PATH.IMAGES,
       json("DELETE", { app: App.LAURA, ids: ["image-1"] })

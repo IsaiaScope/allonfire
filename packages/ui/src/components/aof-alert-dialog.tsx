@@ -10,18 +10,39 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@allonfire/shadcn/components/alert-dialog";
-import { useCallback } from "react";
+import { type ReactNode, useCallback } from "react";
+import type { ComponentPropsWithoutChildren } from "../lib/types";
+import { cn } from "../lib/utils";
 
-export type AOFAlertDialogProps = {
-  /** The button that closes without acting. */
-  cancel: string;
-  /** The button that acts. */
-  confirm: string;
+/** Base UI's alert dialog root (`open`, `onOpenChange`, ...), plus its parts. */
+export type AOFAlertDialogProps = ComponentPropsWithoutChildren<
+  typeof AlertDialog
+> & {
+  /** The button that closes without acting: its label, or what it holds. */
+  cancel: ReactNode;
+  /** The Cancel button's own props (an App's Design dresses it). */
+  cancelProps?: Omit<
+    ComponentPropsWithoutChildren<typeof AlertDialogCancel>,
+    "disabled"
+  >;
+  /** The button that acts: its label, or what it holds. */
+  confirm: ReactNode;
+  /** The acting button's own props (an App's Design dresses it). */
+  confirmProps?: Omit<
+    ComponentPropsWithoutChildren<typeof AlertDialogAction>,
+    "disabled" | "onClick"
+  >;
+  /** The dialog's own props: its classes, its size. */
+  contentProps?: ComponentPropsWithoutChildren<typeof AlertDialogContent>;
   /** What acting does, and that it cannot be undone. */
   description: string;
+  /**
+   * Draws the dialog's head around its title (an App's Design dresses it):
+   * given the title already named for assistive tech, it returns what tops
+   * the dialog. None given: the title heads the text, as shadcn draws it.
+   */
+  head?: ((title: ReactNode) => ReactNode) | undefined;
   onConfirm: () => void;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
   /** While the act runs: both buttons are disabled. */
   pending: boolean;
   title: string;
@@ -33,33 +54,50 @@ export type AOFAlertDialogProps = {
  */
 export const AOFAlertDialog = ({
   cancel,
+  cancelProps,
   confirm,
+  confirmProps,
+  contentProps,
   description,
+  head,
   onConfirm,
-  onOpenChange,
-  open,
   pending,
   title,
+  ...props
 }: AOFAlertDialogProps) => {
   // A bare `onConfirm` would receive the click event.
   const act = useCallback(() => onConfirm(), [onConfirm]);
+  const named = <AlertDialogTitle>{title}</AlertDialogTitle>;
+  // The title goes into the head when there is one, else into the text.
+  const top = head ? head(named) : null;
+  const inText = head ? null : named;
   return (
-    <AlertDialog onOpenChange={onOpenChange} open={open}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+    <AlertDialog {...props}>
+      <AlertDialogContent {...contentProps}>
+        {top}
+        {/* Under a head of its own the text reads from the left on every
+            screen, like the head above it. */}
+        <AlertDialogHeader
+          className={cn(head && "place-items-start text-left")}
+        >
+          {inText}
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel className="cursor-pointer" disabled={pending}>
+          <AlertDialogCancel
+            {...cancelProps}
+            className={cn("cursor-pointer", cancelProps?.className)}
+            disabled={pending}
+          >
             {cancel}
           </AlertDialogCancel>
           <AlertDialogAction
             aria-busy={pending}
-            className="cursor-pointer"
+            variant="destructive"
+            {...confirmProps}
+            className={cn("cursor-pointer", confirmProps?.className)}
             disabled={pending}
             onClick={act}
-            variant="destructive"
           >
             {confirm}
           </AlertDialogAction>

@@ -21,12 +21,10 @@ const BUILD_VARIABLES = [
   "API_URL",
   "BACK_OFFICE_URL",
   "NEXT_PUBLIC_API_URL",
-  "STORAGE_ENDPOINT",
 ] as const;
 
 beforeEach(() => {
   vi.resetModules();
-  vi.stubEnv("STORAGE_ENDPOINT", undefined);
   vi.stubEnv("AUTH_APP", App.BACK_OFFICE);
   vi.stubEnv("API_AUTH_URL", `${LOCAL.URL.API}${API.PATH.AUTH}`);
   vi.stubEnv("NEXT_PUBLIC_API_URL", LOCAL.URL.API);
@@ -35,7 +33,7 @@ beforeEach(() => {
 });
 
 describe("environment", () => {
-  it("loads at runtime without STORAGE_ENDPOINT, which only the build reads", async () => {
+  it("loads at runtime with the App's own variables", async () => {
     await expect(import("../environment")).resolves.toHaveProperty("env");
   });
 
@@ -64,18 +62,12 @@ describe("environment", () => {
   });
 
   it("lets Turbo hand the build every variable it validates", () => {
-    // The App's zod parses: a schema crosses no package (CLAUDE.md).
+    // The App's zod parses: a schema crosses no package (docs/agents/conventions.md).
     const turbo = turboSchema.parse(
       parseJson(readFileSync(TURBO_JSON, "utf8"))
     );
     const passed = [...turbo.tasks.build.env, ...turbo.globalPassThroughEnv];
     expect(passed).toEqual(expect.arrayContaining([...BUILD_VARIABLES]));
-  });
-
-  it("refuses a build without STORAGE_ENDPOINT", async () => {
-    await expect(import("../build-environment")).rejects.toThrow(
-      "Invalid environment variables"
-    );
   });
 
   it("points .env.example at the API's own Auth path", () => {

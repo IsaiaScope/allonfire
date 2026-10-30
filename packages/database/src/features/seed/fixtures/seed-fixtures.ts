@@ -18,7 +18,7 @@ async function upsertImage(
   await client.$transaction([
     client.imageApp.deleteMany({ where: { imageId: id } }),
     client.imageApp.createMany({
-      data: apps.map((link) => ({ ...link, imageId: id })),
+      data: apps.map((app) => ({ app, imageId: id })),
     }),
   ]);
 }

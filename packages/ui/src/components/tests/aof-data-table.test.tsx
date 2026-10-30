@@ -4,13 +4,15 @@ import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   AOFDataTable,
-  type AOFDataTableLabels,
-  AOFDataTablePagination,
   type AOFDataTableStatus,
   type AOFTable,
   aofColumnHelper,
   useAOFTable,
 } from "../aof-data-table";
+import {
+  type AOFDataTableLabels,
+  AOFDataTablePagination,
+} from "../aof-data-table-pagination";
 import { aofSelectColumn } from "../aof-data-table-select";
 
 type Person = { id: string; name: string; role: string };
@@ -153,6 +155,36 @@ describe("AOFDataTable", () => {
   });
 });
 
+describe("AOFDataTable scrolling", () => {
+  it("scrolls sideways outside and up and down inside, one axis each", () => {
+    const html = renderToStaticMarkup(<People pageIndex={0} />);
+    const rows = html.indexOf('data-slot="data-table-rows"');
+    expect(rows).toBeGreaterThan(-1);
+    const rowsTag = html.slice(
+      html.lastIndexOf("<div", rows),
+      html.indexOf(">", rows)
+    );
+    expect(rowsTag).toContain("overflow-x-hidden!");
+    expect(rowsTag).toContain("overscroll-y-auto");
+    expect(html).toContain("overflow-y-hidden!");
+    expect(html).toContain("overscroll-x-none");
+    expect(html).not.toContain("overscroll-x-contain");
+    // The header sticks to the up-and-down box, so it moves sideways with
+    // its columns.
+    expect(html.indexOf("sticky top-0")).toBeGreaterThan(rows);
+  });
+
+  it("keeps a header and eight rows of height, each row as tall as the list says", () => {
+    const html = renderToStaticMarkup(<People pageIndex={0} />);
+    // A field's height unless the list sets its own.
+    expect(html).toContain("[--data-table-row:var(--field-height)]");
+    expect(html).toContain(
+      "min-h-[calc(var(--field-height)+(var(--data-table-row)+1px)*8+2px)]"
+    );
+    expect(html).toContain("h-(--data-table-row)");
+  });
+});
+
 describe("AOFDataTable status", () => {
   it("while pending, draws the skeleton under the toolbar, one column per column", () => {
     const html = renderToStaticMarkup(
@@ -160,7 +192,7 @@ describe("AOFDataTable status", () => {
     );
     expect(html).toContain("toolbar");
     expect(html).toContain('role="status"');
-    expect(html.match(/data-slot="skeleton"/g)?.length).toBe(
+    expect(html.match(/data-skeleton="cell"/g)?.length).toBe(
       COLUMNS.length * 10
     );
     expect(html).not.toContain("<table");
@@ -242,5 +274,69 @@ describe("aofSelectColumn", () => {
     renderToStaticMarkup(<Selectable />);
     built?.toggleAllPageRowsSelected(true);
     expect(asked).toEqual({ "2": true, "3": true });
+  });
+});
+
+const HUGGING_HEAD = /<th[^>]*w-px/;
+const HUGGING_HEAD_ALL = /<th[^>]*w-px/g;
+
+const SIZED = helper.columns([
+  helper.accessor("name", { header: "Name", maxSize: 300 }),
+  helper.accessor("role", { header: "Role", maxSize: 90, minSize: 90 }),
+]);
+
+const Sized = ({ fill }: { fill?: readonly string[] }) => {
+  const table = useAOFTable({
+    columns: SIZED,
+    data: PEOPLE,
+    getRowId: ({ id }) => id,
+  });
+  return <AOFDataTable fill={fill} label="People" table={table} />;
+};
+
+describe("AOFDataTable columns", () => {
+  it("draws each value as wide as it is, up to its column's max width", () => {
+    const html = renderToStaticMarkup(<Sized />);
+    expect(html).toContain("max-width:300px");
+    expect(html).toContain("truncate");
+  });
+
+  it("keeps a column at least its min width; the same min and max fix it", () => {
+    expect(renderToStaticMarkup(<Sized />)).toContain(
+      "max-width:90px;min-width:90px"
+    );
+  });
+
+  it("lets the fill columns share the room left over, the rest hugging", () => {
+    expect(renderToStaticMarkup(<Sized />)).not.toMatch(HUGGING_HEAD);
+    const html = renderToStaticMarkup(<Sized fill={["name"]} />);
+    expect(html).toContain("min-width:min-content;width:100%");
+    expect(html.match(HUGGING_HEAD_ALL)).toHaveLength(1);
+  });
+});
+
+const BUSY_ROW =
+  /<tr[^>]*aria-busy="true"[^>]*data-busy=""[^>]*inert=""[^>]*>(?:(?!<\/tr>).)*Grace/;
+
+const isGrace = (row: { id: string }) => row.id === "2";
+const nameCard = (row: { original: Person }) => <p>card {row.original.name}</p>;
+
+const Busy = () => {
+  const table = useAOFTable({
+    columns: COLUMNS,
+    data: PEOPLE,
+    getRowId: ({ id }) => id,
+  });
+  return (
+    <AOFDataTable busy={isGrace} card={nameCard} label="People" table={table} />
+  );
+};
+
+describe("AOFDataTable busy rows", () => {
+  it("fades a busy row and its card, marks them busy and puts them out of reach", () => {
+    const html = renderToStaticMarkup(<Busy />);
+    expect(html).toMatch(BUSY_ROW);
+    expect(html.match(/aria-busy="true"/g)).toHaveLength(2);
+    expect(html).toContain("data-busy:opacity-50");
   });
 });

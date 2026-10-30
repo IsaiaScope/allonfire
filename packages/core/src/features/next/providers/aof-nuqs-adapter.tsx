@@ -1,8 +1,8 @@
 "use client";
 
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import type { ReactNode } from "react";
+import type { ComponentProps } from "react";
 
-export const AOFNuqsAdapter = ({ children }: { children: ReactNode }) => (
-  <NuqsAdapter>{children}</NuqsAdapter>
+export const AOFNuqsAdapter = (props: ComponentProps<typeof NuqsAdapter>) => (
+  <NuqsAdapter {...props} />
 );

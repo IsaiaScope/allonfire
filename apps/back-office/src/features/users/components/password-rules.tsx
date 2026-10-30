@@ -6,7 +6,7 @@ import { AOFCheckbox } from "@allonfire/ui/components/aof-checkbox";
 import { cn } from "@allonfire/ui/lib/utils";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
-import type { passwordChecks } from "../utils/add-user-schema";
+import type { passwordChecks } from "../utils/user-form-schema";
 
 /** Where each rule sits in the list; every rule needs one, so a rule the
  *  User module adds fails to compile until it is placed. */

@@ -3,6 +3,8 @@ import {
   PWA,
 } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { AOFButton } from "@allonfire/ui/components/aof-button";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
+import { cn } from "@allonfire/ui/lib/utils";
 import {
   AppWindow,
   Download,
@@ -12,6 +14,7 @@ import {
   SquarePlus,
   X,
 } from "lucide-react";
+import type { ComponentProps } from "react";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
 
 const { STEP } = PWA.INSTALL_HINT;
@@ -23,18 +26,49 @@ const STEP_ICON = {
   [STEP.MAC_ADD_TO_DOCK]: AppWindow,
 } as const satisfies Record<InstallStep, LucideIcon>;
 
-export type InstallHintCardProps = {
+/** The card's `<aside>` (named by `aria-label`), plus its words and buttons. */
+export type InstallHintCardProps = ComponentPropsWithoutChildren<"aside"> & {
   cta: string;
-  dismissLabel: string;
+  /** The ✕ button's own props: its name (`aria-label`), its `onClick`. */
+  dismissProps: ComponentPropsWithoutChildren<typeof AOFButton>;
   /** Said under the words after a failed install. */
-  error?: string;
-  /** The browser's own dialog, where it offers one. */
-  install?: { label: string; onInstall: () => void; pending: boolean };
-  label: string;
-  onDismiss: () => void;
+  error?: string | undefined;
+  /** The Install button's own props, its label as children, where the
+   *  browser offers its own dialog; `pending` disables it and spins. */
+  installProps?:
+    | (Omit<ComponentProps<typeof AOFButton>, "disabled"> & {
+        pending: boolean;
+      })
+    | undefined;
   /** The browser's steps, where it offers no dialog. */
-  steps?: { step: InstallStep; text: string }[];
+  steps?: { step: InstallStep; text: string }[] | undefined;
 };
+
+/** The line-coloured Install button: a spinner while `pending`, disabled. */
+const InstallButton = ({
+  children,
+  className,
+  pending,
+  ...props
+}: NonNullable<InstallHintCardProps["installProps"]>) => (
+  <AOFButton
+    size="sm"
+    type="button"
+    {...props}
+    className={cn(
+      "@sm:col-span-1 col-span-full @sm:col-start-3 @sm:row-start-1 @sm:min-w-36 bg-line text-led-panel hover:bg-line/90",
+      className
+    )}
+    disabled={pending}
+  >
+    {pending ? (
+      <LoaderCircle aria-hidden className="motion-safe:animate-spin" />
+    ) : (
+      <Download aria-hidden />
+    )}
+    {children}
+  </AOFButton>
+);
 
 /**
  * The Install hint's card, sent as a toast: a night bar headed by 導入 in the
@@ -45,17 +79,20 @@ export type InstallHintCardProps = {
  * button keeps one width, so Installing and an error change only words.
  */
 export const InstallHintCard = ({
+  className,
   cta,
-  dismissLabel,
+  dismissProps,
   error,
-  install,
-  label,
-  onDismiss,
+  installProps,
   steps,
+  ...props
 }: InstallHintCardProps) => (
   <aside
-    aria-label={label}
-    className="@container dark flex w-md flex-col gap-3 rounded-lg border border-led-dim bg-led-panel p-3 font-sans text-foreground shadow-lg max-[600px]:w-full"
+    className={cn(
+      "@container dark flex w-md flex-col gap-3 rounded-lg border border-led-dim bg-led-panel p-3 font-sans text-foreground shadow-lg max-[600px]:w-full",
+      className
+    )}
+    {...props}
   >
     {/* Narrow: 導入, the words and ✕ on one row, the button on its own
         below, full width. Once the card has room (@sm), the button joins
@@ -72,12 +109,14 @@ export const InstallHintCard = ({
         {cta}
       </p>
       <AOFButton
-        aria-label={dismissLabel}
-        className="@sm:col-start-4 col-start-3 row-start-1"
-        onClick={onDismiss}
         size="icon-sm"
         type="button"
         variant="ghost"
+        {...dismissProps}
+        className={cn(
+          "@sm:col-start-4 col-start-3 row-start-1",
+          dismissProps.className
+        )}
       >
         <X aria-hidden />
       </AOFButton>
@@ -90,22 +129,7 @@ export const InstallHintCard = ({
           {error}
         </p>
       ) : null}
-      {install ? (
-        <AOFButton
-          className="@sm:col-span-1 col-span-full @sm:col-start-3 @sm:row-start-1 @sm:min-w-36 bg-line text-led-panel hover:bg-line/90"
-          disabled={install.pending}
-          onClick={install.onInstall}
-          size="sm"
-          type="button"
-        >
-          {install.pending ? (
-            <LoaderCircle aria-hidden className="motion-safe:animate-spin" />
-          ) : (
-            <Download aria-hidden />
-          )}
-          {install.label}
-        </AOFButton>
-      ) : null}
+      {installProps ? <InstallButton {...installProps} /> : null}
     </div>
     {steps ? (
       <ol className="flex flex-col gap-2">

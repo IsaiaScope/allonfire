@@ -9,6 +9,7 @@ import {
 import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
+import { stubUserDeps } from "./stub-user-deps";
 import { testHost } from "./test-host";
 
 const ADMIN = sessionFor({
@@ -32,6 +33,7 @@ const depsWith = ({
 } = {}) => {
   const created: { hash: string; user: NewUser }[] = [];
   const deps: UserDeps = {
+    ...stubUserDeps(),
     canListUsers: () => true,
     canManageUsers: () => Promise.resolve(allows),
     createUser: (user, hash) => {

@@ -1,6 +1,6 @@
 // @module-tag unit
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { App } from "@allonfire/database/enums";
+import { App, ImageAccess } from "@allonfire/database/enums";
 import {
   deleteBodySchema,
   listQuerySchema,
@@ -11,25 +11,24 @@ import {
 } from "../constants/schemas";
 
 const ALT = { en: "The sea", it: "Il mare" };
-const LAURA_TWICE = [{ app: App.LAURA }, { app: App.LAURA, public: true }];
+const LAURA_TWICE = [App.LAURA, App.LAURA];
 
 describe("uploadItemSchema", () => {
-  it("makes a placement sent without `public` private, and keeps one sent public", () => {
+  it("makes an Image sent without `access` private, and keeps one sent public", () => {
     const file = new File(["x"], "sea.jpg");
-    const meta = [
-      {
-        alt: ALT,
-        apps: [{ app: App.LAURA }, { app: App.BACK_OFFICE, public: true }],
-      },
-    ];
-    expect(
+    const items = (meta: object[]) =>
       toUploadItems(
-        uploadFormSchema.parse({ file, meta: stringifyJson(meta) })
-      )[0]?.apps
-    ).toEqual([
-      { app: App.LAURA, public: false },
-      { app: App.BACK_OFFICE, public: true },
-    ]);
+        uploadFormSchema.parse({
+          file: [file, file],
+          meta: stringifyJson(meta),
+        })
+      );
+    expect(
+      items([
+        { alt: ALT, apps: [App.LAURA] },
+        { access: ImageAccess.PUBLIC, alt: ALT, apps: [App.BACK_OFFICE] },
+      ]).map(({ access }) => access)
+    ).toEqual([ImageAccess.PRIVATE, ImageAccess.PUBLIC]);
   });
 
   it("refuses an Image in no App, or in one App twice", () => {
@@ -49,10 +48,10 @@ describe("uploadItemSchema", () => {
 });
 
 describe("patchBodySchema", () => {
-  it("leaves a `public` that was not sent out, for the route to resolve", () => {
+  it("leaves an `access` that was not sent out: the Image keeps its own", () => {
     expect(
-      patchBodySchema.parse([{ apps: [{ app: App.LAURA }], id: "image-1" }])
-    ).toEqual([{ apps: [{ app: App.LAURA }], id: "image-1" }]);
+      patchBodySchema.parse([{ apps: [App.LAURA], id: "image-1" }])
+    ).toEqual([{ apps: [App.LAURA], id: "image-1" }]);
   });
 
   it("takes a change without apps, but refuses an empty list or an App twice", () => {
@@ -71,7 +70,7 @@ describe("patchBodySchema", () => {
     expect(
       patchBodySchema.safeParse([
         { alt: ALT, id: "image-1" },
-        { apps: [{ app: App.LAURA }], id: "image-1" },
+        { apps: [App.LAURA], id: "image-1" },
       ]).success
     ).toBe(false);
   });

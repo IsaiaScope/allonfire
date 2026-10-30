@@ -1,4 +1,4 @@
-import { App } from "@allonfire/database/enums";
+import { App, ImageAccess } from "@allonfire/database/enums";
 import type { ImageRecord } from "@allonfire/database/features/image/image.service";
 import type { ImageDeps } from "../utils/deps";
 
@@ -18,11 +18,16 @@ const unexpected = (name: string) => () =>
   Promise.reject(new Error(`${name} must not be called`));
 
 /** An Image as the service returns it; override what the test is about. */
-export const imageRecord = (
-  overrides: Partial<ImageRecord> = {}
-): ImageRecord => ({
+export const imageRecord = ({
+  access = ImageAccess.PRIVATE,
+  ...overrides
+}: Partial<Omit<ImageRecord, "access">> & {
+  /** Left out, or as a new Image leaves it: private. */
+  access?: ImageAccess | undefined;
+} = {}): ImageRecord => ({
+  access,
   alt: ALT,
-  apps: [{ app: App.LAURA, public: false }],
+  apps: [App.LAURA],
   blurDataUrl: "data:image/webp;base64,AAAA",
   bytes: 1000,
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
@@ -38,6 +43,7 @@ export const imageRecord = (
 export const stubImageDeps = (
   overrides: Partial<ImageDeps> = {}
 ): ImageDeps => ({
+  copyObject: unexpected("copyObject"),
   createImages: unexpected("createImages"),
   deleteImages: unexpected("deleteImages"),
   deleteObjects: unexpected("deleteObjects"),

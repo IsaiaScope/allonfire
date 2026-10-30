@@ -1,25 +1,14 @@
 "use client";
-
-import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "@allonfire/database/enums";
-import { entryRoles } from "@allonfire/database/features/auth/access/access";
-import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
-import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
+import type { App } from "@allonfire/database/enums";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { cn } from "@allonfire/ui/lib/utils";
+import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import {
-  IconArrowBackUp,
-  IconEye,
   IconKey,
   IconKeyFilled,
-  IconLoader2,
   IconMail,
-  IconShieldCheck,
   IconUser,
-  IconUserOff,
   IconUserPlus,
-  IconUserShield,
 } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -27,69 +16,51 @@ import {
   type SubmitEvent,
   useActionState,
   useCallback,
+  useEffect,
 } from "react";
-import { Link } from "@/features/i18n/navigation";
-import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { useRouter } from "@/features/i18n/navigation";
 import { FormAlert } from "@/shared/components/form-alert";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { addUser } from "../actions/add-user";
 import { USERS } from "../constants/users";
 import {
+  type AddUserFields,
+  type AddUserNotice,
   type AddUserValues,
   addUserSchema,
-  NO_ROLES,
-  passwordChecks,
-  type RoleChoice,
 } from "../utils/add-user-schema";
+import { NO_ROLES, passwordChecks } from "../utils/user-form-schema";
 import { PasswordRules } from "./password-rules";
+import {
+  AVATAR_DRESS,
+  RoleRows,
+  UserFormActions,
+  useAvatarLabels,
+} from "./user-form-parts";
 
-/** Each Role's pictogram in a Role row. */
-const ROLE_ICON = {
-  [Role.ADMIN]: <IconShieldCheck />,
-  [Role.USER]: <IconUser />,
-  [Role.VIEWER]: <IconEye />,
-  [USERS.NO_ROLE]: <IconUserOff />,
-} satisfies Record<RoleChoice, ReactNode>;
+/**
+ * The User was added but their picture was not saved: says so in a toast and
+ * opens the list, where the User shows with their initial.
+ */
+const useAddedWithoutPicture = (notice: AddUserNotice | undefined) => {
+  const t = useTranslations("Users.add.avatar");
+  const router = useRouter();
+  useEffect(() => {
+    if (notice !== USERS.ADD_NOTICE.AVATAR_FAILED) {
+      return;
+    }
+    aofToast(t("failed"), "warning");
+    router.replace(BACK_OFFICE.PAGE.USERS);
+  }, [notice, router, t]);
+};
 
-/** The form's last row: Cancel back to the list, and Add, both kanji buttons. */
-const AddUserActions = ({ pending }: { pending: boolean }) => {
-  const t = useTranslations();
-  return (
-    // At the bottom of the Section when the form is shorter; 8px under the
-    // form alert's kept place at least, as in Sign in.
-    <div className="mt-auto flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-      <Link
-        className={cn(
-          aofButtonVariants({ size: "field", variant: "destructive" }),
-          kanjiAction()
-        )}
-        href={BACK_OFFICE.PAGE.USERS}
-      >
-        <ActionKanji
-          className="text-destructive/20"
-          kanji={USERS.CANCEL_KANJI}
-        />
-        <IconArrowBackUp aria-hidden />
-        {t("Users.add.cancel")}
-      </Link>
-      <AOFSubmitButton
-        className={kanjiAction()}
-        pending={pending}
-        pendingChildren={
-          <>
-            <IconLoader2 aria-hidden className="animate-spin" />
-            {t("Users.add.submitting")}
-          </>
-        }
-        size="field"
-      >
-        <ActionKanji kanji={USERS.ADD_KANJI} />
-        <IconUserPlus aria-hidden />
-        {t("Users.add.submit")}
-      </AOFSubmitButton>
-    </div>
-  );
+/** Where the form starts: nothing typed, every App at "Not a member". */
+const EMPTY: AddUserFields = {
+  confirmPassword: "",
+  email: "",
+  name: "",
+  password: "",
+  roles: NO_ROLES,
 };
 
 /** The password rules met by what the form holds. */
@@ -105,18 +76,16 @@ const checksOf = ({ values }: { values: AddUserValues }) =>
 export const AddUser = () => {
   const t = useTranslations();
   const locale = useLocale();
-  const [{ error, values }, action, pending] = useActionState(
+  const [{ error, notice, values }, action, pending] = useActionState(
     addUser.bind(null, locale),
     {}
   );
+  useAddedWithoutPicture(notice);
+  const avatarLabels = useAvatarLabels();
+  // The picture is the form's own: the action never hands it back.
+  const startValues: AddUserValues = { avatar: null, ...(values ?? EMPTY) };
   const form = useAOFForm({
-    defaultValues: values ?? {
-      confirmPassword: "",
-      email: "",
-      name: "",
-      password: "",
-      roles: NO_ROLES,
-    },
+    defaultValues: startValues,
     // A submit runs the onChange validators too.
     validators: {
       onChange: addUserSchema({
@@ -128,24 +97,17 @@ export const AddUser = () => {
       }),
     },
   });
+  const roleField = useCallback(
+    (app: App, choice: ReactNode) => (
+      <form.AppField name={`roles.${app}`}>{() => choice}</form.AppField>
+    ),
+    [form]
+  );
   const submit = useCallback(
     (event: SubmitEvent<HTMLFormElement>) =>
       submitAOFForm(form, event, formDataTo(action)),
     [form, action]
   );
-  const optionsFor = (app: App) => [
-    {
-      icon: ROLE_ICON[USERS.NO_ROLE],
-      label: t("Users.add.noRole"),
-      value: USERS.NO_ROLE,
-    },
-    ...entryRoles(app).map((role) => ({
-      icon: ROLE_ICON[role],
-      label: t(`Navigation.role.${role}`),
-      value: role,
-    })),
-  ];
-
   return (
     // Fills the Section, so a short form puts its buttons at the bottom.
     <div className="flex flex-1 flex-col gap-6">
@@ -190,6 +152,15 @@ export const AddUser = () => {
                 />
               )}
             </form.AppField>
+            <form.AppField name={USERS.AVATAR_FIELD}>
+              {(field) => (
+                <field.AvatarField
+                  {...AVATAR_DRESS}
+                  label={t("Users.add.avatar.label")}
+                  labels={avatarLabels}
+                />
+              )}
+            </form.AppField>
           </div>
           <div className="flex flex-col">
             <form.AppField name="password">
@@ -220,35 +191,21 @@ export const AddUser = () => {
               {(checks) => <PasswordRules checks={checks} />}
             </form.Subscribe>
           </div>
-          <fieldset className="@2xl:col-span-2 mt-8 flex flex-col gap-8">
-            <legend className="mb-2 flex items-center gap-2 font-bold text-base">
-              <IconUserShield aria-hidden className="size-5" />
-              {t("Users.add.roles")}
-            </legend>
-            {objectValues(App).map((app) => (
-              <div className="flex flex-col gap-2" key={app}>
-                <span aria-hidden className="font-bold text-sm">
-                  {APP_ENTRY[app].name}
-                </span>
-                <form.AppField name={`roles.${app}`}>
-                  {(field) => (
-                    <field.ChoiceField
-                      ink={BACK_OFFICE.CHOSEN.INK}
-                      label={t("Users.add.role", { app: APP_ENTRY[app].name })}
-                      options={optionsFor(app)}
-                      pill={BACK_OFFICE.CHOSEN.PILL}
-                    />
-                  )}
-                </form.AppField>
-              </div>
-            ))}
-          </fieldset>
+          <RoleRows field={roleField} />
           {/* The end of the form: why the last submit failed, in its kept place. */}
           <FormAlert className="@2xl:col-span-2 mt-4">
             {error ? t(`Users.add.error.${error}`) : null}
           </FormAlert>
         </div>
-        <AddUserActions pending={pending} />
+        <UserFormActions
+          pending={pending}
+          submit={{
+            icon: <IconUserPlus aria-hidden />,
+            kanji: USERS.ADD_KANJI,
+            label: t("Users.add.submit"),
+            pendingLabel: t("Users.add.submitting"),
+          }}
+        />
       </form>
     </div>
   );

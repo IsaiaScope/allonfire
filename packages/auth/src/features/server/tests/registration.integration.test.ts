@@ -147,6 +147,24 @@ describe("Registration", () => {
     ]);
   });
 
+  it("never keeps a picture a sign-up sends: `User.image` names a stored file only an Admin sets", async () => {
+    const email = nextEmail();
+    const res = await post(
+      open,
+      AUTH.PATH.SIGN_UP_EMAIL,
+      {
+        email,
+        image: "avatar-someone-else-0f8fad5b-d9cb-469f-a165-70867728950e.avif",
+        name: "New",
+        password: PASSWORD,
+      },
+      { [AUTH.HEADER.APP]: App.LAURA }
+    );
+    expect(res.status).toBe(200);
+    const { image } = await prisma.user.findUniqueOrThrow({ where: { email } });
+    expect(image).toBeNull();
+  });
+
   it("takes the User back out when their Membership cannot be written", async () => {
     const email = nextEmail();
     const insert = vi

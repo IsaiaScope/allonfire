@@ -21,8 +21,11 @@ they get their values from `vitest.setup.ts`.
 
 Every variable is documented in `.env.example`. `DATABASE_URL`, `API_REDIS_URL`,
 `API_CORS_ORIGINS`, `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
-`STORAGE_ACCESS_KEY` and `STORAGE_SECRET_KEY` are required — the process exits
-at boot if any is missing. The `STORAGE_*` names say storage, not MinIO, so the
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_URL`,
+`STORAGE_IMAGE_SERVER_KEY` and `STORAGE_IMAGE_SERVER_SALT` are required — the
+process exits at boot if any is missing. The last three are the image server's
+(imgproxy) address and the hex key and salt the API signs every picture link
+with; the server checks them with the same pair. The `STORAGE_*` names say storage, not MinIO, so the
 server behind them can change without renaming them.
 
 ## Auth
@@ -57,11 +60,11 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
 
 The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
 ADR 0015). Its errors are `CodedError`s the API renders as its own localized
-problem documents. Files go to the public
+problem documents. Files go to the closed
 `image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
 decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
-`image."Image"`, placements in `image."ImageApp"`. Apps render them with `AOFStorageImage` through their `/storage/images/*`
-rewrite.
+`image."Image"`, placements in `image."ImageApp"`. Apps show them through the
+image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
 
 | Endpoint | Guard | Does |
 |---|---|---|
@@ -81,12 +84,13 @@ rewrite.
   lowercase the database stores. An App appears once in a list (400
   otherwise). A batch with one Image the User cannot see answers 404, before
   any 403, and writes nothing.
-- **Readable by key, never listable.** The `image` bucket carries an anonymous
-  policy allowing only `s3:GetObject` on `image/*`: Locally `storage-init`
-  applies it with `mc anonymous set-json`, in Production the one-shot
-  `storage-setup` does (`setupImageBucket`), as does every test run's bucket. Never
-  `mc anonymous set download`: it also grants `ListBucket`, which would list
-  every key. Each App's rewrite proxies `/storage/images/:key` only, for the same reason.
+- **Closed to anonymous reads.** The `image` bucket holds private Images and
+  Avatars, so it carries no policy: Locally `storage-init` runs
+  `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
+  any bucket policy (`setupImageBucket`), as does every test run's bucket. A
+  browser reaches a picture only through a link the API signs, served by the
+  image server (docs/agents/images.md). Never give the bucket an anonymous
+  policy again, read-only included.
 
 ## Writing routes
 
@@ -140,7 +144,7 @@ writable throws rather than waiting.
 
 ## Telemetry
 
-Telemetry is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, which `.env.example`
+Telemetry is on when `TELEMETRY_ENDPOINT` is set, which `.env.example`
 does. The `OTEL_*` variables are part of the zod env schema like every other
 setting: a malformed endpoint or header list fails the boot, and code reads
 them from `env`, never `process.env`.

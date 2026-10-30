@@ -11,6 +11,13 @@
       "retry": "Riprova",
       "reference": "Riferimento {digest}"
     },
+    "Request": {
+      "failed": "Qualcosa è andato storto."
+    },
+    "Toast": {
+      "close": "Chiudi notifica",
+      "region": "Notifiche"
+    },
     "Loading": {
       "label": "Caricamento"
     },

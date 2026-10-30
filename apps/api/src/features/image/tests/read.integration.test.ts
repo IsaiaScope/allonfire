@@ -28,8 +28,8 @@ describe("reading Images on the Fixtures", () => {
   it("shows a visitor only public Images", async () => {
     const keys = await listKeys(app);
     expect(keys).toContain(FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE.key);
-    // Private in the Back Office, public in Laura.
-    expect(keys).toContain(FIXTURE.IMAGE.IN_BOTH_APPS.key);
+    // Private, in Laura and the Back Office alike (ADR 0027).
+    expect(keys).not.toContain(FIXTURE.IMAGE.IN_BOTH_APPS.key);
     expect(keys).not.toContain(FIXTURE.IMAGE.PRIVATE_IN_BACK_OFFICE.key);
     expect(keys).not.toContain(FIXTURE.IMAGE.PRIVATE_IN_LAURA.key);
   });

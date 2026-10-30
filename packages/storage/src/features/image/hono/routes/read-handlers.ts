@@ -8,7 +8,6 @@ import {
 } from "@allonfire/database/features/auth/access/access";
 import { createFactory } from "hono/factory";
 import { validator } from "hono-openapi";
-import { toImageBody } from "../../constants/schemas";
 import {
   type ImageListBody,
   idParamSchema,
@@ -17,6 +16,7 @@ import {
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
 import { notFound } from "../utils/errors";
+import { toImageBody } from "../utils/image-body";
 import { getRoute, listRoute } from "./routes";
 
 const factory = createFactory<AuthEnv>();
@@ -38,7 +38,7 @@ export const listHandlers = (deps: ImageDeps) =>
       });
       const last = images.at(-1);
       const body = {
-        images: images.map(toImageBody),
+        images: images.map((image) => toImageBody(image, new Date())),
         nextCursor:
           images.length === query.limit && last ? encodeCursor(last) : null,
       } satisfies ImageListBody;
@@ -55,9 +55,9 @@ export const getHandlers = (deps: ImageDeps) =>
       const image = await deps.getImage(c.req.valid("param").id);
       const user = c.get(AUTH.VAR.SESSION)?.user ?? null;
       // Hidden is missing: a 403 would tell someone who cannot see it that the id exists.
-      if (!(image && canSeeImage(user, image.apps))) {
+      if (!(image && canSeeImage(user, image))) {
         throw notFound();
       }
-      return c.json(toImageBody(image), HTTP.STATUS.OK);
+      return c.json(toImageBody(image, new Date()), HTTP.STATUS.OK);
     }
   );

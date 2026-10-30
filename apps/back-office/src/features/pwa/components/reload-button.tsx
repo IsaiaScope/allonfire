@@ -1,7 +1,8 @@
 "use client";
 
 import { AOFButton } from "@allonfire/ui/components/aof-button";
-import type { ReactNode } from "react";
+import { cn } from "@allonfire/ui/lib/utils";
+import type { ComponentProps } from "react";
 import { kanjiAction } from "@/shared/components/brush-kanji";
 
 const reload = () => location.reload();
@@ -10,13 +11,15 @@ const reload = () => location.reload();
  * Reloads the address the visitor was opening: the worker serves the
  * Offline page at the address that failed, so a reload is the retry.
  */
-export const ReloadButton = ({ children }: { children: ReactNode }) => (
+export const ReloadButton = ({
+  className,
+  ...props
+}: Omit<ComponentProps<typeof AOFButton>, "onClick" | "type">) => (
   <AOFButton
-    className={kanjiAction()}
-    onClick={reload}
     size="field"
+    {...props}
+    className={cn(kanjiAction(), className)}
+    onClick={reload}
     type="button"
-  >
-    {children}
-  </AOFButton>
+  />
 );

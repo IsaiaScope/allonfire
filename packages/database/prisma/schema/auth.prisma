@@ -24,6 +24,8 @@ model User {
   name          String?
   emailVerified Boolean      @default(false)
   image         String?
+  /// The blur next/image shows while `image` loads, set and cleared with it.
+  imageBlurDataUrl String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   sessions      Session[]

@@ -20,5 +20,7 @@ export const SCREEN = {
   VIEWPORT: {
     DESKTOP: { HEIGHT: 800, WIDTH: BREAKPOINT.XL },
     PHONE: { HEIGHT: 844, WIDTH: 390 },
+    /** An iPhone 13 Pro Max turned sideways: past `md`, the wide layout. */
+    PHONE_LANDSCAPE: { HEIGHT: 428, WIDTH: 926 },
   },
 } as const;

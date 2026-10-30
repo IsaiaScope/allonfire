@@ -28,6 +28,7 @@ export const Account = async () => {
   return (
     <AccountMenu
       email={session.user.email}
+      image={session.user.image}
       labels={{
         account: t("account"),
         language: t("language"),

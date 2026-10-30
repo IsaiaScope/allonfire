@@ -37,6 +37,11 @@ export const AUTH = {
      * expires. The Session itself is read with Better Auth's `getSessionCookie`.
      */
     SESSION_DATA: `${COOKIE_MARKER}session_data`,
+    /**
+     * Better Auth's Session token, matched past any `__Secure-` prefix: the
+     * same for the whole Session, unlike the cookie cache renewed beside it.
+     */
+    SESSION_TOKEN: `${COOKIE_MARKER}session_token`,
   },
   /**
    * What the docs say about the routes this module adds to Better Auth's. No
@@ -88,11 +93,24 @@ export const AUTH = {
     SIGN_OUT: "/sign-out",
     SIGN_UP_EMAIL,
     /**
+     * Better Auth's edit of the signed-in User's name and picture. Disabled:
+     * `User.image` names a stored Avatar that only an Admin sets (the User
+     * module), and a User writing their own could name someone else's file.
+     */
+    UPDATE_USER: "/update-user",
+    /**
      * Better Auth's check of the signed-in User's password. Disabled: nothing
      * calls it, and each request would be a guess outside the auth limit.
      */
     VERIFY_PASSWORD: "/verify-password",
   },
+  /**
+   * Where a sign-in provider keeps the picture it hands Better Auth for
+   * `User.image` (Google's), which an App's next/image optimizes like its own
+   * (`withProviderPictures`). A new provider adds its host here first, or a
+   * dev page holding its picture breaks (next/image refuses an unknown host).
+   */
+  PICTURE_HOSTS: ["lh3.googleusercontent.com"],
   /**
    * Password guessing gets its own, much smaller bucket than a host's global
    * one. Keyed by IP only: IP+email would let one address spray many accounts.

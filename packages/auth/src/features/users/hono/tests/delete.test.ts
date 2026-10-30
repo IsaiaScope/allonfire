@@ -5,6 +5,7 @@ import { App, Role } from "@allonfire/database/enums";
 import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
+import { stubUserDeps } from "./stub-user-deps";
 import { testHost } from "./test-host";
 
 const ADMIN = sessionFor({
@@ -16,16 +17,15 @@ const DELETED = 1;
 
 /** Deps that record whom they were asked about and which ids they deleted. */
 const depsWith = (allows = true) => {
-  const asked: string[] = [];
+  const asked: { sessionId: string; userId: string }[] = [];
   const deleted: string[][] = [];
   const deps: UserDeps = {
+    ...stubUserDeps(),
     canListUsers: () => true,
-    canManageUsers: (userId) => {
-      asked.push(userId);
+    canManageUsers: (caller) => {
+      asked.push(caller);
       return Promise.resolve(allows);
     },
-    createUser: () =>
-      Promise.reject(new Error("createUser must not be called")),
     deleteUsers: (ids) => {
       deleted.push([...ids]);
       return Promise.resolve(DELETED);
@@ -87,12 +87,12 @@ describe("User module: DELETE", () => {
     expect(deleted).toEqual([]);
   });
 
-  it("deletes the ids and answers the count", async () => {
+  it("deletes the ids and answers the count, asking the Host with the caller's Session and User ids", async () => {
     const { asked, deleted, deps } = depsWith();
     const res = await remove(testHost(ADMIN, deps), { ids: [OTHER] });
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await res.json()).toEqual({ deleted: DELETED });
     expect(deleted).toEqual([[OTHER]]);
-    expect(asked).toEqual([SELF]);
+    expect(asked).toEqual([{ sessionId: ADMIN.session.id, userId: SELF }]);
   });
 });

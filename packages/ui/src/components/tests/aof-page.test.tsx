@@ -22,6 +22,14 @@ describe("AOFPage", () => {
     expect(html).toContain('data-state="idle"');
   });
 
+  // Only the page that is the screen fills it: one nested in a frame is as
+  // tall as the frame lets it be.
+  it("takes the screen's height only as the main", () => {
+    expect(
+      renderToStaticMarkup(<AOFPage as="section">Hi</AOFPage>)
+    ).not.toContain("min-h-dvh");
+  });
+
   // Every page keeps clear of a phone's corners, notch and home indicator
   // (the edges in base.css), unless it says otherwise for one side.
   it("keeps to the safe edges by default, one side at a time overridable", () => {

@@ -7,7 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { UsersListSkeleton } from "../users-list-skeleton";
 
-const HIDDEN_TOOLBAR = /<div aria-hidden="true" class="flex flex-col/;
+const HIDDEN_TOOLBAR = /<div aria-hidden="true" class="@container"/;
 
 const html = () =>
   renderToStaticMarkup(
@@ -24,8 +24,19 @@ describe("UsersListSkeleton", () => {
     expect(markup).toMatch(HIDDEN_TOOLBAR);
   });
 
-  it("draws a cell per column: the box, the email, a Role per App, the date", () => {
-    const columns = objectValues(App).length + 3;
-    expect(html()).toContain(`repeat(${columns}, minmax(0, 1fr))`);
+  it("lays the columns out as the list does: the box, the email widest, a Role per App, the date", () => {
+    const tracks = [
+      "48px",
+      "minmax(0,1fr)",
+      ...objectValues(App).map(() => "140px"),
+      "140px",
+    ];
+    expect(html()).toContain(`grid-template-columns:${tracks.join(" ")}`);
+  });
+
+  it("gives a phone cards and keeps the pager's place", () => {
+    const markup = html();
+    expect(markup).toContain('data-skeleton="card"');
+    expect(markup).toContain('data-skeleton="pager"');
   });
 });

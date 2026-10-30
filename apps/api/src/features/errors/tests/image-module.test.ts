@@ -36,7 +36,7 @@ const upload = () => {
   form.append("file", new File([new Uint8Array(10)], "a.jpg"));
   form.append(
     "meta",
-    stringifyJson([{ alt: { en: "", it: "" }, apps: [{ app: App.LAURA }] }])
+    stringifyJson([{ alt: { en: "", it: "" }, apps: [App.LAURA] }])
   );
   return {
     body: form,

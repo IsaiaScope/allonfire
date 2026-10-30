@@ -5,32 +5,11 @@
  */
 const SIGNAL_PREFIX = "/v1";
 
-/** How telemetry leaves the API: OTLP over HTTP, to `OTEL_EXPORTER_OTLP_ENDPOINT`. */
-export const OTLP = {
-  ERROR: {
-    HEADERS_MALFORMED_ESCAPE:
-      "each header value must be valid percent-encoding",
-  },
-  /**
-   * Per-signal paths appended to `OTEL_EXPORTER_OTLP_ENDPOINT`. The exporters
-   * add them only when they read the endpoint from `process.env` themselves;
-   * passed explicitly, as here, the URL must be complete.
-   */
-  PATH: {
-    LOGS: `${SIGNAL_PREFIX}/logs`,
-    METRICS: `${SIGNAL_PREFIX}/metrics`,
-    TRACES: `${SIGNAL_PREFIX}/traces`,
-  },
-  PATTERN: {
-    /** `key=value,key=value`, each value percent-encoded, per the OTel spec. */
-    HEADERS: /^[^=,]+=[^,]+(,[^=,]+=[^,]+)*$/,
-    /** OTLP over HTTP only: a gRPC or bare `host:port` endpoint is a typo here. */
-    PROTOCOL: /^https?$/,
-  },
-} as const;
-
-/** What the API tells OpenTelemetry about itself and its spans. */
-export const OTEL = {
+/**
+ * How telemetry leaves the API (OTLP over HTTP, to `TELEMETRY_ENDPOINT`) and
+ * what it tells OpenTelemetry about itself and its spans.
+ */
+export const TELEMETRY = {
   ATTRIBUTE: {
     /** Resource attributes shared by traces, metrics and logs. */
     RESOURCE: {
@@ -47,6 +26,26 @@ export const OTEL = {
   },
   /** Resource name every span, metric and log line is filed under. */
   DEFAULT_SERVICE_NAME: "allonfire-api",
+  ERROR: {
+    HEADERS_MALFORMED_ESCAPE:
+      "each header value must be valid percent-encoding",
+  },
+  /**
+   * Per-signal paths appended to `TELEMETRY_ENDPOINT`. The exporters
+   * add them only when they read the endpoint from `process.env` themselves;
+   * passed explicitly, as here, the URL must be complete.
+   */
+  PATH: {
+    LOGS: `${SIGNAL_PREFIX}/logs`,
+    METRICS: `${SIGNAL_PREFIX}/metrics`,
+    TRACES: `${SIGNAL_PREFIX}/traces`,
+  },
+  PATTERN: {
+    /** `key=value,key=value`, each value percent-encoded, per the OTel spec. */
+    HEADERS: /^[^=,]+=[^,]+(,[^=,]+=[^,]+)*$/,
+    /** OTLP over HTTP only: a gRPC or bare `host:port` endpoint is a typo here. */
+    PROTOCOL: /^https?$/,
+  },
   /** Prisma's one-off startup spans: noise, and each one is its own root trace. */
   PRISMA_STARTUP_SPANS: [
     "prisma:client:detect_platform",

@@ -5,7 +5,7 @@ import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };
 import { env } from "../../environment/environment";
 import { API } from "../../shared/constants/api";
-import { OTLP } from "../telemetry/constants/telemetry";
+import { TELEMETRY } from "../telemetry/constants/telemetry";
 import {
   otlpExporterOptions,
   telemetryResourceAttributes,
@@ -34,7 +34,7 @@ const otelTransport = (endpoint: string) => ({
     logRecordProcessorOptions: {
       exporterOptions: {
         protobufExporterOptions: {
-          ...otlpExporterOptions(endpoint, OTLP.PATH.LOGS),
+          ...otlpExporterOptions(endpoint, TELEMETRY.PATH.LOGS),
           timeoutMillis: API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS,
         },
         protocol: "http/protobuf",
@@ -78,7 +78,7 @@ export function createLogger(opts?: {
 
   const isDevelopment = env.NODE_ENV === ENV.NODE.DEVELOPMENT;
 
-  const endpoint = env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  const endpoint = env.TELEMETRY_ENDPOINT;
   if (endpoint) {
     const consoleTarget = isDevelopment ? PRETTY_TRANSPORT : STDOUT_TRANSPORT;
     // Each target filters at `info` unless told otherwise.

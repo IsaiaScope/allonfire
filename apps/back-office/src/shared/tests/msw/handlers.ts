@@ -25,13 +25,19 @@ export const USERS_PAGE = {
       createdAt: "2026-10-02T10:00:00.000Z",
       email: FIXTURE.USER.LAURA.ADMIN.email,
       id: "user-laura",
+      image: null,
+      imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.LAURA.ADMIN.memberships],
+      name: FIXTURE.USER.LAURA.ADMIN.name,
     },
     {
       createdAt: "2026-10-01T10:00:00.000Z",
       email: FIXTURE.USER.NO_MEMBERSHIP.email,
       id: "user-none",
+      image: null,
+      imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.NO_MEMBERSHIP.memberships],
+      name: FIXTURE.USER.NO_MEMBERSHIP.name,
     },
   ],
 } satisfies InferResponseType<
@@ -45,5 +51,4 @@ export const handlers = [
     HttpResponse.json(HEALTH_OK)
   ),
   http.get(USERS_URL, () => HttpResponse.json(USERS_PAGE)),
-  http.delete(USERS_URL, () => HttpResponse.json({ deleted: 0 })),
 ];

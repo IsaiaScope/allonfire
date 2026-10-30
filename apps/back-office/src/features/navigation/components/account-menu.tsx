@@ -2,10 +2,6 @@
 
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import {
-  AOFAvatar,
-  AOFAvatarFallback,
-} from "@allonfire/ui/components/aof-avatar";
 import { AOFBadge } from "@allonfire/ui/components/aof-badge";
 import {
   AOFDropdownMenu,
@@ -35,6 +31,7 @@ import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
 import { languageLinks, usePathname } from "@/features/i18n/navigation";
 import { Hanko } from "@/shared/components/hanko";
+import { UserAvatar } from "@/shared/components/user-avatar";
 import { NAVIGATION } from "../constants/navigation";
 
 export type AccountMenuProps = {
@@ -47,6 +44,8 @@ export type AccountMenuProps = {
     themeLight: string;
   };
   email: string;
+  /** Their picture's address, when they have one. */
+  image?: string | null | undefined;
   name: string;
   /** The User's Role in the Back Office, translated. */
   role: string;
@@ -71,17 +70,19 @@ const ChoiceRow = ({ children, label }: ChoiceRowProps) => (
   </div>
 );
 
-type IdentityProps = { email: string; name: string };
+type IdentityProps = Pick<AccountMenuProps, "email" | "image" | "name">;
 
-/** The avatar with the name's initial, the name over the email. */
-const Identity = ({ email, name }: IdentityProps) => (
+/** The avatar (the picture, else the name's initial on the Design's
+ *  primary), the name over the email. */
+const Identity = ({ email, image, name }: IdentityProps) => (
   <>
-    {/* The name's initial on a tile in the Design's primary colour. */}
-    <AOFAvatar className="rounded-lg after:hidden group-data-[collapsible=icon]:mx-0.5 group-data-[collapsible=icon]:size-8">
-      <AOFAvatarFallback className="rounded-lg bg-primary font-semibold text-primary-foreground">
-        {name.charAt(0).toUpperCase()}
-      </AOFAvatarFallback>
-    </AOFAvatar>
+    <UserAvatar
+      className="size-8 rounded-lg group-data-[collapsible=icon]:mx-0.5"
+      image={image}
+      name={name}
+      side={32}
+      tone="primary"
+    />
     <span className="grid flex-1 text-left text-base leading-tight">
       <span className="truncate font-medium text-foreground">{name}</span>
       <span className="truncate text-xs">{email}</span>
@@ -99,6 +100,7 @@ const Identity = ({ email, name }: IdentityProps) => (
  */
 export const AccountMenu = ({
   email,
+  image,
   labels,
   name,
   role,
@@ -124,7 +126,7 @@ export const AccountMenu = ({
               />
             }
           >
-            <Identity email={email} name={name} />
+            <Identity email={email} image={image} name={name} />
             <IconCaretUpDown aria-hidden className="ml-auto size-4" />
           </AOFDropdownMenuTrigger>
           <AOFSidebarDropdownContent align="end">

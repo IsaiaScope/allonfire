@@ -244,10 +244,10 @@ for reduced motion (WCAG 2.2.2).
   menu button, padded to the notch and the home indicator. Text and icons a
   little larger than shadcn's for every pointer (the owner asked): labels
   16px, second lines 14px, sidebar rows 40px, the header's menu button
-  36px with a 20px icon, but icons and the segmented switches stay shadcn's (16px icons, 14px
+  38px with a 22px icon and its breadcrumb 18px (2px up, 2026-10-27), but icons and the segmented switches stay shadcn's (16px icons, 14px
   segment text: larger read too heavy); on any touch screen (`pointer-coarse:`, phone and tablet
   alike) rows and menu items grow to 44px and icons to 20px. Folded to
-  icons the rail is 52px (`AOFSidebarProvider`), every square 36px with an
+  icons the rail is 54px (`AOFSidebarProvider`; 52px read a little tight), every square 36px with an
   18px icon, the logo and avatar 36px too. The account's
   initial sits on a primary tile. The sidebar's wall carries faint brush kanji (線 乗 着 駅) down
   its whole height, cut by its edges, and the folded rail keeps slivers of
@@ -296,7 +296,14 @@ component's props extend the element or component it renders
 (`ComponentProps<"div">`, or `ComponentPropsWithoutChildren<...>` from
 `@allonfire/ui/lib/types` when it draws its own content), spread the rest onto
 it, and expose its variants through `VariantProps`: see
-`features/auth/components/hanko.tsx` and `AOFThemeToggle`. Every page frames itself
+`features/auth/components/hanko.tsx` and `AOFThemeToggle`. Never retype a
+wrapped component's props one by one (`open`, `onOpenChange`, `side`,
+`className`, `size`): infer them (`ComponentPropsWithoutChildren<typeof X>`,
+`Omit` only what else the wrapper owns) and spread the rest. A prop list holds only what the wrapper
+adds. A part inside it (the trigger, the popup, a button) takes its props whole
+as one object typed from that part, `triggerProps`, `contentProps`,
+`cancelProps`, never one `xClassName` or `xSize` at a time: see `AOFTooltip`,
+`AOFAlertDialog`, `AOFFaceted`, `AOFFilterPanel`. Every page frames itself
 with `AOFPage` (`layout`: `stack`, `split` or `centered`; `as` for
 `section`/`article`), and page-level controls sit in an `AOFControlBar`.
 

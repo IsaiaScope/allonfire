@@ -4,16 +4,23 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 import { UNIT } from "../../../shared/constants/units";
+import { type AOFQueryErrors, aofErrorCaches } from "./aof-query-errors";
 
 /** Above zero, so the browser does not refetch what the server just sent. */
 const DEFAULT_STALE_TIME_MS = UNIT.MS_PER_MINUTE;
 
-export type AOFQueryClientOptions = { staleTime?: number | undefined };
+export type AOFQueryClientOptions = {
+  /** How a failure is told (`aofErrorCaches`); none on the server. */
+  errors?: AOFQueryErrors | undefined;
+  staleTime?: number | undefined;
+};
 
 const makeQueryClient = ({
+  errors,
   staleTime = DEFAULT_STALE_TIME_MS,
 }: AOFQueryClientOptions) =>
   new QueryClient({
+    ...(errors && aofErrorCaches(errors)),
     defaultOptions: {
       dehydrate: {
         // Pending queries go to the client too: a server component can

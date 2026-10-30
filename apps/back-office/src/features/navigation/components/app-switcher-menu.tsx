@@ -12,9 +12,9 @@ import {
   AOFSidebarMenuItem,
 } from "@allonfire/ui/components/aof-sidebar";
 import { IconArrowUpRight, IconCaretUpDown } from "@tabler/icons-react";
+import { AppTile } from "@/shared/components/app-tile";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import type { SwitcherApp } from "../constants/apps";
-import { AppTile } from "./app-tile";
 import { CurrentAppMark, switcherButton } from "./current-app-mark";
 
 export type AppSwitcherMenuProps = {

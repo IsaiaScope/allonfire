@@ -9,21 +9,48 @@
 
 /* Anything clickable shows the pointer. Tailwind v4's preflight dropped
    `cursor: pointer` from buttons, so shadcn's buttons (the sidebar's toggle,
-   a menu's trigger) showed the arrow; this is the upgrade guide's fix. */
+   a menu's trigger) showed the arrow; this is the upgrade guide's fix. A
+   list's or a menu's options are clicked too, though shadcn draws them
+   `cursor-default`, a utility, which outranks this layer: hence `!important`
+   there, never on a disabled one (Base UI marks one `data-disabled`, cmdk
+   marks every row `data-disabled="false"`). */
 @layer base {
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  :is(
+    [role="option"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"]
+  ):not([aria-disabled="true"], [data-disabled=""], [data-disabled="true"]) {
+    cursor: pointer !important;
   }
 }
 
 /* A control's size on a touch screen (`pointer-coarse:`): a finger's 44px,
    Apple's minimum target, its icon 20px. Every touch-sized AOF component
    reads these (`pointer-coarse:size-(--tap-target)`), so the size is set
-   here once. */
+   here once.
+
+   A field's height, and every control that lines up with one (a form's
+   buttons, a toolbar, a table's rows, a pager): 40px under a mouse, as dense
+   apps draw them, the finger's 44px on a touch screen. `--field-tile` is the
+   pictogram tile inside it, 4px in from each edge. */
 :root {
   --tap-target: 2.75rem;
   --tap-icon: 1.25rem;
+  --field-height: 2.5rem;
+  --field-tile: 2rem;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --field-height: var(--tap-target);
+    --field-tile: 2.25rem;
+  }
 }
 
 /* How far a page keeps from the screen's edges: clear of a phone's rounded

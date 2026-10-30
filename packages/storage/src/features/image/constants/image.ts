@@ -59,16 +59,16 @@ export const IMAGE = {
     DELETE_SUMMARY: "Take Images out of an App, or delete them",
     GET_200: "The Image",
     GET_DESCRIPTION:
-      "No sign-in needed. An Image public in some App, or in an App the User enters; any other answers 404, not 403, so its id stays hidden.",
+      "No sign-in needed. A public Image, or a private one in an App the User enters; any other answers 404, not 403, so its id stays hidden. Its picture comes as signed links, one per width (`srcSet`): a public Image's never expire, a private one's within the hour.",
     GET_SUMMARY: "Get an Image",
     LIST_200: "One page of Images; `nextCursor` is null on the last page",
-    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters. Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, ${LIMIT.LIST.DEFAULT} per page (\`limit\` up to ${LIMIT.LIST.MAX}). Send \`nextCursor\` back as \`cursor\` for the next page.`,
+    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, ${LIMIT.LIST.DEFAULT} per page (\`limit\` up to ${LIMIT.LIST.MAX}). Send \`nextCursor\` back as \`cursor\` for the next page.`,
     LIST_SUMMARY: "List Images",
     PATCH_200: "The updated Images",
-    PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\` or both. A placement added, removed or switched public needs the Admin Role in its App; \`alt\`, which every App shows, needs it in every App the Image is in. A \`public\` left out keeps a placement's own and makes a new one private; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. All or nothing.`,
+    PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. All or nothing.`,
     PATCH_SUMMARY: "Place Images in Apps or change their alt",
     UPLOAD_201: "The new Images, in file order",
-    UPLOAD_DESCRIPTION: `Signed in, Admin in every App named. multipart/form-data: up to ${LIMIT.FILES_PER_UPLOAD} \`file\` parts and one \`meta\` JSON part, \`[{ apps: [{ app, public? }], alt }]\` in file order, at least one App each, each App once, \`public\` false when left out. JPEG, PNG, WebP, AVIF or HEIC in; each file is stored as AVIF with a blur placeholder. Limits: ${LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB} MiB a file, ${LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB} MiB a request, ${LIMIT.INPUT_MEGAPIXELS} megapixels, ${LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_MINUTE} minutes. All or nothing: one bad file rejects the batch.`,
+    UPLOAD_DESCRIPTION: `Signed in, Admin in every App named. multipart/form-data: up to ${LIMIT.FILES_PER_UPLOAD} \`file\` parts and one \`meta\` JSON part, \`[{ apps: [App], alt, access? }]\` in file order, at least one App each, each App once, private when \`access\` is left out. JPEG, PNG, WebP, AVIF or HEIC in; each file is stored as AVIF with a blur placeholder. Limits: ${LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB} MiB a file, ${LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB} MiB a request, ${LIMIT.INPUT_MEGAPIXELS} megapixels, ${LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_MINUTE} minutes. All or nothing: one bad file rejects the batch.`,
     UPLOAD_SUMMARY: "Upload Images",
   },
   /**
@@ -77,6 +77,8 @@ export const IMAGE = {
    * codes, so a new one fails the host's build until it has a message.
    */
   ERROR_CODE: {
+    /** Made public by another request while this one was turning it private. */
+    IMAGE_CHANGED: "IMAGE_CHANGED",
     IMAGE_TOO_LARGE: "IMAGE_TOO_LARGE",
     UNSUPPORTED_IMAGE: "UNSUPPORTED_IMAGE",
   },
@@ -89,6 +91,13 @@ export const IMAGE = {
     CONTENT_TYPE: "image/avif",
     EXTENSION: ".avif",
   },
+  /**
+   * What a picture may come in as, for a file input's `accept`: every format
+   * the upload decodes (JPEG, PNG, WebP, AVIF, HEIC). HEIC also by its
+   * extensions, since a browser often gives an iPhone's file no type.
+   */
+  INPUT_ACCEPT:
+    "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif",
   LIMIT,
   /** The tag the Image module's routes appear under. */
   OPENAPI_TAG: "Image",

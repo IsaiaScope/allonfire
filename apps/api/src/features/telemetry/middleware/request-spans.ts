@@ -6,7 +6,7 @@ import type { MiddlewareHandler } from "hono";
 import pkg from "../../../../package.json" with { type: "json" };
 import { env } from "../../../environment/environment";
 import { isProbe } from "../../../shared/utils/probe";
-import { OTEL } from "../constants/telemetry";
+import { TELEMETRY } from "../constants/telemetry";
 
 /**
  * One server span and one `http.server.request.duration` point per request,
@@ -24,7 +24,7 @@ import { OTEL } from "../constants/telemetry";
  */
 export const requestSpans = (): MiddlewareHandler => {
   const httpSpans = httpInstrumentationMiddleware({
-    serviceName: env.OTEL_SERVICE_NAME,
+    serviceName: env.TELEMETRY_SERVICE_NAME,
     serviceVersion: pkg.version,
   });
 
@@ -34,10 +34,10 @@ export const requestSpans = (): MiddlewareHandler => {
       : httpSpans(context, async () => {
           const url = new URL(context.req.url);
           trace.getActiveSpan()?.setAttributes({
-            [OTEL.ATTRIBUTE.URL.FULL]: `${url.origin}${url.pathname}`,
-            [OTEL.ATTRIBUTE.URL.PATH]: url.pathname,
+            [TELEMETRY.ATTRIBUTE.URL.FULL]: `${url.origin}${url.pathname}`,
+            [TELEMETRY.ATTRIBUTE.URL.PATH]: url.pathname,
             // `protocol` keeps its trailing colon: "http:".
-            [OTEL.ATTRIBUTE.URL.SCHEME]: url.protocol.slice(0, -1),
+            [TELEMETRY.ATTRIBUTE.URL.SCHEME]: url.protocol.slice(0, -1),
           });
 
           await next();

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSelector } from "@tanstack/react-form";
+import { cva } from "class-variance-authority";
 import { Eye, EyeOff } from "lucide-react";
 import {
   type ChangeEvent,
@@ -17,10 +18,61 @@ import { cn } from "../lib/utils";
 import { AOFButton } from "./aof-button";
 import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
+import { aofInputEndButton } from "./aof-input-clear";
 
 // The tall field of every AOF form, its icon white on a dark tile like station
 // signage. Built on shadcn's tokens only, so any Design wears it. Text longer
 // than the box ends in an ellipsis while the field is not focused.
+
+/** The field's tall input, room left at its start for the icon tile. */
+export const aofFieldInput = cva(
+  "h-(--field-height) text-ellipsis text-base md:text-base",
+  { variants: { icon: { false: "", true: "pl-13" } } }
+);
+
+/** The field's icon, white on a dark tile; decoration, hidden from screen readers. */
+export const AOFFieldTile = ({ children }: { children: ReactNode }) => (
+  <span
+    aria-hidden="true"
+    className="dark pointer-events-none absolute inset-y-1 left-1 flex w-(--field-tile) items-center justify-center rounded-sm bg-background text-foreground *:size-5"
+  >
+    {children}
+  </span>
+);
+
+/**
+ * The label, bold, with an asterisk beside it when the field is required:
+ * outside the `<label>`, so the field's name stays its words alone, and
+ * hidden from screen readers, as the input already says it is required.
+ */
+export const AOFFieldTitle = ({
+  children,
+  htmlFor,
+  required,
+}: {
+  children: ReactNode;
+  htmlFor: string;
+  required?: boolean | undefined;
+}) => {
+  const label = (
+    <AOFFieldLabel className="font-bold" htmlFor={htmlFor}>
+      {children}
+    </AOFFieldLabel>
+  );
+  return required ? (
+    <div className="flex items-baseline gap-1">
+      {label}
+      <span
+        aria-hidden="true"
+        className="font-bold text-destructive leading-none"
+      >
+        *
+      </span>
+    </div>
+  ) : (
+    label
+  );
+};
 
 export type AOFTextFieldProps = Omit<
   AOFInputProps,
@@ -97,25 +149,17 @@ export const AOFTextField = ({
   return (
     // One input needs no group: `role="none"` drops shadcn's unnamed one.
     <AOFField data-invalid={marked || undefined} role="none">
-      <AOFFieldLabel className="font-bold" htmlFor={inputId}>
+      <AOFFieldTitle htmlFor={inputId} required={input.required}>
         {label}
-      </AOFFieldLabel>
+      </AOFFieldTitle>
       <div className="relative">
-        {icon ? (
-          <span
-            aria-hidden="true"
-            className="dark pointer-events-none absolute inset-y-1 left-1 flex w-9 items-center justify-center rounded-sm bg-background text-foreground *:size-5"
-          >
-            {icon}
-          </span>
-        ) : null}
+        {icon ? <AOFFieldTile>{icon}</AOFFieldTile> : null}
         <AOFInput
           {...input}
           aria-describedby={showsErrors ? errorId : undefined}
           aria-invalid={marked || undefined}
           className={cn(
-            "h-11 text-ellipsis text-base md:text-base",
-            icon && "pl-13",
+            aofFieldInput({ icon: Boolean(icon) }),
             reveal && "pr-12",
             className
           )}
@@ -132,9 +176,7 @@ export const AOFTextField = ({
             aria-controls={inputId}
             aria-label={reveal}
             aria-pressed={revealed}
-            className={cn(
-              "absolute top-1 right-1 size-9 text-muted-foreground *:size-5"
-            )}
+            className={aofInputEndButton()}
             onClick={toggleRevealed}
             size="icon"
             type="button"

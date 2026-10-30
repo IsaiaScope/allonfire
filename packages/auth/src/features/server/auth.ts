@@ -1,11 +1,15 @@
 import { prisma } from "@allonfire/database";
 import { canEnterApp } from "@allonfire/database/features/auth/access/access";
-import { betterAuth } from "better-auth";
+import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { customSession, openAPI } from "better-auth/plugins";
 import { AUTH } from "../../shared/constants/auth";
 import type { AuthLike } from "../../shared/types/auth";
+import {
+  type AvatarLink,
+  linkedPicture,
+} from "../../shared/utils/linked-picture";
 import { joinApp } from "./routes/join-app";
 import {
   namedApp,
@@ -27,7 +31,24 @@ export type CreateAuthOptions = {
    * own domain only.
    */
   cookieDomain?: string | undefined;
+  /**
+   * What a browser gets for `User.image` in the Session: the Host signs a
+   * stored Avatar's name into a link; none, and the column is answered as it
+   * is.
+   */
+  avatarLink?: AvatarLink | undefined;
 };
+
+/**
+ * `User.imageBlurDataUrl`, read for the Session only: the User module sets it
+ * with `User.image`, never a sign-up or anything a client sends. Passed to
+ * `customSession` too, which reads a field only from the options it is given.
+ */
+const USER_OPTIONS = {
+  additionalFields: {
+    imageBlurDataUrl: { input: false, required: false, type: "string" },
+  },
+} as const satisfies BetterAuthOptions["user"];
 
 /** A User's Memberships, as the access rules read them. */
 const membershipsOf = (userId: string) =>
@@ -40,7 +61,11 @@ const membershipsOf = (userId: string) =>
  * Who enters an App and who registers comes from `ACCESS.APP_SETTINGS` alone, the
  * table every guard and every App reads too (ADR 0019).
  */
-export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
+export function createAuth({
+  avatarLink = (image) => image,
+  cookieDomain,
+  ...options
+}: CreateAuthOptions) {
   return betterAuth({
     ...options,
     ...(cookieDomain && {
@@ -99,15 +124,26 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
             }
           },
           // Every User a request creates goes through Registration: the one
-          // place a row is written, so the one place that must refuse.
+          // place a row is written, so the one place that must refuse. An
+          // email sign-up keeps no picture it sent: `User.image` names a
+          // stored Avatar only an Admin sets; a provider's own stays.
           before: (user, ctx) =>
             registrationFor(ctx?.headers)
-              ? Promise.resolve({ data: user })
+              ? Promise.resolve({
+                  data:
+                    ctx?.path === AUTH.PATH.SIGN_UP_EMAIL
+                      ? { ...user, image: null }
+                      : user,
+                })
               : Promise.reject(registrationClosed()),
         },
       },
     },
-    disabledPaths: [AUTH.PATH.OPENAPI_SCHEMA, AUTH.PATH.VERIFY_PASSWORD],
+    disabledPaths: [
+      AUTH.PATH.OPENAPI_SCHEMA,
+      AUTH.PATH.UPDATE_USER,
+      AUTH.PATH.VERIFY_PASSWORD,
+    ],
     emailAndPassword: { enabled: true },
     hooks: {
       // Refused before Better Auth looks the email up: a closed App never
@@ -120,10 +156,23 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
     },
     plugins: [
       openAPI({ disableDefaultReference: true }),
-      customSession(async ({ session, user }) => ({
-        session,
-        user: { ...user, memberships: await membershipsOf(user.id) },
-      })),
+      customSession(
+        async ({ session, user }) => ({
+          session,
+          user: {
+            ...user,
+            ...linkedPicture(
+              {
+                image: user.image ?? null,
+                imageBlurDataUrl: user.imageBlurDataUrl ?? null,
+              },
+              avatarLink
+            ),
+            memberships: await membershipsOf(user.id),
+          },
+        }),
+        { user: USER_OPTIONS }
+      ),
       joinApp,
     ],
     // The host rate-limits with its own shared store; Better Auth's default is
@@ -137,6 +186,7 @@ export function createAuth({ cookieDomain, ...options }: CreateAuthOptions) {
       expiresIn: AUTH.SESSION.EXPIRES_IN_S,
       updateAge: AUTH.SESSION.UPDATE_AGE_S,
     },
+    user: USER_OPTIONS,
   });
 }
 

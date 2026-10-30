@@ -19,7 +19,7 @@ export const StationNumber = ({
   <span
     aria-hidden
     className={cn(
-      "shrink-0 font-bold text-base text-line leading-none",
+      "shrink-0 font-bold text-lg text-line leading-none",
       className
     )}
     {...props}

@@ -2,8 +2,13 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { isStaleTestRun } from "@allonfire/config/tests/run/test-run";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
-import { TEMPLATE_SOURCES, templateFingerprint } from "../template";
+import {
+  buildingName,
+  TEMPLATE_SOURCES,
+  templateFingerprint,
+} from "../template";
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
@@ -48,4 +53,12 @@ it("builds from the changelog, the Fixtures and the db-migrate image", () => {
     "liquibase",
     "src/features/seed",
   ]);
+});
+
+it("names a template being built after the process building it, so a dead build is dropped at once", () => {
+  const now = new Date();
+  const epoch = Math.floor(now.getTime() / 1000);
+  const name = buildingName("74ef91", epoch, 4242);
+  expect(isStaleTestRun(name, now, (pid) => pid === 4242)).toBe(false);
+  expect(isStaleTestRun(name, now, () => false)).toBe(true);
 });

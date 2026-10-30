@@ -14,6 +14,7 @@ import {
   fixtureFile,
   imageTestApp,
   jpeg,
+  keyOf,
   served,
   upload,
   uploaded,
@@ -27,7 +28,7 @@ const ACCEPTED = [
   "photo.avif",
   "colors-no-alpha.heic",
 ];
-const IN_BACK_OFFICE = [{ app: App.BACK_OFFICE, public: true }];
+const IN_BACK_OFFICE = [App.BACK_OFFICE];
 
 let app: TestApp;
 /** The keys this test's app put in MinIO. */
@@ -60,11 +61,12 @@ describe("uploading Images on the real stack", () => {
         files: [fixtureFile(name)],
       })
     );
-    expect(image?.key.endsWith(IMAGE.FORMAT.EXTENSION)).toBe(true);
+    const key = await keyOf(image?.id ?? "");
+    expect(key.endsWith(IMAGE.FORMAT.EXTENSION)).toBe(true);
     expect(image?.width).toBeGreaterThan(0);
-    const object = await fetchObject(`${image?.key}`);
+    const object = await fetchObject(key);
     expect(object.headers.get("content-type")).toBe(IMAGE.FORMAT.CONTENT_TYPE);
-    expect(stored).toEqual([image?.key]);
+    expect(stored).toEqual([key]);
   });
 
   it("refuses a GIF and stores nothing", async () => {
@@ -99,7 +101,7 @@ describe("uploading Images on the real stack", () => {
     async ({ into, status, user }) => {
       const cookie = user ? await cookieFor(app, user) : "";
       const res = await upload(app, cookie, {
-        apps: into.map((each) => ({ app: each, public: false })),
+        apps: into,
         files: [jpeg()],
       });
       expect(res.status).toBe(status);

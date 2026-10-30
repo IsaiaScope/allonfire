@@ -10,6 +10,7 @@ import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
 import { userListBodySchema } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
+import { stubUserDeps } from "./stub-user-deps";
 import { testHost } from "./test-host";
 
 const LIST = USER.PATH.BASE;
@@ -21,17 +22,18 @@ const USER_ROW: UserRecord = {
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
   email: FIXTURE.USER.LAURA.ADMIN.email,
   id: "user-2",
+  image: null,
+  imageBlurDataUrl: null,
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
+  name: FIXTURE.USER.LAURA.ADMIN.name,
 };
 
 /** Deps that record each list query and let in whom `allows` says. */
 const depsWith = (allows = true) => {
   const queries: UserListQuery[] = [];
   const deps: UserDeps = {
+    ...stubUserDeps(),
     canListUsers: () => allows,
-    canManageUsers: () => Promise.resolve(false),
-    createUser: () =>
-      Promise.reject(new Error("createUser must not be called")),
     deleteUsers: () => Promise.resolve(0),
     listUsers: (query) => {
       queries.push(query);
@@ -79,10 +81,10 @@ describe("User module", () => {
       )
     ).toEqual({
       query: {
-        app: App.LAURA,
+        app: [App.LAURA],
         page: 2,
         perPage: MIDDLE_PAGE_SIZE,
-        role: Role.ADMIN,
+        role: [Role.ADMIN],
         text: "isa",
       },
       status: HTTP.STATUS.OK,

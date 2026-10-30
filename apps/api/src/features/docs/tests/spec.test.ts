@@ -50,7 +50,9 @@ const specSchema = z.object({
     z.object({
       delete: operationSchema.optional(),
       get: operationSchema.optional(),
+      patch: operationSchema.optional(),
       post: operationSchema.optional(),
+      put: operationSchema.optional(),
     })
   ),
 });
@@ -116,18 +118,32 @@ describe("GET /openapi.json", () => {
         "App",
         "Health",
         "Image",
+        "ImageAccess",
         "ImageAlt",
         "ImageChange",
         "ImageDelete",
-        "ImageLink",
         "ImageList",
         "ImageUpload",
+        "SignedLink",
+        "UserAvatar",
         "Ready",
+        "ListedUser",
         "ReadyUnavailable",
-        "User",
         "UserList",
       ])
     );
+  });
+
+  it("shows an Image's access and signed links, and no per-App public or file name", async () => {
+    const schemas = specSchema.parse(await fullSpec()).components?.schemas;
+    const image = z
+      .object({ properties: z.record(z.string(), z.unknown()) })
+      .parse(schemas?.Image);
+    expect(objectKeys(image.properties)).toEqual(
+      expect.arrayContaining(["access", "srcSet", "apps"])
+    );
+    expect(objectKeys(image.properties)).not.toContain("key");
+    expect(objectKeys(schemas ?? {})).not.toContain("ImageLink");
   });
 
   it("leaves every Model untagged, so the docs list them apart", async () => {
@@ -252,18 +268,45 @@ describe("GET /openapi.json error responses", () => {
     expect(components.responses).toHaveProperty(["Problem404", "content"]);
   });
 
-  it("documents the User list under Users, refusing without a Session or the right", async () => {
-    const { paths } = specSchema.parse(await fullSpec());
-    const operation = paths[API.PATH.USERS]?.get;
-    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
-    expect(objectKeys(operation?.responses ?? {})).toEqual(
-      expect.arrayContaining(
-        [HTTP.STATUS.OK, HTTP.STATUS.UNAUTHORIZED, HTTP.STATUS.FORBIDDEN].map(
-          String
-        )
-      )
-    );
-  });
+  it.each([
+    {
+      method: "get",
+      statuses: [
+        HTTP.STATUS.OK,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+      ],
+    },
+    {
+      method: "post",
+      statuses: [
+        HTTP.STATUS.CREATED,
+        HTTP.STATUS.BAD_REQUEST,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+        HTTP.STATUS.CONFLICT,
+      ],
+    },
+    {
+      method: "delete",
+      statuses: [
+        HTTP.STATUS.OK,
+        HTTP.STATUS.BAD_REQUEST,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+      ],
+    },
+  ] as const)(
+    "documents $method /users under Users, with its refusals",
+    async ({ method, statuses }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation = paths[API.PATH.USERS]?.[method];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(statuses.map(String))
+      );
+    }
+  );
 
   it("points each Image route's error at its own status", async () => {
     const { paths } = await problemDocument();
@@ -293,6 +336,21 @@ describe("GET /openapi.json with the Auth module", () => {
     expect(document.paths).toHaveProperty([API.PATH.HEALTH]);
     expect(document.paths).not.toHaveProperty([`${API.PATH.AUTH}/*`]);
     expect(document.components?.schemas).toHaveProperty(["Session"]);
+  });
+});
+
+describe("GET /openapi.json beside Better Auth's own Models", () => {
+  it("builds the document when Better Auth describes its User", async () => {
+    const auth = apiAuth({
+      openApi: () =>
+        Promise.resolve({
+          components: { schemas: { User: { type: "object" } } },
+          paths: {},
+        }),
+    });
+    const res = await createApp(appDeps({ auth })).request(API.PATH.OPENAPI);
+
+    expect(res.status).toBe(HTTP.STATUS.OK);
   });
 });
 
@@ -369,8 +427,65 @@ describe("GET /openapi.json User writes", () => {
       )
     );
     const { components } = await problemDocument();
-    expect(components.schemas.Problem409?.properties.code.enum).toEqual([
-      USER.ERROR_CODE.EMAIL_TAKEN,
-    ]);
+    expect(components.schemas.Problem409?.properties.code.enum).toContain(
+      USER.ERROR_CODE.EMAIL_TAKEN
+    );
   });
+});
+
+describe("GET /openapi.json one User", () => {
+  it.each([
+    { method: "get", statuses: [] },
+    { method: "patch", statuses: [HTTP.STATUS.BAD_REQUEST] },
+  ] as const)(
+    "documents $method on one User under Users",
+    async ({ method, statuses }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation =
+        paths[`${API.PATH.USERS}${USER.PATH.ONE.replace(":id", "{id}")}`]?.[
+          method
+        ];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(
+          [
+            HTTP.STATUS.OK,
+            HTTP.STATUS.UNAUTHORIZED,
+            HTTP.STATUS.FORBIDDEN,
+            HTTP.STATUS.NOT_FOUND,
+            ...statuses,
+          ].map(String)
+        )
+      );
+    }
+  );
+
+  it("lists the code a change of your own Role answers", async () => {
+    const { components } = await problemDocument();
+    expect(components.schemas.Problem403?.properties.code.enum).toContain(
+      USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE
+    );
+  });
+});
+
+describe("GET /openapi.json Avatars", () => {
+  it.each([
+    { method: "put", status: HTTP.STATUS.OK },
+    { method: "delete", status: HTTP.STATUS.NO_CONTENT },
+  ] as const)(
+    "documents $method on a User's Avatar under Users",
+    async ({ method, status }) => {
+      const { paths } = specSchema.parse(await fullSpec());
+      const operation =
+        paths[`${API.PATH.USERS}${USER.PATH.AVATAR.replace(":id", "{id}")}`]?.[
+          method
+        ];
+      expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining(
+          [status, HTTP.STATUS.FORBIDDEN, HTTP.STATUS.NOT_FOUND].map(String)
+        )
+      );
+    }
+  );
 });

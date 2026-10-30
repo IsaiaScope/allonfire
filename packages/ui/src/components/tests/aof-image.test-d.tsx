@@ -4,7 +4,7 @@ const image = {
   alt: { en: "", it: "" },
   blurDataUrl: "",
   height: 1,
-  key: "a.webp",
+  srcSet: [{ url: "https://images.test/a", width: 640 }],
   width: 1,
 };
 

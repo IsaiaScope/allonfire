@@ -3,10 +3,15 @@ import type { ComponentProps } from "react";
 import { cn } from "../lib/utils";
 
 const page = cva(
-  "relative isolate flex min-h-dvh flex-col bg-background text-foreground",
+  "relative isolate flex flex-col bg-background text-foreground",
   {
-    defaultVariants: { edges: "safe", layout: "stack" },
+    defaultVariants: { as: "main", edges: "safe", layout: "stack" },
     variants: {
+      /**
+       * Only the page that is the screen fills its height; one nested in a
+       * frame (`section`, `article`) is as tall as the frame lets it be.
+       */
+      as: { article: "", main: "min-h-dvh", section: "" },
       edges: {
         /** Draws to the screen's edges, keeping clear of nothing. */
         none: "",
@@ -35,13 +40,13 @@ const page = cva(
 type PageTag = "article" | "main" | "section";
 
 export type AOFPageProps = ComponentProps<"main"> &
-  VariantProps<typeof page> & {
+  Omit<VariantProps<typeof page>, "as"> & {
     /** The element to render; `main` unless the page sits inside another. */
     as?: PageTag;
   };
 
 /**
- * A full-height page frame on the theme's ground: `<main>` by default, any
+ * A page frame (screen-high as the `<main>`) on the theme's ground: `<main>` by default, any
  * prop passed through. `isolate` gives it its own stacking context, so a
  * backdrop behind it can sit at `-z-10`.
  */
@@ -53,7 +58,7 @@ export const AOFPage = ({
   ...props
 }: AOFPageProps) => (
   <Tag
-    className={cn(page({ edges, layout }), className)}
+    className={cn(page({ as: Tag, edges, layout }), className)}
     data-layout={layout ?? "stack"}
     data-slot="page"
     {...props}

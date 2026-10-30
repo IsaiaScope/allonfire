@@ -1,43 +1,21 @@
-import { randomUUID } from "node:crypto";
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { createMiddleware } from "hono/factory";
 import { IMAGE } from "../../constants/image";
-import {
-  ImageTooLargeError,
-  type PreparedImage,
-  UnsupportedImageError,
-} from "../../prepare/prepare-image";
+import type { PreparedImage } from "../../prepare/prepare-image";
+import { imageKey } from "../../utils/image-key";
 import type { UploadItem } from "../constants/schemas";
 import type { ImageDeps } from "./deps";
+import { asImageError } from "./errors";
 
 /** The file bytes as sharp reads them; a decode failure is the client's 415, too many pixels a 413. */
 const prepareFile = async (deps: ImageDeps, file: File) => {
   try {
     return await deps.prepare(Buffer.from(await file.arrayBuffer()));
   } catch (error) {
-    if (error instanceof ImageTooLargeError) {
-      throw new CodedError(
-        {
-          code: IMAGE.ERROR_CODE.IMAGE_TOO_LARGE,
-          status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
-          values: { limit: IMAGE.LIMIT.INPUT_MEGAPIXELS },
-        },
-        { cause: error }
-      );
-    }
-    if (error instanceof UnsupportedImageError) {
-      throw new CodedError(
-        {
-          code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
-          status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
-        },
-        { cause: error }
-      );
-    }
-    throw error;
+    return asImageError(error);
   }
 };
 
@@ -53,7 +31,7 @@ export const prepareAll = (deps: ImageDeps, items: UploadItem[]) =>
     list.push({
       ...item,
       image: await prepareFile(deps, item.file),
-      key: `${randomUUID()}${IMAGE.FORMAT.EXTENSION}`,
+      key: imageKey(),
     });
     return list;
   }, Promise.resolve([]));

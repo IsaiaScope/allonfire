@@ -24,6 +24,9 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `DATABASE_URL: ${LOCAL.URL.DATABASE}`,
       `API_REDIS_URL: ${LOCAL.URL.REDIS}`,
       `STORAGE_ENDPOINT: ${LOCAL.URL.STORAGE}`,
+      `STORAGE_IMAGE_SERVER_URL: ${LOCAL.URL.IMAGE_SERVER}`,
+      `STORAGE_IMAGE_SERVER_KEY: ${LOCAL.IMAGE_SERVER.KEY}`,
+      `STORAGE_IMAGE_SERVER_SALT: ${LOCAL.IMAGE_SERVER.SALT}`,
     ],
   ],
   [
@@ -37,6 +40,9 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
       `STORAGE_ACCESS_KEY="${LOCAL.STORAGE.ACCESS_KEY}"`,
       `STORAGE_SECRET_KEY="${LOCAL.STORAGE.SECRET_KEY}"`,
+      `STORAGE_IMAGE_SERVER_URL="${LOCAL.URL.IMAGE_SERVER}"`,
+      `STORAGE_IMAGE_SERVER_KEY="${LOCAL.IMAGE_SERVER.KEY}"`,
+      `STORAGE_IMAGE_SERVER_SALT="${LOCAL.IMAGE_SERVER.SALT}"`,
     ],
   ],
   [
@@ -46,7 +52,6 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `BACK_OFFICE_URL="${LOCAL.URL.BACK_OFFICE}"`,
       `LAURA_URL="${LOCAL.URL.LAURA}"`,
       `API_URL="${LOCAL.URL.API}"`,
-      `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
     ],
   ],
   [
@@ -54,7 +59,6 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
     [
       `next dev --port ${LOCAL.PORT.BACK_OFFICE}`,
       `next start --port ${LOCAL.PORT.BACK_OFFICE}`,
-      `STORAGE_ENDPOINT=\${STORAGE_ENDPOINT:-${LOCAL.URL.STORAGE}}`,
     ],
   ],
   [
@@ -64,6 +68,9 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `"${LOCAL.PORT.REDIS}:6379"`,
       `"${LOCAL.PORT.STORAGE}:9000"`,
       `"${LOCAL.PORT.STORAGE_CONSOLE}:9001"`,
+      `"${LOCAL.PORT.CDN}:8080"`,
+      `IMGPROXY_KEY: \${STORAGE_IMAGE_SERVER_KEY:-${LOCAL.IMAGE_SERVER.KEY}}`,
+      `IMGPROXY_SALT: \${STORAGE_IMAGE_SERVER_SALT:-${LOCAL.IMAGE_SERVER.SALT}}`,
       `POSTGRES_USER: \${POSTGRES_USER:-${LOCAL.DATABASE.USER}}`,
       `POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-${LOCAL.DATABASE.PASSWORD}}`,
       `POSTGRES_DB: \${POSTGRES_DB:-${LOCAL.DATABASE.NAME}}`,
@@ -78,10 +85,14 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `STORAGE_ENDPOINT="${LOCAL.URL.STORAGE}"`,
       `STORAGE_ACCESS_KEY="${LOCAL.STORAGE.ACCESS_KEY}"`,
       `STORAGE_SECRET_KEY="${LOCAL.STORAGE.SECRET_KEY}"`,
+      `STORAGE_IMAGE_SERVER_URL="${LOCAL.URL.IMAGE_SERVER}"`,
+      `STORAGE_IMAGE_SERVER_KEY="${LOCAL.IMAGE_SERVER.KEY}"`,
+      `STORAGE_IMAGE_SERVER_SALT="${LOCAL.IMAGE_SERVER.SALT}"`,
     ],
   ],
   [
-    ".env.example",
+    // Compose reads `.env` beside the compose file, never the repo root's.
+    "docker/.env.example",
     [
       `POSTGRES_USER="${LOCAL.DATABASE.USER}"`,
       `POSTGRES_PASSWORD="${LOCAL.DATABASE.PASSWORD}"`,
@@ -103,4 +114,42 @@ describe.each(EXPECTED)("%s", (path, lines) => {
   it.each(lines)("holds %s", (line) => {
     expect(read(path)).toContain(line);
   });
+});
+
+const BUILD_STORAGE = /STORAGE_(ENDPOINT|BUCKET)/;
+const DOCKERFILE_STAGE = /^FROM /m;
+const DEPLOY_BUILD_ARGS = /build-args: \|\n((?: {12}.*\n)+)/;
+const TURBO_BUILD_ENV = /"build": \{[^}]*?"env": \[([^\]]*)\]/;
+
+// The Back Office serves no stored file itself (pictures reach the browser
+// through the image server, ADR 0027), so its build reads no storage address.
+describe("the Back Office build", () => {
+  // The pruner, the deps, then the builder.
+  const [, , , builderStage] =
+    read("docker/Dockerfile").split(DOCKERFILE_STAGE);
+  // A split on a capturing pattern holds the capture second; no match, nothing.
+  const [, deployBuildArgs] = read(".github/workflows/deploy.yml").split(
+    DEPLOY_BUILD_ARGS
+  );
+  const [, turboBuildEnv] = read("turbo.json").split(TURBO_BUILD_ENV);
+
+  it.each([
+    ["the Dockerfile's builder stage", builderStage],
+    ["deploy.yml's build-args", deployBuildArgs],
+    ["turbo's build env", turboBuildEnv],
+    ["the Back Office's .env.example", read("apps/back-office/.env.example")],
+    ["the Back Office's scripts", read("apps/back-office/package.json")],
+  ])("%s reads no STORAGE_ENDPOINT or STORAGE_BUCKET", (_where, text) => {
+    expect(text).toBeTruthy();
+    expect(text).not.toMatch(BUILD_STORAGE);
+  });
+});
+
+// Dokploy's API answers only behind the panel's basic auth, so the address
+// carries the login and is a secret, never a variable.
+it("reads DOKPLOY_URL from the prod environment's secrets", () => {
+  const deploy = read(".github/workflows/deploy.yml");
+  const name = "DOKPLOY_URL";
+  expect(deploy).toContain(`${name}: \${{ secrets.${name} }}`);
+  expect(deploy).not.toContain(`vars.${name}`);
 });

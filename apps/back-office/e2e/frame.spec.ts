@@ -7,6 +7,10 @@ import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
 import {
+  NAVIGATION,
+  sidebarParam,
+} from "../src/features/navigation/constants/navigation";
+import {
   SECTION,
   type SECTIONS,
   sectionHref,
@@ -20,6 +24,8 @@ const ITALIAN = "it";
 const ITALIAN_NAME = new RegExp(`^${languageName(ITALIAN)}$`, "i");
 /** A filtered list's address, which switching language must keep. */
 const QUERY = `${USER.PARAM.SEARCH}=isa`;
+/** A background with nothing painted. */
+const TRANSPARENT = "rgba(0, 0, 0, 0)";
 
 /** The menu on screen: the sidebar, or the drawer on a phone. */
 const menuOf = (page: Page) =>
@@ -108,4 +114,40 @@ test("a signed-out visit to a Section is sent to Sign in before any page", async
   for (const response of responses) {
     expect(response.status()).toBe(HTTP.STATUS.TEMPORARY_REDIRECT);
   }
+});
+
+test.describe("before the page runs", () => {
+  // The PWA's worker would answer the App's scripts itself, past `route`.
+  test.use({ serviceWorkers: "block" });
+
+  test("a page opened with the menu folded shows the unfold icon from its first paint", async ({
+    page,
+  }) => {
+    await signInAsAdmin(page);
+    // No script of the App's runs: only the inline one that paints the fold,
+    // so what is on screen is the first paint, before hydration.
+    let blocked = 0;
+    await page.route("**/_next/static/**", (route) => {
+      if (route.request().resourceType() !== "script") {
+        return route.continue();
+      }
+      blocked += 1;
+      return route.abort();
+    });
+    await page.goto(
+      `${sectionHref(SECTION.USERS.path)}?${NAVIGATION.PARAM.SIDEBAR}=${sidebarParam.serialize(false)}`
+    );
+    // The App's own scripts really did not run.
+    expect(blocked).toBeGreaterThan(0);
+    const trigger = page.getByRole("button", { name: t.toggleMenu });
+    await expect(
+      trigger.locator(".tabler-icon-layout-sidebar-left-expand")
+    ).toBeVisible();
+    await expect(
+      trigger.locator(".tabler-icon-layout-sidebar-left-collapse")
+    ).toBeHidden();
+    // Not lit as if the menu were open: the page's HTML says it is open
+    // (`aria-expanded`) until the page runs.
+    await expect(trigger).toHaveCSS("background-color", TRANSPARENT);
+  });
 });

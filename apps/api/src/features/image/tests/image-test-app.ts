@@ -1,15 +1,16 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
-import type { App } from "@allonfire/database/enums";
-import type { ImageLink } from "@allonfire/database/features/auth/access/access";
-import { env } from "@allonfire/storage/environment/environment";
+import type { App, ImageAccess } from "@allonfire/database/enums";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
 import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
 import { imageListBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
 import { putImageObject } from "@allonfire/storage/features/image/objects/image-objects";
-import { storedObjectUrl } from "@allonfire/storage/shared/utils/stored-object-url";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
+import { pictureLink } from "@allonfire/storage/features/image-server/sign";
 import { z } from "zod";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
@@ -39,9 +40,14 @@ export const imageTestApp = (stored: string[] = []): TestApp =>
     })
   );
 
-/** What the run's bucket answers anyone for `key`. */
+/**
+ * The stored file `key` as a browser gets it: the bucket is closed, so through
+ * the image server, signed, at its largest width, as AVIF.
+ */
 export const fetchObject = (key: string) =>
-  fetch(storedObjectUrl(env.STORAGE_ENDPOINT, env.STORAGE_BUCKET, key));
+  fetch(pictureLink({ key, width: Math.max(...IMAGE_SERVER.WIDTHS) }), {
+    headers: { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE },
+  });
 
 /** An Image Fixture's source file. */
 export const fixtureFile = (name: string): UploadFile => ({
@@ -59,12 +65,14 @@ export function upload(
   app: TestApp,
   cookie: string,
   {
+    access,
     alt = { en: "test", it: "test" },
     apps,
     files,
   }: {
+    access?: ImageAccess;
     alt?: { en: string; it: string };
-    apps: readonly ImageLink[];
+    apps: readonly App[];
     files: readonly UploadFile[];
   }
 ) {
@@ -72,7 +80,10 @@ export function upload(
   for (const { bytes, name } of files) {
     form.append("file", new File([new Uint8Array(bytes)], name));
   }
-  form.append("meta", stringifyJson(files.map(() => ({ alt, apps }))));
+  form.append(
+    "meta",
+    stringifyJson(files.map(() => ({ alt, apps, ...(access && { access }) })))
+  );
   return app.request(API.PATH.IMAGES, {
     body: form,
     headers: { cookie, origin: ORIGIN },
@@ -107,11 +118,16 @@ export async function listKeys(
     headers: { cookie, origin: ORIGIN },
   });
   const { images, nextCursor } = imageListBodySchema.parse(await res.json());
-  const keys = images.map(({ key }) => key);
+  // The body names no file: each Image's key is read by its id, in order.
+  const keys = await Promise.all(images.map(({ id }) => keyOf(id)));
   return nextCursor
     ? [...keys, ...(await listKeys(app, cookie, options, nextCursor))]
     : keys;
 }
+
+/** The file name an Image is stored under: the API never answers it. */
+export const keyOf = async (id: string) =>
+  (await prisma.image.findUniqueOrThrow({ where: { id } })).key;
 
 /** The id of the Image stored under `key`. */
 export const idOf = async (key: string) =>

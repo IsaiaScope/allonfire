@@ -18,7 +18,7 @@ export const JAPAN_IMAGE_COLOR = {
   dark: {
     background: "#16191d",
     foreground: "#eef0f2",
-    mutedForeground: "#9aa3ad",
+    mutedForeground: "#a3acb6",
     primary: "#3a9ee0",
   },
   /** The line palette: each App picks its own (the Line Rule). */

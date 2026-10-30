@@ -70,13 +70,15 @@ export const SignInForm = ({
       <form.AppField name="email">
         {(email) => (
           <email.TextField
+            // Both fields are needed, so no asterisk marks either: the
+            // inputs still say so to assistive tech.
+            aria-required
             autoComplete="username"
             icon={<Mail />}
             id="sign-in-email"
             inputMode="email"
             invalid={invalid}
             label={t("email")}
-            required
             spellCheck={false}
             type="email"
           />
@@ -85,12 +87,12 @@ export const SignInForm = ({
       <form.AppField name="password">
         {(password) => (
           <password.TextField
+            aria-required
             autoComplete="current-password"
             icon={<KeyRound />}
             id="sign-in-password"
             invalid={invalid}
             label={t("password")}
-            required
             reveal={t("showPassword")}
             type="password"
           />

@@ -157,7 +157,7 @@
       "night-card": {
         "role": "neutral",
         "displayName": "Night Card",
-        "canonical": "#1c2025",
+        "canonical": "#20252b",
         "tonalRamp": [
           "oklch(15% 0.011 254.1)",
           "oklch(26% 0.011 254.1)",
@@ -172,7 +172,7 @@
       "night-concourse": {
         "role": "neutral",
         "displayName": "Night Concourse",
-        "canonical": "#242a31",
+        "canonical": "#2f3640",
         "tonalRamp": [
           "oklch(15% 0.015 252.4)",
           "oklch(26% 0.015 252.4)",
@@ -202,7 +202,7 @@
       "night-muted": {
         "role": "neutral",
         "displayName": "Night Muted",
-        "canonical": "#9aa3ad",
+        "canonical": "#a3acb6",
         "tonalRamp": [
           "oklch(15% 0.018 250.9)",
           "oklch(26% 0.018 250.9)",
@@ -217,7 +217,7 @@
       "night-border": {
         "role": "neutral",
         "displayName": "Night Border",
-        "canonical": "#2c323a",
+        "canonical": "#3b434d",
         "tonalRamp": [
           "oklch(15% 0.017 255.6)",
           "oklch(26% 0.017 255.6)",
@@ -232,7 +232,7 @@
       "night-input": {
         "role": "neutral",
         "displayName": "Night Input",
-        "canonical": "#3a414a",
+        "canonical": "#56606c",
         "tonalRamp": [
           "oklch(15% 0.018 254.8)",
           "oklch(26% 0.018 254.8)",

@@ -10,6 +10,9 @@ const valid = {
   DATABASE_URL: "postgresql://u:p@localhost:5432/db",
   STORAGE_ACCESS_KEY: "allonfire",
   STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
+  STORAGE_IMAGE_SERVER_KEY: LOCAL.IMAGE_SERVER.KEY,
+  STORAGE_IMAGE_SERVER_SALT: LOCAL.IMAGE_SERVER.SALT,
+  STORAGE_IMAGE_SERVER_URL: LOCAL.URL.IMAGE_SERVER,
   STORAGE_SECRET_KEY: "allonfire",
 };
 
@@ -62,26 +65,26 @@ describe("parseEnv", () => {
 
   it("leaves telemetry off unless an OTLP endpoint is set", () => {
     const env = parseEnv(valid);
-    expect(env.OTEL_EXPORTER_OTLP_ENDPOINT).toBeUndefined();
-    expect(env.OTEL_EXPORTER_OTLP_HEADERS).toEqual({});
-    expect(env.OTEL_SERVICE_NAME).toBe("allonfire-api");
+    expect(env.TELEMETRY_ENDPOINT).toBeUndefined();
+    expect(env.TELEMETRY_HEADERS).toEqual({});
+    expect(env.TELEMETRY_SERVICE_NAME).toBe("allonfire-api");
   });
 
-  it("reports a malformed percent-escape in OTEL_EXPORTER_OTLP_HEADERS as an env error", () => {
+  it("reports a malformed percent-escape in TELEMETRY_HEADERS as an env error", () => {
     expect(() =>
       parseEnv({
         ...valid,
-        OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic%E0",
+        TELEMETRY_HEADERS: "Authorization=Basic%E0",
       })
     ).toThrow("Invalid environment variables");
   });
 
-  it("parses OTEL_EXPORTER_OTLP_HEADERS into decoded header pairs", () => {
+  it("parses TELEMETRY_HEADERS into decoded header pairs", () => {
     const env = parseEnv({
       ...valid,
-      OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Basic%20YWI6Y2Q=,x-team=api",
+      TELEMETRY_HEADERS: "Authorization=Basic%20YWI6Y2Q=,x-team=api",
     });
-    expect(env.OTEL_EXPORTER_OTLP_HEADERS).toEqual({
+    expect(env.TELEMETRY_HEADERS).toEqual({
       Authorization: "Basic YWI6Y2Q=",
       "x-team": "api",
     });
@@ -91,14 +94,14 @@ describe("parseEnv", () => {
     "rejects the OTLP endpoint %s",
     (endpoint) => {
       expect(() =>
-        parseEnv({ ...valid, OTEL_EXPORTER_OTLP_ENDPOINT: endpoint })
+        parseEnv({ ...valid, TELEMETRY_ENDPOINT: endpoint })
       ).toThrow();
     }
   );
 
   it("rejects a header entry with no value", () => {
     expect(() =>
-      parseEnv({ ...valid, OTEL_EXPORTER_OTLP_HEADERS: "Authorization" })
+      parseEnv({ ...valid, TELEMETRY_HEADERS: "Authorization" })
     ).toThrow();
   });
 });

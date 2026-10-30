@@ -1,5 +1,6 @@
 "use client";
 
+import { ScrollBar } from "@allonfire/shadcn/components/scroll-area";
 import {
   Table,
   TableBody,
@@ -8,13 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@allonfire/shadcn/components/table";
+import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
 import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-} from "@tabler/icons-react";
-import {
+  type Column,
+  columnSizingFeature,
   createColumnHelper,
   type ReactTable,
   type Row,
@@ -26,28 +24,37 @@ import {
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { type ComponentProps, type ReactNode, useCallback } from "react";
-import type { ComponentPropsWithoutChildren } from "../lib/types";
+import { cva } from "class-variance-authority";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { cn } from "../lib/utils";
-import { AOFButton } from "./aof-button";
-import { AOFDataTableSkeleton } from "./aof-data-table-skeleton";
 import {
-  AOFSelect,
-  AOFSelectContent,
-  AOFSelectItem,
-  AOFSelectTrigger,
-  AOFSelectValue,
-} from "./aof-select";
+  AOFDataTableSkeleton,
+  aofDataTableBox,
+  aofDataTableFrame,
+} from "./aof-data-table-skeleton";
 
 /**
- * An AOF table's features: pages and row selection. Sorting, filtering and
+ * An AOF table's features: pages, row selection, and its columns' widths
+ * (TanStack's column sizing: a column's `maxSize`). Sorting, filtering and
  * the rest join when a list needs them; module scope, so TanStack never sees
  * a new set.
  */
-export const AOF_TABLE_FEATURES = tableFeatures({
+const AOF_TABLE_FEATURES = tableFeatures({
+  columnSizingFeature,
   rowPaginationFeature,
   rowSelectionFeature,
 });
+
+/**
+ * A column's width comes from its definition, in px: as wide as what it
+ * holds, never past `maxSize` (320 unless it says; past it a value ends in
+ * an ellipsis), never under `minSize` when it gives one; both the same fix
+ * it. The `fill` columns (the table's prop) share the room the rest leave,
+ * each in proportion to what it holds, like flex items growing together;
+ * a value stays whole when its share is enough and is cut to an ellipsis
+ * when not, down to its `minSize`; under that the table scrolls sideways.
+ */
+const DEFAULT_COLUMN = { maxSize: 320, minSize: 0 } as const;
 export type AOFTableFeatures = typeof AOF_TABLE_FEATURES;
 export type AOFTable<TData extends RowData> = ReactTable<
   AOFTableFeatures,
@@ -64,23 +71,29 @@ export const aofColumnHelper = <TData extends RowData>() =>
 /** TanStack Table v9's `useTable` with the AOF features. */
 export const useAOFTable = <TData extends RowData>(
   options: Omit<TableOptions<AOFTableFeatures, TData>, "features">
-): AOFTable<TData> => useTable({ ...options, features: AOF_TABLE_FEATURES });
-
-/** Every word the footer says, in the page's language. */
-export type AOFDataTableLabels = {
-  first: string;
-  last: string;
-  next: string;
-  /** "Page 2 of 3": the page counted from 1. */
-  page: (page: number, pageCount: number) => string;
-  previous: string;
-  rowsPerPage: string;
-};
+): AOFTable<TData> =>
+  useTable({
+    ...options,
+    defaultColumn: { ...DEFAULT_COLUMN, ...options.defaultColumn },
+    features: AOF_TABLE_FEATURES,
+  });
 
 /** Where the rows stand: TanStack Query's own names, so `status={query.status}`. */
 export type AOFDataTableStatus = "pending" | "error" | "success";
 
 export type AOFDataTableProps<TData extends RowData> = ComponentProps<"div"> & {
+  /**
+   * Whether a row is being changed (a deletion on its way): drawn faded,
+   * marked busy and out of reach until the change lands.
+   */
+  busy?: ((row: AOFRow<TData>) => boolean) | undefined;
+  /**
+   * The columns that share the room a wide screen leaves over, by id, each
+   * in proportion to what it holds; every other column (a row's checkbox)
+   * stays as wide as what it holds. None: the browser shares the room among
+   * all of them.
+   */
+  fill?: readonly string[] | undefined;
   /** The table's accessible name. */
   label: string;
   table: AOFTable<TData>;
@@ -112,9 +125,11 @@ export type AOFDataTableStates = {
  * a failure with no rows held they are `error`, and with none found `empty`.
  */
 export const AOFDataTable = <TData extends RowData>({
+  busy,
   card,
   children,
   className,
+  fill,
   footer,
   label,
   states = {},
@@ -143,9 +158,10 @@ export const AOFDataTable = <TData extends RowData>({
           empty
         ) : (
           <AOFDataTableRows
+            busy={busy}
             card={card}
+            fill={fill}
             label={label}
-            rows={rows}
             table={table}
           />
         )}
@@ -155,7 +171,7 @@ export const AOFDataTable = <TData extends RowData>({
   }
   return (
     <div
-      className={cn("flex min-h-0 flex-1 flex-col gap-3", className)}
+      className={cn(aofDataTableFrame(), className)}
       data-slot="aof-data-table"
       {...props}
     >
@@ -165,176 +181,170 @@ export const AOFDataTable = <TData extends RowData>({
   );
 };
 
-/** The rows as a table, and as cards on a phone when `card` is given. */
-const AOFDataTableRows = <TData extends RowData>({
-  card,
-  label,
-  rows,
-  table,
-}: Pick<AOFDataTableProps<TData>, "card" | "label" | "table"> & {
-  rows: AOFRow<TData>[];
-}) => (
-  <>
-    <div
-      className={cn(
-        // The only scroller, so the header sticks to it.
-        "min-h-0 flex-1 overflow-auto rounded-lg border *:data-[slot=table-container]:overflow-visible",
-        card && "hidden md:block"
-      )}
-    >
-      <Table aria-label={label}>
-        <TableHeader className="sticky top-0 z-10 bg-background">
-          {table.getHeaderGroups().map((group) => (
-            <TableRow key={group.id}>
-              {group.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder ? null : (
-                    <table.FlexRender header={header} />
-                  )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getAllCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  <table.FlexRender cell={cell} />
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-    {card ? (
-      <ul
-        aria-label={label}
-        className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
-      >
-        {rows.map((row) => (
-          <li key={row.id}>{card(row)}</li>
-        ))}
-      </ul>
-    ) : null}
-  </>
+/**
+ * What holds a cell's value: cut to an ellipsis at the column's width, with
+ * a little room around it (taken back by the margin) so a control's focus
+ * ring inside is not cut too. A checkbox is never cut: its hit area reaches
+ * past the box, and a cut one leaves the rest to a link stretched over the
+ * row.
+ */
+const valueBox = cva(
+  "-m-1 truncate p-1 has-[[role=checkbox]]:overflow-visible"
 );
 
-export type AOFDataTablePaginationProps<TData extends RowData> =
-  ComponentPropsWithoutChildren<"div"> & {
-    labels: AOFDataTableLabels;
-    pageSizes: readonly number[];
-    table: AOFTable<TData>;
-  };
+/**
+ * How a column's value is sized (`DEFAULT_COLUMN`). A fill column's value
+ * spans its cell (`100%`), so the table sizes the column by what it holds
+ * and can still narrow it to its `minSize` (to what it holds when it gives
+ * none: `0`, the default, since TanStack's own is 20), cutting the value to
+ * an ellipsis.
+ */
+const widths = <TData extends RowData>(
+  column: Column<AOFTableFeatures, TData>,
+  fill: readonly string[] | undefined
+): CSSProperties => {
+  const { maxSize, minSize } = column.columnDef;
+  return fill?.includes(column.id)
+    ? { maxWidth: maxSize, minWidth: minSize || "min-content", width: "100%" }
+    : { maxWidth: maxSize, minWidth: minSize };
+};
 
-/** Rows per page, where you are, and the four ways to move. */
-export const AOFDataTablePagination = <TData extends RowData>({
-  className,
-  labels,
-  pageSizes,
+/**
+ * A row (or its card) while it is being changed: faded, positioned so a
+ * link in it can stretch over all of it (`after:absolute after:inset-0`).
+ */
+const busyRow = cva(
+  "relative data-busy:opacity-50 motion-safe:transition-opacity"
+);
+
+/** A busy row's marks: announced busy, and `inert`, so nothing in it acts. */
+const busyProps = <TData extends RowData>(
+  row: AOFRow<TData>,
+  busy: ((row: AOFRow<TData>) => boolean) | undefined
+) =>
+  busy?.(row) ? { "aria-busy": true, "data-busy": "", inert: true } : undefined;
+
+/**
+ * The rows as a table, and as cards on a phone when `card` is given. Each
+ * column is as wide as what it holds, up to its `maxSize` (past it a value
+ * ends in an ellipsis); on a wide screen the `fill` columns share the room
+ * left over, and when the columns need more room than the box has, the table
+ * scrolls sideways, with a bar along its foot that stays drawn (a Mac's own
+ * bars hide until the table scrolls), so it shows there is more to the side.
+ */
+const AOFDataTableRows = <TData extends RowData>({
+  busy,
+  card,
+  fill,
+  label,
   table,
-  ...props
-}: AOFDataTablePaginationProps<TData>) => {
-  const { pageIndex, pageSize } = table.state.pagination;
-  const pageCount = Math.max(table.getPageCount(), 1);
-  // A hand-edited address can open past the last page: the way back then
-  // goes straight to the last page, not one empty page at a time.
-  const pastEnd = pageIndex >= pageCount;
-  const canBack = table.getCanPreviousPage();
-  const canOn = table.getCanNextPage();
-  const toFirst = useCallback(() => table.firstPage(), [table]);
-  const toPrevious = useCallback(
-    () => (pastEnd ? table.setPageIndex(pageCount - 1) : table.previousPage()),
-    [pageCount, pastEnd, table]
-  );
-  const toNext = useCallback(() => table.nextPage(), [table]);
-  const toLast = useCallback(() => table.lastPage(), [table]);
-  const resize = useCallback(
-    (size: unknown) => {
-      if (typeof size === "number") {
-        table.setPageSize(size);
-      }
-    },
-    [table]
-  );
+}: Pick<
+  AOFDataTableProps<TData>,
+  "busy" | "card" | "fill" | "label" | "table"
+>) => {
+  const { rows } = table.getRowModel();
   return (
-    <div
-      className={cn(
-        "flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-end sm:gap-6",
-        className
-      )}
-      data-slot="aof-data-table-pagination"
-      {...props}
-    >
-      <div className="flex items-center gap-2 text-sm">
-        <span className="whitespace-nowrap font-medium">
-          {labels.rowsPerPage}
-        </span>
-        <AOFSelect
-          items={pageSizes.map((size) => ({
-            label: String(size),
-            value: size,
-          }))}
-          onValueChange={resize}
-          value={pageSize}
+    <>
+      {/* Two boxes, one axis each, inside Base UI's scroll area (shadcn's
+        `scroll-area` is built on it). iOS pans a box that scrolls both ways
+        freely on a diagonal drag (WebKit bug 209486), so the table came
+        loose: the viewport scrolls only sideways and holds the columns'
+        full width, and inside it a box scrolls only up and down, the header
+        sticking to it, so it moves sideways with its columns. Neither
+        bounces sideways (`overscroll-behavior` `none`; `contain` still
+        bounces); at the rows' end a swipe up or down carries on to the
+        page. The box keeps a header and eight rows of height: on a shorter
+        screen the page grows and scrolls instead, its padding still under
+        the pager. The viewport is laid over the box (`absolute`), so the
+        rows never make the box, or the page, taller than that. Each box is a scroll area of its
+        own, so Base UI makes each a keyboard stop while it overflows, its
+        arrows scrolling it, and leaves it out otherwise. Only a horizontal bar is
+        drawn, at the bottom whenever the columns need more room than the
+        box has, never fading, its thumb a hand to grab. */}
+      <ScrollAreaPrimitive.Root
+        className={cn(aofDataTableBox(), card && "hidden md:block")}
+      >
+        {/* `!`: Base UI sets `overflow: scroll` inline. */}
+        <ScrollAreaPrimitive.Viewport
+          className="overflow-y-hidden! absolute inset-0 overscroll-x-none outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          data-slot="data-table-viewport"
         >
-          <AOFSelectTrigger aria-label={labels.rowsPerPage} className="w-20">
-            <AOFSelectValue />
-          </AOFSelectTrigger>
-          <AOFSelectContent>
-            {pageSizes.map((size) => (
-              <AOFSelectItem key={size} value={size}>
-                {size}
-              </AOFSelectItem>
-            ))}
-          </AOFSelectContent>
-        </AOFSelect>
-      </div>
-      <span className="whitespace-nowrap font-medium text-sm">
-        {labels.page(pageIndex + 1, pageCount)}
-      </span>
-      <div className="flex items-center gap-2">
-        <AOFButton
-          aria-label={labels.first}
-          className="hidden lg:inline-flex"
-          disabled={!canBack}
-          onClick={toFirst}
-          size="icon-sm"
-          variant="outline"
+          <ScrollAreaPrimitive.Content className="h-full **:data-[slot=table-container]:overflow-visible">
+            <ScrollAreaPrimitive.Root className="h-full">
+              <ScrollAreaPrimitive.Viewport
+                className="overflow-x-hidden! size-full overscroll-y-auto outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                data-slot="data-table-rows"
+              >
+                <Table aria-label={label} className="text-base">
+                  <TableHeader className="sticky top-0 z-10 bg-background">
+                    {table.getHeaderGroups().map((group) => (
+                      <TableRow key={group.id}>
+                        {group.headers.map((header) => (
+                          <TableHead
+                            className={cn(
+                              "h-(--field-height) has-[[role=checkbox]]:px-3",
+                              fill && !fill.includes(header.column.id) && "w-px"
+                            )}
+                            key={header.id}
+                          >
+                            <div
+                              className={valueBox()}
+                              style={widths(header.column, fill)}
+                            >
+                              {header.isPlaceholder ? null : (
+                                <table.FlexRender header={header} />
+                              )}
+                            </div>
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((row) => (
+                      <TableRow
+                        className={busyRow()}
+                        key={row.id}
+                        {...busyProps(row, busy)}
+                      >
+                        {row.getAllCells().map((cell) => (
+                          <TableCell
+                            className="h-(--data-table-row) has-[[role=checkbox]]:px-3"
+                            key={cell.id}
+                          >
+                            <div
+                              className={valueBox()}
+                              style={widths(cell.column, fill)}
+                            >
+                              <table.FlexRender cell={cell} />
+                            </div>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollAreaPrimitive.Viewport>
+            </ScrollAreaPrimitive.Root>
+          </ScrollAreaPrimitive.Content>
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar
+          className="cursor-pointer **:data-[slot=scroll-area-thumb]:cursor-grab **:data-[slot=scroll-area-thumb]:rounded-sm **:data-[slot=scroll-area-thumb]:bg-input **:data-[slot=scroll-area-thumb]:active:cursor-grabbing"
+          orientation="horizontal"
+        />
+      </ScrollAreaPrimitive.Root>
+      {card ? (
+        <ul
+          aria-label={label}
+          className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
         >
-          <IconChevronsLeft />
-        </AOFButton>
-        <AOFButton
-          aria-label={labels.previous}
-          disabled={!canBack}
-          onClick={toPrevious}
-          size="icon-sm"
-          variant="outline"
-        >
-          <IconChevronLeft />
-        </AOFButton>
-        <AOFButton
-          aria-label={labels.next}
-          disabled={!canOn}
-          onClick={toNext}
-          size="icon-sm"
-          variant="outline"
-        >
-          <IconChevronRight />
-        </AOFButton>
-        <AOFButton
-          aria-label={labels.last}
-          className="hidden lg:inline-flex"
-          disabled={!(canOn || pastEnd)}
-          onClick={toLast}
-          size="icon-sm"
-          variant="outline"
-        >
-          <IconChevronsRight />
-        </AOFButton>
-      </div>
-    </div>
+          {rows.map((row) => (
+            <li className={busyRow()} key={row.id} {...busyProps(row, busy)}>
+              {card(row)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
   );
 };

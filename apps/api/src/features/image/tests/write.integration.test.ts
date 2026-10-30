@@ -2,30 +2,29 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { prisma } from "@allonfire/database";
-import { App } from "@allonfire/database/enums";
-import type { ImageLink } from "@allonfire/database/features/auth/access/access";
+import { App, ImageAccess } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
 import type {
   deleteBodySchema,
   patchBodySchema,
 } from "@allonfire/storage/features/image/hono/constants/schemas";
-import type { z } from "zod";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
+import { z } from "zod";
 import { API } from "../../../shared/constants/api";
 import { cookieFor, ORIGIN, type TestApp } from "../../../shared/tests/sign-in";
 import {
   imageTestApp,
   jpeg,
+  keyOf,
   listKeys,
   served,
   upload,
   uploaded,
 } from "./image-test-app";
 
-const BOTH: ImageLink[] = [
-  { app: App.BACK_OFFICE, public: false },
-  { app: App.LAURA, public: false },
-];
-const BACK_OFFICE_ONLY: ImageLink[] = [{ app: App.BACK_OFFICE, public: true }];
+const BOTH = [App.BACK_OFFICE, App.LAURA];
+const BACK_OFFICE_ONLY = [App.BACK_OFFICE];
 const BACK_OFFICE_ADMIN = FIXTURE.USER.BACK_OFFICE.ADMIN;
 const { ADMIN_EVERYWHERE } = FIXTURE.USER;
 
@@ -38,16 +37,19 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-/** A fresh Image placed in `apps`: a test never changes a Fixture others read. */
-const fresh = async (apps: ImageLink[]) => {
+/**
+ * A fresh Image placed in `apps`, public unless said: a test never changes a
+ * Fixture others read. Its key is read back: the API never answers it.
+ */
+const fresh = async (apps: App[], access: ImageAccess = ImageAccess.PUBLIC) => {
   const cookie = await cookieFor(app, ADMIN_EVERYWHERE);
   const [image] = await uploaded(
-    await upload(app, cookie, { apps, files: [jpeg()] })
+    await upload(app, cookie, { access, apps, files: [jpeg()] })
   );
   if (!image) {
     throw new Error("the upload returned no Image");
   }
-  return image;
+  return { ...image, key: await keyOf(image.id) };
 };
 
 const send = async (
@@ -91,7 +93,7 @@ describe("changing Images on the real stack", () => {
 
   it("adds a placement only for an Admin of the App it adds", async () => {
     const { id } = await fresh(BACK_OFFICE_ONLY);
-    const apps = [...BACK_OFFICE_ONLY, { app: App.LAURA, public: false }];
+    const apps = [...BACK_OFFICE_ONLY, App.LAURA];
     expect((await patch(BACK_OFFICE_ADMIN, [{ apps, id }])).status).toBe(
       HTTP.STATUS.FORBIDDEN
     );
@@ -101,13 +103,35 @@ describe("changing Images on the real stack", () => {
     expect(await prisma.imageApp.count({ where: { imageId: id } })).toBe(2);
   });
 
-  it("lets an App's Admin make its placement private, hiding it from visitors", async () => {
-    const { id, key } = await fresh(BACK_OFFICE_ONLY);
-    const apps = [{ app: App.BACK_OFFICE, public: false }];
-    expect((await patch(BACK_OFFICE_ADMIN, [{ apps, id }])).status).toBe(
-      HTTP.STATUS.OK
+  it("making it private kills its public links: hidden from visitors, its old link 404, its new one 200", async () => {
+    const { id, key, srcSet } = await fresh(BACK_OFFICE_ONLY);
+    const [publicLink] = srcSet;
+    expect((await fetch(publicLink?.url ?? "")).status).toBe(HTTP.STATUS.OK);
+    const res = await patch(BACK_OFFICE_ADMIN, [
+      { access: ImageAccess.PRIVATE, id },
+    ]);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    const [changed] = z.array(imageBodySchema).parse(await res.json());
+    expect(changed?.access).toBe(ImageAccess.PRIVATE);
+    expect(await keyOf(id)).not.toBe(key);
+    expect(await listKeys(app)).not.toContain(await keyOf(id));
+    // Dead once the image cache asked imgproxy again.
+    await expect
+      .poll(async () => (await fetch(publicLink?.url ?? "")).status, {
+        timeout: IMAGE_SERVER.GONE_WITHIN_MS,
+      })
+      .toBe(HTTP.STATUS.NOT_FOUND);
+    const [privateLink] = changed?.srcSet ?? [];
+    expect((await fetch(privateLink?.url ?? "")).status).toBe(HTTP.STATUS.OK);
+  });
+
+  it("makes an Image public only for an Admin of every App it is in", async () => {
+    const { id } = await fresh(BOTH, ImageAccess.PRIVATE);
+    const change = [{ access: ImageAccess.PUBLIC, id }];
+    expect((await patch(BACK_OFFICE_ADMIN, change)).status).toBe(
+      HTTP.STATUS.FORBIDDEN
     );
-    expect(await listKeys(app)).not.toContain(key);
+    expect((await patch(ADMIN_EVERYWHERE, change)).status).toBe(HTTP.STATUS.OK);
   });
 
   it("takes an Image out of one App and keeps it in the other", async () => {

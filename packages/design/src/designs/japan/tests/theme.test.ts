@@ -58,8 +58,22 @@ const TEXT_PAIRS = [
   // A button filled with the line's colour (the Install hint), labelled in
   // the LED board's black.
   ["led-panel", "line-green"],
+  // A popup's placeholder and a chosen row's or badge's text.
+  ["muted-foreground", "popover"],
+  ["muted-foreground", "muted"],
+  ["popover-foreground", "muted"],
   // A chosen option on the line's calmer, deeper green, labelled in white.
   ["line-green-deep-foreground", "line-green-deep"],
+  // A toast's pictogram and edge, in how its notice went, on the popover.
+  ["success", "popover"],
+  ["warning", "popover"],
+  ["info", "popover"],
+  ["destructive", "popover"],
+  // A toast filled with how its notice went, and its words on it.
+  ["toast-foreground", "toast-success"],
+  ["toast-foreground", "toast-warning"],
+  ["toast-foreground", "toast-info"],
+  ["toast-foreground", "toast-error"],
 ] as const;
 
 describe.each([":root", ".dark"])("Japan theme %s", (selector) => {

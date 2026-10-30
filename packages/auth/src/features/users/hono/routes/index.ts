@@ -2,16 +2,28 @@ import { Hono } from "hono";
 import type { AuthEnv } from "../../../hono/types/variables";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
-import { createHandlers, deleteHandlers, listHandlers } from "./handlers";
+import {
+  avatarDeleteHandlers,
+  avatarPutHandlers,
+  createHandlers,
+  deleteHandlers,
+  listHandlers,
+  readHandlers,
+  updateHandlers,
+} from "./handlers";
 
 /**
- * The User module: mount it where the Host wants Users listed, added and
- * deleted. It reads the
- * Session the Host's sessionLoader set, and asks the Host who may list and
- * who may delete them.
+ * The User module: mount it where the Host wants Users listed, added,
+ * edited and deleted, and their Avatars set. It reads the Session the
+ * Host's sessionLoader set, and asks the Host who may list and who may
+ * change them.
  */
 export const userRoutes = (deps: UserDeps) =>
   new Hono<AuthEnv>()
     .get(USER.PATH.LIST, ...listHandlers(deps))
     .post(USER.PATH.CREATE, ...createHandlers(deps))
-    .delete(USER.PATH.DELETE, ...deleteHandlers(deps));
+    .delete(USER.PATH.DELETE, ...deleteHandlers(deps))
+    .get(USER.PATH.ONE, ...readHandlers(deps))
+    .patch(USER.PATH.ONE, ...updateHandlers(deps))
+    .put(USER.PATH.AVATAR, ...avatarPutHandlers(deps))
+    .delete(USER.PATH.AVATAR, ...avatarDeleteHandlers(deps));

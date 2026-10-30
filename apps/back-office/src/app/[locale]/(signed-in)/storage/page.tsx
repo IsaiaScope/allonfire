@@ -1,13 +1,14 @@
 import { AOFEmpty } from "@allonfire/ui/components/aof-empty";
 import { useTranslations } from "next-intl";
+import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { SECTION } from "@/features/navigation/constants/sections";
-import { sectionMetadata } from "@/features/navigation/utils/section-metadata";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 
 const { icon: Icon, label } = SECTION.STORAGE;
 
-export const generateMetadata = () => sectionMetadata(SECTION.STORAGE);
+export const generateMetadata = () =>
+  pageMetadata(SECTION.STORAGE.path, `Navigation.${SECTION.STORAGE.label}`);
 
 const StoragePage = () => {
   const t = useTranslations();
