@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Object storage for any kind of file; only <code>features/s3</code> knows the provider (MinIO today). Images are its first kind: <code>features/image</code> prepares them, stores them in the closed <code>image</code> bucket (ADR 0013, ADR 0027), ships the Image module any Host mounts (ADR 0015), and signs the image-server links every stored picture reaches a browser by (through the `image-cache` nginx in front of imgproxy, which keeps each answer and, after checking with imgproxy that the link and the file still hold, serves it without resizing again). Avatars, a User's own picture, live in the same bucket.
+  Object storage for any kind of file; only <code>features/s3</code> knows the provider (MinIO today). Images are its first kind: <code>features/image</code> prepares them, stores them in the closed <code>image</code> bucket (ADR 0013, ADR 0027), ships the Image module any Host mounts (ADR 0015), and signs the image-server links every stored picture reaches a browser by (through the `cdn` nginx in front of imgproxy, under `/image`, which keeps each answer and, after checking with imgproxy that the link and the file still hold, serves it without resizing again). Avatars, a User's own picture, live in the same bucket.
 </p>
 
 ---

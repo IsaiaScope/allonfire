@@ -34,19 +34,21 @@ ARG APP_NAME
 # the API the browser calls, and the Back Office's build fails without it.
 # BACK_OFFICE_URL is the Back Office's metadataBase, baked into prerendered
 # pages; it must equal the runtime value.
-# Other values are placeholders that never reach the runner stage.
+# Other values are placeholders that never reach the runner stage. The
+# secret-shaped ones live on the build RUN line, not ENV, so they never enter
+# the image config and the SecretsUsedInArgOrEnv check stays quiet.
 ARG NEXT_PUBLIC_API_URL
 ARG BACK_OFFICE_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
-    AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
-    AUTH_URL="http://build.placeholder" \
     API_URL="http://build.placeholder" \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
-    BACK_OFFICE_URL=${BACK_OFFICE_URL} \
-    STORAGE_ACCESS_KEY="build" \
-    STORAGE_SECRET_KEY="build-placeholder"
+    BACK_OFFICE_URL=${BACK_OFFICE_URL}
 RUN pnpm --filter @allonfire/database db:generate
-RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
+RUN AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
+    AUTH_URL="http://build.placeholder" \
+    STORAGE_ACCESS_KEY="build" \
+    STORAGE_SECRET_KEY="build-placeholder" \
+    pnpm turbo build --filter=@allonfire/${APP_NAME}
 
 # Stage 4a: the API (and any Node Host): runs the TypeScript sources with tsx,
 # with the workspace's installed dependencies. ponytail: bundle the API if
