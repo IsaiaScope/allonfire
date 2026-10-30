@@ -71,7 +71,7 @@ describe("telemetry", () => {
     "traefik.http.routers.allonfire-telemetry.rule=Host(`observe.isaiariva.com`)",
     "traefik.http.routers.allonfire-telemetry.entrypoints=websecure",
     "traefik.http.routers.allonfire-telemetry.tls.certresolver=letsencrypt",
-    "traefik.http.routers.allonfire-telemetry.middlewares=admin-gate@file",
+    '"traefik.http.routers.allonfire-telemetry.middlewares=noindex@file"',
     "traefik.http.services.allonfire-telemetry.loadbalancer.server.port=5080",
   ])("holds %s", (line) => {
     expect(telemetry).toContain(line);
@@ -136,7 +136,7 @@ describe.each([
   ["api", "allonfire-api"],
   ["back-office", "allonfire-back-office"],
 ])("%s's telemetry", (name, serviceName) => {
-  it("is wired, and stays off until the ingest account's headers are set", () => {
+  it("is wired, and stays off until the ingestion token's headers are set", () => {
     const block = service(name);
     expect(block).toContain(
       `TELEMETRY_ENDPOINT=${interpolate("TELEMETRY_HEADERS:+http://telemetry:5080/api/default")}`
@@ -174,4 +174,10 @@ it("gives storage-setup every storage key the API gets: both load the storage pa
       .map(([, key]) => key)
       .sort((a, b) => a.localeCompare(b));
   expect(keys("storage-setup")).toEqual(keys("api"));
+});
+
+it("keeps the storage console out of search results, ahead of its login", () => {
+  expect(service("storage")).toContain(
+    "traefik.http.routers.allonfire-storage.middlewares=noindex@file,admin-gate@file"
+  );
 });

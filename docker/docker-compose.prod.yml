@@ -130,7 +130,7 @@ services:
       - AUTH_APP=BACK_OFFICE
       - BACK_OFFICE_URL=${BACK_OFFICE_URL}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
-      # Telemetry: on only once the ingest account's headers are set.
+      # Telemetry: on only once the ingestion token's headers are set.
       - TELEMETRY_ENDPOINT=${TELEMETRY_HEADERS:+http://telemetry:5080/api/default}
       - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:-}
       - TELEMETRY_SERVICE_NAME=allonfire-back-office
@@ -195,7 +195,7 @@ services:
       - "traefik.http.routers.allonfire-storage.rule=Host(`storage.isaiariva.com`)"
       - "traefik.http.routers.allonfire-storage.entrypoints=websecure"
       - "traefik.http.routers.allonfire-storage.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.allonfire-storage.middlewares=admin-gate@file"
+      - "traefik.http.routers.allonfire-storage.middlewares=noindex@file,admin-gate@file"
       - "traefik.http.services.allonfire-storage.loadbalancer.server.port=9001"
 
   # Rate limits and caches. Internal network only, never routed.
@@ -293,7 +293,9 @@ services:
       - "traefik.http.routers.allonfire-telemetry.rule=Host(`observe.isaiariva.com`)"
       - "traefik.http.routers.allonfire-telemetry.entrypoints=websecure"
       - "traefik.http.routers.allonfire-telemetry.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.allonfire-telemetry.middlewares=admin-gate@file"
+      # No admin-gate: the console signs in through the Authorization header too,
+      # so a basic-auth gate in front of it loops on its own login.
+      - "traefik.http.routers.allonfire-telemetry.middlewares=noindex@file"
       - "traefik.http.services.allonfire-telemetry.loadbalancer.server.port=5080"
 
   # Every stored picture reaches a browser through it, by a link the API
