@@ -1,6 +1,6 @@
 {
   "name": "allonfire",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Turborepo monorepo of Next.js apps on one Hono API, with shared packages for auth, database, storage and design",
   "homepage": "https://github.com/IsaiaScope/allonfire#readme",
