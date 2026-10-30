@@ -3,7 +3,7 @@
 VPS, Docker services, CI. Pictures: `images.md`.
 
 - VPS: Hetzner, 4 vCPU / 8 GB RAM, no swap, at 188.245.174.30 (ssh main-vps)
-- Observability: self-hosted OpenObserve (`telemetry`, Production and Local; UI at `observe.isaiariva.com` behind `admin-gate`, OTLP ingest internal only) + Umami (Local only so far) — see `docs/adr/0006-self-hosted-observability.md`. Production's `telemetry-init` gives OpenObserve its own storage user, limited to the `telemetry` bucket
+- Observability: self-hosted OpenObserve (`telemetry`, Production and Local; UI at `observe.isaiariva.com` behind its own login only (a basic-auth gate loops on it), OTLP ingest internal only) + Umami (Local only so far) — see `docs/adr/0006-self-hosted-observability.md`. Production's `telemetry-init` gives OpenObserve its own storage user, limited to the `telemetry` bucket
 - Redis: production's `redis` service (internal network only, 128 MB, append-only) serves the Apps; Dokploy's own `dokploy-redis` is never shared
 - Orchestrator: Dokploy runs one compose project of GHCR images; `.github/workflows/deploy.yml` builds only the affected Deploy units on a push to `prod` and redeploys it (ADR 0018).
 - DB: Shared PostgreSQL 16 (database: allonfire)

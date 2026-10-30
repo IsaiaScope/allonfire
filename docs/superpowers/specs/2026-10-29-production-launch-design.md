@@ -217,7 +217,7 @@ Owner's answers:
 
 My calls (the owner can overrule):
 
-- **The OpenObserve ingest account** can exist only once OpenObserve runs.
+- **The OpenObserve ingestion token** can exist only once OpenObserve runs.
   So the first deploy ships with telemetry optional, as the API reads it
   today, but with the API's and the Back Office's `OTEL_*` already wired in
   the compose (no `:?` yet). The plan then:
