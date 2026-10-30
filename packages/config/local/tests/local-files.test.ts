@@ -119,6 +119,8 @@ describe.each(EXPECTED)("%s", (path, lines) => {
 const BUILD_STORAGE = /STORAGE_(ENDPOINT|BUCKET)/;
 const DOCKERFILE_STAGE = /^FROM /m;
 const TURBO_PIN = /"turbo": "([^"]+)"/;
+/** deploy.yml's image job, up to the job after it. */
+const IMAGE_JOB = /\n {2}image:\n([\s\S]*?)\n {2}[a-z-]+:\n/;
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const PRUNE_WITH_PINNED_TURBO = `RUN npx "turbo@$(node -p "require('./package.json').devDependencies.turbo")" prune`;
 const DEPLOY_BUILD_ARGS = /build-args: \|\n((?: {12}.*\n)+)/;
@@ -167,5 +169,14 @@ describe("the Docker prune", () => {
       `turbo:\n        specifier: ${version}\n        version: ${version}\n`
     );
     expect(read("docker/Dockerfile")).toContain(PRUNE_WITH_PINNED_TURBO);
+  });
+});
+
+describe("the production images", () => {
+  // The VPS is arm64 (aarch64); an amd64-only image has no manifest it can run.
+  it("are built natively for arm64, the VPS's architecture", () => {
+    const [, job] = read(".github/workflows/deploy.yml").split(IMAGE_JOB);
+    expect(job).toContain("runs-on: ubuntu-24.04-arm");
+    expect(job).toContain("platforms: linux/arm64");
   });
 });
