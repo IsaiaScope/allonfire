@@ -1,0 +1,30 @@
+{
+  "name": "@allonfire/design",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./apps/back-office/styles.css": "./src/apps/back-office/styles.css",
+    "./brand/aof-logo": "./src/brand/aof-logo.ts",
+    "./brand/aof-monogram": "./src/brand/aof-monogram.ts",
+    "./designs/japan/image-colors": "./src/designs/japan/image-colors.ts",
+    "./designs/japan/image-font": "./src/designs/japan/image-font.ts",
+    "./designs/japan/image-fonts": "./src/designs/japan/image-fonts.ts",
+    "./designs/japan/share-card-look": "./src/designs/japan/share-card-look.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "design:sync": "tsx scripts/sync.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@allonfire/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@allonfire/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "tsx": "^4.19.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  }
+}

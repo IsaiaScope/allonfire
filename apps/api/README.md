@@ -1,13 +1,14 @@
 # @allonfire/api
 
-The HTTP backend for the AllOnFire apps. Hono on Node, no auth yet, no domain
-endpoints yet.
+The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
+(`packages/auth`) under `/v1/auth`, and the Images every App shows under
+`/v1/images`.
 
 ## Running it
 
 ```bash
 cp .env.example .env
-pnpm --filter @allonfire/api dev      # starts Redis and OpenObserve via predev, then tsx watch
+pnpm --filter @allonfire/api dev      # starts the redis, telemetry and storage services via predev, then tsx watch
 ```
 
 Then: `http://localhost:3300/health`, `/ready`, `/reference`.
@@ -18,8 +19,78 @@ they get their values from `vitest.setup.ts`.
 
 ## Environment
 
-Every variable is documented in `.env.example`. `DATABASE_URL`, `REDIS_URL` and
-`CORS_ORIGINS` are required — the process exits at boot if any is missing.
+Every variable is documented in `.env.example`. `DATABASE_URL`, `API_REDIS_URL`,
+`API_CORS_ORIGINS`, `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
+`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_URL`,
+`STORAGE_IMAGE_SERVER_KEY` and `STORAGE_IMAGE_SERVER_SALT` are required — the
+process exits at boot if any is missing. The last three are the image server's
+(imgproxy) address and the hex key and salt the API signs every picture link
+with; the server checks them with the same pair. The `STORAGE_*` names say storage, not MinIO, so the
+server behind them can change without renaming them.
+
+## Auth
+
+Better Auth runs inside the API, built from the Auth module (`packages/auth`)
+and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
+`createApp` loads the Session once per request, after the rate limiters.
+
+- **Guards** — `requireSession` and `requireApp(App.LAURA)`
+  (mounted once per App) from `@allonfire/auth/features/hono/guards/middleware/*`. They throw
+  `HTTPException(401 | 403)` and `onError` renders the localised problem
+  document. A failing Session lookup is a 500, never anonymous.
+- **Auth bucket** — the routes where Better Auth checks or hashes a password,
+  `POST /v1/auth/sign-in/email`, `POST /v1/auth/sign-up/email` and
+  `POST /v1/auth/change-password`, share one
+  limit on top of the global one: `AUTH_RATE_LIMIT_MAX` attempts per
+  `AUTH_RATE_LIMIT_WINDOW_MS` per client IP (default 10 per 15 minutes). Like
+  the global limiter it fails open when Redis is down.
+- **Sessions live in Postgres**, read through Better Auth's five-minute cookie
+  cache, so a revoked Session reaches the guards up to five minutes late. A
+  User's Memberships are read on every Session read, so a Role change counts
+  at once (ADR 0019). Redis db 2 stays reserved; see ADR 0009.
+- **Docs** — Better Auth's endpoints appear in `/openapi.json` and `/reference`
+  under the `Auth` tag. The plugin's own schema route and reference page are off.
+- **Registration is per App** (`ACCESS.APP_SETTINGS`, ADR 0019): `/sign-up/email` and
+  `/join-app` need `x-aof-app` naming an App open to it, otherwise 403
+  `REGISTRATION_CLOSED`; every App is closed today. A sign-in with `x-aof-app`
+  answers 403 `APP_FORBIDDEN` to a User that App does not let in, before any
+  Session is written.
+
+## Images
+
+The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
+ADR 0015). Its errors are `CodedError`s the API renders as its own localized
+problem documents. Files go to the closed
+`image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
+decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
+`image."Image"`, placements in `image."ImageApp"`. Apps show them through the
+image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
+
+| Endpoint | Guard | Does |
+|---|---|---|
+| `GET /v1/images?app=&cursor=&limit=` | none | the Images visible in `app` (any App when left out): placed there, and public or in an App the User enters; newest upload first; `nextCursor` (opaque) pages; never 403 |
+| `GET /v1/images/:id` | none; 404 unless visible in some App | one Image |
+| `POST /v1/images` | Session; `ADMIN` in every App named (a User who is `ADMIN` in no App is refused before the body is read) | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [{ app, public? }], alt: { en, it } }]` in file order |
+| `PATCH /v1/images` | Session; `ADMIN` in each App whose placement is added, removed or switched public; for `alt`, in every App the Image is in | `[{ id, apps?, alt? }]`, each Image once: `apps` is the full new list; a `public` left out keeps the placement's own |
+| `DELETE /v1/images` | Session; with `app`, `ADMIN` there; without, in every App the Image is in | `{ ids, app? }`: with `app`, takes the Images out of it and deletes those left in none; without, deletes them everywhere; rows first, then files |
+
+- **All or nothing.** One bad file rejects the whole upload (415), an unknown
+  id rejects a whole PATCH or DELETE (404). A failed insert deletes the files
+  it already stored.
+- **Limits:** 20 MiB per file and 100 MiB per upload (413 naming the limit
+  crossed), 20 files per upload, 100 items per PATCH or DELETE. The upload
+  skips the API-wide 1 MiB body limit and brings its own.
+- **App values are the enum names**, `LAURA` and `BACK_OFFICE`, not the
+  lowercase the database stores. An App appears once in a list (400
+  otherwise). A batch with one Image the User cannot see answers 404, before
+  any 403, and writes nothing.
+- **Closed to anonymous reads.** The `image` bucket holds private Images and
+  Avatars, so it carries no policy: Locally `storage-init` runs
+  `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
+  any bucket policy (`setupImageBucket`), as does every test run's bucket. A
+  browser reaches a picture only through a link the API signs, served by the
+  image server (docs/agents/images.md). Never give the bucket an anonymous
+  policy again, read-only included.
 
 ## Writing routes
 
@@ -31,7 +102,7 @@ return value; separate statements silently degrade them to nothing.
 export const createThingRoutes = (deps: Deps) =>
   new Hono()
     .get("/things", (c) => c.json({ things: [] }))
-    .post("/things", validator("json", schema, validationHook), (c) => c.json({}, 201));
+    .post("/things", validator("json", schema, invalidHook), (c) => c.json({}, 201));
 
 // wrong — client types become unusable, and no runtime test will notice
 const app = new Hono();
@@ -40,11 +111,11 @@ app.get("/things", handler);
 
 `src/client.test-d.ts` guards this. If it starts failing, a route was un-chained.
 
-**Domain routes mount under `/v1`**, through `API_VERSION_PREFIX`
-(`src/shared/constants/routes.ts`) — never a hard-coded string:
+**Domain routes mount under `/v1`**, through `API.PATH.VERSION`
+(`src/shared/constants/api.ts`) — never a hard-coded string:
 
 ```ts
-.route(API_VERSION_PREFIX, createThingRoutes(deps))
+.route(API.PATH.VERSION, createThingRoutes(deps))
 ```
 
 `/health` and `/ready` stay unversioned — infrastructure endpoints are not part
@@ -59,7 +130,7 @@ One project-scoped instance, split by database index:
 
 | index | contents | expiry |
 |---|---|---|
-| 0 | rate-limit counters | always |
+| 0 | rate-limit counters, incl. `ratelimit:auth:*` | always |
 | 1 | cache (reserved, unused) | always |
 | 2 | sessions (reserved, unused) | never |
 
@@ -73,7 +144,7 @@ writable throws rather than waiting.
 
 ## Telemetry
 
-Telemetry is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, which `.env.example`
+Telemetry is on when `TELEMETRY_ENDPOINT` is set, which `.env.example`
 does. The `OTEL_*` variables are part of the zod env schema like every other
 setting: a malformed endpoint or header list fails the boot, and code reads
 them from `env`, never `process.env`.
@@ -100,7 +171,7 @@ Where each signal comes from:
   Its two one-off startup spans are ignored.
 - **Logs**: a pino `mixin` stamps `trace_id`/`span_id` on lines logged inside a
   request, and `pino-opentelemetry-transport` ships every line to OpenObserve.
-  Request lines record only the headers in `LOGGED_REQUEST_HEADERS`.
+  Request lines record only the headers in `API.LOGGED_REQUEST_HEADERS`.
 - **Redis**: not traced. ioredis can only be traced by patching it at load,
   which needs an ESM loader hook; see ADR 0006.
 - **OpenTelemetry's own failures** (collector down, wrong password) appear in

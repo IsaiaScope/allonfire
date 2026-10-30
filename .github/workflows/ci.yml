@@ -7,37 +7,82 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Vercel Remote Cache, shared with local runs (`turbo login` + `turbo link`).
+# Without the secret, turbo runs uncached and still passes.
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # What `--affected` diffs against. Turbo would read GITHUB_BASE_REF as a
+  # local branch, which checkout never creates, and fall back to everything.
+  TURBO_SCM_BASE: origin/${{ github.base_ref }}
+
 jobs:
-  lint-types:
-    runs-on: ubuntu-latest
+  # Turbo diffs against the PR's base branch and adds every dependent, so a
+  # shared package lists each App that reads it; the changed files add what
+  # its graph does not see (root files, Markdown-only changes).
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      apps: ${{ steps.affected.outputs.apps }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Affected Apps and Deploy units
+        id: affected
+        run: pnpm -s ci:affected "$TURBO_SCM_BASE" >> "$GITHUB_OUTPUT"
+
+  lint-types:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
       - name: Type check
-        run: pnpm check-types
+        run: pnpm turbo run check-types --affected
       - name: Lint
         run: pnpm lint
-      - name: i18n placeholders and generated types
-        run: pnpm turbo run i18n:check
+      - name: Design copies in sync
+        run: pnpm design:sync --check
+      - name: i18n placeholders, generated types and Tailwind classes
+        run: pnpm turbo run i18n:check tailwind:check
+      # ShellCheck ships on GitHub's Ubuntu runners.
+      - name: Shell scripts
+        run: shellcheck -x packages/database/liquibase/*.sh packages/database/scripts/*.sh
+      # The Dockerfile's `check=error=true` turns every build-check warning into
+      # a failure.
+      - name: Migrate image build checks
+        run: docker build --check -f packages/database/liquibase/Dockerfile .
+      - name: Workflows
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: dev
     services:
-      postgres:
+      database:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: allonfire
@@ -61,58 +106,128 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      REDIS_URL: redis://localhost:6379/0
-      CORS_ORIGINS: http://localhost:3200
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      AUTH_URL: ${{ secrets.AUTH_URL }}
+      API_REDIS_URL: redis://localhost:6379/0
+      API_CORS_ORIGINS: http://localhost:3200
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_ACCESS_KEY: allonfire
+      STORAGE_SECRET_KEY: allonfire
+      STORAGE_IMAGE_SERVER_URL: http://localhost:9010/image
+      STORAGE_IMAGE_SERVER_KEY: 5ac692d6a2b19f10fdcdc2f2dd03efdf413a4108bf93d08508e9c4c6656d95f1
+      STORAGE_IMAGE_SERVER_SALT: b8d9db70864d2cf60e0b5d06d04b8cb5
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
-      - name: Push schema to database
-        run: pnpm db:push
+      # Each package's integration tests make their own Test database and
+      # bucket; Storage comes from the dev compose file, as Local runs it.
+      - name: Start Storage
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait storage image-server cdn
       - name: Run tests
-        run: pnpm turbo run test
+        run: pnpm turbo run test --affected
+      # The Test database template is the changelog plus the Fixtures: the
+      # command builds it when no affected package did and prints its URL.
+      - name: Changelog matches the Prisma schema
+        run: DATABASE_URL="$(pnpm -s -C packages/database test-database template)" pnpm db:drift
+
+  # Browser and end-to-end tests for the affected Apps, on the stack Local
+  # runs: the database, Redis and Storage from the dev compose file, the API and the
+  # App as production builds.
+  e2e:
+    runs-on: ubuntu-24.04
+    needs: changes
+    if: needs.changes.outputs.apps != '[]'
+    # Every value here exists only for this run's throwaway stack.
+    env:
+      DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
+      API_REDIS_URL: redis://localhost:6379/0
+      API_LOG_LEVEL: warn
+      AUTH_SECRET: e2e-secret-only-for-this-throwaway-stack-000
+      STORAGE_ACCESS_KEY: allonfire
+      STORAGE_SECRET_KEY: allonfire
+      STORAGE_IMAGE_SERVER_URL: http://localhost:9010/image
+      STORAGE_IMAGE_SERVER_KEY: 5ac692d6a2b19f10fdcdc2f2dd03efdf413a4108bf93d08508e9c4c6656d95f1
+      STORAGE_IMAGE_SERVER_SALT: b8d9db70864d2cf60e0b5d06d04b8cb5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Start the database, Redis and Storage
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn
+      - name: Generate Prisma client
+        run: pnpm db:generate
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(pnpm -s --filter @allonfire/back-office exec playwright --version)" >> "$GITHUB_OUTPUT"
+      - name: Cache browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium and WebKit
+        run: pnpm --filter @allonfire/back-office exec playwright install chromium webkit --with-deps
+      - name: Browser and end-to-end tests
+        run: pnpm turbo run test:browser test:e2e --affected
+      - name: Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: apps/*/playwright-report
+          retention-days: 7
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: lint-types
     environment: dev
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-      BETTER_AUTH_URL: ${{ secrets.BETTER_AUTH_URL }}
-      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
-      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
-      MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      AUTH_URL: ${{ secrets.AUTH_URL }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+      BACK_OFFICE_URL: ${{ secrets.BACK_OFFICE_URL }}
+      # The Back Office's server address of the API: validated at build, never called.
+      API_URL: http://build.placeholder
+      STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
+      STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: package.json
           cache: pnpm
-      - name: Turbo Cache
-        uses: rharkor/caching-for-turbo@v2.3.11
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma client
         run: pnpm db:generate
       - name: Build
-        run: pnpm build
+        run: pnpm turbo run build --affected

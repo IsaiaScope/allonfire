@@ -2,14 +2,10 @@ import type { EventEmitter } from "node:events";
 import type { Redis as RedisClient } from "ioredis";
 import { Redis } from "ioredis";
 import type { Logger } from "pino";
-import { REDIS_RETRY } from "../../shared/constants/limits";
-import {
-  LOG_MESSAGE,
-  REDIS_EVENT,
-  REDIS_STATUS_READY,
-} from "../../shared/constants/runtime";
+import { API } from "../../shared/constants/api";
 import { outageLatch } from "../../shared/utils/outage";
 import { logger as defaultLogger } from "../logger/logger";
+import { REDIS } from "./constants/redis";
 
 /**
  * With no `error` listener, ioredis prints "Unhandled error event" to stderr on
@@ -21,11 +17,11 @@ export function watchRedis(
   logger: Logger = defaultLogger
 ): void {
   const latch = outageLatch(logger, {
-    down: LOG_MESSAGE.REDIS_DOWN,
-    recovered: LOG_MESSAGE.REDIS_RECOVERED,
+    down: API.LOG_MESSAGE.REDIS_DOWN,
+    recovered: API.LOG_MESSAGE.REDIS_RECOVERED,
   });
-  redis.on(REDIS_EVENT.ERROR, latch.fail);
-  redis.on(REDIS_EVENT.READY, latch.ok);
+  redis.on(REDIS.EVENT.ERROR, latch.fail);
+  redis.on(REDIS.EVENT.READY, latch.ok);
 }
 
 export function createRedis(url: string): RedisClient {
@@ -33,11 +29,11 @@ export function createRedis(url: string): RedisClient {
     enableOfflineQueue: false,
     // Defaults retry forever and queue commands while disconnected, which
     // turns a Redis outage into hanging requests instead of fast failures.
-    maxRetriesPerRequest: REDIS_RETRY.MAX_PER_REQUEST,
+    maxRetriesPerRequest: REDIS.RETRY.MAX_PER_REQUEST,
     retryStrategy: (times) =>
       Math.min(
-        times * REDIS_RETRY.BACKOFF_STEP_MS,
-        REDIS_RETRY.BACKOFF_CEILING_MS
+        times * REDIS.RETRY.BACKOFF_STEP_MS,
+        REDIS.RETRY.BACKOFF_CEILING_MS
       ),
   });
   watchRedis(redis);
@@ -50,20 +46,20 @@ export function createRedis(url: string): RedisClient {
  * startup has to wait for `ready` first.
  */
 export function awaitReady(redis: RedisClient): Promise<void> {
-  if (redis.status === REDIS_STATUS_READY) {
+  if (redis.status === REDIS.STATUS.READY) {
     return Promise.resolve();
   }
 
   return new Promise((resolve, reject) => {
     const onReady = () => {
-      redis.off(REDIS_EVENT.ERROR, onError);
+      redis.off(REDIS.EVENT.ERROR, onError);
       resolve();
     };
     const onError = (err: Error) => {
-      redis.off(REDIS_EVENT.READY, onReady);
+      redis.off(REDIS.EVENT.READY, onReady);
       reject(err);
     };
-    redis.once(REDIS_EVENT.READY, onReady);
-    redis.once(REDIS_EVENT.ERROR, onError);
+    redis.once(REDIS.EVENT.READY, onReady);
+    redis.once(REDIS.EVENT.ERROR, onError);
   });
 }

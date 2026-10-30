@@ -1,61 +1,87 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
+  "futureFlags": { "affectedUsingTaskInputs": true },
   "globalPassThroughEnv": [
     "DATABASE_URL",
-    "BETTER_AUTH_SECRET",
-    "BETTER_AUTH_URL",
-    "MINIO_ENDPOINT",
-    "MINIO_ACCESS_KEY",
-    "MINIO_SECRET_KEY",
-    "MINIO_BUCKET",
-    "REDIS_URL",
+    "AUTH_SECRET",
+    "AUTH_URL",
+    "STORAGE_ENDPOINT",
+    "STORAGE_ACCESS_KEY",
+    "STORAGE_SECRET_KEY",
+    "STORAGE_BUCKET",
+    "API_REDIS_URL",
     "PORT",
-    "LOG_LEVEL",
-    "CORS_ORIGINS",
-    "TRUSTED_PROXY_HOPS",
-    "ENABLE_DOCS"
+    "API_LOG_LEVEL",
+    "API_CORS_ORIGINS",
+    "API_TRUSTED_PROXY_HOPS",
+    "API_ENABLE_DOCS"
   ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": [".env*"]
+      "env": [
+        "ANALYZE",
+        "NEXT_DIST_DIR",
+        "NEXT_PUBLIC_API_URL",
+        "BACK_OFFICE_URL",
+        "API_URL"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "public/sw.js"
+      ]
     },
     "dev": {
       "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "persistent": true
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "lint:fix": {
-      "dependsOn": ["^lint:fix"]
-    },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "i18n:check": {
-      "inputs": ["src/i18n/messages/**"],
-      "outputs": []
+      "inputs": ["src/**/i18n/translations/**"]
+    },
+    "tailwind:check": {
+      "inputs": [
+        "src/**",
+        "!**/*.md",
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "$TURBO_ROOT$/packages/design/src/**",
+        "$TURBO_ROOT$/packages/shadcn/src/styles/**",
+        "$TURBO_ROOT$/packages/core/src/features/tailwind/**",
+        "!$TURBO_ROOT$/packages/**/*.md"
+      ]
     },
     "test": {
-      "dependsOn": ["^test"],
-      "inputs": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "vitest.config.ts",
-        "vitest.setup.ts",
-        ".env*",
-        "../../packages/database/prisma/schema.prisma"
-      ],
-      "outputs": ["coverage/**"],
-      "env": ["DATABASE_URL", "BETTER_AUTH_SECRET"]
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
+    },
+    "test:browser": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
     },
-    "db:push": {
-      "cache": false
+    "transit": {
+      "dependsOn": ["^transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"]
+    },
+    "test:e2e": {
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
+      "passThroughEnv": ["CI", "CONFIG_E2E_STAMP"]
+    },
+    "//#test:ui": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

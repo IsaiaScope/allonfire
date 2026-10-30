@@ -5,7 +5,7 @@ import {
   AnimatedPageWrapper,
   AnimatedSection,
 } from "@/components/animated-page";
-import { getQuizQuestionsListAction } from "@/features/games/actions/quiz";
+import { getQuizQuestionsListAction } from "@/features/games/actions/quiz-admin";
 import { QuizQuestionList } from "@/features/games/components/quiz-question-list";
 import { auth } from "@/lib/auth";
 
@@ -16,7 +16,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Games" });
-  return { title: t("quizEditTitle"), robots: { index: false, follow: false } };
+  return { robots: { follow: false, index: false }, title: t("quizEditTitle") };
 }
 
 export default async function QuizEditPage({

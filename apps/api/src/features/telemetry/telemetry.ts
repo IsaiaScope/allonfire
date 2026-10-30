@@ -25,9 +25,9 @@ import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import type { Logger } from "pino";
-import { env } from "../environment/environment";
+import { env } from "../../environment/environment";
 import { logger as defaultLogger } from "../logger/logger";
-import { OTLP_PATH, PRISMA_STARTUP_SPANS } from "./constants/telemetry";
+import { TELEMETRY } from "./constants/telemetry";
 import { otlpExporterOptions, telemetryResourceAttributes } from "./resource";
 
 let sdk: NodeSDK | undefined;
@@ -46,7 +46,7 @@ export const pinoDiagLogger = (logger: Logger): DiagLogger => ({
 });
 
 export function startTelemetry(): void {
-  const endpoint = env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  const endpoint = env.TELEMETRY_ENDPOINT;
   if (sdk || !endpoint) {
     return;
   }
@@ -56,7 +56,9 @@ export function startTelemetry(): void {
   // OTEL_TRACES_SAMPLER=parentbased_traceidratio if span volume ever matters.
   sdk = new NodeSDK({
     instrumentations: [
-      new PrismaInstrumentation({ ignoreSpanTypes: [...PRISMA_STARTUP_SPANS] }),
+      new PrismaInstrumentation({
+        ignoreSpanTypes: [...TELEMETRY.PRISMA_STARTUP_SPANS],
+      }),
     ],
     // Logs ship through the pino transport. Left undefined, the SDK would
     // build a second, env-configured log pipeline beside it.
@@ -64,14 +66,14 @@ export function startTelemetry(): void {
     metricReaders: [
       new PeriodicExportingMetricReader({
         exporter: new OTLPMetricExporter(
-          otlpExporterOptions(endpoint, OTLP_PATH.METRICS)
+          otlpExporterOptions(endpoint, TELEMETRY.PATH.METRICS)
         ),
       }),
     ],
     resource: resourceFromAttributes(telemetryResourceAttributes()),
-    serviceName: env.OTEL_SERVICE_NAME,
+    serviceName: env.TELEMETRY_SERVICE_NAME,
     traceExporter: new OTLPTraceExporter(
-      otlpExporterOptions(endpoint, OTLP_PATH.TRACES)
+      otlpExporterOptions(endpoint, TELEMETRY.PATH.TRACES)
     ),
   });
   sdk.start();

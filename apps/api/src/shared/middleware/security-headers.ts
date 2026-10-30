@@ -1,13 +1,17 @@
-import { securityHeaders as sharedHeaders } from "@allonfire/utils/security-headers";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { MiddlewareHandler } from "hono";
 import { every } from "hono/combine";
 import { secureHeaders } from "hono/secure-headers";
 
-/** The headers every allonfire app sends, then Hono's `secureHeaders` defaults. */
+/**
+ * Hono's `secureHeaders` defaults, then the headers every allonfire app sends
+ * on top. `secureHeaders` writes after the handler, so ours are written after
+ * it, or its `SAMEORIGIN` and 180-day HSTS would win.
+ */
 export const securityHeaders = (): MiddlewareHandler =>
   every(async (context, next) => {
-    for (const header of sharedHeaders) {
+    await next();
+    for (const header of HTTP.SECURITY_HEADERS) {
       context.header(header.key, header.value);
     }
-    await next();
   }, secureHeaders());

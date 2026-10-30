@@ -1,0 +1,38 @@
+/* Back Office's own layer over ui's base: the Design it wears and the App's
+   few rules. The App imports ui's base.css, then this file, and adds its own
+   `@source`. A Design is worn by importing its theme.css here
+   (`/aof-design new` adds it). */
+@import "../../designs/japan/theme.css";
+
+/* Back Office's line (the Line Rule). */
+:root {
+  --line: var(--line-green);
+}
+
+/* No scrollbars anywhere in the App; every area still scrolls by wheel,
+   touch and keyboard. Overscroll stays the browser's: turning it off also
+   turns off pull to refresh. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Japanese is only ever decoration here (the App ships no Japanese), so a
+   drag or a long press never selects a kanji. Safari still needs the prefix. */
+[lang="ja"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Toasts as wide as the Install hint's one-row layout needs (Sonner's own
+   356px is narrower). Sonner's stylesheet is unlayered, so a utility class
+   loses to it: this rule outranks it by one attribute instead. On a phone
+   Sonner's own full-width rule applies. */
+@media (min-width: 601px) {
+  [data-sonner-toaster][data-x-position] {
+    width: 28rem;
+  }
+}

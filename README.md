@@ -9,9 +9,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm&logoColor=white" alt="pnpm" />
   <img src="https://img.shields.io/badge/Turborepo-2-EF4444?logo=turborepo&logoColor=white" alt="Turborepo" />
-  <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Biome-linter-60A5FA?logo=biome&logoColor=white" alt="Biome" />
-  <img src="https://img.shields.io/badge/Node-22-339933?logo=node.js&logoColor=white" alt="Node" />
+  <img src="https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white" alt="Node" />
 </p>
 
 ---
@@ -60,8 +60,7 @@ Shared libraries consumed by all apps in the monorepo.
 | 🔐 | **[@allonfire/auth](packages/auth/)** | Shared BetterAuth config, session guards, login UI |
 | 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
 | 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
-| 🪝 | **[@allonfire/hooks](packages/hooks/)** | Responsive breakpoint hooks |
-| 🔧 | **[@allonfire/utils](packages/utils/)** | Type-safe utility functions |
+| 🔧 | **[@allonfire/core](packages/core/)** | Shared constants, helpers and the Next scaffolding |
 | ⚙️ | **[@allonfire/config](packages/config/)** | Shared TypeScript configuration |
 
 ## 🗂️ Project Structure
@@ -84,8 +83,7 @@ allonfire/
     database/             Prisma ORM + services
     storage/              S3/MinIO uploads + image processing
     ui/                   Shared UI components
-    hooks/                React hooks
-    utils/                Utility functions
+    core/                 Shared constants, helpers, Next scaffolding
     config/               TypeScript config
   docker/                 Docker Compose + Dockerfile
   docs/                   Project documentation
@@ -103,6 +101,91 @@ Production deployment stack powering all apps and services.
 | 🐘 | **Database** | PostgreSQL 16 |
 | 🔒 | **Proxy** | Traefik + Let's Encrypt SSL |
 | 🔄 | **CI** | GitHub Actions |
+
+### 🚢 Deploy
+
+A push to `prod` runs `.github/workflows/deploy.yml`: it builds an image only
+for each Deploy unit (`api`, `back-office`, `db-migrate`) affected since the
+last deploy (the `deployed/prod` tag), pushes it to GHCR as `:<sha>`, tags
+every one `:prod` once all are built, and asks Dokploy to redeploy the one
+compose project, which recreates only the services whose image changed (ADR 0018).
+
+One-time setup:
+
+1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
+2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
+3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `BACK_OFFICE_URL`, `STORAGE_IMAGE_SERVER_HOST`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT`.
+4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
+
+Before the API starts, the one-shot `storage-setup` service creates the `image` bucket when missing and leaves it closed to anonymous reads (no bucket policy); nothing is uploaded by hand.
+
+Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
+
+Laura is out of Production until its rebuild.
+
+### 💻 Local
+
+`pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
+real Admin (`DATABASE_SEED_ADMIN_*` in `packages/database/.env`, Admin in
+every App) and creates the `image` bucket with its policy: Local holds what
+Production holds. The Fixtures live only in Test databases; remove
+`DATABASE_SEED_MODE` and `DATABASE_SEED_LAURA_VIEWER_*` from an older `.env`.
+`packages/storage/.env` (from its `.env.example`) holds the Local MinIO
+login the setup and the e2e run's bucket use.
+
+`pnpm dev` also serves each dev App over Tailscale as its own Tailscale
+Service, with HTTPS, and stops serving them when it stops (Ctrl+C); with
+Tailscale off it skips this and the Apps answer on localhost only.
+`pnpm dev:tailscale` does the same on its own: the Back Office at `https://back-office.<tailnet>.ts.net`,
+Laura at `https://laura.<tailnet>.ts.net`. Tailscale must be running on the
+Mac and on each device that opens them, with MagicDNS and HTTPS Certificates
+on in the tailnet's DNS settings. Started on its own, Tailscale keeps serving them across
+restarts; `pnpm dev:tailscale:off` stops it. `next dev` accepts only names
+on this tailnet, which it reads from `tailscale status` at start: sign in to
+Tailscale before `pnpm dev`, or restart `pnpm dev` after.
+
+One-time setup, in the admin console:
+
+1. Access controls: add the tag, let it host the Services, and let members
+   reach them:
+
+   ```json
+   "tagOwners": { "tag:dev": ["autogroup:admin"] },
+   "autoApprovers": {
+     "services": {
+       "svc:back-office": ["tag:dev"],
+       "svc:laura": ["tag:dev"],
+       "svc:cdn": ["tag:dev"]
+     }
+   },
+   "grants": [
+     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:cdn"], "ip": ["443"] }
+   ]
+   ```
+
+   Merge into the existing `tagOwners` and `grants`, and keep the default
+   allow-all grant.
+2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
+   `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
+   so the Mac then belongs to the tag, not to a user.
+3. Services: define `back-office`, `laura` and `cdn`, each on `tcp:443`.
+4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
+   defined stays pending: `tailscale serve clear svc:<name>`, then run it
+   again, and the auto-approval applies.
+5. Add each App's tailnet address to `API_CORS_ORIGINS` in `apps/api/.env`
+   (`https://back-office.<tailnet>.ts.net,https://laura.<tailnet>.ts.net`):
+   an App's server forwards the page's Origin to the API, whose Better Auth
+   refuses one it does not trust, and Sign in then reports itself unavailable.
+6. Set `STORAGE_IMAGE_SERVER_URL` in `apps/api/.env` to
+   `https://cdn.<tailnet>.ts.net/image`: the API signs every picture link
+   with that address and the browser loads it directly, so `localhost:9010`
+   reaches no phone. The Mac reaches it too while Tailscale is on; with
+   Tailscale off, put `http://localhost:9010/image` back.
+7. Set `BACK_OFFICE_URL` to `https://back-office.<tailnet>.ts.net` in
+   `apps/back-office/.env.development.local`, so link previews on the phone
+   load their images; delete the file to go back to localhost.
+
+Why Services, and what a new App needs: ADR 0021.
 
 ---
 

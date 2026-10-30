@@ -6,7 +6,7 @@ on:
 jobs:
   verify-source:
     name: Verify Source Branch
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Ensure PR comes from the allowed upstream branch
         env:
@@ -14,8 +14,8 @@ jobs:
           HEAD: ${{ github.head_ref }}
         run: |
           case "$BASE" in
-            prod) EXPECTED=test ;;
-            test) EXPECTED=dev ;;
+            prod) EXPECTED="test" ;;
+            test) EXPECTED="dev" ;;
             *)    echo "ℹ️ No gate configured for '$BASE'"; exit 0 ;;
           esac
 

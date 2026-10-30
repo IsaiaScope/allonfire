@@ -1,0 +1,5 @@
+*
+!package.json
+!packages/database/changelog
+!packages/database/liquibase
+packages/database/liquibase/tests

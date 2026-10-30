@@ -1,50 +1,183 @@
 name: allonfire
 
+# The db-migrate image (packages/database/liquibase), shared by the two
+# one-shot services that run before the Apps on every deploy (ADR 0008).
+# Confined: read-only root filesystem, no Linux capabilities, no privilege
+# escalation, a scratch /tmp for the JVM, and only the network that reaches
+# dokploy-postgres.
+x-db-job: &db-job
+  # Built by CI (.github/workflows/deploy.yml, ADR 0018); pulled on every deploy.
+  image: ghcr.io/isaiascope/allonfire-db-migrate:prod
+  pull_policy: always
+  restart: "no"
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  environment:
+    - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+  networks:
+    - dokploy-network
+
 services:
-  laura:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        APP_NAME: laura
-        BETTER_AUTH_URL: https://laura.isaiariva.com
-    restart: unless-stopped
+  # First: a verified custom-format dump of allonfire, newest 14 kept. Same
+  # disk as the database: this serves rollback, not disaster recovery.
+  db-backup:
+    <<: *db-job
+    command: ["backup"]
+    volumes:
+      - db_backups:/backups
+
+  # Then: apply the changelog (validated first), tag the release. The Apps
+  # start only if this exits 0.
+  db-migrate:
+    <<: *db-job
+    command: ["deploy"]
+    # A stop mid-deploy waits for the running changeset instead of killing it
+    # and leaving the changelog lock behind.
+    stop_grace_period: 5m
+    depends_on:
+      db-backup:
+        condition: service_completed_successfully
+
+  # Then: the pictures' bucket, created when missing and closed (no anonymous
+  # read; an earlier deploy's read-only policy is removed).
+  # Runs from the API's image, which holds the storage package.
+  storage-setup:
+    image: ghcr.io/isaiascope/allonfire-api:prod
+    pull_policy: always
+    restart: "no"
+    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/cli.ts"]
+    depends_on:
+      storage:
+        condition: service_healthy
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=https://laura.isaiariva.com
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET=${MINIO_BUCKET}
-      - LAURA_VIEWER_EMAIL=${LAURA_VIEWER_EMAIL:-}
-      - LAURA_VIEWER_PASSWORD=${LAURA_VIEWER_PASSWORD:-}
-      - NODE_ENV=production
+      - STORAGE_ENDPOINT=http://storage:9000
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+    networks:
+      - allonfire
+
+  # Every Deploy unit below is an image CI built (ADR 0018); compose recreates
+  # only the ones whose :prod tag moved. Laura is out of Production until its
+  # rebuild (ADR 0010).
+  api:
+    image: ghcr.io/isaiascope/allonfire-api:prod
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      storage-setup:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - API_REDIS_URL=redis://redis:6379
+      - API_CORS_ORIGINS=https://${BACK_OFFICE_HOST:?BACK_OFFICE_HOST is required}
+      - API_TRUSTED_PROXY_HOPS=${API_TRUSTED_PROXY_HOPS:-1}
+      - AUTH_SECRET=${AUTH_SECRET:?AUTH_SECRET is required}
+      - AUTH_URL=https://${API_HOST:?API_HOST is required}
+      - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
+      - STORAGE_ENDPOINT=http://storage:9000
+      - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+      - STORAGE_IMAGE_SERVER_URL=https://${CDN_HOST:?CDN_HOST is required}/image
+      - STORAGE_IMAGE_SERVER_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
+      - STORAGE_IMAGE_SERVER_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
+      # Telemetry (ADR 0006): the endpoint is set only once the ingest
+      # account's headers are, so the first deploy, before that account
+      # exists, runs with telemetry off instead of failing every export.
+      - TELEMETRY_ENDPOINT=${TELEMETRY_HEADERS:+http://telemetry:5080/api/default}
+      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:-}
+      - TELEMETRY_SERVICE_NAME=allonfire-api
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 30s
     networks:
       - allonfire
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.allonfire-laura.rule=Host(`laura.isaiariva.com`)"
-      - "traefik.http.routers.allonfire-laura.entrypoints=websecure"
-      - "traefik.http.routers.allonfire-laura.tls.certresolver=letsencrypt"
-      - "traefik.http.services.allonfire-laura.loadbalancer.server.port=3000"
+      - "traefik.http.routers.allonfire-api.rule=Host(`${API_HOST}`)"
+      - "traefik.http.routers.allonfire-api.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-api.loadbalancer.server.port=3000"
 
-  minio:
-    image: minio/minio:latest
+  # NEXT_PUBLIC_API_URL and BACK_OFFICE_URL are baked in at build (deploy.yml); BACK_OFFICE_URL is also read at runtime, the same value.
+  back-office:
+    image: ghcr.io/isaiascope/allonfire-back-office:prod
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - API_AUTH_URL=http://api:3000/v1/auth
+      - API_URL=http://api:3000
+      - AUTH_APP=BACK_OFFICE
+      - BACK_OFFICE_URL=${BACK_OFFICE_URL}
+      - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
+      # Telemetry: on only once the ingest account's headers are set.
+      - TELEMETRY_ENDPOINT=${TELEMETRY_HEADERS:+http://telemetry:5080/api/default}
+      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:-}
+      - TELEMETRY_SERVICE_NAME=allonfire-back-office
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - allonfire
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.allonfire-back-office.rule=Host(`${BACK_OFFICE_HOST}`)"
+      - "traefik.http.routers.allonfire-back-office.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-back-office.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-back-office.loadbalancer.server.port=3000"
+
+  # One-shot, before storage starts: copies the data of the service's old
+  # name (`minio`, volume allonfire-minio-data) into storage's own volume.
+  # Docker cannot rename a volume. The marker makes every later deploy a
+  # no-op; without it (a copy cut short) the volume is emptied and the copy
+  # redone whole. The old volume is left untouched: it is the rollback.
+  storage-move:
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "set -e;
+      [ -f /to/.storage-moved ] && exit 0;
+      rm -rf /to/* /to/.[!.]* /to/..?*;
+      cp -a /from/. /to/;
+      touch /to/.storage-moved"
+    volumes:
+      - old_storage_data:/from:ro
+      - storage_data:/to
+    network_mode: none
+
+  storage:
+    # MinIO deleted minio/minio from Docker Hub; the same pin as Local.
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
     command: server /data --console-address ":9001"
     volumes:
-      - minio_data:/data
+      - storage_data:/data
+    depends_on:
+      storage-move:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
@@ -55,16 +188,185 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.allonfire-minio.rule=Host(`minio.isaiariva.com`)"
-      - "traefik.http.routers.allonfire-minio.entrypoints=websecure"
-      - "traefik.http.routers.allonfire-minio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.allonfire-minio.middlewares=admin-gate@file"
-      - "traefik.http.services.allonfire-minio.loadbalancer.server.port=9001"
+      - "traefik.http.routers.allonfire-storage.rule=Host(`storage.isaiariva.com`)"
+      - "traefik.http.routers.allonfire-storage.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-storage.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-storage.middlewares=admin-gate@file"
+      - "traefik.http.services.allonfire-storage.loadbalancer.server.port=9001"
+
+  # Rate limits and caches. Internal network only, never routed.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - allonfire
+
+  # One-shot, before telemetry starts: OpenObserve's bucket, and a storage
+  # user (TELEMETRY_STORAGE_*) allowed into that bucket only, so OpenObserve never holds
+  # the root keys. Every command is an upsert: a later deploy is a no-op.
+  telemetry-init:
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+    restart: "no"
+    depends_on:
+      storage:
+        condition: service_healthy
+    environment:
+      ROOT_USER: ${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      ROOT_PASSWORD: ${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+      TELEMETRY_USER: ${TELEMETRY_STORAGE_ACCESS_KEY:?TELEMETRY_STORAGE_ACCESS_KEY is required}
+      TELEMETRY_PASSWORD: ${TELEMETRY_STORAGE_SECRET_KEY:?TELEMETRY_STORAGE_SECRET_KEY is required}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        mc alias set local http://storage:9000 "$$ROOT_USER" "$$ROOT_PASSWORD"
+        mc mb --ignore-existing local/telemetry
+        cat > /tmp/telemetry.json <<'POLICY'
+        {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:*"],"Resource":["arn:aws:s3:::telemetry","arn:aws:s3:::telemetry/*"]}]}
+        POLICY
+        mc admin policy create local telemetry /tmp/telemetry.json
+        mc admin user add local "$$TELEMETRY_USER" "$$TELEMETRY_PASSWORD"
+        # Attaching twice is an error, so an attached policy counts as done.
+        mc admin policy attach local telemetry --user "$$TELEMETRY_USER" \
+          || mc admin user info local "$$TELEMETRY_USER" | grep -qw telemetry
+    networks:
+      - allonfire
+
+  # Logs, traces and metrics (ADR 0006): data in its own bucket, 14 days kept;
+  # metadata and the WAL stay on /data. OTLP ingest stays on the internal
+  # network; only the UI is routed, behind admin-gate.
+  telemetry:
+    image: openobserve/openobserve:v1.0.3
+    restart: unless-stopped
+    mem_limit: 768m
+    depends_on:
+      telemetry-init:
+        condition: service_completed_successfully
+    environment:
+      # Read on first start only; later changes do nothing.
+      ZO_ROOT_USER_EMAIL: ${TELEMETRY_ROOT_EMAIL:?TELEMETRY_ROOT_EMAIL is required}
+      ZO_ROOT_USER_PASSWORD: ${TELEMETRY_ROOT_PASSWORD:?TELEMETRY_ROOT_PASSWORD is required}
+      ZO_DATA_DIR: /data
+      ZO_LOCAL_MODE_STORAGE: s3
+      ZO_S3_PROVIDER: minio
+      ZO_S3_SERVER_URL: http://storage:9000
+      ZO_S3_REGION_NAME: us-east-1
+      ZO_S3_BUCKET_NAME: telemetry
+      ZO_S3_ACCESS_KEY: ${TELEMETRY_STORAGE_ACCESS_KEY:?TELEMETRY_STORAGE_ACCESS_KEY is required}
+      ZO_S3_SECRET_KEY: ${TELEMETRY_STORAGE_SECRET_KEY:?TELEMETRY_STORAGE_SECRET_KEY is required}
+      ZO_COMPACT_DATA_RETENTION_DAYS: "14"
+      ZO_WEB_URL: https://observe.isaiariva.com
+      ZO_COOKIE_SECURE_ONLY: "true"
+      ZO_TELEMETRY: "false"
+      # Sized for the 768 MB cap: it reads the cgroup limit, and its breaker
+      # is off by default.
+      ZO_MEMORY_CIRCUIT_BREAKER_ENABLED: "true"
+      ZO_MEM_TABLE_MAX_SIZE: "128"
+      ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "192"
+    volumes:
+      - telemetry_data:/data
+    # Distroless: the binary is the check, as in Local.
+    healthcheck:
+      test: ["CMD", "/openobserve", "node", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - allonfire
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.allonfire-telemetry.rule=Host(`observe.isaiariva.com`)"
+      - "traefik.http.routers.allonfire-telemetry.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-telemetry.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-telemetry.middlewares=admin-gate@file"
+      - "traefik.http.services.allonfire-telemetry.loadbalancer.server.port=5080"
+
+  # Every stored picture reaches a browser through it, by a link the API
+  # signed (imgproxy; ADR 0027): it reads the closed bucket with the storage's
+  # keys, never the public. Same pin and settings as Local.
+  image-server:
+    container_name: allonfire-image-server
+    image: ghcr.io/imgproxy/imgproxy:v4.0.20
+    restart: unless-stopped
+    environment:
+      - IMGPROXY_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
+      - IMGPROXY_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
+      - IMGPROXY_USE_S3=true
+      - IMGPROXY_S3_ENDPOINT=http://storage:9000
+      - IMGPROXY_S3_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
+      - AWS_SECRET_ACCESS_KEY=${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
+      # Only the Apps' bucket: no other bucket, no web address.
+      - IMGPROXY_ALLOWED_SOURCES=s3://image/
+      - IMGPROXY_AUTO_AVIF=true
+      - IMGPROXY_AUTO_WEBP=true
+      - IMGPROXY_MAX_SRC_RESOLUTION=100
+    depends_on:
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - allonfire
+
+  # The public delivery address (nginx, `configs.cdn`): pictures under /image,
+  # cached in front of the image server so a link already answered is never
+  # resized again.
+  cdn:
+    container_name: allonfire-cdn
+    image: nginx:1.30.1-alpine
+    restart: unless-stopped
+    configs:
+      - source: cdn
+        target: /etc/nginx/conf.d/default.conf
+    volumes:
+      - cdn_data:/var/cache/nginx
+    depends_on:
+      image-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - allonfire
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.allonfire-cdn.rule=Host(`${CDN_HOST}`)"
+      - "traefik.http.routers.allonfire-cdn.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-cdn.loadbalancer.server.port=8080"
 
 volumes:
-  minio_data:
+  storage_data:
+    name: allonfire-storage-data
+  old_storage_data:
     external: true
     name: allonfire-minio-data
+  db_backups:
+    name: allonfire-db-backups
+  cdn_data:
+    name: allonfire-cdn-data
+  redis_data:
+    name: allonfire-redis-data
+  telemetry_data:
+    name: allonfire-telemetry-data
 
 networks:
   allonfire:
@@ -72,3 +374,51 @@ networks:
   dokploy-network:
     external: true
     name: dokploy-network
+
+configs:
+  cdn:
+    content: |
+      # The public delivery address. Pictures: answers a signed image-server
+      # link it has already seen, so imgproxy
+      # resizes each picture once per link, not once per viewer (the open-source
+      # imgproxy keeps nothing itself). Kept identical in dev and prod
+      # (service-names.test.ts).
+      map $$http_accept $$image_format {
+          ~image/avif avif;
+          ~image/webp webp;
+          default     other;
+      }
+      proxy_cache_path /var/cache/nginx/images levels=1:2 keys_zone=images:10m
+                       max_size=5g inactive=30d use_temp_path=off;
+      server {
+          listen 8080;
+          location = /health {
+              access_log off;
+              return 200;
+          }
+          # Nothing else is delivered yet: a new path is a new location.
+          location / {
+              return 404;
+          }
+          # Pictures: the image server gets the signed path without /image.
+          location /image/ {
+              proxy_pass http://image-server:8080/;
+              proxy_cache images;
+              # The whole path, signature and exp included: a hit needs the
+              # exact signed link, so a tampered one always reaches imgproxy.
+              # The format imgproxy picks from Accept is the only other part.
+              proxy_cache_key "$$request_uri|$$image_format";
+              # Every copy is checked with imgproxy before it is served (a 1 s
+              # life, then If-None-Match): imgproxy checks the link (403, 404
+              # past exp) and asks the bucket whether the file is unchanged,
+              # answering 304 without resizing, or 404 once it was deleted or
+              # renamed. The resize is what is saved; a revoked link dies at
+              # once. Only a 200 is kept. The browser still gets imgproxy's
+              # own Cache-Control.
+              proxy_ignore_headers Cache-Control Expires Vary;
+              proxy_cache_valid 200 1s;
+              proxy_cache_revalidate on;
+              proxy_cache_lock on;
+              add_header X-Cache-Status $$upstream_cache_status always;
+          }
+      }

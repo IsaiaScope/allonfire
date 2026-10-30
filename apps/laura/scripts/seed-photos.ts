@@ -1,6 +1,10 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
-import { createPhoto, getPhotoCount, prisma } from "@allonfire/database";
+import { prisma } from "@allonfire/database";
+import {
+  createPhoto,
+  getPhotoCount,
+} from "@allonfire/database/features/laura/photo.service";
 import { processPhoto, uploadFile } from "@allonfire/storage";
 
 const SEED_DIR = join(import.meta.dirname, "../seed-photos");
@@ -57,7 +61,9 @@ async function main() {
   let processed = 0;
   let failed = 0;
 
-  for (const filename of imageFiles) {
+  // One photo at a time: each is decoded and resized in memory before upload.
+  await imageFiles.reduce(async (previous, filename) => {
+    await previous;
     const filePath = join(SEED_DIR, filename);
 
     try {
@@ -77,24 +83,24 @@ async function main() {
       ]);
 
       await createPhoto({
-        url: fullUrl,
-        thumbnailUrl: thumbUrl,
-        width: photo.width,
-        height: photo.height,
         blurHash: photo.blurHash,
+        height: photo.height,
+        thumbnailUrl: thumbUrl,
         uploadedBy: userId,
+        url: fullUrl,
+        width: photo.width,
       });
 
-      processed++;
+      processed += 1;
       console.log(
         `[${processed}/${imageFiles.length}] ${filename} (${photo.width}x${photo.height})`
       );
     } catch (error) {
-      failed++;
+      failed += 1;
       const message = error instanceof Error ? error.message : "Unknown error";
       console.error(`[FAIL] ${filename}: ${message}`);
     }
-  }
+  }, Promise.resolve());
 
   console.log(`\nDone! Processed: ${processed}, Failed: ${failed}`);
   await prisma.$disconnect();

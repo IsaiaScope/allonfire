@@ -1,0 +1,26 @@
+// Laura's App schema (ADR 0007).
+
+// ============ Games ============
+
+enum GameType {
+  MEMORY
+  QUIZ
+
+  @@schema("laura")
+}
+
+model GameScore {
+  id        String   @id @default(cuid(2))
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType  GameType
+  timeMs    Int?
+  score     Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([gameType, timeMs])
+  @@index([gameType, score])
+  @@index([userId, gameType])
+  @@schema("laura")
+}

@@ -1,7 +1,7 @@
+// @module-tag unit
 import { EventEmitter } from "node:events";
-import { describe, expect, it } from "vitest";
-import { REDIS_EVENT } from "../../../shared/constants/runtime";
 import { captureLog } from "../../logger/tests/capture";
+import { REDIS } from "../constants/redis";
 import { watchRedis } from "../redis";
 
 describe("watchRedis", () => {
@@ -10,10 +10,10 @@ describe("watchRedis", () => {
     const redis = new EventEmitter();
     watchRedis(redis, logger);
 
-    redis.emit(REDIS_EVENT.ERROR, new Error("ECONNREFUSED"));
-    redis.emit(REDIS_EVENT.ERROR, new Error("ECONNREFUSED"));
-    redis.emit(REDIS_EVENT.READY);
-    redis.emit(REDIS_EVENT.ERROR, new Error("ECONNREFUSED"));
+    redis.emit(REDIS.EVENT.ERROR, new Error("ECONNREFUSED"));
+    redis.emit(REDIS.EVENT.ERROR, new Error("ECONNREFUSED"));
+    redis.emit(REDIS.EVENT.READY);
+    redis.emit(REDIS.EVENT.ERROR, new Error("ECONNREFUSED"));
 
     expect(lines.map((line) => line.msg)).toEqual([
       "redis unreachable",

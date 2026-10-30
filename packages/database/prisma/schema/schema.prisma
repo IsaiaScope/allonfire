@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/prisma"
+}
+
+// One client for every App schema: Prisma resolves relations only inside a
+// single client, and Laura's and the Images' tables point at auth.User
+// (ADR 0007, ADR 0013).
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth", "image", "laura"]
+}

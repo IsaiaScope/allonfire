@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // Biome lints everything else; oxlint runs only what Biome cannot:
+  // deprecated APIs, members included, read from the types (`--type-aware`).
+  "categories": { "correctness": "off" },
+  "rules": {
+    "typescript/no-deprecated": [
+      "error",
+      {
+        "allow": [
+          // next-intl's own GetRequestConfigParams still requires it; the
+          // Apps read the locale from next/root-params.
+          { "from": "package", "package": "next-intl", "name": "requestLocale" }
+        ]
+      }
+    ]
+  },
+  // Paused Laura, the untracked reference packages, generated shadcn code and
+  // the exFAT AppleDouble twins.
+  "ignorePatterns": [
+    "apps/laura/**",
+    "packages/*-old/**",
+    "packages/shadcn/src/**",
+    "**/._*"
+  ]
+}

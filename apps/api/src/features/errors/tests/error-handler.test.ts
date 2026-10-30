@@ -1,72 +1,89 @@
+// @module-tag unit
+
+import { invalidHook } from "@allonfire/core/features/errors/coded-error";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { validator } from "hono-openapi";
-import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import {
-  notFound,
-  onError,
-  type ProblemDetails,
-  validationHook,
-} from "../middleware/error-handler";
-
-// undici types `Response.json()` as `Promise<unknown>`; these tests assert on
-// the envelope, so name the shape once here.
-const envelopeOf = async (res: Response) =>
-  (await res.json()) as ProblemDetails;
+import { localeResolver } from "../../i18n/middleware/locale-resolver";
+import { notFound, onError } from "../middleware/error-handler";
+import { problemOf } from "./problem-of";
 
 function testApp() {
   return new Hono()
     .use(requestId())
+    .use(localeResolver())
     .get("/boom", () => {
       throw new Error(
         "Invalid `prisma.user.findMany()` on column `secret_col`"
       );
     })
     .get("/nope", () => {
-      throw new HTTPException(403, { message: "not allowed" });
+      // Hono's validators throw English text like this.
+      throw new HTTPException(403, {
+        message: "Malformed JSON in request body",
+      });
+    })
+    .get("/teapot", () => {
+      throw new HTTPException(418);
     })
     .onError(onError)
     .notFound(notFound);
 }
 
 describe("onError", () => {
-  it("maps an HTTPException to its status and a code", async () => {
+  it("maps an HTTPException to its status, a code and the catalogue's text", async () => {
     const res = await testApp().request("/nope");
     expect(res.status).toBe(403);
-    const body = await envelopeOf(res);
-    expect(body.code).toBe("FORBIDDEN");
-    expect(body.detail).toBe("not allowed");
+    const body = await problemOf(res);
+    expect(body.code).toBe(ERROR.CODE.FORBIDDEN);
+    expect(body.detail).toBe("Not allowed");
     expect(body.requestId).toBeTruthy();
+  });
+
+  it("answers an HTTPException in the request's language", async () => {
+    const res = await testApp().request("/nope", {
+      headers: { "accept-language": "it" },
+    });
+    expect((await problemOf(res)).detail).toBe("Non consentito");
+  });
+
+  it("answers 500 for a status the API does not document", async () => {
+    const res = await testApp().request("/teapot");
+    expect(res.status).toBe(500);
+    expect((await problemOf(res)).code).toBe(ERROR.CODE.INTERNAL_ERROR);
   });
 
   it("never leaks an unknown error's message", async () => {
     const res = await testApp().request("/boom");
     expect(res.status).toBe(500);
-    const body = await envelopeOf(res);
-    expect(body.code).toBe("INTERNAL_ERROR");
+    const body = await problemOf(res);
+    expect(body.code).toBe(ERROR.CODE.INTERNAL_ERROR);
     expect(body.detail).toBe("Internal server error");
-    expect(JSON.stringify(body)).not.toContain("secret_col");
+    expect(stringifyJson(body)).not.toContain("secret_col");
   });
 
   it("returns NOT_FOUND in the same envelope for unmatched routes", async () => {
     const res = await testApp().request("/missing");
     expect(res.status).toBe(404);
-    const body = await envelopeOf(res);
-    expect(body.code).toBe("NOT_FOUND");
+    const body = await problemOf(res);
+    expect(body.code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });
 
-describe("validationHook", () => {
+// The modules' validator hook, rendered by the API's `onError`.
+describe("invalidHook", () => {
   const app = new Hono()
     .use(requestId())
     .post(
       "/echo",
       validator(
         "json",
-        z.object({ email: z.email(), age: z.number() }),
-        validationHook
+        z.object({ age: z.number(), email: z.email() }),
+        invalidHook
       ),
       (context) => context.json(context.req.valid("json"))
     )
@@ -74,17 +91,17 @@ describe("validationHook", () => {
 
   it("returns 400 with field paths and no schema dump", async () => {
     const res = await app.request("/echo", {
-      method: "POST",
+      body: stringifyJson({ age: "old", email: "nope" }),
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: "nope", age: "old" }),
+      method: "POST",
     });
 
     expect(res.status).toBe(400);
-    const body = await envelopeOf(res);
-    expect(body.code).toBe("VALIDATION_FAILED");
+    const body = await problemOf(res);
+    expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
     const paths = (body.errors ?? []).map((d: { path: string }) => d.path);
     expect(paths).toContain("email");
     expect(paths).toContain("age");
-    expect(JSON.stringify(body)).not.toContain("ZodError");
+    expect(stringifyJson(body)).not.toContain("ZodError");
   });
 });

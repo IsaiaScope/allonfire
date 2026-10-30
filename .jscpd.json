@@ -1,0 +1,19 @@
+{
+  "path": ["apps/api", "apps/back-office", "packages"],
+  "format": ["typescript", "tsx", "javascript"],
+  "minTokens": 60,
+  "minLines": 6,
+  "reporters": ["console", "json"],
+  "output": ".jscpd",
+  "gitignore": true,
+  "ignore": [
+    "**/._*",
+    "**/node_modules/**",
+    "**/.next/**",
+    "packages/auth-old/**",
+    "packages/ui-old/**",
+    "packages/shadcn/**",
+    "**/generated/**",
+    "**/*.d.ts"
+  ]
+}

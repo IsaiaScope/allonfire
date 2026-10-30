@@ -1,0 +1,17 @@
+{
+  // The vendor components not written for strict TypeScript (React Bits'
+  // GooeyNav.tsx: unchecked array reads, nullable refs), under the rules they
+  // were written for. Add a file here and to the package tsconfig's
+  // "exclude", then run `pnpm vendor:types`. The editor and `check-types`
+  // check these files here; every other component is not in "files", so the
+  // editor keeps reading the package's strict tsconfig for it.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noImplicitReturns": false,
+    "noUncheckedIndexedAccess": false,
+    "strict": false
+  },
+  "files": ["GooeyNav.tsx"],
+  "include": [],
+  "exclude": []
+}

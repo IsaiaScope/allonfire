@@ -5,20 +5,40 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./services": "./src/services/index.ts",
-    "./generated/prisma": "./generated/prisma/index.ts"
+    "./enums": "./generated/prisma/enums.ts",
+    "./environment/environment": "./src/environment/environment.ts",
+    "./features/apps/laura/game-score.service": "./src/features/apps/laura/game-score.service.ts",
+    "./features/auth/user.service": "./src/features/auth/user.service.ts",
+    "./features/auth/access/access": "./src/features/auth/access/access.ts",
+    "./features/auth/access/constants/app-settings": "./src/features/auth/access/constants/app-settings.ts",
+    "./features/auth/access/constants/access": "./src/features/auth/access/constants/access.ts",
+    "./features/auth/access/constants/schemas": "./src/features/auth/access/constants/schemas.ts",
+    "./features/image/alt": "./src/features/image/alt.ts",
+    "./features/image/image.service": "./src/features/image/image.service.ts",
+    "./features/seed/fixtures/fixtures": "./src/features/seed/fixtures/fixtures.ts",
+    "./features/seed/fixtures/seed-fixtures": "./src/features/seed/fixtures/seed-fixtures.ts",
+    "./features/seed/upsert-user": "./src/features/seed/upsert-user.ts",
+    "./features/test-database/global-setup": "./src/features/test-database/global-setup.ts",
+    "./features/test-database/names": "./src/features/test-database/names.ts",
+    "./features/test-database/server": "./src/features/test-database/server.ts",
+    "./features/test-database/template": "./src/features/test-database/template.ts",
+    "./features/test-database/test-database": "./src/features/test-database/test-database.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:changeset": "tsx --env-file=.env scripts/changeset.ts",
+    "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "tsx --env-file=.env src/seed.ts",
-    "db:seed-quiz": "tsx --env-file=.env src/seed-quiz.ts",
-    "db:studio": "prisma studio",
-    "test": "vitest run"
+    "db:rollback": "bash scripts/liquibase.sh rollback",
+    "db:seed": "tsx --env-file=.env src/features/seed/cli.ts",
+    "db:status": "bash scripts/liquibase.sh status --verbose",
+    "db:update": "bash scripts/liquibase.sh update",
+    "dev": "nc -z localhost 5555 && echo \"Prisma Studio already running on http://localhost:5555\" || prisma studio --port 5555 --browser none",
+    "test": "vitest run",
+    "test-database": "tsx --env-file-if-exists=.env src/features/test-database/cli.ts"
   },
   "dependencies": {
+    "@allonfire/core": "workspace:*",
     "@prisma/client": "^6.19.3",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",
@@ -26,8 +46,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@allonfire/config": "workspace:*",
     "tsx": "^4.19.0",
-    "typescript": "~5.8.2",
-    "vitest": "^4.1.0"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

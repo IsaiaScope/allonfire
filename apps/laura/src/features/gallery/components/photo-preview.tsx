@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useHeartAnimation } from "@/features/gallery/hooks/use-heart-animation";
+import { blurPlaceholder } from "@/lib/blur-placeholder";
 
 async function fetchImageBlob(url: string, id: string) {
   const res = await fetch(url);
@@ -176,11 +177,9 @@ export function PhotoPreview({
         const { blob, fileName } = await fetchImageBlob(photo.url, photo.id);
         const file = new File([blob], fileName, { type: blob.type });
         await navigator.share({ files: [file] });
-      } catch (err) {
-        // User cancelled — not an error
-        if (err instanceof Error && err.name === "AbortError") {
-          return;
-        }
+      } catch {
+        // Closing the share sheet rejects with AbortError. Nothing is reported
+        // for it or for any other share failure.
       }
     },
     [photo.url, photo.id]
@@ -207,17 +206,16 @@ export function PhotoPreview({
           className="relative overflow-hidden rounded-lg"
           style={{
             aspectRatio: `${photo.width} / ${photo.height}`,
-            width: `min(94vw, calc((90vh - 3.5rem) * ${photo.width} / ${photo.height}))`,
             maxHeight: "calc(90vh - 3.5rem)",
+            width: `min(94vw, calc((90vh - 3.5rem) * ${photo.width} / ${photo.height}))`,
           }}
         >
           {/* Thumbnail placeholder — renders instantly from browser cache */}
           <Image
             alt=""
-            blurDataURL={photo.blurDataURL}
             className="h-full w-full object-contain"
             fill
-            placeholder={photo.blurDataURL ? "blur" : "empty"}
+            {...blurPlaceholder(photo.blurDataURL)}
             sizes="90vw"
             src={photo.thumbnailUrl}
           />

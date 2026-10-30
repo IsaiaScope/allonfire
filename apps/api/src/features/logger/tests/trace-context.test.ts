@@ -1,22 +1,10 @@
+// @module-tag unit
 import { context } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { TracerProvider } from "@opentelemetry/sdk-trace";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createLogger } from "../logger";
+import { captureLog } from "./capture";
 
 const tracer = new TracerProvider().getTracer("trace-context-test");
-
-function captureLines() {
-  const lines: Record<string, unknown>[] = [];
-  return {
-    lines,
-    stream: {
-      write: (chunk: string) => {
-        lines.push(JSON.parse(chunk));
-      },
-    },
-  };
-}
 
 describe("log lines and traces", () => {
   beforeAll(() => {
@@ -28,8 +16,7 @@ describe("log lines and traces", () => {
   afterAll(() => context.disable());
 
   it("stamps a line logged inside a span with that span's ids", () => {
-    const { lines, stream } = captureLines();
-    const logger = createLogger({ destination: stream });
+    const { lines, logger } = captureLog();
 
     const spanContext = tracer.startActiveSpan("request", (span) => {
       logger.info("inside");
@@ -45,8 +32,7 @@ describe("log lines and traces", () => {
   });
 
   it("leaves a line logged outside any span unstamped", () => {
-    const { lines, stream } = captureLines();
-    const logger = createLogger({ destination: stream });
+    const { lines, logger } = captureLog();
 
     logger.info("outside");
 

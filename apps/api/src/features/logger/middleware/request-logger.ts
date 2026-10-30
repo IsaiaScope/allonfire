@@ -1,11 +1,9 @@
-import { objectFromEntries } from "@allonfire/utils/object";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { LOG } from "@allonfire/core/features/logger/constants/logger";
+import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { pinoLogger } from "hono-pino";
 import type { Logger } from "pino";
-import { HTTP_STATUS } from "../../../shared/constants/http";
-import {
-  LOG_LEVEL,
-  LOGGED_REQUEST_HEADERS,
-} from "../../../shared/constants/runtime";
+import { API } from "../../../shared/constants/api";
 import { isProbe } from "../../../shared/utils/probe";
 import { logger as defaultLogger } from "../logger";
 
@@ -19,7 +17,7 @@ export const requestLogger = (logger: Logger = defaultLogger) =>
       onReqBindings: (context) => ({
         req: {
           headers: objectFromEntries(
-            LOGGED_REQUEST_HEADERS.flatMap((name) => {
+            API.LOGGED_REQUEST_HEADERS.flatMap((name) => {
               const value = context.req.header(name);
               return value === undefined ? [] : [[name, value] as const];
             })
@@ -32,14 +30,14 @@ export const requestLogger = (logger: Logger = defaultLogger) =>
       // available when you are actually debugging a probe.
       onResLevel: (context) => {
         if (isProbe(context.req.path)) {
-          return LOG_LEVEL.DEBUG;
+          return LOG.LEVEL.DEBUG;
         }
-        if (context.res.status >= HTTP_STATUS.INTERNAL_SERVER_ERROR) {
-          return LOG_LEVEL.ERROR;
+        if (context.res.status >= HTTP.STATUS.INTERNAL_SERVER_ERROR) {
+          return LOG.LEVEL.ERROR;
         }
-        return context.res.status >= HTTP_STATUS.BAD_REQUEST
-          ? LOG_LEVEL.WARN
-          : LOG_LEVEL.INFO;
+        return context.res.status >= HTTP.STATUS.BAD_REQUEST
+          ? LOG.LEVEL.WARN
+          : LOG.LEVEL.INFO;
       },
     },
     pino: logger,

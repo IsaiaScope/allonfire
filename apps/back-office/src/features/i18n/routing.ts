@@ -1,0 +1,4 @@
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { AOFDefineRouting } from "@allonfire/core/features/next/i18n/aof-define-routing";
+
+export const routing = AOFDefineRouting(I18N.BASE_LANGUAGES);

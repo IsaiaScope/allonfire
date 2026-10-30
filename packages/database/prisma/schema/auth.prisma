@@ -1,0 +1,96 @@
+// The user base every App shares (ADR 0007). Better Auth owns these tables.
+// User lists Laura's models only because Prisma requires back-relations.
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+
+  @@schema("auth")
+}
+
+/// An App of the monorepo. Upper-case in code like Role; stored as the App
+/// names themselves.
+enum App {
+  LAURA       @map("laura")
+  BACK_OFFICE @map("back-office")
+
+  @@schema("auth")
+}
+
+model User {
+  id            String       @id @default(cuid(2))
+  email         String       @unique
+  name          String?
+  emailVerified Boolean      @default(false)
+  image         String?
+  /// The blur next/image shows while `image` loads, set and cleared with it.
+  imageBlurDataUrl String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  memberships   Membership[]
+  images        Image[]
+  gameScores    GameScore[]
+
+  @@schema("auth")
+}
+
+/// A User's place in one App, and their Role there (ADR 0019).
+model Membership {
+  userId    String
+  app       App
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, app])
+  @@schema("auth")
+}
+
+model Session {
+  id        String   @id @default(cuid(2))
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model Account {
+  id                    String    @id @default(cuid(2))
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model Verification {
+  id         String    @id @default(cuid(2))
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@schema("auth")
+}
