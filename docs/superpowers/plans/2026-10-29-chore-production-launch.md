@@ -251,26 +251,30 @@ This task takes over Plan A Task 3a.
 - Drift (2026-10-30): OpenObserve v1.0.3 offers only an `Admin` role and no password field for a new user, so no `telemetry-ingest@` user was made. An ingestion token named `api` (IAM → Ingestion Tokens) replaced it: its ready `Basic` header went from the clipboard into both `.env.production` files and Dokploy's env, never printed. That needs a redeploy, which the cascade carrying the `observe.` gate change gives.
 - [x] **Step 1: Guided, right after Task 7's deploy.** `TELEMETRY_HEADERS` is already filled (`docker/.env.production`, `apps/api/.env.production`): the Basic auth of the user `telemetry-ingest@allonfire.com`, password generated, so telemetry is on from the first deploy and its exports answer 401 until this step. The owner signs in at `https://observe.isaiariva.com` as the root user (`TELEMETRY_ROOT_*`) and adds that user. Its password goes to the clipboard, never the terminal: `grep '^TELEMETRY_HEADERS=' docker/.env.production | sed 's/.*Basic%20//' | python3 -c 'import sys,urllib.parse,base64; print(base64.b64decode(urllib.parse.unquote(sys.stdin.read().strip())).decode().split(":",1)[1], end="")' | pbcopy`.
 - [x] **Step 2: No redeploy.** (Drift: redeploy needed, see above.) The header was in Dokploy's env from Task 5; exports succeed as soon as the user exists.
-- [ ] **Step 3: Verify.** In OpenObserve's logs stream, a line from `allonfire-api` appears within a minute of `curl https://api.isaiariva.com/health`.
+- [x] **Step 3: Verify.** In OpenObserve's logs stream, a line from `allonfire-api` appears within a minute of `curl https://api.isaiariva.com/health`.
+  - Done 2026-10-30 after v0.6.4: spans from `allonfire-api` in the `default` traces stream and `http_server_*` metric streams. The logs stream stayed empty: healthy requests appear to log nothing (not checked).
 
 ### Task 9: Laura leaves the VPS
 
-- [ ] **Step 1: Ask the owner for a yes,** naming exactly what goes, with no backup:
+- Drift (2026-10-30, owner's yes): no Laura app or container was left (it ran inside the AllOnFire compose the deploys replaced). Removed bucket `allonfire` (86 MB, Laura's, not `laura-photos`) and image `applications-allonfire-nrnhaj-laura:latest`. Step 3 skipped: the owner keeps the `laura` A record for now. Storage now holds only `image` and `telemetry`.
+
+- [x] **Step 1: Ask the owner for a yes,** naming exactly what goes, with no backup:
   - the Laura Dokploy app, or the Laura service inside a shared compose, as the inventory found it;
   - the `laura-photos` bucket.
-- [ ] **Step 2: Remove it.**
+- [x] **Step 2: Remove it.**
   - Delete or stop the app through Dokploy, guided or through `/iso-browser`.
   - Remove the bucket over SSH with `mc rb --force local/laura-photos`.
 - [ ] **Step 3: Delete the `laura` A record**, with a yes.
-- [ ] **Step 4: Verify.**
+- [x] **Step 4: Verify.**
   - `dig +short laura.isaiariva.com` returns nothing.
   - `mc ls local` lists no `laura-photos`.
   - No container named for Laura is running.
 
 ### Task 10: The renamed services serve under their new names only
 
-- [ ] **Step 1:** `curl` `storage.`, `board.` and `workflow.`. Expected: each answers as its old name did, behind `admin-gate` where the old one was.
-- [ ] **Step 2:** Remove the old domains from Multica's and n8n's Dokploy config, then redeploy with a yes.
+- [x] **Step 1:** `curl` `storage.`, `board.` and `workflow.`. Expected: each answers as its old name did, behind `admin-gate` where the old one was.
+- [x] **Step 2:** Remove the old domains from Multica's and n8n's Dokploy config, then redeploy with a yes.
+  - Done 2026-10-30 (owner's yes): workflow's `n8n.` Dokploy domain deleted; board's `CORS_ALLOWED_ORIGINS` reduced to `https://board.isaiariva.com`; both redeployed through Dokploy's API. Board's routes are the hand-written `board-routes.yml`, which the owner rewrites to `Host(board.isaiariva.com)` with a script (agent edits on the VPS are refused); backup in `/root/board-routes.yml.bak-2026-10-30`. `n8n.` and `multica.` answer 404; `board.` 200, its `/ws` route 400 (reaches the backend without an upgrade header).
 
 ### Task 11: Leftovers and old records go
 

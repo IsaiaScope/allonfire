@@ -58,8 +58,7 @@ it.each(FILES)("names no service in %s after its software", (file) => {
   for (const name of OLD_NAMES) {
     // A service key, a container, a hostname, a volume, a compose caller.
     expect(text).not.toMatch(new RegExp(`^ {2}${name}:$`, "m"));
-    // Not `allonfire-minio-data`: the old volume `storage-move` reads.
-    expect(text).not.toMatch(new RegExp(`allonfire-${name}(?![\\w-])`));
+    expect(text).not.toMatch(new RegExp(`allonfire-${name}`));
     expect(text).not.toMatch(new RegExp(`\\b${name}:\\d{4}\\b`));
     expect(text).not.toMatch(new RegExp(`\\b${name}_data\\b`));
     expect(text).not.toMatch(
@@ -74,12 +73,11 @@ it.each(LOCAL_SERVICES)("runs %s Locally under its own name", (name) => {
   );
 });
 
-it("moves Production's storage data into its new volume before storage starts", () => {
+it("runs Production's storage on its own volume, with no move from the old one", () => {
   const text = read("docker/docker-compose.prod.yml");
-  expect(text).toMatch(STORAGE_MOVE_SERVICE);
+  expect(text).not.toMatch(STORAGE_MOVE_SERVICE);
   expect(text).toMatch(STORAGE_SERVICE);
   expect(text).toContain("name: allonfire-storage-data");
-  expect(text).toContain("name: allonfire-minio-data");
   expect(text).toContain(
     "traefik.http.routers.allonfire-storage.rule=Host(`storage.isaiariva.com`)"
   );
