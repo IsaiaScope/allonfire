@@ -118,6 +118,9 @@ describe.each(EXPECTED)("%s", (path, lines) => {
 
 const BUILD_STORAGE = /STORAGE_(ENDPOINT|BUCKET)/;
 const DOCKERFILE_STAGE = /^FROM /m;
+const TURBO_PIN = /"turbo": "([^"]+)"/;
+const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
+const PRUNE_WITH_PINNED_TURBO = `RUN npx "turbo@$(node -p "require('./package.json').devDependencies.turbo")" prune`;
 const DEPLOY_BUILD_ARGS = /build-args: \|\n((?: {12}.*\n)+)/;
 const TURBO_BUILD_ENV = /"build": \{[^}]*?"env": \[([^\]]*)\]/;
 
@@ -152,4 +155,17 @@ it("reads DOKPLOY_URL from the prod environment's secrets", () => {
   const name = "DOKPLOY_URL";
   expect(deploy).toContain(`${name}: \${{ secrets.${name} }}`);
   expect(deploy).not.toContain(`vars.${name}`);
+});
+
+describe("the Docker prune", () => {
+  // `npx turbo` in the pruner has no node_modules, so it fetched npm's latest
+  // turbo, whose pruned turbo.json the builder's locked turbo could not parse.
+  it("runs the turbo the lockfile installs, pinned exactly", () => {
+    const [, version] = read("package.json").split(TURBO_PIN);
+    expect(version).toMatch(EXACT_VERSION);
+    expect(read("pnpm-lock.yaml")).toContain(
+      `turbo:\n        specifier: ${version}\n        version: ${version}\n`
+    );
+    expect(read("docker/Dockerfile")).toContain(PRUNE_WITH_PINNED_TURBO);
+  });
 });

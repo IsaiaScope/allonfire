@@ -8,7 +8,10 @@ RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
 COPY . .
 ARG APP_NAME
-RUN npx turbo prune @allonfire/${APP_NAME} --docker
+# The lockfile's turbo, pinned exactly in package.json: a bare `npx turbo`
+# here has no node_modules, fetches npm's latest, and the builder's locked
+# turbo then fails to parse the turbo.json that latest writes.
+RUN npx "turbo@$(node -p "require('./package.json').devDependencies.turbo")" prune @allonfire/${APP_NAME} --docker
 
 # Stage 2: Install dependencies (cached unless package.jsons change)
 FROM node:${NODE_VERSION}-alpine AS deps
