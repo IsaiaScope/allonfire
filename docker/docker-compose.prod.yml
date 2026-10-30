@@ -150,25 +150,6 @@ services:
       - "traefik.http.routers.allonfire-back-office.tls.certresolver=letsencrypt"
       - "traefik.http.services.allonfire-back-office.loadbalancer.server.port=3000"
 
-  # One-shot, before storage starts: copies the data of the service's old
-  # name (`minio`, volume allonfire-minio-data) into storage's own volume.
-  # Docker cannot rename a volume. The marker makes every later deploy a
-  # no-op; without it (a copy cut short) the volume is emptied and the copy
-  # redone whole. The old volume is left untouched: it is the rollback.
-  storage-move:
-    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
-    restart: "no"
-    entrypoint: >
-      /bin/sh -c "set -e;
-      [ -f /to/.storage-moved ] && exit 0;
-      rm -rf /to/* /to/.[!.]* /to/..?*;
-      cp -a /from/. /to/;
-      touch /to/.storage-moved"
-    volumes:
-      - old_storage_data:/from:ro
-      - storage_data:/to
-    network_mode: none
-
   storage:
     # MinIO deleted minio/minio from Docker Hub; the same pin as Local.
     image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
@@ -179,9 +160,6 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - storage_data:/data
-    depends_on:
-      storage-move:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 30s
@@ -362,9 +340,6 @@ services:
 volumes:
   storage_data:
     name: allonfire-storage-data
-  old_storage_data:
-    external: true
-    name: allonfire-minio-data
   db_backups:
     name: allonfire-db-backups
   cdn_data:
