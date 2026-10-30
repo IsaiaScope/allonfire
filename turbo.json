@@ -23,8 +23,6 @@
       "env": [
         "ANALYZE",
         "NEXT_DIST_DIR",
-        "STORAGE_ENDPOINT",
-        "STORAGE_BUCKET",
         "NEXT_PUBLIC_API_URL",
         "BACK_OFFICE_URL",
         "API_URL"

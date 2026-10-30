@@ -110,7 +110,7 @@ the setup Production runs. After changing a source file, run
 
 Locally, `image:setup` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
 
-The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket (the Back Office reads it at build, for the rewrite). It is readable by key and never listable: `storage-init` sets a `s3:GetObject`-only anonymous policy in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket with that policy, only when missing. Do not use `mc anonymous set download`: it also allows listing every key.
+The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket. It is closed to anonymous reads, since it holds private Images and Avatars: `storage-init` runs `mc anonymous set none` in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket when missing and deletes any bucket policy. A browser reaches a picture only through a link the API signs (`features/image-server/sign`), served by the image server. Never give the bucket an anonymous policy again.
 
 ## 🔧 Usage
 

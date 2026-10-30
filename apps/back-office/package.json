@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "find .next -name '._*' -delete 2>/dev/null; next build && pnpm --filter @allonfire/core pwa:build --app \"$PWD\"",
-    "check-types": "STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-http://localhost:9000} next typegen && tsc --noEmit",
+    "check-types": "next typegen && tsc --noEmit",
     "dev": "find .next -name '._*' -delete 2>/dev/null; next dev --port 3400",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
     "preview": "set -a && . ./.env.development && if [ -f .env.development.local ]; then . ./.env.development.local; fi && set +a && pnpm build && cp -R .next/static .next/standalone/apps/back-office/.next/ && cp -R public .next/standalone/apps/back-office/ && PORT=3420 node .next/standalone/apps/back-office/server.js",

@@ -112,12 +112,12 @@ compose project, which recreates only the services whose image changed (ADR 0018
 
 One-time setup:
 
-1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `STORAGE_ENDPOINT`, `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variables `DOKPLOY_URL`, `DOKPLOY_COMPOSE_ID`.
+1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
 2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
-3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `BACK_OFFICE_URL`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`.
+3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds `DATABASE_URL`, `API_REDIS_URL`, `AUTH_SECRET`, `AUTH_COOKIE_DOMAIN`, `API_HOST`, `BACK_OFFICE_HOST`, `BACK_OFFICE_URL`, `STORAGE_IMAGE_SERVER_HOST`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT`.
 4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
 
-Before the API starts, the one-shot `storage-setup` service creates the `image` bucket with its read-only policy, only when missing; nothing is uploaded by hand.
+Before the API starts, the one-shot `storage-setup` service creates the `image` bucket when missing and leaves it closed to anonymous reads (no bucket policy); nothing is uploaded by hand.
 
 Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
 
@@ -155,11 +155,11 @@ One-time setup, in the admin console:
      "services": {
        "svc:back-office": ["tag:dev"],
        "svc:laura": ["tag:dev"],
-       "svc:image-server": ["tag:dev"]
+       "svc:cdn": ["tag:dev"]
      }
    },
    "grants": [
-     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:image-server"], "ip": ["443"] }
+     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:cdn"], "ip": ["443"] }
    ]
    ```
 
@@ -168,7 +168,7 @@ One-time setup, in the admin console:
 2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
    `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
    so the Mac then belongs to the tag, not to a user.
-3. Services: define `back-office`, `laura` and `image-server`, each on `tcp:443`.
+3. Services: define `back-office`, `laura` and `cdn`, each on `tcp:443`.
 4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
    defined stays pending: `tailscale serve clear svc:<name>`, then run it
    again, and the auto-approval applies.
@@ -177,10 +177,13 @@ One-time setup, in the admin console:
    an App's server forwards the page's Origin to the API, whose Better Auth
    refuses one it does not trust, and Sign in then reports itself unavailable.
 6. Set `STORAGE_IMAGE_SERVER_URL` in `apps/api/.env` to
-   `https://image-server.<tailnet>.ts.net`: the API signs every picture link
+   `https://cdn.<tailnet>.ts.net/image`: the API signs every picture link
    with that address and the browser loads it directly, so `localhost:9010`
    reaches no phone. The Mac reaches it too while Tailscale is on; with
-   Tailscale off, put `http://localhost:9010` back.
+   Tailscale off, put `http://localhost:9010/image` back.
+7. Set `BACK_OFFICE_URL` to `https://back-office.<tailnet>.ts.net` in
+   `apps/back-office/.env.development.local`, so link previews on the phone
+   load their images; delete the file to go back to localhost.
 
 Why Services, and what a new App needs: ADR 0021.
 

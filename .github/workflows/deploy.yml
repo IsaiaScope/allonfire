@@ -84,7 +84,6 @@ jobs:
           target: ${{ matrix.unit == 'api' && 'node-runner' || '' }}
           build-args: |
             APP_NAME=${{ matrix.unit }}
-            STORAGE_ENDPOINT=${{ secrets.STORAGE_ENDPOINT }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             BACK_OFFICE_URL=${{ secrets.BACK_OFFICE_URL }}
           push: true
@@ -141,7 +140,9 @@ jobs:
       # is `error`).
       - name: Redeploy the compose project
         env:
-          DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
+          # https://<user>:<password>@panel…: Dokploy's API sits behind the
+          # panel's basic auth, so the address is a secret.
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
           DOKPLOY_COMPOSE_ID: ${{ vars.DOKPLOY_COMPOSE_ID }}
           DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
         run: |

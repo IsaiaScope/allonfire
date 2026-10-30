@@ -1,4 +1,5 @@
 // @module-tag unit
+import { env } from "../../../environment/environment";
 import { IMAGE_SERVER } from "../constants/image-server";
 import {
   pictureLink,
@@ -17,7 +18,7 @@ const DOCS = {
 const KEY = "photo.avif";
 const SIGNATURE = /^[\w-]{43}$/;
 const SIGNED_640 =
-  /^http:\/\/localhost:9010\/[\w-]{43}\/rs:fit:640:0\/plain\/s3:\/\/image\/photo\.avif$/;
+  /^http:\/\/localhost:9010\/image\/[\w-]{43}\/rs:fit:640:0\/plain\/s3:\/\/image\/photo\.avif$/;
 const IN_AN_HOUR = new Date("2026-10-28T12:00:00Z");
 
 describe("signPath", () => {
@@ -46,7 +47,9 @@ describe("pictureLink", () => {
 
   it("signs each link for its own path", () => {
     const signature = (width: number) =>
-      new URL(pictureLink({ key: KEY, width })).pathname.split("/")[1];
+      pictureLink({ key: KEY, width })
+        .slice(env.STORAGE_IMAGE_SERVER_URL.length)
+        .split("/")[1];
     const [small, large] = [signature(640), signature(1080)];
     expect(small).toMatch(SIGNATURE);
     expect(small).not.toBe(large);

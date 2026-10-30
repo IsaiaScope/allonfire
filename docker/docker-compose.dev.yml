@@ -96,16 +96,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # The image server's address: an nginx cache in front of it, so a link
-  # already answered is never resized again (`configs.image-cache`).
-  image-cache:
-    container_name: allonfire-image-cache
+  # The public delivery address (nginx, `configs.cdn`): pictures under /image,
+  # cached in front of the image server so a link already answered is never
+  # resized again.
+  cdn:
+    container_name: allonfire-cdn
     image: nginx:1.30.1-alpine
     restart: unless-stopped
     ports:
       - "9010:8080"
     configs:
-      - source: image-cache
+      - source: cdn
         target: /etc/nginx/conf.d/default.conf
     depends_on:
       image-server:
@@ -273,9 +274,10 @@ volumes:
   workflow_data:
 
 configs:
-  image-cache:
+  cdn:
     content: |
-      # Answers a signed image-server link it has already seen, so imgproxy
+      # The public delivery address. Pictures: answers a signed image-server
+      # link it has already seen, so imgproxy
       # resizes each picture once per link, not once per viewer (the open-source
       # imgproxy keeps nothing itself). Kept identical in dev and prod
       # (service-names.test.ts).
@@ -292,8 +294,13 @@ configs:
               access_log off;
               return 200;
           }
+          # Nothing else is delivered yet: a new path is a new location.
           location / {
-              proxy_pass http://image-server:8080;
+              return 404;
+          }
+          # Pictures: the image server gets the signed path without /image.
+          location /image/ {
+              proxy_pass http://image-server:8080/;
               proxy_cache images;
               # The whole path, signature and exp included: a hit needs the
               # exact signed link, so a tampered one always reaches imgproxy.

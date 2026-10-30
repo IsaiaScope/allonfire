@@ -27,21 +27,17 @@ COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
-# collection. STORAGE_ENDPOINT and NEXT_PUBLIC_API_URL must match runtime values:
-# Next.js bakes them in at build (STORAGE_ENDPOINT is the /storage/images
-# rewrite target, NEXT_PUBLIC_API_URL the API the browser calls). The Back
-# office's build fails without STORAGE_ENDPOINT or NEXT_PUBLIC_API_URL.
+# collection. NEXT_PUBLIC_API_URL must match the runtime value: Next.js bakes in
+# the API the browser calls, and the Back Office's build fails without it.
 # BACK_OFFICE_URL is the Back Office's metadataBase, baked into prerendered
 # pages; it must equal the runtime value.
 # Other values are placeholders that never reach the runner stage.
-ARG STORAGE_ENDPOINT
 ARG NEXT_PUBLIC_API_URL
 ARG BACK_OFFICE_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
     AUTH_URL="http://build.placeholder" \
     API_URL="http://build.placeholder" \
-    STORAGE_ENDPOINT=${STORAGE_ENDPOINT} \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
     BACK_OFFICE_URL=${BACK_OFFICE_URL} \
     STORAGE_ACCESS_KEY="build" \

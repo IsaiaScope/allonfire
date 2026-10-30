@@ -68,3 +68,11 @@ survive. A schema crosses no package: a package's `storageItem` takes its own zo
   and hand it to config's `aofPlaywrightConfig` (`apiPath`), since config, a leaf package,
   imports nothing.
 
+
+## Comments
+
+A comment says what a thing is or does, never which Apps or packages use it
+today: "shared by every service that reports", not "shared by the API and the
+Back Office". A list of consumers goes stale the day one is added; the code
+already says who imports what. Name a specific App or package only when the
+line is about that one alone.

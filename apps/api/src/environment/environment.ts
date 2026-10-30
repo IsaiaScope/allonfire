@@ -13,7 +13,7 @@ import { storageEnvSchema } from "@allonfire/storage/environment/environment";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 import { RATE_LIMIT } from "../features/rate-limit/constants/limits";
-import { OTEL, OTLP } from "../features/telemetry/constants/telemetry";
+import { TELEMETRY } from "../features/telemetry/constants/telemetry";
 import { API } from "../shared/constants/api";
 
 /** `a=1,b=x%20y` to `{ a: "1", b: "x y" }`, splitting each pair at its first `=`. */
@@ -63,15 +63,17 @@ export function parseEnv(raw: Record<string, string | undefined>) {
         .int()
         .min(0)
         .default(RATE_LIMIT.DEFAULT.TRUSTED_PROXY_HOPS),
-      // Unset switches telemetry off. Named after the OTel spec so the
-      // collector docs apply unchanged; app code reads them from here.
-      OTEL_EXPORTER_OTLP_ENDPOINT: z
-        .url({ protocol: OTLP.PATTERN.PROTOCOL })
+      PORT: z.coerce.number().int().positive().default(API.DEFAULT.PORT),
+      // The OTLP endpoint (unset switches telemetry off), its headers and the
+      // service name; the exporters get them from here, never the SDK's own
+      // OTEL_* lookup.
+      TELEMETRY_ENDPOINT: z
+        .url({ protocol: TELEMETRY.PATTERN.PROTOCOL })
         .transform((url) => url.replace(PATTERN.TRAILING_SLASHES, ""))
         .optional(),
-      OTEL_EXPORTER_OTLP_HEADERS: z
+      TELEMETRY_HEADERS: z
         .string()
-        .regex(OTLP.PATTERN.HEADERS)
+        .regex(TELEMETRY.PATTERN.HEADERS)
         // `decodeURIComponent` throws on a bad escape (`%E0`); report it as an
         // env issue so boot fails with the same message as any other typo.
         .transform((value, context) => {
@@ -80,14 +82,15 @@ export function parseEnv(raw: Record<string, string | undefined>) {
           } catch {
             context.addIssue({
               code: "custom",
-              message: OTLP.ERROR.HEADERS_MALFORMED_ESCAPE,
+              message: TELEMETRY.ERROR.HEADERS_MALFORMED_ESCAPE,
             });
             return z.NEVER;
           }
         })
         .default({}),
-      OTEL_SERVICE_NAME: z.string().default(OTEL.DEFAULT_SERVICE_NAME),
-      PORT: z.coerce.number().int().positive().default(API.DEFAULT.PORT),
+      TELEMETRY_SERVICE_NAME: z
+        .string()
+        .default(TELEMETRY.DEFAULT_SERVICE_NAME),
     },
   });
 }

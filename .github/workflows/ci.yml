@@ -113,7 +113,7 @@ jobs:
       STORAGE_ENDPOINT: http://localhost:9000
       STORAGE_ACCESS_KEY: allonfire
       STORAGE_SECRET_KEY: allonfire
-      STORAGE_IMAGE_SERVER_URL: http://localhost:9010
+      STORAGE_IMAGE_SERVER_URL: http://localhost:9010/image
       STORAGE_IMAGE_SERVER_KEY: 5ac692d6a2b19f10fdcdc2f2dd03efdf413a4108bf93d08508e9c4c6656d95f1
       STORAGE_IMAGE_SERVER_SALT: b8d9db70864d2cf60e0b5d06d04b8cb5
     steps:
@@ -135,7 +135,7 @@ jobs:
       # Each package's integration tests make their own Test database and
       # bucket; Storage comes from the dev compose file, as Local runs it.
       - name: Start Storage
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait storage image-server image-cache
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait storage image-server cdn
       - name: Run tests
         run: pnpm turbo run test --affected
       # The Test database template is the changelog plus the Fixtures: the
@@ -158,7 +158,7 @@ jobs:
       AUTH_SECRET: e2e-secret-only-for-this-throwaway-stack-000
       STORAGE_ACCESS_KEY: allonfire
       STORAGE_SECRET_KEY: allonfire
-      STORAGE_IMAGE_SERVER_URL: http://localhost:9010
+      STORAGE_IMAGE_SERVER_URL: http://localhost:9010/image
       STORAGE_IMAGE_SERVER_KEY: 5ac692d6a2b19f10fdcdc2f2dd03efdf413a4108bf93d08508e9c4c6656d95f1
       STORAGE_IMAGE_SERVER_SALT: b8d9db70864d2cf60e0b5d06d04b8cb5
     steps:
@@ -176,7 +176,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Start the database, Redis and Storage
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server image-cache
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn
       - name: Generate Prisma client
         run: pnpm db:generate
       - name: Playwright version
@@ -207,7 +207,6 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       AUTH_URL: ${{ secrets.AUTH_URL }}
-      STORAGE_ENDPOINT: ${{ secrets.STORAGE_ENDPOINT }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
       BACK_OFFICE_URL: ${{ secrets.BACK_OFFICE_URL }}
       # The Back Office's server address of the API: validated at build, never called.

@@ -46,7 +46,9 @@ Env var names start with their owner: a package's with the package name
 API's with `API_` (`API_REDIS_URL`, `API_CORS_ORIGINS`). A var that points at
 another service carries that service's name (`API_AUTH_URL` in the Back Office). A
 name a tool reads by itself stays as the tool spells it: `NODE_ENV`, `PORT`,
-`OTEL_*`. Laura keeps its old names until it is rebuilt.
+the OpenTelemetry SDK's tuning `OTEL_*` (none set). Telemetry's own keys start
+with `TELEMETRY_` (`TELEMETRY_ENDPOINT`), the same in every App that reports.
+Laura keeps its old names until it is rebuilt.
 Export keys mirror the file path without `src/` and `.ts`, one line per file:
 `"./features/hono/guards/middleware/require-app": "./src/features/hono/guards/middleware/require-app.ts"`.
 A folder's `index.ts` exports as the folder (`./features/image/hono/routes`). Generated code keeps its

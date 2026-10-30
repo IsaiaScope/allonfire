@@ -8,12 +8,22 @@ const PORT = {
   API_E2E: 3310,
   BACK_OFFICE: 3400,
   BACK_OFFICE_E2E: 3410,
+  CDN: 9010,
   DATABASE: 5432,
-  IMAGE_SERVER: 9010,
   LAURA: 3200,
   REDIS: 6379,
   STORAGE: 9000,
   STORAGE_CONSOLE: 9001,
+} as const;
+
+/**
+ * The cdn's paths, the same Locally and in Production: each hands its requests
+ * to the service behind it, prefix stripped.
+ */
+const CDN = {
+  PATH: {
+    IMAGE: "/image",
+  },
 } as const;
 
 /** The Local database's login; compose's defaults. */
@@ -45,9 +55,11 @@ const ADDRESS = {
   API_E2E: http(PORT.API_E2E),
   BACK_OFFICE: http(PORT.BACK_OFFICE),
   BACK_OFFICE_E2E: http(PORT.BACK_OFFICE_E2E),
+  /** The public delivery address (nginx), in front of the image server. */
+  CDN: http(PORT.CDN),
   DATABASE: `postgresql://${DATABASE.USER}:${DATABASE.PASSWORD}@localhost:${PORT.DATABASE}/${DATABASE.NAME}`,
-  /** Signed links to stored pictures (imgproxy). */
-  IMAGE_SERVER: http(PORT.IMAGE_SERVER),
+  /** Signed links to stored pictures (imgproxy), through the cdn. */
+  IMAGE_SERVER: `${http(PORT.CDN)}${CDN.PATH.IMAGE}`,
   LAURA: http(PORT.LAURA),
   /** db 0: rate limits (ADR 0002). */
   REDIS: `redis://localhost:${PORT.REDIS}/0`,
@@ -58,6 +70,7 @@ const ADDRESS = {
 
 /** The Local stack: `LOCAL.PORT.*`, `LOCAL.URL.*` and the logins compose defaults to. */
 export const LOCAL = {
+  CDN,
   DATABASE,
   IMAGE_SERVER,
   PORT,

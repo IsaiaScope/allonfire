@@ -125,10 +125,9 @@ export const aofPlaywrightConfig = ({
         // The API's address is baked into the build, so the App is built
         // for this stack, then served the way the Docker image serves it:
         // the standalone server, with the static files copied beside it.
-        // Runs in the App's folder, where this config lives. The bucket is
-        // baked into the `/storage/images` rewrite too.
+        // Runs in the App's folder, where this config lives.
         command: [
-          `BUCKET="$(${testBucket("name")})" && STORAGE_BUCKET="$BUCKET" pnpm build`,
+          "pnpm build",
           `cp -R .next/static ${standalone}/.next/`,
           `cp -R public ${standalone}/`,
           `node ${standalone}/server.js`,
@@ -139,7 +138,6 @@ export const aofPlaywrightConfig = ({
           API_URL: apiUrl,
           NEXT_PUBLIC_API_URL: apiUrl,
           PORT: String(port),
-          STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
         },
         timeout: START_TIMEOUT_MS,
         url: baseURL,

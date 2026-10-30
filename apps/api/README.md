@@ -84,12 +84,13 @@ image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
   lowercase the database stores. An App appears once in a list (400
   otherwise). A batch with one Image the User cannot see answers 404, before
   any 403, and writes nothing.
-- **Readable by key, never listable.** The `image` bucket carries an anonymous
-  policy allowing only `s3:GetObject` on `image/*`: Locally `storage-init`
-  applies it with `mc anonymous set-json`, in Production the one-shot
-  `storage-setup` does (`setupImageBucket`), as does every test run's bucket. Never
-  `mc anonymous set download`: it also grants `ListBucket`, which would list
-  every key. Each App's rewrite proxies `/storage/images/:key` only, for the same reason.
+- **Closed to anonymous reads.** The `image` bucket holds private Images and
+  Avatars, so it carries no policy: Locally `storage-init` runs
+  `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
+  any bucket policy (`setupImageBucket`), as does every test run's bucket. A
+  browser reaches a picture only through a link the API signs, served by the
+  image server (docs/agents/images.md). Never give the bucket an anonymous
+  policy again, read-only included.
 
 ## Writing routes
 
@@ -143,7 +144,7 @@ writable throws rather than waiting.
 
 ## Telemetry
 
-Telemetry is on when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, which `.env.example`
+Telemetry is on when `TELEMETRY_ENDPOINT` is set, which `.env.example`
 does. The `OTEL_*` variables are part of the zod env schema like every other
 setting: a malformed endpoint or header list fails the boot, and code reads
 them from `env`, never `process.env`.

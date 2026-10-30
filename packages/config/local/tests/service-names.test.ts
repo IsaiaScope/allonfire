@@ -1,6 +1,7 @@
 // @module-tag unit
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { LOCAL } from "../addresses";
 
 const REPO = resolve(import.meta.dirname, "../../../..");
 const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
@@ -30,19 +31,19 @@ const LOCAL_SERVICES = [
   "database-init",
   "database-console",
   "image-server",
-  "image-cache",
+  "cdn",
 ] as const;
 const STORAGE_MOVE_SERVICE = /^ {2}storage-move:$/m;
 const STORAGE_SERVICE = /^ {2}storage:$/m;
 const IMAGE_SERVER_SERVICE =
   /^ {2}image-server:\n {4}container_name: allonfire-image-server$/m;
-const IMAGE_CACHE_SERVICE =
-  /^ {2}image-cache:\n {4}container_name: allonfire-image-cache$/m;
-/** Where each compose file keeps the image cache's nginx config, to its end. */
-const IMAGE_CACHE_CONFIG = "\nconfigs:\n  image-cache:\n";
-/** The router for the image server's public address, `IMAGE_SERVER_HOST`. */
-const IMAGE_SERVER_ROUTER =
-  "traefik.http.routers.allonfire-image-server.rule=Host(`$";
+const NOT_FOUND_ELSEWHERE = /location \/ \{\s+return 404;/;
+const CDN_SERVICE = /^ {2}cdn:\n {4}container_name: allonfire-cdn$/m;
+/** Where each compose file keeps the cdn's nginx config, to its end. */
+const CDN_CONFIG = "\nconfigs:\n  cdn:\n";
+/** The router for the cdn's public address, `CDN_HOST`. */
+const CDN_HOST_KEY = "CDN_HOST";
+const CDN_ROUTER = `traefik.http.routers.allonfire-cdn.rule=Host(\`\${${CDN_HOST_KEY}}\`)`;
 /** Every file that names a Docker service. */
 const FILES = [
   "docker/docker-compose.dev.yml",
@@ -80,7 +81,7 @@ it("moves Production's storage data into its new volume before storage starts", 
   expect(text).toContain("name: allonfire-storage-data");
   expect(text).toContain("name: allonfire-minio-data");
   expect(text).toContain(
-    "traefik.http.routers.allonfire-storage.rule=Host(`minio.isaiariva.com`)"
+    "traefik.http.routers.allonfire-storage.rule=Host(`storage.isaiariva.com`)"
   );
   expect(text).toContain("STORAGE_ENDPOINT=http://storage:9000");
   // Deleted from Docker Hub: a deploy could no longer pull it.
@@ -94,26 +95,40 @@ it("serves stored pictures in Production through the image server only", () => {
   expect(text).toContain("IMGPROXY_S3_ENDPOINT=http://storage:9000");
 });
 
-it("answers the image server's address from the cache in front of it", () => {
+it("answers the public delivery address from the cdn, never the image server", () => {
   const text = read("docker/docker-compose.prod.yml");
-  expect(text).toMatch(IMAGE_CACHE_SERVICE);
-  const cache = text.slice(text.search(IMAGE_CACHE_SERVICE));
+  expect(text).toMatch(CDN_SERVICE);
+  const cdn = text.slice(text.search(CDN_SERVICE));
   const server = text.slice(
     text.search(IMAGE_SERVER_SERVICE),
-    text.search(IMAGE_CACHE_SERVICE)
+    text.search(CDN_SERVICE)
   );
-  expect(cache).toContain(IMAGE_SERVER_ROUTER);
-  expect(cache).toContain("IMAGE_SERVER_HOST");
+  expect(cdn).toContain(CDN_ROUTER);
   expect(server).not.toContain("traefik.enable=true");
+  expect(text).toContain(
+    `STORAGE_IMAGE_SERVER_URL=https://\${CDN_HOST:?CDN_HOST is required}${LOCAL.CDN.PATH.IMAGE}`
+  );
 });
 
-it("caches pictures Locally exactly as Production does", () => {
+describe("the cdn's nginx config", () => {
   const config = (file: string) => {
     const text = read(file);
-    return text.slice(text.indexOf(IMAGE_CACHE_CONFIG));
+    return text.slice(text.indexOf(CDN_CONFIG));
   };
-  expect(config("docker/docker-compose.dev.yml")).toContain("proxy_cache_key");
-  expect(config("docker/docker-compose.dev.yml")).toBe(
-    config("docker/docker-compose.prod.yml")
-  );
+
+  it("is the same Locally as in Production", () => {
+    expect(config("docker/docker-compose.dev.yml")).toContain(
+      "proxy_cache_key"
+    );
+    expect(config("docker/docker-compose.dev.yml")).toBe(
+      config("docker/docker-compose.prod.yml")
+    );
+  });
+
+  it("hands the image path to the image server, prefix stripped, and 404s the rest", () => {
+    const text = config("docker/docker-compose.dev.yml");
+    expect(text).toContain(`location ${LOCAL.CDN.PATH.IMAGE}/ {`);
+    expect(text).toContain("proxy_pass http://image-server:8080/;");
+    expect(text).toMatch(NOT_FOUND_ELSEWHERE);
+  });
 });
