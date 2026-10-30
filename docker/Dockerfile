@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=22
+ARG NODE_VERSION=24
 
 # Stage 1: Prune monorepo to only the target app's dependency tree
 FROM node:${NODE_VERSION}-alpine AS pruner
@@ -27,22 +27,43 @@ COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
-# collection. MINIO_ENDPOINT, MINIO_BUCKET, and BETTER_AUTH_URL must match
-# runtime values because Next.js bakes them into prerendered HTML at build time.
-# Other values are placeholders that never reach the runner stage (multi-stage isolation).
-ARG BETTER_AUTH_URL="http://localhost:3000"
+# collection. NEXT_PUBLIC_API_URL must match the runtime value: Next.js bakes in
+# the API the browser calls, and the Back Office's build fails without it.
+# BACK_OFFICE_URL is the Back Office's metadataBase, baked into prerendered
+# pages; it must equal the runtime value.
+# Other values are placeholders that never reach the runner stage.
+ARG NEXT_PUBLIC_API_URL
+ARG BACK_OFFICE_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
-    BETTER_AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
-    BETTER_AUTH_URL=${BETTER_AUTH_URL} \
-    MINIO_ENDPOINT="http://minio:9000" \
-    MINIO_ACCESS_KEY="build" \
-    MINIO_SECRET_KEY="build-placeholder" \
-    MINIO_BUCKET="allonfire"
-RUN pnpm --filter @allonfire/database db:generate 2>/dev/null || true
+    AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
+    AUTH_URL="http://build.placeholder" \
+    API_URL="http://build.placeholder" \
+    NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    BACK_OFFICE_URL=${BACK_OFFICE_URL} \
+    STORAGE_ACCESS_KEY="build" \
+    STORAGE_SECRET_KEY="build-placeholder"
+RUN pnpm --filter @allonfire/database db:generate
 RUN pnpm turbo build --filter=@allonfire/${APP_NAME}
 
-# Stage 4: Production runner (Next.js standalone)
-FROM node:${NODE_VERSION}-alpine AS runner
+# Stage 4a: the API (and any Node Host): runs the TypeScript sources with tsx,
+# with the workspace's installed dependencies. ponytail: bundle the API if
+# start time or image size ever matters.
+FROM node:${NODE_VERSION}-alpine AS node-runner
+# Prisma's musl engine needs OpenSSL.
+RUN apk add --no-cache openssl
+WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME} NODE_ENV=production PORT=3000
+COPY --from=builder --chown=appuser:nodejs /app ./
+USER appuser
+EXPOSE 3000
+WORKDIR /app/apps/${APP_NAME}
+CMD ["node_modules/.bin/tsx", "src/index.ts"]
+
+# Stage 4b: a Next App (standalone). The last stage, so the default target.
+FROM node:${NODE_VERSION}-alpine AS next-runner
 WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 appuser

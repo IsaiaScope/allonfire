@@ -1,0 +1,201 @@
+{
+  "Metadata": {
+    "description": "Dove si gestiscono i contenuti, gli utenti e i dati della famiglia AllOnFire."
+  },
+  "Home": {
+    "description": "Ancora niente qui."
+  },
+  "SignIn": {
+    "email": "Email",
+    "error": {
+      "forbidden": "Questo account non può accedere al Back Office.",
+      "invalid": "Email o password errate.",
+      "missing": "Inserisci email e password.",
+      "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
+      "unavailable": "L’accesso non è disponibile ora. Riprova tra poco."
+    },
+    "field": {
+      "emailInvalid": "Inserisci un indirizzo email valido.",
+      "emailRequired": "Inserisci la tua email.",
+      "passwordRequired": "Inserisci la password."
+    },
+    "language": "Lingua",
+    "notice": "Solo utenti autorizzati. Registrazione chiusa.",
+    "password": "Password",
+    "pauseNotice": "Metti in pausa l'avviso",
+    "showPassword": "Mostra password",
+    "submit": "Accedi",
+    "submitting": "Accesso in corso…",
+    "theme": "Cambia tema"
+  },
+  "Navigation": {
+    "account": "Account",
+    "apps": "App",
+    "breadcrumb": "Percorso",
+    "home": "Home",
+    "language": "Lingua",
+    "menu": "Menu principale",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "Utente",
+      "VIEWER": "Visualizzatore"
+    },
+    "signOut": "Esci",
+    "storage": "Archivio",
+    "switchApp": "Cambia App",
+    "theme": "Tema",
+    "themeDark": "Scuro",
+    "themeLight": "Chiaro",
+    "toggleMenu": "Comprimi o espandi il menu",
+    "users": "Utenti"
+  },
+  "Storage": {
+    "empty": {
+      "description": "Immagini e altri file arriveranno qui con l'API di Archivio.",
+      "title": "Ancora nessun file"
+    }
+  },
+  "Users": {
+    "column": {
+      "created": "Creato",
+      "email": "Email"
+    },
+    "empty": {
+      "description": "Prova un'altra email, App o Ruolo.",
+      "title": "Nessun Utente trovato",
+      "clear": "Azzera la ricerca"
+    },
+    "error": {
+      "description": "Controlla la connessione, poi riprova.",
+      "retry": "Riprova",
+      "title": "Impossibile caricare gli Utenti"
+    },
+    "filter": {
+      "app": "App",
+      "button": "Filtri",
+      "empty": "Nessun risultato",
+      "reset": "Reimposta",
+      "resetAll": "Azzera",
+      "role": "Ruolo",
+      "search": "Cerca",
+      "selected": "{count} selezionati"
+    },
+    "list": "Utenti",
+    "loading": "Caricamento degli Utenti",
+    "noMembership": "Non iscritto",
+    "pagination": {
+      "first": "Vai alla prima pagina",
+      "last": "Vai all'ultima pagina",
+      "next": "Vai alla pagina successiva",
+      "page": "Pagina <n>{page}</n> di <n>{pageCount}</n>",
+      "previous": "Vai alla pagina precedente",
+      "rowsPerPage": "Righe per pagina"
+    },
+    "search": {
+      "label": "Cerca per email o nome",
+      "clear": "Cancella il testo"
+    },
+    "detail": {
+      "page": "Utente"
+    },
+    "edit": {
+      "avatarFailed": "Salvato; la foto no.",
+      "confirmPassword": "Conferma la nuova password",
+      "email": "Email",
+      "error": {
+        "failed": "Non riesco a salvare. Riprova.",
+        "gone": "Questo Utente non esiste più.",
+        "invalid": "Controlla i campi e riprova.",
+        "ownRole": "Non puoi cambiare il tuo Ruolo nel Back Office.",
+        "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo."
+      },
+      "ownRoleLocked": "Nessuno cambia il proprio Ruolo in {app}.",
+      "password": "Nuova password",
+      "saved": "Salvato",
+      "submit": "Salva",
+      "submitting": "Salvo…"
+    },
+    "pastEnd": {
+      "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
+      "title": "Questa pagina è oltre la fine",
+      "last": "Vai all'ultima pagina"
+    },
+    "delete": {
+      "action": "Elimina",
+      "cancel": "Annulla",
+      "confirm": "Elimina",
+      "description": "Ogni Utente lascia tutte le App ed esce ovunque. Non si può annullare.",
+      "done": "{count, plural, one {# Utente eliminato} other {# Utenti eliminati}}",
+      "failed": "Non è stato possibile eliminare gli Utenti.",
+      "gone": "{count, plural, one {Questo Utente era già stato eliminato} other {Questi Utenti erano già stati eliminati}}",
+      "partly": "{deleted, plural, one {# Utente eliminato} other {# Utenti eliminati}}; {gone, plural, one {# era già stato eliminato} other {# erano già stati eliminati}}",
+      "select": "Seleziona {email}",
+      "selectAll": "Seleziona tutti gli Utenti di questa pagina",
+      "title": "{count, plural, one {Eliminare # Utente?} other {Eliminare # Utenti?}}"
+    },
+    "add": {
+      "avatar": {
+        "cancel": "Annulla",
+        "change": "Cambia",
+        "choose": "Scegli una foto",
+        "cropAgain": "Ritaglia di nuovo",
+        "current": "Foto attuale",
+        "dialogTitle": "Ritaglia la foto",
+        "drop": "Trascina qui la tua foto",
+        "failed": "Utente aggiunto; la foto non è stata salvata.",
+        "formats": "JPEG, PNG, WebP, AVIF o HEIC, fino a {size} MB",
+        "label": "Foto",
+        "preparing": "Preparo la foto…",
+        "remove": "Rimuovi la foto",
+        "tooLarge": "La foto è troppo grande",
+        "unreadable": "Non riesco a leggere la foto. Provane un'altra.",
+        "use": "Usa",
+        "wrongType": "Il file non è una foto. Prova con JPEG, PNG, WebP, AVIF o HEIC.",
+        "zoomIn": "Ingrandisci",
+        "zoomOut": "Rimpicciolisci"
+      },
+      "button": "Aggiungi",
+      "cancel": "Annulla",
+      "confirmPassword": "Conferma password",
+      "email": "Email",
+      "error": {
+        "failed": "Non è stato possibile aggiungere l'Utente. Riprova.",
+        "invalid": "Controlla i campi e riprova.",
+        "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo.",
+        "taken": "Questa email ha già un account"
+      },
+      "field": {
+        "emailInvalid": "Inserisci un'email valida",
+        "emailRequired": "Inserisci un'email",
+        "nameRequired": "Inserisci un nome",
+        "passwordMismatch": "Le password sono diverse",
+        "passwordWeak": "Non tutte le regole qui sotto sono rispettate"
+      },
+      "name": "Nome",
+      "noRole": "Non membro",
+      "password": "Password",
+      "role": "Ruolo in {app}",
+      "roles": "Ruoli",
+      "rule": {
+        "length": "Almeno {min} caratteri",
+        "lowercase": "Una lettera minuscola",
+        "match": "Le due password coincidono",
+        "number": "Un numero",
+        "symbol": "Un simbolo",
+        "uppercase": "Una lettera maiuscola"
+      },
+      "rules": "La password deve avere",
+      "showPassword": "Mostra password",
+      "submit": "Aggiungi Utente",
+      "submitting": "Aggiunta…",
+      "title": "Aggiungi un Utente"
+    },
+    "open": "Apri {email}",
+    "copy": {
+      "done": "Email copiata",
+      "failed": "Non è stato possibile copiare l'email",
+      "label": "Copia {email}",
+      "tip": "Copia email"
+    }
+  }
+}

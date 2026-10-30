@@ -1,18 +1,21 @@
-/** Namespace for rate-limit counters. Redis db 0 — see `docs/adr/0002`. */
-export const RATE_LIMIT_KEY_PREFIX = "ratelimit:";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 
-export const rateLimitKey = (clientKey: string): string =>
-  `${RATE_LIMIT_KEY_PREFIX}${clientKey}`;
+/** The API's global rate limit: where it counts, how it answers, and what the env falls back to. */
+export const RATE_LIMIT = {
+  DEFAULT: {
+    MAX: 100,
+    TRUSTED_PROXY_HOPS: 0,
+    WINDOW_MS: UNIT.MS_PER_MINUTE,
+  },
+  /** `hono-rate-limiter`'s header spec; draft-6 is the IETF standard set. */
+  HEADER_SPEC: "draft-6",
+  /** Context key the limiter stores its `RateLimitInfo` under. */
+  INFO: "rateLimit",
+  /** Namespace for rate-limit counters. Redis db 0 — see `docs/adr/0002`. */
+  KEY_PREFIX: "ratelimit:",
+  /** The one counter every client without a readable address shares. */
+  UNKNOWN_CLIENT: "unknown",
+} as const;
 
-/** Name the INCR+PEXPIRE Lua script is registered under via `defineCommand`. */
-export const RATE_LIMIT_COMMAND = "rateLimitIncrement";
-
-/** `hono-rate-limiter`'s header spec; draft-6 is the IETF standard set. */
-export const RATE_LIMIT_HEADER_SPEC = "draft-6";
-
-/** Context key the limiter stores its `RateLimitInfo` under. */
-export const RATE_LIMIT_INFO = "rateLimit";
-
-export const DEFAULT_RATE_LIMIT_WINDOW_MS = 60_000;
-export const DEFAULT_RATE_LIMIT_MAX = 100;
-export const DEFAULT_TRUSTED_PROXY_HOPS = 0;
+export const rateLimitKey = (clientKey: string) =>
+  `${RATE_LIMIT.KEY_PREFIX}${clientKey}` as const;

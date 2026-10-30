@@ -1,12 +1,12 @@
-node_modules
-.next
+**/node_modules
+**/.next
 .git
 .github
 .gitignore
-.env
-.env.*
+**/.env
+**/.env.*
 *.md
-.turbo
+**/.turbo
 .cache
 .vscode
 .idea
@@ -14,3 +14,5 @@ docker
 dist
 coverage
 screenshots/
+# exFAT AppleDouble twins (see CLAUDE.md, exFAT volume).
+**/._*

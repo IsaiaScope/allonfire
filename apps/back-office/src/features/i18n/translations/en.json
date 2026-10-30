@@ -1,0 +1,201 @@
+{
+  "Metadata": {
+    "description": "Where the AllOnFire family's content, users and data are managed."
+  },
+  "Home": {
+    "description": "Nothing here yet."
+  },
+  "SignIn": {
+    "email": "Email",
+    "error": {
+      "forbidden": "This account cannot enter the Back Office.",
+      "invalid": "Email or password is wrong.",
+      "missing": "Enter your email and password.",
+      "rateLimited": "Too many attempts. Try again in a few minutes.",
+      "unavailable": "Signing in is not available right now. Try again shortly."
+    },
+    "field": {
+      "emailInvalid": "Enter a valid email address.",
+      "emailRequired": "Enter your email.",
+      "passwordRequired": "Enter your password."
+    },
+    "language": "Language",
+    "notice": "Authorized users only. Sign-up is closed.",
+    "password": "Password",
+    "pauseNotice": "Pause notice",
+    "showPassword": "Show password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "theme": "Switch theme"
+  },
+  "Navigation": {
+    "account": "Account",
+    "apps": "Apps",
+    "breadcrumb": "Breadcrumb",
+    "home": "Home",
+    "language": "Language",
+    "menu": "Main menu",
+    "role": {
+      "ADMIN": "Admin",
+      "USER": "User",
+      "VIEWER": "Viewer"
+    },
+    "signOut": "Sign out",
+    "storage": "Storage",
+    "switchApp": "Switch App",
+    "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "toggleMenu": "Collapse or expand the menu",
+    "users": "Users"
+  },
+  "Storage": {
+    "empty": {
+      "description": "Images and other files arrive here with Storage's API.",
+      "title": "No files yet"
+    }
+  },
+  "Users": {
+    "column": {
+      "created": "Created",
+      "email": "Email"
+    },
+    "empty": {
+      "description": "Try another email, App or Role.",
+      "title": "No Users match",
+      "clear": "Clear the search"
+    },
+    "error": {
+      "description": "Check the connection, then try again.",
+      "retry": "Try again",
+      "title": "The Users could not be loaded"
+    },
+    "filter": {
+      "app": "App",
+      "button": "Filters",
+      "empty": "No match",
+      "reset": "Reset",
+      "resetAll": "Clear",
+      "role": "Role",
+      "search": "Search",
+      "selected": "{count} selected"
+    },
+    "list": "Users",
+    "loading": "Loading Users",
+    "noMembership": "Not a member",
+    "pagination": {
+      "first": "Go to first page",
+      "last": "Go to last page",
+      "next": "Go to next page",
+      "page": "Page <n>{page}</n> of <n>{pageCount}</n>",
+      "previous": "Go to previous page",
+      "rowsPerPage": "Rows per page"
+    },
+    "search": {
+      "label": "Search by email or name",
+      "clear": "Clear the text"
+    },
+    "detail": {
+      "page": "User"
+    },
+    "edit": {
+      "avatarFailed": "Saved; the picture was not.",
+      "confirmPassword": "Confirm the new password",
+      "email": "Email",
+      "error": {
+        "failed": "Could not save. Try again.",
+        "gone": "This User no longer exists.",
+        "invalid": "Check the fields and try again.",
+        "ownRole": "You cannot change your own Role in the Back Office.",
+        "refused": "You can no longer change Users. Sign in again."
+      },
+      "ownRoleLocked": "Nobody changes their own Role in {app}.",
+      "password": "New password",
+      "saved": "Saved",
+      "submit": "Save",
+      "submitting": "Saving…"
+    },
+    "pastEnd": {
+      "description": "There are fewer pages than this one; the last page has the Users.",
+      "title": "This page is past the end",
+      "last": "Go to the last page"
+    },
+    "delete": {
+      "action": "Delete",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "description": "Each User leaves every App and is signed out everywhere. This cannot be undone.",
+      "done": "{count, plural, one {# User deleted} other {# Users deleted}}",
+      "failed": "The Users could not be deleted.",
+      "gone": "{count, plural, one {This User had already been deleted} other {These Users had already been deleted}}",
+      "partly": "{deleted, plural, one {# User deleted} other {# Users deleted}}; {gone, plural, one {# had already been deleted} other {# had already been deleted}}",
+      "select": "Select {email}",
+      "selectAll": "Select every User on this page",
+      "title": "{count, plural, one {Delete # User?} other {Delete # Users?}}"
+    },
+    "add": {
+      "avatar": {
+        "cancel": "Cancel",
+        "change": "Change",
+        "choose": "Select a picture",
+        "cropAgain": "Crop again",
+        "current": "Current picture",
+        "dialogTitle": "Crop the picture",
+        "drop": "Drop your picture here",
+        "failed": "User added; the picture was not saved.",
+        "formats": "JPEG, PNG, WebP, AVIF or HEIC, up to {size} MB",
+        "label": "Picture",
+        "preparing": "Preparing the picture…",
+        "remove": "Remove the picture",
+        "tooLarge": "That picture is too large",
+        "unreadable": "That picture could not be read. Try another one.",
+        "use": "Use",
+        "wrongType": "That file is not a picture. Try a JPEG, PNG, WebP, AVIF or HEIC.",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out"
+      },
+      "button": "Add",
+      "cancel": "Cancel",
+      "confirmPassword": "Confirm password",
+      "email": "Email",
+      "error": {
+        "failed": "The User could not be added. Try again.",
+        "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Users. Sign in again.",
+        "taken": "This email already has an account"
+      },
+      "field": {
+        "emailInvalid": "Enter a valid email",
+        "emailRequired": "Enter an email",
+        "nameRequired": "Enter a name",
+        "passwordMismatch": "The passwords differ",
+        "passwordWeak": "Not every rule below is met yet"
+      },
+      "name": "Name",
+      "noRole": "Not a member",
+      "password": "Password",
+      "role": "Role in {app}",
+      "roles": "Roles",
+      "rule": {
+        "length": "At least {min} characters",
+        "lowercase": "A lowercase letter",
+        "match": "Both passwords match",
+        "number": "A number",
+        "symbol": "A symbol",
+        "uppercase": "An uppercase letter"
+      },
+      "rules": "The password needs",
+      "showPassword": "Show password",
+      "submit": "Add User",
+      "submitting": "Adding…",
+      "title": "Add a User"
+    },
+    "open": "Open {email}",
+    "copy": {
+      "done": "Email copied",
+      "failed": "The email could not be copied",
+      "label": "Copy {email}",
+      "tip": "Copy email"
+    }
+  }
+}

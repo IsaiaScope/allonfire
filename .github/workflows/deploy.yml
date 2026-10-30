@@ -1,0 +1,194 @@
+name: Deploy
+
+on:
+  push:
+    branches: [prod]
+  # A manual run deploys every unit: the first deploy, or a recovery.
+  workflow_dispatch:
+
+# One deploy at a time. A run cancelled while queued loses nothing: the next
+# one diffs against the last commit that deployed, not the previous push.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  REGISTRY: ghcr.io/isaiascope
+  # Moved by the `deploy` job once Dokploy finished the deploy.
+  DEPLOYED_TAG: deployed/prod
+
+jobs:
+  # A manual run started from any other branch would ship that branch and
+  # move the tag off `prod`; skipping here skips `image` and `deploy` too.
+  changes:
+    if: github.ref == 'refs/heads/prod'
+    runs-on: ubuntu-24.04
+    outputs:
+      deploy: ${{ steps.affected.outputs.deploy }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      # Against the last deployed commit: what changed since then. With no
+      # deploy yet, or on a manual run, every unit.
+      - name: Affected Deploy units
+        id: affected
+        run: pnpm -s ci:affected "${{ github.event_name == 'push' && env.DEPLOYED_TAG || '' }}" >> "$GITHUB_OUTPUT"
+
+  # One image per affected Deploy unit, tagged with the commit only: `deploy`
+  # moves :prod once every image exists.
+  image:
+    needs: changes
+    if: needs.changes.outputs.deploy != '[]'
+    runs-on: ubuntu-24.04
+    environment: prod
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        unit: ${{ fromJSON(needs.changes.outputs.deploy) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # db-migrate has its own Dockerfile; the API runs the node-runner
+      # target; a Next App takes the default (next-runner). No provenance or
+      # SBOM: each would add a manifest that the keep-10 cleanup counts as a
+      # version, and could delete from under an index it keeps.
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.unit == 'db-migrate' && 'packages/database/liquibase/Dockerfile' || 'docker/Dockerfile' }}
+          target: ${{ matrix.unit == 'api' && 'node-runner' || '' }}
+          build-args: |
+            APP_NAME=${{ matrix.unit }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
+            BACK_OFFICE_URL=${{ secrets.BACK_OFFICE_URL }}
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ env.REGISTRY }}/allonfire-${{ matrix.unit }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.unit }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.unit }}
+
+  # Skipped with `image` when nothing is affected: Dokploy is never called.
+  deploy:
+    needs: [changes, image]
+    runs-on: ubuntu-24.04
+    environment: prod
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # A re-run of an older run would put its images back on :prod and move
+      # the tag backwards, under a newer deploy. Ship a new commit instead.
+      - name: Refuse a commit behind the deployed one
+        run: |
+          if git rev-parse -q --verify "refs/tags/$DEPLOYED_TAG" > /dev/null \
+            && ! git merge-base --is-ancestor "refs/tags/$DEPLOYED_TAG" "$GITHUB_SHA"; then
+            echo "::error::$GITHUB_SHA does not contain $DEPLOYED_TAG; push a new commit to prod."
+            exit 1
+          fi
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # Only now, with every image built, does any :prod tag move.
+      - name: Tag the images :prod
+        env:
+          DEPLOY: ${{ needs.changes.outputs.deploy }}
+        run: |
+          for unit in $(jq -r '.[]' <<< "$DEPLOY"); do
+            docker buildx imagetools create \
+              -t "$REGISTRY/allonfire-$unit:prod" \
+              "$REGISTRY/allonfire-$unit:$GITHUB_SHA"
+          done
+      # One call: compose recreates only the services whose :prod image
+      # changed, after db-backup and db-migrate (depends_on). Dokploy only
+      # queues it, so the step then waits for that deployment's own status:
+      # the tag below moves only once compose came up (a failed db-migrate
+      # is `error`).
+      - name: Redeploy the compose project
+        env:
+          # https://<user>:<password>@panel…: Dokploy's API sits behind the
+          # panel's basic auth, so the address is a secret.
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_COMPOSE_ID: ${{ vars.DOKPLOY_COMPOSE_ID }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+        run: |
+          # Newest first.
+          latest() {
+            curl --fail-with-body -sS -H "x-api-key: $DOKPLOY_API_KEY" \
+              "$DOKPLOY_URL/api/deployment.allByCompose?composeId=$DOKPLOY_COMPOSE_ID" \
+              | jq -c 'sort_by(.createdAt) | last // {}'
+          }
+          before=$(latest | jq -r '.deploymentId // ""')
+          curl --fail-with-body -sS -X POST "$DOKPLOY_URL/api/compose.deploy" \
+            -H "x-api-key: $DOKPLOY_API_KEY" \
+            -H "content-type: application/json" \
+            -d "{\"composeId\":\"$DOKPLOY_COMPOSE_ID\"}"
+          # 15 minutes: a backup, the migration and the Apps' start.
+          for _ in $(seq 90); do
+            sleep 10
+            deployment=$(latest)
+            [ "$(jq -r '.deploymentId // ""' <<< "$deployment")" = "$before" ] && continue
+            case "$(jq -r '.status' <<< "$deployment")" in
+              done) exit 0 ;;
+              error) echo "::error::Dokploy deployment failed; see its log in Dokploy."; exit 1 ;;
+            esac
+          done
+          echo "::error::Dokploy deployment did not finish in 15 minutes."
+          exit 1
+      - name: Mark this commit deployed
+        run: |
+          git tag -f "$DEPLOYED_TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$DEPLOYED_TAG"
+
+  # After the deploy, so each unit's :prod image is its newest version and
+  # always among the ten kept. A unit this run did not build is untouched.
+  # GHCR is free for now; ten builds back is enough to roll back.
+  cleanup:
+    needs: [changes, deploy]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        unit: ${{ fromJSON(needs.changes.outputs.deploy) }}
+    steps:
+      - name: Keep the last 10 images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: allonfire-${{ matrix.unit }}
+          package-type: container
+          min-versions-to-keep: 10

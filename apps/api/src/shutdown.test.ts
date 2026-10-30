@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+// @module-tag unit
 import { captureLog } from "./features/logger/tests/capture";
-import { TELEMETRY_FLUSH_TIMEOUT_MS } from "./shared/constants/limits";
+import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
 
 const recorder = (order: string[], name: string) => () => {
@@ -40,7 +40,6 @@ describe("createShutdown", () => {
     await done;
 
     expect(order).toEqual(["redis", "database", "telemetry"]);
-    vi.useRealTimers();
   });
 
   it("continues shutting down when one step throws", async () => {
@@ -69,10 +68,9 @@ describe("createShutdown", () => {
     });
 
     const done = shutdown();
-    await vi.advanceTimersByTimeAsync(TELEMETRY_FLUSH_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
 
     await expect(done).resolves.toEqual(["server", "redis", "database"]);
-    vi.useRealTimers();
   });
 
   it("reports every other step when the telemetry flush fails", async () => {
@@ -124,9 +122,8 @@ describe("createCrashHandler", () => {
     });
 
     const done = crash(new Error("boom"), "uncaughtException");
-    await vi.advanceTimersByTimeAsync(TELEMETRY_FLUSH_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
     await done;
-    vi.useRealTimers();
 
     expect(exit).toHaveBeenCalledWith(1);
   });

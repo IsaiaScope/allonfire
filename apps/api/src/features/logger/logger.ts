@@ -1,14 +1,11 @@
+import { LOG } from "@allonfire/core/features/logger/constants/logger";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import { trace } from "@opentelemetry/api";
 import pino, { type DestinationStream, type Logger } from "pino";
 import pkg from "../../../package.json" with { type: "json" };
-import { TELEMETRY_FLUSH_TIMEOUT_MS } from "../../shared/constants/limits";
-import {
-  NODE_ENV,
-  REDACT_CENSOR,
-  REDACT_PATHS,
-} from "../../shared/constants/runtime";
-import { env } from "../environment/environment";
-import { OTLP_PATH } from "../telemetry/constants/telemetry";
+import { env } from "../../environment/environment";
+import { API } from "../../shared/constants/api";
+import { TELEMETRY } from "../telemetry/constants/telemetry";
 import {
   otlpExporterOptions,
   telemetryResourceAttributes,
@@ -37,8 +34,8 @@ const otelTransport = (endpoint: string) => ({
     logRecordProcessorOptions: {
       exporterOptions: {
         protobufExporterOptions: {
-          ...otlpExporterOptions(endpoint, OTLP_PATH.LOGS),
-          timeoutMillis: TELEMETRY_FLUSH_TIMEOUT_MS,
+          ...otlpExporterOptions(endpoint, TELEMETRY.PATH.LOGS),
+          timeoutMillis: API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS,
         },
         protocol: "http/protobuf",
       },
@@ -70,24 +67,24 @@ export function createLogger(opts?: {
   destination?: DestinationStream;
 }): Logger {
   const options = {
-    level: env.LOG_LEVEL,
+    level: env.API_LOG_LEVEL,
     mixin: traceContext,
-    redact: { censor: REDACT_CENSOR, paths: [...REDACT_PATHS] },
+    redact: { censor: LOG.REDACT.CENSOR, paths: [...LOG.REDACT.PATHS] },
   };
 
   if (opts?.destination) {
     return pino(options, opts.destination);
   }
 
-  const isDevelopment = env.NODE_ENV === NODE_ENV.DEVELOPMENT;
+  const isDevelopment = env.NODE_ENV === ENV.NODE.DEVELOPMENT;
 
-  const endpoint = env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  const endpoint = env.TELEMETRY_ENDPOINT;
   if (endpoint) {
     const consoleTarget = isDevelopment ? PRETTY_TRANSPORT : STDOUT_TRANSPORT;
     // Each target filters at `info` unless told otherwise.
     const targets = [consoleTarget, otelTransport(endpoint)].map((target) => ({
       ...target,
-      level: env.LOG_LEVEL,
+      level: env.API_LOG_LEVEL,
     }));
     return pino({ ...options, transport: { targets } });
   }

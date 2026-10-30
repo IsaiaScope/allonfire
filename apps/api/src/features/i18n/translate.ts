@@ -1,11 +1,8 @@
+import type { CodedErrorValues } from "@allonfire/core/features/errors/coded-error";
+import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import { memoize, strategies } from "@formatjs/fast-memoize";
 import { type Formatters, IntlMessageFormat } from "intl-messageformat";
-import {
-  CATALOGUE,
-  DEFAULT_LOCALE,
-  type Locale,
-  type TranslationKey,
-} from "./constants/locales";
+import { TRANSLATION, type TranslationKey } from "./constants/locales";
 import type { TranslationValues } from "./translation-values";
 
 // `variadic` keys the cache on every argument. The default picks by arity, and
@@ -17,14 +14,14 @@ const VARIADIC = { strategy: strategies.variadic };
  * instance, so N messages x M locales makes N x M copies. Measured 92 ms -> 20 ms.
  */
 const INTL: Formatters = {
-  getNumberFormat: memoize(
-    (locales?: string | string[], options?: Intl.NumberFormatOptions) =>
-      new Intl.NumberFormat(locales, options),
-    VARIADIC
-  ),
   getDateTimeFormat: memoize(
     (locales?: string | string[], options?: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat(locales, options),
+    VARIADIC
+  ),
+  getNumberFormat: memoize(
+    (locales?: string | string[], options?: Intl.NumberFormatOptions) =>
+      new Intl.NumberFormat(locales, options),
     VARIADIC
   ),
   getPluralRules: memoize(
@@ -45,7 +42,7 @@ function formatterFor(key: TranslationKey, locale: Locale): IntlMessageFormat {
 
   if (!formatter) {
     formatter = new IntlMessageFormat(
-      CATALOGUE[locale][key],
+      TRANSLATION.CATALOGUE[locale][key],
       locale,
       undefined,
       {
@@ -70,9 +67,25 @@ export function translate<K extends TranslationKey>(
     ? []
     : [TranslationValues[K]]
 ): string {
+  return translateCode(key, locale, values);
+}
+
+/**
+ * For a code whose values arrive at runtime, a module's `CodedError`:
+ * unchecked against `TranslationValues`, so a value the module forgot renders
+ * ICU's fallback instead of failing the build.
+ */
+export function translateCode(
+  key: TranslationKey,
+  locale: Locale,
+  values?: CodedErrorValues
+): string {
   try {
-    return formatterFor(key, locale).format(values) as string;
+    // `never`: the catalogue has no rich-text tags, so no part is anything but
+    // a string. Parts only come back as an array when a tag splits the message.
+    const parts = formatterFor(key, locale).format<never>(values);
+    return typeof parts === "string" ? parts : parts.join("");
   } catch {
-    return CATALOGUE[DEFAULT_LOCALE][key];
+    return TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][key];
   }
 }

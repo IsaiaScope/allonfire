@@ -1,82 +1,82 @@
+import { CodedError } from "@allonfire/core/features/errors/coded-error";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
+import { UNIT } from "@allonfire/core/shared/constants/units";
+import type { ValueOf } from "@allonfire/core/shared/utils/object";
 import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { getReasonPhrase } from "http-status-codes";
+import { API } from "../../../shared/constants/api";
 import {
-  CONTENT_TYPE,
-  type ErrorStatus,
-  HTTP_HEADER,
-  HTTP_STATUS,
-  type HttpStatus,
-} from "../../../shared/constants/http";
-import {
-  BODY_LIMIT_BYTES,
-  MS_PER_SECOND,
-  REQUEST_TIMEOUT_MS,
-} from "../../../shared/constants/limits";
-import {
-  CONTEXT_VAR,
-  LOG_MESSAGE,
-  SEPARATOR,
-} from "../../../shared/constants/runtime";
-import type { Locale } from "../../i18n/constants/locales";
-import { localeOf } from "../../i18n/middleware/locale-resolver";
-import { translate } from "../../i18n/translate";
-import { logger } from "../../logger/logger";
-import {
-  ERROR_CODE,
-  ERROR_TYPE,
   type ErrorCode,
-  STATUS_TO_ERROR_CODE,
-  UNKNOWN_REQUEST_ID,
-} from "../constants/error-codes";
+  type ErrorStatus,
+  errorCodeSchema,
+  errorStatusSchema,
+} from "../../../shared/constants/error";
+import { localeOf } from "../../i18n/middleware/locale-resolver";
+import { translate, translateCode } from "../../i18n/translate";
+import { logger } from "../../logger/logger";
 import type { ErrorDetail, ProblemDetails } from "../constants/problem-details";
 
 // Re-exported so callers import the error contract from the middleware that
 // produces it, without reaching into constants/ themselves.
-export type { ErrorCode } from "../constants/error-codes";
+export type { ErrorCode } from "../../../shared/constants/error";
 export type {
   ErrorDetail,
   ProblemDetails,
 } from "../constants/problem-details";
 
 const isErrorStatus = (status: number): status is ErrorStatus =>
-  status in STATUS_TO_ERROR_CODE;
+  errorStatusSchema.safeParse(status).success;
 
-export function codeForStatus(status: number): ErrorCode {
-  return isErrorStatus(status)
-    ? STATUS_TO_ERROR_CODE[status]
-    : ERROR_CODE.INTERNAL_ERROR;
-}
+/** Generic, so a literal status gives its exact code: `codeForStatus(404)` is `"NOT_FOUND"`. */
+export const codeForStatus = <S extends ErrorStatus>(
+  status: S
+): (typeof API.ERROR.CODE_OF_STATUS)[S] => API.ERROR.CODE_OF_STATUS[status];
+
+/** The codes a bare `HTTPException` status maps to. */
+type StatusErrorCode = ValueOf<typeof API.ERROR.CODE_OF_STATUS>;
 
 /**
  * Renders a code with the values this layer can supply.
  *
  * `onError` sees whatever status Hono's middleware threw, so it has to cover
- * every code — including the parameterized ones. The values come from the same
- * constants the middleware was configured with, so the message cannot claim a
- * limit the server does not enforce. The switch is exhaustive: a new code with
- * values fails to compile here until it is handled.
+ * every code a status maps to — including the parameterized ones. The values
+ * come from the same constants the middleware was configured with, so the
+ * message cannot claim a limit the server does not enforce. A module throws
+ * `CodedError` with its own values and never reaches here. The switch is
+ * exhaustive: a new status code with values fails to compile here until it is
+ * handled.
  */
-export function fallbackMessage(code: ErrorCode, locale: Locale): string {
+export function fallbackMessage(code: StatusErrorCode, locale: Locale): string {
   switch (code) {
-    case ERROR_CODE.VALIDATION_FAILED:
-      return translate(code, locale, { count: 0 });
-    case ERROR_CODE.RATE_LIMITED:
+    case ERROR.CODE.RATE_LIMITED:
       return translate(code, locale, { seconds: 0 });
-    case ERROR_CODE.TIMEOUT:
+    case ERROR.CODE.TIMEOUT:
       return translate(code, locale, {
-        seconds: REQUEST_TIMEOUT_MS / MS_PER_SECOND,
+        seconds: API.LIMIT.REQUEST_TIMEOUT_MS / UNIT.MS_PER_SECOND,
       });
-    case ERROR_CODE.PAYLOAD_TOO_LARGE:
-      return translate(code, locale, { limit: BODY_LIMIT_BYTES });
+    case ERROR.CODE.PAYLOAD_TOO_LARGE:
+      return translate(code, locale, { limit: API.LIMIT.BODY_BYTES });
     default:
       return translate(code, locale);
   }
 }
 
 function requestIdOf(context: Context): string {
-  return context.get(CONTEXT_VAR.REQUEST_ID) ?? UNKNOWN_REQUEST_ID;
+  return (
+    context.get(API.CONTEXT_VAR.REQUEST_ID) ?? API.ERROR.UNKNOWN_REQUEST_ID
+  );
 }
+
+/** What varies between one problem document and the next. */
+export type Problem = {
+  code: ErrorCode;
+  status: ErrorStatus;
+  detail: string;
+  errors?: ErrorDetail[];
+};
 
 /**
  * Builds an RFC 9457 problem document.
@@ -86,14 +86,6 @@ function requestIdOf(context: Context): string {
  * what a reason phrase is. Everything that varies — and everything localised —
  * is `detail`.
  */
-/** What varies between one problem document and the next. */
-export type Problem = {
-  code: ErrorCode;
-  status: ErrorStatus;
-  detail: string;
-  errors?: ErrorDetail[];
-};
-
 function problem(
   context: Context,
   { code, status, detail, errors }: Problem
@@ -105,14 +97,14 @@ function problem(
     requestId: requestIdOf(context),
     status,
     title: getReasonPhrase(status),
-    type: ERROR_TYPE[code],
+    type: API.ERROR.TYPE[code],
     ...(errors ? { errors } : {}),
   };
 }
 
 /** RFC 9457 documents carry their own media type, not `application/json`. */
 const PROBLEM_HEADERS = {
-  [HTTP_HEADER.CONTENT_TYPE]: CONTENT_TYPE.PROBLEM_JSON,
+  [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.PROBLEM_JSON,
 } as const;
 
 /**
@@ -137,89 +129,58 @@ export const normalizeThrown =
     } catch (err) {
       throw err instanceof Error
         ? err
-        : new Error(LOG_MESSAGE.NON_ERROR_THROWN, { cause: err });
+        : new Error(API.LOG_MESSAGE.NON_ERROR_THROWN, { cause: err });
     }
   };
 
 export function onError(err: Error, context: Context): Response {
   const requestId = requestIdOf(context);
 
-  if (err instanceof HTTPException) {
-    // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than
-    // this API emits. `codeForStatus` narrows it; the cast only re-states for
-    // `context.json` what `isErrorStatus` already proved.
-    const status = err.status as HttpStatus;
+  // A shared module's error (ADR 0015): its code and values, our format and
+  // language. A code or status this API does not document is a bug below.
+  if (err instanceof CodedError) {
+    const code = errorCodeSchema.safeParse(err.code);
+    if (code.success && isErrorStatus(err.status)) {
+      return problemResponse(context, {
+        code: code.data,
+        detail: translateCode(code.data, localeOf(context), err.values),
+        status: err.status,
+        ...(err.errors.length > 0 && { errors: [...err.errors] }),
+      });
+    }
+  }
+
+  // `HTTPException.status` is Hono's ContentfulStatusCode, a wider set than this
+  // API documents. One it does not (a 418) is a bug: it falls through to the
+  // unhandled path, gets logged and answers 500.
+  if (err instanceof HTTPException && isErrorStatus(err.status)) {
+    const { status } = err;
     const code = codeForStatus(status);
-    // An explicit message on the exception is caller-supplied and already in
-    // whatever language the caller chose, so it wins. Hono's own middleware
-    // throws with an empty message, which is where the catalogue takes over.
-    const detail = err.message || fallbackMessage(code, localeOf(context));
+    // Always the catalogue: Hono's validators throw English text ("Malformed
+    // JSON in request body") that would otherwise reach every language.
     return problemResponse(context, {
       code,
-      detail,
-      status: status as ErrorStatus,
+      detail: fallbackMessage(code, localeOf(context)),
+      status,
     });
   }
 
   // pino's `err` serializer drops a `cause` that is not an Error, which is
   // exactly what `normalizeThrown` stores: log the thrown value beside it.
   const thrown = err.cause instanceof Error ? undefined : err.cause;
-  logger.error({ err, requestId, thrown }, LOG_MESSAGE.UNHANDLED_ERROR);
+  logger.error({ err, requestId, thrown }, API.LOG_MESSAGE.UNHANDLED_ERROR);
 
   return problemResponse(context, {
-    code: ERROR_CODE.INTERNAL_ERROR,
-    detail: translate(ERROR_CODE.INTERNAL_ERROR, localeOf(context)),
-    status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    code: ERROR.CODE.INTERNAL_ERROR,
+    detail: translate(ERROR.CODE.INTERNAL_ERROR, localeOf(context)),
+    status: HTTP.STATUS.INTERNAL_SERVER_ERROR,
   });
 }
 
 export function notFound(context: Context): Response {
   return problemResponse(context, {
-    code: ERROR_CODE.NOT_FOUND,
-    detail: translate(ERROR_CODE.NOT_FOUND, localeOf(context)),
-    status: HTTP_STATUS.NOT_FOUND,
-  });
-}
-
-/**
- * Matches `Hook` from `@hono/standard-validator`: on failure `error` is the
- * Standard Schema issue array itself, not a wrapper object.
- */
-type StandardIssue = {
-  readonly message: string;
-  readonly path?: readonly (PropertyKey | { readonly key: PropertyKey })[];
-};
-
-type ValidationResult =
-  | { success: true }
-  | { success: false; error?: readonly StandardIssue[] };
-
-function issuePath(issue: StandardIssue): string {
-  return (issue.path ?? [])
-    .map((segment) =>
-      typeof segment === "object" && segment !== null && "key" in segment
-        ? String(segment.key)
-        : String(segment)
-    )
-    .join(SEPARATOR.PATH);
-}
-
-export function validationHook(result: ValidationResult, context: Context) {
-  if (result.success) {
-    return;
-  }
-
-  const details: ErrorDetail[] = (result.error ?? []).map((issue) => ({
-    message: issue.message,
-    path: issuePath(issue),
-  }));
-
-  return problemResponse(context, {
-    code: ERROR_CODE.VALIDATION_FAILED,
-    detail: translate(ERROR_CODE.VALIDATION_FAILED, localeOf(context), {
-      count: details.length,
-    }),
-    errors: details,
-    status: HTTP_STATUS.BAD_REQUEST,
+    code: ERROR.CODE.NOT_FOUND,
+    detail: translate(ERROR.CODE.NOT_FOUND, localeOf(context)),
+    status: HTTP.STATUS.NOT_FOUND,
   });
 }

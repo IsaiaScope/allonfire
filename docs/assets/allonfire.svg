@@ -1,50 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<svg fill="none" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <title>AllOnFire</title>
   <defs>
-    <linearGradient id="flame-grad" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#FFDD44"/>
-      <stop offset="50%" stop-color="#FF8811"/>
-      <stop offset="100%" stop-color="#E03C00"/>
+    <linearGradient id="flame-grad" x1="0.5" x2="0.5" y1="0" y2="1">
+      <stop offset="0%" stop-color="#FFDD44" />
+      <stop offset="50%" stop-color="#FF8811" />
+      <stop offset="100%" stop-color="#E03C00" />
     </linearGradient>
     <!-- Subtle drop shadow -->
-    <filter id="text-shadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.45"/>
+    <filter height="130%" id="text-shadow" width="130%" x="-10%" y="-10%">
+      <feDropShadow
+        dx="2"
+        dy="3"
+        flood-color="#000000"
+        flood-opacity="0.45"
+        stdDeviation="3"
+      />
     </filter>
     <!-- Glow for flame -->
-    <filter id="flame-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#FF8811" flood-opacity="0.5"/>
-      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
+    <filter height="140%" id="flame-glow" width="140%" x="-20%" y="-20%">
+      <feDropShadow
+        dx="0"
+        dy="0"
+        flood-color="#FF8811"
+        flood-opacity="0.5"
+        stdDeviation="6"
+      />
+      <feDropShadow
+        dx="1"
+        dy="2"
+        flood-color="#000000"
+        flood-opacity="0.3"
+        stdDeviation="2"
+      />
     </filter>
   </defs>
 
   <!-- Dark background -->
-  <rect width="512" height="512" rx="72" fill="#151515"/>
+  <rect fill="#151515" height="512" rx="72" width="512" />
 
   <!-- All letters as one merged group — single shadow on the whole shape -->
-  <g transform="translate(244, 261)" filter="url(#text-shadow)">
-
+  <g filter="url(#text-shadow)" transform="translate(244, 261)">
     <!-- "A" letter -->
     <g transform="translate(-168, 0)">
-      <path d="M0 110 L58 -120 L90 -120 L148 110 L114 110 L100 56 L48 56 L34 110 Z" fill="#C0C0C0" stroke="#C0C0C0" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" paint-order="stroke"/>
-      <path d="M56 30 L74 -52 L92 30 Z" fill="#C0C0C0" stroke="#C0C0C0" stroke-width="4" stroke-linejoin="round" paint-order="stroke"/>
+      <path
+        d="M0 110 L58 -120 L90 -120 L148 110 L114 110 L100 56 L48 56 L34 110 Z"
+        fill="#C0C0C0"
+        paint-order="stroke"
+        stroke="#C0C0C0"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="8"
+      />
+      <path
+        d="M56 30 L74 -52 L92 30 Z"
+        fill="#C0C0C0"
+        paint-order="stroke"
+        stroke="#C0C0C0"
+        stroke-linejoin="round"
+        stroke-width="4"
+      />
     </g>
 
     <!-- "O" letter — overlaps A on the left -->
     <g transform="translate(6, 0)">
-      <ellipse cx="0" cy="-5" rx="78" ry="115" fill="#C0C0C0"/>
-      <ellipse cx="0" cy="-5" rx="46" ry="78" fill="#C0C0C0"/>
+      <ellipse cx="0" cy="-5" fill="#C0C0C0" rx="78" ry="115" />
+      <ellipse cx="0" cy="-5" fill="#C0C0C0" rx="46" ry="78" />
     </g>
 
     <!-- "F" letter — overlaps into the O -->
     <g transform="translate(82, 0)">
-      <path d="M0 110 L0 -120 L110 -120 L110 -84 L36 -84 L36 -16 L90 -16 L90 18 L36 18 L36 110 Z" fill="#C0C0C0" stroke="#C0C0C0" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" paint-order="stroke"/>
+      <path
+        d="M0 110 L0 -120 L110 -120 L110 -84 L36 -84 L36 -16 L90 -16 L90 18 L36 18 L36 110 Z"
+        fill="#C0C0C0"
+        paint-order="stroke"
+        stroke="#C0C0C0"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="8"
+      />
     </g>
-
   </g>
 
   <!-- Flame on top, outside the text shadow group -->
-  <g transform="translate(250, 258)" filter="url(#flame-glow)">
+  <g filter="url(#flame-glow)" transform="translate(250, 258)">
     <g transform="scale(5.8)">
-      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#flame-grad)" transform="translate(-12, -12)"/>
+      <path
+        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+        fill="url(#flame-grad)"
+        transform="translate(-12, -12)"
+      />
     </g>
   </g>
 </svg>

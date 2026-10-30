@@ -1,3 +1,4 @@
+// @module-tag unit
 import { context, trace } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import {
@@ -5,24 +6,11 @@ import {
   SimpleSpanProcessor,
   TracerProvider,
 } from "@opentelemetry/sdk-trace";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { type AppDeps, createApp } from "../../../app";
+import { createApp } from "../../../app";
+import { API } from "../../../shared/constants/api";
+import { appDeps } from "../../../shared/tests/app-deps";
 
 const exporter = new InMemorySpanExporter();
-
-const deps: AppDeps = {
-  checkDatabase: async () => true,
-  checkRedis: async () => true,
-  store: {
-    decrement: () => Promise.resolve(),
-    increment: () =>
-      Promise.resolve({
-        resetTime: new Date(Date.now() + 60_000),
-        totalHits: 1,
-      }),
-    resetKey: () => Promise.resolve(),
-  },
-};
 
 const spanNames = () => exporter.getFinishedSpans().map((span) => span.name);
 
@@ -46,15 +34,15 @@ describe("request spans", () => {
   });
 
   it("names each request span after its route pattern", async () => {
-    const app = createApp(deps);
+    const app = createApp(appDeps());
 
-    await app.request("/openapi.json");
+    await app.request(API.PATH.OPENAPI);
 
-    expect(spanNames()).toEqual(["GET /openapi.json"]);
+    expect(spanNames()).toEqual([`GET ${API.PATH.OPENAPI}`]);
   });
 
   it("collapses unmatched paths to the catch-all pattern, not the raw path", async () => {
-    const app = createApp(deps);
+    const app = createApp(appDeps());
 
     await app.request("/wp-admin/setup.php");
 
@@ -62,11 +50,11 @@ describe("request spans", () => {
   });
 
   it("does not trace health probes, query string or not", async () => {
-    const app = createApp(deps);
+    const app = createApp(appDeps());
 
-    await app.request("/health");
-    await app.request("/ready");
-    await app.request("/health?probe=1");
+    await app.request(API.PATH.HEALTH);
+    await app.request(API.PATH.READY);
+    await app.request(`${API.PATH.HEALTH}?probe=1`);
 
     expect(spanNames()).toEqual([]);
   });

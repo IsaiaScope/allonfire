@@ -3,6 +3,7 @@
 import { cn } from "@allonfire/ui/lib/utils";
 import Image from "next/image";
 import type { QuizQuestionData } from "@/features/games/actions/quiz";
+import { blurPlaceholder } from "@/lib/blur-placeholder";
 
 type QuizQuestionProps = {
   question: QuizQuestionData;
@@ -26,10 +27,9 @@ export function QuizQuestion({
         <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
           <Image
             alt=""
-            blurDataURL={question.imageBlurDataURL ?? undefined}
             className="object-contain"
             fill
-            placeholder={question.imageBlurDataURL ? "blur" : "empty"}
+            {...blurPlaceholder(question.imageBlurDataURL)}
             sizes="(max-width: 640px) 100vw, 600px"
             src={question.imageThumbnailUrl}
           />
@@ -135,10 +135,9 @@ function ImageAnswerGrid({
                 <div className="relative aspect-[4/3] w-full bg-muted">
                   <Image
                     alt={answer.text}
-                    blurDataURL={answer.imageBlurDataURL ?? undefined}
                     className="object-contain"
                     fill
-                    placeholder={answer.imageBlurDataURL ? "blur" : "empty"}
+                    {...blurPlaceholder(answer.imageBlurDataURL)}
                     sizes="(max-width: 640px) 45vw, 250px"
                     src={imageSrc}
                   />

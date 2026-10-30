@@ -1,5 +1,8 @@
 import type { GameType } from "@allonfire/database";
-import { getGameStats, getLeaderboard } from "@allonfire/database";
+import {
+  getGameStats,
+  getLeaderboard,
+} from "@allonfire/database/features/laura/game-score.service";
 import { cacheTag } from "next/cache";
 
 export const LEADERBOARD_CACHE_TAGS = {

@@ -1,0 +1,256 @@
+// @module-tag unit
+
+import {
+  membershipsIn,
+  sessionFor,
+} from "@allonfire/auth/shared/tests/stub-auth";
+import type { AuthSession } from "@allonfire/auth/shared/types/auth";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { App, ImageAccess, Role } from "@allonfire/database/enums";
+import { STORAGE } from "../../../../shared/constants/paths";
+import { IMAGE_SERVER } from "../../../image-server/constants/image-server";
+import { pictureSrcSet, privateLinkExpiry } from "../../../image-server/sign";
+import { imageBodySchema } from "../../constants/schemas";
+import { imageListBodySchema } from "../constants/schemas";
+import { encodeCursor } from "../utils/cursor";
+import type { ImageDeps } from "../utils/deps";
+import { imageRecord } from "./stub-image-deps";
+import { testHost as app, errorOf } from "./test-host";
+
+const lauraUser = sessionFor({
+  memberships: [{ app: App.LAURA, role: Role.VIEWER }],
+});
+const otherAppUser = sessionFor({ memberships: [] });
+const visitor: AuthSession | null = null;
+const NOW = new Date("2026-10-28T10:05:00Z");
+const KEY = "0b9a0c3e-0000-4000-8000-000000000001.webp";
+
+beforeEach(() => {
+  vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+const noImages = () => vi.fn<ImageDeps["listImages"]>(async () => []);
+
+describe("GET /images", () => {
+  it("lists the Images visible in the App with the next cursor", async () => {
+    const listImages = vi.fn<ImageDeps["listImages"]>(async () => [
+      imageRecord(),
+    ]);
+    const res = await app(lauraUser, { listImages }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&limit=1`
+    );
+    expect(res.status).toBe(200);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.LAURA,
+      enterable: [App.LAURA],
+      limit: 1,
+    });
+    expect(await res.json()).toEqual({
+      images: [
+        {
+          access: ImageAccess.PRIVATE,
+          alt: { en: "The sea", it: "Il mare" },
+          apps: [App.LAURA],
+          blurDataUrl: "data:image/webp;base64,AAAA",
+          createdAt: "2026-10-01T10:00:00.000Z",
+          height: 600,
+          id: "image-1",
+          srcSet: pictureSrcSet(KEY, privateLinkExpiry(NOW)),
+          width: 800,
+        },
+      ],
+      nextCursor: encodeCursor({
+        createdAt: new Date("2026-10-01T10:00:00.000Z"),
+        id: "image-1",
+      }),
+    });
+  });
+
+  it("has no next cursor on a short page", async () => {
+    const res = await app(lauraUser, {
+      listImages: async () => [imageRecord()],
+    }).request(`${STORAGE.PATH.IMAGES}?app=${App.LAURA}`);
+    expect(imageListBodySchema.parse(await res.json()).nextCursor).toBeNull();
+  });
+
+  it("asks for the Images visible in any App when none is named", async () => {
+    const listImages = noImages();
+    const res = await app(lauraUser, { listImages }).request(
+      STORAGE.PATH.IMAGES
+    );
+    expect(res.status).toBe(200);
+    expect(listImages).toHaveBeenCalledWith({
+      enterable: [App.LAURA],
+      limit: 30,
+    });
+  });
+
+  it("passes every App an Admin of every App enters", async () => {
+    const listImages = noImages();
+    await app(sessionFor({ memberships: membershipsIn(Role.ADMIN) }), {
+      listImages,
+    }).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.BACK_OFFICE,
+      enterable: [App.LAURA, App.BACK_OFFICE],
+      limit: 30,
+    });
+  });
+
+  it("leaves out an App whose floor the User's Role is under", async () => {
+    const listImages = noImages();
+    await app(
+      sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.USER }] }),
+      { listImages }
+    ).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.BACK_OFFICE,
+      enterable: [],
+      limit: 30,
+    });
+  });
+
+  it("lists for a visitor without a Session, who enters no App", async () => {
+    const listImages = noImages();
+    const res = await app(visitor, { listImages }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
+    );
+    expect(res.status).toBe(200);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.LAURA,
+      enterable: [],
+      limit: 30,
+    });
+  });
+
+  it("never answers 403: a User who cannot enter the App gets its public Images", async () => {
+    const listImages = noImages();
+    const res = await app(otherAppUser, { listImages }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
+    );
+    expect(res.status).toBe(200);
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.LAURA,
+      enterable: [],
+      limit: 30,
+    });
+  });
+
+  it("passes the decoded cursor to the service", async () => {
+    const listImages = noImages();
+    const cursor = {
+      createdAt: new Date("2026-10-01T10:00:00.000Z"),
+      id: "image-1",
+    };
+    await app(lauraUser, { listImages }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${encodeCursor(cursor)}`
+    );
+    expect(listImages).toHaveBeenCalledWith({
+      app: App.LAURA,
+      cursor,
+      enterable: [App.LAURA],
+      limit: 30,
+    });
+  });
+});
+
+describe("GET /images refusals", () => {
+  it.each([
+    ["not base64url JSON", "%%%"],
+    ["JSON of the wrong shape", Buffer.from("{}").toString("base64url")],
+  ])("refuses a cursor that is %s", async (_, cursor) => {
+    const res = await app(lauraUser, {}).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${cursor}`
+    );
+    expect(res.status).toBe(400);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
+  });
+
+  it("refuses app=ALL with a validation problem", async () => {
+    const res = await app(lauraUser, {}).request(
+      `${STORAGE.PATH.IMAGES}?app=ALL`
+    );
+    expect(res.status).toBe(400);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
+  });
+
+  it("reports each invalid field", async () => {
+    const res = await app(lauraUser, {}).request(
+      `${STORAGE.PATH.IMAGES}?app=ALL&limit=0`
+    );
+    expect(res.status).toBe(400);
+    const body = await errorOf(res);
+    expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
+    expect(body.errors?.map(({ path }) => path).sort()).toEqual([
+      "app",
+      "limit",
+    ]);
+    expect(body.values).toEqual({ count: 2 });
+  });
+});
+
+describe("GET /images/:id", () => {
+  it("returns an Image of an App the User enters", async () => {
+    const res = await app(lauraUser, {
+      getImage: async () => imageRecord(),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    expect(res.status).toBe(200);
+    expect(imageBodySchema.parse(await res.json()).apps).toEqual([App.LAURA]);
+  });
+
+  it("signs a private Image's links for the hour, one per width", async () => {
+    const res = await app(lauraUser, {
+      getImage: async () => imageRecord(),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    const { srcSet } = imageBodySchema.parse(await res.json());
+    expect(srcSet.map(({ width }) => width)).toEqual([...IMAGE_SERVER.WIDTHS]);
+    const expiry = privateLinkExpiry(NOW).getTime() / 1000;
+    for (const { url } of srcSet) {
+      expect(url).toContain(`/exp:${expiry}/`);
+    }
+  });
+
+  it("gives a public Image four links that never expire", async () => {
+    const res = await app(visitor, {
+      getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    const { srcSet } = imageBodySchema.parse(await res.json());
+    expect(srcSet).toHaveLength(IMAGE_SERVER.WIDTHS.length);
+    for (const { url } of srcSet) {
+      expect(url).not.toContain("/exp:");
+    }
+  });
+
+  it("returns a public Image to a visitor without a Session", async () => {
+    const res = await app(visitor, {
+      getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    expect(res.status).toBe(200);
+  });
+
+  it("answers 404 to a visitor for a private Image", async () => {
+    const res = await app(visitor, {
+      getImage: async () => imageRecord(),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    expect(res.status).toBe(404);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
+  });
+
+  it("answers 404 for another App's Image, as if it did not exist", async () => {
+    const res = await app(otherAppUser, {
+      getImage: async () => imageRecord(),
+    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    expect(res.status).toBe(404);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
+  });
+
+  it("answers 404 for an unknown id", async () => {
+    const res = await app(lauraUser, { getImage: async () => null }).request(
+      `${STORAGE.PATH.IMAGES}/missing`
+    );
+    expect(res.status).toBe(404);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
+  });
+});

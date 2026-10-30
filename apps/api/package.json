@@ -4,18 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./shared/constants/api": "./src/shared/constants/api.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis openobserve",
+    "predev": "docker compose -f ../../docker/docker-compose.dev.yml up -d redis telemetry storage storage-init",
     "dev": "tsx watch --env-file=.env src/index.ts",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
     "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/auth": "workspace:*",
+    "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
-    "@allonfire/utils": "workspace:*",
+    "@allonfire/storage": "workspace:*",
     "@formatjs/fast-memoize": "^3.1.7",
     "@formatjs/intl-localematcher": "^0.8.13",
     "@hono/node-server": "^1.14.0",
@@ -30,6 +34,8 @@
     "@opentelemetry/sdk-node": "^0.222.0",
     "@prisma/instrumentation": "^6.19.3",
     "@scalar/hono-api-reference": "^0.9.0",
+    "@standard-community/standard-json": "^0.3.5",
+    "@standard-community/standard-openapi": "^0.2.9",
     "@t3-oss/env-core": "^0.13.10",
     "hono": "^4.9.0",
     "hono-openapi": "^1.1.0",
@@ -40,6 +46,7 @@
     "negotiator": "^1.1.0",
     "pino": "^10.3.1",
     "pino-opentelemetry-transport": "^4.0.2",
+    "tsx": "^4.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -48,10 +55,10 @@
     "@opentelemetry/context-async-hooks": "^2.11.0",
     "@opentelemetry/sdk-trace": "^2.11.0",
     "@types/negotiator": "^0.6.5",
+    "better-auth": "^1.5.3",
     "http-status-codes": "^2.3.0",
     "pino-pretty": "^13.0.0",
-    "tsx": "^4.19.0",
-    "typescript": "~5.8.2",
-    "vitest": "^4.1.0"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   }
 }

@@ -1,120 +1,76 @@
-@import "tailwindcss";
+/* The base every App starts from: shadcn's generated tokens and base layer,
+   plus where Tailwind looks for classes in ui and shadcn. An App reaches it
+   through its stylesheet in @allonfire/design, which adds the Design's
+   tokens on top (ADR 0011). */
+@import "@allonfire/shadcn/styles/globals.css";
 
-@custom-variant dark (&:is(.dark *));
+@source "../../../shadcn/src";
+@source "../components";
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+/* Anything clickable shows the pointer. Tailwind v4's preflight dropped
+   `cursor: pointer` from buttons, so shadcn's buttons (the sidebar's toggle,
+   a menu's trigger) showed the arrow; this is the upgrade guide's fix. A
+   list's or a menu's options are clicked too, though shadcn draws them
+   `cursor-default`, a utility, which outranks this layer: hence `!important`
+   there, never on a disabled one (Base UI marks one `data-disabled`, cmdk
+   marks every row `data-disabled="false"`). */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-
-  --shadow-2xs: var(--shadow-2xs);
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow: var(--shadow);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
-  --shadow-xl: var(--shadow-xl);
-  --shadow-2xl: var(--shadow-2xl);
+  :is(
+    [role="option"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"]
+  ):not([aria-disabled="true"], [data-disabled=""], [data-disabled="true"]) {
+    cursor: pointer !important;
+  }
 }
 
-@layer base {
-  html {
-    overflow-x: hidden;
-    overscroll-behavior-x: none;
-  }
+/* A control's size on a touch screen (`pointer-coarse:`): a finger's 44px,
+   Apple's minimum target, its icon 20px. Every touch-sized AOF component
+   reads these (`pointer-coarse:size-(--tap-target)`), so the size is set
+   here once.
 
-  /* Radix scroll-lock fix — prevents margin-right shift when Sheet/Dialog opens */
-  /* ref: https://github.com/shadcn-ui/ui/issues/4227 */
-  html body[data-scroll-locked] {
-    margin-right: 0 !important;
-    overflow: visible !important;
-  }
+   A field's height, and every control that lines up with one (a form's
+   buttons, a toolbar, a table's rows, a pager): 40px under a mouse, as dense
+   apps draw them, the finger's 44px on a touch screen. `--field-tile` is the
+   pictogram tile inside it, 4px in from each edge. */
+:root {
+  --tap-target: 2.75rem;
+  --tap-icon: 1.25rem;
+  --field-height: 2.5rem;
+  --field-tile: 2rem;
+}
 
-  * {
-    scrollbar-color: var(--border) transparent;
-    scrollbar-width: thin;
-    @apply border-border outline-ring/50;
+@media (pointer: coarse) {
+  :root {
+    --field-height: var(--tap-target);
+    --field-tile: 2.25rem;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+}
 
-  /* PWA safe area insets — pushes body content inside notch/home indicator zones */
-  @supports (padding: env(safe-area-inset-left)) and
-    (padding: env(safe-area-inset-right)) {
-    :root {
-      --safe-area-inset-left: env(safe-area-inset-left, 0px);
-      --safe-area-inset-right: env(safe-area-inset-right, 0px);
-      --safe-area-inset-top: env(safe-area-inset-top, 0px);
-      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-    }
+/* How far a page keeps from the screen's edges: clear of a phone's rounded
+   corners, and of its notch, Dynamic Island or home indicator where they
+   reach further. The insets are real only under core's AOFBaseViewport
+   (viewport-fit=cover); they are physical, so each side is its own. Every
+   AOFPage pads itself to them, AOFToaster offsets toasts by them, and a fixed
+   control sits on them (`bottom-(--gutter-bottom)`); the body is never
+   padded. */
+:root {
+  --page-gutter: 1.5rem;
+  --gutter-top: max(var(--page-gutter), env(safe-area-inset-top, 0px));
+  --gutter-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+  --gutter-bottom: max(var(--page-gutter), env(safe-area-inset-bottom, 0px));
+  --gutter-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+}
 
-    body {
-      padding-top: var(--safe-area-inset-top) !important;
-      padding-right: var(--safe-area-inset-right) !important;
-      padding-bottom: var(--safe-area-inset-bottom) !important;
-      padding-left: var(--safe-area-inset-left) !important;
-    }
-  }
-
-  *:hover {
-    scrollbar-color: color-mix(in oklch, var(--primary) 70%, transparent)
-      transparent;
-  }
-
-  /* Webkit (Chrome, Safari, Edge) */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in oklch, var(--primary) 70%, transparent);
-  }
+/* While a modal is open (the phone's menu drawer, a dialog), Base UI marks
+   everything outside it inert, the toaster included: drop the toasts under
+   the modal (z-50), or one at the bottom covers the drawer's account menu. */
+[data-base-ui-inert] [data-sonner-toaster] {
+  z-index: 40;
 }

@@ -1,3 +1,5 @@
+// @module-tag unit
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { context, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import {
@@ -13,7 +15,7 @@ import {
 } from "@opentelemetry/sdk-trace";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { API } from "../../../shared/constants/api";
 import { requestSpans } from "../middleware/request-spans";
 
 const spans = new InMemorySpanExporter();
@@ -35,7 +37,7 @@ const buildApp = () =>
       throw new Error("boom");
     })
     // Stands in for /ready's database check, which Prisma traces.
-    .get("/ready", (c) => {
+    .get(API.PATH.READY, (c) => {
       trace.getTracer("prisma-stand-in").startActiveSpan("query", (span) => {
         span.end();
       });
@@ -83,7 +85,7 @@ describe("requestSpans", () => {
     expect(attributes["url.full"]).toBe("http://localhost/things/42");
     expect(attributes["url.path"]).toBe("/things/42");
     expect(attributes["url.scheme"]).toBe("http");
-    expect(JSON.stringify(attributes)).not.toContain("secret");
+    expect(objectValues(attributes).join(" ")).not.toContain("secret");
   });
 
   it("leaves a 4xx span unset, as the HTTP semantic conventions require", async () => {
@@ -99,7 +101,7 @@ describe("requestSpans", () => {
   });
 
   it("traces nothing a probe triggers, including its database check", async () => {
-    await buildApp().request("/ready");
+    await buildApp().request(API.PATH.READY);
 
     expect(spans.getFinishedSpans()).toHaveLength(0);
   });

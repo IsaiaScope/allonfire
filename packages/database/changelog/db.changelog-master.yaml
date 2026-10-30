@@ -1,0 +1,10 @@
+# Root changelog. Never edited: every change is a new file in changesets/,
+# Liquibase formatted SQL, one changeset per file, run in file-name order —
+# the four-digit prefix is the order. Each file sets its own logicalFilePath,
+# so the path Liquibase records does not depend on where it runs from.
+databaseChangeLog:
+  - includeAll:
+      path: changesets/
+      relativeToChangelogFile: true
+      endsWithFilter: .sql
+      errorIfMissingOrEmpty: true

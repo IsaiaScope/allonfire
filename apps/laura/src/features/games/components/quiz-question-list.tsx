@@ -20,8 +20,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import type { QuizQuestionListItem } from "@/features/games/actions/quiz";
-import { deleteQuestionAction } from "@/features/games/actions/quiz";
+import type { QuizQuestionListItem } from "@/features/games/actions/quiz-admin";
+import { deleteQuestionAction } from "@/features/games/actions/quiz-admin";
 import { Link } from "@/i18n/navigation";
 import {
   fadeInUp,
@@ -178,7 +178,7 @@ export function QuizQuestionList({ questions }: QuizQuestionListProps) {
 
       <AlertDialog
         onOpenChange={(open) => !(open || isPending) && setDeleteId(null)}
-        open={!!deleteId}
+        open={Boolean(deleteId)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,37 +1,87 @@
 {
   "name": "@allonfire/auth",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    "./server": "./src/server.ts",
-    "./client": "./src/client.ts",
-    "./route": "./src/route.ts",
-    "./guard": "./src/guard.ts",
-    "./actions/check-access": "./src/actions/check-access.ts",
-    "./env": "./src/env.ts",
-    "./components/login-form": "./src/components/login-form.tsx",
-    "./components/theme-provider": "./src/components/theme-provider.tsx",
-    "./components/sonner": "./src/components/sonner.tsx",
-    "./components/providers": "./src/components/providers.tsx"
+    "./environment/environment": "./src/environment/environment.ts",
+    "./environment/next-environment": "./src/environment/next-environment.ts",
+    "./features/hono/guards/middleware/require-app": "./src/features/hono/guards/middleware/require-app.ts",
+    "./features/hono/guards/middleware/require-session": "./src/features/hono/guards/middleware/require-session.ts",
+    "./features/hono/rate-limit/middleware/auth-limit": "./src/features/hono/rate-limit/middleware/auth-limit.ts",
+    "./features/hono/routes": "./src/features/hono/routes/index.ts",
+    "./features/hono/session/middleware/session-loader": "./src/features/hono/session/middleware/session-loader.ts",
+    "./features/hono/types/variables": "./src/features/hono/types/variables.ts",
+    "./features/next/actions/sign-in": "./src/features/next/actions/sign-in.ts",
+    "./features/next/actions/sign-out": "./src/features/next/actions/sign-out.ts",
+    "./features/next/components/with-app-session": "./src/features/next/components/with-app-session.tsx",
+    "./features/next/constants/paths": "./src/features/next/constants/paths.ts",
+    "./features/next/constants/api": "./src/features/next/constants/api.ts",
+    "./features/next/utils/auth-client": "./src/features/next/utils/auth-client.ts",
+    "./features/next/utils/redirect-to": "./src/features/next/utils/redirect-to.ts",
+    "./features/next/utils/refresh-session": "./src/features/next/utils/refresh-session.ts",
+    "./features/next/utils/session": "./src/features/next/utils/session.ts",
+    "./features/next/utils/session-cookie": "./src/features/next/utils/session-cookie.ts",
+    "./features/next/utils/set-cookie": "./src/features/next/utils/set-cookie.ts",
+    "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
+    "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",
+    "./features/next/utils/with-provider-pictures": "./src/features/next/utils/with-provider-pictures.ts",
+    "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
+    "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
+    "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
+    "./features/server/auth": "./src/features/server/auth.ts",
+    "./features/users/constants/users": "./src/features/users/constants/users.ts",
+    "./features/users/hono/constants/schemas": "./src/features/users/hono/constants/schemas.ts",
+    "./features/users/hono/routes": "./src/features/users/hono/routes/index.ts",
+    "./features/users/hono/tests/stub-user-deps": "./src/features/users/hono/tests/stub-user-deps.ts",
+    "./features/users/hono/utils/deps": "./src/features/users/hono/utils/deps.ts",
+    "./features/users/utils/password-rules": "./src/features/users/utils/password-rules.ts",
+    "./shared/constants/errors": "./src/shared/constants/errors.ts",
+    "./shared/constants/auth": "./src/shared/constants/auth.ts",
+    "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
+    "./shared/types/auth": "./src/shared/types/auth.ts",
+    "./shared/utils/linked-picture": "./src/shared/utils/linked-picture.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@allonfire/core": "workspace:*",
     "@allonfire/database": "workspace:*",
-    "@allonfire/ui": "workspace:*",
     "@better-auth/prisma-adapter": "^1.5.3",
-    "@tanstack/react-query": "^5.62.0",
-    "better-auth": "^1.2.0",
-    "lucide-react": "^0.474.0",
-    "next": "^16.1.6",
-    "next-themes": "^0.4.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hook-form": "^7.71.2",
-    "sonner": "^2.0.7",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "better-auth": "^1.5.3",
+    "hono-openapi": "^1.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/react": "^19.2.14",
-    "typescript": "~5.8.2"
+    "@allonfire/config": "workspace:*",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "hono": "^4.9.0",
+    "next": "^16.3.6",
+    "next-intl": "^4.14.7",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "hono": "^4.9.0",
+    "next": "^16.0.0",
+    "next-intl": "^4.0.0",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "next-intl": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
   }
 }

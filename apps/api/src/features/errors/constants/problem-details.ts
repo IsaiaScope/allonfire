@@ -1,9 +1,14 @@
+import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
 import { z } from "zod";
-import { errorCodeSchema } from "./error-codes";
+import {
+  codesFor,
+  type ErrorStatus,
+  errorCodeSchema,
+} from "../../../shared/constants/error";
 
 export const errorDetailSchema = z.object({
-  path: z.string(),
   message: z.string(),
+  path: z.string(),
 });
 
 /**
@@ -13,7 +18,7 @@ export const errorDetailSchema = z.object({
  * one clients may already understand — Spring and ASP.NET emit it natively —
  * rather than one they have to learn from our docs.
  *
- * - `type`     stable identifier for the problem class, from `ERROR_TYPE`
+ * - `type`     stable identifier for the problem class, from `API.ERROR.TYPE`
  * - `title`    invariant summary; the registered reason phrase for the status
  * - `status`   duplicated from the response line, per the RFC, so a logged or
  *              forwarded body is still self-describing
@@ -26,15 +31,24 @@ export const errorDetailSchema = z.object({
  * and the two would read as the same thing.
  */
 export const problemDetailsSchema = z.object({
-  type: z.string(),
-  title: z.string(),
-  status: z.number(),
+  code: errorCodeSchema,
   detail: z.string(),
+  errors: z.array(errorDetailSchema).optional(),
   instance: z.string(),
   requestId: z.string(),
-  code: errorCodeSchema,
-  errors: z.array(errorDetailSchema).optional(),
+  status: z.number(),
+  title: z.string(),
+  type: z.string(),
 });
+
+/**
+ * The problem document for one status, as the docs show it: `status` fixed
+ * and `code` only the codes sent with it. One named schema per status.
+ */
+export const problemDetailsSchemaFor = (status: ErrorStatus) =>
+  problemDetailsSchema
+    .extend({ code: z.enum(codesFor(status)), status: z.literal(status) })
+    .meta({ ref: problemResponseName(status) });
 
 export type ErrorDetail = z.infer<typeof errorDetailSchema>;
 export type ProblemDetails = z.infer<typeof problemDetailsSchema>;
