@@ -14,15 +14,18 @@ const turboQuery = (...paths: string[]) =>
     data: { affectedPackages: { items: packagesAt(paths) } },
   });
 
-/** `turbo ls --output=json` of the whole workspace. */
+/** `turbo query` of every package in the workspace. */
 const ALL = stringifyJson({
-  packages: {
-    items: packagesAt([
-      "apps/api",
-      "apps/back-office",
-      "packages/auth",
-      "packages/database",
-    ]),
+  data: {
+    packages: {
+      items: packagesAt([
+        ".",
+        "apps/api",
+        "apps/back-office",
+        "packages/auth",
+        "packages/database",
+      ]),
+    },
   },
 });
 
