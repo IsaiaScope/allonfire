@@ -31,9 +31,9 @@ const turboQuerySchema = z.object({
   data: z.object({ affectedPackages: z.object({ items: packagesSchema }) }),
 });
 
-/** `turbo ls --output=json` output. */
-const turboLsSchema = z.object({
-  packages: z.object({ items: packagesSchema }),
+/** `turbo query` output of every package (`PACKAGES_QUERY` in print-affected). */
+const turboPackagesSchema = z.object({
+  data: z.object({ packages: z.object({ items: packagesSchema }) }),
 });
 
 /** The Apps and Deploy units of these packages, the migration first. */
@@ -47,10 +47,10 @@ const unitsOf = (packages: z.infer<typeof packagesSchema>): Affected => {
   return { apps, deploy: [...migrate, ...apps] };
 };
 
-/** Every App and every Deploy unit, from `turbo ls` of the whole workspace. */
-export const everything = (turboLsJson: string): Affected => {
+/** Every App and every Deploy unit, from `turbo query` of every package. */
+export const everything = (turboPackagesJson: string): Affected => {
   const { apps } = unitsOf(
-    parseJsonWith(turboLsJson, turboLsSchema).packages.items
+    parseJsonWith(turboPackagesJson, turboPackagesSchema).data.packages.items
   );
   return { apps, deploy: [DB_MIGRATE, ...apps] };
 };
@@ -58,16 +58,16 @@ export const everything = (turboLsJson: string): Affected => {
 /**
  * Turbo's affected packages, read as the Apps to test end to end and the
  * Deploy units to ship, the migration first, as the compose file runs it
- * before the Apps. A changed image file reaches every unit (`turboLsJson`
+ * before the Apps. A changed image file reaches every unit (`turboPackagesJson`
  * lists them all).
  */
 export const affectedFrom = (
   turboQueryJson: string,
-  turboLsJson: string,
+  turboPackagesJson: string,
   changedFiles: readonly string[]
 ): Affected =>
   changedFiles.some((file) => IMAGE_FILES.some((pattern) => pattern.test(file)))
-    ? everything(turboLsJson)
+    ? everything(turboPackagesJson)
     : unitsOf(
         parseJsonWith(turboQueryJson, turboQuerySchema).data.affectedPackages
           .items

@@ -278,12 +278,14 @@ This task takes over Plan A Task 3a.
 
 ### Task 11: Leftovers and old records go
 
-- [ ] **Step 1: Ask the owner for one yes over the full list:** every item ticked in Task 3, plus the records `minio`, `multica` and `n8n`, plus the volume `allonfire-minio-data`. The volume goes only if `storage-move` left `.storage-moved` and the `image` bucket lists its objects.
-- [ ] **Step 2: Remove each one:**
+- Done 2026-10-30 (owner's yes): Cloudflare records `minio`, `multica`, `n8n` deleted (`laura` kept by the owner). `storage-move` and the external `old_storage_data` volume left the compose first (v0.6.5), since an external volume that is gone fails the deploy; then `allonfire-minio-data` (Laura's original photos) was deleted. Dokploy removed the orphaned `storage-move` container on deploy. Storage holds `image` and `telemetry`; api 200, back-office 307, cdn `/` 404, storage 401, observe 308. DNS comments no longer name the gate (`Basic Auth`).
+
+- [x] **Step 1: Ask the owner for one yes over the full list:** every item ticked in Task 3, plus the records `minio`, `multica` and `n8n`, plus the volume `allonfire-minio-data`. The volume goes only if `storage-move` left `.storage-moved` and the `image` bucket lists its objects.
+- [x] **Step 2: Remove each one:**
   - records through Cloudflare, guided or through `/iso-browser`;
   - volumes and containers over SSH;
   - Dokploy apps through Dokploy.
-- [ ] **Step 3: Verify.** Re-run Task 3's listing. Expected: none of the removed items remain, and every `AllOnFire needs it` item is still healthy.
+- [x] **Step 3: Verify.** Re-run Task 3's listing. Expected: none of the removed items remain, and every `AllOnFire needs it` item is still healthy.
 
 ### Task 12: Behind Cloudflare's proxy, all together
 

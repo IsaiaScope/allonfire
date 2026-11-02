@@ -21,7 +21,10 @@ const resolves = (ref: string) => {
   }
 };
 
-const all = run("pnpm", ["-s", "turbo", "ls", "--output=json"]);
+// A raw query, not `turbo ls --output=json`: that flag is experimental.
+const PACKAGES_QUERY = "query { packages { items { name path } } }";
+
+const all = run("pnpm", ["-s", "turbo", "query", PACKAGES_QUERY]);
 const { apps, deploy } =
   base && resolves(base)
     ? affectedFrom(
