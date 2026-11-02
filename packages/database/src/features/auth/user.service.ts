@@ -6,6 +6,7 @@ import {
   type AccessUser,
   accessUserFrom,
 } from "./access/access";
+import { userVersion } from "./user-version";
 
 /** A User's stored picture: its file's name, and the blur shown while it loads. */
 export type UserPicture = { image: string; imageBlurDataUrl: string };
@@ -22,6 +23,8 @@ export type UserRecord = {
   imageBlurDataUrl: string | null;
   createdAt: Date;
   memberships: AccessMembership[];
+  /** Their Version (`userVersion`): an edit must carry it to be written. */
+  version: string;
 };
 
 /**
@@ -46,7 +49,17 @@ const userRecord = {
   imageBlurDataUrl: true,
   memberships: { orderBy: { app: "asc" }, select: { app: true, role: true } },
   name: true,
+  updatedAt: true,
 } as const satisfies Prisma.UserSelect;
+
+/** A User as read, their `updatedAt` turned into their Version. */
+const toRecord = ({
+  updatedAt,
+  ...user
+}: Prisma.UserGetPayload<{ select: typeof userRecord }>): UserRecord => ({
+  ...user,
+  version: userVersion({ memberships: user.memberships, updatedAt }),
+});
 
 /**
  * The Users matching `query`, newest first, and how many match in all. The id
@@ -88,7 +101,7 @@ export const listUsers = async ({
       where,
     }),
   ]);
-  return { total, users };
+  return { total, users: users.map(toRecord) };
 };
 
 /**
@@ -152,8 +165,13 @@ export const accessUserById = async (
 };
 
 /** One User as the list shows them; null for an unknown id. */
-export const readUser = (id: string): Promise<UserRecord | null> =>
-  prisma.user.findUnique({ select: userRecord, where: { id } });
+export const readUser = async (id: string): Promise<UserRecord | null> => {
+  const user = await prisma.user.findUnique({
+    select: userRecord,
+    where: { id },
+  });
+  return user && toRecord(user);
+};
 
 /**
  * What an edit changes; a field left out stays as it is. `memberships` is
@@ -166,12 +184,20 @@ export type UserChange = {
   hashedPassword?: string;
 };
 
+/** `updateUser` wrote nothing: the User changed since the edit's Version. */
+export class UserChangedError extends Error {
+  override name = "UserChangedError";
+}
+
 /** Better Auth's provider id for a password login. */
 const CREDENTIAL = "credential";
 
 /**
  * Edits a User, all or nothing, and answers them as `readUser` does; null
- * for an unknown id, nothing written. A new password goes on their
+ * for an unknown id, nothing written. `expectedVersion` is the Version the
+ * edit was made on: when the User changed since, it throws
+ * `UserChangedError` and nothing is written, so a form never overwrites what it did not show. The
+ * row stays locked from that check to the last write. A new password goes on their
  * `credential` Account, created for a User who signed in only through a
  * provider, and ends every Session of theirs but `keepSessionId` (the
  * caller's own, when they edit themselves): whoever held the old one is out.
@@ -179,15 +205,31 @@ const CREDENTIAL = "credential";
 export const updateUser = (
   id: string,
   { hashedPassword, memberships, name }: UserChange,
-  { keepSessionId }: { keepSessionId?: string | undefined } = {}
+  {
+    expectedVersion,
+    keepSessionId,
+  }: { expectedVersion: string; keepSessionId?: string | undefined }
 ): Promise<UserRecord | null> =>
   prisma.$transaction(async (tx) => {
-    const user = await tx.user.findUnique({
-      select: { id: true },
-      where: { id },
-    });
-    if (!user) {
+    // Locked till the last write: an edit landing at the same time waits,
+    // then reads this one's result as a change it did not see. A Membership
+    // written elsewhere (a join) waits too: its foreign key check locks this
+    // row (`FOR KEY SHARE`), so it lands before the read below or after the
+    // last write, never between them.
+    const [locked] = await tx.$queryRaw<{ updatedAt: Date }[]>`
+      SELECT "updatedAt" FROM auth."User" WHERE "id" = ${id} FOR UPDATE`;
+    if (!locked) {
       return null;
+    }
+    const held = await tx.membership.findMany({
+      select: { app: true, role: true },
+      where: { userId: id },
+    });
+    if (
+      userVersion({ memberships: held, updatedAt: locked.updatedAt }) !==
+      expectedVersion
+    ) {
+      throw new UserChangedError();
     }
     if (name !== undefined) {
       await tx.user.update({ data: { name }, where: { id } });
@@ -224,7 +266,9 @@ export const updateUser = (
         },
       });
     }
-    return tx.user.findUnique({ select: userRecord, where: { id } });
+    return toRecord(
+      await tx.user.findUniqueOrThrow({ select: userRecord, where: { id } })
+    );
   });
 
 /**

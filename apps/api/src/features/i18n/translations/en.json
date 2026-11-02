@@ -3,6 +3,7 @@
   "VALIDATION_FAILED": "{count, plural, one {# field failed validation} other {# fields failed validation}}",
   "UNAUTHORIZED": "Authentication required",
   "FORBIDDEN": "Not allowed",
+  "RESOURCE_CHANGED": "Someone changed this meanwhile. Reload to see the latest and edit again.",
   "CANNOT_DELETE_SELF": "You cannot delete yourself",
   "CANNOT_CHANGE_OWN_ROLE": "You cannot change your own Role here",
   "EMAIL_TAKEN": "An account with this email already exists",

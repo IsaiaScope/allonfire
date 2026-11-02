@@ -1,18 +1,25 @@
+import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { DetailedError } from "hono/client";
+import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
+import { USERS } from "../constants/users";
 import { fetchUser } from "./users-queries";
 
 /**
- * One User as the Session (`sessionCookie`) sees them, read afresh on every request, never
- * kept: the Edit form is seeded from it and saves every Membership it
- * shows, so a copy missing one gained elsewhere (a User joining an App,
- * which no Back Office save sees) would delete it. Null for an unknown id;
- * any other refusal is thrown.
+ * One User as the visitor's Session reads them, kept in their browser only
+ * (`"use cache: private"`) under the list's tag, so a link can
+ * prefetch their page. A kept copy can be minutes old: the edit form sends
+ * the User's `version` and the API refuses a save on an older one, so a
+ * Membership gained elsewhere is never overwritten (ADR 0028). Null for an
+ * unknown id; any other refusal is thrown, never kept.
  */
-export const readUser = async (sessionCookie: string, id: string) => {
+export const readUser = async (id: string) => {
+  "use cache: private";
+  cacheTag(USERS.CACHE.TAG);
+  cacheLife(USERS.CACHE.LIFE);
   try {
-    return await fetchUser(sessionApi(sessionCookie), id);
+    return await fetchUser(sessionApi(await readSessionCookie()), id);
   } catch (error) {
     if (
       error instanceof DetailedError &&

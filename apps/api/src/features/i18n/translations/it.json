@@ -3,6 +3,7 @@
   "VALIDATION_FAILED": "{count, plural, one {# campo non valido} other {# campi non validi}}",
   "UNAUTHORIZED": "Autenticazione richiesta",
   "FORBIDDEN": "Non consentito",
+  "RESOURCE_CHANGED": "Qualcuno l'ha modificato nel frattempo. Ricarica per vedere la versione aggiornata e modificalo di nuovo.",
   "CANNOT_DELETE_SELF": "Non puoi eliminare te stesso",
   "CANNOT_CHANGE_OWN_ROLE": "Non puoi cambiare il tuo Ruolo qui",
   "EMAIL_TAKEN": "Esiste già un account con questa email",

@@ -40,6 +40,7 @@ const ROW: UserRecord = {
   imageBlurDataUrl: BLUR,
   memberships: [],
   name: null,
+  version: "version-1",
 };
 
 type Options = {

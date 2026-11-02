@@ -136,6 +136,8 @@ export const aofPlaywrightConfig = ({
           ...env,
           API_AUTH_URL: `${apiUrl}${apiPath.AUTH}`,
           API_URL: apiUrl,
+          // This build alone exposes Next's testing API, for `instant()`.
+          CONFIG_E2E_TESTING_API: "true",
           NEXT_PUBLIC_API_URL: apiUrl,
           PORT: String(port),
         },

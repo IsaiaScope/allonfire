@@ -63,8 +63,17 @@ export const AOFCreateNextConfig = (
     ...config,
     /** Dev only: every name on this machine's tailnet (the Apps' Tailscale Services) can load the dev server's assets and HMR; no other tailnet can. */
     allowedDevOrigins: [...devOrigins(), ...(config.allowedDevOrigins ?? [])],
-    /** A navigation or Server Action the network fails waits and retries once it is back (`useOffline` reads it), instead of throwing. */
-    experimental: { ...config.experimental, useOffline: true },
+    /**
+     * A navigation or Server Action the network fails waits and retries once it is back (`useOffline` reads it), instead of throwing.
+     * The e2e build alone exposes Next's testing API, so `instant()` can hold a navigation; the image serving traffic never does.
+     */
+    experimental: {
+      ...config.experimental,
+      useOffline: true,
+      ...(env.CONFIG_E2E_TESTING_API && {
+        exposeTestingApiInProductionBuild: true,
+      }),
+    },
     /** Every path gets the security headers, an unindexed App's also `X-Robots-Tag`; the App's rules come after them, so they win. */
     headers: async () => [
       {
@@ -94,6 +103,8 @@ export const AOFCreateNextConfig = (
     ],
     /** The optimized images Next keeps on disk: none on macOS (`diskImageCache`). */
     images: { ...diskImageCache(), ...config.images },
+    /** A `<Link>` prefetches its route's App Shell (static, cached and session content); `prefetch={true}` adds the content behind its address (ADR 0028). */
+    partialPrefetching: true,
     /** Workspace packages that ship TypeScript source, which Next must compile itself. */
     transpilePackages: [
       ...new Set([

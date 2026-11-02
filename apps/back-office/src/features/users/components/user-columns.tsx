@@ -10,6 +10,7 @@ import { AOFButton } from "@allonfire/ui/components/aof-button";
 import { aofColumnHelper } from "@allonfire/ui/components/aof-data-table";
 import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
+import { useAOFIntentPrefetch } from "@allonfire/ui/lib/use-aof-intent-prefetch";
 import { cn } from "@allonfire/ui/lib/utils";
 import { IconBarrierBlockOff, IconChevronRight } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
@@ -122,7 +123,8 @@ const openLink = cva(
  * positioned ancestor), so a click anywhere off a control opens it. On a
  * card it is a chevron; in the table it is the row's last text (`children`,
  * the day they joined), so no column is spent on it, and it says aloud whom
- * it opens before that text.
+ * it opens before that text. It prefetches the User's page, their data
+ * included, only once reached for: hover, focus, or a finger landing.
  */
 export const OpenUser = ({
   children,
@@ -132,9 +134,13 @@ export const OpenUser = ({
 }: Omit<ComponentProps<typeof Link>, "href"> & { user: UserBody }) => {
   const t = useTranslations("Users");
   const name = t("open", { email: user.email });
+  // Intent, not viewport: a page holds up to 100 rows and each prefetch is
+  // a server read (ADR 0028).
+  const intent = useAOFIntentPrefetch();
   return children ? (
     <Link
       {...props}
+      {...intent}
       className={cn(openLink({ shape: "text" }), className)}
       href={userHref(user.id)}
     >
@@ -145,6 +151,7 @@ export const OpenUser = ({
     <Link
       aria-label={name}
       {...props}
+      {...intent}
       className={cn(openLink({ shape: "chevron" }), className)}
       href={userHref(user.id)}
     >

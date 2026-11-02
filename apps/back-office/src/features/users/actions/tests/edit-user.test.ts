@@ -11,6 +11,8 @@ import { editUser } from "../edit-user";
 import { FAKE_API, resetFakeApi } from "./fake-api";
 
 const ID = "user-2";
+/** The Version the form was opened with. */
+const VERSION = "version-1";
 const STRONG = "A-long-password-1";
 
 vi.mock("@/features/api/utils/server-api", async () => ({
@@ -45,16 +47,18 @@ beforeEach(() => {
 
 describe("editUser", () => {
   it("sends no password when both fields are empty", async () => {
-    await editUser(ID, {}, formOf({}));
+    await editUser(ID, VERSION, {}, formOf({}));
     expect(patchBody()).toEqual({
       memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
       name: "Edited",
+      version: VERSION,
     });
   });
 
   it("sends a typed password", async () => {
     await editUser(
       ID,
+      VERSION,
       {},
       formOf({ confirmPassword: STRONG, password: STRONG })
     );
@@ -62,14 +66,14 @@ describe("editUser", () => {
   });
 
   it("sends the locked row's posted Role", async () => {
-    await editUser(ID, {}, formOf({}));
+    await editUser(ID, VERSION, {}, formOf({}));
     expect(patchBody()).toMatchObject({
       memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
     });
   });
 
   it("refuses invalid fields without asking the API, keeping no password", async () => {
-    const state = await editUser(ID, {}, formOf({ name: " " }));
+    const state = await editUser(ID, VERSION, {}, formOf({ name: " " }));
     expect(state.error).toBe(USERS.EDIT_ERROR.INVALID);
     expect(state.values?.name).toBe(" ");
     expect(FAKE_API.sent).toEqual([]);
@@ -90,6 +94,12 @@ describe("editUser", () => {
       USERS.EDIT_ERROR.REFUSED,
     ],
     [HTTP.STATUS.NOT_FOUND, API.ERROR.CODE.NOT_FOUND, USERS.EDIT_ERROR.GONE],
+    // Changed by someone else since the form was opened.
+    [
+      HTTP.STATUS.CONFLICT,
+      API.ERROR.CODE.RESOURCE_CHANGED,
+      USERS.EDIT_ERROR.CHANGED,
+    ],
     [
       HTTP.STATUS.INTERNAL_SERVER_ERROR,
       API.ERROR.CODE.INTERNAL_ERROR,
@@ -97,15 +107,18 @@ describe("editUser", () => {
     ],
   ])("maps %i %s to %s, keeping the values", async (status, code, error) => {
     FAKE_API.answers.set(HTTP.METHOD.PATCH, { code, status });
-    const state = await editUser(ID, {}, formOf({}));
+    const state = await editUser(ID, VERSION, {}, formOf({}));
     expect(state.error).toBe(error);
     expect(state.values?.name).toBe("Edited");
     expect(updateTag).not.toHaveBeenCalled();
   });
+});
 
+describe("editUser, once saved", () => {
   it("on 200 removes the Avatar when posted removed, and answers SAVED after updateTag", async () => {
     const state = await editUser(
       ID,
+      VERSION,
       {},
       formOf({ [REMOVAL.name]: REMOVAL.value })
     );
@@ -123,6 +136,7 @@ describe("editUser", () => {
     FAKE_API.unreachable.add(HTTP.METHOD.PUT);
     const state = await editUser(
       ID,
+      VERSION,
       {},
       formOf({
         [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
@@ -138,6 +152,7 @@ describe("editUser", () => {
     });
     const state = await editUser(
       ID,
+      VERSION,
       {},
       formOf({
         [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
@@ -158,6 +173,7 @@ describe("editUser", () => {
     });
     const state = await editUser(
       ID,
+      VERSION,
       {},
       formOf({ [REMOVAL.name]: REMOVAL.value })
     );

@@ -46,6 +46,7 @@
   "devDependencies": {
     "@allonfire/config": "workspace:*",
     "@lingual/i18n-check": "^0.9.5",
+    "@next/playwright": "~16.3.6",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.19.2",

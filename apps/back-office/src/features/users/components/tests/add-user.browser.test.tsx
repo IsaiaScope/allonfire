@@ -19,10 +19,8 @@ import { AddUser } from "../add-user";
 
 vi.mock("../../actions/add-user", () => ({ addUser: vi.fn() }));
 const replace = vi.fn();
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   useRouter: () => ({ replace }),
 }));
 vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({

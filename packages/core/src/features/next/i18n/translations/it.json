@@ -12,7 +12,8 @@
       "reference": "Riferimento {digest}"
     },
     "Request": {
-      "failed": "Qualcosa è andato storto."
+      "failed": "Qualcosa è andato storto.",
+      "changed": "Qualcuno l'ha modificato nel frattempo. Ricarica per vedere la versione aggiornata e modificalo di nuovo."
     },
     "Toast": {
       "close": "Chiudi notifica",

@@ -4,8 +4,12 @@ import {
 } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { resourceChanged } from "@allonfire/core/features/version/utils/resource-changed";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
-import { EmailTakenError } from "@allonfire/database/features/auth/user.service";
+import {
+  EmailTakenError,
+  UserChangedError,
+} from "@allonfire/database/features/auth/user.service";
 import { hashPassword } from "better-auth/crypto";
 import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
@@ -238,7 +242,7 @@ export const updateHandlers = (deps: UserDeps) =>
     validator("json", userUpdateRequestSchema, invalidHook),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { memberships, name, password } = c.req.valid("json");
+      const { memberships, name, password, version } = c.req.valid("json");
       const session = c.get(AUTH.VAR.SESSION);
       const self = id === session.user.id;
       if (self && memberships) {
@@ -254,17 +258,25 @@ export const updateHandlers = (deps: UserDeps) =>
           });
         }
       }
-      const user = await deps.updateUser(
-        id,
-        {
-          ...(name !== undefined && { name }),
-          ...(memberships && { memberships }),
-          ...(password !== undefined && {
-            hashedPassword: await hashPassword(password),
-          }),
-        },
-        self ? { keepSessionId: session.session.id } : {}
-      );
+      const user = await deps
+        .updateUser(
+          id,
+          {
+            ...(name !== undefined && { name }),
+            ...(memberships && { memberships }),
+            ...(password !== undefined && {
+              hashedPassword: await hashPassword(password),
+            }),
+          },
+          {
+            expectedVersion: version,
+            ...(self && { keepSessionId: session.session.id }),
+          }
+        )
+        .catch((error: unknown) => {
+          // Changed since the edit's Version: refused, nothing written.
+          throw error instanceof UserChangedError ? resourceChanged() : error;
+        });
       if (!user) {
         throw userNotFound();
       }

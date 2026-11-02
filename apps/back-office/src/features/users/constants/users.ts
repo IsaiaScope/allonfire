@@ -28,9 +28,9 @@ export const USERS = {
    */
   AVATAR_FIELD: "avatar",
   /**
-   * The list's rows, kept on this server per Session and address
-   * (`readUsers`) until a change to Users calls `updateTag(TAG)`, which drops
-   * every kept list and this browser's copy. The rows hold Avatar links
+   * The list's rows (`usersHydration`) and one User (`readUser`), kept in
+   * the visitor's browser per address (ADR 0028) until a change to Users
+   * calls `updateTag(TAG)`, which drops this browser's copies. The rows hold Avatar links
    * signed for an hour, and a cache never outlives them: gone after an hour
    * (`expire`), read again in the background after half of it (`revalidate`),
    * and another Admin's browser reuses its copy for 5 minutes (`stale`,
@@ -61,6 +61,8 @@ export const USERS = {
   DELETE_KANJI: "消",
   /** Why the Edit a User action refused, each with its message over the form. */
   EDIT_ERROR: {
+    /** Someone changed the User since the form was opened (the API's 409). */
+    CHANGED: "changed",
     FAILED: "failed",
     GONE: "gone",
     INVALID: "invalid",

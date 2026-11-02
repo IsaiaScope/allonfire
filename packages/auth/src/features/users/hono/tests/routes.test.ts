@@ -26,6 +26,7 @@ const USER_ROW: UserRecord = {
   imageBlurDataUrl: null,
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
   name: FIXTURE.USER.LAURA.ADMIN.name,
+  version: "version-1",
 };
 
 /** Deps that record each list query and let in whom `allows` says. */

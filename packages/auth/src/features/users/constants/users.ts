@@ -42,7 +42,7 @@ export const USER = {
     READ_SUMMARY: "Read a User",
     UPDATE_200: "The User as edited",
     UPDATE_DESCRIPTION:
-      "Edits a User: their name, their Memberships (the whole set, replacing theirs) and their password, any of them; the email never changes. A new password ends every Session of theirs, but the caller's own when they edit themselves. Nobody changes their own Membership in the App that manages Users: that answers 403 `CANNOT_CHANGE_OWN_ROLE` and changes nothing. An unknown id answers 404. Only a User the Host lets change Users, read from the database at the time of the request.",
+      "Edits a User: their name, their Memberships (the whole set, replacing theirs) and their password, any of them; the email never changes. A new password ends every Session of theirs, but the caller's own when they edit themselves. Nobody changes their own Membership in the App that manages Users: that answers 403 `CANNOT_CHANGE_OWN_ROLE` and changes nothing. An unknown id answers 404. The body carries the `version` the edit was made on (`ListedUser.version`): when the User changed since, it answers 409 `RESOURCE_CHANGED` and changes nothing. Only a User the Host lets change Users, read from the database at the time of the request.",
     UPDATE_SUMMARY: "Edit a User",
   },
   /** Codes the module throws beyond core's standard ones. */

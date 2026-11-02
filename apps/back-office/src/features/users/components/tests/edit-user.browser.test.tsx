@@ -3,11 +3,11 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
@@ -19,10 +19,8 @@ import { EditUser } from "../edit-user";
 
 vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
 const replace = vi.fn();
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   useRouter: () => ({ replace }),
 }));
 vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
@@ -48,6 +46,7 @@ const USER: UserBody = {
     { app: App.LAURA, role: Role.VIEWER },
   ],
   name: NAME,
+  version: "version-1",
 };
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
@@ -63,14 +62,15 @@ const renderForm = (user = USER) =>
     <NextIntlClientProvider
       formats={DATE.FORMATS}
       locale={I18N.DEFAULT_LANGUAGE}
-      messages={EN}
+      messages={{ ...SHARED_TRANSLATIONS.en, ...EN }}
       timeZone={DATE.TIME_ZONE}
     >
       <EditUser manageApp={App.BACK_OFFICE} selfId={SELF_ID} user={user} />
     </NextIntlClientProvider>
   );
 const save = () => page.getByRole("button", { name: t.submit }).click();
-const posted = () => vi.mocked(editUser).mock.calls[0]?.[2];
+// The bound id and Version come first, then the action's state and the form.
+const posted = () => vi.mocked(editUser).mock.calls[0]?.[3];
 
 beforeEach(() => {
   vi.mocked(editUser).mockReset();
@@ -137,6 +137,10 @@ describe("EditUser", () => {
       .toHaveAttribute("aria-disabled", "true");
     await save();
     await expect.poll(() => vi.mocked(editUser).mock.calls.length).toBe(1);
+    expect(vi.mocked(editUser).mock.calls[0]?.slice(0, 2)).toEqual([
+      SELF_ID,
+      USER.version,
+    ]);
     expect(posted()?.get(`roles.${App.BACK_OFFICE}`)).toBe(Role.ADMIN);
   });
 
@@ -171,6 +175,17 @@ describe("EditUser", () => {
     await save();
     await expect.poll(() => replace.mock.calls.length).toBe(1);
     expect(aofToast).toHaveBeenCalledWith(t.avatarFailed, "warning");
+  });
+
+  it("a CHANGED answer shows every App's changed-elsewhere alert and stays", async () => {
+    const changed: EditUserState = { error: USERS.EDIT_ERROR.CHANGED };
+    vi.mocked(editUser).mockResolvedValue(changed);
+    await renderForm();
+    await save();
+    await expect
+      .element(page.getByText(SHARED_TRANSLATIONS.en.Common.Request.changed))
+      .toBeVisible();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("a GONE answer shows the alert and stays", async () => {

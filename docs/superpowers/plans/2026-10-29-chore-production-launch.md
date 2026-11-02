@@ -241,7 +241,7 @@ This task takes over Plan A Task 3a.
   pnpm --filter @allonfire/database exec tsx --env-file=.env.production src/features/seed/cli.ts
   ```
   If the seed CLI seeds Fixtures as well as the Admin, stop and ask: production gets the Admin only.
-- [ ] **Step 6: Verify.**
+- [x] **Step 6: Verify.** (2026-11-02: `/ready` 200, sign-in page shown, Users lists only the seeded Admin.)
   - `curl -s https://api.isaiariva.com/ready` answers 200.
   - `https://back-office.isaiariva.com` shows the sign-in page.
   - The owner signs in as the seeded Admin, and the Users page lists exactly that one User.
@@ -289,16 +289,25 @@ This task takes over Plan A Task 3a.
 
 ### Task 12: Behind Cloudflare's proxy, all together
 
-- [ ] **Step 1: Read the current state.**
+- Done 2026-11-02 (owner's yes per step). Drift from the steps below:
+  - `admin-gate` and `panel-auth` are basic auth, not IP allowlists: nothing to change there.
+  - `sofia-ratelimit` counted the connecting address, so behind the proxy every visitor would share Cloudflare's: it gained `sourceCriterion.ipStrategy.depth: 1`.
+  - Step 3 ran after Step 4, not before: hops 2 against a one-entry `X-Forwarded-For` falls back to Traefik's address, one bucket for everyone. `API_TRUSTED_PROXY_HOPS` was unset (compose default 1), now 2.
+  - SSL/TLS was Full, now Full (strict), set before any record was proxied. Always Use HTTPS stays on: it does not redirect `/.well-known/acme-challenge/` (plain HTTP answers Traefik's challenge 404), so HTTP-01 renewal works and Step 6's throwaway record was skipped.
+  - `acme.json` dropped the certificates of the hosts deleted in Task 11 (`minio`, `multica`, `n8n`, `db`).
+  - Verified: all 14 records on `188.245.174.30` proxied (`mt-ai-squad`, `music` are other servers), every host answers as before, direct IP times out on 80/443, the API's only rate-limit key is the visitor's IP, a manual Deploy reached Dokploy.
+  - Not done, optional: Authenticated Origin Pulls on top of the IP allowlist (Cloudflare rates the allowlist moderately secure, its IPs being shared by every Cloudflare customer).
+
+- [x] **Step 1: Read the current state.**
   - Fetch `https://www.cloudflare.com/ips-v4` and `ips-v6`.
   - Check Traefik's static config for `entryPoints.websecure.forwardedHeaders` and `admin-gate`, from Task 3.
-- [ ] **Step 2: Traefik trusts Cloudflare.**
+- [x] **Step 2: Traefik trusts Cloudflare.**
   - Prepare the config diff: Cloudflare's ranges go into `forwardedHeaders.trustedIPs`.
   - If `admin-gate` is an IP allowlist, it changes to basic auth, or to an allowlist on Cloudflare's real-IP header.
   - Show the diff. With a yes, apply it and restart Traefik once.
   - Verify that `back-office.`, `api.`, `board.`, `workflow.`, `storage.` and `observe.` still answer.
-- [ ] **Step 3: Raise the hops.** `API_TRUSTED_PROXY_HOPS` goes up by one from its current Dokploy value. Redeploy the API with a yes.
-- [ ] **Step 4: Cloudflare,** with one yes. Through `/iso-browser`, or guided:
+- [x] **Step 3: Raise the hops.** `API_TRUSTED_PROXY_HOPS` goes up by one from its current Dokploy value. Redeploy the API with a yes.
+- [x] **Step 4: Cloudflare,** with one yes. Through `/iso-browser`, or guided:
   - set **Proxied** on every record whose content is `188.245.174.30`, all at once;
   - set SSL/TLS mode to **Full (strict)**.
 
@@ -306,27 +315,29 @@ This task takes over Plan A Task 3a.
   - every listed record shows proxied, and none on that IP is DNS only;
   - `dig +short back-office.isaiariva.com` returns Cloudflare addresses;
   - `curl -sI https://<each host>` answers as before.
-- [ ] **Step 5: Hetzner firewall**, with a yes. Use `hcloud firewall` to replace the rules for ports 80 and 443 with one inbound rule per port, whose sources are Cloudflare's ranges from Step 1. Every other rule stays exactly as Task 3 recorded it. Verify:
+- [x] **Step 5: Hetzner firewall**, with a yes. Use `hcloud firewall` to replace the rules for ports 80 and 443 with one inbound rule per port, whose sources are Cloudflare's ranges from Step 1. Every other rule stays exactly as Task 3 recorded it. Verify:
   - `hcloud firewall describe` shows the change;
   - `curl -sI --resolve back-office.isaiariva.com:443:188.245.174.30 https://back-office.isaiariva.com` from the Mac times out;
   - the same `curl` through Cloudflare answers.
-- [ ] **Step 6: Certificate renewal.**
+- [x] **Step 6: Certificate renewal.**
   - Trigger Traefik's ACME check, for example by adding a throwaway router for `renew-check.isaiariva.com` (a proxied record, created and removed with a yes), and read Traefik's log for the HTTP-01 result.
   - If it fails, ask the owner for a Cloudflare API token scoped to DNS edit on `isaiariva.com`. Store it through the script, switch `letsencrypt` to DNS-01 with the Cloudflare provider, restart with a yes, and re-check.
-- [ ] **Step 7: The visitor's IP survives.** Send requests to an API route with a per-IP limit until it answers 429, then check from another network (the owner's phone on mobile data) that it isn't limited. If the Mac is limited too, the hops are wrong: stop and fix before ending.
-- [ ] **Step 8: The deploy still reaches Dokploy.** Run `gh workflow run deploy.yml`, or re-run the last prod deploy, with a yes. Expected: success, which shows that `DOKPLOY_URL` still answers through the firewall.
+- [x] **Step 7: The visitor's IP survives.** Send requests to an API route with a per-IP limit until it answers 429, then check from another network (the owner's phone on mobile data) that it isn't limited. If the Mac is limited too, the hops are wrong: stop and fix before ending.
+- [x] **Step 8: The deploy still reaches Dokploy.** Run `gh workflow run deploy.yml`, or re-run the last prod deploy, with a yes. Expected: success, which shows that `DOKPLOY_URL` still answers through the firewall.
 
 ### Task 13: Close the loop
 
+- Done 2026-11-02. `TODO.md` (git-ignored) had already lost the launch items and its Laura entry; Laura's rebuild went back in with the fresh production setup it needs. `deployment.md` gained the hosts, Cloudflare, the firewall, the trusted IPs and hops, telemetry ingest and rotation. The three memories were done and deleted, with their `MEMORY.md` lines.
+
 **Files:** `TODO.md`, `docs/agents/deployment.md`, the memory files `project_dns_renames_at_launch.md`, `project_vps_db_replace.md` and `project_back_office_public_url.md`.
 
-- [ ] **Step 1:** In `TODO.md`, remove the three "Production launch" items. Keep "Laura rebuild", and add to it that Laura needs a fresh production setup: app, record and bucket.
-- [ ] **Step 2:** Update `deployment.md`:
+- [x] **Step 1:** In `TODO.md`, remove the three "Production launch" items. Keep "Laura rebuild", and add to it that Laura needs a fresh production setup: app, record and bucket.
+- [x] **Step 2:** Update `deployment.md`:
   - production's hostnames;
   - the proxy, the firewall, Traefik's trusted IPs;
   - telemetry;
   - how to rotate a value through `.env.production`.
-- [ ] **Step 3:** Rewrite the three memory files as done, with the date, or delete the ones that no longer hold, and update `MEMORY.md`'s lines.
+- [x] **Step 3:** Rewrite the three memory files as done, with the date, or delete the ones that no longer hold, and update `MEMORY.md`'s lines.
 
 ## Watch out (owner's steps)
 

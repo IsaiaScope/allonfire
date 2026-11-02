@@ -18,39 +18,21 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import {
-  SECTION,
-  sectionHref,
-} from "../src/features/navigation/constants/sections";
 import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
-import { openSidebar, SIGN_IN_URL, signIn } from "./pages";
+import {
+  emailOf,
+  openSidebar,
+  rowOf,
+  SIGN_IN_URL,
+  signIn,
+  signInAsAdmin,
+  USERS,
+  usersSearchHref,
+} from "./pages";
 
 const t = EN.Users;
-const USERS = sectionHref(SECTION.USERS.path);
-
-/** Signs in as the Back Office Admin and waits for the frame. */
-const signInAsAdmin = async (page: Page) => {
-  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
-  await expect(
-    page.getByRole("button", { name: EN.Navigation.toggleMenu })
-  ).toBeVisible();
-};
-
-/** A User's email as drawn on screen: a table row, or a card on a phone. */
-const emailOf = (page: Page, email: string) =>
-  page
-    .getByRole("button", { name: t.copy.label.replace("{email}", email) })
-    .filter({ visible: true });
-
-/** The row, or the card on a phone, that holds a User. */
-const rowOf = (page: Page, email: string) =>
-  page
-    .getByRole("row")
-    .or(page.getByRole("listitem"))
-    .filter({ has: emailOf(page, email) });
-
 test("sends the first page with the HTML, already filled", async ({ page }) => {
   await signInAsAdmin(page);
   const html = await (await page.request.get(USERS)).text();
@@ -286,9 +268,12 @@ test("deletes a User it added: confirmed, they leave the list", async ({
   await expect(emailOf(page, user.email)).toHaveCount(0);
 });
 
-/** A User's own page, as their row links it. */
+/**
+ * A User's own page, as their row links it: searched by email, since the
+ * Users other tests add can push them off the first page.
+ */
 const userPathOf = async (page: Page, email: string) => {
-  await page.goto(USERS);
+  await page.goto(usersSearchHref(email));
   return (
     (await rowOf(page, email).getByRole("link").getAttribute("href")) ?? ""
   );
@@ -414,6 +399,14 @@ test("renames a User and changes their Laura Role; the list shows both", async (
   const row = rowOf(page, user.email).first();
   await expect(row).toContainText("Renamed");
   await expect(row).toContainText(EN.Navigation.role[Role.VIEWER]);
+  // Reopened, the saved User is read again, not the copy kept before the
+  // save: their new Version lets a second save through.
+  await row.getByRole("link").click();
+  const name = form.getByLabel(t.add.name, { exact: true });
+  await expect(name).toHaveValue("Renamed");
+  await name.fill("Renamed again");
+  await saveEdit(page, user.email);
+  await expect(rowOf(page, user.email).first()).toContainText("Renamed again");
 });
 
 test("a new password lets the User sign in with it", async ({
@@ -472,11 +465,7 @@ test("an unknown id shows the 404 inside the frame", async ({ page }) => {
 
 /** The list searched for one email, so no page hides them. */
 const searchFor = (page: Page, email: string) =>
-  page.goto(
-    `${USERS}?${new URLSearchParams({
-      [USER.PARAM.SEARCH]: USER_SEARCH.serialize({ text: email }),
-    })}`
-  );
+  page.goto(usersSearchHref(email));
 
 /** Adds a User through the form, as a Back Office Admin, and waits for the list. */
 const addedUser = async (page: Page, project: string) => {

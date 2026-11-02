@@ -11,6 +11,7 @@ import {
   userCreatedBodySchema,
   userDeleteBodySchema,
   userListBodySchema,
+  type userUpdateRequestSchema,
 } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
@@ -424,9 +425,22 @@ describe("a User's Avatar", () => {
 const EDITED = "edit-users-api.test";
 const NEW_PASSWORD = "Another-long-password-2";
 const onePath = (id: string) => `${LIST}${USER.PATH.ONE.replace(":id", id)}`;
-const edit = <T>(id: string, body: T & Json<T>, cookie: string) =>
+/** The User's Version now, as an edit form opened now would carry it. */
+const currentVersion = async (id: string, cookie: string) =>
+  userBodySchema.parse(await (await get(onePath(id), cookie)).json()).version;
+/** An edit as the Back Office sends it: on the Version read just before. */
+type EditBody = Omit<z.input<typeof userUpdateRequestSchema>, "version">;
+const edit = async (
+  id: string,
+  body: EditBody,
+  cookie: string,
+  version?: string
+) =>
   app.request(onePath(id), {
-    body: stringifyJson(body),
+    body: stringifyJson({
+      ...body,
+      version: version ?? (await currentVersion(id, cookie)),
+    }),
     headers: {
       [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
       cookie,
@@ -490,6 +504,23 @@ describe("editing Users", () => {
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.CANNOT_CHANGE_OWN_ROLE);
     expect(problem.detail).toBe("You cannot change your own Role here");
+  });
+
+  it("answers 409 RESOURCE_CHANGED when the User changed since it was read", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await editable("changed-meanwhile");
+    const opened = await currentVersion(id, cookie);
+    // Another Admin's edit lands first.
+    expect((await edit(id, { name: "First" }, cookie)).status).toBe(
+      HTTP.STATUS.OK
+    );
+    const res = await edit(id, { name: "Late" }, cookie, opened);
+    expect(res.status).toBe(HTTP.STATUS.CONFLICT);
+    const problem = await problemOf(res);
+    expect(problem.code).toBe(API.ERROR.CODE.RESOURCE_CHANGED);
+    expect(
+      userBodySchema.parse(await (await get(onePath(id), cookie)).json()).name
+    ).toBe("First");
   });
 
   it("answers 404 for an unknown id", async () => {

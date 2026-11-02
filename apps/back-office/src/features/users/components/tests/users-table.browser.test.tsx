@@ -21,7 +21,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { delay, HttpResponse, http } from "msw";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
-import type { ReactNode } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
@@ -63,10 +62,8 @@ const SLOW_MS = 400;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
 
 /** Every query the list sent, as its search params. */

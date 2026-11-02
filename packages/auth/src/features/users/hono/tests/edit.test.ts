@@ -1,14 +1,17 @@
 // @module-tag unit
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, Role } from "@allonfire/database/enums";
-import type {
-  UserChange,
-  UserRecord,
+import {
+  type UserChange,
+  UserChangedError,
+  type UserRecord,
 } from "@allonfire/database/features/auth/user.service";
+import type { z } from "zod";
 import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
+import type { userUpdateRequestSchema } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
 import { stubUserDeps } from "./stub-user-deps";
 import { testHost } from "./test-host";
@@ -19,6 +22,8 @@ const ADMIN_HERE = { app: App.BACK_OFFICE, role: Role.ADMIN };
 const ADMIN = sessionFor({ id: SELF_ID, memberships: [ADMIN_HERE] });
 const PASSWORD = "A-long-password-1";
 const STORED = "avatar-user-2.avif";
+/** The Version every stored row answers, and so every edit form carries. */
+const VERSION = "version-1";
 
 const rowFor = (id: string, memberships = [ADMIN_HERE]): UserRecord => ({
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
@@ -28,20 +33,26 @@ const rowFor = (id: string, memberships = [ADMIN_HERE]): UserRecord => ({
   imageBlurDataUrl: null,
   memberships,
   name: "Edited",
+  version: VERSION,
 });
 
 type Update = {
   id: string;
   change: UserChange;
-  options?: { keepSessionId?: string | undefined } | undefined;
+  options?:
+    | { expectedVersion: string; keepSessionId?: string | undefined }
+    | undefined;
 };
 
 /** Deps recording every update the module asks for. */
 const depsWith = ({
   allows = true,
+  changed = false,
   exists = true,
 }: {
   allows?: boolean;
+  /** The stored User changed since the Version the edit carries. */
+  changed?: boolean;
   exists?: boolean;
 } = {}) => {
   const updates: Update[] = [];
@@ -52,6 +63,9 @@ const depsWith = ({
     readUser: (id) => Promise.resolve(exists ? rowFor(id) : null),
     updateUser: (id, change, options) => {
       updates.push({ change, id, options });
+      if (changed) {
+        return Promise.reject(new UserChangedError());
+      }
       return Promise.resolve(exists ? rowFor(id) : null);
     },
   });
@@ -64,13 +78,18 @@ const pathOf = (id: string) =>
 const get = (host: ReturnType<typeof testHost>, id = OTHER_ID) =>
   host.request(pathOf(id));
 
-const patch = <T>(
+/** An edit's body; `version` defaults to the stored row's, as a form opened now sends it. */
+type PatchBody = Partial<
+  Omit<z.input<typeof userUpdateRequestSchema>, "version">
+> & { version?: string | undefined };
+
+const patch = (
   host: ReturnType<typeof testHost>,
-  body: T & Json<T>,
+  body: PatchBody,
   id = OTHER_ID
 ) =>
   host.request(pathOf(id), {
-    body: stringifyJson(body),
+    body: stringifyJson({ version: VERSION, ...body }),
     headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
     method: HTTP.METHOD.PATCH,
   });
@@ -146,7 +165,9 @@ describe("User module: PATCH", () => {
 
   it("answers the User as edited", async () => {
     const { deps, updates } = depsWith();
-    const res = await patch(testHost(ADMIN, deps), { name: " Renamed " });
+    const res = await patch(testHost(ADMIN, deps), {
+      name: " Renamed ",
+    });
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await res.json()).toMatchObject({ id: OTHER_ID });
     expect(updates[0]?.change).toEqual({ name: "Renamed" });
@@ -182,16 +203,44 @@ describe("User module: PATCH", () => {
     const { deps, updates } = depsWith();
     const res = await patch(
       testHost(ADMIN, deps),
-      { memberships: [ADMIN_HERE, { app: App.LAURA, role: Role.VIEWER }] },
+      {
+        memberships: [ADMIN_HERE, { app: App.LAURA, role: Role.VIEWER }],
+      },
       SELF_ID
     );
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(updates).toHaveLength(1);
   });
 
+  it("answers 409 RESOURCE_CHANGED when the stored User changed since the version", async () => {
+    const res = await patch(testHost(ADMIN, depsWith({ changed: true }).deps), {
+      name: "Late",
+    });
+    expect(res.status).toBe(HTTP.STATUS.CONFLICT);
+    expect(await res.json()).toEqual({ code: ERROR.CODE.RESOURCE_CHANGED });
+  });
+
+  it("refuses a PATCH without a version", async () => {
+    const { deps, updates } = depsWith();
+    const res = await patch(testHost(ADMIN, deps), {
+      name: "No version",
+      version: undefined,
+    });
+    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
+    expect(updates).toEqual([]);
+  });
+
+  it("passes the version through to updateUser", async () => {
+    const { deps, updates } = depsWith();
+    await patch(testHost(ADMIN, deps), { name: "Renamed" });
+    expect(updates[0]?.options?.expectedVersion).toBe(VERSION);
+  });
+
   it("lets you change another User's Role in manageApp", async () => {
     const { deps } = depsWith();
-    const res = await patch(testHost(ADMIN, deps), { memberships: [] });
+    const res = await patch(testHost(ADMIN, deps), {
+      memberships: [],
+    });
     expect(res.status).toBe(HTTP.STATUS.OK);
   });
 });

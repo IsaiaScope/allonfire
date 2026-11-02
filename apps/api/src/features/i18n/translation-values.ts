@@ -7,6 +7,7 @@ export type TranslationValues = {
   VALIDATION_FAILED: { count: number };
   UNAUTHORIZED: never;
   FORBIDDEN: never;
+  RESOURCE_CHANGED: never;
   CANNOT_DELETE_SELF: never;
   CANNOT_CHANGE_OWN_ROLE: never;
   EMAIL_TAKEN: never;

@@ -3,7 +3,6 @@
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import type { ReactNode } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -17,10 +16,8 @@ const t = EN.Navigation;
 /** The address the mocked router reports; a test moves it to navigate. */
 const at = { pathname: sectionHref(SECTION.USERS.path) };
 
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   usePathname: () => at.pathname,
 }));
 

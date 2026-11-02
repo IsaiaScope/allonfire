@@ -206,6 +206,13 @@ _Avoid_: permission level, rank
 A Role in an App that allows browsing and playing but no mutations.
 _Avoid_: guest, demo user, read-only user
 
+**Version**:
+What a saved thing looked like when it was read, as a short hash the API
+hands out with it (a User's: their row's last change and every Role they
+hold). A save carries the Version it was made on, and the API refuses it
+when the thing changed since, so nobody overwrites what they never saw.
+_Avoid_: revision, ETag, timestamp
+
 **App schema**:
 The Postgres schema holding one App's tables, named after the App (`laura`).
 `auth` is the one schema no App owns: it holds the user base every App shares.

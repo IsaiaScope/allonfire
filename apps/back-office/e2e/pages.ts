@@ -1,3 +1,7 @@
+import {
+  USER,
+  USER_SEARCH,
+} from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
@@ -8,6 +12,10 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
+import {
+  SECTION,
+  sectionHref,
+} from "../src/features/navigation/constants/sections";
 
 /** Any locale's Sign in page. */
 export const SIGN_IN_URL = new RegExp(`${AUTH.PAGE.SIGN_IN}$`);
@@ -62,3 +70,38 @@ export const signIn = async (
   await page.getByLabel(t.SignIn.password, { exact: true }).fill(password);
   await page.getByRole("button", { name: t.SignIn.submit }).click();
 };
+
+/** The Users list. */
+export const USERS = sectionHref(SECTION.USERS.path);
+
+/**
+ * The Users list searched for one email: the Users other tests add can push
+ * anyone off the first page.
+ */
+export const usersSearchHref = (email: string) =>
+  `${USERS}?${new URLSearchParams({
+    [USER.PARAM.SEARCH]: USER_SEARCH.serialize({ text: email }),
+  })}`;
+
+/** Signs in as the Back Office Admin and waits for the frame. */
+export const signInAsAdmin = async (page: Page) => {
+  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
+  await expect(
+    page.getByRole("button", { name: EN.Navigation.toggleMenu })
+  ).toBeVisible();
+};
+
+/** A User's email as drawn on screen: a table row, or a card on a phone. */
+export const emailOf = (page: Page, email: string) =>
+  page
+    .getByRole("button", {
+      name: EN.Users.copy.label.replace("{email}", email),
+    })
+    .filter({ visible: true });
+
+/** The row, or the card on a phone, that holds a User. */
+export const rowOf = (page: Page, email: string) =>
+  page
+    .getByRole("row")
+    .or(page.getByRole("listitem"))
+    .filter({ has: emailOf(page, email) });

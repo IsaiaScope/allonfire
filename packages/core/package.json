@@ -6,6 +6,9 @@
   "exports": {
     "./environment/environment": "./src/environment/environment.ts",
     "./features/ci/affected": "./src/features/ci/affected.ts",
+    "./features/version/constants/version": "./src/features/version/constants/version.ts",
+    "./features/version/utils/resource-changed": "./src/features/version/utils/resource-changed.ts",
+    "./features/version/utils/version-of": "./src/features/version/utils/version-of.ts",
     "./features/search/constants/search": "./src/features/search/constants/search.ts",
     "./features/search/search-query": "./src/features/search/search-query.ts",
     "./shared/constants/screens": "./src/shared/constants/screens.ts",

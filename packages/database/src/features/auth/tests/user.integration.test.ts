@@ -12,6 +12,7 @@ import {
   readUser,
   sessionAlive,
   setUserImage,
+  UserChangedError,
   type UserListQuery,
   updateUser,
   userImages,
@@ -429,42 +430,50 @@ describe("a User's picture", () => {
 const EDITED = "edit-users.test";
 const NEW_HASH = "new-hash";
 
-describe("readUser and updateUser", () => {
-  let count = 0;
-  /** A User with a password, a Laura Membership and two Sessions. */
-  const edited = async () => {
-    count += 1;
-    const { id } = await createUser(
-      {
-        email: `edited-${count}@${EDITED}`,
-        memberships: [{ app: App.LAURA, role: Role.USER }],
-        name: "Edited",
-      },
-      HASH
-    );
-    const sessions = await Promise.all(
-      ["a", "b"].map((tag) =>
-        prisma.session.create({
-          data: {
-            expiresAt: new Date(Date.now() + 60_000),
-            token: `edit-${count}-${tag}`,
-            userId: id,
-          },
-          select: { id: true },
-        })
-      )
-    );
-    return { id, sessions: sessions.map((session) => session.id) };
-  };
-  const passwordOf = async (userId: string) =>
-    (
-      await prisma.account.findFirst({
-        where: { providerId: "credential", userId },
+let count = 0;
+/** A User with a password, a Laura Membership and two Sessions. */
+const edited = async () => {
+  count += 1;
+  const { id } = await createUser(
+    {
+      email: `edited-${count}@${EDITED}`,
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+      name: "Edited",
+    },
+    HASH
+  );
+  const sessions = await Promise.all(
+    ["a", "b"].map((tag) =>
+      prisma.session.create({
+        data: {
+          expiresAt: new Date(Date.now() + 60_000),
+          token: `edit-${count}-${tag}`,
+          userId: id,
+        },
+        select: { id: true },
       })
-    )?.password;
-  const sessionsOf = (userId: string) =>
-    prisma.session.findMany({ select: { id: true }, where: { userId } });
+    )
+  );
+  return { id, sessions: sessions.map((session) => session.id) };
+};
+const passwordOf = async (userId: string) =>
+  (
+    await prisma.account.findFirst({
+      where: { providerId: "credential", userId },
+    })
+  )?.password;
+const sessionsOf = (userId: string) =>
+  prisma.session.findMany({ select: { id: true }, where: { userId } });
+/** The Version an edit form opened now would carry. */
+const current = async (id: string) => (await readUser(id))?.version ?? "";
+/** An edit made on the User as they are now, as a form opened now makes it. */
+const updateNow = async (
+  id: string,
+  change: Parameters<typeof updateUser>[1],
+  options: { keepSessionId?: string | undefined } = {}
+) => updateUser(id, change, { ...options, expectedVersion: await current(id) });
 
+describe("readUser and updateUser", () => {
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
   });
@@ -484,16 +493,18 @@ describe("readUser and updateUser", () => {
 
   it("renames, leaving the rest", async () => {
     const { id } = await edited();
-    const after = await updateUser(id, { name: "Renamed" });
-    expect(after?.name).toBe("Renamed");
-    expect(after?.memberships).toEqual([{ app: App.LAURA, role: Role.USER }]);
+    const after = await updateNow(id, { name: "Renamed" });
+    expect(after).toMatchObject({
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+      name: "Renamed",
+    });
     expect(await passwordOf(id)).toBe(HASH);
     expect(await sessionsOf(id)).toHaveLength(2);
   });
 
   it("replaces the Memberships with the set given", async () => {
     const { id } = await edited();
-    await updateUser(id, {
+    await updateNow(id, {
       memberships: [{ app: App.BACK_OFFICE, role: Role.VIEWER }],
     });
     expect((await readUser(id))?.memberships).toEqual([
@@ -503,14 +514,14 @@ describe("readUser and updateUser", () => {
 
   it("sets the password on the credential Account and ends every Session", async () => {
     const { id } = await edited();
-    await updateUser(id, { hashedPassword: NEW_HASH });
+    await updateNow(id, { hashedPassword: NEW_HASH });
     expect(await passwordOf(id)).toBe(NEW_HASH);
     expect(await sessionsOf(id)).toHaveLength(0);
   });
 
   it("keeps the Session named in keepSessionId", async () => {
     const { id, sessions } = await edited();
-    await updateUser(
+    await updateNow(
       id,
       { hashedPassword: NEW_HASH },
       { keepSessionId: sessions[0] }
@@ -526,7 +537,7 @@ describe("readUser and updateUser", () => {
       },
       select: { id: true },
     });
-    await updateUser(id, { hashedPassword: NEW_HASH });
+    await updateNow(id, { hashedPassword: NEW_HASH });
     const credentials = await prisma.account.findMany({
       where: { providerId: "credential", userId: id },
     });
@@ -537,13 +548,54 @@ describe("readUser and updateUser", () => {
 
   it("leaves Sessions alone without a password", async () => {
     const { id } = await edited();
-    await updateUser(id, { memberships: [] });
+    await updateNow(id, { memberships: [] });
     expect(await sessionsOf(id)).toHaveLength(2);
   });
 
   it("answers null and writes nothing for an unknown id", async () => {
-    expect(await updateUser(MISSING_ID, { name: "Nobody" })).toBeNull();
+    expect(
+      await updateUser(
+        MISSING_ID,
+        { name: "Nobody" },
+        { expectedVersion: "any" }
+      )
+    ).toBeNull();
     expect(await prisma.user.count({ where: { id: MISSING_ID } })).toBe(0);
+  });
+});
+
+describe("updateUser on a Version", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
+  });
+
+  it("refuses a stale version and writes nothing", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    // Removed elsewhere after the form was opened: no row, no timestamp.
+    await prisma.membership.deleteMany({ where: { userId: id } });
+    await expect(
+      updateUser(
+        id,
+        { memberships: [{ app: App.LAURA, role: Role.USER }], name: "Late" },
+        { expectedVersion: opened }
+      )
+    ).rejects.toBeInstanceOf(UserChangedError);
+    const after = await readUser(id);
+    expect(after?.name).toBe("Edited");
+    expect(after?.memberships).toEqual([]);
+  });
+
+  it("writes with the current version and answers a new one", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    const after = await updateUser(
+      id,
+      { name: "Renamed" },
+      { expectedVersion: opened }
+    );
+    expect(after).toMatchObject({ name: "Renamed" });
+    expect(after?.version).not.toBe(opened);
   });
 });
 

@@ -26,10 +26,8 @@ const MIN_ROWS = 8;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
 // Vite hands ui's next/image over as a module object, not a component.
 vi.mock("@allonfire/ui/components/aof-image", () => ({

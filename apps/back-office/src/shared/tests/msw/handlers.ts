@@ -29,6 +29,7 @@ export const USERS_PAGE = {
       imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.LAURA.ADMIN.memberships],
       name: FIXTURE.USER.LAURA.ADMIN.name,
+      version: "version-laura",
     },
     {
       createdAt: "2026-10-01T10:00:00.000Z",
@@ -38,6 +39,7 @@ export const USERS_PAGE = {
       imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.NO_MEMBERSHIP.memberships],
       name: FIXTURE.USER.NO_MEMBERSHIP.name,
+      version: "version-none",
     },
   ],
 } satisfies InferResponseType<

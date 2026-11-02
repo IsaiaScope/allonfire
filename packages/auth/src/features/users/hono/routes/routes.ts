@@ -133,7 +133,8 @@ export const updateRoute = describeRoute({
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.CONFLICT
     ),
   },
   summary: USER.DOC.UPDATE_SUMMARY,

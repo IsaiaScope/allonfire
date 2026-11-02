@@ -1,15 +1,12 @@
 // @module-tag unit
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { SECTIONS, sectionHref } from "../../constants/sections";
 import { AppFrame } from "../app-frame";
 
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   usePathname: () => "/",
 }));
 

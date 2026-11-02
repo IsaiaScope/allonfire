@@ -57,6 +57,9 @@ const SectionRow = ({
         <Link
           aria-current={current ? "page" : undefined}
           href={sectionHref(path)}
+          // One link per Section, few: each prefetches its page's data too
+          // (ADR 0028).
+          prefetch
         />
       }
       tooltip={label}

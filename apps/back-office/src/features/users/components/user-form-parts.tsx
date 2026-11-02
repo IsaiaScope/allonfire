@@ -138,6 +138,8 @@ export const UserFormActions = ({
           kanjiAction()
         )}
         href={BACK_OFFICE.PAGE.USERS}
+        // Back to the list with its rows already there (ADR 0028).
+        prefetch
       >
         <ActionKanji kanji={USERS.CANCEL_KANJI} />
         <IconArrowBackUp aria-hidden />

@@ -8,7 +8,10 @@ import { AOFCreateNextConfig } from "../aof-create-next-config";
 import { tailnetHosts } from "../tailnet-hosts";
 
 vi.mock("../tailnet-hosts", () => ({ tailnetHosts: vi.fn(() => []) }));
-const runtime = vi.hoisted(() => ({ NODE_ENV: "test" }));
+const runtime = vi.hoisted(() => ({
+  CONFIG_E2E_TESTING_API: false,
+  NODE_ENV: "test",
+}));
 vi.mock("../../../../environment/environment", () => ({ env: runtime }));
 
 const TAILNET_HOST = "*.tailnet.ts.net";
@@ -140,6 +143,25 @@ describe("AOFCreateNextConfig", () => {
 
   it("leaves the disk cache to Next elsewhere", () => {
     expect(onPlatform("linux", () => AOFCreateNextConfig()).images).toEqual({});
+  });
+
+  it("prefetches each route's App Shell, for every App", () => {
+    expect(AOFCreateNextConfig()).toMatchObject({ partialPrefetching: true });
+  });
+
+  // The testing API lets `instant()` hold a navigation; the image that
+  // serves traffic never has it.
+  it("exposes the testing API only for the e2e build", () => {
+    runtime.CONFIG_E2E_TESTING_API = false;
+    expect(
+      AOFCreateNextConfig().experimental?.exposeTestingApiInProductionBuild
+    ).toBeFalsy();
+    runtime.CONFIG_E2E_TESTING_API = true;
+    expect(AOFCreateNextConfig().experimental).toMatchObject({
+      exposeTestingApiInProductionBuild: true,
+      useOffline: true,
+    });
+    runtime.CONFIG_E2E_TESTING_API = false;
   });
 
   it("keeps a failed navigation pending until the network is back", () => {

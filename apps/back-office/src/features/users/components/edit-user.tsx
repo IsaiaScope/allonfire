@@ -101,10 +101,15 @@ export const EditUser = ({
 }) => {
   const t = useTranslations();
   const [{ error, notice, values }, action, pending] = useActionState(
-    editUser.bind(null, user.id),
+    editUser.bind(null, user.id, user.version),
     {}
   );
   useSaved(notice);
+  // A User changed elsewhere says so in every App's words (`Common`).
+  const errorText =
+    error === USERS.EDIT_ERROR.CHANGED
+      ? t("Common.Request.changed")
+      : error && t(`Users.edit.error.${error}`);
   const avatarLabels = useAvatarLabels();
   // The picture is the form's own: the action never hands it back.
   const startValues: EditUserValues = {
@@ -216,9 +221,7 @@ export const EditUser = ({
             locked={user.id === selfId ? manageApp : undefined}
           />
           {/* The end of the form: why the last submit failed, in its kept place. */}
-          <FormAlert className="@2xl:col-span-2 mt-4">
-            {error ? t(`Users.edit.error.${error}`) : null}
-          </FormAlert>
+          <FormAlert className="@2xl:col-span-2 mt-4">{errorText}</FormAlert>
         </div>
         <UserFormActions
           pending={pending}

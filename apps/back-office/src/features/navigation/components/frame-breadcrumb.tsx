@@ -57,7 +57,7 @@ const CurrentBreadcrumb = () => {
           {below ? (
             <AOFBreadcrumbLink
               className="flex items-center gap-1.5"
-              render={<Link href={sectionHref(section.path)} />}
+              render={<Link href={sectionHref(section.path)} prefetch />}
             >
               {crumb}
             </AOFBreadcrumbLink>

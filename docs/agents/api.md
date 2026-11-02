@@ -112,7 +112,9 @@ many, and `middlewares/` reads wrong.
   Nobody deletes themselves: a list holding the caller's id answers 403
   `USER.ERROR_CODE.CANNOT_DELETE_SELF` and deletes nobody. Nobody changes their own Role in
   the Host's `manageApp` (the API: `App.BACK_OFFICE`): 403
-  `USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE`, nothing changed.
+  `USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE`, nothing changed. A `PATCH` carries the `version`
+  the form was opened on: a User changed since answers 409 `ERROR.CODE.RESOURCE_CHANGED`
+  (core's `resourceChanged()`), nothing changed (ADR 0028).
 - **`createApp(deps)` takes its dependencies** (rate-limit store, health
   checkers) so tests never open a socket.
 - **Required env:** `DATABASE_URL`, `API_REDIS_URL`, `API_CORS_ORIGINS`,

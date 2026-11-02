@@ -1,3 +1,4 @@
+import { versionSchema } from "@allonfire/core/features/version/constants/version";
 import {
   appSchema,
   roleSchema,
@@ -48,6 +49,8 @@ export const userBodySchema = z
     memberships: z.array(membershipSchema),
     /** What they are called, when they gave a name. */
     name: z.string().nullable(),
+    /** Their Version: an edit sends it back, and is refused (409) once the User changed. */
+    version: z.string(),
   })
   .meta({ ref: "ListedUser" });
 export type UserBody = z.infer<typeof userBodySchema>;
@@ -94,6 +97,8 @@ export const userUpdateRequestSchema = z
     memberships: membershipsSchema.optional(),
     name: nameSchema.optional(),
     password: passwordSchema.optional(),
+    /** The Version the edit was made on (`ListedUser.version`). */
+    version: versionSchema,
   })
   .refine(
     ({ memberships, name, password }) =>

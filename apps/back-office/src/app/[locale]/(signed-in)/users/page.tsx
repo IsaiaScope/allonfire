@@ -1,7 +1,5 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
-import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
-import { AOFGetQueryClient } from "@allonfire/core/features/next/query/aof-get-query-client";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { HydrationBoundary } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
@@ -12,9 +10,7 @@ import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
 import { UsersTable } from "@/features/users/components/users-table";
 import { loadUsersParams } from "@/features/users/constants/users-params";
-import { readUsers } from "@/features/users/utils/read-users";
-import { usersListKey } from "@/features/users/utils/users-queries";
-import { usersVisitorOf } from "@/features/users/utils/users-visitor";
+import { usersHydration } from "@/features/users/utils/users-hydration";
 
 export const generateMetadata = () =>
   pageMetadata(SECTION.USERS.path, `Navigation.${SECTION.USERS.label}`);
@@ -24,28 +20,23 @@ const leaveToTable = () => undefined;
 type UsersPageProps = { searchParams: Promise<SearchParams> };
 
 /**
- * The list's rows, read on the server from the address (cleaned, never
- * refused) through `readUsers`, kept on this server until a change to Users,
- * and handed to the table already filled: it reads the query back under the
- * same key. A query the API refused is left to the table, which asks again
- * and shows the error.
+ * The list's rows, read from the address (cleaned, never refused) through
+ * `usersHydration`, kept in the visitor's browser until a change to Users,
+ * so a link prefetches them, and handed to the table already filled: it
+ * reads the query back under the same key. A query the API refused is left to the
+ * table, which asks again and shows the error.
  */
 const UsersList = async ({ searchParams }: UsersPageProps) => {
   // The Session is the page check's own read (one per request): whose row
-  // has no checkbox, and with their Role the kept rows' key.
-  const [params, sessionCookie, session] = await Promise.all([
-    loadUsersParams(searchParams),
-    readSessionCookie(),
+  // has no checkbox. The rows need only the address, so both run at once
+  // (the API checks the Session on the read itself).
+  const params = await loadUsersParams(searchParams);
+  const [session, state] = await Promise.all([
     requireAppSession(),
+    usersHydration(params).catch(leaveToTable),
   ]);
-  const users = await readUsers(
-    usersVisitorOf(session.user, sessionCookie),
-    params
-  ).catch(leaveToTable);
-  const queryClient = AOFGetQueryClient();
-  queryClient.setQueryData(usersListKey(params), users);
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={state}>
       <UsersTable selfId={session.user.id} />
     </HydrationBoundary>
   );
