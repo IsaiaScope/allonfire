@@ -33,8 +33,8 @@ Number values work too (`z.enum(HTTP.STATUS)`).
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `affectedFrom(turboQueryJson, turboLsJson, changedFiles)` | Function | `turbo query affected --packages` read as `{ apps, deploy }`: the Apps CI tests end to end and the Deploy units to ship, `db-migrate` first. A changed image file Turbo does not read (`docker/`, `.dockerignore`, `pnpm-workspace.yaml`) reaches every unit (`turboLsJson`, `turbo ls` of the whole workspace) |
-| `everything(turboLsJson)` | Function | Every App and every Deploy unit |
+| `affectedFrom(turboQueryJson, turboPackagesJson, changedFiles)` | Function | `turbo query affected --packages` read as `{ apps, deploy }`: the Apps CI tests end to end and the Deploy units to ship, `db-migrate` first. A changed image file Turbo does not read (`docker/`, `.dockerignore`, `pnpm-workspace.yaml`) reaches every unit (`turboPackagesJson`, a `turbo query` of every package) |
+| `everything(turboPackagesJson)` | Function | Every App and every Deploy unit |
 | `Affected` | Type | `{ apps, deploy }`: an App is a package under `apps/`, named by its folder (the API included); a Deploy unit is an App or `db-migrate` |
 
 CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `apps=` and `deploy=` for `$GITHUB_OUTPUT`. What counts as affected is Turbo's (`futureFlags.affectedUsingTaskInputs` in `turbo.json`): a package whose task inputs changed, and its dependents. Every task excludes `**/*.md`, so a Markdown-only change affects nothing, and a root `package.json`, `turbo.json` or lockfile change affects everything. No base, or one that does not resolve (no deploy yet), prints every unit.
