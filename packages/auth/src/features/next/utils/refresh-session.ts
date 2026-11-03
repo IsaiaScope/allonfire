@@ -1,4 +1,5 @@
 import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
@@ -33,7 +34,8 @@ export const refreshSession = async (
         },
       },
     });
-  } catch {
+  } catch (err) {
+    serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_REFRESH_FAILED);
     return [];
   }
   return parseSetCookies(renewed);

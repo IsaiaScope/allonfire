@@ -15,27 +15,33 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type AddUserState, addUser } from "../../actions/add-user";
 import { USERS } from "../../constants/users";
+import { replace } from "../../tests/user-form-mocks";
 import { AddUser } from "../add-user";
 
 vi.mock("../../actions/add-user", () => ({ addUser: vi.fn() }));
-const replace = vi.fn();
-vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
-  useRouter: () => ({ replace }),
-}));
+// jscpd:ignore-start
+// Every User form test mocks the same modules: Vitest hoists each vi.mock
+// within its own file, so only the factories are shared (user-form-mocks).
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
 vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
   ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
   aofToast: vi.fn(),
 }));
-// next/image reaches the browser as a CommonJS object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ src }: { src: string }) => <span data-src={src} />,
-}));
+vi.mock(
+  "@allonfire/ui/components/aof-image",
+  () => import("../../tests/user-form-mocks")
+);
+// jscpd:ignore-end
 
 const t = EN.Users.add;
+/** The words both User forms share. */
+const FORM = EN.Users.form;
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: t.role.replace("{app}", APP_ENTRY[app].name),
+    name: FORM.role.replace("{app}", APP_ENTRY[app].name),
   });
 const NEW = {
   email: "new@add-user.test",
@@ -74,10 +80,10 @@ const pageShown = (visible: boolean) => (
 
 const fill = async () => {
   await page.getByLabelText(t.email, { exact: true }).fill(NEW.email);
-  await page.getByLabelText(t.name, { exact: true }).fill(NEW.name);
-  await page.getByLabelText(t.password, { exact: true }).fill(NEW.password);
+  await page.getByLabelText(FORM.name, { exact: true }).fill(NEW.name);
+  await page.getByLabelText(FORM.password, { exact: true }).fill(NEW.password);
   await page
-    .getByLabelText(t.confirmPassword, { exact: true })
+    .getByLabelText(FORM.confirmPassword, { exact: true })
     .fill(NEW.password);
 };
 
@@ -99,7 +105,7 @@ describe("AddUser on its page", () => {
     await screen.rerender(pageShown(false));
     await screen.rerender(pageShown(true));
     await Promise.all(
-      [t.email, t.name, t.password, t.confirmPassword].map((label) =>
+      [t.email, FORM.name, FORM.password, FORM.confirmPassword].map((label) =>
         expect
           .element(page.getByLabelText(label, { exact: true }))
           .toHaveValue("")
@@ -134,44 +140,46 @@ describe("AddUser", () => {
 
   it("ticks each password rule live, as it is met", async () => {
     await renderForm();
-    const password = page.getByLabelText(t.password, { exact: true });
+    const password = page.getByLabelText(FORM.password, { exact: true });
     const length = rule(
-      t.rule.length.replace("{min}", String(USER.LIMIT.PASSWORD_MIN))
+      FORM.rule.length.replace("{min}", String(USER.LIMIT.PASSWORD_MIN))
     );
     await expect.element(length).not.toBeChecked();
     await password.fill("a");
-    await expect.element(rule(t.rule.lowercase)).toBeChecked();
-    await expect.element(rule(t.rule.uppercase)).not.toBeChecked();
+    await expect.element(rule(FORM.rule.lowercase)).toBeChecked();
+    await expect.element(rule(FORM.rule.uppercase)).not.toBeChecked();
     await password.fill(NEW.password);
     await Promise.all(
       [
         length,
-        rule(t.rule.uppercase),
-        rule(t.rule.number),
-        rule(t.rule.symbol),
+        rule(FORM.rule.uppercase),
+        rule(FORM.rule.number),
+        rule(FORM.rule.symbol),
       ].map((met) => expect.element(met).toBeChecked())
     );
-    await expect.element(rule(t.rule.match)).not.toBeChecked();
+    await expect.element(rule(FORM.rule.match)).not.toBeChecked();
     await page
-      .getByLabelText(t.confirmPassword, { exact: true })
+      .getByLabelText(FORM.confirmPassword, { exact: true })
       .fill(NEW.password);
-    await expect.element(rule(t.rule.match)).toBeChecked();
+    await expect.element(rule(FORM.rule.match)).toBeChecked();
   });
 
   it("keeps the rules out of the tab order: they only report", async () => {
     await renderForm();
-    await expect.element(rule(t.rule.match)).toHaveAttribute("tabindex", "-1");
+    await expect
+      .element(rule(FORM.rule.match))
+      .toHaveAttribute("tabindex", "-1");
   });
 
   it("refuses to post when the confirmation differs", async () => {
     await renderForm();
     await fill();
     await page
-      .getByLabelText(t.confirmPassword, { exact: true })
+      .getByLabelText(FORM.confirmPassword, { exact: true })
       .fill(`${NEW.password}y`);
     await page.getByRole("button", { name: t.submit }).click();
     await expect
-      .element(page.getByText(t.field.passwordMismatch))
+      .element(page.getByText(FORM.field.passwordMismatch))
       .toBeVisible();
     expect(addUser).not.toHaveBeenCalled();
   });
@@ -201,7 +209,7 @@ describe("AddUser", () => {
       .element(page.getByLabelText(t.email, { exact: true }))
       .toHaveAttribute("aria-invalid", "true");
     await expect
-      .element(page.getByLabelText(t.name, { exact: true }))
+      .element(page.getByLabelText(FORM.name, { exact: true }))
       .toHaveValue(NEW.name);
   });
 
@@ -234,7 +242,9 @@ describe("AddUser's picture", () => {
     const labels = [...form.querySelectorAll("label")].map(
       ({ textContent }) => textContent
     );
-    expect(labels.indexOf(t.avatar.label)).toBe(labels.indexOf(t.name) + 1);
+    expect(labels.indexOf(FORM.avatar.label)).toBe(
+      labels.indexOf(FORM.name) + 1
+    );
   });
 
   it("a picture that was not saved says so and goes to the list: the User was added", async () => {
@@ -245,7 +255,7 @@ describe("AddUser's picture", () => {
     await page.getByRole("button", { name: t.submit }).click();
     await expect
       .poll(() => vi.mocked(aofToast).mock.calls[0]?.[0])
-      .toBe(t.avatar.failed);
+      .toBe(t.avatarFailed);
     expect(replace).toHaveBeenCalledWith(BACK_OFFICE.PAGE.USERS);
   });
 });

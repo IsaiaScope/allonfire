@@ -1,7 +1,9 @@
 // @module-tag unit
+
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { App, Role } from "@allonfire/database/enums";
 import { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
@@ -129,6 +131,25 @@ describe("withSignInGate", () => {
     );
     await visit(SIGN_IN, TOKEN);
     expect(proxy).toHaveBeenCalledTimes(2);
+  });
+
+  it("logs the error when the API call rejects, and lets the visit through", async () => {
+    const failure = new Error("API down");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(failure))
+    );
+    const error = vi
+      .spyOn(serverLogger(), "error")
+      .mockImplementation(() => undefined);
+
+    await visit(SIGN_IN, TOKEN);
+
+    expect(proxy).toHaveBeenCalledOnce();
+    expect(error).toHaveBeenCalledWith(
+      { err: failure },
+      AUTH.LOG_MESSAGE.SESSION_READ_FAILED
+    );
   });
 
   it("asks the API nothing for a signed-out visit to Sign in", async () => {

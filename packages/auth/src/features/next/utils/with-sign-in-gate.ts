@@ -1,5 +1,6 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
@@ -11,7 +12,8 @@ type Proxy = (request: NextRequest) => Promise<Response> | Response;
 /**
  * Whether the visitor's Session, asked of the API, is one this App lets in:
  * the real check, never the cookie alone, since a cookie the API refuses
- * would bounce between Home and Sign in. `false` when the API cannot say.
+ * would bounce between Home and Sign in. `false` when the API cannot say
+ * (logged).
  */
 const entersAppNow = async (request: NextRequest) => {
   try {
@@ -21,7 +23,8 @@ const entersAppNow = async (request: NextRequest) => {
       },
     });
     return entersApp(data);
-  } catch {
+  } catch (err) {
+    serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_READ_FAILED);
     return false;
   }
 };

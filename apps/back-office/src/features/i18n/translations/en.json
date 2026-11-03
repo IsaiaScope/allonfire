@@ -134,6 +134,24 @@
       "title": "{count, plural, one {Delete # User?} other {Delete # Users?}}"
     },
     "add": {
+      "avatarFailed": "User added; the picture was not saved.",
+      "button": "Add",
+      "email": "Email",
+      "error": {
+        "failed": "The User could not be added. Try again.",
+        "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Users. Sign in again.",
+        "taken": "This email already has an account"
+      },
+      "field": {
+        "emailInvalid": "Enter a valid email",
+        "emailRequired": "Enter an email"
+      },
+      "submit": "Add User",
+      "submitting": "Adding…",
+      "title": "Add a User"
+    },
+    "form": {
       "avatar": {
         "cancel": "Cancel",
         "change": "Change",
@@ -142,7 +160,6 @@
         "current": "Current picture",
         "dialogTitle": "Crop the picture",
         "drop": "Drop your picture here",
-        "failed": "User added; the picture was not saved.",
         "formats": "JPEG, PNG, WebP, AVIF or HEIC, up to {size} MB",
         "label": "Picture",
         "preparing": "Preparing the picture…",
@@ -154,19 +171,9 @@
         "zoomIn": "Zoom in",
         "zoomOut": "Zoom out"
       },
-      "button": "Add",
       "cancel": "Cancel",
       "confirmPassword": "Confirm password",
-      "email": "Email",
-      "error": {
-        "failed": "The User could not be added. Try again.",
-        "invalid": "Check the fields and try again.",
-        "refused": "You can no longer change Users. Sign in again.",
-        "taken": "This email already has an account"
-      },
       "field": {
-        "emailInvalid": "Enter a valid email",
-        "emailRequired": "Enter an email",
         "nameRequired": "Enter a name",
         "passwordMismatch": "The passwords differ",
         "passwordWeak": "Not every rule below is met yet"
@@ -185,10 +192,7 @@
         "uppercase": "An uppercase letter"
       },
       "rules": "The password needs",
-      "showPassword": "Show password",
-      "submit": "Add User",
-      "submitting": "Adding…",
-      "title": "Add a User"
+      "showPassword": "Show password"
     },
     "open": "Open {email}",
     "copy": {

@@ -1,16 +1,22 @@
 // @module-tag unit
 import { testClient } from "hono/testing";
+import type { Logger } from "pino";
+import { API } from "../../../shared/constants/api";
+import { captureLog } from "../../logger/tests/capture";
 import { healthRoutes } from "../routes";
 import type { HealthDeps } from "../utils/status";
 
 /** Typed from the routes themselves: bodies need no hand-written shape and no cast. */
-const client = (overrides: Partial<HealthDeps> = {}) =>
+const client = (overrides: Partial<HealthDeps> = {}, logger?: Logger) =>
   testClient(
-    healthRoutes({
-      checkDatabase: async () => true,
-      checkRedis: async () => true,
-      ...overrides,
-    })
+    healthRoutes(
+      {
+        checkDatabase: async () => true,
+        checkRedis: async () => true,
+        ...overrides,
+      },
+      logger
+    )
   );
 
 describe("GET /health", () => {
@@ -53,6 +59,44 @@ describe("GET /ready", () => {
     }).ready.$get();
 
     expect(res.status).toBe(503);
+  });
+
+  it("a failed database check still answers 503 and logs the cause", async () => {
+    const { lines, logger } = captureLog();
+
+    const res = await client(
+      { checkDatabase: () => Promise.reject(new Error("refused")) },
+      logger
+    ).ready.$get();
+
+    expect(res.status).toBe(503);
+    expect(lines).toEqual([
+      expect.objectContaining({
+        err: expect.objectContaining({ message: "refused" }),
+        msg: API.LOG_MESSAGE.DATABASE_DOWN,
+      }),
+    ]);
+  });
+
+  it("logs a database outage once, and its end once", async () => {
+    const { lines, logger } = captureLog();
+    // Down for two probes, then back for two.
+    const checkDatabase = vi
+      .fn<() => Promise<boolean>>()
+      .mockRejectedValueOnce(new Error("refused"))
+      .mockRejectedValueOnce(new Error("refused"))
+      .mockResolvedValue(true);
+    const { ready } = client({ checkDatabase }, logger);
+
+    await ready.$get();
+    await ready.$get();
+    await ready.$get();
+    await ready.$get();
+
+    expect(lines.map((line) => line.msg)).toEqual([
+      API.LOG_MESSAGE.DATABASE_DOWN,
+      API.LOG_MESSAGE.DATABASE_RECOVERED,
+    ]);
   });
 
   it("stays 200 when only Redis is down", async () => {

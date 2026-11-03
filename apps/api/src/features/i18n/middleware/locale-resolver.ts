@@ -17,6 +17,7 @@ import { TRANSLATION } from "../constants/locales";
  *
  * Never throws: a malformed tag yields `TRANSLATION.DEFAULT_LOCALE`, because a bad language
  * header is not a reason to fail a call that would otherwise succeed.
+ * @internal
  */
 export function resolveLocale(header: string | undefined): Locale {
   if (!header) {

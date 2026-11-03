@@ -1,17 +1,13 @@
 "use client";
 
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { entryRoles } from "@allonfire/database/features/auth/access/access";
-import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
-import type {
-  AOFAvatarFieldLabels,
-  AOFAvatarFieldProps,
-} from "@allonfire/ui/components/aof-avatar-field";
 import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
 import { AOFChoiceField } from "@allonfire/ui/components/aof-choice-field";
 import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
+import { withAOFFieldGroup } from "@allonfire/ui/lib/form";
+import { type AOFToastKind, aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import { cn } from "@allonfire/ui/lib/utils";
 import {
   IconArrowBackUp,
@@ -24,18 +20,17 @@ import {
   IconUserShield,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
-import { Link } from "@/features/i18n/navigation";
-import {
-  ActionKanji,
-  BrushKanji,
-  kanjiAction,
-} from "@/shared/components/brush-kanji";
+import { type ReactNode, useEffect } from "react";
+import { Link, useRouter } from "@/features/i18n/navigation";
+import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { USERS } from "../constants/users";
-import type { RoleChoice } from "../utils/user-form-schema";
-import { toolbarActionClass, toolbarActionKanji } from "./toolbar-action";
+import {
+  NO_ROLES,
+  type RoleChoice,
+  type UserFieldMessages,
+} from "../utils/user-form-schema";
 
 /** Each Role's pictogram in a Role row. */
 const ROLE_ICON = {
@@ -56,11 +51,11 @@ const RoleChoiceRow = ({ app, locked }: { app: App; locked: boolean }) => {
       className={cn(locked && "opacity-60")}
       inert={locked || undefined}
       ink={BACK_OFFICE.CHOSEN.INK}
-      label={t("Users.add.role", { app: APP_ENTRY[app].name })}
+      label={t("Users.form.role", { app: APP_ENTRY[app].name })}
       options={[
         {
           icon: ROLE_ICON[USERS.NO_ROLE],
-          label: t("Users.add.noRole"),
+          label: t("Users.form.noRole"),
           value: USERS.NO_ROLE,
         },
         ...entryRoles(app).map((role) => ({
@@ -75,15 +70,15 @@ const RoleChoiceRow = ({ app, locked }: { app: App; locked: boolean }) => {
 };
 
 /**
- * The Role rows, one per App, each drawn as Gooey Nav. `field` binds a row
- * to its form (`form.AppField name={`roles.${app}`}`) around the choice it
- * is handed. The `locked` App's row cannot change, with a note saying why.
+ * The Role rows, one per App, each drawn as Gooey Nav. `children` binds a
+ * row to its form around the choice it is handed. The `locked` App's row
+ * cannot change, with a note saying why.
  */
-export const RoleRows = ({
-  field,
+const RoleRowList = ({
+  children,
   locked,
 }: {
-  field: (app: App, choice: ReactNode) => ReactNode;
+  children: (app: App, choice: ReactNode) => ReactNode;
   locked?: App | undefined;
 }) => {
   const t = useTranslations();
@@ -91,14 +86,14 @@ export const RoleRows = ({
     <fieldset className="@2xl:col-span-2 mt-8 flex flex-col gap-8">
       <legend className="mb-2 flex items-center gap-2 font-bold text-base">
         <IconUserShield aria-hidden className="size-5" />
-        {t("Users.add.roles")}
+        {t("Users.form.roles")}
       </legend>
       {objectValues(App).map((app) => (
         <div className="flex flex-col gap-2" key={app}>
           <span aria-hidden className="font-bold text-sm">
             {APP_ENTRY[app].name}
           </span>
-          {field(app, <RoleChoiceRow app={app} locked={app === locked} />)}
+          {children(app, <RoleChoiceRow app={app} locked={app === locked} />)}
           {app === locked ? (
             <p className="flex items-center gap-1.5 text-muted-foreground text-sm">
               <IconLock aria-hidden className="size-4" />
@@ -110,6 +105,25 @@ export const RoleRows = ({
     </fieldset>
   );
 };
+
+/** What the Role rows can be told: the App whose row cannot change. */
+const ROLE_ROWS_PROPS: { locked?: App | undefined } = {};
+
+/**
+ * The Role rows (`RoleRowList`), a field group both User forms bind
+ * (`USERS.FORM_FIELDS.ROLES`): each row is the form's `roles.<app>`.
+ */
+export const RoleRows = withAOFFieldGroup({
+  defaultValues: { roles: NO_ROLES },
+  props: ROLE_ROWS_PROPS,
+  render: ({ group, locked }) => (
+    <RoleRowList locked={locked}>
+      {(app, choice) => (
+        <group.AppField name={`roles.${app}`}>{() => choice}</group.AppField>
+      )}
+    </RoleRowList>
+  ),
+});
 
 /** A form's submit button: its words, pictogram and kanji. */
 export type UserFormSubmit = {
@@ -143,7 +157,7 @@ export const UserFormActions = ({
       >
         <ActionKanji kanji={USERS.CANCEL_KANJI} />
         <IconArrowBackUp aria-hidden />
-        {t("Users.add.cancel")}
+        {t("Users.form.cancel")}
       </Link>
       <AOFSubmitButton
         className={kanjiAction()}
@@ -164,78 +178,37 @@ export const UserFormActions = ({
   );
 };
 
-/** The picture field's words, in the page's language. */
-export const useAvatarLabels = (): AOFAvatarFieldLabels => {
-  const t = useTranslations("Users.add.avatar");
+/** The field messages both User forms' schemas take, in the page's language. */
+export const useUserFieldMessages = (): UserFieldMessages => {
+  const t = useTranslations("Users.form.field");
   return {
-    busy: t("preparing"),
-    cancel: t("cancel"),
-    change: t("change"),
-    choose: t("choose"),
-    cropAgain: t("cropAgain"),
-    current: t("current"),
-    dialogTitle: t("dialogTitle"),
-    drop: t("drop"),
-    formats: t("formats", {
-      size: AVATAR.INPUT_BYTES / UNIT.BYTES_PER_MIB,
-    }),
-    remove: t("remove"),
-    tooLarge: t("tooLarge"),
-    unreadable: t("unreadable"),
-    use: t("use"),
-    wrongType: t("wrongType"),
-    zoomIn: t("zoomIn"),
-    zoomOut: t("zoomOut"),
+    nameRequired: t("nameRequired"),
+    passwordMismatch: t("passwordMismatch"),
+    passwordWeak: t("passwordWeak"),
   };
 };
 
-/** A crop dialog's zoom button: the toolbar's icon shape, `kanji` at its edge. */
-const zoomDress = (kanji: string) => ({
-  className: toolbarActionClass("icon", "outline"),
-  decoration: (
-    <ActionKanji
-      className={toolbarActionKanji({ shape: "icon" })}
-      kanji={kanji}
-    />
-  ),
-});
+/** A notice's toast before the list opens: its words and kind. */
+type ListToast = { kind: AOFToastKind; message: string };
 
 /**
- * The picture field in the Japan Design: its choose button a green kanji
- * action (写, the line's green), the crop dialog's title signed 切 and its
- * buttons the form's own (Cancel 戻 in red, Use 決 in the primary), its
- * zoom the toolbar's kanji icon buttons (縮, 拡).
+ * A User form's answer that sends it back to the list: the notice's toast,
+ * when `toasts` lists it, then the list, where the change shows. A notice
+ * it does not list, or none, leaves the form where it is.
  */
-export const AVATAR_DRESS = {
-  cropProps: {
-    cancelProps: {
-      className: kanjiAction(),
-      decoration: <ActionKanji kanji={USERS.CANCEL_KANJI} />,
-      size: "field",
-      variant: "destructive",
-    },
-    titleProps: {
-      decoration: <BrushKanji kanji={USERS.CROP_KANJI} placement="title" />,
-    },
-    useProps: {
-      className: kanjiAction(),
-      decoration: <ActionKanji kanji={USERS.CROP_USE_KANJI} />,
-      size: "field",
-    },
-    // Icon buttons with the toolbar's kanji, at the title's right end.
-    zoomInProps: zoomDress(USERS.ZOOM_IN_KANJI),
-    zoomOutProps: zoomDress(USERS.ZOOM_OUT_KANJI),
-  },
-  triggerProps: {
-    // The smaller kanji action: inside the drop area, not a form's last row.
-    className: cn(
-      kanjiAction(),
-      "min-w-0 bg-(--line-green-deep) pr-10 text-(--line-green-deep-foreground) hover:bg-(--line-green-deep)/90"
-    ),
-    decoration: (
-      <ActionKanji className="text-4xl" kanji={USERS.PICTURE_KANJI} />
-    ),
-    // Filled, so no outline's dark-theme ground shows over the green.
-    variant: "default",
-  },
-} as const satisfies Pick<AOFAvatarFieldProps, "cropProps" | "triggerProps">;
+export const useToastThenList = <TNotice extends string>(
+  notice: TNotice | undefined,
+  toasts: Partial<Record<TNotice, ListToast>>
+) => {
+  const router = useRouter();
+  const toast = notice === undefined ? undefined : toasts[notice];
+  const kind = toast?.kind;
+  const message = toast?.message;
+  useEffect(() => {
+    if (!(kind && message)) {
+      return;
+    }
+    aofToast(message, kind);
+    router.replace(BACK_OFFICE.PAGE.USERS);
+  }, [kind, message, router]);
+};

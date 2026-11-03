@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
 
-export const signInErrorSchema = z.enum(AUTH.SIGN_IN_ERROR);
+const signInErrorSchema = z.enum(AUTH.SIGN_IN_ERROR);
 export type SignInError = z.infer<typeof signInErrorSchema>;
 
 /**

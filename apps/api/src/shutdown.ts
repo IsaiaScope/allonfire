@@ -1,5 +1,6 @@
+import { TELEMETRY } from "@allonfire/core/features/telemetry/constants/telemetry";
 import type { Logger } from "pino";
-import { logger } from "./features/logger/logger";
+import { logger as defaultLogger } from "./features/logger/logger";
 import { API, type ShutdownStep } from "./shared/constants/api";
 
 export type ShutdownDeps = {
@@ -8,19 +9,34 @@ export type ShutdownDeps = {
   closeDatabase: () => Promise<void>;
   flushTelemetry: () => Promise<void>;
   drainTimeoutMs?: number;
+  /** Optional so tests can capture the lines. */
+  logger?: Logger;
 };
 
-function withTimeout(promise: Promise<void>, ms: number): Promise<boolean> {
+/** How a step bounded by a timeout ended: done, out of time, or failed with its error. */
+type Bounded =
+  | { done: true }
+  | { done: false; timedOut: true }
+  | {
+      done: false;
+      timedOut: false;
+      err: unknown;
+    };
+
+function withTimeout(promise: Promise<void>, ms: number): Promise<Bounded> {
   return new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(false), ms);
+    const timer = setTimeout(
+      () => resolve({ done: false, timedOut: true }),
+      ms
+    );
     promise
       .then(() => {
         clearTimeout(timer);
-        resolve(true);
+        resolve({ done: true });
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         clearTimeout(timer);
-        resolve(false);
+        resolve({ done: false, err, timedOut: false });
       });
   });
 }
@@ -30,27 +46,38 @@ function withTimeout(promise: Promise<void>, ms: number): Promise<boolean> {
  * is abandoned. Shared by the graceful and the crash path so both give up at
  * the same point.
  */
-const flushWithinBudget = (flush: () => Promise<void>): Promise<boolean> =>
-  withTimeout(flush(), API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
+const flushWithinBudget = (flush: () => Promise<void>): Promise<Bounded> =>
+  withTimeout(flush(), TELEMETRY.LIMIT.FLUSH_TIMEOUT_MS);
 
 export function createShutdown(deps: ShutdownDeps) {
   const drainTimeoutMs = deps.drainTimeoutMs ?? API.DEFAULT.DRAIN_TIMEOUT_MS;
+  const logger = deps.logger ?? defaultLogger;
 
   return async function shutdown(): Promise<ShutdownStep[]> {
     const completed: ShutdownStep[] = [];
 
     // Stop accepting and let in-flight requests finish before any dependency
     // is closed — closing Prisma first would fail requests that could complete.
-    if (await withTimeout(deps.closeServer(), drainTimeoutMs)) {
+    const drain = await withTimeout(deps.closeServer(), drainTimeoutMs);
+    if (drain.done) {
       completed.push(API.SHUTDOWN.STEP.SERVER);
-    } else {
+    } else if (drain.timedOut) {
       logger.warn({ drainTimeoutMs }, API.LOG_MESSAGE.DRAIN_TIMEOUT);
+    } else {
+      logger.error(
+        { err: drain.err, step: API.SHUTDOWN.STEP.SERVER },
+        API.LOG_MESSAGE.SHUTDOWN_STEP_FAILED
+      );
     }
 
-    // An abandoned flush is reported like any other failed step.
+    // An abandoned flush is reported like any other failed step, its own
+    // error (if it failed rather than timed out) kept as the cause.
     const flushTelemetry = async () => {
-      if (!(await flushWithinBudget(deps.flushTelemetry))) {
-        throw new Error(API.LOG_MESSAGE.TELEMETRY_FLUSH_ABANDONED);
+      const flush = await flushWithinBudget(deps.flushTelemetry);
+      if (!flush.done) {
+        throw new Error(API.LOG_MESSAGE.TELEMETRY_FLUSH_ABANDONED, {
+          cause: flush.timedOut ? undefined : flush.err,
+        });
       }
     };
 
@@ -94,7 +121,7 @@ export type CrashDeps = {
  * too (Node's default mode throws it), and `origin` says which of the two it was.
  */
 export function createCrashHandler(deps: CrashDeps) {
-  const log = deps.logger ?? logger;
+  const log = deps.logger ?? defaultLogger;
   return async function crash(
     err: unknown,
     origin: NodeJS.UncaughtExceptionOrigin

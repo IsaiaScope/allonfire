@@ -12,10 +12,7 @@ import {
 import { contrastInk, parseColor } from "../lib/gooey-nav/colors";
 import { createGooeyEngine, type GooeyEngine } from "../lib/gooey-nav/engine";
 import {
-  GOOEY_NO_TINTS,
-  GOOEY_PILLS,
-  GOOEY_SIZES,
-  GOOEY_THEMES,
+  GOOEY,
   type GooeyPalette,
   type GooeySize,
 } from "../lib/gooey-nav/looks";
@@ -38,7 +35,7 @@ import { cn } from "../lib/utils";
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-export type AOFGooeyNavItem = {
+type AOFGooeyNavItem = {
   href?: string;
   icon?: ReactNode;
   label?: string;
@@ -170,7 +167,7 @@ export const AOFGooeyNav = ({
   theme = "dark",
   color,
   activeTextColor,
-  colors = GOOEY_NO_TINTS,
+  colors = GOOEY.NO_TINTS,
   size = "md",
   frame = true,
   animationTime = 600,
@@ -203,17 +200,17 @@ export const AOFGooeyNav = ({
   const indexRef = useRef(current);
   indexRef.current = current;
   const palette = theme === "light" ? "light" : "dark";
-  const pillColor = color || GOOEY_PILLS[palette].color;
+  const pillColor = color || GOOEY.PILLS[palette].color;
   const pillRgb = parseColor(pillColor);
   const settings: GooeySettings = {
     animationTime,
     gooeyness,
     hoverEffect,
-    hoverRgb: parseColor(GOOEY_PILLS[palette].hover),
+    hoverRgb: parseColor(GOOEY.PILLS[palette].hover),
     particleCount,
     pillRgb,
     radius: corner,
-    shadow: GOOEY_PILLS[palette].shadow,
+    shadow: GOOEY.PILLS[palette].shadow,
     spread,
     timeVariance,
     tints: colors.map(parseColor),
@@ -285,8 +282,8 @@ export const AOFGooeyNav = ({
       className={cn(navVariants({ frame }), className)}
       ref={navRef}
       style={{
-        ...GOOEY_SIZES[size],
-        ...GOOEY_THEMES[palette],
+        ...GOOEY.SIZES[size],
+        ...GOOEY.THEMES[palette],
         ...variables,
         ...style,
       }}

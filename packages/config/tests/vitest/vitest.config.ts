@@ -1,8 +1,11 @@
 import { fileURLToPath } from "node:url";
 import { configDefaults, defineConfig } from "vitest/config";
 
-/** Browser tests, which only `vitestBrowserConfig` collects. */
-export const BROWSER_TESTS = "**/*.browser.test.{ts,tsx}";
+/** The Vitest preset's own values. */
+export const VITEST = {
+  /** Browser tests, which only `vitestBrowserConfig` collects. */
+  BROWSER_FILES: "**/*.browser.test.{ts,tsx}",
+} as const;
 
 /**
  * Shared by every package that runs vitest. A package merges its own options
@@ -23,7 +26,7 @@ export const vitestConfig = defineConfig({
       // Playwright owns these.
       "e2e/**",
       // The browser config runs these (../browser/vitest.browser.config.ts).
-      BROWSER_TESTS,
+      VITEST.BROWSER_FILES,
     ],
     // `describe`, `it`, `expect`, `vi` without an import. The package's
     // tsconfig lists `vitest/globals` so the types follow.

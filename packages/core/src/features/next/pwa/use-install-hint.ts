@@ -17,7 +17,7 @@ const { INSTALL_STATUS } = PWA.INSTALL_HINT;
  * installed (then the hint is gone); `failed` when the dialog failed, the
  * button ready to try again. Refusing the dialog counts as a dismissal.
  */
-export type InstallButton = {
+type InstallButton = {
   failed: boolean;
   installing: boolean;
   onInstall: () => Promise<void>;

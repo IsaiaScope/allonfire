@@ -63,6 +63,15 @@ export const AUTH = {
    * hash.
    */
   LIMITED_PATHS: [SIGN_IN_EMAIL, SIGN_UP_EMAIL, CHANGE_PASSWORD],
+  /**
+   * What an App's server logs when a call to the API's auth fails and it
+   * falls back (signed out, no renewal, cookies cleared here).
+   */
+  LOG_MESSAGE: {
+    SESSION_READ_FAILED: "session read failed, treated as signed out",
+    SESSION_REFRESH_FAILED: "session refresh failed, cookies left as they are",
+    SIGN_OUT_FAILED: "sign out on the API failed, cookies cleared here",
+  },
   /** Methods Better Auth's handler answers. */
   METHODS: [HTTP.METHOD.GET, HTTP.METHOD.POST],
   /** Tag every Better Auth operation carries in a host's OpenAPI document. */

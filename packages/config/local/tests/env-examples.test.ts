@@ -30,6 +30,7 @@ const OWNERS = [
       fromSchemas(
         "apps/api/src/environment/environment.ts",
         "packages/auth/src/environment/environment.ts",
+        "packages/core/src/environment/telemetry-environment.ts",
         "packages/database/src/environment/environment.ts",
         "packages/storage/src/environment/environment.ts"
       ),
@@ -39,7 +40,8 @@ const OWNERS = [
     () =>
       fromSchemas(
         "apps/back-office/src/environment/environment.ts",
-        "packages/auth/src/environment/next-environment.ts"
+        "packages/auth/src/environment/next-environment.ts",
+        "packages/core/src/environment/telemetry-environment.ts"
       ),
   ],
   [

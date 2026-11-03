@@ -11,7 +11,7 @@ import {
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { env } from "../../../environment/environment";
-import { storedObjectUrl } from "../../../shared/utils/stored-object-url";
+import { storedObjectUrl } from "../../../shared/tests/stored-object-url";
 import { IMAGE } from "../../image/constants/image";
 import { s3 } from "../../s3/client";
 import { dropTestBucketsOf, sweepTestBuckets } from "../bucket";

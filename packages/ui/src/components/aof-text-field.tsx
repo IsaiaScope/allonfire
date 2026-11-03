@@ -89,13 +89,13 @@ export type AOFTextFieldProps = Omit<
   /** Drawn at the input's start; decoration, hidden from screen readers. */
   icon?: ReactNode;
   /** An error the server reported for this field: marks it, no message. */
-  invalid?: boolean;
+  invalid?: boolean | undefined;
   /**
    * For a password: the name, in the page's language, of an eye button at the
    * input's end that shows and hides what was typed ("Show password");
    * `aria-pressed` says which.
    */
-  reveal?: string;
+  reveal?: string | undefined;
 };
 
 /**

@@ -7,7 +7,10 @@ import {
 } from "../../metadata/constants/metadata";
 import { fileRoute } from "./file-route";
 
-/** A logo's file name in `METADATA.PATH.LOGO`: `horizontal-auto.svg`. */
+/**
+ * A logo's file name in `METADATA.PATH.LOGO`: `horizontal-auto.svg`.
+ * @internal
+ */
 export const logoFile = (layout: LogoLayout, scheme: LogoScheme) =>
   `${layout}-${scheme}.svg`;
 

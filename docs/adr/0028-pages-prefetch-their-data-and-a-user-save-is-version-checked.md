@@ -12,12 +12,31 @@ gained elsewhere. So a save now carries the User's version (a hash of the
 User and their Roles in every App), and the API refuses it with 409 when the
 User changed since; the form tells the Admin to reload.
 
-The Version is generic: core holds the hash (`versionOf`), the `version`
-field's schema and the standard code `RESOURCE_CHANGED` (409) with one shared
-translation; each resource decides only what its version covers. It travels in
-the JSON body, not as an `ETag`/`If-Match` header: the API has one typed
-client, and in the body the compiler forbids forgetting it (as Kubernetes'
-`resourceVersion` and GitHub's `sha` do).
+The Version is generic, and every versioned save goes through one shared
+check: core holds the hash (`versionOf`), the `version` field's schema, the
+standard code `RESOURCE_CHANGED` (409) with one shared translation, and
+`checkVersion(expected, actual)`, which throws `ResourceChangedError`. A
+service runs it under the row lock its write already takes, before any write;
+`ResourceChangedError` is a `CodedError`, so every host's `onError` answers it
+as the 409 with no mapping in any module. Each resource decides only what its
+version covers:
+
+- a User: `updatedAt` and every (App, Role) pair. Their Avatar is part of
+  them: `PUT` and `DELETE /users/:id/avatar` carry the User's Version too, and
+  the Edit form sends its Avatar change with the Version its `PATCH` answered,
+  so a change landing between the two requests is refused. Adding a User
+  answers their first Version, which the Add form's Avatar carries.
+- an Image: `updatedAt` (`Image.updatedAt`, moved by every change, its Apps'
+  included), its access, its alt in each Language and its Apps, sorted. A
+  `PATCH /images` item sends the full `apps` list and `alt`, so a save made on
+  an older copy could drop an App or an alt set meanwhile; each item carries
+  its Image's Version. A batch that would leave an Image in no App (another
+  change took it out of its other Apps first) answers the same 409.
+
+It travels in the JSON body (a form field for the Avatar's multipart `PUT`),
+not as an `ETag`/`If-Match` header: the API has one typed client, and in the
+body the compiler forbids forgetting it (as Kubernetes' `resourceVersion` and
+GitHub's `sha` do).
 
 ## Considered Options
 
@@ -38,6 +57,8 @@ client, and in the body the compiler forbids forgetting it (as Kubernetes'
 - Any change to a User since the form was read refuses the save, a rename
   the User made themself included; the Admin reloads and saves again.
 - Delete is not version-checked: it removes the person, it sets no fields.
+  Nor is creating (a new User, an Image upload): there is nothing to
+  overwrite.
 - A long list's links prefetch on intent through ui's `useAOFIntentPrefetch`, props spread onto any `<Link>`, never a Link wrapper (the Next skills forbid an app-wide one).
 - Navigation is verified only against a production build (`instant()` tests):
   `next dev` never prefetches.

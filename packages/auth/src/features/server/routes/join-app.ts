@@ -1,7 +1,7 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { prisma } from "@allonfire/database";
 import { App } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import type { BetterAuthPlugin } from "better-auth";
 import { createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 import { AUTH } from "../../../shared/constants/auth";

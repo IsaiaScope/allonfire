@@ -13,9 +13,12 @@ import { PWA } from "./constants/pwa";
 export const AOFServiceWorker = ({ enabled }: { enabled: boolean }) => {
   useEffect(() => {
     if (enabled && "serviceWorker" in navigator) {
-      // ponytail: a failed registration only means no offline page this
-      // visit; the next visit tries again.
-      new Workbox(PWA.PATH.SERVICE_WORKER).register().catch(() => undefined);
+      // A failed registration only means no offline page this visit; the
+      // next visit tries again. It is still reported (`reportError`, a
+      // browser global looked up on failure).
+      new Workbox(PWA.PATH.SERVICE_WORKER)
+        .register()
+        .catch((error: unknown) => reportError(error));
     }
   }, [enabled]);
   return null;

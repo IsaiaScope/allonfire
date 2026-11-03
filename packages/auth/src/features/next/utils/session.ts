@@ -1,4 +1,5 @@
 import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
@@ -11,9 +12,11 @@ import { redirectTo } from "./redirect-to";
 
 /**
  * The visitor's Session, read from the API with the browser's cookies; `null`
- * when signed out or the API cannot say. The App's proxy has already renewed
- * the cookies (`refreshSession`), so a renewal the API sends here is a repeat.
+ * when signed out or the API cannot say (logged). The App's proxy has already
+ * renewed the cookies (`refreshSession`), so a renewal the API sends here is a
+ * repeat.
  * Read once per request.
+ * @internal
  */
 export const getSession = cache(async (): Promise<Session | null> => {
   // Any other cookie (the language one) is no reason to ask the API.
@@ -25,7 +28,8 @@ export const getSession = cache(async (): Promise<Session | null> => {
       fetchOptions: { headers: await readVisitorHeaders() },
     });
     return data;
-  } catch {
+  } catch (err) {
+    serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_READ_FAILED);
     return null;
   }
 });

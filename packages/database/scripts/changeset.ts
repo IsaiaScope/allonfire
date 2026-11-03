@@ -4,22 +4,23 @@
 import { execFileSync } from "node:child_process";
 import { readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import {
   buildChangeset,
-  CHANGESET_NAME,
+  CHANGESET,
   isEmptySql,
   nextChangesetNumber,
 } from "./changeset-file";
 
-const PACKAGE_DIR = resolve(import.meta.dirname, "..");
-const CHANGESETS_DIR = resolve(PACKAGE_DIR, "changelog/changesets");
+const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
+const CHANGESETS_DIR = resolve(PACKAGE_ROOT, CHANGESET.DIR);
 const SCHEMA = "prisma/schema";
 
 function prismaDiff(from: string[], to: string[]): string {
   return execFileSync(
     "prisma",
     ["migrate", "diff", ...from, ...to, "--script"],
-    { cwd: PACKAGE_DIR, encoding: "utf8" }
+    { cwd: PACKAGE_ROOT, encoding: "utf8" }
   );
 }
 
@@ -29,12 +30,12 @@ function fail(message: string): never {
 }
 
 const name = process.argv[2] ?? "";
-if (!CHANGESET_NAME.test(name)) {
+if (!PATTERN.CHANGESET.NAME.test(name)) {
   fail("Usage: pnpm db:changeset <kebab-case-name>");
 }
 
 execFileSync("bash", ["scripts/liquibase.sh", "update"], {
-  cwd: PACKAGE_DIR,
+  cwd: PACKAGE_ROOT,
   stdio: "inherit",
 });
 

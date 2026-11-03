@@ -62,10 +62,10 @@
       },
       "suspicious": {
         "noConsole": { "level": "error", "options": { "allow": ["error"] } },
-        // Next sets NEXT_PHASE itself inside the build; turbo never passes it.
+        // Next sets NEXT_PHASE and NEXT_RUNTIME itself; turbo never passes them.
         "noUndeclaredEnvVars": {
           "level": "error",
-          "options": { "allowedEnvVars": ["NEXT_PHASE"] }
+          "options": { "allowedEnvVars": ["NEXT_PHASE", "NEXT_RUNTIME"] }
         }
       }
     }
@@ -109,6 +109,9 @@
         "**/env.ts",
         "**/environment.ts",
         "**/*-environment.ts",
+        // Next's instrumentation picks its runtime by NEXT_RUNTIME, which Next
+        // inlines at build so the other runtime's branch is dropped.
+        "**/instrumentation.ts",
         "**/seed*.ts",
         "**/seed/**",
         // Seed data: long lists by nature.
@@ -116,6 +119,8 @@
         "**/scripts/**",
         "**/*.config.ts",
         "**/vitest.setup.ts",
+        // A test setup fills each unset env var with its Local value.
+        "**/local-env.ts",
         // Vitest and Playwright hooks hand the run's database and bucket to the
         // workers through the env.
         "**/global-setup.ts",

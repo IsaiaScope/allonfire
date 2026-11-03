@@ -9,6 +9,12 @@ const PAGE_SIZES = [25, 50, 100] as const;
 /** One User's route, under the module's base. */
 const ONE_USER = "/:id";
 
+/** How a Users list's `search` reads: `app:laura role:admin,user isa` (ADR 0026). */
+const SEARCH = searchQuery({
+  app: objectValues(App),
+  role: objectValues(Role),
+});
+
 export const USER = {
   /** The page a list opens on, and the furthest it reads. */
   DEFAULT_PAGE: 1,
@@ -16,14 +22,14 @@ export const USER = {
   DOC: {
     AVATAR_DELETE_204: "The picture is removed; their initial shows instead",
     AVATAR_DELETE_DESCRIPTION:
-      "Removes a User's Avatar and deletes its file; a provider's picture is only forgotten, never deleted. Only a User the Host lets change Users, read from the database at the time of the request.",
+      "Removes a User's Avatar and deletes its file; a provider's picture is only forgotten, never deleted. The JSON body carries the `version` the change was made on (`ListedUser.version`): when the User changed since, it answers 409 `RESOURCE_CHANGED` and changes nothing. Only a User the Host lets change Users, read from the database at the time of the request.",
     AVATAR_DELETE_SUMMARY: "Remove a User's Avatar",
     AVATAR_PUT_200:
       "The new picture's link, signed for the hour; every later read signs its own",
     AVATAR_PUT_DESCRIPTION:
-      "Sets a User's Avatar from one picture, multipart/form-data `file`: JPEG, PNG, WebP, AVIF or HEIC, whose centre square is stored as a 256x256 AVIF under a new name. The picture it replaces is deleted. Only a User the Host lets change Users, read from the database at the time of the request.",
+      "Sets a User's Avatar from one picture, multipart/form-data `file`: JPEG, PNG, WebP, AVIF or HEIC, whose centre square is stored as a 256x256 AVIF under a new name. The picture it replaces is deleted. The form's `version` is the one the change was made on (`ListedUser.version`, or `UserCreated.version` for a User just added): when the User changed since, it answers 409 `RESOURCE_CHANGED` and changes nothing. Only a User the Host lets change Users, read from the database at the time of the request.",
     AVATAR_PUT_SUMMARY: "Set a User's Avatar",
-    CREATE_201: "The new User's id",
+    CREATE_201: "The new User's id and Version",
     CREATE_DESCRIPTION:
       "Adds a User with a password login and a Membership in each App given. The email is stored lowercased; one already taken answers 409 `EMAIL_TAKEN`. Only a User the Host lets change Users, read from the database at the time of the request, never from a cached Session.",
     CREATE_SUMMARY: "Add a User",
@@ -75,10 +81,6 @@ export const USER = {
     /** One User: `GET` reads them, `PATCH` edits them. */
     ONE: ONE_USER,
   },
+  /** How a Users list's `search` reads (ADR 0026). */
+  SEARCH,
 } as const;
-
-/** How a Users list's `search` reads: `app:laura role:admin,user isa` (ADR 0026). */
-export const USER_SEARCH = searchQuery({
-  app: objectValues(App),
-  role: objectValues(Role),
-});

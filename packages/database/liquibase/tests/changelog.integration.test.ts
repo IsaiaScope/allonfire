@@ -2,15 +2,13 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client";
-import { CHANGESET_FILE } from "../../scripts/changeset-file";
-import {
-  DOCKER_TIMEOUT,
-  liquibase,
-  PACKAGE_DIR,
-} from "../../src/features/test-database/server";
+import { CHANGESET } from "../../scripts/changeset-file";
+import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
+import { liquibase } from "../../src/features/test-database/server";
 import {
   clientFor,
   dropDatabase,
@@ -43,7 +41,11 @@ const BASELINE_TABLES = [
   "QuizQuestion",
 ].sort();
 
-const BASELINE = resolve(PACKAGE_DIR, "changelog/changesets/0000-baseline.sql");
+const BASELINE = resolve(
+  TEST_DATABASE.PACKAGE_ROOT,
+  CHANGESET.DIR,
+  "0000-baseline.sql"
+);
 const EXISTING_USER = "existing-user";
 const LAURA_VIEWER = "laura-viewer";
 /** A User whose access was revoked by deleting their Memberships. */
@@ -51,8 +53,8 @@ const NO_MEMBERSHIP = "no-membership";
 
 /** Every changeset above the baseline, so the rollback test survives new ones. */
 const CHANGESETS_AFTER_BASELINE =
-  readdirSync(resolve(PACKAGE_DIR, "changelog/changesets")).filter((file) =>
-    CHANGESET_FILE.test(file)
+  readdirSync(resolve(TEST_DATABASE.PACKAGE_ROOT, CHANGESET.DIR)).filter(
+    (file) => PATTERN.CHANGESET.FILE.test(file)
   ).length - 1;
 
 describe("changelog on an empty database", () => {
@@ -64,7 +66,7 @@ describe("changelog on an empty database", () => {
     await recreateDatabase(database);
     client = clientFor(url);
     liquibase(url, "update");
-  }, DOCKER_TIMEOUT);
+  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
 
   afterAll(async () => {
     await client.$disconnect();
@@ -85,8 +87,8 @@ describe("changelog on an empty database", () => {
 
   it("places an Image in each App once, private by default, gone with the Image", async () => {
     await client.$executeRaw`
-      INSERT INTO image."Image" (id, key, width, height, bytes, "blurDataUrl", alt)
-      VALUES ('placed', 'placed.avif', 1, 1, 1, '', '{}')
+      INSERT INTO image."Image" (id, key, width, height, bytes, "blurDataUrl", alt, "updatedAt")
+      VALUES ('placed', 'placed.avif', 1, 1, 1, '', '{}', now())
     `;
     await client.$executeRaw`
       INSERT INTO image."ImageApp" ("imageId", app) VALUES ('placed', 'laura')
@@ -144,7 +146,7 @@ describe("changelog on a database that already has the tables", () => {
       VALUES (${LAURA_VIEWER}, 'viewer@allonfire.test', now(), 'VIEWER', ARRAY['laura', 'social'])
     `;
     liquibase(url, "update");
-  }, DOCKER_TIMEOUT);
+  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
 
   afterAll(async () => {
     await client.$disconnect();
@@ -217,7 +219,7 @@ describe("rolling back the schema move", () => {
       INSERT INTO auth."Membership" ("userId", app, role)
       VALUES (${LAURA_VIEWER}, 'laura', 'VIEWER')
     `;
-  }, DOCKER_TIMEOUT);
+  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
 
   afterAll(async () => {
     await client.$disconnect();
@@ -237,7 +239,7 @@ describe("rolling back the schema move", () => {
       `;
       expect(schemas).toEqual([]);
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 
   it("gives a User back the Apps and Role their Memberships held, and nothing without one", async () => {
@@ -260,12 +262,15 @@ describe("rolling back the schema move", () => {
       expect(await tablesIn(client, "laura")).toEqual(LAURA_TABLES);
       expect(await tablesIn(client, "image")).toEqual(IMAGE_TABLES);
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 });
 
 const { version } = parseJsonWith(
-  readFileSync(resolve(PACKAGE_DIR, "../../package.json"), "utf8"),
+  readFileSync(
+    resolve(TEST_DATABASE.PACKAGE_ROOT, "../../package.json"),
+    "utf8"
+  ),
   z.object({ version: z.string() })
 );
 const RELEASE_TAG = `v${version}`;
@@ -299,7 +304,7 @@ describe("deploy", () => {
       liquibase(url, "deploy");
       expect(await tags(client)).toEqual([RELEASE_TAG]);
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 
   it(
@@ -309,6 +314,6 @@ describe("deploy", () => {
       liquibase(url, "deploy");
       expect(await tags(client)).toEqual([RELEASE_TAG]);
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 });

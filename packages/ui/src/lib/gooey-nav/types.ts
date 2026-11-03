@@ -26,7 +26,7 @@ export type PillState = {
 };
 
 /** A drop's flight: a cubic Bézier, four points as x, y pairs. */
-export type DropPath = readonly [
+type DropPath = readonly [
   number,
   number,
   number,
@@ -37,7 +37,7 @@ export type DropPath = readonly [
   number,
 ];
 
-export type DropPhase = "waiting" | "flying" | "absorbing";
+type DropPhase = "waiting" | "flying" | "absorbing";
 
 /** A particle of goo on its way from one pill to another. */
 export type Drop = {

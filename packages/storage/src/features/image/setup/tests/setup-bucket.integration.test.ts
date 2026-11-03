@@ -9,7 +9,7 @@ import {
   PutBucketPolicyCommand,
 } from "@aws-sdk/client-s3";
 import { env } from "../../../../environment/environment";
-import { storedObjectUrl } from "../../../../shared/utils/stored-object-url";
+import { storedObjectUrl } from "../../../../shared/tests/stored-object-url";
 import { s3 } from "../../../s3/client";
 import { putObject } from "../../../s3/objects";
 import { dropTestBucket } from "../../../test-bucket/bucket";

@@ -42,6 +42,17 @@ describe("AOFServiceWorker", () => {
     expect(Workbox).not.toHaveBeenCalled();
   });
 
+  it("reports a failed registration, still rendering nothing", async () => {
+    const failure = new Error("registration failed");
+    const reportError = vi.fn();
+    vi.stubGlobal("reportError", reportError);
+    register.mockRejectedValueOnce(failure);
+
+    expect(renderToStaticMarkup(<AOFServiceWorker enabled />)).toBe("");
+
+    await vi.waitFor(() => expect(reportError).toHaveBeenCalledWith(failure));
+  });
+
   it("registers nothing in a browser without service workers", () => {
     vi.stubGlobal("navigator", {});
     renderToStaticMarkup(<AOFServiceWorker enabled />);

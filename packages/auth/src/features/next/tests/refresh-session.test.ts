@@ -1,5 +1,7 @@
 // @module-tag unit
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
 import { refreshSession } from "../utils/refresh-session";
@@ -47,10 +49,26 @@ describe("refreshSession", () => {
     ]);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(String(url)).toBe(
-      `${TEST_API_URL}${AUTH.PATH.BASE}${AUTH.PATH.GET_SESSION}`
+      `${LOCAL.URL.TEST_API}${AUTH.PATH.BASE}${AUTH.PATH.GET_SESSION}`
     );
     expect(new Headers(init?.headers).get("x-forwarded-for")).toBe(
       "203.0.113.7"
+    );
+  });
+});
+
+describe("refreshSession when the API fails", () => {
+  it("renews nothing and logs the error", async () => {
+    const failure = new Error("API down");
+    fetchMock.mockRejectedValueOnce(failure);
+    const error = vi
+      .spyOn(serverLogger(), "error")
+      .mockImplementation(() => undefined);
+
+    expect(await refreshSession(request(TOKEN))).toEqual([]);
+    expect(error).toHaveBeenCalledWith(
+      { err: failure },
+      AUTH.LOG_MESSAGE.SESSION_REFRESH_FAILED
     );
   });
 });

@@ -23,6 +23,7 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
 - **Tasks 5 to 12:** rows already fixed are listed per task (back-office-5/6/7, auth-1, storage-3, storage-14, config-design-root-6/8), and so are line moves and narrowed rows.
 - **Task 12b:** reduced scope (owner). The mutation and invalidation already live in `users-mutations.ts`. The TODO.md step is gone.
 - **Task 13:** the production launch (ccf03a9) already renamed `MINIO_*` to `STORAGE_ACCESS_KEY`/`STORAGE_SECRET_KEY` with `:?` guards, and Dokploy holds the new pair. Only the `BACK_OFFICE_URL` guard is left (owner). The Watch out step is deleted.
+- **Plan A's remainders (2026-11-03):** Plan A fixed seven layer 2 rows only in their tool hit; their status ends `left for Plan B: …` (api-10, back-office-13, back-office-15, auth-9, auth-10, storage-15, storage-17). Tasks 5 to 12 now list each remainder, and Task 14's check counts them. config-design-root-5's remainder is accepted.
 - **Plan A, for awareness:** telemetry is `TELEMETRY_*` (not `OTEL_*`). It is required in production only (`:?` on `TELEMETRY_HEADERS` in the prod compose) and optional in Local and tests. Plan A Task 5 reuses core's `RESOURCE_CHANGED`, and Plan A Task 9 keeps a reduced scope. No step here assumes otherwise.
 
 ## Global Constraints
@@ -171,7 +172,8 @@ Every area task has the same steps. Its files are the ones its rows name.
 - **Task 5 (API):**
   - api-22: `shared/utils/avatar-link` was deleted (268edb1), so drop it from the fix. The wrong `locales.test-d.ts` path is now at `api.md:130`.
   - api-19 cites no tool, so it stays here.
-  - Layer 2: api-10, api-18, api-20.
+  - Layer 2: api-10, api-18, api-20. api-18 and api-20 are fixed (Plan A).
+  - api-10's remainder: the new User helpers move from `users.integration.test.ts` to `apps/api/src/shared/tests/`, and `change-password.integration.test.ts` uses them instead of its own `upsertUser` call for the Back Office Admin.
 - **Task 6 (Back Office):**
   - Already fixed:
     - back-office-5: `avatarRemoval(USERS.AVATAR_FIELD)`;
@@ -182,11 +184,13 @@ Every area task has the same steps. Its files are the ones its rows name.
     - back-office-19: `avatar-field.browser.test.tsx:420`;
     - back-office-21: `USERS.CANCEL_KANJI` at `users.ts:50`;
     - back-office-22: `user-form-parts.tsx:233`.
-  - Layer 2: back-office-9, -10, -11, -13, -15. back-office-11's `Link` stub now also strips `prefetch` in four browser tests.
+  - Layer 2: back-office-9, -10, -11, -13, -15. back-office-11's `Link` stub now also strips `prefetch` in four browser tests. back-office-9 and -10 are fixed (Plan A).
+  - back-office-13's remainder: the empty list answer, written three times, becomes one constant; `renderAt`'s four positional optionals become one options object.
+  - back-office-15's remainder: the three tests that go to Add, call `addUser` and wait for the list by hand call `addedUser`; `deleteInAnotherTab` calls `deleteFromList` instead of repeating its steps.
 - **Task 7 (auth):**
   - Already fixed: auth-1 (`handlers.ts:8` imports database's `roleIn`).
-  - auth-9 is narrowed to the `next/headers` + forwarded-for mock pair in `session-cache.test.ts` and `session.test.ts`. `apiSends` now lives only in `with-sign-in-gate.test.ts`.
-  - auth-10 is narrowed to `ADMIN` and `userRow(overrides)`, put in `stub-user-deps.ts`:
+  - auth-9: Plan A shared the `next/headers` + forwarded-for mocks (`features/next/tests/session-request-mocks.ts`). Left: `apiSends` is written in both `session.test.ts:22` and `with-sign-in-gate.test.ts:28`; it moves into `session-request-mocks.ts`, once.
+  - auth-10: Plan A fixed the clones and shared `BACK_OFFICE_ADMIN`. What is left is narrowed to `ADMIN` and `userRow(overrides)`, put in `stub-user-deps.ts`:
     - `userRow` carries `UserRecord`'s new `version`;
     - Plan A Task 8's `json()` replaces the request helpers, and Task 1's `fillPath` replaces `userPath`;
     - `hono/tests/test-host.ts` no longer exists after Plan A Task 8.
@@ -195,7 +199,9 @@ Every area task has the same steps. Its files are the ones its rows name.
     - storage-3: `deps.ts:32` reads `log: LeftoverLog`;
     - storage-14: fixed by Plan A Task 8's shared host.
   - storage-16: `upload()` goes beside Plan A Task 8's shared `json()`, or into `stub-image-deps.ts`, since storage's `test-host.ts` is deleted.
-  - Probably layer 2: storage-5, -6, -15, -17.
+  - Layer 2: storage-6 (fixed, Plan A), storage-15, storage-17.
+  - storage-15's remainder (`hono/tests/write.test.ts`): `placedIn` (`:61`) and `publicIn` (`:73`) become one function taking whether the Image is public; the duplicate-Image PATCH test moves out of `describe("DELETE /images")` into the PATCH block.
+  - storage-17's remainder (`hono/tests/read.test.ts`): `KEY` (`:27`) and the expected bodies are read from the stub record, not retyped.
 - **Task 9 (database):**
   - database-6: `updateUser` now locks the row and checks the Version (instant-users).
     - `CREDENTIAL` is at `user.service.ts:191`, the Memberships at `:230-231`, the password at `:239-250`, and `createUser` at `:314`.
@@ -216,9 +222,9 @@ Every area task has the same steps. Its files are the ones its rows name.
     - config-design-root-8: Task 13.
   - config-design-root-9 is left only for `BACK_OFFICE_URL`, which Task 13 fixes.
   - config-design-root-4: the e2e services are `storage image-server cdn` (`ci.yml:138`), so the fix starts `database redis storage image-server cdn`.
-  - config-design-root-5 is Plan A Task 17.
+  - config-design-root-5: Plan A Task 17 fixed the setup blocks; `pnpm db:generate` staying a step in each job is accepted (`plan-a.json`).
 
-- [ ] **Step 1: List** the section's rows marked `open (Plan B)`. Re-read each one at its `file:line`, and mark any that are already fixed.
+- [ ] **Step 1: List** the section's rows marked `open (Plan B)`, plus its layer 2 rows whose status says `left for Plan B` (the remainders above). Re-read each one at its `file:line`, and mark any that are already fixed.
 - [ ] **Step 2: Write failing tests** for the rows that change behaviour. Each test is named for the row's visible effect: for example api-24, "translates every code in every locale without throwing", or core-12, a doc comment that names a constant that exists, checked by a grep in the area's tests.
 - [ ] **Step 3: Run** them. Expected: FAIL.
 - [ ] **Step 4: Fix every row** as its `fix` cell and correction say. Where a row turns out to need a decision the report doesn't settle, stop and ask the owner. Don't guess.
@@ -274,6 +280,6 @@ config-design-root-8 is already fixed. The production launch (ccf03a9) renamed `
 
 **Files:** `docs/superpowers/specs/2026-10-29-quality-scan-report.md`
 
-- [ ] **Step 1: Check.** Run `grep -c "open (Plan B)"` on the report. Expected: `0`. Every row is now `fixed` or `accepted: <reason>`.
+- [ ] **Step 1: Check.** Run `grep -cE "open \(Plan B\)|left for Plan B"` on the report. Expected: `0`. Every row is now `fixed` or `accepted: <reason>`, the remainders included (their status in `.superpowers/quality-scan/plan-a.json` becomes `fixed (Plan A, Plan B)`, then `node .superpowers/quality-scan/build-report.js` rewrites the report).
 - [ ] **Step 2: Check the rules.** For each rule 2, 3, 4, 7, 8, 11, 12 and 13, grep its guide. Expected: the rule's text is there, and the pattern it forbids no longer appears in the code.
 - [ ] **Step 3: Gate**, repo-wide: `pnpm lint && pnpm check-types && pnpm test && pnpm test:browser && pnpm test:e2e && pnpm knip && pnpm knip:production && pnpm dupes`. Expected: all green.

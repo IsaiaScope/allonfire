@@ -180,3 +180,22 @@ describe("the production images", () => {
     expect(job).toContain("platforms: linux/arm64");
   });
 });
+
+/** One `$TURBO_ROOT$/…` entry of a turbo.json, its repo path captured. */
+const TURBO_ROOT_INPUT = /"\$TURBO_ROOT\$\/([^"]+)"/g;
+/** The repo files outside config that config's tests read. */
+const READ_FROM_REPO = [
+  "docker/docker-compose.prod.yml",
+  ".husky/pre-commit",
+  "package.json",
+  "pnpm-lock.yaml",
+] as const;
+
+// ponytail: turbo.json is JSONC and config cannot import core's parseJson
+// (core depends on config), so the entries are matched in the text.
+it("config's turbo test inputs list every repo file its tests read", () => {
+  const inputs = [
+    ...read("packages/config/turbo.json").matchAll(TURBO_ROOT_INPUT),
+  ].map(([, path]) => path);
+  expect(inputs).toEqual(expect.arrayContaining([...READ_FROM_REPO]));
+});

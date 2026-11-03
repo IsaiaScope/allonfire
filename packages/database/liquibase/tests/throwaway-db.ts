@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { testRunStamp } from "@allonfire/config/tests/run/test-run";
 import { PrismaClient } from "../../generated/prisma/client";
 import { env } from "../../src/environment/environment";
+import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
 import {
   databaseUrl,
   testDatabaseName,
@@ -9,7 +10,6 @@ import {
 import {
   createDatabase,
   dropDatabase as dropOnServer,
-  PACKAGE_DIR,
 } from "../../src/features/test-database/server";
 
 const LIQUIBASE_TABLE = /^databasechangelog/;
@@ -43,7 +43,7 @@ export function executeFile(url: string, file: string): void {
   execFileSync(
     "pnpm",
     ["exec", "prisma", "db", "execute", "--file", file, "--url", url],
-    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
+    { cwd: TEST_DATABASE.PACKAGE_ROOT, encoding: "utf8", stdio: "pipe" }
   );
 }
 

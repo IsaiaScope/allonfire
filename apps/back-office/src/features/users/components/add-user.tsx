@@ -1,58 +1,25 @@
 "use client";
-import type { App } from "@allonfire/database/enums";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
-import {
-  IconKey,
-  IconKeyFilled,
-  IconMail,
-  IconUser,
-  IconUserPlus,
-} from "@tabler/icons-react";
+import { IconMail, IconUserPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  type ReactNode,
-  type SubmitEvent,
-  useActionState,
-  useCallback,
-  useEffect,
-} from "react";
-import { useRouter } from "@/features/i18n/navigation";
+import { type SubmitEvent, useActionState, useCallback } from "react";
 import { FormAlert } from "@/shared/components/form-alert";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { addUser } from "../actions/add-user";
 import { USERS } from "../constants/users";
 import {
   type AddUserFields,
-  type AddUserNotice,
   type AddUserValues,
   addUserSchema,
 } from "../utils/add-user-schema";
-import { NO_ROLES, passwordChecks } from "../utils/user-form-schema";
-import { PasswordRules } from "./password-rules";
+import { NO_ROLES } from "../utils/user-form-schema";
+import { AvatarField, NameField, PasswordFields } from "./user-form-fields";
 import {
-  AVATAR_DRESS,
   RoleRows,
   UserFormActions,
-  useAvatarLabels,
+  useToastThenList,
+  useUserFieldMessages,
 } from "./user-form-parts";
-
-/**
- * The User was added but their picture was not saved: says so in a toast and
- * opens the list, where the User shows with their initial.
- */
-const useAddedWithoutPicture = (notice: AddUserNotice | undefined) => {
-  const t = useTranslations("Users.add.avatar");
-  const router = useRouter();
-  useEffect(() => {
-    if (notice !== USERS.ADD_NOTICE.AVATAR_FAILED) {
-      return;
-    }
-    aofToast(t("failed"), "warning");
-    router.replace(BACK_OFFICE.PAGE.USERS);
-  }, [notice, router, t]);
-};
 
 /** Where the form starts: nothing typed, every App at "Not a member". */
 const EMPTY: AddUserFields = {
@@ -62,10 +29,6 @@ const EMPTY: AddUserFields = {
   password: "",
   roles: NO_ROLES,
 };
-
-/** The password rules met by what the form holds. */
-const checksOf = ({ values }: { values: AddUserValues }) =>
-  passwordChecks(values);
 
 /**
  * The Add a User form, an AOF form (ADR 0017): email, name, the password the
@@ -80,8 +43,15 @@ export const AddUser = () => {
     addUser.bind(null, locale),
     {}
   );
-  useAddedWithoutPicture(notice);
-  const avatarLabels = useAvatarLabels();
+  // The User was added but their picture was not saved: the list, where
+  // they show with their initial.
+  useToastThenList(notice, {
+    [USERS.ADD_NOTICE.AVATAR_FAILED]: {
+      kind: "warning",
+      message: t("Users.add.avatarFailed"),
+    },
+  });
+  const fieldMessages = useUserFieldMessages();
   // The picture is the form's own: the action never hands it back.
   const startValues: AddUserValues = { avatar: null, ...(values ?? EMPTY) };
   const form = useAOFForm({
@@ -89,20 +59,12 @@ export const AddUser = () => {
     // A submit runs the onChange validators too.
     validators: {
       onChange: addUserSchema({
+        ...fieldMessages,
         emailInvalid: t("Users.add.field.emailInvalid"),
         emailRequired: t("Users.add.field.emailRequired"),
-        nameRequired: t("Users.add.field.nameRequired"),
-        passwordMismatch: t("Users.add.field.passwordMismatch"),
-        passwordWeak: t("Users.add.field.passwordWeak"),
       }),
     },
   });
-  const roleField = useCallback(
-    (app: App, choice: ReactNode) => (
-      <form.AppField name={`roles.${app}`}>{() => choice}</form.AppField>
-    ),
-    [form]
-  );
   const submit = useCallback(
     (event: SubmitEvent<HTMLFormElement>) =>
       submitAOFForm(form, event, formDataTo(action)),
@@ -142,56 +104,17 @@ export const AddUser = () => {
                 />
               )}
             </form.AppField>
-            <form.AppField name="name">
-              {(field) => (
-                <field.TextField
-                  autoComplete="off"
-                  icon={<IconUser />}
-                  label={t("Users.add.name")}
-                  required
-                />
-              )}
-            </form.AppField>
-            <form.AppField name={USERS.AVATAR_FIELD}>
-              {(field) => (
-                <field.AvatarField
-                  {...AVATAR_DRESS}
-                  label={t("Users.add.avatar.label")}
-                  labels={avatarLabels}
-                />
-              )}
-            </form.AppField>
+            <NameField fields={USERS.FORM_FIELDS.NAME} form={form} />
+            <AvatarField fields={USERS.FORM_FIELDS.AVATAR} form={form} />
           </div>
           <div className="flex flex-col">
-            <form.AppField name="password">
-              {(field) => (
-                <field.TextField
-                  autoComplete="new-password"
-                  icon={<IconKey />}
-                  label={t("Users.add.password")}
-                  required
-                  reveal={t("Users.add.showPassword")}
-                  type="password"
-                />
-              )}
-            </form.AppField>
-            <form.AppField name="confirmPassword">
-              {(field) => (
-                <field.TextField
-                  autoComplete="new-password"
-                  icon={<IconKeyFilled />}
-                  label={t("Users.add.confirmPassword")}
-                  required
-                  reveal={t("Users.add.showPassword")}
-                  type="password"
-                />
-              )}
-            </form.AppField>
-            <form.Subscribe selector={checksOf}>
-              {(checks) => <PasswordRules checks={checks} />}
-            </form.Subscribe>
+            <PasswordFields
+              fields={USERS.FORM_FIELDS.PASSWORD}
+              form={form}
+              required
+            />
           </div>
-          <RoleRows field={roleField} />
+          <RoleRows fields={USERS.FORM_FIELDS.ROLES} form={form} />
           {/* The end of the form: why the last submit failed, in its kept place. */}
           <FormAlert className="@2xl:col-span-2 mt-4">
             {error ? t(`Users.add.error.${error}`) : null}

@@ -34,11 +34,28 @@ const REDACT_PATHS = [
   "*.*.token",
 ] as const;
 
-/** Everything about logging every Host shares: `LOG.LEVEL.*` and what pino redacts. */
+/**
+ * Everything about logging every Host shares: `LOG.LEVEL.*`, its messages,
+ * what pino redacts, and the transports a line can leave through.
+ */
 export const LOG = {
   LEVEL,
+  /** What a Host logs in its own words, the same in every Host. */
+  MESSAGE: {
+    /** A request the server failed to answer (Next's `onRequestError`). */
+    REQUEST_FAILED: "request failed",
+  },
   REDACT: {
     CENSOR: "[Redacted]",
     PATHS: REDACT_PATHS,
+  },
+  /** pino transport targets, resolved by pino from the logger's own package. */
+  TRANSPORT: {
+    /** Ships every line to the OTLP collector. */
+    OTLP: "pino-opentelemetry-transport",
+    /** Coloured, human-readable lines for development. */
+    PRETTY: "pino-pretty",
+    /** Plain JSON to a file descriptor, as `pino()` writes without a transport. */
+    STDOUT: "pino/file",
   },
 } as const;

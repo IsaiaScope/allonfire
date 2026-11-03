@@ -30,24 +30,28 @@ export const pictureOf = (change: AOFAvatarChange) =>
   change.kind === "picture" ? change.file : null;
 
 /**
- * Sends the picture's change once the User is saved: the API's answer (a
- * network error when it never got there, so the action still answers), or
- * null when there was nothing to send.
+ * Sends the picture's change once the User is saved, on the `version` that
+ * save answered, so a change landing between the two is refused (409): the
+ * API's answer (a network error when it never got there, so the action still
+ * answers), or null when there was nothing to send.
  */
 export const sendAvatarChange = async (
   client: ApiClient,
-  id: string,
-  change: AOFAvatarChange
+  {
+    change,
+    id,
+    version,
+  }: { change: AOFAvatarChange; id: string; version: string }
 ): Promise<Response | null> => {
   const { avatar } = client[API.VERSION.CURRENT].users[":id"];
   if (change.kind === "picture") {
     return await avatar
-      .$put({ form: { file: change.file }, param: { id } })
+      .$put({ form: { file: change.file, version }, param: { id } })
       .catch(() => Response.error());
   }
   if (change.kind === "removed") {
     return await avatar
-      .$delete({ param: { id } })
+      .$delete({ json: { version }, param: { id } })
       .catch(() => Response.error());
   }
   return null;

@@ -35,8 +35,9 @@ this). Revisit if a non-TypeScript service ever needs a streaming RPC contract.
   TanStack Query expects. One sign-in now holds for every App on the domain;
   Allowed apps still decide who enters which.
 - **Auth routes** are Better Auth's, mounted behind one catch-all, so `hc` has
-  no types for them. Apps call them with Better Auth's own client
-  (`createApiAuthClient` in `@allonfire/auth/features/next/utils/auth-client`),
-  typed from the server's `Auth`.
+  no types for them. Apps call them through auth's Next helpers (sign-in,
+  sign-out, the Session), which wrap Better Auth's own client
+  (`createApiAuthClient`, internal to `@allonfire/auth`), typed from the
+  server's `Auth`.
 - **Not axios.** It would replace these types with hand-written ones and add a
   dependency for what `fetch` already does.

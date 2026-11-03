@@ -1,6 +1,6 @@
 "use client";
 
-import type { USER_SEARCH } from "@allonfire/auth/features/users/constants/users";
+import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { AOFButton } from "@allonfire/ui/components/aof-button";
@@ -26,7 +26,7 @@ const APPS = objectValues(App).map((app) => ({
   value: app,
 }));
 
-export type UserSearch = ReturnType<typeof USER_SEARCH.parse>;
+export type UserSearch = ReturnType<typeof USER.SEARCH.parse>;
 
 /**
  * The Users list's Filter button, opening on the toolbar's pictogram tile,

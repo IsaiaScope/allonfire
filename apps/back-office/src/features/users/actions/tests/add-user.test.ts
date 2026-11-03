@@ -77,6 +77,23 @@ describe("addUser", () => {
     expect(redirect).toHaveBeenCalledOnce();
   });
 
+  it("sends the picture with the new User's Version", async () => {
+    FAKE_API.answers.set(HTTP.METHOD.POST, {
+      body: { id: "user-new", version: "version-new" },
+      status: HTTP.STATUS.CREATED,
+    });
+    await addUser(
+      "en",
+      {},
+      formOf({
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+      })
+    );
+    expect(
+      FAKE_API.sent.find(({ method }) => method === HTTP.METHOD.PUT)?.body
+    ).toEqual({ version: "version-new" });
+  });
+
   it("says so when the picture's call never reaches the API, the list still dropped", async () => {
     FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
     FAKE_API.unreachable.add(HTTP.METHOD.PUT);

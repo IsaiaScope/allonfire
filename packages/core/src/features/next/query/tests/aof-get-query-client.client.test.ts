@@ -1,5 +1,6 @@
 // @module-tag unit
 import { environmentManager } from "@tanstack/react-query";
+import { UNIT } from "../../../../shared/constants/units";
 import { AOFGetQueryClient } from "../aof-get-query-client";
 
 describe("AOFGetQueryClient in the browser", () => {
@@ -8,6 +9,8 @@ describe("AOFGetQueryClient in the browser", () => {
     const first = AOFGetQueryClient();
     const second = AOFGetQueryClient({ staleTime: 1 });
     expect(second).toBe(first);
-    expect(second.getDefaultOptions().queries?.staleTime).toBe(60_000);
+    expect(second.getDefaultOptions().queries?.staleTime).toBe(
+      UNIT.MS_PER_MINUTE
+    );
   });
 });

@@ -1,13 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { PrismaClient } from "../../../generated/prisma/client";
+import { TEST_DATABASE } from "./constants/test-database";
 import { databaseUrl } from "./names";
-
-export const PACKAGE_DIR = resolve(import.meta.dirname, "../../..");
-
-/** Liquibase runs in Docker; the first build pulls the image. */
-export const DOCKER_TIMEOUT = 5 * UNIT.MS_PER_MINUTE;
 
 /** Runs `run` on a client for `url`, disconnected however it ends. */
 export async function withClient<T>(
@@ -55,6 +49,7 @@ export const createDatabase = (serverUrl: string, name: string) =>
  * Runs the db-migrate image against `url`; returns its stdout. `extraEnv`
  * holds `NAME=value` pairs for scripts/liquibase.sh (DB_BACKUPS_VOLUME,
  * BACKUP_KEEP).
+ * @internal
  */
 export function migrateImage(
   url: string,
@@ -73,7 +68,7 @@ export function migrateImage(
       "scripts/liquibase.sh",
       ...args,
     ],
-    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
+    { cwd: TEST_DATABASE.PACKAGE_ROOT, encoding: "utf8", stdio: "pipe" }
   );
 }
 

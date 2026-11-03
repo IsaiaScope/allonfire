@@ -1,8 +1,5 @@
 // @module-tag integration
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { worker } from "@allonfire/config/tests/browser/msw";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
@@ -47,9 +44,9 @@ const HIT_AREA_SLACK_PX = 8;
 const TEXT = "isa";
 const LAURA = APP_ENTRY[App.LAURA].name;
 /** The search as the address holds it: the words, then with a filter or two. */
-const WORDS = USER_SEARCH.serialize({ text: TEXT });
-const IN_LAURA = USER_SEARCH.serialize({ app: [App.LAURA], text: TEXT });
-const ADMIN_IN_LAURA = USER_SEARCH.serialize({
+const WORDS = USER.SEARCH.serialize({ text: TEXT });
+const IN_LAURA = USER.SEARCH.serialize({ app: [App.LAURA], text: TEXT });
+const ADMIN_IN_LAURA = USER.SEARCH.serialize({
   app: [App.LAURA],
   role: [Role.ADMIN],
   text: TEXT,
@@ -124,6 +121,27 @@ const renderAt = (
       </NuqsTestingAdapter>
     </QueryClientProvider>
   );
+
+type Screen = Awaited<ReturnType<typeof renderAt>>;
+
+/** The first User's copy button in the table, and their email. */
+const copyButtonOfFirst = (screen: Screen) => {
+  const email = USERS_PAGE.users[0]?.email ?? "";
+  return {
+    button: screen
+      .getByRole("table", { name: t.list })
+      .getByRole("button", { name: t.copy.label.replace("{email}", email) }),
+    email,
+  };
+};
+
+/** Opens the Filter panel and resets every filter. */
+const resetAllFilters = async (screen: Screen) => {
+  await screen.getByRole("button", { name: t.filter.button }).click();
+  await page
+    .getByRole("button", { exact: true, name: t.filter.resetAll })
+    .click();
+};
 
 /** What the open tooltip says (Base UI's popup carries no role). */
 const tipText = () =>
@@ -200,13 +218,8 @@ describe("UsersTable", () => {
     const writeText = vi
       .spyOn(navigator.clipboard, "writeText")
       .mockResolvedValue();
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const email = laura?.email ?? "";
-    await screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", { name: t.copy.label.replace("{email}", email) })
-      .click();
+    const { button, email } = copyButtonOfFirst(await renderAt());
+    await button.click();
     expect(writeText).toHaveBeenCalledWith(email);
     await expect.poll(tipText).toBe(t.copy.done);
     expect(document.querySelector("[data-sonner-toast]")).toBeNull();
@@ -214,13 +227,7 @@ describe("UsersTable", () => {
 
   it("a second copy keeps the tip open its full time again", async () => {
     vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const button = screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", {
-        name: t.copy.label.replace("{email}", laura?.email ?? ""),
-      });
+    const { button } = copyButtonOfFirst(await renderAt());
     await button.click();
     await expect.poll(tipText).toBe(t.copy.done);
     await new Promise((resolve) => setTimeout(resolve, USERS.COPIED_MS / 2));
@@ -236,13 +243,7 @@ describe("UsersTable", () => {
     vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(
       new Error("denied")
     );
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const button = screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", {
-        name: t.copy.label.replace("{email}", laura?.email ?? ""),
-      });
+    const { button } = copyButtonOfFirst(await renderAt());
     await expect.element(button).toBeVisible();
     button.element().focus();
     await userEvent.keyboard("{Enter}");
@@ -329,10 +330,7 @@ describe("UsersTable controls", () => {
     expect(onUrlUpdate.mock.lastCall?.[0].options.history).toBe(
       USERS.HISTORY.SEARCH.history
     );
-    await screen.getByRole("button", { name: t.filter.button }).click();
-    await page
-      .getByRole("button", { exact: true, name: t.filter.resetAll })
-      .click();
+    await resetAllFilters(screen);
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
@@ -366,7 +364,7 @@ describe("UsersTable filters", () => {
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(
-        USER_SEARCH.serialize({
+        USER.SEARCH.serialize({
           app: [App.LAURA],
           role: [Role.ADMIN, Role.USER],
           text: TEXT,
@@ -381,7 +379,7 @@ describe("UsersTable filters", () => {
 
   it("counts the values chosen on the Filter button, and a list's past two", async () => {
     const screen = await renderAt(
-      `?${USER.PARAM.SEARCH}=${USER_SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN, Role.USER, Role.VIEWER], text: "" })}`
+      `?${USER.PARAM.SEARCH}=${USER.SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN, Role.USER, Role.VIEWER], text: "" })}`
     );
     await screen.getByRole("button", { name: `${t.filter.button} 4` }).click();
     await expect
@@ -411,7 +409,7 @@ describe("UsersTable filters", () => {
     await page.getByRole("option", { name: LAURA }).click();
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
-      .toBe(USER_SEARCH.serialize({ app: [App.LAURA], text: "" }));
+      .toBe(USER.SEARCH.serialize({ app: [App.LAURA], text: "" }));
   });
 
   it("a list's Reset clears only that list", async () => {
@@ -430,10 +428,7 @@ describe("UsersTable filters", () => {
       `?${new URLSearchParams({ [USER.PARAM.PAGE]: "3", [USER.PARAM.SEARCH]: ADMIN_IN_LAURA })}`,
       onUrlUpdate
     );
-    await screen.getByRole("button", { name: t.filter.button }).click();
-    await page
-      .getByRole("button", { exact: true, name: t.filter.resetAll })
-      .click();
+    await resetAllFilters(screen);
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
@@ -640,6 +635,17 @@ const renderAsSelf = (search = "") => renderAt(search, vi.fn(), EN, SELF);
 const deleteButton = () =>
   page.getByRole("button", { exact: true, name: del.action });
 const dialog = () => page.getByRole("alertdialog");
+/** Ticks OTHER_EMAIL's row in the table. */
+const tickOther = (screen: Screen) =>
+  screen
+    .getByRole("table")
+    .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
+    .click();
+/** Presses Delete, then confirms in the dialog. */
+const confirmDelete = async () => {
+  await deleteButton().click();
+  await dialog().getByRole("button", { name: del.confirm }).click();
+};
 
 describe("UsersTable selection", () => {
   beforeEach(() => {
@@ -697,10 +703,7 @@ describe("UsersTable selection", () => {
   it("a page change clears the selection", async () => {
     listAnswering(() => HttpResponse.json({ ...USERS_PAGE, ...TWO_PAGES }));
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     await expect.element(deleteButton()).toBeEnabled();
     await screen.getByRole("button", { name: t.pagination.next }).click();
     await expect.element(deleteButton()).toBeDisabled();
@@ -754,17 +757,13 @@ describe("UsersTable deletion", () => {
       .getByRole("table")
       .getByRole("checkbox", { name: del.selectAll })
       .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.poll(() => deletions).toEqual([[NO_APP?.id]]);
   });
 
   it("Delete asks first; Cancel keeps the selection", async () => {
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     await deleteButton().click();
     await expect.element(dialog().getByText(DELETE_ONE)).toBeVisible();
     await expect.element(dialog().getByText(del.description)).toBeVisible();
@@ -781,8 +780,7 @@ describe("UsersTable deletion", () => {
       .getByRole("table")
       .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) });
     await box.click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.poll(() => deletions.length).toBe(1);
     await expect.element(dialog()).not.toBeInTheDocument();
     const row = box.element().closest("tr");
@@ -794,13 +792,9 @@ describe("UsersTable deletion", () => {
   it("confirming deletes, says how many, clears the selection and refetches the list", async () => {
     listAnswering(() => HttpResponse.json(USERS_PAGE));
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     const asked = sent.length;
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.element(page.getByText(ONE_DELETED)).toBeVisible();
     await expect.element(deleteButton()).toBeDisabled();
     await expect.poll(() => sent.length).toBeGreaterThan(asked);
@@ -814,13 +808,9 @@ describe("UsersTable deletion, past the usual path", () => {
     listAnswering(() => HttpResponse.json(USERS_PAGE));
     deleteAnswering(() => 0);
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     const asked = sent.length;
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.element(page.getByText(ALREADY_GONE_ONE)).toBeVisible();
     await expect.poll(() => sent.length).toBeGreaterThan(asked);
   });
@@ -828,12 +818,8 @@ describe("UsersTable deletion, past the usual path", () => {
   it("keeps the selection and says so when the delete fails", async () => {
     deleteAnswering(() => null);
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await tickOther(screen);
+    await confirmDelete();
     await expect.element(page.getByText(del.failed)).toBeVisible();
     await expect.element(dialog()).not.toBeInTheDocument();
     await expect.element(deleteButton()).toBeEnabled();
@@ -869,12 +855,8 @@ describe("UsersTable deletion, past the usual path", () => {
       EN,
       SELF
     );
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await tickOther(screen);
+    await confirmDelete();
     await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
   });
 });

@@ -139,6 +139,7 @@ const acceptedOf = (accept: string | undefined) =>
  * iPhone's `IMG_0001.HEIC`, which some browsers hand over with no type),
  * else a size over `maxBytes`. DiceUI's own check is case-sensitive and
  * answers in English, so this one runs first.
+ * @internal
  */
 export const fileRefusal = (
   {
@@ -171,8 +172,7 @@ export const fileRefusal = (
 
 /** `accept` with each extension in capitals too, for DiceUI's own check,
  *  which a file `fileRefusal` took must pass. */
-const acceptBothCases = (accept: string | undefined) =>
-  accept &&
+const acceptBothCases = (accept: string) =>
   acceptedOf(accept)
     .flatMap((entry) =>
       entry.startsWith(".") ? [entry, entry.toUpperCase()] : [entry]
@@ -194,7 +194,7 @@ export const AOFFileUpload = ({
   "aria-describedby": describedBy,
   busy = false,
   className,
-  disabled,
+  disabled = false,
   icon,
   items,
   label,
@@ -215,10 +215,10 @@ export const AOFFileUpload = ({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <FileUpload
-        accept={acceptBothCases(accept)}
+        {...(accept === undefined ? {} : { accept: acceptBothCases(accept) })}
+        {...(label === undefined ? {} : { label })}
+        {...(multiple === undefined ? {} : { multiple })}
         disabled={busy || disabled}
-        label={label}
-        multiple={multiple}
         onFileValidate={validate}
         {...props}
       >

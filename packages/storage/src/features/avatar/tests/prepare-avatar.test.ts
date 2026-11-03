@@ -7,6 +7,7 @@ import sharp from "sharp";
 import { IMAGE } from "../../image/constants/image";
 import { IMAGE_FIXTURE_FILES } from "../../image/fixtures/constants/files";
 import { asImageError } from "../../image/hono/utils/errors";
+import { UnsupportedImageError } from "../../image/prepare/prepare-image";
 import { AVATAR } from "../constants/avatar";
 import { prepareAvatar } from "../prepare-avatar";
 
@@ -63,5 +64,13 @@ describe("prepareAvatar", () => {
       code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
       status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
     });
+  });
+
+  it("refuses a truncated JPEG as unsupported, never a server error", async () => {
+    const photo = file("photo.jpg");
+    const half = photo.subarray(0, Math.floor(photo.length / 2));
+    await expect(prepareAvatar(half)).rejects.toBeInstanceOf(
+      UnsupportedImageError
+    );
   });
 });

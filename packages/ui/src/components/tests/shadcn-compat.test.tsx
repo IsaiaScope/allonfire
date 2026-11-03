@@ -1,36 +1,48 @@
 // @module-tag unit
-// Type-checked by `pnpm check-types` under this package's tsconfig: these are
-// the generated components that break the repo's strict flags, so a consumer
-// that stops relaxing them fails here, not on the first AOF date picker.
+// Type-checked by `pnpm check-types` under this package's strict tsconfig:
+// these are the generated components that break the repo's strict flags, so
+// one whose generated .d.ts goes missing or stale fails here, not on the
+// first AOF date picker.
 
 import { existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Calendar } from "@allonfire/shadcn/components/calendar";
+import { Faceted, FacetedTrigger } from "@allonfire/shadcn/components/faceted";
 import { ScrollArea } from "@allonfire/shadcn/components/scroll-area";
+import { Toaster } from "@allonfire/shadcn/components/sonner";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 
 describe("shadcn components under a consumer's tsconfig", () => {
-  it("renders the calendar and the scroll area", () => {
+  it("renders the calendar, the faceted filter, the scroll area and the toaster", () => {
     const html = renderToStaticMarkup(
       <>
         <Calendar />
+        <Faceted>
+          <FacetedTrigger>filter</FacetedTrigger>
+        </Faceted>
         <ScrollArea>content</ScrollArea>
+        <Toaster />
       </>
     );
     expect(html).toContain('data-slot="calendar"');
+    expect(html).toContain('data-slot="faceted-trigger"');
     expect(html).toContain('data-slot="scroll-area"');
+    // Sonner draws no toaster until a toast shows: only its live region.
+    expect(html).toContain('<section aria-label="Notifications');
   });
 });
 
-// packages/shadcn's components, and the two tsconfigs that check them: the
-// package's strict one and the lenient one beside the vendor files that are
+// packages/shadcn's components, and the tsconfigs that check them: the
+// package's strict one and the lenient ones beside the vendor files that are
 // not strict TypeScript.
 const SHADCN = fileURLToPath(new URL("../../../../shadcn/", import.meta.url));
 const COMPONENTS = `${SHADCN}src/components/`;
 const TSX = /\.tsx$/;
 /** macOS's `._` sidecars on the exFAT drive (CLAUDE.md): not components. */
 const isComponent = (file: string) => TSX.test(file) && !file.startsWith("._");
+/** A tsconfig beside the components: a lenient one. */
+const TSCONFIG = /^tsconfig(\.[\w-]+)?\.json$/;
 
 /** The component files a tsconfig checks. */
 const checkedBy = (config: string) => {
@@ -46,13 +58,16 @@ const checkedBy = (config: string) => {
     .filter(isComponent);
 };
 
-describe("packages/shadcn's two tsconfigs", () => {
+describe("packages/shadcn's tsconfigs", () => {
   const strict = checkedBy(`${SHADCN}tsconfig.json`);
-  const lenient = checkedBy(`${COMPONENTS}tsconfig.json`);
+  const lenients = readdirSync(COMPONENTS)
+    .filter((file) => TSCONFIG.test(file))
+    .map((file) => checkedBy(`${COMPONENTS}${file}`));
+  const lenient = lenients.flat();
 
   it("check every component exactly once", () => {
     const components = readdirSync(COMPONENTS).filter(isComponent).sort();
-    expect(strict.filter((file) => lenient.includes(file))).toEqual([]);
+    expect(lenients.length).toBeGreaterThan(1);
     expect([...strict, ...lenient].sort()).toEqual(components);
   });
 

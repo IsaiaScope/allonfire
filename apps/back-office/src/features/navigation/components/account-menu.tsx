@@ -50,7 +50,7 @@ export type AccountMenuProps = {
   /** The User's Role in the Back Office, translated. */
   role: string;
   /** The Role's seal (`NAVIGATION.ROLE_SEAL`), pressed beside the User. */
-  seal?: string;
+  seal?: string | undefined;
 };
 
 const { DARK, LIGHT } = METADATA.COLOR_SCHEME;

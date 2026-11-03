@@ -1,5 +1,7 @@
 // @module-tag unit
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { NextResponse } from "next/server";
+import { AUTH } from "../../../shared/constants/auth";
 import { signOutOfApi } from "../utils/sign-out";
 
 /** The `Secure` attribute, not the `__Secure-` in a cookie's name. */
@@ -85,8 +87,16 @@ describe("signOutOfApi", () => {
   });
 
   it("still clears the cookies, with their Domain and Secure, when the API is down", async () => {
-    fetchMock.mockRejectedValueOnce(new Error("unreachable"));
+    const failure = new Error("unreachable");
+    fetchMock.mockRejectedValueOnce(failure);
+    const error = vi
+      .spyOn(serverLogger(), "error")
+      .mockImplementation(() => undefined);
     await signOutOfApi();
+    expect(error).toHaveBeenCalledWith(
+      { err: failure },
+      AUTH.LOG_MESSAGE.SIGN_OUT_FAILED
+    );
     for (const name of [TOKEN, DATA]) {
       expect(sentFor(name)).toMatch(SECURE_ATTRIBUTE);
       expect(sentFor(name)).toContain("Expires=Thu, 01 Jan 1970");

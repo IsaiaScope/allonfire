@@ -62,7 +62,12 @@ export const useCropPictures = (onUnreadable: () => void) => {
   const pick = useCallback(
     async (file: File) => {
       setPreparing(true);
-      const drawable = await heicToJpeg(file).catch(() => null);
+      // A conversion that fails reads as unreadable, and is still reported
+      // (`reportError`, a browser global looked up on failure).
+      const drawable = await heicToJpeg(file).catch((error: unknown) => {
+        reportError(error);
+        return null;
+      });
       setPreparing(false);
       if (!(drawable && (await canDraw(drawable)))) {
         onUnreadable();

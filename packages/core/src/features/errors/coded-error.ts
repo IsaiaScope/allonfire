@@ -43,7 +43,10 @@ export class CodedError extends Error {
   }
 }
 
-/** The part of a Standard Schema issue a host reads. */
+/**
+ * The part of a Standard Schema issue a host reads.
+ * @internal
+ */
 export type StandardIssue = {
   readonly message: string;
   readonly path?:
@@ -65,7 +68,10 @@ const pathOf = (issue: StandardIssue): string =>
     )
     .join(SEPARATOR.PATH);
 
-/** A 400 `VALIDATION_FAILED`, each failed field named. */
+/**
+ * A 400 `VALIDATION_FAILED`, each failed field named.
+ * @internal
+ */
 export const validationError = (
   issues: readonly StandardIssue[]
 ): CodedError => {
@@ -80,6 +86,28 @@ export const validationError = (
     values: { count: errors.length },
   });
 };
+
+/** A 404 `NOT_FOUND`; `cause` keeps the module's own error behind it. */
+export const notFound = (options?: { cause?: unknown }): CodedError =>
+  new CodedError(
+    { code: ERROR.CODE.NOT_FOUND, status: HTTP.STATUS.NOT_FOUND },
+    options
+  );
+
+/** A 403 `FORBIDDEN`. */
+export const forbidden = (): CodedError =>
+  new CodedError({
+    code: ERROR.CODE.FORBIDDEN,
+    status: HTTP.STATUS.FORBIDDEN,
+  });
+
+/** A 413 `PAYLOAD_TOO_LARGE` naming the limit that was actually crossed. */
+export const payloadTooLarge = (limit: number): CodedError =>
+  new CodedError({
+    code: ERROR.CODE.PAYLOAD_TOO_LARGE,
+    status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
+    values: { limit },
+  });
 
 /** A validator hook (`sValidator`, hono-openapi) that throws `validationError`. */
 export const invalidHook = (result: ValidationResult): void => {

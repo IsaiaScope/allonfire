@@ -10,7 +10,10 @@ const BREAKPOINT = {
   XL: 1280,
 } as const;
 
-/** Screen widths, Tailwind's, and the windows tests draw at. */
+/**
+ * Screen widths, Tailwind's, and the windows tests draw at.
+ * @internal
+ */
 export const SCREEN = {
   BREAKPOINT,
   /**

@@ -13,7 +13,10 @@ async function dropPicked(
   return picked;
 }
 
-/** Drops what `staleTestDatabases` lists; `keep` is the template this run clones. */
+/**
+ * Drops what `staleTestDatabases` lists; `keep` is the template this run clones.
+ * @internal
+ */
 export const sweepTestDatabases = (
   serverUrl: string,
   keep: string,

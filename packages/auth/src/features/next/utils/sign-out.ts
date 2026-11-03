@@ -1,4 +1,5 @@
 import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { SECURE_COOKIE_PREFIX } from "better-auth/cookies";
 import { cookies } from "next/headers";
 import { nextAuthEnv } from "../../../environment/next-environment";
@@ -26,7 +27,9 @@ export const signOutOfApi = async () => {
         },
       },
     })
-    .catch(() => undefined);
+    .catch((err: unknown) =>
+      serverLogger().error({ err }, AUTH.LOG_MESSAGE.SIGN_OUT_FAILED)
+    );
   const jar = await cookies();
   const expired = new Set(adoptSetCookies(jar, expiredByApi));
   for (const { name } of jar.getAll()) {

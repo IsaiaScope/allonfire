@@ -1,5 +1,7 @@
-import { CodedError } from "@allonfire/core/features/errors/coded-error";
-import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import {
+  CodedError,
+  notFound,
+} from "@allonfire/core/features/errors/coded-error";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ImageNotFoundError } from "@allonfire/database/features/image/image.service";
 import { IMAGE } from "../../constants/image";
@@ -7,18 +9,6 @@ import {
   ImageTooLargeError,
   UnsupportedImageError,
 } from "../../prepare/prepare-image";
-
-export const notFound = (options?: ErrorOptions) =>
-  new CodedError(
-    { code: ERROR.CODE.NOT_FOUND, status: HTTP.STATUS.NOT_FOUND },
-    options
-  );
-
-export const forbidden = () =>
-  new CodedError({
-    code: ERROR.CODE.FORBIDDEN,
-    status: HTTP.STATUS.FORBIDDEN,
-  });
 
 /**
  * 409: another request changed the Image while this one was working on it
@@ -28,14 +18,6 @@ export const imageChanged = () =>
   new CodedError({
     code: IMAGE.ERROR_CODE.IMAGE_CHANGED,
     status: HTTP.STATUS.CONFLICT,
-  });
-
-/** 413 naming the limit that was actually crossed, not a host-wide one. */
-export const tooLarge = (limit: number) =>
-  new CodedError({
-    code: ERROR.CODE.PAYLOAD_TOO_LARGE,
-    status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
-    values: { limit },
   });
 
 /** The service's unknown-id error, as the 404 every other route answers. */

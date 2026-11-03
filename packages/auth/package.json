@@ -15,16 +15,10 @@
     "./features/next/actions/sign-in": "./src/features/next/actions/sign-in.ts",
     "./features/next/actions/sign-out": "./src/features/next/actions/sign-out.ts",
     "./features/next/components/with-app-session": "./src/features/next/components/with-app-session.tsx",
-    "./features/next/constants/paths": "./src/features/next/constants/paths.ts",
     "./features/next/constants/api": "./src/features/next/constants/api.ts",
-    "./features/next/utils/auth-client": "./src/features/next/utils/auth-client.ts",
     "./features/next/utils/redirect-to": "./src/features/next/utils/redirect-to.ts",
-    "./features/next/utils/refresh-session": "./src/features/next/utils/refresh-session.ts",
     "./features/next/utils/session": "./src/features/next/utils/session.ts",
     "./features/next/utils/session-cookie": "./src/features/next/utils/session-cookie.ts",
-    "./features/next/utils/set-cookie": "./src/features/next/utils/set-cookie.ts",
-    "./features/next/utils/sign-in": "./src/features/next/utils/sign-in.ts",
-    "./features/next/utils/sign-out": "./src/features/next/utils/sign-out.ts",
     "./features/next/utils/with-provider-pictures": "./src/features/next/utils/with-provider-pictures.ts",
     "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
     "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
@@ -39,8 +33,8 @@
     "./shared/constants/errors": "./src/shared/constants/errors.ts",
     "./shared/constants/auth": "./src/shared/constants/auth.ts",
     "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
-    "./shared/types/auth": "./src/shared/types/auth.ts",
-    "./shared/utils/linked-picture": "./src/shared/utils/linked-picture.ts"
+    "./shared/tests/test-host": "./src/shared/tests/test-host.ts",
+    "./shared/types/auth": "./src/shared/types/auth.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

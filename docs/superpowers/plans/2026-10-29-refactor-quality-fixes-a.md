@@ -4,6 +4,8 @@
 
 **Goal:** Runs after `docs/superpowers/plans/2026-10-29-chore-production-launch.md` (done) and `docs/superpowers/plans/2026-11-02-instant-users-navigation.md`. Fix the scan report's 15 Shortlist items. Then fix or accept, with a written reason, every hit knip and jscpd report. Then gate both tools in CI.
 
+**Status:** implemented (uncommitted) @ 2026-11-02T23:42:08Z
+
 **Reconciled 2026-11-02** against the tree after 268edb1 (ccf03a9, 141d34d, 830d9a0, 3bf4eb5, 161802b) and the uncommitted instant-users-navigation work. **Gate: this plan starts only after the instant-users-navigation plan is committed.**
 - Telemetry env names are `TELEMETRY_ENDPOINT`/`TELEMETRY_HEADERS`/`TELEMETRY_SERVICE_NAME` (ccf03a9, package-layout.md); the `OTEL_*` exception is gone.
 - Telemetry is required in production only (owner): the prod compose's `:?` guard on `TELEMETRY_HEADERS`; the env schemas keep the keys optional, so Local and tests run without it.
@@ -13,7 +15,7 @@
 - Task 4: `cleanUp`/`LOG_MESSAGE.CLEANUP_FAILED`, not the nonexistent `DELETE_FAILED`.
 - Task 5: an emptied Image answers core's `RESOURCE_CHANGED` (instant-users' `resourceChanged()`), no new code or translations (owner).
 - Task 6: the prod compose input landed in ccf03a9; `.husky/pre-commit`, root `package.json` and `pnpm-lock.yaml` remain.
-- Task 7: new line hints; rule 9 names instant-users' `resourceChanged()`.
+- Task 7: new line hints; rule 9 names 5b's `ResourceChangedError` (it replaced instant-users' `resourceChanged()`).
 - Task 8: `edit.test.ts` rewritten by instant-users; `avatar.test.ts`'s `removeAvatar` added.
 - Task 9: reduced scope (owner): e325a70 shipped the data and schema pieces; left are the field parts, the toast-then-list hook and the `Users.form` copy.
 - Task 12: deleted, done by Production Launch Task 2; its report mark moves to Task 18.
@@ -22,6 +24,7 @@
 - Task 17: compose and workflow exact-text tests constrain YAML de-duplication.
 - Task 18: statuses for rows fixed by the Production Launch and Edit User.
 - Task 5b (new, owner 2026-11-02): one shared Version check in core (`ResourceChangedError`, `checkVersion`, one Hono mapping); Users move onto it, the Avatar `PUT`/`DELETE` carry the User's Version, and Images gain one (`updatedAt` + `access` + `alt` + Apps; a changeset adds `Image.updatedAt`).
+- Task 3, during the run (owner 2026-11-02): the Back Office's server logs ship in-process (pino stream into the OpenTelemetry logs API, exported by the SDK), since a Next standalone build cannot load pino's worker transport; `register`/`onRequestError` and `instrumentation.node.ts` live in core (`features/next/instrumentation/`), each Next App's `src/instrumentation.ts` only re-binds them, and the OpenTelemetry packages are core's; the telemetry regexes moved to core's `PATTERN.TELEMETRY`.
 - For awareness only: Plan B makes `FIXTURE.PASSWORD` itself strong and reseeds the local database (cross-6); not this plan's work.
 
 **Architecture:**
@@ -50,7 +53,7 @@
   - no `as` casts except `as const`;
   - constants as one nested object per owner;
   - no literal paths or error codes;
-  - env vars carry their owner prefix; telemetry's are `TELEMETRY_*` in every App (`docs/agents/package-layout.md`, "Env var names start with their owner").
+  - env vars carry their owner prefix; telemetry's are `TELEMETRY_*` in every App (`docs/guides/package-layout.md`, "Env var names start with their owner").
 - **Any new npm dependency** passes the 200k weekly-download rule.
 - **Laura-only exports are kept,** each accepted in knip with the reason "held only by Laura".
 - **The 36 unused shadcn components stay.** Nothing in `packages/shadcn` is edited.
@@ -84,11 +87,11 @@
 **Interfaces:**
 - Produces: `encodeAvif(image: Sharp, options: { width: number; quality: number }): Promise<Buffer>` in `prepare-image.ts`. It rejects with `UnsupportedImageError` on any sharp decode or encode failure. Both `prepareImage` and `prepareAvatar` call it.
 
-- [ ] **Step 1: Write the failing test** `it("refuses a truncated JPEG as unsupported, never a server error")`. Cut a real fixture JPEG to half its bytes, then `await expect(prepareAvatar(half)).rejects.toBeInstanceOf(UnsupportedImageError)`.
-- [ ] **Step 2: Run** `pnpm --filter @allonfire/storage exec vitest run src/features/avatar/tests/prepare-avatar.test.ts`. Expected: FAIL. The rejection is `Error: VipsJpeg: premature end of JPEG image`.
-- [ ] **Step 3: Implement `encodeAvif`.** Move `prepareImage`'s encode-and-wrap block (currently `prepare-image.ts:127-150`) into it, and call it from both functions.
-- [ ] **Step 4: Run** the same file, then `prepare-image.test.ts`. Expected: PASS.
-- [ ] **Step 5: Gate** on `@allonfire/storage` and `@allonfire/api`. The api's avatar integration test exercises the route.
+- [x] **Step 1: Write the failing test** `it("refuses a truncated JPEG as unsupported, never a server error")`. Cut a real fixture JPEG to half its bytes, then `await expect(prepareAvatar(half)).rejects.toBeInstanceOf(UnsupportedImageError)`.
+- [x] **Step 2: Run** `pnpm --filter @allonfire/storage exec vitest run src/features/avatar/tests/prepare-avatar.test.ts`. Expected: FAIL. The rejection is `Error: VipsJpeg: premature end of JPEG image`.
+- [x] **Step 3: Implement `encodeAvif`.** Move `prepareImage`'s encode-and-wrap block (currently `prepare-image.ts:127-150`) into it, and call it from both functions.
+- [x] **Step 4: Run** the same file, then `prepare-image.test.ts`. Expected: PASS.
+- [x] **Step 5: Gate** on `@allonfire/storage` and `@allonfire/api`. The api's avatar integration test exercises the route.
 
 ### Task 2: cross-15 (API part), one pino factory in core and the API's fallbacks log
 
@@ -106,7 +109,7 @@
   - `apps/api/src/features/health/routes/handlers.ts:27`;
   - `apps/api/src/features/i18n/translate.ts:88`;
   - `apps/api/src/shutdown.ts:21`;
-  - `docs/agents/conventions.md:51` and `docs/agents/api.md:60`, which still name the API's `OTLP` and `OTEL` constants: they become the API's `TELEMETRY` and core's `TELEMETRY`.
+  - `docs/guides/conventions.md:51` and `docs/guides/api.md:60`, which still name the API's `OTLP` and `OTEL` constants: they become the API's `TELEMETRY` and core's `TELEMETRY`.
 - Test:
   - `packages/core/src/features/logger/tests/create-logger.test.ts`;
   - `apps/api/src/features/health/tests/index.test.ts`, `apps/api/src/features/i18n/tests/translate.test.ts`, `apps/api/src/shutdown.test.ts`.
@@ -119,7 +122,7 @@
   - `telemetryResourceAttributes(target: OtlpTarget, serviceVersion: string)`.
   - These live in `@allonfire/core/features/telemetry/otlp` and `@allonfire/core/features/logger/create-logger`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `create-logger.test.ts`:
     - "writes JSON with the redacted paths censored to the stream it is handed";
     - "adds the OTLP transport only when a target is given": inspect the built transport options through a `destination` spy, or by exporting a pure `loggerTargets(options)` that the test reads.
@@ -129,8 +132,8 @@
     - "a close that fails is logged with its error, not as a drain timeout".
 
     Each test captures lines with the API's existing `features/logger/tests/capture.ts`. `TELEMETRY_ENDPOINT` stays optional, so `vitest.setup.ts` and CI set nothing new, and tests keep passing a `destination`, so no line is shipped.
-- [ ] **Step 2: Run** `pnpm --filter @allonfire/core exec vitest run src/features/logger` and the three API test files. Expected: FAIL. The module is not found, and no log line is captured.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2: Run** `pnpm --filter @allonfire/core exec vitest run src/features/logger` and the three API test files. Expected: FAIL. The module is not found, and no log line is captured.
+- [x] **Step 3: Implement.**
   - Move the factory, the OTLP helpers, the protocol constants and the env schemas to core, and make the API's `logger.ts` call `createLogger` with its env (`otlp` only when `env.TELEMETRY_ENDPOINT` is set, as today).
   - Make the three fallbacks log:
     - `outageLatch` (`apps/api/src/shared/utils/outage.ts`) warns once per outage for `/ready`;
@@ -138,9 +141,9 @@
     - `withTimeout` carries the rejection's `err` beside `DRAIN_TIMEOUT`.
   - Keep every fallback's return value.
   - Update `conventions.md:51` and `api.md:60`.
-- [ ] **Step 4: Run** the same tests. Expected: PASS.
-- [ ] **Step 5: Check that log lines ship.** Run the API locally with its `.env` telemetry values (the Local `telemetry` service up), `curl` `/health` and an unknown path, and look for the lines in the local OpenObserve's `default` logs stream. Production Launch Task 8 saw `allonfire-api` spans and metrics there, but no log line. If none arrives, find why before going on.
-- [ ] **Step 6: Gate** on core and api.
+- [x] **Step 4: Run** the same tests. Expected: PASS.
+- [x] **Step 5: Check that log lines ship.** Run the API locally with its `.env` telemetry values (the Local `telemetry` service up), `curl` `/health` and an unknown path, and look for the lines in the local OpenObserve's `default` logs stream. Production Launch Task 8 saw `allonfire-api` spans and metrics there, but no log line. If none arrives, find why before going on.
+- [x] **Step 6: Gate** on core and api.
 
 ### Task 3: cross-15 (Back Office, auth and browser parts), Next server logs and OpenTelemetry
 
@@ -159,7 +162,7 @@
   - `packages/config/local/tests/env-examples.test.ts` (the back-office entry of `OWNERS` reads `packages/core/src/environment/telemetry-environment.ts` too);
   - `docker/docker-compose.prod.yml`: for both the API (`:100-102`) and the Back Office (`:134-136`), `TELEMETRY_ENDPOINT=http://telemetry:5080/api/default` as a plain value and `TELEMETRY_HEADERS=${TELEMETRY_HEADERS:?TELEMETRY_HEADERS is required}`. It is one shared key; `TELEMETRY_SERVICE_NAME` is already set;
   - `packages/config/local/tests/prod-compose.test.ts:142-147` (assert the plain endpoint and the `:?` guard);
-  - `docs/agents/conventions.md` (rule 1), `docs/agents/next-apps.md` (instrumentation), `docs/agents/deployment.md` (the Back Office's telemetry vars, and the line "telemetry stays off while that key is empty" becomes: production's compose requires `TELEMETRY_HEADERS`, the deploy fails without it; Local and tests run without telemetry while the keys are unset);
+  - `docs/guides/conventions.md` (rule 1), `docs/guides/next-apps.md` (instrumentation), `docs/guides/deployment.md` (the Back Office's telemetry vars, and the line "telemetry stays off while that key is empty" becomes: production's compose requires `TELEMETRY_HEADERS`, the deploy fails without it; Local and tests run without telemetry while the keys are unset);
   - `apps/back-office/package.json` (`@opentelemetry/sdk-node` and the OTLP trace exporter, the versions the API uses).
 - Test:
   - `packages/core/src/features/next/logger/tests/server-logger.test.ts`;
@@ -174,34 +177,34 @@
   - `register(): Promise<void>`, which starts the NodeSDK from `instrumentation.node.ts` when `process.env.NEXT_RUNTIME === "nodejs"` and `TELEMETRY_ENDPOINT` is set. Unset, nothing starts and nothing ships.
   - `onRequestError: Instrumentation.onRequestError`, which calls `serverLogger().error({ err, path: request.path, routeType: context.routeType }, …)`.
 
-- [ ] **Step 0: Check production telemetry.** The Production Launch plan is done. Check that Dokploy's AllOnFire env holds `TELEMETRY_HEADERS`, one key for both Apps (key names only: `pnpm env:prod keys docker/.env.production` and Dokploy's key list). Otherwise stop and ask: Step 3's compose guard would fail the next deploy.
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 0: Check production telemetry.** The Production Launch plan is done. Check that Dokploy's AllOnFire env holds `TELEMETRY_HEADERS`, one key for both Apps (key names only: `pnpm env:prod keys docker/.env.production` and Dokploy's key list). Otherwise stop and ask: Step 3's compose guard would fail the next deploy.
+- [x] **Step 1: Write the failing tests.**
   - "getSession returns null and logs the error when the API call rejects". Mock the API client to reject, and spy on `serverLogger().error`. Write the same test for the sign-in gate, `refreshSession` and `signOutOfApi`.
   - "the telemetry env accepts unset TELEMETRY_* and parses headers as the API does", and "serverLogger carries the OTLP target only when TELEMETRY_ENDPOINT is set".
   - "onRequestError logs the error with its route type".
   - "register starts the SDK on the Node runtime only, and only with an endpoint".
   - `prod-compose.test.ts`: "the API and the Back Office get the plain telemetry endpoint, and the deploy fails without TELEMETRY_HEADERS".
   - Browser side: "a failed HEIC conversion still shows 'unreadable' and calls reportError". Spy `globalThis.reportError`. Do the same for the service worker registration.
-- [ ] **Step 2: Run** the touched test files with `pnpm --filter <pkg> exec vitest run <file>`. Expected: FAIL.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2: Run** the touched test files with `pnpm --filter <pkg> exec vitest run <file>`. Expected: FAIL.
+- [x] **Step 3: Implement.**
   - Build `serverLogger`, the instrumentation files, the four auth logs and the two `reportError` calls.
   - Change the prod compose's telemetry lines and the Back Office's env files and example.
   - Write rule 1 in `conventions.md`, word for word from the report's "Rules to write".
   - Write the Back Office's instrumentation in `next-apps.md`, and rewrite the telemetry line in `deployment.md` as listed under Files.
-- [ ] **Step 4: Run** the same tests and `pnpm --filter @allonfire/config test`. Expected: PASS. Then run `pnpm --filter @allonfire/back-office build` with no `TELEMETRY_*` set. Expected: the build succeeds, and `pino` stays external, as it is in Next's default list. Then run `docker compose -f docker/docker-compose.prod.yml config -q` without `TELEMETRY_HEADERS`. Expected: it fails, naming the key.
-- [ ] **Step 5: Gate** on core, auth, ui, config and back-office.
+- [x] **Step 4: Run** the same tests and `pnpm --filter @allonfire/config test`. Expected: PASS. Then run `pnpm --filter @allonfire/back-office build` with no `TELEMETRY_*` set. Expected: the build succeeds, and `pino` stays external, as it is in Next's default list. Then run `docker compose -f docker/docker-compose.prod.yml config -q` without `TELEMETRY_HEADERS`. Expected: it fails, naming the key.
+- [x] **Step 5: Gate** on core, auth, ui, config and back-office.
 
 ### Task 4: storage-19, private copies are cleaned on failure
 
 **Files:**
-- Modify: `packages/storage/src/features/image/hono/routes/write-handlers.ts:134-157` (`copiesForPrivate`, its `Promise.all` at :142), `docs/agents/images.md` (rule 10)
+- Modify: `packages/storage/src/features/image/hono/routes/write-handlers.ts:134-157` (`copiesForPrivate`, its `Promise.all` at :142), `docs/guides/images.md` (rule 10)
 - Test: `packages/storage/src/features/image/hono/tests/write.test.ts`
 
-- [ ] **Step 1: Write the failing test** "when one copy fails, the copies already made are deleted and logged". The stub's `copyObject` rejects on the second key. Assert that `deleteObjects` was called with the first copy's key, and that `log.warn` got `LOG_MESSAGE.CLEANUP_FAILED` only when that delete fails.
-- [ ] **Step 2: Run** `write.test.ts`. Expected: FAIL. `deleteObjects` is not called.
-- [ ] **Step 3: Implement** `copiesForPrivate` with `Promise.allSettled`. On any rejection, run the file's `cleanUp(deps, keys)` (`deleteLeftovers` with `LOG_MESSAGE.CLEANUP_FAILED`) on the fulfilled copies' `to` keys, then rethrow the first rejection. Write rule 10 in `images.md`.
-- [ ] **Step 4: Run.** Expected: PASS.
-- [ ] **Step 5: Gate** on storage and api.
+- [x] **Step 1: Write the failing test** "when one copy fails, the copies already made are deleted and logged". The stub's `copyObject` rejects on the second key. Assert that `deleteObjects` was called with the first copy's key, and that `log.warn` got `LOG_MESSAGE.CLEANUP_FAILED` only when that delete fails.
+- [x] **Step 2: Run** `write.test.ts`. Expected: FAIL. `deleteObjects` is not called.
+- [x] **Step 3: Implement** `copiesForPrivate` with `Promise.allSettled`. On any rejection, run the file's `cleanUp(deps, keys)` (`deleteLeftovers` with `LOG_MESSAGE.CLEANUP_FAILED`) on the fulfilled copies' `to` keys, then rethrow the first rejection. Write rule 10 in `images.md`.
+- [x] **Step 4: Run.** Expected: PASS.
+- [x] **Step 5: Gate** on storage and api.
 
 ### Task 5: database-12, an Image a batch would empty answers 409 RESOURCE_CHANGED
 
@@ -221,13 +224,13 @@ The Image exists, but another change took it out of its other Apps first: a conc
   - `class ImageEmptiedError extends Error { readonly ids: string[] }`, so the database tells an emptied Image from an unknown one;
   - storage answers it with `resourceChanged()`: HTTP `409`, `ERROR.CODE.RESOURCE_CHANGED`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - Database: "a batch that leaves an Image in no App throws ImageEmptiedError with its id".
   - Storage: "an emptied Image answers 409 RESOURCE_CHANGED, not 404".
-- [ ] **Step 2: Run** both. Expected: FAIL. `ImageNotFoundError` is thrown, and the route answers 404.
-- [ ] **Step 3: Implement** the error and its mapping to `resourceChanged()`. The API already knows the code and its message.
-- [ ] **Step 4: Run.** Expected: PASS.
-- [ ] **Step 5: Gate** on database, storage and api.
+- [x] **Step 2: Run** both. Expected: FAIL. `ImageNotFoundError` is thrown, and the route answers 404.
+- [x] **Step 3: Implement** the error and its mapping to `resourceChanged()`. The API already knows the code and its message. Done via Task 5b's `ResourceChangedError` (no `ImageEmptiedError`).
+- [x] **Step 4: Run.** Expected: PASS.
+- [x] **Step 5: Gate** on database, storage and api.
 
 ### Task 5b: one shared Version check, for Users (their Avatar included) and Images
 
@@ -253,7 +256,7 @@ Not from the scan report: the owner's decisions (2026-11-02). The Version (ADR 0
   - the Hono error mapping that answers `ResourceChangedError` with `resourceChanged()`, written once where both modules use it (core's Hono error handling), not per module;
   - `apps/back-office/src/features/users/utils/user-form-data.ts` (`sendAvatarChange`) and `actions/edit-user.ts`: send the Avatar change with the Version the PATCH answered; a 409 there shows `Common.Request.changed`;
   - every Avatar and Image PATCH caller in tests and fixtures, which now sends `version`;
-  - `docs/adr/0028-…`: the Version also covers Avatars and Images, through the shared check; `docs/agents/images.md` and `docs/agents/database.md`: one line each.
+  - `docs/adr/0028-…`: the Version also covers Avatars and Images, through the shared check; `docs/guides/images.md` and `docs/guides/database.md`: one line each.
 - Test:
   - core: `resource-changed-error.test.ts`;
   - database: `image-version.test.ts`, `image.integration.test.ts`, `user.integration.test.ts`;
@@ -269,31 +272,31 @@ Not from the scan report: the owner's decisions (2026-11-02). The Version (ADR 0
   - `setUserImage(id, picture, { expectedVersion })`;
   - a required `version` on `PUT`/`DELETE /users/:id/avatar` and on each `PATCH /images` item; `ImageBody.version`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - core: "checkVersion throws ResourceChangedError on a mismatch and returns on a match".
   - `imageVersion`: "changes when updatedAt, access, either alt or the Apps change, and not when the Apps only change order".
   - database: "an Image change on an older Version throws ResourceChangedError and writes nothing"; "an App-only change moves the Image's Version"; "two changes made on one Version at once: the second throws"; "setUserImage on an older Version throws and keeps the old picture".
   - auth and storage: "a stale Version answers 409 RESOURCE_CHANGED and writes nothing" for the Avatar `PUT`, the Avatar `DELETE` and the Image PATCH; "the PATCH answer carries the new Version".
   - back-office: "the Avatar change is sent with the Version the PATCH answered".
-- [ ] **Step 2: Run** them. Expected: FAIL.
-- [ ] **Step 3: Write the changeset** with `pnpm db:changeset image-updated-at`, review the SQL (existing rows get `createdAt`), run `pnpm db:update` and `pnpm db:drift`. Expected: no drift.
-- [ ] **Step 4: Implement** core's error and check, move `updateUser` onto it, then the Avatar and Image checks, the schemas, the one Hono mapping and the Back Office's Avatar send. Update every caller to send `version`.
-- [ ] **Step 5: Run.** Expected: PASS.
-- [ ] **Step 6: Gate** on core, database, auth, storage, api and back-office.
+- [x] **Step 2: Run** them. Expected: FAIL.
+- [x] **Step 3: Write the changeset** with `pnpm db:changeset image-updated-at`, review the SQL (existing rows get `createdAt`), run `pnpm db:update` and `pnpm db:drift`. Expected: no drift.
+- [x] **Step 4: Implement** core's error and check, move `updateUser` onto it, then the Avatar and Image checks, the schemas, the one Hono mapping and the Back Office's Avatar send. Update every caller to send `version`.
+- [x] **Step 5: Run.** Expected: PASS.
+- [x] **Step 6: Gate** on core, database, auth, storage, api and back-office.
 
 ### Task 6: config-design-root-1, the guard test sees every file it reads
 
 ccf03a9 already added `$TURBO_ROOT$/docker/docker-compose.prod.yml` (`packages/config/turbo.json:16`). Still missing: `.husky/pre-commit` (read by `service-names.test.ts`), and the root `package.json` and `pnpm-lock.yaml`, which `local-files.test.ts:166-168` reads since 141d34d.
 
 **Files:**
-- Modify: `packages/config/turbo.json:6`, `docs/agents/testing.md` (rule 14)
+- Modify: `packages/config/turbo.json:6`, `docs/guides/testing.md` (rule 14)
 - Test: `packages/config/local/tests/local-files.test.ts`
 
-- [ ] **Step 1: Write the failing test** "config's turbo test inputs list every repo file its tests read". Parse `packages/config/turbo.json` with core's `parseJson`, collect the `$TURBO_ROOT$/…` inputs, and assert that they include `docker/docker-compose.prod.yml`, `.husky/pre-commit`, `package.json` and `pnpm-lock.yaml`.
-- [ ] **Step 2: Run** `pnpm --filter @allonfire/config test`. Expected: FAIL, on the three missing files.
-- [ ] **Step 3: Implement.** Add the three inputs, name `service-names.test.ts` and `local-files.test.ts` in the comment, and write rule 14.
-- [ ] **Step 4: Run.** Expected: PASS. Then run `pnpm turbo run test --filter @allonfire/config --dry=json`. Expected: all four files appear in the task's inputs.
-- [ ] **Step 5: Gate** on config.
+- [x] **Step 1: Write the failing test** "config's turbo test inputs list every repo file its tests read". Parse `packages/config/turbo.json` with core's `parseJson`, collect the `$TURBO_ROOT$/…` inputs, and assert that they include `docker/docker-compose.prod.yml`, `.husky/pre-commit`, `package.json` and `pnpm-lock.yaml`.
+- [x] **Step 2: Run** `pnpm --filter @allonfire/config test`. Expected: FAIL, on the three missing files.
+- [x] **Step 3: Implement.** Add the three inputs, name `service-names.test.ts` and `local-files.test.ts` in the comment, and write rule 14.
+- [x] **Step 4: Run.** Expected: PASS. Then run `pnpm turbo run test --filter @allonfire/config --dry=json`. Expected: all four files appear in the task's inputs.
+- [x] **Step 5: Gate** on config.
 
 ### Task 7: cross-7, the standard CodedErrors live in core
 
@@ -302,7 +305,7 @@ ccf03a9 already added `$TURBO_ROOT$/docker/docker-compose.prod.yml` (`packages/c
   - `packages/core/src/features/errors/coded-error.ts`;
   - `packages/storage/src/features/image/hono/utils/errors.ts:11-40` (`notFound` :11, `forbidden` :17, `tooLarge` :34; `imageChanged` :27 stays, as storage's own code);
   - `packages/auth/src/features/users/hono/routes/handlers.ts:48,165` (`userNotFound`, and the inline 413);
-  - `docs/agents/api.md` (rule 9).
+  - `docs/guides/api.md` (rule 9).
 - Test: `packages/core/src/features/errors/tests/coded-error.test.ts`
 
 **Interfaces:**
@@ -311,13 +314,13 @@ ccf03a9 already added `$TURBO_ROOT$/docker/docker-compose.prod.yml` (`packages/c
   - `forbidden(): CodedError`;
   - `payloadTooLarge(limit: number): CodedError`.
 
-  Each one carries `ERROR.CODE.NOT_FOUND`, `FORBIDDEN` or `PAYLOAD_TOO_LARGE` and its HTTP status, and `payloadTooLarge` carries `values: { limit }`. The instant-users-navigation plan's `resourceChanged()` (`features/version/utils/resource-changed.ts`, 409 `RESOURCE_CHANGED`) is the fourth standard factory; it stays with its Version feature.
+  Each one carries `ERROR.CODE.NOT_FOUND`, `FORBIDDEN` or `PAYLOAD_TOO_LARGE` and its HTTP status, and `payloadTooLarge` carries `values: { limit }`. Task 5b's `ResourceChangedError` (`features/version/utils/resource-changed-error.ts`, a `CodedError`, 409 `RESOURCE_CHANGED`) is the fourth standard error; it stays with its Version feature. (`resourceChanged()` was deleted in 5b.)
 
-- [ ] **Step 1: Write the failing test.** For each factory, assert its code, status and values.
-- [ ] **Step 2: Run.** Expected: FAIL, with no export.
-- [ ] **Step 3: Implement.** Replace storage's and auth's local builders with these. Storage keeps only `imageChanged`, `notFoundOnUnknownIds` (and Task 5's mapping) and `asImageError`. Write rule 9, naming `resourceChanged()` among the standard factories.
-- [ ] **Step 4: Run** core, then the storage and auth tests. Expected: PASS, with unchanged response bodies.
-- [ ] **Step 5: Gate** on core, storage, auth and api.
+- [x] **Step 1: Write the failing test.** For each factory, assert its code, status and values.
+- [x] **Step 2: Run.** Expected: FAIL, with no export.
+- [x] **Step 3: Implement.** Replace storage's and auth's local builders with these. Storage keeps only `imageChanged`, `notFoundOnUnknownIds` and `asImageError` (5b needs no mapping: `ResourceChangedError` is a `CodedError`). Write rule 9, naming `ResourceChangedError` among the standard errors.
+- [x] **Step 4: Run** core, then the storage and auth tests. Expected: PASS, with unchanged response bodies.
+- [x] **Step 5: Gate** on core, storage, auth and api.
 
 ### Task 8: cross-1, one test host for the HTTP modules
 
@@ -333,11 +336,11 @@ ccf03a9 already added `$TURBO_ROOT$/docker/docker-compose.prod.yml` (`packages/c
   - `json(method: HttpMethod, body: unknown): RequestInit`.
   - `errorOf(res: Response): Promise<{ code: string; errors?: unknown; values?: unknown }>`.
 
-- [ ] **Step 1: Write the failing test.** `test-host.test.ts`: "answers a CodedError with its code, errors and values" and "answers an uncoded error as INTERNAL_ERROR".
-- [ ] **Step 2: Run.** Expected: FAIL, with no module.
-- [ ] **Step 3: Implement.** Point every module test at the new host. Turn the per-file request helpers into `host.request(path, json(HTTP.METHOD.X, body))`.
-- [ ] **Step 4: Run** `pnpm --filter @allonfire/auth test` and `pnpm --filter @allonfire/storage test`. Expected: PASS, with the same test count as before.
-- [ ] **Step 5: Gate** on auth and storage.
+- [x] **Step 1: Write the failing test.** `test-host.test.ts`: "answers a CodedError with its code, errors and values" and "answers an uncoded error as INTERNAL_ERROR".
+- [x] **Step 2: Run.** Expected: FAIL, with no module.
+- [x] **Step 3: Implement.** Point every module test at the new host. Turn the per-file request helpers into `host.request(path, json(HTTP.METHOD.X, body))`.
+- [x] **Step 4: Run** `pnpm --filter @allonfire/auth test` and `pnpm --filter @allonfire/storage test`. Expected: PASS, with the same test count as before.
+- [x] **Step 5: Gate** on auth and storage.
 
 ### Task 9: back-office-3 and the copy half of back-office-4, Add and Edit a User share their fields and copy
 
@@ -360,12 +363,12 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - in `user-form-parts.tsx`: `NameField`, `AvatarField` and `PasswordFields` (`required` and `labels` as props, built with the AOF form's `withForm`), plus `useToastThenList(options: { notices: readonly Notice[] })`;
   - shared copy under `Users.form.*`: `name`, `avatar.*`, `password`, `confirmPassword`, `showPassword`, `field.{nameRequired,passwordMismatch,passwordWeak}`, `roles`, `role`, `noRole`, `cancel`, `rules`, `rule.*`. `Users.add`/`Users.edit` keep only what differs (`email`, `field.email*`, titles, submits, errors, notices, Edit's password labels).
 
-- [ ] **Step 1: Re-check.** List what is still duplicated between `add-user.tsx` and `edit-user.tsx`, and which `Users.add.*` keys Edit or the shared parts still read (`user-form-parts.tsx:59,63,94,146,169`, `password-rules.tsx:37`, `edit-user.tsx:124-126,176,186,199,210`).
-- [ ] **Step 2: Write the failing tests.** "NameField, AvatarField and PasswordFields render the same fields in both forms, labelled from Users.form"; "useToastThenList toasts each listed notice and opens the list, and does nothing for an unlisted one"; and in each browser test, the form reads its shared labels from `Users.form`.
-- [ ] **Step 3: Run** `pnpm --filter @allonfire/back-office test` and `test:browser` on the users files. Expected: FAIL on the new tests only.
-- [ ] **Step 4: Implement.** Move the fields, the hook and the copy, then run `pnpm i18n:check`.
-- [ ] **Step 5: Run.** Expected: PASS. Then run `pnpm dupes`. Expected: no clone between `add-user*` and `edit-user*`.
-- [ ] **Step 6: Gate** on back-office.
+- [x] **Step 1: Re-check.** List what is still duplicated between `add-user.tsx` and `edit-user.tsx`, and which `Users.add.*` keys Edit or the shared parts still read (`user-form-parts.tsx:59,63,94,146,169`, `password-rules.tsx:37`, `edit-user.tsx:124-126,176,186,199,210`).
+- [x] **Step 2: Write the failing tests.** "NameField, AvatarField and PasswordFields render the same fields in both forms, labelled from Users.form"; "useToastThenList toasts each listed notice and opens the list, and does nothing for an unlisted one"; and in each browser test, the form reads its shared labels from `Users.form`.
+- [x] **Step 3: Run** `pnpm --filter @allonfire/back-office test` and `test:browser` on the users files. Expected: FAIL on the new tests only.
+- [x] **Step 4: Implement.** Move the fields, the hook and the copy, then run `pnpm i18n:check`.
+- [x] **Step 5: Run.** Expected: PASS. Then run `pnpm dupes`. Expected: no clone between `add-user*` and `edit-user*`.
+- [x] **Step 6: Gate** on back-office.
 
 ### Task 10: cross-2, each env owner writes its local defaults once
 
@@ -385,25 +388,25 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - `useLocalStorageEnv(): void`, which sets the six `STORAGE_*` from `LOCAL` with `??=`;
   - `useLocalDatabaseEnv(): void`, which does the same for `DATABASE_URL`.
 
-- [ ] **Step 1: Write the failing tests.** "fills each unset STORAGE_ variable from LOCAL and keeps a set one". Do the same for the database.
-- [ ] **Step 2: Run.** Expected: FAIL.
-- [ ] **Step 3: Implement.** Replace the copied lines in the five setups.
-- [ ] **Step 4: Run.** Expected: PASS. Then run `pnpm dupes`. Expected: no cross-area `vitest.setup` clone.
-- [ ] **Step 5: Gate** on storage, database, auth and api.
+- [x] **Step 1: Write the failing tests.** "fills each unset STORAGE_ variable from LOCAL and keeps a set one". Do the same for the database.
+- [x] **Step 2: Run.** Expected: FAIL.
+- [x] **Step 3: Implement.** Replace the copied lines in the five setups.
+- [x] **Step 4: Run.** Expected: PASS. Then run `pnpm dupes`. Expected: no cross-area `vitest.setup` clone.
+- [x] **Step 5: Gate** on storage, database, auth and api.
 
 ### Task 11: cross-12, export keys only for what is read from outside
 
 **Files:**
 - Modify:
   - `packages/auth/package.json:18-43`, `packages/storage/package.json:10-38`, `packages/database/package.json:19-25`, `packages/config/package.json:14`, and each one's README table;
-  - `docs/agents/package-layout.md` (rule 5).
+  - `docs/guides/package-layout.md` (rule 5).
 - Test: `packages/config/local/tests/package-exports.test.ts` (new)
 
-- [ ] **Step 1: Write the failing test** "every export key of auth, storage, database and config is imported from outside its package". For each key, grep through `git ls-files` for the import specifier outside the package. Allow a Laura import, and allow a key a script, config or CLI reads.
-- [ ] **Step 2: Run.** Expected: FAIL, naming the dead keys: 25 at scan time. Recount, since Task 8 adds the live `./shared/tests/test-host`.
-- [ ] **Step 3: Implement.** Remove the dead keys and their README rows, and switch any in-package user of a removed key to a relative import. Keep the live ones each area finding lists. Write rule 5.
-- [ ] **Step 4: Run.** Expected: PASS.
-- [ ] **Step 5: Gate** on all four packages and both Apps.
+- [x] **Step 1: Write the failing test** "every export key of auth, storage, database and config is imported from outside its package". For each key, grep through `git ls-files` for the import specifier outside the package. Allow a Laura import, and allow a key a script, config or CLI reads.
+- [x] **Step 2: Run.** Expected: FAIL, naming the dead keys: 25 at scan time. Recount, since Task 8 adds the live `./shared/tests/test-host`.
+- [x] **Step 3: Implement.** Remove the dead keys and their README rows, and switch any in-package user of a removed key to a relative import. Keep the live ones each area finding lists. Write rule 5.
+- [x] **Step 4: Run.** Expected: PASS.
+- [x] **Step 5: Gate** on all four packages and both Apps.
 
 ### Task 13: ui-2, ui's own code type-checks strictly
 
@@ -414,10 +417,10 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - `packages/ui/src/components/aof-file-upload.tsx:163`, `aof-sidebar.tsx:148`, `tests/aof-text-field.test.tsx:23` (re-check the lines first).
 - Test: `packages/ui/src/components/tests/shadcn-compat.test.tsx`
 
-- [ ] **Step 1: Write the failing check.** Restore `exactOptionalPropertyTypes` and `noUnusedLocals` in `packages/ui/tsconfig.json`, then run `pnpm --filter @allonfire/ui check-types`. Expected: FAIL, with the three ui errors plus errors in the four shadcn files.
-- [ ] **Step 2: Implement.** Route the four shadcn files through the lenient vendor setup, so no shadcn file is edited. Fix the three ui errors. Extend `shadcn-compat.test.tsx` to cover the four.
-- [ ] **Step 3: Run** `check-types` and `pnpm --filter @allonfire/ui test`. Expected: PASS.
-- [ ] **Step 4: Gate** on ui and back-office.
+- [x] **Step 1: Write the failing check.** Restore `exactOptionalPropertyTypes` and `noUnusedLocals` in `packages/ui/tsconfig.json`, then run `pnpm --filter @allonfire/ui check-types`. Expected: FAIL, with the three ui errors plus errors in the four shadcn files.
+- [x] **Step 2: Implement.** Route the four shadcn files through the lenient vendor setup, so no shadcn file is edited. Fix the three ui errors. Extend `shadcn-compat.test.tsx` to cover the four.
+- [x] **Step 3: Run** `check-types` and `pnpm --filter @allonfire/ui test`. Expected: PASS.
+- [x] **Step 4: Gate** on ui and back-office.
 
 ### Task 14: cross-9, durations from UNIT
 
@@ -432,11 +435,11 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
     - api `rate-limit/tests/rate-limiter.test.ts:22`.
 - Test: `packages/core/src/shared/constants/tests/units.test.ts`
 
-- [ ] **Step 1: Write the failing test.** `UNIT.MS_PER_HOUR === 60 * UNIT.MS_PER_MINUTE` and `UNIT.MS_PER_DAY === 24 * UNIT.MS_PER_HOUR`.
-- [ ] **Step 2: Run.** Expected: FAIL.
-- [ ] **Step 3: Implement.** Replace every listed literal. Storage's year is already `UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY` (`image/constants/image.ts:7`) and stays. `config/test-run.ts` stays local.
-- [ ] **Step 4: Run** the touched packages' tests. Expected: PASS, with unchanged values.
-- [ ] **Step 5: Gate** on core, storage, database, ui and api.
+- [x] **Step 1: Write the failing test.** `UNIT.MS_PER_HOUR === 60 * UNIT.MS_PER_MINUTE` and `UNIT.MS_PER_DAY === 24 * UNIT.MS_PER_HOUR`.
+- [x] **Step 2: Run.** Expected: FAIL.
+- [x] **Step 3: Implement.** Replace every listed literal. Storage's year is already `UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY` (`image/constants/image.ts:7`) and stays. `config/test-run.ts` stays local.
+- [x] **Step 4: Run** the touched packages' tests. Expected: PASS, with unchanged values.
+- [x] **Step 5: Gate** on core, storage, database, ui and api.
 
 ### Task 15: cross-14, flat constants fold into their owners
 
@@ -446,12 +449,12 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - config `tests/e2e/run.ts:4`: the `E2E_*` siblings become one `E2E`, updating every importer: `playwright.config.ts`, `global-teardown.ts`, `packages/config/README.md`, `apps/back-office/e2e/pwa.spec.ts` and `apps/back-office/e2e/instant.spec.ts` (`E2E_TAG.CHROMIUM_ONLY`); `local/addresses.ts:82`: `TEST_API_URL` becomes `LOCAL.URL.TEST_API`; `tests/vitest/vitest.config.ts:5`: `BROWSER_TESTS`;
   - database `scripts/changeset-file.ts:1-5` (`CHANGESET`) and `test-database/*` (`TEST_DATABASE`);
   - ui `lib/use-aof-toast.ts:71`: `AOF_TOAST_KINDS` becomes `AOF_TOAST.KIND`; `lib/gooey-nav/looks.ts:5`: the `GOOEY_*` siblings become `GOOEY`;
-  - `docs/agents/testing.md:25`, which names `TEST_API_URL`.
+  - `docs/guides/testing.md:25`, which names `TEST_API_URL`.
 
-- [ ] **Step 1:** This is a rename with no new behaviour, so the test is the existing suite. Run `pnpm check-types`. Expected: PASS, the baseline.
-- [ ] **Step 2: Implement** each fold, and update every importer, with `git grep` on each old name until it returns nothing.
-- [ ] **Step 3: Run** `git grep -nE "\b(USER_SEARCH|E2E_LABEL|E2E_CLI|E2E_TAG|TEST_API_URL|BROWSER_TESTS|AOF_TOAST_KINDS|GOOEY_THEMES|GOOEY_PILLS|GOOEY_SIZES|GOOEY_NO_TINTS|CHANGESET_AUTHOR|CHANGESET_NAME|CHANGESET_FILE|PACKAGE_DIR|DOCKER_TIMEOUT)\b" -- apps packages docs`. Expected: no output.
-- [ ] **Step 4: Gate** on auth, config, database, ui, back-office and api.
+- [x] **Step 1:** This is a rename with no new behaviour, so the test is the existing suite. Run `pnpm check-types`. Expected: PASS, the baseline.
+- [x] **Step 2: Implement** each fold, and update every importer, with `git grep` on each old name until it returns nothing.
+- [x] **Step 3: Run** `git grep -nE "\b(USER_SEARCH|E2E_LABEL|E2E_CLI|E2E_TAG|TEST_API_URL|BROWSER_TESTS|AOF_TOAST_KINDS|GOOEY_THEMES|GOOEY_PILLS|GOOEY_SIZES|GOOEY_NO_TINTS|CHANGESET_AUTHOR|CHANGESET_NAME|CHANGESET_FILE|PACKAGE_DIR|DOCKER_TIMEOUT)\b" -- apps packages docs`. Expected: no output.
+- [x] **Step 4: Gate** on auth, config, database, ui, back-office and api.
 
 ## Phase 2: the tool hits and the CI gate
 
@@ -463,8 +466,8 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - `package.json` scripts: `knip:production` is `knip --production`;
   - `packages/database/src/index.ts` and its importers: the barrel goes;
   - every file a hit fixes;
-  - `docs/agents/conventions.md` (rule 6, for unexported schemas);
-  - `docs/agents/tooling.md` (how to read and accept knip).
+  - `docs/guides/conventions.md` (rule 6, for unexported schemas);
+  - `docs/guides/tooling.md` (how to read and accept knip).
 - Test: `packages/config/local/tests/knip-config.test.ts` (new)
 
 **Interfaces:**
@@ -472,24 +475,24 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - `pnpm knip` and `pnpm knip:production`, each exiting 0;
   - in `knip.jsonc`, every `ignore*` entry preceded by a `//` reason.
 
-- [ ] **Step 1: Write the failing test.** "every knip ignore carries a reason, and none covers a whole folder". Read `knip.jsonc` as text, and assert that each entry in `ignore`, `ignoreDependencies`, `ignoreBinaries` and `ignoreIssues` sits under a `//` line and is not a bare `<dir>/**`. Also assert that no `biome-ignore` remains under `packages/*/src` or `apps/*/src`.
-- [ ] **Step 2: Run.** Expected: FAIL. Today's `.claude/**` has no reason, and `database/src/index.ts` has a `biome-ignore`.
-- [ ] **Step 3: Implement the config.**
+- [x] **Step 1: Write the failing test.** "every knip ignore carries a reason, and none covers a whole folder". Read `knip.jsonc` as text, and assert that each entry in `ignore`, `ignoreDependencies`, `ignoreBinaries` and `ignoreIssues` sits under a `//` line and is not a bare `<dir>/**`. Also assert that no `biome-ignore` remains under `packages/*/src` or `apps/*/src`.
+- [x] **Step 2: Run.** Expected: FAIL. Today's `.claude/**` has no reason, and `database/src/index.ts` has a `biome-ignore`.
+- [x] **Step 3: Implement the config.**
   - Rename the file.
   - Mark production entries with `!`: `apps/api/src/index.ts!`, the CLIs, and `print-affected.ts!`.
   - Add `project` patterns that leave `**/tests/**` and `**/*.test*.ts*` out of production mode.
   - Silence `next` in `packages/config/typescript/nextjs.json` through `ignoreUnresolved`, with a reason.
   - Add reasons to every existing ignore. After Task 2, `pino-opentelemetry-transport` and `pino-pretty` are core's dependencies: the reasons say so.
-- [ ] **Step 4: Remove database's barrel.** Replace `index.ts` with direct export subpaths, `./prisma` and the generated types. Update every `@allonfire/database` root importer, and remove the `biome-ignore`.
-- [ ] **Step 5: Work the output.** Run `pnpm knip` and `pnpm knip:production`. For each hit, **fix it** (delete the export or file, or move a runtime dep from dev to prod as in api-20), or **accept it** with a reason:
+- [x] **Step 4: Remove database's barrel.** Replace `index.ts` with direct export subpaths, `./prisma` and the generated types. Update every `@allonfire/database` root importer, and remove the `biome-ignore`.
+- [x] **Step 5: Work the output.** Run `pnpm knip` and `pnpm knip:production`. For each hit, **fix it** (delete the export or file, or move a runtime dep from dev to prod as in api-20), or **accept it** with a reason:
   - the 36 shadcn components: "generated by the shadcn CLI, kept so any can be wrapped without re-adding";
   - `AOFStorageImage` and `srcSetLoader`: "kept for the Images page";
   - `playwrightConfig`, `formatErrorMessage` and the `game-score.service` key: "held only by Laura";
   - the `@better-auth/prisma-adapter` peer.
 
   A zod schema used only for its type loses its `export`, per rule 6, which is written now.
-- [ ] **Step 6: Run** both scripts. Expected: exit 0. Then run the Step 1 test. Expected: PASS.
-- [ ] **Step 7: Gate**, repo-wide: `pnpm test`.
+- [x] **Step 6: Run** both scripts. Expected: exit 0. Then run the Step 1 test. Expected: PASS.
+- [x] **Step 7: Gate**, repo-wide: `pnpm test`.
 
 ### Task 17: jscpd, sharpened and worked to zero, and the CI setup written once
 
@@ -498,23 +501,23 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
   - `.jscpd.json`: add `"absolute": true`, `"exitCode": 1`, the `yaml` format, and the paths `.github` and `docker`;
   - the files whose clones are fixed;
   - `.github/workflows/ci.yml` and `deploy.yml`;
-  - `docs/agents/deployment.md` (rule 16).
+  - `docs/guides/deployment.md` (rule 16).
 - Create: `.github/actions/setup/action.yml`, a composite action doing checkout depth 0, pnpm, Node from `node-version-file` with the pnpm cache, and `pnpm install --frozen-lockfile`.
 
 **Interfaces:**
 - Produces: `pnpm dupes`, exiting 0 on an empty clone list and 1 on any clone.
 
-- [ ] **Step 1: Run** `pnpm dupes` with the new settings. Expected: exit 1, listing the clones with absolute paths, including the six copied CI setup blocks (ci.yml's five jobs, deploy.yml's `changes`).
-- [ ] **Step 2: Implement.** Replace the six setup blocks with `uses: ./.github/actions/setup`, and write rule 16. Then fix each remaining clone (they're mostly in tests, merged into the test file's helper), or accept it with `// jscpd:ignore-start` and a reason. Never use a whole-file ignore. The compose files and workflows are read as exact text by `prod-compose.test.ts`, `service-names.test.ts` and `local-files.test.ts`: a YAML clone fixed with anchors or merge keys updates those tests in the same step, or is accepted with a reason.
-- [ ] **Step 3: Run** `pnpm dupes`. Expected: exit 0. The workflow files themselves are proved by Task 19's CI run.
-- [ ] **Step 4: Gate**, repo-wide.
+- [x] **Step 1: Run** `pnpm dupes` with the new settings. Expected: exit 1, listing the clones with absolute paths, including the six copied CI setup blocks (ci.yml's five jobs, deploy.yml's `changes`).
+- [x] **Step 2: Implement.** Replace the six setup blocks with `uses: ./.github/actions/setup`, and write rule 16. Then fix each remaining clone (they're mostly in tests, merged into the test file's helper), or accept it with `// jscpd:ignore-start` and a reason. Never use a whole-file ignore. The compose files and workflows are read as exact text by `prod-compose.test.ts`, `service-names.test.ts` and `local-files.test.ts`: a YAML clone fixed with anchors or merge keys updates those tests in the same step, or is accepted with a reason.
+- [x] **Step 3: Run** `pnpm dupes`. Expected: exit 0. The workflow files themselves are proved by Task 19's CI run.
+- [x] **Step 4: Gate**, repo-wide.
 
 ### Task 18: the report says which layer each finding is in
 
 **Files:**
 - Modify: `docs/superpowers/specs/2026-10-29-quality-scan-report.md`, `.superpowers/quality-scan/build-report.js`
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
   - Give `build-report.js` a `layer` column:
     - `1` for the Shortlist ids;
     - `2` for any finding whose file and line, or whose named export, appears in Task 16's or 17's final pre-fix tool output, kept in `.superpowers/quality-scan/` as `knip-final.json` and `jscpd-final.json`. A partly flagged finding is `2` as a whole;
@@ -523,19 +526,24 @@ Left are the form fields, the toast-then-list hook and the shared copy. The inst
     - `fixed (Production Launch)`: config-design-root-2 (ccf03a9), config-design-root-6 (141d34d, turbo pinned), config-design-root-8 (ccf03a9, `MINIO_*` to `STORAGE_*`). config-design-root-9 is only partly fixed (the storage logins are guarded, `BACK_OFFICE_URL=${BACK_OFFICE_URL}` at `docker/docker-compose.prod.yml:131` is not), so it stays `open (Plan B)`;
     - `fixed (Edit User)`: back-office-1 and back-office-2 (e325a70); back-office-3 and back-office-4 are `fixed (Plan A)` once Task 9 lands.
   - Regenerate the report, keeping the hand-written head and rules sections.
-- [ ] **Step 2: Check.** Every layer 1 and 2 row is `fixed` or `accepted`. `grep -c "open (Plan B)"` equals the layer-3 count printed by the script.
+- [x] **Step 2: Check.** Every layer 1 and 2 row is `fixed` or `accepted`. `grep -c "open (Plan B)"` equals the layer-3 count printed by the script.
 
 ### Task 19: the CI quality job
 
 **Files:**
-- Modify: `.github/workflows/ci.yml`, `docs/agents/testing.md` (the quality job), `docs/agents/tooling.md`
+- Modify: `.github/workflows/ci.yml`, `docs/guides/testing.md` (the quality job), `docs/guides/tooling.md`
 
-- [ ] **Step 1: Add a `quality` job** that runs on every pull request, using `./.github/actions/setup`, then `pnpm knip`, `pnpm knip:production` and `pnpm dupes`. It has no affected-filter.
-- [ ] **Step 2: Prove that it fails.** Plant `export const plantedUnused = 1;` in `packages/core/src/shared/utils/planted.ts`, and a copy of a 20-line block in a test file. Run the three commands locally. Expected: knip exits 1 naming `plantedUnused`, and jscpd exits 1 naming the clone.
-- [ ] **Step 3: Remove both plants,** then run the three commands. Expected: all exit 0.
-- [ ] **Step 4: Gate**, repo-wide: `pnpm lint && pnpm check-types && pnpm test && pnpm test:browser`. Expected: all green.
+- [x] **Step 1: Add a `quality` job** that runs on every pull request, using `./.github/actions/setup`, then `pnpm knip`, `pnpm knip:production` and `pnpm dupes`. It has no affected-filter.
+- [x] **Step 2: Prove that it fails.** Plant `export const plantedUnused = 1;` in `packages/core/src/shared/utils/planted.ts`, and a copy of a 20-line block in a test file. Run the three commands locally. Expected: knip exits 1 naming `plantedUnused`, and jscpd exits 1 naming the clone.
+- [x] **Step 3: Remove both plants,** then run the three commands. Expected: all exit 0.
+- [x] **Step 4: Gate**, repo-wide: `pnpm lint && pnpm check-types && pnpm test && pnpm test:browser`. Expected: all green.
 
 ## Watch out (owner's steps)
 
 - **Commit the instant-users-navigation work first.** Tasks 5, 7, 8, 9, 14 and 15 build on it.
 - **Keep `TELEMETRY_HEADERS` in Dokploy's AllOnFire env.** Task 3's compose guard fails any deploy without it.
+
+## Implementation Log
+- Implemented: 2026-11-02T23:42:08Z
+- Workspace: current-branch — feat/instant-users-navigation
+- Committed: no — awaiting user review

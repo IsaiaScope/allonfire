@@ -15,7 +15,10 @@ export type AccessMembership = { app: App; role: Role };
 /** What the rules read from a User. */
 export type AccessUser = { memberships: readonly AccessMembership[] };
 
-/** True when `role` reaches at least `min`: `hasRole(Role.ADMIN, Role.USER)`. */
+/**
+ * True when `role` reaches at least `min`: `hasRole(Role.ADMIN, Role.USER)`.
+ * @internal
+ */
 export const hasRole = (role: Role, min: Role): boolean =>
   ACCESS.ROLE_RANK[role] >= ACCESS.ROLE_RANK[min];
 

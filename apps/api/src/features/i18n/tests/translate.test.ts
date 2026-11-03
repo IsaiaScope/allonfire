@@ -2,8 +2,10 @@
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { API } from "../../../shared/constants/api";
+import { captureLog } from "../../logger/tests/capture";
 import { TRANSLATION } from "../constants/locales";
-import { translate } from "../translate";
+import { translate, translateCode } from "../translate";
 
 /** Any surviving brace means a placeholder was not substituted. */
 const UNRESOLVED_PLACEHOLDER = /[{}]/;
@@ -96,5 +98,29 @@ describe("translate — resilience", () => {
     for (const locale of I18N.SUPPORTED_LOCALES) {
       expect(() => translate(ERROR.CODE.INTERNAL_ERROR, locale)).not.toThrow();
     }
+  });
+
+  it("a missing translation serves English and warns with the key and locale", () => {
+    const { lines, logger } = captureLog();
+
+    // A runtime code whose value never arrived: ICU cannot render it.
+    const rendered = translateCode(
+      ERROR.CODE.RATE_LIMITED,
+      I18N.LOCALE.IT_IT,
+      undefined,
+      logger
+    );
+
+    expect(rendered).toBe(
+      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][ERROR.CODE.RATE_LIMITED]
+    );
+    expect(lines).toEqual([
+      expect.objectContaining({
+        code: ERROR.CODE.RATE_LIMITED,
+        err: expect.objectContaining({ message: expect.any(String) }),
+        locale: I18N.LOCALE.IT_IT,
+        msg: API.LOG_MESSAGE.TRANSLATION_FAILED,
+      }),
+    ]);
   });
 });

@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { AOFInput } from "@allonfire/ui/components/aof-input";
@@ -46,13 +43,13 @@ const tidy = (text: string) =>
  */
 const keptInBox = (typed: string) =>
   [
-    USER_SEARCH.parse(typed).text,
+    USER.SEARCH.parse(typed).text,
     ...tidy(typed)
       .split(SEPARATOR.WORD)
       .filter(
         (part) =>
           part.includes(SEPARATOR.FIELD) &&
-          USER_SEARCH.serialize(USER_SEARCH.parse(part)) === ""
+          USER.SEARCH.serialize(USER.SEARCH.parse(part)) === ""
       ),
   ]
     .filter(Boolean)
@@ -68,14 +65,14 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
   const t = useTranslations();
   const [params, setParams] = useQueryStates(usersParams);
   const raw = params[USER.PARAM.SEARCH];
-  const search = useMemo(() => USER_SEARCH.parse(raw), [raw]);
+  const search = useMemo(() => USER.SEARCH.parse(raw), [raw]);
   const [draft, setDraft] = useState(search.text);
   // The address changed under the box (Back, a link): the box follows it,
   // unless its words already say the same (a field still being typed stays).
   const [seen, setSeen] = useState(search.text);
   if (search.text !== seen) {
     setSeen(search.text);
-    if (USER_SEARCH.parse(draft).text !== search.text) {
+    if (USER.SEARCH.parse(draft).text !== search.text) {
       setDraft(search.text);
     }
   }
@@ -87,7 +84,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
       setParams(
         {
           [USER.PARAM.PAGE]: null,
-          [USER.PARAM.SEARCH]: USER_SEARCH.serialize(next) || null,
+          [USER.PARAM.SEARCH]: USER.SEARCH.serialize(next) || null,
         },
         USERS.HISTORY.SEARCH
       ),
@@ -101,7 +98,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
     // A field typed in the box (`app:laura`) becomes its filter, and the
     // box keeps only the words.
     const timer = setTimeout(() => {
-      write({ ...search, ...USER_SEARCH.parse(draft) });
+      write({ ...search, ...USER.SEARCH.parse(draft) });
       setDraft(keptInBox(draft));
     }, USERS.TYPING_REST_MS);
     return () => clearTimeout(timer);

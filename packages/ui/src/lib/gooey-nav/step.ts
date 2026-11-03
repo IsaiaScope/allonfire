@@ -1,3 +1,4 @@
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { pillAt, planFlight } from "./drops";
 import { bezier, clamp01, travelEase } from "./geometry";
 import type { Drop, Sim } from "./types";
@@ -25,7 +26,9 @@ const fly = (sim: Sim, drop: Drop, { dt, now }: Tick) => {
     source.outgoing = Math.max(0, source.outgoing - step);
     drop.given += step;
   }
-  const t = clamp01((now - (drop.start ?? now)) / 1000 / (drop.duration ?? 1));
+  const t = clamp01(
+    (now - (drop.start ?? now)) / UNIT.MS_PER_SECOND / (drop.duration ?? 1)
+  );
   const eased = travelEase(t);
   const { x, y } = drop;
   const [x0, y0, x1, y1, x2, y2, x3, y3] = drop.path ?? [

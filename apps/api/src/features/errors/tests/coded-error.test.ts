@@ -3,6 +3,7 @@
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { Hono } from "hono";
 import { localeResolver } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
@@ -33,6 +34,18 @@ describe("onError with a CodedError", () => {
       translate(ERROR.CODE.PAYLOAD_TOO_LARGE, I18N.LOCALE.IT_IT, {
         limit: 2048,
       })
+    );
+  });
+
+  it("answers a service's ResourceChangedError as 409 RESOURCE_CHANGED, in the request's language", async () => {
+    const res = await appThrowing(
+      new ResourceChangedError(["image-1"])
+    ).request("/", { headers: { "accept-language": "it" } });
+    expect(res.status).toBe(409);
+    const body = await problemOf(res);
+    expect(body.code).toBe(ERROR.CODE.RESOURCE_CHANGED);
+    expect(body.detail).toBe(
+      translate(ERROR.CODE.RESOURCE_CHANGED, I18N.LOCALE.IT_IT)
     );
   });
 

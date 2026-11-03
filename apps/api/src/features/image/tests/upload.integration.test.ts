@@ -3,8 +3,8 @@
 import { randomUUID } from "node:crypto";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { prisma } from "@allonfire/database";
 import { App } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { cookieFor, type TestApp } from "../../../shared/tests/sign-in";
@@ -69,17 +69,29 @@ describe("uploading Images on the real stack", () => {
     expect(stored).toEqual([key]);
   });
 
-  it("refuses a GIF and stores nothing", async () => {
+  it.each([
+    {
+      code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
+      file: () => fixtureFile("animation.gif"),
+      what: "a GIF",
+    },
+    {
+      code: ERROR.CODE.PAYLOAD_TOO_LARGE,
+      file: () => ({
+        bytes: Buffer.alloc(IMAGE.LIMIT.FILE_BYTES + 1),
+        name: "big.jpg",
+      }),
+      what: "a file over the size limit",
+    },
+  ])("refuses $what and stores nothing", async ({ code, file }) => {
     const marker = randomUUID();
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
     const res = await upload(app, cookie, {
       alt: { en: marker, it: marker },
       apps: IN_BACK_OFFICE,
-      files: [fixtureFile("animation.gif")],
+      files: [file()],
     });
-    expect((await problemOf(res)).code).toBe(
-      IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE
-    );
+    expect((await problemOf(res)).code).toBe(code);
     expect(await rowsMarked(marker)).toBe(0);
     expect(await anyServed()).toBe(false);
   });
@@ -107,19 +119,4 @@ describe("uploading Images on the real stack", () => {
       expect(res.status).toBe(status);
     }
   );
-
-  it("refuses a file over the size limit and stores nothing", async () => {
-    const marker = randomUUID();
-    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const res = await upload(app, cookie, {
-      alt: { en: marker, it: marker },
-      apps: IN_BACK_OFFICE,
-      files: [
-        { bytes: Buffer.alloc(IMAGE.LIMIT.FILE_BYTES + 1), name: "big.jpg" },
-      ],
-    });
-    expect((await problemOf(res)).code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
-    expect(await rowsMarked(marker)).toBe(0);
-    expect(await anyServed()).toBe(false);
-  });
 });

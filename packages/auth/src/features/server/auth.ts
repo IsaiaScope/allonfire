@@ -1,5 +1,5 @@
-import { prisma } from "@allonfire/database";
 import { canEnterApp } from "@allonfire/database/features/auth/access/access";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";

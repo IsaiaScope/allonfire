@@ -27,7 +27,7 @@ export const pillShape = (sim: Sim, index: number, amount: number) => {
   } satisfies Rect;
 };
 
-export const toBox = ({ h, w, x, y }: Rect): Box => ({
+const toBox = ({ h, w, x, y }: Rect): Box => ({
   cx: x + w / 2,
   cy: y + h / 2,
   hh: h / 2,

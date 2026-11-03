@@ -190,7 +190,7 @@ const UserIdentity = ({ user }: { user: UserBody }) => (
 
 /** Where a User has no Membership: a closed barrier that says "not a member"
  *  aloud. */
-export const NoMembership = () => {
+const NoMembership = () => {
   const t = useTranslations("Users");
   return (
     <>

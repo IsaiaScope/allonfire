@@ -18,6 +18,7 @@ const CARD = {
  * How a Design dresses the card, as data: its scheme's colours, the face its
  * image fonts load, and an optional strip along the bottom edge (the Japan
  * Design's tactile paving), drawn as a background image.
+ * @internal
  */
 export type ShareCardLook = {
   colors: { background: string; foreground: string; mutedForeground: string };

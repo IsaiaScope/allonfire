@@ -77,8 +77,8 @@ export const addUser = async (
     );
     return { error, values };
   }
-  const { id } = await res.json();
-  const sent = await sendAvatarChange(client, id, avatar);
+  const { id, version } = await res.json();
+  const sent = await sendAvatarChange(client, { change: avatar, id, version });
   // The kept lists lack the new User: dropped, so the list shows them first.
   updateTag(USERS.CACHE.TAG);
   if (sent && !sent.ok) {

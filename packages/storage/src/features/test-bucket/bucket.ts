@@ -70,7 +70,10 @@ async function removeLeftovers(
   return leftovers;
 }
 
-/** Drops crashed runs' buckets, never one a run still going holds. */
+/**
+ * Drops crashed runs' buckets, never one a run still going holds.
+ * @internal
+ */
 export const sweepTestBuckets = (now = new Date()) =>
   removeLeftovers((bucket) => isStaleTestRun(bucket, now));
 

@@ -1,4 +1,5 @@
 // @module-tag unit
+import { TELEMETRY } from "@allonfire/core/features/telemetry/constants/telemetry";
 import { captureLog } from "./features/logger/tests/capture";
 import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
@@ -42,6 +43,53 @@ describe("createShutdown", () => {
     expect(order).toEqual(["redis", "database", "telemetry"]);
   });
 
+  it("logs a hung drain as a drain timeout", async () => {
+    vi.useFakeTimers();
+    const { lines, logger } = captureLog();
+
+    const shutdown = createShutdown({
+      closeDatabase: () => Promise.resolve(),
+      closeRedis: () => Promise.resolve(),
+      closeServer: () => new Promise<void>(() => undefined),
+      drainTimeoutMs: 10_000,
+      flushTelemetry: () => Promise.resolve(),
+      logger,
+    });
+
+    const done = shutdown();
+    await vi.advanceTimersByTimeAsync(10_000);
+    await done;
+
+    expect(lines.map((line) => line.msg)).toEqual([
+      API.LOG_MESSAGE.DRAIN_TIMEOUT,
+    ]);
+  });
+
+  it("a close that fails is logged with its error, not as a drain timeout", async () => {
+    const { lines, logger } = captureLog();
+
+    const shutdown = createShutdown({
+      closeDatabase: () => Promise.resolve(),
+      closeRedis: () => Promise.resolve(),
+      closeServer: () => Promise.reject(new Error("server not running")),
+      flushTelemetry: () => Promise.resolve(),
+      logger,
+    });
+
+    await expect(shutdown()).resolves.toEqual([
+      "redis",
+      "database",
+      "telemetry",
+    ]);
+    expect(lines).toEqual([
+      expect.objectContaining({
+        err: expect.objectContaining({ message: "server not running" }),
+        msg: API.LOG_MESSAGE.SHUTDOWN_STEP_FAILED,
+        step: API.SHUTDOWN.STEP.SERVER,
+      }),
+    ]);
+  });
+
   it("continues shutting down when one step throws", async () => {
     const order: string[] = [];
 
@@ -68,7 +116,7 @@ describe("createShutdown", () => {
     });
 
     const done = shutdown();
-    await vi.advanceTimersByTimeAsync(API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(TELEMETRY.LIMIT.FLUSH_TIMEOUT_MS);
 
     await expect(done).resolves.toEqual(["server", "redis", "database"]);
   });
@@ -122,7 +170,7 @@ describe("createCrashHandler", () => {
     });
 
     const done = crash(new Error("boom"), "uncaughtException");
-    await vi.advanceTimersByTimeAsync(API.LIMIT.TELEMETRY_FLUSH_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(TELEMETRY.LIMIT.FLUSH_TIMEOUT_MS);
     await done;
 
     expect(exit).toHaveBeenCalledWith(1);

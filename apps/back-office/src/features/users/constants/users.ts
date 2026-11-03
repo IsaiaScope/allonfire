@@ -5,6 +5,9 @@ import type { StationSignage } from "@/shared/components/station-notice";
 /** How long the Avatar links a list holds stay valid, at least. */
 const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
 
+/** The picture field's name in both User forms. */
+const AVATAR_FIELD = "avatar";
+
 /** The Back Office's Users list: its tunables, each written once. */
 export const USERS = {
   /** Why the Add a User action refused, each with its message over the form. */
@@ -26,7 +29,7 @@ export const USERS = {
    * The picture field's name in both User forms; its removal posts under
    * `avatarRemoval(AVATAR_FIELD)` (ui's `avatar-change`).
    */
-  AVATAR_FIELD: "avatar",
+  AVATAR_FIELD,
   /**
    * The list's rows (`usersHydration`) and one User (`readUser`), kept in
    * the visitor's browser per address (ADR 0028) until a change to Users
@@ -75,6 +78,16 @@ export const USERS = {
    * or all but their picture. The form toasts either and opens the list.
    */
   EDIT_NOTICE: { AVATAR_FAILED: "avatarFailed", SAVED: "saved" },
+  /**
+   * Where each part both User forms share (`user-form-parts`) finds its
+   * fields: the part's names mapped to the form's, the same in both forms.
+   */
+  FORM_FIELDS: {
+    AVATAR: { avatar: AVATAR_FIELD },
+    NAME: { name: "name" },
+    PASSWORD: { confirmPassword: "confirmPassword", password: "password" },
+    ROLES: { roles: "roles" },
+  },
   /**
    * How the address changes: a search replaces the history entry (Back should
    * not walk through each keystroke); a page or page size pushes one.

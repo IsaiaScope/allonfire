@@ -62,7 +62,7 @@ describe("environment", () => {
   });
 
   it("lets Turbo hand the build every variable it validates", () => {
-    // The App's zod parses: a schema crosses no package (docs/agents/conventions.md).
+    // The App's zod parses: a schema crosses no package (docs/guides/conventions.md).
     const turbo = turboSchema.parse(
       parseJson(readFileSync(TURBO_JSON, "utf8"))
     );

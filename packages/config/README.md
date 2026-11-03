@@ -15,11 +15,11 @@ config/
     node.json              Node code (extends base + Node types, ES2022 lib, no emit)
     nextjs.json            Next.js app config (extends base + DOM lib, JSX, plugin, Node types)
   local/
-    addresses.ts           LOCAL (PORT, URL, DATABASE, STORAGE), TEST_API_URL: every Local and test address, once
-    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it
+    addresses.ts           LOCAL (PORT, URL with URL.TEST_API, DATABASE, STORAGE): every Local and test address, once
+    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it; package-exports.test.ts checks each export key of auth, storage, database and config has a reader outside its package
   tests/                   One folder per test layer
     vitest/
-      vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags
+      vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags; VITEST.BROWSER_FILES, the files only the browser config collects
       vitest.setup.ts      Fails a test file with no `// @module-tag`
     browser/
       vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit
@@ -27,29 +27,30 @@ config/
     e2e/
       playwright.config.ts End-to-end: `aofPlaywrightConfig` builds and starts the App plus the API (`./e2e`) on the run's Test database and bucket, and runs each spec in Chromium and WebKit, desktop and phone
       global-teardown.ts   Drops them
-      run.ts               E2E_LABEL, the e2e run's label beside its stamp
+      run.ts               E2E: LABEL, the e2e run's label beside its stamp; CLI, the scripts making and dropping its Test database and bucket; TAG, the tags its tests take
     run/
       test-run.ts          `testRunStamp()` names a run's Test database and bucket; `isStaleTestRun(name, now)` finds an ended run's, its process gone or a day old; `isTestRunOf(name, label)` finds a label's; `dropWhenRunEnds(drop)` is a global setup's teardown, run on SIGHUP too; `runsIntegration(tagsFilter)` says whether a run needs them
 ```
 
 ## 🔧 Usage
 
-Each app or package extends the appropriate preset:
+Each app or package extends the appropriate preset by its relative path (the
+presets have no export key):
 
 ```json
-// Next.js apps (apps/laura)
+// Next.js apps (apps/back-office)
 {
-  "extends": "@allonfire/config/typescript/nextjs.json"
+  "extends": "../../packages/config/typescript/nextjs.json"
 }
 
-// Node packages and apps (packages/database, apps/api)
+// Node packages and apps (packages/core, apps/api)
 {
-  "extends": "@allonfire/config/typescript/node.json"
+  "extends": "../../packages/config/typescript/node.json"
 }
 
 // Custom (extend base directly)
 {
-  "extends": "@allonfire/config/typescript/base.json"
+  "extends": "../../packages/config/typescript/base.json"
 }
 ```
 

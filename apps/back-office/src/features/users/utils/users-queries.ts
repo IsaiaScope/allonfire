@@ -12,6 +12,7 @@ import type { UsersParams } from "../constants/users-params";
 /**
  * Asks once more after a server or network failure; never after the API
  * refused (a 401, 403 or 400), so the error shows at once.
+ * @internal
  */
 export const retryUsers = (failureCount: number, error: unknown) =>
   failureCount < USERS.RETRIES &&

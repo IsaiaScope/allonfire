@@ -1,6 +1,7 @@
 // @module-tag unit
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
 import { onError } from "../../errors/middleware/error-handler";
@@ -19,7 +20,7 @@ function appWith(
   store: RateLimitStore,
   trustedHops: number,
   limit = 2,
-  windowMs = 60_000
+  windowMs = UNIT.MS_PER_MINUTE
 ) {
   return new Hono()
     .use(requestId())
@@ -108,7 +109,7 @@ describe("rate limited response", () => {
           totalHits: 2,
         }),
     };
-    const res = await appWith(store, 1, 1, 60_000).request(
+    const res = await appWith(store, 1, 1, UNIT.MS_PER_MINUTE).request(
       "/ping",
       forwarded("5.5.5.5")
     );
@@ -164,10 +165,10 @@ describe("store outage", () => {
       logger
     );
 
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
 
     expect(lines.map((line) => line.msg)).toEqual([
       "rate limit store unreachable, failing open",
@@ -187,7 +188,7 @@ describe("createRateLimiter keyPrefix", () => {
           limit: 10,
           store,
           trustedHops: 0,
-          windowMs: 60_000,
+          windowMs: UNIT.MS_PER_MINUTE,
         })
       )
       .get("/", (context) => context.text("ok"));
@@ -220,7 +221,7 @@ describe("one store behind several limiters", () => {
         windowMs,
       });
     const app = new Hono()
-      .use(limiter("", 60_000))
+      .use(limiter("", UNIT.MS_PER_MINUTE))
       .use(limiter("sign-in:", 900_000))
       .get("/", (context) => context.text("ok"));
 
@@ -228,7 +229,7 @@ describe("one store behind several limiters", () => {
 
     expect(windows).toEqual(
       new Map([
-        [RATE_LIMIT.UNKNOWN_CLIENT, 60_000],
+        [RATE_LIMIT.UNKNOWN_CLIENT, UNIT.MS_PER_MINUTE],
         [`sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`, 900_000],
       ])
     );

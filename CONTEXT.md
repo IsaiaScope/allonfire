@@ -227,9 +227,14 @@ plus the Apps and API running on the host.
 _Avoid_: dev environment — `dev` is an integration branch, not a place anything
 runs.
 
+**VPS**:
+The one Hetzner server. It runs Production and services that are not
+AllOnFire, which share its proxy, firewall and backups.
+_Avoid_: server (alone), box, Production (for the whole machine).
+
 **Production**:
-The VPS. The only deployed environment; the `test` and `prod` branches are
-promotion gates, not environments.
+AllOnFire running on the VPS. The only deployed environment; the `test` and
+`prod` branches are promotion gates, not environments.
 _Avoid_: prod server, staging — no staging exists.
 
 **Test database**:

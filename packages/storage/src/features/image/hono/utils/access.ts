@@ -1,3 +1,7 @@
+import {
+  forbidden,
+  notFound,
+} from "@allonfire/core/features/errors/coded-error";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import {
@@ -9,7 +13,7 @@ import {
 } from "@allonfire/database/features/auth/access/access";
 import type { ImageChange } from "@allonfire/database/features/image/image.service";
 import type { PatchChange } from "../constants/schemas";
-import { forbidden, imageChanged, notFound } from "./errors";
+import { imageChanged } from "./errors";
 
 /** Each Image's access and Apps, by id: what a write's checks read. */
 type Placements = ReadonlyMap<string, ImageVisibility>;

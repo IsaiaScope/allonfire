@@ -3,28 +3,15 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { seedFixtures } from "../seed/fixtures/seed-fixtures";
-import {
-  databaseUrl,
-  TEMPLATE_PREFIX,
-  templateName,
-  testDatabaseName,
-} from "./names";
+import { TEST_DATABASE } from "./constants/test-database";
+import { databaseUrl, templateName, testDatabaseName } from "./names";
 import {
   createDatabase,
   databasesOnServer,
   liquibase,
   onServer,
-  PACKAGE_DIR,
   withClient,
 } from "./server";
-
-/**
- * What the template is built from: a change to any file builds a new one. The
- * db-migrate image (`liquibase/`) runs the changelog, so it counts too.
- */
-export const TEMPLATE_SOURCES = ["changelog", "liquibase", "src/features/seed"];
-/** Any constant; every run asks Postgres for this one lock. */
-const TEMPLATE_LOCK = 4_180_017;
 
 /**
  * The files under `dir` that build something: dotfiles (`.DS_Store`, exFAT's
@@ -45,10 +32,13 @@ const filesUnder = (root: string, dir: string): string[] =>
     .map(({ path }) => path)
     .sort();
 
-/** sha256 over the sources' paths and contents. */
+/**
+ * sha256 over the sources' paths and contents.
+ * @internal
+ */
 export function templateFingerprint(
-  root = PACKAGE_DIR,
-  sources: readonly string[] = TEMPLATE_SOURCES
+  root = TEST_DATABASE.PACKAGE_ROOT,
+  sources: readonly string[] = TEST_DATABASE.TEMPLATE.SOURCES
 ): string {
   const hash = createHash("sha256");
   for (const file of sources.flatMap((dir) => filesUnder(root, dir))) {
@@ -57,19 +47,18 @@ export function templateFingerprint(
   return hash.digest("hex");
 }
 
-/** The template's name carries this much of the fingerprint. */
-const NAME_FINGERPRINT_LENGTH = 6;
-
 const templateFor = async (serverUrl: string, fingerprint: string) =>
   (await databasesOnServer(serverUrl)).find(
     (name) =>
-      name.startsWith(TEMPLATE_PREFIX) && name.endsWith(`_${fingerprint}`)
+      name.startsWith(TEST_DATABASE.TEMPLATE.PREFIX) &&
+      name.endsWith(`_${fingerprint}`)
   );
 
 /**
  * A template's working name while it is built: it carries the building
  * process, so a build that died is stale at once (`isStaleTestRun`), not a
  * day later.
+ * @internal
  */
 export const buildingName = (
   fingerprint: string,
@@ -102,7 +91,10 @@ async function buildTemplate(serverUrl: string, fingerprint: string) {
  * finds it.
  */
 export async function ensureTemplate(serverUrl: string): Promise<string> {
-  const fingerprint = templateFingerprint().slice(0, NAME_FINGERPRINT_LENGTH);
+  const fingerprint = templateFingerprint().slice(
+    0,
+    TEST_DATABASE.TEMPLATE.FINGERPRINT_LENGTH
+  );
   const found = await templateFor(serverUrl, fingerprint);
   if (found) {
     return found;
@@ -110,7 +102,7 @@ export async function ensureTemplate(serverUrl: string): Promise<string> {
   // A session-level lock, released when the session ends: disconnecting frees
   // it, whatever failed, and no unlock can hide the error that did.
   return onServer(serverUrl, async (lock) => {
-    await lock.$executeRaw`SELECT pg_advisory_lock(${TEMPLATE_LOCK})`;
+    await lock.$executeRaw`SELECT pg_advisory_lock(${TEST_DATABASE.TEMPLATE.LOCK})`;
     return (
       (await templateFor(serverUrl, fingerprint)) ??
       (await buildTemplate(serverUrl, fingerprint))

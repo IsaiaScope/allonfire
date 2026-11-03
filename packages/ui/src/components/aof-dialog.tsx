@@ -3,9 +3,7 @@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
   DialogTitle,
 } from "@allonfire/shadcn/components/dialog";
 import type { ComponentProps } from "react";
@@ -20,15 +18,9 @@ export const AOFDialog = (props: ComponentProps<typeof Dialog>) => (
 export const AOFDialogContent = (
   props: ComponentProps<typeof DialogContent>
 ) => <DialogContent {...props} />;
-export const AOFDialogHeader = (props: ComponentProps<typeof DialogHeader>) => (
-  <DialogHeader {...props} />
-);
 export const AOFDialogTitle = (props: ComponentProps<typeof DialogTitle>) => (
   <DialogTitle {...props} />
 );
-export const AOFDialogDescription = (
-  props: ComponentProps<typeof DialogDescription>
-) => <DialogDescription {...props} />;
 export const AOFDialogFooter = (props: ComponentProps<typeof DialogFooter>) => (
   <DialogFooter {...props} />
 );

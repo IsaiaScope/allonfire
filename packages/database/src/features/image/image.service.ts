@@ -1,24 +1,33 @@
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import type { Image, Prisma } from "../../../generated/prisma/client";
 import { type App, ImageAccess } from "../../../generated/prisma/enums";
 import type { ImageVisibility } from "../auth/access/access";
 import { prisma } from "../prisma/client";
 import { type ImageAlt, readAlt } from "./alt";
+import { checkImageVersions, rowVersion } from "./image-version";
 
 /** Where the last page ended: its last Image's sort key, not a row reference. */
 export type ImageCursor = { createdAt: Date; id: string };
 
 /**
  * An Image, its access and every App it is placed in, ordered by App
- * (ADR 0020, ADR 0027).
+ * (ADR 0020, ADR 0027), and its Version.
  */
 export type ImageRecord = Omit<Image, "alt"> & {
   alt: ImageAlt;
   apps: App[];
+  /** Its Version (`imageVersion`): a change must carry it to be written. */
+  version: string;
 };
 /** A new Image: private unless `access` says otherwise. */
-export type NewImage = Omit<ImageRecord, "id" | "createdAt" | "access"> & {
+export type NewImage = Omit<
+  ImageRecord,
+  "id" | "createdAt" | "updatedAt" | "access" | "version"
+> & {
   access?: ImageAccess | undefined;
 };
+/** An Image a change names, and the Version the change was made on. */
+export type OpenedImage = { id: string; version: string };
 export type ImageChange = {
   id: string;
   /** Apps to place it in; one it is already in is left alone. */
@@ -56,6 +65,7 @@ const toRecord = (row: ImageRow): ImageRecord => ({
   ...row,
   alt: readAlt(row.alt),
   apps: row.apps.map(({ app }) => app),
+  version: rowVersion(row),
 });
 
 /** Throws unless every id exists; duplicates in `ids` count once. */
@@ -65,7 +75,14 @@ async function assertAllExist(
 ) {
   const unique = [...new Set(ids)];
   const found = await tx.image.findMany({
-    select: { access: true, apps: withLinks.apps, id: true, key: true },
+    select: {
+      access: true,
+      alt: true,
+      apps: withLinks.apps,
+      id: true,
+      key: true,
+      updatedAt: true,
+    },
     where: { id: { in: unique } },
   });
   const foundIds = new Set(found.map(({ id }) => id));
@@ -88,7 +105,10 @@ const lockImages = async (
   await tx.$queryRaw`SELECT "id" FROM image."Image" WHERE "id" = ANY(${[...ids]}) ORDER BY "id" FOR UPDATE`;
 };
 
-/** A locked Image's access and Apps, and the file its row names now. */
+/**
+ * A locked Image's access and Apps, and the file its row names now.
+ * @internal
+ */
 export type ImageLink = ImageVisibility & { key: string };
 
 /** Each locked Image's access, Apps and file name, by id. */
@@ -200,7 +220,11 @@ export async function getImage(id: string): Promise<ImageRecord | null> {
   return row && toRecord(row);
 }
 
-/** One change, its statements in order: take out, then place or switch. */
+/**
+ * One change, its statements in order: take out, then place or switch. Any
+ * change moves the Image's `updatedAt`, an App-only one too, so every change
+ * is a new Version.
+ */
 const applyChange = async (
   tx: Prisma.TransactionClient,
   { access, alt, id, key, place = [], remove = [] }: ImageChange
@@ -216,9 +240,10 @@ const applyChange = async (
       skipDuplicates: true,
     });
   }
-  if (alt || access || key) {
+  if (alt || access || key || place.length > 0 || remove.length > 0) {
     await tx.image.update({
       data: {
+        updatedAt: new Date(),
         ...(alt && { alt }),
         ...(access && { access }),
         ...(key && { key }),
@@ -230,19 +255,29 @@ const applyChange = async (
 };
 
 /**
- * Writes what `resolve` works out from the placements of `ids`, locked; the
- * Images come back in the order of its changes. All or nothing: an unknown
- * id (before `resolve` runs), or an Image the batch would leave in no App,
- * rolls the whole batch back with `ImageNotFoundError`. One change at a
+ * Writes what `resolve` works out from the placements of the `opened`
+ * Images, locked; the Images come back in the order of its changes. All or
+ * nothing: an unknown id (before `resolve` runs) throws `ImageNotFoundError`;
+ * an Image changed since the Version it was opened on (checked after
+ * `resolve`, before any write), or one the batch would leave in no App,
+ * throws `ResourceChangedError`, and nothing is written. One change at a
  * time (a reduce chain): a batch may name the same Image twice, and its
  * changes apply in order.
  */
 export function updateImages(
-  ids: readonly string[],
+  opened: readonly OpenedImage[],
   resolve: ResolveChanges
 ): Promise<ImageRecord[]> {
+  const ids = opened.map(({ id }) => id);
   return prisma.$transaction(async (tx) => {
-    const { checked: changes } = await lockedAndChecked(tx, ids, resolve);
+    const { checked: changes, found } = await lockedAndChecked(
+      tx,
+      ids,
+      resolve
+    );
+    // After the caller's checks, so a refusal never tells an Image exists
+    // that the caller cannot see.
+    checkImageVersions(opened, found);
     await changes.reduce<Promise<void>>(async (done, change) => {
       await done;
       await applyChange(tx, change);
@@ -253,10 +288,11 @@ export function updateImages(
       where: { id: { in: [...ids] } },
     });
     // A batch whose changes take an Image out of every App must not leave a
-    // row nobody sees and nobody can delete: throwing rolls it all back.
+    // row nobody sees and nobody can delete: throwing rolls it all back. The
+    // Image exists, another change took it out of its other Apps first.
     const emptied = rows.filter(({ apps }) => apps.length === 0);
     if (emptied.length > 0) {
-      throw new ImageNotFoundError(emptied.map(({ id }) => id));
+      throw new ResourceChangedError(emptied.map(({ id }) => id));
     }
     const byId = new Map(rows.map((row) => [row.id, toRecord(row)]));
     return changes.flatMap(({ id }) => byId.get(id) ?? []);
@@ -296,18 +332,5 @@ export function deleteImages(
     const { found } = await lockedAndChecked(tx, ids, authorise);
     await tx.image.deleteMany({ where: { id: { in: ids } } });
     return found.map(({ key }) => key);
-  });
-}
-
-/**
- * Points the Image at a new file name, the old file still in the bucket; the
- * caller copied it first and deletes the old one after. Making a public
- * Image private does this, so its never-expiring links stop at once.
- */
-export async function renameImageKey(id: string, key: string): Promise<void> {
-  await prisma.image.update({
-    data: { key },
-    select: { id: true },
-    where: { id },
   });
 }

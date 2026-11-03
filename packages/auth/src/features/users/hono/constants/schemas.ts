@@ -106,8 +106,9 @@ export const userUpdateRequestSchema = z
     { message: "Nothing to change" }
   );
 
+/** The new User: their id, and their Version, which a picture set next carries. */
 export const userCreatedBodySchema = z
-  .object({ id: z.string() })
+  .object({ id: z.string(), version: z.string() })
   .meta({ ref: "UserCreated" });
 export type UserCreatedBody = z.infer<typeof userCreatedBodySchema>;
 
@@ -124,8 +125,17 @@ export type UserDeleteBody = z.infer<typeof userDeleteBodySchema>;
 /** One User's id, as the path names them. */
 export const userIdParamSchema = z.object({ id: z.string().min(1) });
 
-/** An Avatar's request: one picture, as multipart/form-data `file`. */
-export const avatarFormSchema = z.object({ file: z.instanceof(File) });
+/**
+ * An Avatar's request: one picture, as multipart/form-data `file`, and the
+ * User's `version` the change was made on.
+ */
+export const avatarFormSchema = z.object({
+  file: z.instanceof(File),
+  version: versionSchema,
+});
+
+/** An Avatar's removal: the User's `version` the change was made on. */
+export const avatarDeleteRequestSchema = z.object({ version: versionSchema });
 
 /** A User's new picture, as the listed User holds it: its link signed for
  *  the hour, and the blur to show while it loads. */

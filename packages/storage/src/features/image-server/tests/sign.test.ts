@@ -1,4 +1,5 @@
 // @module-tag unit
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../../environment/environment";
 import { IMAGE_SERVER } from "../constants/image-server";
 import {
@@ -41,7 +42,7 @@ describe("pictureLink", () => {
       width: 640,
     });
     expect(link).toContain(
-      `/rs:fit:640:0/exp:${IN_AN_HOUR.getTime() / 1000}/plain/`
+      `/rs:fit:640:0/exp:${IN_AN_HOUR.getTime() / UNIT.MS_PER_SECOND}/plain/`
     );
   });
 

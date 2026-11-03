@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createLogger } from "../logger";
 
 const logLineSchema = z.looseObject({ level: z.number(), msg: z.string() });
-export type LogLine = z.infer<typeof logLineSchema>;
+type LogLine = z.infer<typeof logLineSchema>;
 
 /**
  * A real logger whose output is parsed into `lines` instead of written out.

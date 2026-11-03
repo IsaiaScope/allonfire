@@ -18,7 +18,7 @@ export type SwitcherApp = {
  */
 export const switcherApps = (
   apps: readonly App[],
-  addresses: Partial<Record<App, string>>,
+  addresses: Partial<Record<App, string | undefined>>,
   current: App
 ): SwitcherApp[] =>
   objectValues(App).flatMap((app) => {

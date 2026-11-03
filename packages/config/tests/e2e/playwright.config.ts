@@ -2,11 +2,11 @@ import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { LOCAL } from "../../local/addresses";
 import { testRunStamp } from "../run/test-run";
-import { E2E_CLI, E2E_LABEL, E2E_TAG } from "./run";
+import { E2E } from "./run";
 
 const isCi = Boolean(process.env.CI);
 /** Tests tagged for Chromium only, which the WebKit projects leave out. */
-const CHROMIUM_ONLY = new RegExp(E2E_TAG.CHROMIUM_ONLY);
+const CHROMIUM_ONLY = new RegExp(E2E.TAG.CHROMIUM_ONLY);
 
 /**
  * `next build` runs before the App answers; the API waits for its Test
@@ -27,9 +27,9 @@ const E2E_RATE_LIMIT_MAX = 10_000;
 const cli =
   ({ dir, script }: { dir: string; script: string }) =>
   (command: string) =>
-    `pnpm -s -C "${dir}" ${script} ${command} ${E2E_LABEL} ${STAMP}`;
-const testDatabase = cli(E2E_CLI.DATABASE);
-const testBucket = cli(E2E_CLI.BUCKET);
+    `pnpm -s -C "${dir}" ${script} ${command} ${E2E.LABEL} ${STAMP}`;
+const testDatabase = cli(E2E.CLI.DATABASE);
+const testBucket = cli(E2E.CLI.BUCKET);
 
 export const playwrightConfig = defineConfig({
   forbidOnly: isCi,

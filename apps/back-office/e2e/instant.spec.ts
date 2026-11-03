@@ -1,4 +1,4 @@
-import { E2E_TAG } from "@allonfire/config/tests/e2e/run";
+import { E2E } from "@allonfire/config/tests/e2e/run";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { instant } from "@next/playwright";
 import { expect, type Page, test } from "@playwright/test";
@@ -55,7 +55,7 @@ test("Cancel on a User opens the list with its rows already there", async ({
   await signInAsAdmin(page);
   await openShown(page);
   await instant(page, async () => {
-    await page.getByRole("link", { name: t.add.cancel }).click();
+    await page.getByRole("link", { name: t.form.cancel }).click();
     await page.waitForURL(toUsers);
     await expect(anyEmail(page)).toBeVisible();
   });
@@ -66,7 +66,7 @@ test("Cancel on Add a User opens the list with its rows already there", async ({
 }) => {
   await signInAsAdmin(page);
   await page.goto(newUserHref());
-  const cancel = page.getByRole("link", { name: t.add.cancel });
+  const cancel = page.getByRole("link", { name: t.form.cancel });
   await expect(cancel).toBeVisible();
   await instant(page, async () => {
     await cancel.click();
@@ -112,7 +112,7 @@ test("the sidebar's Users link opens the list with its rows already there", asyn
 });
 
 test("a User row reached for opens the form already filled", {
-  tag: E2E_TAG.CHROMIUM_ONLY,
+  tag: E2E.TAG.CHROMIUM_ONLY,
 }, async ({ page }) => {
   await signInAsAdmin(page);
   await page.goto(usersSearchHref(SHOWN.email));

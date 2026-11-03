@@ -43,12 +43,12 @@ const valuesOf = (form: FormData): EditUserFields => ({
 
 /**
  * Saves a User through the API as the visitor (an Admin, checked there):
- * their name, their Roles, a new password when one was typed, then their
- * picture, on the `version` the form was opened with: when the User changed
- * since, the API refuses (`CHANGED`) and nothing is written. It never
- * redirects: the form toasts what it answers and opens the list. A refusal
- * hands back why and what was typed. The checks here are the
- * ones that count.
+ * their name, their Roles, a new password when one was typed, on the
+ * `version` the form was opened with, then their picture on the Version that
+ * save answered: when the User changed since either, the API refuses
+ * (`CHANGED`) and nothing more is written. It never redirects: the form
+ * toasts what it answers and opens the list. A refusal hands back why and
+ * what was typed. The checks here are the ones that count.
  */
 export const editUser = async (
   id: string,
@@ -91,12 +91,20 @@ export const editUser = async (
     // would overwrite the change the Admin never saw. They reload instead.
     return { error, values };
   }
-  const sent = await sendAvatarChange(client, id, avatar);
+  const sent = await sendAvatarChange(client, {
+    change: avatar,
+    id,
+    version: (await res.json()).version,
+  });
   // The kept list and this User's kept page hold the old values.
   updateTag(USERS.CACHE.TAG);
   // Deleted by another Admin between the save and their picture.
   if (sent?.status === HTTP.STATUS.NOT_FOUND) {
     return { error: USERS.EDIT_ERROR.GONE, values };
+  }
+  // Changed by someone else between the save and their picture.
+  if (sent?.status === HTTP.STATUS.CONFLICT) {
+    return { error: USERS.EDIT_ERROR.CHANGED, values };
   }
   return {
     notice:

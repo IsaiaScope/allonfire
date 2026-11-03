@@ -1,5 +1,5 @@
 // @module-tag unit
-import { LOCAL, TEST_API_URL } from "../addresses";
+import { LOCAL } from "../addresses";
 
 describe("local addresses", () => {
   it("builds every URL from its port", () => {
@@ -15,10 +15,11 @@ describe("local addresses", () => {
       REDIS: "redis://localhost:6379/0",
       REDIS_E2E: "redis://localhost:6379/15",
       STORAGE: "http://localhost:9000",
+      TEST_API: "http://api.test",
     });
   });
 
   it("names a host that never resolves for MSW", () => {
-    expect(TEST_API_URL).toBe("http://api.test");
+    expect(LOCAL.URL.TEST_API).toBe("http://api.test");
   });
 });

@@ -3,12 +3,15 @@ import type { z } from "zod";
 import { type App, Role } from "../../../../../generated/prisma/enums";
 import { roleSchema } from "./schemas";
 
-/** A Role a stranger can be given by Registration: never Admin. */
+/**
+ * A Role a stranger can be given by Registration: never Admin.
+ * @internal
+ */
 export const registrationRoleSchema = roleSchema.exclude([Role.ADMIN]);
 export type RegistrationRole = z.infer<typeof registrationRoleSchema>;
 
 /** What an App declares about itself (ADR 0019); more fields can follow. */
-export type AppSettings = {
+type AppSettings = {
   /** Whether search engines may list this App's pages (CONTEXT.md, Indexing). */
   indexing: Indexing;
   /** The lowest Role this App lets in. */

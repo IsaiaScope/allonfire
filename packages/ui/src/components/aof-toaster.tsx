@@ -14,7 +14,7 @@ import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import type { ToasterProps } from "sonner";
-import { AOF_TOAST_KINDS, type AOFToastKind } from "../lib/use-aof-toast";
+import { AOF_TOAST, type AOFToastKind } from "../lib/use-aof-toast";
 import { cn } from "../lib/utils";
 
 /**
@@ -104,7 +104,7 @@ export type AOFToastBackdrops = Partial<Record<AOFToastKind, ReactNode>>;
 const iconsWith = (backdrops: AOFToastBackdrops | undefined) => ({
   ...ICONS,
   ...objectFromEntries(
-    AOF_TOAST_KINDS.map((kind) => [
+    AOF_TOAST.KIND.map((kind) => [
       kind,
       <>
         {ICONS[kind]}

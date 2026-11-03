@@ -2,12 +2,9 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { HeadBucketCommand, S3ServiceException } from "@aws-sdk/client-s3";
 import { bucketExists } from "../exists";
+import { send } from "./s3-client-mock";
 
-const send = vi.hoisted(() =>
-  vi.fn<(command: unknown) => Promise<unknown>>(() => Promise.resolve({}))
-);
-// The real client validates STORAGE_* at import; these tests need no provider.
-vi.mock("../client", () => ({ s3: { send } }));
+vi.mock("../client", () => import("./s3-client-mock"));
 
 const refusal = (httpStatusCode: number) =>
   new S3ServiceException({

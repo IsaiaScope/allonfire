@@ -5,7 +5,10 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { aofToast } from "../lib/use-aof-toast";
 
-/** A failure told to the visitor: an error toast. */
+/**
+ * A failure told to the visitor: an error toast.
+ * @internal
+ */
 export const aofNotifyError = (message: string) => aofToast(message, "error");
 
 /**

@@ -3,6 +3,10 @@ const HEIC_TYPE = /^image\/hei[cf]$/;
 const HEIC_EXTENSION = /\.hei[cf]$/i;
 const JPEG = { QUALITY: 0.92, TYPE: "image/jpeg" } as const;
 
+/**
+ * Whether `file` is a HEIC or HEIF picture, by its type or its extension.
+ * @internal
+ */
 export const isHeic = (file: File): boolean =>
   HEIC_TYPE.test(file.type) || HEIC_EXTENSION.test(file.name);
 

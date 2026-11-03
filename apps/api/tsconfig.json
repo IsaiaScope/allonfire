@@ -3,7 +3,6 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@allonfire/database": ["../../packages/database/src/index.ts"],
       "@allonfire/core/*": ["../../packages/core/src/*"]
     }
   },

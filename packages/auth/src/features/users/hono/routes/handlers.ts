@@ -1,15 +1,12 @@
 import {
   CodedError,
   invalidHook,
+  notFound,
+  payloadTooLarge,
 } from "@allonfire/core/features/errors/coded-error";
-import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { resourceChanged } from "@allonfire/core/features/version/utils/resource-changed";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
-import {
-  EmailTakenError,
-  UserChangedError,
-} from "@allonfire/database/features/auth/user.service";
+import { EmailTakenError } from "@allonfire/database/features/auth/user.service";
 import { hashPassword } from "better-auth/crypto";
 import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
@@ -18,8 +15,9 @@ import { AUTH } from "../../../../shared/constants/auth";
 import { linkedPicture } from "../../../../shared/utils/linked-picture";
 import { guard } from "../../../hono/guards/utils/guard";
 import type { AuthEnv } from "../../../hono/types/variables";
-import { USER, USER_SEARCH } from "../../constants/users";
+import { USER } from "../../constants/users";
 import {
+  avatarDeleteRequestSchema,
   avatarFormSchema,
   listQuerySchema,
   toUserBody,
@@ -44,12 +42,6 @@ import {
 } from "./routes";
 
 const factory = createFactory<AuthEnv>();
-
-const userNotFound = () =>
-  new CodedError({
-    code: ERROR.CODE.NOT_FOUND,
-    status: HTTP.STATUS.NOT_FOUND,
-  });
 
 /** 401 without a Session, 403 unless the Host lets this User list Users. */
 const allowed = (deps: UserDeps) =>
@@ -77,7 +69,7 @@ export const listHandlers = (deps: UserDeps) =>
       const query = c.req.valid("query");
       const perPage = query[USER.PARAM.PER_PAGE];
       const { total, users } = await deps.listUsers({
-        ...USER_SEARCH.parse(query[USER.PARAM.SEARCH]),
+        ...USER.SEARCH.parse(query[USER.PARAM.SEARCH]),
         page: query[USER.PARAM.PAGE],
         perPage,
       });
@@ -119,7 +111,8 @@ export const deleteHandlers = (deps: UserDeps) =>
 
 /**
  * Adds a User with the password the Admin typed, hashed as Better Auth
- * hashes it, so they can sign in at once. A taken email answers 409.
+ * hashes it, so they can sign in at once, and answers their id and Version.
+ * A taken email answers 409.
  */
 export const createHandlers = (deps: UserDeps) =>
   factory.createHandlers(
@@ -129,11 +122,14 @@ export const createHandlers = (deps: UserDeps) =>
     async (c) => {
       const { password, ...user } = c.req.valid("json");
       try {
-        const { id } = await deps.createUser(
+        const { id, version } = await deps.createUser(
           user,
           await hashPassword(password)
         );
-        return c.json({ id } satisfies UserCreatedBody, HTTP.STATUS.CREATED);
+        return c.json(
+          { id, version } satisfies UserCreatedBody,
+          HTTP.STATUS.CREATED
+        );
       } catch (error) {
         if (error instanceof EmailTakenError) {
           throw new CodedError(
@@ -151,9 +147,10 @@ export const createHandlers = (deps: UserDeps) =>
 
 /**
  * Sets a User's Avatar: the picture processed and stored under a new name,
- * that name written to the User, the picture it replaced deleted. An unknown
- * User answers 404, and the file just stored is deleted, as it is when the
- * write fails.
+ * that name written to the User on the Version the change was made on, the
+ * picture it replaced deleted. An unknown User answers 404, and the file just
+ * stored is deleted, as it is when the write fails or the User changed since
+ * (409, thrown by the service).
  */
 export const avatarPutHandlers = (deps: UserDeps) =>
   factory.createHandlers(
@@ -162,32 +159,28 @@ export const avatarPutHandlers = (deps: UserDeps) =>
     bodyLimit({
       maxSize: deps.avatarMaxBytes,
       onError: () => {
-        throw new CodedError({
-          code: ERROR.CODE.PAYLOAD_TOO_LARGE,
-          status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
-          values: { limit: deps.avatarMaxBytes },
-        });
+        throw payloadTooLarge(deps.avatarMaxBytes);
       },
     }),
     validator("param", userIdParamSchema, invalidHook),
     validator("form", avatarFormSchema, invalidHook),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { file } = c.req.valid("form");
+      const { file, version } = c.req.valid("form");
       const picture = await deps.saveAvatar(
         id,
         Buffer.from(await file.arrayBuffer())
       );
       // The file just stored is deleted unless the User's row now names it.
       const changed = await deps
-        .setUserImage(id, picture)
+        .setUserImage(id, picture, { expectedVersion: version })
         .catch(async (error: unknown) => {
           await deps.deleteAvatars([picture.image]);
           throw error;
         });
       if (!changed) {
         await deps.deleteAvatars([picture.image]);
-        throw userNotFound();
+        throw notFound();
       }
       await deps.deleteAvatars([changed.previous]);
       return c.json(
@@ -197,16 +190,22 @@ export const avatarPutHandlers = (deps: UserDeps) =>
     }
   );
 
-/** Removes a User's Avatar and deletes its file; an unknown User answers 404. */
+/**
+ * Removes a User's Avatar, on the Version the change was made on, and
+ * deletes its file; an unknown User answers 404, one changed since 409.
+ */
 export const avatarDeleteHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     avatarDeleteRoute,
     canManage(deps),
     validator("param", userIdParamSchema, invalidHook),
+    validator("json", avatarDeleteRequestSchema, invalidHook),
     async (c) => {
-      const changed = await deps.setUserImage(c.req.valid("param").id, null);
+      const changed = await deps.setUserImage(c.req.valid("param").id, null, {
+        expectedVersion: c.req.valid("json").version,
+      });
       if (!changed) {
-        throw userNotFound();
+        throw notFound();
       }
       await deps.deleteAvatars([changed.previous]);
       return c.body(null, HTTP.STATUS.NO_CONTENT);
@@ -222,7 +221,7 @@ export const readHandlers = (deps: UserDeps) =>
     async (c) => {
       const user = await deps.readUser(c.req.valid("param").id);
       if (!user) {
-        throw userNotFound();
+        throw notFound();
       }
       return c.json(toUserBody(user, deps.avatarLink), HTTP.STATUS.OK);
     }
@@ -258,27 +257,23 @@ export const updateHandlers = (deps: UserDeps) =>
           });
         }
       }
-      const user = await deps
-        .updateUser(
-          id,
-          {
-            ...(name !== undefined && { name }),
-            ...(memberships && { memberships }),
-            ...(password !== undefined && {
-              hashedPassword: await hashPassword(password),
-            }),
-          },
-          {
-            expectedVersion: version,
-            ...(self && { keepSessionId: session.session.id }),
-          }
-        )
-        .catch((error: unknown) => {
-          // Changed since the edit's Version: refused, nothing written.
-          throw error instanceof UserChangedError ? resourceChanged() : error;
-        });
+      // Changed since the edit's Version: the service throws the 409.
+      const user = await deps.updateUser(
+        id,
+        {
+          ...(name !== undefined && { name }),
+          ...(memberships && { memberships }),
+          ...(password !== undefined && {
+            hashedPassword: await hashPassword(password),
+          }),
+        },
+        {
+          expectedVersion: version,
+          ...(self && { keepSessionId: session.session.id }),
+        }
+      );
       if (!user) {
-        throw userNotFound();
+        throw notFound();
       }
       return c.json(toUserBody(user, deps.avatarLink), HTTP.STATUS.OK);
     }

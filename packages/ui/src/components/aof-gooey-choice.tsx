@@ -7,7 +7,7 @@ import { useAOFColorScheme } from "../lib/use-aof-theme-switch";
 import { cn } from "../lib/utils";
 import { AOFGooeyNav } from "./aof-gooey-nav";
 
-export type AOFGooeyOption<V extends string> = {
+type AOFGooeyOption<V extends string> = {
   icon: ReactNode;
   label: string;
   value: V;

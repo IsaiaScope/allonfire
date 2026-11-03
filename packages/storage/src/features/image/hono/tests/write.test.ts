@@ -4,7 +4,11 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
+import { errorOf, json } from "@allonfire/auth/shared/tests/test-host";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import {
@@ -13,6 +17,7 @@ import {
   type ImageLink,
   type ImageLinksById,
   ImageNotFoundError,
+  type OpenedImage,
 } from "@allonfire/database/features/image/image.service";
 import { z } from "zod";
 import { STORAGE } from "../../../../shared/constants/paths";
@@ -23,8 +28,13 @@ import {
   UnsupportedImageError,
 } from "../../prepare/prepare-image";
 import type { ImageDeps } from "../utils/deps";
-import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
-import { testHost as app, errorOf, json } from "./test-host";
+import {
+  ALT,
+  imageHost as app,
+  imageRecord,
+  PREPARED,
+  VERSION,
+} from "./stub-image-deps";
 
 const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
 const user = sessionFor({ memberships: membershipsIn(Role.USER) });
@@ -99,21 +109,71 @@ const deletes = (links: Links, keys: string[] = []) => {
 
 /**
  * The update service as the database runs it: the route works its changes
- * out against the placements `links` answers, recorded in `written`, and each
- * changed Image comes back as `answer` builds it.
+ * out against the placements `links` answers, recorded in `written` with the
+ * Images and Versions it named (`opened`), and each changed Image comes back
+ * as `answer` builds it.
  */
 const updates = (
   links: Links,
   answer = (id: string) => imageRecord({ id })
 ) => {
   const written = vi.fn<(changes: ImageChange[]) => void>();
-  const updateImages: ImageDeps["updateImages"] = async (ids, resolve) => {
-    const changes = resolve(await links(ids));
+  const opened: OpenedImage[] = [];
+  const updateImages: ImageDeps["updateImages"] = async (named, resolve) => {
+    opened.push(...named);
+    const changes = resolve(await links(named.map(({ id }) => id)));
     written(changes);
     return changes.map(({ id }) => answer(id));
   };
-  return { updateImages, written };
+  return { opened, updateImages, written };
 };
+
+/**
+ * PATCHes image-1, a public Laura Image read under `key`, to private: its
+ * file copied (a no-op unless `deps` says) and the old one deleted.
+ */
+const makePrivate = async (
+  key: string,
+  deps: Pick<ImageDeps, "deleteObjects"> &
+    Partial<Pick<ImageDeps, "copyObject">>
+) => {
+  const { updateImages, written } = updates(publicIn(App.LAURA));
+  const res = await app(lauraAdmin, {
+    copyObject: async () => undefined,
+    ...deps,
+    getImage: async () => imageRecord({ access: ImageAccess.PUBLIC, key }),
+    updateImages,
+  }).request(
+    STORAGE.PATH.IMAGES,
+    json(HTTP.METHOD.PATCH, [
+      { access: ImageAccess.PRIVATE, id: "image-1", version: VERSION },
+    ])
+  );
+  return { res, written };
+};
+
+/** image-1 private in Laura, image-2 private in the Back Office. */
+const oneInEach: Links = () =>
+  Promise.resolve(
+    new Map([
+      [
+        "image-1",
+        {
+          access: ImageAccess.PRIVATE,
+          apps: [App.LAURA],
+          key: lockedKey("image-1"),
+        },
+      ],
+      [
+        "image-2",
+        {
+          access: ImageAccess.PRIVATE,
+          apps: [App.BACK_OFFICE],
+          key: lockedKey("image-2"),
+        },
+      ],
+    ])
+  );
 
 const imagesBody = z.array(imageBodySchema);
 const IMAGE_KEY = /^[0-9a-f-]{36}\.avif$/;
@@ -329,7 +389,7 @@ describe("POST /images failures", () => {
     const body = await errorOf(res);
     expect(body.code).toBe(ERROR.CODE.TIMEOUT);
     expect(body.values).toEqual({
-      seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / 1000,
+      seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_SECOND,
     });
   });
 
@@ -409,7 +469,9 @@ describe("PATCH /images", () => {
     );
     const res = await app(admin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [App.BACK_OFFICE], id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { apps: [App.BACK_OFFICE], id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(200);
     expect(written).toHaveBeenCalledWith([
@@ -424,7 +486,9 @@ describe("PATCH /images", () => {
     const { updateImages, written } = updates(placedIn(App.LAURA));
     const res = await app(officeAdmin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [App.LAURA, App.BACK_OFFICE], id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { apps: [App.LAURA, App.BACK_OFFICE], id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(404);
     expect(written).not.toHaveBeenCalled();
@@ -434,7 +498,9 @@ describe("PATCH /images", () => {
     const { updateImages, written } = updates(placedIn(App.LAURA));
     const res = await app(lauraUser, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [App.LAURA], id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { apps: [App.LAURA], id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(200);
     expect(written).toHaveBeenCalledWith([{ id: "image-1" }]);
@@ -446,12 +512,34 @@ describe("PATCH /images", () => {
     );
     const res = await app(admin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ access: ImageAccess.PUBLIC, id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { access: ImageAccess.PUBLIC, id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(200);
     expect(written).toHaveBeenCalledWith([
       { access: ImageAccess.PUBLIC, id: "image-1" },
     ]);
+  });
+
+  it("passes each Image's Version to updateImages", async () => {
+    const { opened, updateImages } = updates(inLaura);
+    await app(lauraAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [{ alt: ALT, id: "image-1", version: VERSION }])
+    );
+    expect(opened).toEqual([{ id: "image-1", version: VERSION }]);
+  });
+
+  it("the PATCH answer carries each Image's new Version", async () => {
+    const { updateImages } = updates(inLaura, (id) =>
+      imageRecord({ id, version: "version-2" })
+    );
+    const res = await app(lauraAdmin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [{ alt: ALT, id: "image-1", version: VERSION }])
+    );
+    expect(imagesBody.parse(await res.json())[0]?.version).toBe("version-2");
   });
 
   it("making a public Image private moves it to a copy, then deletes the old file", async () => {
@@ -460,17 +548,10 @@ describe("PATCH /images", () => {
     const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
       async () => undefined
     );
-    const { updateImages, written } = updates(publicIn(App.LAURA));
-    const res = await app(lauraAdmin, {
+    const { res, written } = await makePrivate(OLD, {
       copyObject,
       deleteObjects,
-      getImage: async () =>
-        imageRecord({ access: ImageAccess.PUBLIC, key: OLD }),
-      updateImages,
-    }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
-    );
+    });
     expect(res.status).toBe(200);
     const [from, to] = copyObject.mock.calls[0] ?? [];
     expect(from).toBe(OLD);
@@ -489,17 +570,7 @@ describe("PATCH /images making an Image private, raced", () => {
     const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
       async () => undefined
     );
-    const { updateImages } = updates(publicIn(App.LAURA));
-    const res = await app(lauraAdmin, {
-      copyObject: async () => undefined,
-      deleteObjects,
-      getImage: async () =>
-        imageRecord({ access: ImageAccess.PUBLIC, key: "old.avif" }),
-      updateImages,
-    }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
-    );
+    const { res } = await makePrivate("old.avif", { deleteObjects });
     expect(res.status).toBe(200);
     expect(deleteObjects).toHaveBeenCalledWith([lockedKey("image-1")]);
   });
@@ -512,19 +583,103 @@ describe("PATCH /images making an Image private, with storage failing", () => {
       .fn<ImageDeps["deleteObjects"]>()
       .mockRejectedValueOnce(new Error("storage hiccup"))
       .mockResolvedValue(undefined);
-    const { updateImages } = updates(publicIn(App.LAURA));
-    const res = await app(lauraAdmin, {
-      copyObject: async () => undefined,
-      deleteObjects,
-      getImage: async () =>
-        imageRecord({ access: ImageAccess.PUBLIC, key: OLD }),
-      updateImages,
-    }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [{ access: ImageAccess.PRIVATE, id: "image-1" }])
-    );
+    const { res } = await makePrivate(OLD, { deleteObjects });
     expect(res.status).toBe(200);
     expect(deleteObjects.mock.calls).toEqual([[[OLD]], [[OLD]]]);
+  });
+
+  /** Two public Images made private; the second one's copy fails. */
+  const secondCopyFails = (deleteObjects: ImageDeps["deleteObjects"]) => {
+    const copyObject = vi.fn<ImageDeps["copyObject"]>((from) =>
+      from === lockedKey("image-2")
+        ? Promise.reject(new Error("storage down"))
+        : Promise.resolve()
+    );
+    const warn = vi.fn<ImageDeps["log"]["warn"]>();
+    const pending = app(lauraAdmin, {
+      copyObject,
+      deleteObjects,
+      getImage: async (id) =>
+        imageRecord({ access: ImageAccess.PUBLIC, id, key: lockedKey(id) }),
+      log: { warn },
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [
+        { access: ImageAccess.PRIVATE, id: "image-1", version: VERSION },
+        { access: ImageAccess.PRIVATE, id: "image-2", version: VERSION },
+      ])
+    );
+    /** The name the first Image's copy was given. */
+    const firstCopy = () =>
+      copyObject.mock.calls.find(
+        ([from]) => from === lockedKey("image-1")
+      )?.[1];
+    return { firstCopy, pending, warn };
+  };
+
+  it("when one copy fails, the copies already made are deleted", async () => {
+    const deleteObjects = vi.fn<ImageDeps["deleteObjects"]>(
+      async () => undefined
+    );
+    const { firstCopy, pending, warn } = secondCopyFails(deleteObjects);
+    const res = await pending;
+    expect(res.status).toBe(500);
+    expect(firstCopy()).toMatch(IMAGE_KEY);
+    expect(deleteObjects).toHaveBeenCalledWith([firstCopy()]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("when one copy fails and their delete fails too, the copies already made are logged", async () => {
+    const cleanupFailure = new Error("storage still down");
+    const { firstCopy, pending, warn } = secondCopyFails(() =>
+      Promise.reject(cleanupFailure)
+    );
+    const res = await pending;
+    expect(res.status).toBe(500);
+    expect(warn).toHaveBeenCalledWith(
+      { err: cleanupFailure, keys: [firstCopy()] },
+      IMAGE.LOG_MESSAGE.CLEANUP_FAILED
+    );
+  });
+});
+
+describe("PATCH /images on a Version", () => {
+  it("a stale Version answers 409 RESOURCE_CHANGED and writes nothing", async () => {
+    // The service refuses before any write, under its lock.
+    const res = await app(lauraAdmin, {
+      updateImages: () => Promise.reject(new ResourceChangedError()),
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [
+        { alt: ALT, id: "image-1", version: "version-0" },
+      ])
+    );
+    expect(res.status).toBe(HTTP.STATUS.CONFLICT);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.RESOURCE_CHANGED);
+  });
+
+  it("an emptied Image answers 409 RESOURCE_CHANGED, not 404", async () => {
+    // Another change took it out of its other Apps first: the Image exists.
+    const res = await app(admin, {
+      updateImages: () => Promise.reject(new ResourceChangedError(["image-1"])),
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [
+        { apps: [App.LAURA], id: "image-1", version: VERSION },
+      ])
+    );
+    expect(res.status).toBe(HTTP.STATUS.CONFLICT);
+    expect((await errorOf(res)).code).toBe(ERROR.CODE.RESOURCE_CHANGED);
+  });
+
+  it("refuses a change without a version before reading anything", async () => {
+    const updateImages = vi.fn();
+    const res = await app(admin, { updateImages }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [{ alt: ALT, id: "image-1" }])
+    );
+    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
+    expect(updateImages).not.toHaveBeenCalled();
   });
 });
 
@@ -532,7 +687,10 @@ describe("PATCH /images refusals", () => {
   it("answers 404 when an id is unknown", async () => {
     const res = await app(admin, {
       updateImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
-    }).request(STORAGE.PATH.IMAGES, json("PATCH", [{ id: "missing" }]));
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.PATCH, [{ id: "missing", version: VERSION }])
+    );
     expect(res.status).toBe(404);
   });
 
@@ -542,74 +700,53 @@ describe("PATCH /images refusals", () => {
     );
     const res = await app(lauraAdmin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ access: ImageAccess.PUBLIC, id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { access: ImageAccess.PUBLIC, id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(403);
     expect(written).not.toHaveBeenCalled();
   });
 
-  it("refuses an alt-only edit by a User below Admin in one of the Image's Apps", async () => {
-    const { updateImages, written } = updates(inLaura);
-    const res = await app(lauraUser, { updateImages }).request(
+  it.each([
+    {
+      case: "an alt-only edit by a User below Admin in one of the Image's Apps",
+      links: inLaura,
+      session: lauraUser,
+      status: 403,
+    },
+    {
+      // Laura's Admin read it in Laura only; by the time the write locks it, a
+      // Back Office Admin has placed it there too, so it is no longer theirs alone.
+      case: "an alt edit checked against the placements the write locks",
+      links: placedIn(App.LAURA, App.BACK_OFFICE),
+      session: lauraAdmin,
+      status: 403,
+    },
+    {
+      case: "an Image in an App the User cannot enter",
+      links: placedIn(App.BACK_OFFICE),
+      session: lauraAdmin,
+      status: 404,
+    },
+  ])("answers $status to $case", async ({ links, session, status }) => {
+    const { updateImages, written } = updates(links);
+    const res = await app(session, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ alt: ALT, id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [{ alt: ALT, id: "image-1", version: VERSION }])
     );
-    expect(res.status).toBe(403);
-    expect(written).not.toHaveBeenCalled();
-  });
-
-  it("checks an alt edit against the placements the write locks", async () => {
-    // Laura's Admin read it in Laura only; by the time the write locks it, a
-    // Back Office Admin has placed it there too, so it is no longer theirs alone.
-    const { updateImages, written } = updates(
-      placedIn(App.LAURA, App.BACK_OFFICE)
-    );
-    const res = await app(lauraAdmin, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [{ alt: ALT, id: "image-1" }])
-    );
-    expect(res.status).toBe(403);
-    expect(written).not.toHaveBeenCalled();
-  });
-
-  it("answers 404 for an Image in an App the User cannot enter", async () => {
-    const { updateImages, written } = updates(placedIn(App.BACK_OFFICE));
-    const res = await app(lauraAdmin, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json("PATCH", [{ alt: ALT, id: "image-1" }])
-    );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(status);
     expect(written).not.toHaveBeenCalled();
   });
 
   it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
     // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
-    const { updateImages, written } = updates(
-      async () =>
-        new Map([
-          [
-            "image-1",
-            {
-              access: ImageAccess.PRIVATE,
-              apps: [App.LAURA],
-              key: lockedKey("image-1"),
-            },
-          ],
-          [
-            "image-2",
-            {
-              access: ImageAccess.PRIVATE,
-              apps: [App.BACK_OFFICE],
-              key: lockedKey("image-2"),
-            },
-          ],
-        ])
-    );
+    const { updateImages, written } = updates(oneInEach);
     const res = await app(lauraUser, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [
-        { alt: ALT, id: "image-1" },
-        { alt: ALT, id: "image-2" },
+      json(HTTP.METHOD.PATCH, [
+        { alt: ALT, id: "image-1", version: VERSION },
+        { alt: ALT, id: "image-2", version: VERSION },
       ])
     );
     expect(res.status).toBe(404);
@@ -622,7 +759,7 @@ describe("PATCH /images refusals", () => {
   ])("refuses apps naming %s", async (_, apps) => {
     const res = await app(admin, {}).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps, id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [{ apps, id: "image-1", version: VERSION }])
     );
     expect(res.status).toBe(400);
     expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
@@ -631,7 +768,9 @@ describe("PATCH /images refusals", () => {
   it("refuses alt missing a language", async () => {
     const res = await app(admin, {}).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ alt: { en: "only English" }, id: "image-1" }])
+      json(HTTP.METHOD.PATCH, [
+        { alt: { en: "only English" }, id: "image-1", version: VERSION },
+      ])
     );
     expect(res.status).toBe(400);
   });
@@ -640,30 +779,10 @@ describe("PATCH /images refusals", () => {
 describe("DELETE /images", () => {
   it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
     // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
-    const { services, written } = deletes(
-      async () =>
-        new Map([
-          [
-            "image-1",
-            {
-              access: ImageAccess.PRIVATE,
-              apps: [App.LAURA],
-              key: lockedKey("image-1"),
-            },
-          ],
-          [
-            "image-2",
-            {
-              access: ImageAccess.PRIVATE,
-              apps: [App.BACK_OFFICE],
-              key: lockedKey("image-2"),
-            },
-          ],
-        ])
-    );
+    const { services, written } = deletes(oneInEach);
     const res = await app(lauraUser, services).request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { ids: ["image-1", "image-2"] })
+      json(HTTP.METHOD.DELETE, { ids: ["image-1", "image-2"] })
     );
     expect(res.status).toBe(404);
     expect(written).not.toHaveBeenCalled();
@@ -673,9 +792,9 @@ describe("DELETE /images", () => {
     const updateImages = vi.fn();
     const res = await app(admin, { updateImages }).request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [
-        { alt: ALT, id: "image-1" },
-        { alt: ALT, id: "image-1" },
+      json(HTTP.METHOD.PATCH, [
+        { alt: ALT, id: "image-1", version: VERSION },
+        { alt: ALT, id: "image-1", version: VERSION },
       ])
     );
     expect(res.status).toBe(400);
@@ -693,7 +812,10 @@ describe("DELETE /images", () => {
         order.push(`objects:${keys.join()}`);
         return Promise.resolve();
       },
-    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["image-1"] }));
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
+    );
     expect(res.status).toBe(204);
     expect(order).toEqual(["rows", "objects:a.avif"]);
   });
@@ -702,14 +824,20 @@ describe("DELETE /images", () => {
     const res = await app(admin, {
       deleteImages: async () => ["a.avif"],
       deleteObjects: () => Promise.reject(new Error("storage down")),
-    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["image-1"] }));
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
+    );
     expect(res.status).toBe(204);
   });
 
   it("answers 404 when an id is unknown", async () => {
     const res = await app(admin, {
       deleteImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
-    }).request(STORAGE.PATH.IMAGES, json("DELETE", { ids: ["missing"] }));
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["missing"] })
+    );
     expect(res.status).toBe(404);
   });
 
@@ -720,7 +848,7 @@ describe("DELETE /images", () => {
     );
     const res = await app(lauraAdmin, { ...services, deleteObjects }).request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["image-1"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["image-1"] })
     );
     expect(res.status).toBe(204);
     expect(written).toHaveBeenCalledWith(["image-1"], App.LAURA);
@@ -731,7 +859,7 @@ describe("DELETE /images", () => {
     const { services, written } = deletes(placedIn(App.BACK_OFFICE));
     const res = await app(admin, services).request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["image-1"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["image-1"] })
     );
     expect(res.status).toBe(404);
     expect(written).not.toHaveBeenCalled();

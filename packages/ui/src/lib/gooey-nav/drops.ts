@@ -1,7 +1,7 @@
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { MAX_DROPS } from "./shaders";
 import type { Drop, PillState, Sim } from "./types";
 
-const MS_PER_SECOND = 1000;
 /** The shortest a flight lasts, in seconds, however low `animationTime` is. */
 const MIN_FLIGHT = 0.15;
 const EMPTY = 0.002;
@@ -37,8 +37,9 @@ export const planFlight = (
   const reach = Math.max(0, s.spread);
   const ex = rect.x + rect.w / 2 + jitter() * rect.w * 0.45;
   const ey = rect.y + rect.h / 2 + jitter() * rect.h * 0.2;
-  const base = Math.max(MIN_FLIGHT, s.animationTime / MS_PER_SECOND);
-  const variance = jitter() * (Math.max(0, s.timeVariance) / MS_PER_SECOND);
+  const base = Math.max(MIN_FLIGHT, s.animationTime / UNIT.MS_PER_SECOND);
+  const variance =
+    jitter() * (Math.max(0, s.timeVariance) / UNIT.MS_PER_SECOND);
   const duration = Math.max(
     MIN_FLIGHT,
     base * (0.62 + Math.random() * 0.32) + variance * 0.6
@@ -89,7 +90,8 @@ export const emitDrops = (
   if (count <= 0) {
     return;
   }
-  const spread = Math.max(MIN_FLIGHT, s.animationTime / MS_PER_SECOND) * 0.16;
+  const spread =
+    Math.max(MIN_FLIGHT, s.animationTime / UNIT.MS_PER_SECOND) * 0.16;
   for (let i = 0; i < count; i += 1) {
     const mass = available / count;
     source.outgoing += mass;
@@ -98,7 +100,7 @@ export const emitDrops = (
       emerged: 0,
       given: 0,
       index: to,
-      leave: now + Math.random() * spread * MS_PER_SECOND,
+      leave: now + Math.random() * spread * UNIT.MS_PER_SECOND,
       mass,
       size: 0.8 + Math.random() * 0.4,
       source: from,

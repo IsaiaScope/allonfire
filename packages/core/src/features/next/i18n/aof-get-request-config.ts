@@ -11,6 +11,7 @@ import {
 /**
  * The shared text for the languages a Host adds: core has it for the base
  * ones only, so a Host routing another must pass it, or fail to compile.
+ * @internal
  */
 export type SharedTranslationsFor<L extends string> = [
   Exclude<L, Language>,

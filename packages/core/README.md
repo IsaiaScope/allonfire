@@ -29,6 +29,15 @@ Number values work too (`z.enum(HTTP.STATUS)`).
 |--------|------|-------------|
 | `ERROR` | Constant | `ERROR.CODE`, the error codes every Host and module shares: `BAD_REQUEST`, `FORBIDDEN`, `INTERNAL_ERROR`, `NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `TIMEOUT`, `UNAUTHORIZED`, `VALIDATION_FAILED`. A module adds only its own; a Host answers with these plus its modules' and owns each code's message and status |
 
+### `./features/version/*` (ADR 0028)
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `versionOf(...parts)` (`utils/version-of`) | Function | A resource's Version: a hash of the parts a save could overwrite; server only |
+| `VERSION`, `versionSchema` (`constants/version`) | Constant, schema | How a Version is made; the `version` a save sends (non-empty) |
+| `checkVersion(expected, actual)` (`utils/resource-changed-error`) | Function | The one Version check every versioned save runs under its row lock, before any write: throws `ResourceChangedError` on a mismatch |
+| `ResourceChangedError` (`utils/resource-changed-error`) | Class | A `CodedError`, 409 `ERROR.CODE.RESOURCE_CHANGED`, with the `ids` that changed when known; a service throws it and every host's `onError` answers it, so no module maps it |
+
 ### `./features/ci/affected`
 
 | Export | Type | Description |
@@ -76,28 +85,29 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `HTTP.STATUS`, `httpStatusSchema`, `HttpStatus` | const / zod / type | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
-| `HTTP.METHOD`, `httpMethodSchema`, `HttpMethod` | const / zod / type | Every RFC 9110 method plus `PATCH` |
-| `HTTP.CONTENT_TYPE`, `contentTypeSchema`, `ContentType` | const / zod / type | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
-| `HTTP.HEADER`, `httpHeaderSchema`, `HttpHeader` | const / zod / type | Common request, response and security header names, lower-case |
+| `HTTP.STATUS`, `httpStatusSchema` | const / zod | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
+| `HTTP.METHOD`, `HttpMethod` | const / type | Every RFC 9110 method plus `PATCH` |
+| `HTTP.CONTENT_TYPE` | const | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
+| `HTTP.HEADER`, `httpHeaderSchema` | const / zod | Common request, response and security header names, lower-case |
 
 ### `./shared/constants/env`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `ENV.BOOLEAN`, `booleanEnvSchema`, `BooleanEnv` | const / zod / type | `"true"` / `"false"`, the only accepted spellings of an env flag |
+| `ENV.BOOLEAN`, `booleanEnvSchema` | const / zod | `"true"` / `"false"`, the only accepted spellings of an env flag |
 | `NODE_ENV`, `nodeEnvSchema`, `NodeEnv` | const / zod / type | `development`, `production`, `test`: compare against these, not bare strings; `nodeEnvSchema.default(...)` in each env module |
 
 ### `./shared/constants/separators`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `SEPARATOR`, `separatorSchema`, `Separator` | const / zod / type | `LIST` (`,`), `PAIR` (`=`), `PATH` (`.`) |
+| `SEPARATOR` | const | `LIST` (`,`), `PAIR` (`=`), `PATH` (`.`) |
 
 ### `./shared/constants/patterns`
 
 | Export | Type | Description |
 |--------|------|-------------|
+| `PATTERN.CHANGESET.FILE`, `PATTERN.CHANGESET.NAME` | RegExp | A Liquibase changeset's numbered `.sql` file, and the kebab-case name `pnpm db:changeset` takes |
 | `PATTERN.TRAILING_SLASHES` | RegExp | `/\/+$/`, stripped from a URL or path before comparing or appending |
 
 ### `./features/logger/constants/logger`
@@ -111,14 +121,14 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `UNIT.MS_PER_SECOND`, `UNIT.SECONDS_PER_MINUTE`, `UNIT.MS_PER_MINUTE`, `UNIT.SECONDS_PER_HOUR`, `UNIT.SECONDS_PER_DAY` | number | Time conversions, so no bare `1000` or `60_000` |
+| `UNIT.MS_PER_SECOND`, `UNIT.SECONDS_PER_MINUTE`, `UNIT.MS_PER_MINUTE`, `UNIT.SECONDS_PER_HOUR`, `UNIT.MS_PER_HOUR`, `UNIT.SECONDS_PER_DAY`, `UNIT.MS_PER_DAY`, `UNIT.DAYS_PER_YEAR` | number | Time conversions, so no bare `1000`, `60_000` or `60 * 60 * 1000` |
 | `UNIT.BYTES_PER_KIB`, `UNIT.BYTES_PER_MIB` | number | Size conversions |
 
 ### `./features/http/constants/http` (security headers)
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `HTTP.SECURITY_HEADERS` | `{ key: HttpHeader; value: string }[]` | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
+| `HTTP.SECURITY_HEADERS` | `{ key, value }[]` (a header name and its value) | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
 
 ### `./features/i18n/constants/locales`
 

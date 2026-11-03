@@ -32,15 +32,15 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 
 | Import | Content |
 |---|---|
-| `@allonfire/database` | `prisma`, `PrismaClient`, generated types (`Role`, `GameType`, models) |
-| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `updateImages(ids, resolve)` (places and takes out only what the changes `resolve` works out from the locked placements name; refuses to leave an Image in no App), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord`, `NewImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks`, `ResolveChanges` |
-| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `AppSettings`, `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
+| `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client (no root entry, no barrel) |
+| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks`, `ResolveChanges` |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
-| `@allonfire/database/features/seed/fixtures/{fixtures,seed-fixtures}` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`); `seedFixtures(client)` |
+| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) |
 | `@allonfire/database/features/seed/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
-| `@allonfire/database/features/test-database/{names,server,template,test-database,global-setup}` | The Test database: `createTestDatabase(server, label, stamp)` (the template, built when missing, then a sweep of crashed runs, then the clone; returns its URL), `dropTestDatabase(server, label, stamp)`, `dropTestDatabasesOf(server, label)` (every run of a label one run at a time holds: e2e), `ensureTemplate`, `sweepTestDatabases`, `testDatabaseName`; `global-setup` is the Vitest `globalSetup`; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
+| `@allonfire/database/features/test-database/{names,global-setup,local-env}` | The Test database: `global-setup` is the Vitest `globalSetup`, a Test database per run cloned from the template (built when missing, after a sweep of crashed runs), dropped when the run ends; `testDatabaseName` names it; `fillLocalDatabaseEnv()` fills an unset `DATABASE_URL` from `LOCAL`, for a test setup; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
 `FROM laura."GameScore"`, never `FROM "GameScore"`.
@@ -207,7 +207,6 @@ packages/database/
     changeset-file.ts       changeset naming and formatting
     tests/
   src/
-    index.ts                prisma + generated types (the root export)
     environment/            environment.ts (package), seed-environment.ts
                             (seed scripts), tests/
     features/
@@ -220,7 +219,7 @@ packages/database/
                             upsert-user.ts, tests/
         fixtures/           users.ts, images.ts, seed-fixtures.ts, tests/
       test-database/        names, server, template, test-database, cli,
-                            global-setup, tests/
+                            global-setup, local-env, tests/
 ```
 
 ## Dependencies

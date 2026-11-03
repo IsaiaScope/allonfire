@@ -15,24 +15,30 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type EditUserState, editUser } from "../../actions/edit-user";
 import { USERS } from "../../constants/users";
+import { replace } from "../../tests/user-form-mocks";
 import { EditUser } from "../edit-user";
 
 vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
-const replace = vi.fn();
-vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
-  useRouter: () => ({ replace }),
-}));
+// jscpd:ignore-start
+// Every User form test mocks the same modules: Vitest hoists each vi.mock
+// within its own file, so only the factories are shared (user-form-mocks).
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
 vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
   ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
   aofToast: vi.fn(),
 }));
-// next/image reaches the browser as a CommonJS object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ src }: { src: string }) => <span data-src={src} />,
-}));
+vi.mock(
+  "@allonfire/ui/components/aof-image",
+  () => import("../../tests/user-form-mocks")
+);
+// jscpd:ignore-end
 
 const t = EN.Users.edit;
+/** The words both User forms share. */
+const FORM = EN.Users.form;
 const SELF_ID = "user-self";
 const NAME = "Edited";
 const USER: UserBody = {
@@ -50,7 +56,7 @@ const USER: UserBody = {
 };
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: EN.Users.add.role.replace("{app}", APP_ENTRY[app].name),
+    name: FORM.role.replace("{app}", APP_ENTRY[app].name),
   });
 const lockedNote = t.ownRoleLocked.replace(
   "{app}",
@@ -93,7 +99,7 @@ describe("EditUser", () => {
     await expect.element(email).toBeDisabled();
     expect(email.element().getAttribute("name")).toBeNull();
     await expect
-      .element(page.getByLabelText(EN.Users.add.name, { exact: true }))
+      .element(page.getByLabelText(FORM.name, { exact: true }))
       .toHaveValue(NAME);
     await expect
       .element(

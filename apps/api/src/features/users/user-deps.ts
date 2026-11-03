@@ -35,6 +35,7 @@ import type { LeftoverLog } from "@allonfire/storage/features/image/objects/dele
  * 5-minute cookie cache can hide: a new password deletes every other
  * Session, and from then on that one changes nobody, though it may still
  * list Users until its cookie copy runs out.
+ * @internal
  */
 export const isBackOfficeAdmin = (user: AccessUser): boolean =>
   hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN);

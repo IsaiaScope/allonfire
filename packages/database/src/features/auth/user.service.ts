@@ -1,3 +1,4 @@
+import { checkVersion } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { Prisma } from "../../../generated/prisma/client";
 import type { App, Role } from "../../../generated/prisma/enums";
 import { prisma } from "../prisma/client";
@@ -6,7 +7,7 @@ import {
   type AccessUser,
   accessUserFrom,
 } from "./access/access";
-import { userVersion } from "./user-version";
+import { lockUser, userVersion } from "./user-version";
 
 /** A User's stored picture: its file's name, and the blur shown while it loads. */
 export type UserPicture = { image: string; imageBlurDataUrl: string };
@@ -117,20 +118,24 @@ export const deleteUsers = async (ids: readonly string[]): Promise<number> =>
  * Sets `picture` as the User's (an Avatar's file name and its blur, or null
  * for none, which clears both) and answers the file it held before, read
  * under a row lock in the same transaction, so the caller can delete a file
- * it replaced; null when no User has `id`.
+ * it replaced; null when no User has `id`. `expectedVersion` is the Version
+ * the change was made on: when the User changed since, it throws
+ * `ResourceChangedError` and nothing is written.
  */
 export const setUserImage = (
   id: string,
-  picture: UserPicture | null
+  picture: UserPicture | null,
+  { expectedVersion }: { expectedVersion: string }
 ): Promise<{ previous: string | null } | null> =>
   prisma.$transaction(async (tx) => {
-    // Locked till the write: a picture set at the same time waits and reads
-    // this one's file as its previous, so each replaced file is answered once.
-    const [user] = await tx.$queryRaw<{ image: string | null }[]>`
-      SELECT "image" FROM auth."User" WHERE "id" = ${id} FOR UPDATE`;
+    // Locked till the write: a picture set at the same time on the same
+    // Version waits, then finds a new one and is refused, so each replaced
+    // file is answered once.
+    const user = await lockUser(tx, id);
     if (!user) {
       return null;
     }
+    checkVersion(expectedVersion, user.version);
     await tx.user.update({
       data: {
         image: picture?.image ?? null,
@@ -184,11 +189,6 @@ export type UserChange = {
   hashedPassword?: string;
 };
 
-/** `updateUser` wrote nothing: the User changed since the edit's Version. */
-export class UserChangedError extends Error {
-  override name = "UserChangedError";
-}
-
 /** Better Auth's provider id for a password login. */
 const CREDENTIAL = "credential";
 
@@ -196,7 +196,7 @@ const CREDENTIAL = "credential";
  * Edits a User, all or nothing, and answers them as `readUser` does; null
  * for an unknown id, nothing written. `expectedVersion` is the Version the
  * edit was made on: when the User changed since, it throws
- * `UserChangedError` and nothing is written, so a form never overwrites what it did not show. The
+ * `ResourceChangedError` and nothing is written, so a form never overwrites what it did not show. The
  * row stays locked from that check to the last write. A new password goes on their
  * `credential` Account, created for a User who signed in only through a
  * provider, and ends every Session of theirs but `keepSessionId` (the
@@ -212,25 +212,12 @@ export const updateUser = (
 ): Promise<UserRecord | null> =>
   prisma.$transaction(async (tx) => {
     // Locked till the last write: an edit landing at the same time waits,
-    // then reads this one's result as a change it did not see. A Membership
-    // written elsewhere (a join) waits too: its foreign key check locks this
-    // row (`FOR KEY SHARE`), so it lands before the read below or after the
-    // last write, never between them.
-    const [locked] = await tx.$queryRaw<{ updatedAt: Date }[]>`
-      SELECT "updatedAt" FROM auth."User" WHERE "id" = ${id} FOR UPDATE`;
+    // then reads this one's result as a change it did not see.
+    const locked = await lockUser(tx, id);
     if (!locked) {
       return null;
     }
-    const held = await tx.membership.findMany({
-      select: { app: true, role: true },
-      where: { userId: id },
-    });
-    if (
-      userVersion({ memberships: held, updatedAt: locked.updatedAt }) !==
-      expectedVersion
-    ) {
-      throw new UserChangedError();
-    }
+    checkVersion(expectedVersion, locked.version);
     if (name !== undefined) {
       await tx.user.update({ data: { name }, where: { id } });
     }
@@ -296,26 +283,32 @@ export class EmailTakenError extends Error {
 const UNIQUE_VIOLATION = "P2002";
 
 /**
- * Adds a User with a password login and their Memberships, all or nothing.
- * The email is stored trimmed and lowercased, as Better Auth stores it, so
- * the unique email holds whatever case was typed. Already verified: an
- * Admin vouches for it.
+ * Adds a User with a password login and their Memberships, all or nothing,
+ * and answers their id and Version (what a picture set next carries). The
+ * email is stored trimmed and lowercased, as Better Auth stores it, so the
+ * unique email holds whatever case was typed. Already verified: an Admin
+ * vouches for it.
  */
 export const createUser = async (
   { email, memberships, name }: NewUser,
   hashedPassword: string
-): Promise<{ id: string }> => {
+): Promise<{ id: string; version: string }> => {
   try {
     return await prisma.$transaction(async (tx) => {
-      const { id } = await tx.user.create({
+      const created = await tx.user.create({
         data: {
           email: email.trim().toLowerCase(),
           emailVerified: true,
           memberships: { create: [...memberships] },
           name,
         },
-        select: { id: true },
+        select: {
+          id: true,
+          memberships: { select: { app: true, role: true } },
+          updatedAt: true,
+        },
       });
+      const { id } = created;
       await tx.account.create({
         data: {
           accountId: id,
@@ -324,7 +317,7 @@ export const createUser = async (
           userId: id,
         },
       });
-      return { id };
+      return { id, version: userVersion(created) };
     });
   } catch (error) {
     if (

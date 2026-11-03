@@ -3,7 +3,7 @@ import { cn } from "@allonfire/ui/lib/utils";
 import { Pause, Play } from "lucide-react";
 
 /** A board's standing notice: read once, run right to left, pausable. */
-export type BoardNotice = {
+type BoardNotice = {
   /** The notice in Japanese, run before it. */
   kana: string;
   /** The accessible name of the pause control. */

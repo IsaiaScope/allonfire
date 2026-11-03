@@ -4,8 +4,10 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
+import { errorOf } from "@allonfire/auth/shared/tests/test-host";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import { STORAGE } from "../../../../shared/constants/paths";
 import { IMAGE_SERVER } from "../../../image-server/constants/image-server";
@@ -14,8 +16,7 @@ import { imageBodySchema } from "../../constants/schemas";
 import { imageListBodySchema } from "../constants/schemas";
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
-import { imageRecord } from "./stub-image-deps";
-import { testHost as app, errorOf } from "./test-host";
+import { imageHost as app, imageRecord, VERSION } from "./stub-image-deps";
 
 const lauraUser = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.VIEWER }],
@@ -58,6 +59,7 @@ describe("GET /images", () => {
           height: 600,
           id: "image-1",
           srcSet: pictureSrcSet(KEY, privateLinkExpiry(NOW)),
+          version: VERSION,
           width: 800,
         },
       ],
@@ -112,22 +114,13 @@ describe("GET /images", () => {
     });
   });
 
-  it("lists for a visitor without a Session, who enters no App", async () => {
+  // Never 403: whoever cannot enter the App gets its public Images.
+  it.each([
+    { session: visitor, who: "a visitor without a Session" },
+    { session: otherAppUser, who: "a User who cannot enter the App" },
+  ])("lists for $who, who enters no App", async ({ session }) => {
     const listImages = noImages();
-    const res = await app(visitor, { listImages }).request(
-      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
-    );
-    expect(res.status).toBe(200);
-    expect(listImages).toHaveBeenCalledWith({
-      app: App.LAURA,
-      enterable: [],
-      limit: 30,
-    });
-  });
-
-  it("never answers 403: a User who cannot enter the App gets its public Images", async () => {
-    const listImages = noImages();
-    const res = await app(otherAppUser, { listImages }).request(
+    const res = await app(session, { listImages }).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
     );
     expect(res.status).toBe(200);
@@ -206,7 +199,7 @@ describe("GET /images/:id", () => {
     }).request(`${STORAGE.PATH.IMAGES}/image-1`);
     const { srcSet } = imageBodySchema.parse(await res.json());
     expect(srcSet.map(({ width }) => width)).toEqual([...IMAGE_SERVER.WIDTHS]);
-    const expiry = privateLinkExpiry(NOW).getTime() / 1000;
+    const expiry = privateLinkExpiry(NOW).getTime() / UNIT.MS_PER_SECOND;
     for (const { url } of srcSet) {
       expect(url).toContain(`/exp:${expiry}/`);
     }
@@ -230,21 +223,19 @@ describe("GET /images/:id", () => {
     expect(res.status).toBe(200);
   });
 
-  it("answers 404 to a visitor for a private Image", async () => {
-    const res = await app(visitor, {
-      getImage: async () => imageRecord(),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
-    expect(res.status).toBe(404);
-    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
-  });
-
-  it("answers 404 for another App's Image, as if it did not exist", async () => {
-    const res = await app(otherAppUser, {
-      getImage: async () => imageRecord(),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
-    expect(res.status).toBe(404);
-    expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
-  });
+  it.each([
+    { image: "a private Image", session: visitor, who: "a visitor" },
+    { image: "another App's Image", session: otherAppUser, who: "a User" },
+  ])(
+    "answers 404 to $who for $image, as if it did not exist",
+    async ({ session }) => {
+      const res = await app(session, {
+        getImage: async () => imageRecord(),
+      }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+      expect(res.status).toBe(404);
+      expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
+    }
+  );
 
   it("answers 404 for an unknown id", async () => {
     const res = await app(lauraUser, { getImage: async () => null }).request(

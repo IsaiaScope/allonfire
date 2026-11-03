@@ -36,6 +36,7 @@
     "env:prod": "bash packages/config/local/env-production.sh",
     "i18n:check": "turbo run i18n:check",
     "knip": "knip",
+    "knip:production": "knip --production",
     "lint": "ultracite check --error-on-warnings && oxlint --type-aware",
     "lint:fix": "ultracite fix",
     "prepare": "husky",

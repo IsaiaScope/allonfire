@@ -3,8 +3,7 @@ import { UNIT } from "../../../shared/constants/units";
 import { storageItem } from "../../../shared/utils/storage";
 import { PWA } from "./constants/pwa";
 
-const QUIET_MS =
-  PWA.INSTALL_HINT.QUIET_DAYS * UNIT.SECONDS_PER_DAY * UNIT.MS_PER_SECOND;
+const QUIET_MS = PWA.INSTALL_HINT.QUIET_DAYS * UNIT.MS_PER_DAY;
 
 /** When the visitor last dismissed the hint, in ms. */
 const dismissed = storageItem(
@@ -19,6 +18,7 @@ const seen = storageItem(PWA.INSTALL_HINT.STORAGE_KEY.SEEN, z.literal(true));
  * The hint never shows on a first load (web.dev's install patterns: wait
  * until someone comes back). Where storage keeps nothing every load is a
  * first, so the hint never nags a visitor whose dismissal it would forget.
+ * @internal
  */
 export const firstLoad = () => {
   if (seen.read()) {

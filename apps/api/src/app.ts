@@ -84,7 +84,7 @@ export const createApp = (deps: AppDeps) => {
     .use(authRateLimit(deps.auth, store))
     // Before the Session read: probes never need one, and Better Auth reads
     // its own, so loading it here as well would read it twice.
-    .route(API.PATH.ROOT, healthRoutes(deps))
+    .route(API.PATH.ROOT, healthRoutes(deps, deps.logger))
     .route(API.PATH.ROOT, authRoutes(deps.auth))
     // After the limiters, so a flood of requests never reaches the Session read.
     .use(sessionLoader(deps.auth))

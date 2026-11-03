@@ -1,7 +1,7 @@
 // @module-tag unit
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { cacheLife, cacheTag } from "next/cache";
 import { USERS_PAGE } from "@/shared/tests/msw/handlers";
@@ -11,7 +11,7 @@ import { readUser } from "../read-user";
 vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 // The App's env is read at import, which a unit test lacks.
 vi.mock("@/environment/environment", () => ({
-  env: { API_URL: TEST_API_URL },
+  env: { API_URL: LOCAL.URL.TEST_API },
 }));
 vi.mock("@allonfire/auth/features/next/utils/session-cookie", () => ({
   readSessionCookie: vi.fn(async () => COOKIE),

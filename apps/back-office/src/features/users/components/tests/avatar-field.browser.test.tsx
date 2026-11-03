@@ -102,6 +102,19 @@ const iphonePhoto = async () =>
     type: "image/heic",
   });
 
+/**
+ * A HEIC that fails to convert is reported (`reportError`); a real report
+ * would reach the runner as an unhandled error, so each test gets a spy.
+ */
+const reported = vi.fn<typeof reportError>();
+beforeEach(() => {
+  vi.stubGlobal("reportError", reported);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
+  reported.mockClear();
+});
+
 const NO_AVATAR: { avatar: File | null } = { avatar: null };
 /** The field's label, and so its drop area's name. */
 const LABEL = "Picture";
@@ -250,6 +263,7 @@ describe("AOFAvatarField", () => {
     await pick(unreadable());
     await expect.element(page.getByText(LABELS.unreadable)).toBeVisible();
     expect(dialog().query()).toBeNull();
+    expect(reported).toHaveBeenCalledOnce();
     await page.getByRole("button", { name: "Save" }).click();
     expect(onSubmit).toHaveBeenCalledOnce();
   });

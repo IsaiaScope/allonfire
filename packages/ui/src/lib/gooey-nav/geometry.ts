@@ -23,6 +23,7 @@ export const bezier = (
 /**
  * The corner radius a box of these half extents draws with: the Design's
  * `radius`, never past half the shorter side (a capsule).
+ * @internal
  */
 export const cornerRadius = (hw: number, hh: number, radius: number) =>
   Math.max(0, Math.min(hw, hh, radius));

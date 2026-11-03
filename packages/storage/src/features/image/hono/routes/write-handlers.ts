@@ -1,7 +1,10 @@
 import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { invalidHook } from "@allonfire/core/features/errors/coded-error";
+import {
+  invalidHook,
+  payloadTooLarge,
+} from "@allonfire/core/features/errors/coded-error";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ImageAccess } from "@allonfire/database/enums";
 import {
@@ -32,7 +35,7 @@ import {
   authoriseUploader,
 } from "../utils/access";
 import type { ImageDeps } from "../utils/deps";
-import { notFoundOnUnknownIds, tooLarge } from "../utils/errors";
+import { notFoundOnUnknownIds } from "../utils/errors";
 import { toImageBody } from "../utils/image-body";
 import { prepareAll, storeAll, uploadTimeout } from "../utils/upload-batch";
 import { deleteRoute, patchRoute, uploadRoute } from "./routes";
@@ -43,20 +46,12 @@ import { deleteRoute, patchRoute, uploadRoute } from "./routes";
  */
 const factory = createFactory<AuthEnv>();
 
-const LOG_MESSAGE = {
-  CLEANUP_FAILED: "image cleanup failed",
-  OBJECT_DELETE_FAILED: "image object delete failed",
-  /** The old file of an Image made private: its public links still answer
-   *  until it is deleted, so this one is deleted by hand. */
-  PUBLIC_FILE_LEFT: "public image file left behind after making it private",
-} as const;
-
 /** Deletes files no row points at, if any; a failure is logged, never answered. */
 const cleanUp = (deps: ImageDeps, keys: readonly string[]) =>
   deleteLeftovers({
     keys,
     log: deps.log,
-    reason: LOG_MESSAGE.CLEANUP_FAILED,
+    reason: IMAGE.LOG_MESSAGE.CLEANUP_FAILED,
     remove: deps.deleteObjects,
   });
 
@@ -72,7 +67,7 @@ export const uploadHandlers = (deps: ImageDeps) =>
     bodyLimit({
       maxSize: IMAGE.LIMIT.UPLOAD_BYTES,
       onError: () => {
-        throw tooLarge(IMAGE.LIMIT.UPLOAD_BYTES);
+        throw payloadTooLarge(IMAGE.LIMIT.UPLOAD_BYTES);
       },
     }),
     // `meta` is JSON text on the wire; the docs show what it holds.
@@ -84,7 +79,7 @@ export const uploadHandlers = (deps: ImageDeps) =>
       const { user } = c.get(AUTH.VAR.SESSION);
       authoriseUpload(user, items);
       if (items.some(({ file }) => file.size > IMAGE.LIMIT.FILE_BYTES)) {
-        throw tooLarge(IMAGE.LIMIT.FILE_BYTES);
+        throw payloadTooLarge(IMAGE.LIMIT.FILE_BYTES);
       }
       const prepared = await prepareAll(deps, items);
 
@@ -131,6 +126,8 @@ export const uploadHandlers = (deps: ImageDeps) =>
  * goes after (another change may have renamed it since this read). Only
  * for an Image the User may change everywhere, as read now: a refused change
  * copies nothing; one refused later, under the lock, has its copy deleted.
+ * When any read or copy fails, every copy already made is deleted (logged
+ * if that fails too) before the first failure is thrown.
  */
 const copiesForPrivate = async (
   deps: ImageDeps,
@@ -140,7 +137,7 @@ const copiesForPrivate = async (
   const turning = changes.filter(
     ({ access }) => access === ImageAccess.PRIVATE
   );
-  const copied = await Promise.all(
+  const settled = await Promise.allSettled(
     turning.map(async ({ id }) => {
       const image = await deps.getImage(id);
       if (
@@ -154,7 +151,18 @@ const copiesForPrivate = async (
       return [[id, to] as const];
     })
   );
-  return new Map(copied.flat());
+  const copied = settled.flatMap((result) =>
+    result.status === "fulfilled" ? result.value : []
+  );
+  const failed = settled.find((result) => result.status === "rejected");
+  if (failed) {
+    await cleanUp(
+      deps,
+      copied.map(([, to]) => to)
+    );
+    throw failed.reason;
+  }
+  return new Map(copied);
 };
 
 export const patchHandlers = (deps: ImageDeps) =>
@@ -171,9 +179,10 @@ export const patchHandlers = (deps: ImageDeps) =>
       const resolved: ImageChange[] = [];
       // The file each renamed Image's locked row named, now replaced.
       const replaced: string[] = [];
+      // Each on the Version it was made on: one changed since throws the 409.
       const images = await deps
         .updateImages(
-          changes.map(({ id }) => id),
+          changes.map(({ id, version }) => ({ id, version })),
           (current) => {
             resolved.push(...authorisePatch(user, current, changes, renamed));
             replaced.push(
@@ -198,7 +207,7 @@ export const patchHandlers = (deps: ImageDeps) =>
       await deleteLeftovers({
         keys: replaced,
         log: deps.log,
-        reason: LOG_MESSAGE.PUBLIC_FILE_LEFT,
+        reason: IMAGE.LOG_MESSAGE.PUBLIC_FILE_LEFT,
         remove: deps.deleteObjects,
         retry: true,
       });
@@ -230,7 +239,7 @@ export const deleteHandlers = (deps: ImageDeps) =>
       await deleteLeftovers({
         keys,
         log: deps.log,
-        reason: LOG_MESSAGE.OBJECT_DELETE_FAILED,
+        reason: IMAGE.LOG_MESSAGE.OBJECT_DELETE_FAILED,
         remove: deps.deleteObjects,
       });
       return c.body(null, HTTP.STATUS.NO_CONTENT);

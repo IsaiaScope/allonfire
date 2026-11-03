@@ -78,7 +78,10 @@ export const useAOFTable = <TData extends RowData>(
     features: AOF_TABLE_FEATURES,
   });
 
-/** Where the rows stand: TanStack Query's own names, so `status={query.status}`. */
+/**
+ * Where the rows stand: TanStack Query's own names, so `status={query.status}`.
+ * @internal
+ */
 export type AOFDataTableStatus = "pending" | "error" | "success";
 
 export type AOFDataTableProps<TData extends RowData> = ComponentProps<"div"> & {
@@ -107,7 +110,7 @@ export type AOFDataTableProps<TData extends RowData> = ComponentProps<"div"> & {
   status?: AOFDataTableStatus | undefined;
 };
 
-export type AOFDataTableStates = {
+type AOFDataTableStates = {
   /** No rows found; the footer stays. None given: the empty table. */
   empty?: ReactNode;
   /** Loading failed and no rows are held. None given: the empty table. */

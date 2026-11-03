@@ -9,7 +9,8 @@ import {
 } from "react";
 import { type ExternalToast, toast } from "sonner";
 
-export const AOF_TOAST = {
+/** How long a toast stays and whether it can be swiped away. */
+const OPTIONS = {
   /** A failure or a warning stays twice Sonner's 4 seconds: it is read,
    *  then acted on. Any toast also waits while hovered or focused (Sonner's
    *  own pause). */
@@ -17,6 +18,13 @@ export const AOF_TOAST = {
   /** A toast that stays until its sender takes it back: no timeout, no swipe. */
   PERSISTENT: { dismissible: false, duration: Number.POSITIVE_INFINITY },
 } as const satisfies Record<string, Omit<ExternalToast, "id">>;
+
+export const AOF_TOAST = {
+  ...OPTIONS,
+  /** How a one-off notice went: each wears its colour and pictogram
+   *  (`AOFToaster`). */
+  KIND: ["error", "info", "success", "warning"],
+} as const;
 
 /**
  * Shows `content` as the toast `id` while it is not null, updated in place
@@ -66,10 +74,7 @@ export const useAOFToast = (
   );
 };
 
-/** How a one-off notice went: each wears its colour and pictogram
- *  (`AOFToaster`). */
-export const AOF_TOAST_KINDS = ["error", "info", "success", "warning"] as const;
-export type AOFToastKind = ElementOf<typeof AOF_TOAST_KINDS>;
+export type AOFToastKind = ElementOf<typeof AOF_TOAST.KIND>;
 
 /** The kinds that stay longer: something went wrong, or may. */
 const NEEDS_READING: ReadonlySet<AOFToastKind> = new Set(["error", "warning"]);

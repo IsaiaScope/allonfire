@@ -13,6 +13,8 @@ import { FAKE_API, resetFakeApi } from "./fake-api";
 const ID = "user-2";
 /** The Version the form was opened with. */
 const VERSION = "version-1";
+/** The Version the PATCH answers: the User as just saved. */
+const SAVED_VERSION = "version-2";
 const STRONG = "A-long-password-1";
 
 vi.mock("@/features/api/utils/server-api", async () => ({
@@ -39,6 +41,16 @@ const formOf = (fields: Record<string, string | File>) => {
 };
 const patchBody = () =>
   FAKE_API.sent.find(({ method }) => method === HTTP.METHOD.PATCH)?.body;
+/** What the request for `method` sent. */
+const sentBody = (method: string) =>
+  FAKE_API.sent.find((sent) => sent.method === method)?.body;
+/** The PATCH answering the User as saved, on their new Version. */
+const savedOn = (version: string) =>
+  FAKE_API.answers.set(HTTP.METHOD.PATCH, {
+    body: { version },
+    status: HTTP.STATUS.OK,
+  });
+const PICTURE = () => new File(["x"], "a.webp", { type: "image/webp" });
 
 beforeEach(() => {
   resetFakeApi();
@@ -115,6 +127,39 @@ describe("editUser", () => {
 });
 
 describe("editUser, once saved", () => {
+  it.each([
+    [
+      "new picture",
+      HTTP.METHOD.PUT,
+      () => ({ [USERS.AVATAR_FIELD]: PICTURE() }),
+    ],
+    ["removal", HTTP.METHOD.DELETE, () => ({ [REMOVAL.name]: REMOVAL.value })],
+  ])(
+    "the Avatar change (%s) is sent with the Version the PATCH answered",
+    async (_, method, fields) => {
+      savedOn(SAVED_VERSION);
+      await editUser(ID, VERSION, {}, formOf(fields()));
+      expect(sentBody(method)).toEqual({ version: SAVED_VERSION });
+    }
+  );
+
+  it("a 409 on the Avatar change answers CHANGED, keeping the values, the list dropped", async () => {
+    savedOn(SAVED_VERSION);
+    FAKE_API.answers.set(HTTP.METHOD.PUT, {
+      code: API.ERROR.CODE.RESOURCE_CHANGED,
+      status: HTTP.STATUS.CONFLICT,
+    });
+    const state = await editUser(
+      ID,
+      VERSION,
+      {},
+      formOf({ [USERS.AVATAR_FIELD]: PICTURE() })
+    );
+    expect(state.error).toBe(USERS.EDIT_ERROR.CHANGED);
+    expect(state.values?.name).toBe("Edited");
+    expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+  });
+
   it("on 200 removes the Avatar when posted removed, and answers SAVED after updateTag", async () => {
     const state = await editUser(
       ID,

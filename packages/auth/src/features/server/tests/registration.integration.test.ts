@@ -3,10 +3,10 @@
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import type { AppSettingsTable } from "@allonfire/database/features/auth/access/constants/app-settings";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
 import { cookieOf, HOST_AUTH_PATH } from "../../../shared/tests/stub-auth";

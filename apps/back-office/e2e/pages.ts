@@ -1,7 +1,4 @@
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
@@ -80,7 +77,7 @@ export const USERS = sectionHref(SECTION.USERS.path);
  */
 export const usersSearchHref = (email: string) =>
   `${USERS}?${new URLSearchParams({
-    [USER.PARAM.SEARCH]: USER_SEARCH.serialize({ text: email }),
+    [USER.PARAM.SEARCH]: USER.SEARCH.serialize({ text: email }),
   })}`;
 
 /** Signs in as the Back Office Admin and waits for the frame. */

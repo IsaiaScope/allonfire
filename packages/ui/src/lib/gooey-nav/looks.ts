@@ -2,7 +2,7 @@ export type GooeyPalette = "dark" | "light";
 export type GooeySize = "sm" | "md" | "lg";
 
 /** The frame's glass and the labels' ink, per palette. */
-export const GOOEY_THEMES = {
+const THEMES = {
   dark: {
     "--gn-frame": "rgba(38, 35, 46, 0.66)",
     "--gn-frame-edge": "rgba(255, 255, 255, 0.08)",
@@ -24,7 +24,7 @@ export const GOOEY_THEMES = {
 } as const satisfies Record<GooeyPalette, Record<`--gn-${string}`, string>>;
 
 /** The pill's default colour, the hover's tint and the shadow's strength. */
-export const GOOEY_PILLS = {
+const PILLS = {
   dark: { color: "#f4f4f5", hover: "rgba(255, 255, 255, 0.08)", shadow: 0.4 },
   light: { color: "#27272a", hover: "rgba(24, 24, 27, 0.06)", shadow: 0.2 },
 } as const satisfies Record<
@@ -33,7 +33,7 @@ export const GOOEY_PILLS = {
 >;
 
 /** Type size, gaps and padding, per size. */
-export const GOOEY_SIZES = {
+const SIZES = {
   lg: {
     "--gn-font": "16px",
     "--gn-gap": "6px",
@@ -58,4 +58,7 @@ export const GOOEY_SIZES = {
 } as const satisfies Record<GooeySize, Record<`--gn-${string}`, string>>;
 
 /** No drop colours: every drop takes the pill's. One array, so props stay stable. */
-export const GOOEY_NO_TINTS: string[] = [];
+const NO_TINTS: string[] = [];
+
+/** The gooey nav's looks: per palette and size, and its default drop colours. */
+export const GOOEY = { NO_TINTS, PILLS, SIZES, THEMES } as const;

@@ -33,7 +33,7 @@ import { AOFDropdownMenuContent } from "./aof-dropdown-menu";
 type Collapsible = NonNullable<ComponentProps<typeof Sidebar>["collapsible"]>;
 
 /** The address param that holds the sidebar's state, and its collapsed value. */
-export type AOFSidebarCollapsedBy = { param: string; value: string };
+type AOFSidebarCollapsedBy = { param: string; value: string };
 
 /**
  * Runs while the HTML is parsed, before the first paint: when the address
@@ -101,7 +101,9 @@ const AOFSidebarSheet = ({
   children,
   label,
   side = "left",
-}: Pick<AOFSidebarProps, "children" | "label" | "side">) => {
+}: Pick<AOFSidebarProps, "children" | "label"> & {
+  side?: AOFSidebarProps["side"] | undefined;
+}) => {
   const { openMobile, setOpenMobile } = useSidebar();
   return (
     <Sheet onOpenChange={setOpenMobile} open={openMobile}>

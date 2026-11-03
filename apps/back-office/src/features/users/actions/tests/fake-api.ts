@@ -1,13 +1,28 @@
 import type { ApiType } from "@allonfire/api/client";
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { hc } from "hono/client";
 
-/** A request the action sent: its method, path and JSON body. */
+/**
+ * A request the action sent: its method, path and body, JSON as sent or a
+ * form's text fields.
+ */
 type Sent = { body: unknown; method: string; path: string };
 
-/** How the API answers a method: its status, and a problem's code if any. */
-type Answer = { status: number; code?: string };
+/**
+ * How the API answers a method: its status, and a problem's code or the
+ * JSON body it answers, if any.
+ */
+type Answer = { status: number; code?: string; body?: object };
+
+/** A form's text fields; its files left out. */
+const textFieldsOf = async (request: Request) =>
+  objectFromEntries(
+    [...(await request.formData()).entries()].flatMap(([key, value]) =>
+      typeof value === "string" ? [[key, value] as const] : []
+    )
+  );
 
 /**
  * The API as an action's tests see it: every request recorded in `sent`,
@@ -30,18 +45,25 @@ export const resetFakeApi = () => {
 
 const fakeFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   const request = new Request(input, init);
-  const json = request.headers
-    .get(HTTP.HEADER.CONTENT_TYPE)
-    ?.startsWith(HTTP.CONTENT_TYPE.JSON);
+  const type = request.headers.get(HTTP.HEADER.CONTENT_TYPE) ?? "";
+  const bodyOf = () => {
+    if (type.startsWith(HTTP.CONTENT_TYPE.JSON)) {
+      return request.json();
+    }
+    if (type.startsWith(HTTP.CONTENT_TYPE.MULTIPART_FORM_DATA)) {
+      return textFieldsOf(request);
+    }
+    return null;
+  };
   FAKE_API.sent.push({
-    body: json ? await request.json() : null,
+    body: await bodyOf(),
     method: request.method,
     path: new URL(request.url).pathname,
   });
   if (FAKE_API.unreachable.has(request.method)) {
     throw new TypeError("fetch failed");
   }
-  const { code, status } = FAKE_API.answers.get(request.method) ?? {
+  const { body, code, status } = FAKE_API.answers.get(request.method) ?? {
     status:
       request.method === HTTP.METHOD.DELETE
         ? HTTP.STATUS.NO_CONTENT
@@ -50,9 +72,9 @@ const fakeFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   if (status === HTTP.STATUS.NO_CONTENT) {
     return new Response(null, { status });
   }
-  return Response.json(code ? { code } : {}, { status });
+  return Response.json(code ? { code } : (body ?? {}), { status });
 };
 
 /** `serverApi`'s stand-in: the typed client over the fake. */
 export const fakeServerApi = () =>
-  Promise.resolve(hc<ApiType>(TEST_API_URL, { fetch: fakeFetch }));
+  Promise.resolve(hc<ApiType>(LOCAL.URL.TEST_API, { fetch: fakeFetch }));

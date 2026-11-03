@@ -64,7 +64,7 @@ problem documents. Files go to the closed
 `image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
 decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
 `image."Image"`, placements in `image."ImageApp"`. Apps show them through the
-image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
+image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
 
 | Endpoint | Guard | Does |
 |---|---|---|
@@ -89,7 +89,7 @@ image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
   `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
   any bucket policy (`setupImageBucket`), as does every test run's bucket. A
   browser reaches a picture only through a link the API signs, served by the
-  image server (docs/agents/images.md). Never give the bucket an anonymous
+  image server (docs/guides/images.md). Never give the bucket an anonymous
   policy again, read-only included.
 
 ## Writing routes
@@ -178,7 +178,8 @@ Where each signal comes from:
   the API log as errors and warnings, instead of vanishing.
 
 Traces, metrics and logs carry the same resource: `service.name`,
-`service.version` and `deployment.environment.name` (`features/telemetry/resource.ts`).
+`service.version` and `deployment.environment.name` (core's
+`features/telemetry/otlp.ts`).
 
 `index.ts` calls `startTelemetry()` before `createApp`, because `@hono/otel`
 binds its meter when the app is built. Nothing is patched, so there is no

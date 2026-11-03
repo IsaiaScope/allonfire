@@ -136,13 +136,13 @@ describe.each([
   ["api", "allonfire-api"],
   ["back-office", "allonfire-back-office"],
 ])("%s's telemetry", (name, serviceName) => {
-  it("is wired, and stays off until the ingestion token's headers are set", () => {
+  it("gets the plain endpoint, and the deploy fails without TELEMETRY_HEADERS", () => {
     const block = service(name);
     expect(block).toContain(
-      `TELEMETRY_ENDPOINT=${interpolate("TELEMETRY_HEADERS:+http://telemetry:5080/api/default")}`
+      "TELEMETRY_ENDPOINT=http://telemetry:5080/api/default"
     );
     expect(block).toContain(
-      `TELEMETRY_HEADERS=${interpolate("TELEMETRY_HEADERS:-")}`
+      `TELEMETRY_HEADERS=${required("TELEMETRY_HEADERS")}`
     );
     expect(block).toContain(`TELEMETRY_SERVICE_NAME=${serviceName}`);
   });

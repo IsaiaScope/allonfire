@@ -1,8 +1,12 @@
-export const CHANGESET_AUTHOR = "isaia";
-export const CHANGESET_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 
-// Any numbered `.sql`, hand-named ones included, so none shares a number.
-export const CHANGESET_FILE = /^\d{4}-.+\.sql$/;
+/** A changeset's own values: who writes it and where it is kept. */
+export const CHANGESET = {
+  AUTHOR: "isaia",
+  /** The folder holding one formatted-SQL changeset per file, under the package. */
+  DIR: "changelog/changesets",
+} as const;
+
 const NUMBER_LENGTH = 4;
 const SQL_COMMENT = "--";
 
@@ -19,7 +23,7 @@ export function isEmptySql(sql: string): boolean {
 /** The four-digit prefix the next changeset file takes. */
 export function nextChangesetNumber(fileNames: readonly string[]): string {
   const numbers = fileNames
-    .filter((name) => CHANGESET_FILE.test(name))
+    .filter((name) => PATTERN.CHANGESET.FILE.test(name))
     .map((name) => Number(name.slice(0, NUMBER_LENGTH)));
   const next = numbers.length === 0 ? 0 : Math.max(...numbers) + 1;
   return String(next).padStart(NUMBER_LENGTH, "0");
@@ -49,7 +53,7 @@ export function buildChangeset({
   return [
     `--liquibase formatted sql logicalFilePath:changesets/${id}.sql`,
     "",
-    `--changeset ${CHANGESET_AUTHOR}:${id}`,
+    `--changeset ${CHANGESET.AUTHOR}:${id}`,
     forward.trim(),
     ...rollbackLines,
     "",

@@ -1,6 +1,7 @@
 // @module-tag unit
 
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectKeys } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import type { AccessMembership } from "@allonfire/database/features/auth/access/access";
@@ -84,7 +85,7 @@ describe("createAuth", () => {
 
   it("keeps a Session 60 days, extended at most once a day", () => {
     expect(auth.options.session?.expiresIn).toBe(AUTH.SESSION.EXPIRES_IN_S);
-    expect(AUTH.SESSION.EXPIRES_IN_S).toBe(60 * 24 * 60 * 60);
+    expect(AUTH.SESSION.EXPIRES_IN_S).toBe(60 * UNIT.SECONDS_PER_DAY);
     expect(auth.options.session?.updateAge).toBe(AUTH.SESSION.UPDATE_AGE_S);
   });
 

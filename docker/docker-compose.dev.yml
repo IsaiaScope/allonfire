@@ -273,6 +273,10 @@ volumes:
   telemetry_data:
   workflow_data:
 
+# jscpd:ignore-start
+# The same cdn config in both compose files, on purpose: Dokploy deploys the
+# prod compose alone, so each file carries it inline, and service-names.test.ts
+# fails when the two drift.
 configs:
   cdn:
     content: |
@@ -320,3 +324,4 @@ configs:
               add_header X-Cache-Status $$upstream_cache_status always;
           }
       }
+# jscpd:ignore-end

@@ -29,7 +29,10 @@ import { AOFControlBarSeparator } from "./aof-control-bar";
 import { AOFInputClear } from "./aof-input-clear";
 import { AOFTooltip } from "./aof-tooltip";
 
-/** Every word a Faceted list says, in the page's language. */
+/**
+ * Every word a Faceted list says, in the page's language.
+ * @internal
+ */
 export type AOFFacetedLabels = {
   /** The button that empties the search box. */
   clear: string;
@@ -80,7 +83,7 @@ const badge = cva("min-w-0", {
   variants: { size: { field: "h-6 text-sm", other: "" } },
 });
 
-export type AOFFacetedItem<V extends string> = { label: string; value: V };
+type AOFFacetedItem<V extends string> = { label: string; value: V };
 
 /** DiceUI's Faceted root (`open`, `onOpenChange`, ...), always several values,
  *  typed by `V`. */

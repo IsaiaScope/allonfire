@@ -2,10 +2,10 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../../environment/environment";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
+import { TEST_DATABASE } from "../constants/test-database";
 import { templateName, testDatabaseName } from "../names";
 import {
   createDatabase,
-  DOCKER_TIMEOUT,
   databasesOnServer,
   dropDatabase,
   withClient,
@@ -21,7 +21,7 @@ import {
 const SERVER = env.DATABASE_URL;
 const EPOCH = Math.floor(Date.now() / UNIT.MS_PER_SECOND);
 
-describe("Test databases", { timeout: DOCKER_TIMEOUT }, () => {
+describe("Test databases", { timeout: TEST_DATABASE.DOCKER_TIMEOUT_MS }, () => {
   it("names the template by its fingerprint and builds it once when two runs ask at once", async () => {
     const [first, second] = await Promise.all([
       ensureTemplate(SERVER),

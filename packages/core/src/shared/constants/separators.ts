@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export const SEPARATOR = {
   /** Between a search field and its value: `role:admin`. */
   FIELD: ":",
@@ -14,6 +12,3 @@ export const SEPARATOR = {
   /** Between the words of a search. */
   WORD: " ",
 } as const;
-
-export const separatorSchema = z.enum(SEPARATOR);
-export type Separator = z.infer<typeof separatorSchema>;

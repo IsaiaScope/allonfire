@@ -67,7 +67,7 @@ export function createRedisStore(redis: Redis): RateLimitStore {
   };
 }
 
-export function clientKey(context: Context, trustedHops: number): string {
+function clientKey(context: Context, trustedHops: number): string {
   if (trustedHops > 0) {
     const chain = (context.req.header(HTTP.HEADER.X_FORWARDED_FOR) ?? "")
       .split(SEPARATOR.LIST)

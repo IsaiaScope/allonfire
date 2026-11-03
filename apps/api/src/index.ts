@@ -1,4 +1,4 @@
-import { prisma } from "@allonfire/database";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";

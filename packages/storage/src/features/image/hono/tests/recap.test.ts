@@ -4,7 +4,9 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
+import { json } from "@allonfire/auth/shared/tests/test-host";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
@@ -16,8 +18,13 @@ import {
 import { STORAGE } from "../../../../shared/constants/paths";
 import { imageListBodySchema } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
-import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
-import { json, testHost } from "./test-host";
+import {
+  ALT,
+  imageHost,
+  imageRecord,
+  PREPARED,
+  VERSION,
+} from "./stub-image-deps";
 
 /**
  * The recap agreed for ADR 0020 and ADR 0027, one test per row. P is public,
@@ -118,7 +125,7 @@ const host = (session: AuthSession | null) => {
       changes.map(({ id }) => imageRecord({ id }))
     ),
   };
-  const app = testHost(session, {
+  const app = imageHost(session, {
     ...writes,
     // As the database runs a delete: the check on the placements, then the rows.
     deleteImages: async (ids, authorise) => {
@@ -133,8 +140,8 @@ const host = (session: AuthSession | null) => {
       return writes.removeImagesFromApp(ids, fromApp);
     },
     // As the database runs an update: the changes worked out on the placements.
-    updateImages: async (ids, resolve) =>
-      writes.updateImages(resolve(await linksOf(ids))),
+    updateImages: async (opened, resolve) =>
+      writes.updateImages(resolve(await linksOf(opened.map(({ id }) => id)))),
   });
   const wrote = () =>
     objectValues(writes).some((write) => write.mock.calls.length > 0);
@@ -196,6 +203,14 @@ describe("recap: reads", () => {
   });
 });
 
+/** A PATCH of one change, on the Version every Image here holds. */
+const patchOne = (change: {
+  id: string;
+  access?: ImageAccess;
+  alt?: typeof ALT;
+  apps?: App[];
+}) => json(HTTP.METHOD.PATCH, [{ ...change, version: VERSION }]);
+
 describe("recap: writes", () => {
   /** Each write row: its request, and what a visitor, Giulia, Mario and an Admin get. */
   const writes: [
@@ -210,47 +225,43 @@ describe("recap: writes", () => {
     ],
     [
       "PATCH Q make public",
-      () => json("PATCH", [{ access: ImageAccess.PUBLIC, id: "Q" }]),
+      () => patchOne({ access: ImageAccess.PUBLIC, id: "Q" }),
       [401, 403, 200, 200],
     ],
     [
       "PATCH P make private",
-      () => json("PATCH", [{ access: ImageAccess.PRIVATE, id: "P" }]),
+      () => patchOne({ access: ImageAccess.PRIVATE, id: "P" }),
       [401, 403, 403, 200],
     ],
     [
       "PATCH P apps: [BACK_OFFICE]",
-      () => json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }]),
+      () => patchOne({ apps: [App.BACK_OFFICE], id: "P" }),
       [401, 403, 200, 200],
     ],
     [
       "PATCH P alt",
-      () => json("PATCH", [{ alt: ALT, id: "P" }]),
+      () => patchOne({ alt: ALT, id: "P" }),
       [401, 403, 403, 200],
     ],
-    [
-      "PATCH R",
-      () => json("PATCH", [{ alt: ALT, id: "R" }]),
-      [401, 404, 404, 200],
-    ],
+    ["PATCH R", () => patchOne({ alt: ALT, id: "R" }), [401, 404, 404, 200]],
     [
       "DELETE { [P], LAURA }",
-      () => json("DELETE", { app: App.LAURA, ids: ["P"] }),
+      () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["P"] }),
       [401, 403, 204, 204],
     ],
     [
       "DELETE { [Q], LAURA }",
-      () => json("DELETE", { app: App.LAURA, ids: ["Q"] }),
+      () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["Q"] }),
       [401, 403, 204, 204],
     ],
     [
       "DELETE { [P] }",
-      () => json("DELETE", { ids: ["P"] }),
+      () => json(HTTP.METHOD.DELETE, { ids: ["P"] }),
       [401, 403, 403, 204],
     ],
     [
       "DELETE { [Q, R] }",
-      () => json("DELETE", { ids: ["Q", "R"] }),
+      () => json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] }),
       [401, 404, 404, 204],
     ],
   ];
@@ -273,7 +284,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }])
+      patchOne({ apps: [App.BACK_OFFICE], id: "P" })
     );
     expect(done.updateImages).toHaveBeenCalledWith([
       { id: "P", remove: [App.LAURA] },
@@ -284,7 +295,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["P"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["P"] })
     );
     expect(done.removeImagesFromApp).toHaveBeenCalledWith(["P"], App.LAURA);
     expect(done.deleteImages).not.toHaveBeenCalled();
@@ -295,7 +306,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["Q"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["Q"] })
     );
     expect(done.deleteObjects).toHaveBeenCalledWith(["q.avif"]);
   });
@@ -304,7 +315,7 @@ describe("recap: writes", () => {
     const { app, wrote } = host(mario);
     const res = await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { ids: ["Q", "R"] })
+      json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] })
     );
     expect(res.status).toBe(404);
     expect(wrote()).toBe(false);

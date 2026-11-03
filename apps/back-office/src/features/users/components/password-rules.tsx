@@ -34,7 +34,7 @@ export const PasswordRules = ({
 }: {
   checks: ReturnType<typeof passwordChecks>;
 }) => {
-  const t = useTranslations("Users.add");
+  const t = useTranslations("Users.form");
   const id = useId();
   return (
     <div className="flex flex-col gap-2">

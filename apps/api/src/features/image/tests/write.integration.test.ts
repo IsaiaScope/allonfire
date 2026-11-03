@@ -1,8 +1,9 @@
 // @module-tag integration
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { prisma } from "@allonfire/database";
 import { App, ImageAccess } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
 import type {
@@ -13,6 +14,7 @@ import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants
 import { z } from "zod";
 import { API } from "../../../shared/constants/api";
 import { cookieFor, ORIGIN, type TestApp } from "../../../shared/tests/sign-in";
+import { problemOf } from "../../errors/tests/problem-of";
 import {
   imageTestApp,
   jpeg,
@@ -78,12 +80,12 @@ const remove = (
 
 describe("changing Images on the real stack", () => {
   it("changes alt only for an Admin of every App the Image is in", async () => {
-    const { id } = await fresh(BOTH);
+    const { id, version } = await fresh(BOTH);
     const alt = { en: "changed", it: "cambiato" };
-    expect((await patch(BACK_OFFICE_ADMIN, [{ alt, id }])).status).toBe(
-      HTTP.STATUS.FORBIDDEN
-    );
-    expect((await patch(ADMIN_EVERYWHERE, [{ alt, id }])).status).toBe(
+    expect(
+      (await patch(BACK_OFFICE_ADMIN, [{ alt, id, version }])).status
+    ).toBe(HTTP.STATUS.FORBIDDEN);
+    expect((await patch(ADMIN_EVERYWHERE, [{ alt, id, version }])).status).toBe(
       HTTP.STATUS.OK
     );
     expect(
@@ -92,23 +94,23 @@ describe("changing Images on the real stack", () => {
   });
 
   it("adds a placement only for an Admin of the App it adds", async () => {
-    const { id } = await fresh(BACK_OFFICE_ONLY);
+    const { id, version } = await fresh(BACK_OFFICE_ONLY);
     const apps = [...BACK_OFFICE_ONLY, App.LAURA];
-    expect((await patch(BACK_OFFICE_ADMIN, [{ apps, id }])).status).toBe(
-      HTTP.STATUS.FORBIDDEN
-    );
-    expect((await patch(ADMIN_EVERYWHERE, [{ apps, id }])).status).toBe(
-      HTTP.STATUS.OK
-    );
+    expect(
+      (await patch(BACK_OFFICE_ADMIN, [{ apps, id, version }])).status
+    ).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(
+      (await patch(ADMIN_EVERYWHERE, [{ apps, id, version }])).status
+    ).toBe(HTTP.STATUS.OK);
     expect(await prisma.imageApp.count({ where: { imageId: id } })).toBe(2);
   });
 
   it("making it private kills its public links: hidden from visitors, its old link 404, its new one 200", async () => {
-    const { id, key, srcSet } = await fresh(BACK_OFFICE_ONLY);
+    const { id, key, srcSet, version } = await fresh(BACK_OFFICE_ONLY);
     const [publicLink] = srcSet;
     expect((await fetch(publicLink?.url ?? "")).status).toBe(HTTP.STATUS.OK);
     const res = await patch(BACK_OFFICE_ADMIN, [
-      { access: ImageAccess.PRIVATE, id },
+      { access: ImageAccess.PRIVATE, id, version },
     ]);
     expect(res.status).toBe(HTTP.STATUS.OK);
     const [changed] = z.array(imageBodySchema).parse(await res.json());
@@ -126,12 +128,29 @@ describe("changing Images on the real stack", () => {
   });
 
   it("makes an Image public only for an Admin of every App it is in", async () => {
-    const { id } = await fresh(BOTH, ImageAccess.PRIVATE);
-    const change = [{ access: ImageAccess.PUBLIC, id }];
+    const { id, version } = await fresh(BOTH, ImageAccess.PRIVATE);
+    const change = [{ access: ImageAccess.PUBLIC, id, version }];
     expect((await patch(BACK_OFFICE_ADMIN, change)).status).toBe(
       HTTP.STATUS.FORBIDDEN
     );
     expect((await patch(ADMIN_EVERYWHERE, change)).status).toBe(HTTP.STATUS.OK);
+  });
+
+  it("a stale Version answers 409 RESOURCE_CHANGED and writes nothing", async () => {
+    const { id, version } = await fresh(BOTH);
+    const theirs = { en: "theirs", it: "loro" };
+    const first = await patch(ADMIN_EVERYWHERE, [{ alt: theirs, id, version }]);
+    expect(first.status).toBe(HTTP.STATUS.OK);
+    const [saved] = z.array(imageBodySchema).parse(await first.json());
+    expect(saved?.version).not.toBe(version);
+    const late = await patch(ADMIN_EVERYWHERE, [
+      { alt: { en: "late", it: "tardi" }, id, version },
+    ]);
+    expect(late.status).toBe(HTTP.STATUS.CONFLICT);
+    expect((await problemOf(late)).code).toBe(ERROR.CODE.RESOURCE_CHANGED);
+    expect(
+      (await prisma.image.findUniqueOrThrow({ where: { id } })).alt
+    ).toEqual(theirs);
   });
 
   it("takes an Image out of one App and keeps it in the other", async () => {

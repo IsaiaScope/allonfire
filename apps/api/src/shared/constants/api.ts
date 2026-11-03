@@ -49,16 +49,12 @@ export const API = {
     /** Request body ceiling. Larger bodies get 413 before a handler sees them. */
     BODY_BYTES: UNIT.BYTES_PER_MIB,
     REQUEST_TIMEOUT_MS: 30 * UNIT.MS_PER_SECOND,
-    /**
-     * How long the final telemetry flush is allowed to take. The OTLP exporter
-     * retries an unreachable collector for ~8s; tsx watch force-kills after 5s
-     * and Docker after 10s, so the flush gets less than either.
-     */
-    TELEMETRY_FLUSH_TIMEOUT_MS: 2 * UNIT.MS_PER_SECOND,
   },
   /** Log messages emitted outside a request, where there is no requestId. */
   LOG_MESSAGE: {
     CRASHED: "uncaught error, exiting",
+    DATABASE_DOWN: "database unreachable, not ready",
+    DATABASE_RECOVERED: "database reachable again",
     DRAIN_TIMEOUT: "drain timed out, closing dependencies anyway",
     LISTENING: "api listening",
     NON_ERROR_THROWN: "a non-Error value was thrown",
@@ -72,6 +68,7 @@ export const API = {
     SHUTTING_DOWN: "shutting down",
     TELEMETRY_FLUSH_ABANDONED:
       "telemetry flush failed or timed out, spans dropped",
+    TRANSLATION_FAILED: "translation failed, serving the English source",
     UNHANDLED_ERROR: "unhandled error",
   },
   /**
@@ -117,7 +114,7 @@ export const API = {
   VERSION: { CURRENT: CURRENT_VERSION },
 } as const;
 
-export const shutdownStepSchema = z.enum(API.SHUTDOWN.STEP);
+const shutdownStepSchema = z.enum(API.SHUTDOWN.STEP);
 export type ShutdownStep = z.infer<typeof shutdownStepSchema>;
 
 /** Derived from the paths the health router serves, so it cannot drift from them. */

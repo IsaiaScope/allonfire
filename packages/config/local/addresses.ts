@@ -66,6 +66,8 @@ const ADDRESS = {
   /** db 15: an e2e run's counters, apart from the ones `pnpm dev` reads. */
   REDIS_E2E: `redis://localhost:${PORT.REDIS}/15`,
   STORAGE: http(PORT.STORAGE),
+  /** A host that never resolves: MSW answers it, a leak fails. */
+  TEST_API: "http://api.test",
 } as const;
 
 /** The Local stack: `LOCAL.PORT.*`, `LOCAL.URL.*` and the logins compose defaults to. */
@@ -77,6 +79,3 @@ export const LOCAL = {
   STORAGE,
   URL: ADDRESS,
 } as const;
-
-/** A host that never resolves: MSW answers it, a leak fails. */
-export const TEST_API_URL = "http://api.test";

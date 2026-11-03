@@ -1,5 +1,10 @@
 /// <reference path="./types/heic-decode.d.ts" />
-import sharp, { type Metadata, type Sharp } from "sharp";
+import sharp, {
+  type Metadata,
+  type OutputInfo,
+  type ResizeOptions,
+  type Sharp,
+} from "sharp";
 import { IMAGE } from "../constants/image";
 
 /**
@@ -119,33 +124,47 @@ export const blurDataUrlOf = async (stored: Buffer): Promise<string> => {
 };
 
 /**
- * Upright, metadata-free AVIF capped at `IMAGE.LIMIT.DIMENSION`, plus its WebP
- * blur.
+ * `image` resized and encoded as metadata-free AVIF. sharp decodes lazily, so
+ * a picture whose header reads but whose body is broken (a truncated JPEG)
+ * fails only here: any failure is the client's bytes, `UnsupportedImageError`.
  */
-export async function prepareImage(input: Buffer): Promise<PreparedImage> {
-  const upright = await decodeUpright(input);
+export async function encodeAvif(
+  image: Sharp,
+  { quality, resize }: { quality: number; resize: ResizeOptions }
+): Promise<{ data: Buffer; info: OutputInfo }> {
   try {
-    // The source is decoded once. The blur comes from the stored AVIF, at
-    // most 2560px, instead of a second full decode of the original.
-    const { data, info } = await upright
-      .resize({
-        fit: "inside",
-        height: IMAGE.LIMIT.DIMENSION,
-        width: IMAGE.LIMIT.DIMENSION,
-        withoutEnlargement: true,
-      })
-      .avif({ quality: SOURCE_QUALITY })
+    return await image
+      .resize(resize)
+      .avif({ quality })
       .toBuffer({ resolveWithObject: true });
-    return {
-      blurDataUrl: await blurDataUrlOf(data),
-      buffer: data,
-      bytes: info.size,
-      height: info.height,
-      width: info.width,
-    };
   } catch (error) {
     throw new UnsupportedImageError("Image failed to decode", {
       cause: error,
     });
   }
+}
+
+/**
+ * Upright, metadata-free AVIF capped at `IMAGE.LIMIT.DIMENSION`, plus its WebP
+ * blur.
+ */
+export async function prepareImage(input: Buffer): Promise<PreparedImage> {
+  // The source is decoded once. The blur comes from the stored AVIF, at most
+  // 2560px, instead of a second full decode of the original.
+  const { data, info } = await encodeAvif(await decodeUpright(input), {
+    quality: SOURCE_QUALITY,
+    resize: {
+      fit: "inside",
+      height: IMAGE.LIMIT.DIMENSION,
+      width: IMAGE.LIMIT.DIMENSION,
+      withoutEnlargement: true,
+    },
+  });
+  return {
+    blurDataUrl: await blurDataUrlOf(data),
+    buffer: data,
+    bytes: info.size,
+    height: info.height,
+    width: info.width,
+  };
 }

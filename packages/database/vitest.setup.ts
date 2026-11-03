@@ -1,3 +1,3 @@
-import { LOCAL } from "@allonfire/config/local/addresses";
+import { fillLocalDatabaseEnv } from "./src/features/test-database/local-env";
 
-process.env.DATABASE_URL ??= LOCAL.URL.DATABASE;
+fillLocalDatabaseEnv();

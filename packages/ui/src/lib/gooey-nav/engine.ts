@@ -1,3 +1,4 @@
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { emitDrops, pillAt, planFlight } from "./drops";
 import { disposeScene } from "./pipeline";
 import {
@@ -135,7 +136,7 @@ export const createGooeyEngine = (
 
   const frame = (now: number) => {
     raf = 0;
-    const dt = Math.min(MAX_DT, (now - last) / 1000 || 0);
+    const dt = Math.min(MAX_DT, (now - last) / UNIT.MS_PER_SECOND || 0);
     last = now;
     stepDrops(sim, { dt, now });
     stepPills(sim, dt);

@@ -1,5 +1,6 @@
 import { nextAuthEnv } from "@allonfire/auth/environment/next-environment";
 import { runtimeEnvSchema } from "@allonfire/core/environment/environment";
+import { telemetryEnv } from "@allonfire/core/environment/telemetry-environment";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
@@ -17,7 +18,9 @@ export const env = createEnv({
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
-  extends: [nextAuthEnv],
+  // The server's telemetry (`TELEMETRY_*`, all optional): core's
+  // `serverLogger` and `instrumentation.node.ts` read it.
+  extends: [nextAuthEnv, telemetryEnv],
   server: {
     /**
      * The API as this App's server reaches it, for a page that reads data
