@@ -23,7 +23,7 @@ config/
       vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags; VITEST.BROWSER_FILES, the files only the browser config collects
       vitest.setup.ts      Fails a test file with no `// @module-tag`
     browser/
-      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit
+      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit: the Back Office's and ui's
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
       asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/
@@ -67,7 +67,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(vitestConfig, defineConfig({ test: { setupFiles: ["./vitest.setup.ts"] } }));
 
-// vitest.browser.config.ts (an App): `*.browser.test.tsx` in headless Chromium and WebKit
+// vitest.browser.config.ts (an App, or ui): `*.browser.test.tsx` in headless Chromium and WebKit
 import { vitestBrowserConfig } from "@allonfire/config/tests/browser";
 
 export default mergeConfig(vitestBrowserConfig, defineConfig({ test: { setupFiles: ["./vitest.browser.setup.ts"] } }));
@@ -119,9 +119,9 @@ differences, not what only a real iPhone does (the collapsing toolbar, the
 keyboard, safe areas). Browser tests run each component in Chromium and
 WebKit.
 
-Every run is headless. To watch one, from the root (every App that has the
-script, one after another, never through turbo: nothing to cache) or for one
-App with `pnpm --filter @allonfire/<app>`:
+Every run is headless. To watch one, from the root (every App or package that
+has the script, one after another, never through turbo: nothing to cache) or
+for one with `pnpm --filter @allonfire/<name>`:
 
 | Script | Shows |
 |---|---|

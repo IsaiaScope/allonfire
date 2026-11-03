@@ -1,6 +1,9 @@
 "use client";
-import { useAOFForm } from "@allonfire/ui/lib/form";
-import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import {
+  formDataTo,
+  submitAOFForm,
+} from "@allonfire/ui/features/form/utils/form-submit";
 import { IconMail, IconUserPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type SubmitEvent, useActionState, useCallback } from "react";

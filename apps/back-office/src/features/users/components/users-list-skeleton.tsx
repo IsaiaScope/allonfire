@@ -4,8 +4,8 @@ import {
   AOFDataTableSkeleton,
   type AOFDataTableSkeletonColumn,
   aofDataTableFrame,
-} from "@allonfire/ui/components/aof-data-table-skeleton";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/features/data-table/components/aof-data-table-skeleton";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
 import { userRow } from "../utils/user-row";

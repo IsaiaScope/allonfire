@@ -1,6 +1,6 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import type { AOFRowSelection } from "@allonfire/ui/components/aof-data-table";
+import type { AOFRowSelection } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { useQueryStates } from "nuqs";
 import { useCallback, useState } from "react";
 import { usersParams } from "../constants/users-params";

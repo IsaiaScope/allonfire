@@ -18,7 +18,7 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 ## React
 
 - An animation that changes layout (width plus content plus timing) uses Framer Motion (`motion`, `AnimatePresence`, `layout`); CSS transitions are for one property; never coordinate with `setTimeout`. Example: `apps/laura/src/components/motion-provider.tsx`.
-- Every `<img>` or `<Image>` gets `width` and `height`, or `fill` inside a sized box, so nothing shifts as it loads. Example: `packages/ui/src/components/aof-image.tsx`.
+- Every `<img>` or `<Image>` gets `width` and `height`, or `fill` inside a sized box, so nothing shifts as it loads. Example: `packages/ui/src/shared/components/aof-image.tsx`.
 
 ## CSS
 

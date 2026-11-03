@@ -1,6 +1,7 @@
 // @module-tag integration
+
+import { computedValue } from "@allonfire/ui/shared/tests/computed-style";
 import { render } from "vitest-browser-react";
-import { computedValue } from "@/shared/tests/computed-style";
 import { Torii } from "../torii";
 
 describe("Torii", () => {

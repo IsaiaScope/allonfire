@@ -61,8 +61,8 @@ own key (`@allonfire/database/enums`). A package that serves HTTP for any host
 takes its dependencies as arguments, and throws `CodedError` from
 `@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015;
 routes Better Auth serves throw its `APIError`, which its handler answers).
-`packages/shadcn`, `packages/ui`, `packages/design` and `packages/config` are
-exempt: the first two follow shadcn's `components/` and `lib/` so `shadcn add`
+`packages/shadcn`, `packages/design` and `packages/config` are
+exempt: shadcn follows the CLI's `components/` and `lib/` so `shadcn add`
 works; `packages/design` holds Designs and Apps (ADR 0011); `packages/config`
 has no `src/`, since its presets are addressed by path (the tsconfigs in
 `typescript/`, the Vitest and Playwright configs in `tests/`, the Local

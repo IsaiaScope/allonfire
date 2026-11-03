@@ -3,8 +3,8 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
 // The storage's HEIC Fixture, served by Vite to the browser under test.
 import HEIC_URL from "@allonfire/storage/features/image/fixtures/files/colors-no-alpha.heic?url";
-import { avatarChangeOf } from "@allonfire/ui/lib/avatar-change";
-import { useAOFForm } from "@allonfire/ui/lib/form";
+import { avatarChangeOf } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useCallback } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
@@ -20,7 +20,7 @@ import { USERS } from "../../constants/users";
 /** A size as the file row shows it: a number, then kB. */
 const KILOBYTES = /\d+(\.\d)?\s?kB/;
 
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

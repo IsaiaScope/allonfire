@@ -45,6 +45,7 @@ src/apps/<app>/         PRODUCT.md, styles.css, DESIGN.md + DESIGN.json
 | `./designs/japan/image-font` | `JAPAN_IMAGE_FONT.FAMILY`: the face's name, safe in a browser bundle |
 | `./designs/japan/image-fonts` | `loadJapanImageFonts`, the face's files for `ImageResponse` (server only: reads files) |
 | `./designs/japan/share-card-look` | `JAPAN_SHARE_CARD`: how ui's `AOFShareCard` looks in Japan, per scheme (colours, face, tactile edge) |
+| `./designs/japan/theme.css` | the Design's tokens alone, no App's rules: ui's browser tests wear it over ui's base |
 
 ## design:sync
 

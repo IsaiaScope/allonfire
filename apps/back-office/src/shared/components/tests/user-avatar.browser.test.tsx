@@ -5,7 +5,7 @@ import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { render } from "vitest-browser-react";
 import { UserAvatar } from "../user-avatar";
 
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

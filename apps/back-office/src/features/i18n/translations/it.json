@@ -71,6 +71,7 @@
       "title": "Impossibile caricare gli Utenti"
     },
     "filter": {
+      "add": "Aggiungi",
       "app": "App",
       "button": "Filtri",
       "empty": "Nessun risultato",

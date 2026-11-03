@@ -44,10 +44,20 @@ the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no t
 checks them and nothing executes. Three layers: unit and integration tests run
 in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `integration`) render one client component in real Chromium and WebKit through
-`vitest.browser.config.ts`, with MSW answering the API: the worker and its
+`vitest.browser.config.ts`. The Back Office and `packages/ui` have them. An
+App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
+Design's `theme.css` (`src/shared/tests/browser.css`), never an App's. A
+look a visitor sees (a corner, a height, padding, an overflow axis, a
+transition) is asserted from `getComputedStyle` against the token it should
+wear, through ui's `@allonfire/ui/shared/tests/computed-style`
+(`computedValue`, `colorAlpha`, `seconds`, `roundestCorner`) and
+`emulated-media` (`withReducedMotion`, `withCoarsePointer`; Chromium only,
+`CAN_EMULATE_MEDIA`, as are the notch tests through
+`Emulation.setSafeAreaInsetsOverride`); a value that animates is read with
+`expect.poll`. An App's browser tests have MSW answering the API: the worker and its
 guard are shared (`@allonfire/config/tests/browser/msw`: `startMsw`,
 `worker`), the handlers are the App's own (`src/shared/tests/msw/handlers.ts`),
-and a request no handler answers fails the test. Vitest serves MSW's
+and a request no handler answers fails the test; ui fakes no API. Vitest serves MSW's
 `mockServiceWorker.js` from the installed `msw`; no App keeps one in
 `public/`, where it would ship to production; e2e
 tests are Playwright's, under the App's `e2e/`, against the API plus the App
@@ -55,7 +65,9 @@ tests are Playwright's, under the App's `e2e/`, against the API plus the App
 `mobile-chrome` (Pixel 7) and `mobile-safari` (iPhone 15). Both layers are
 headless; `pnpm test:e2e:headed`, `pnpm test:e2e:ui` and
 `pnpm test:browser:headed` show the browser. A server action is mocked in a browser test and
-covered for real by e2e. CI runs browser and e2e tests only for affected Apps.
+covered for real by e2e. CI runs the browser tests of every affected package
+that has them (an App, ui: the `changes` job's `browser` output) and e2e
+tests for the affected Apps.
 
 The pre-commit hook (`.husky/pre-commit`) runs Biome on the staged files
 (errors and warnings fail), `oxlint --type-aware` over the repo, starts the

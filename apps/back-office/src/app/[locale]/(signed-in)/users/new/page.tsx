@@ -1,4 +1,4 @@
-import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
+import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";

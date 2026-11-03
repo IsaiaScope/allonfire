@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 /**
- * ui's `AOFImage` (`@allonfire/ui/components/aof-image`) or next/image as a
+ * ui's `AOFImage` (`@allonfire/ui/shared/components/aof-image`) or next/image as a
  * test renders it: next/image needs Next's loader, and reaches the browser as
  * a CommonJS object, not a component. A `<span>` shows what it was handed:
  * its `alt`, its `src` (through its `loader` when given) and whether the

@@ -3,10 +3,10 @@
 import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { AOFFaceted } from "@allonfire/ui/components/aof-faceted";
-import { AOFFilterPanel } from "@allonfire/ui/components/aof-filter-panel";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
+import { AOFFilterPanel } from "@allonfire/ui/features/data-table/components/aof-filter-panel";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
   IconFilter2Search,
   IconRefresh,
@@ -62,6 +62,7 @@ export const UsersFilters = ({
     value: role,
   }));
   const list = {
+    add: t("Users.filter.add"),
     clear: t("Users.search.clear"),
     empty: t("Users.filter.empty"),
     reset: t("Users.filter.reset"),

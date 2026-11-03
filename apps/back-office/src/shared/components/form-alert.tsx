@@ -1,4 +1,4 @@
-import { cn } from "@allonfire/ui/lib/utils";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import type { ComponentProps } from "react";
 

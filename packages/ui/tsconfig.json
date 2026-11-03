@@ -3,7 +3,12 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["dom", "dom.iterable", "ES2022"],
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals", "next/types/global"]
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": [
+    "src",
+    "vitest.config.ts",
+    "vitest.browser.config.ts",
+    "vitest.browser.setup.ts"
+  ]
 }

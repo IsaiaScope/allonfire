@@ -71,6 +71,7 @@
       "title": "The Users could not be loaded"
     },
     "filter": {
+      "add": "Add",
       "app": "App",
       "button": "Filters",
       "empty": "No match",

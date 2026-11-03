@@ -2,7 +2,10 @@
 
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { useInstallHint } from "@allonfire/core/features/next/pwa/hooks/use-install-hint";
-import { AOF_TOAST, useAOFToast } from "@allonfire/ui/lib/use-aof-toast";
+import {
+  AOF_TOAST,
+  useAOFToast,
+} from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { useTranslations } from "next-intl";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { InstallHintCard } from "./install-hint-card";

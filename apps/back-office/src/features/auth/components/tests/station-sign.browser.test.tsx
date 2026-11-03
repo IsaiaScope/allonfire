@@ -1,10 +1,13 @@
 // @module-tag integration
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import {
+  colorAlpha,
+  computedValue,
+} from "@allonfire/ui/shared/tests/computed-style";
 import { render } from "vitest-browser-react";
-import { colorAlpha, computedValue } from "@/shared/tests/computed-style";
 import { StationSign } from "../station-sign";
 
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

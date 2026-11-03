@@ -1,6 +1,6 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
 import { App } from "@allonfire/database/enums";
-import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
+import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";

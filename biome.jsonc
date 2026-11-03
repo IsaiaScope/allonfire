@@ -159,7 +159,7 @@
                       "@tanstack/react-form",
                       "@tanstack/react-form/**"
                     ],
-                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
+                    "message": "Build forms with useAOFForm from @allonfire/ui/features/form/utils/form (ADR 0017)."
                   }
                 ]
               }
@@ -190,7 +190,7 @@
                       "@tanstack/react-form",
                       "@tanstack/react-form/**"
                     ],
-                    "message": "Build forms with useAOFForm from @allonfire/ui/lib/form (ADR 0017)."
+                    "message": "Build forms with useAOFForm from @allonfire/ui/features/form/utils/form (ADR 0017)."
                   },
                   {
                     "group": [

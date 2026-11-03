@@ -3,7 +3,7 @@
 import {
   AOFSidebarMenuButton,
   useAOFSidebar,
-} from "@allonfire/ui/components/aof-sidebar";
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { cva } from "class-variance-authority";
 import { type ReactNode, Suspense, useCallback } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";

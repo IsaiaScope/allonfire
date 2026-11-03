@@ -1,5 +1,8 @@
-import { AOFPage, type AOFPageProps } from "@allonfire/ui/components/aof-page";
-import { cn } from "@allonfire/ui/lib/utils";
+import {
+  AOFPage,
+  type AOFPageProps,
+} from "@allonfire/ui/features/navigation/components/aof-page";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 // Twice the bottom gutter: a page's last row (a form's buttons, a table's

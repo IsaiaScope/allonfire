@@ -1,5 +1,5 @@
 // @module-tag integration
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
@@ -11,8 +11,10 @@ import { useDeleteUsersFlow } from "../use-delete-users-flow";
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
-  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
+  ...(await original<
+    typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
+  >()),
   aofToast: vi.fn(),
 }));
 

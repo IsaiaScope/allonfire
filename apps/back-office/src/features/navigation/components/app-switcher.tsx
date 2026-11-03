@@ -8,8 +8,8 @@ import {
   AOFSidebarMenu,
   AOFSidebarMenuButton,
   AOFSidebarMenuItem,
-} from "@allonfire/ui/components/aof-sidebar";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { getTranslations } from "next-intl/server";
 import { env } from "@/environment/environment";
 import { switcherApps } from "../utils/switcher-apps";

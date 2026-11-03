@@ -3,10 +3,13 @@
 import { signIn } from "@allonfire/auth/features/next/actions/sign-in";
 import type { SignInState } from "@allonfire/auth/features/next/constants/api";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
-import { useAOFForm } from "@allonfire/ui/lib/form";
-import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFSubmitButton } from "@allonfire/ui/features/form/components/aof-submit-button";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import {
+  formDataTo,
+  submitAOFForm,
+} from "@allonfire/ui/features/form/utils/form-submit";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { KeyRound, LoaderCircle, Mail, Nfc } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { type SubmitEvent, useActionState, useCallback } from "react";

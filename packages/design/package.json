@@ -10,7 +10,8 @@
     "./designs/japan/image-colors": "./src/designs/japan/image-colors.ts",
     "./designs/japan/image-font": "./src/designs/japan/image-font.ts",
     "./designs/japan/image-fonts": "./src/designs/japan/image-fonts.ts",
-    "./designs/japan/share-card-look": "./src/designs/japan/share-card-look.ts"
+    "./designs/japan/share-card-look": "./src/designs/japan/share-card-look.ts",
+    "./designs/japan/theme.css": "./src/designs/japan/theme.css"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

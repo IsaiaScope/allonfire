@@ -1,6 +1,6 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
-import { cn } from "@allonfire/ui/lib/utils";
+import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconArrowBackUp } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";

@@ -1,7 +1,7 @@
 "use client";
 
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
 import { IconTrashX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { StationAlert } from "@/shared/components/station-alert";

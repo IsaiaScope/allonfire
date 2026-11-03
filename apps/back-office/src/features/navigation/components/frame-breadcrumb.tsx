@@ -7,7 +7,7 @@ import {
   AOFBreadcrumbList,
   AOFBreadcrumbPage,
   AOFBreadcrumbSeparator,
-} from "@allonfire/ui/components/aof-breadcrumb";
+} from "@allonfire/ui/features/navigation/components/aof-breadcrumb";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";

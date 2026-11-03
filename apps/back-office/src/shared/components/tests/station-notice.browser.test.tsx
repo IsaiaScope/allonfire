@@ -1,10 +1,11 @@
 // @module-tag integration
-import { render } from "vitest-browser-react";
-import { seconds } from "@/shared/tests/computed-style";
+
+import { seconds } from "@allonfire/ui/shared/tests/computed-style";
 import {
-  CAN_REDUCE_MOTION,
+  CAN_EMULATE_MEDIA,
   withReducedMotion,
-} from "@/shared/tests/reduce-motion";
+} from "@allonfire/ui/shared/tests/emulated-media";
+import { render } from "vitest-browser-react";
 import { StationNotice } from "../station-notice";
 
 const SIGNAGE = { CODE: "404", KANA: "回送", WALL_KANJI: "迷子" };
@@ -79,7 +80,7 @@ describe("StationNotice", () => {
   });
 
   // Only Chromium can be asked for less motion.
-  describe.runIf(CAN_REDUCE_MOTION)("asked for less motion", () => {
+  describe.runIf(CAN_EMULATE_MEDIA)("asked for less motion", () => {
     it("stands still", async () => {
       // Read while it holds: a computed style is live.
       const names = await withReducedMotion(async () => {

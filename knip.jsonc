@@ -101,7 +101,7 @@
     // by the Apps' playwright.config.ts, which production mode leaves out.
     "packages/config/tests/e2e/playwright.config.ts": ["exports"],
     // Kept for the Images page.
-    "packages/ui/src/components/aof-image.tsx": ["exports", "types"],
+    "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
     // Read by the Apps' next.config.ts, which production mode leaves out.
     "packages/auth/src/features/next/utils/with-provider-pictures.ts": [
       "exports"
@@ -127,6 +127,8 @@
     "packages/storage/src/features/image/hono/tests/stub-image-deps.ts": [
       "exports"
     ],
+    "packages/ui/src/shared/tests/computed-style.ts": ["exports"],
+    "packages/ui/src/shared/tests/emulated-media.ts": ["exports"],
     // watchRedis is unit-tested; awaitReady is the wait apps/api/README.md
     // asks of any command issued at startup, and only integration tests
     // issue one yet.
@@ -274,7 +276,7 @@
     "packages/ui": {
       "entry": ["src/**/*.test-d.{ts,tsx}"],
       "project": [
-        "**/*.{js,ts,tsx}!",
+        "**/*.{js,ts,tsx,css}!",
         "!**/tests/**!",
         "!**/*.test*.{ts,tsx}!",
         "!vitest.*.ts!"

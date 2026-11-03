@@ -3,7 +3,7 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   type AOFAvatarChange,
   avatarChangeOf,
-} from "@allonfire/ui/lib/avatar-change";
+} from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
 import { z } from "zod";
 import type { ApiClient } from "@/features/api/utils/api";
 import { USERS } from "../constants/users";

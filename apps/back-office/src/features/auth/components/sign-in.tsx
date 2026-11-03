@@ -2,9 +2,9 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
   AOFControlBar,
   AOFControlBarSeparator,
-} from "@allonfire/ui/components/aof-control-bar";
-import { AOFPage } from "@allonfire/ui/components/aof-page";
-import { AOFThemeToggle } from "@allonfire/ui/components/aof-theme-toggle";
+} from "@allonfire/ui/features/data-table/components/aof-control-bar";
+import { AOFPage } from "@allonfire/ui/features/navigation/components/aof-page";
+import { AOFThemeToggle } from "@allonfire/ui/features/theme/components/aof-theme-toggle";
 import { useTranslations } from "next-intl";
 import { BrushKanji } from "@/shared/components/brush-kanji";
 import { Hanko } from "@/shared/components/hanko";

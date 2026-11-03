@@ -1,7 +1,7 @@
 // @module-tag integration
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { App } from "@allonfire/database/enums";
-import { AOFSidebarProvider } from "@allonfire/ui/components/aof-sidebar";
+import { AOFSidebarProvider } from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
@@ -11,7 +11,7 @@ import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type SwitcherApp, switcherApps } from "../../utils/switcher-apps";
 import { AppSwitcherMenu } from "../app-switcher-menu";
 
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

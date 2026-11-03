@@ -1,9 +1,10 @@
 // @module-tag integration
-import { render } from "vitest-browser-react";
+
 import {
-  CAN_REDUCE_MOTION,
+  CAN_EMULATE_MEDIA,
   withReducedMotion,
-} from "@/shared/tests/reduce-motion";
+} from "@allonfire/ui/shared/tests/emulated-media";
+import { render } from "vitest-browser-react";
 import { EkiStamp } from "../eki-stamp";
 
 /** The Japan Design's stamp landing (`theme.css`, `--animate-stamp`). */
@@ -31,7 +32,7 @@ describe("EkiStamp", () => {
   });
 
   // Only Chromium can be asked for less motion.
-  describe.runIf(CAN_REDUCE_MOTION)("asked for less motion", () => {
+  describe.runIf(CAN_EMULATE_MEDIA)("asked for less motion", () => {
     it("is already there", async () => {
       const { animationName } = await withReducedMotion(ring);
       expect(animationName).toBe("none");

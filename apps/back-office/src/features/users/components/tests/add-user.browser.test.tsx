@@ -6,8 +6,8 @@ import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import { Activity, type ReactNode } from "react";
 import { page } from "vitest/browser";
@@ -29,12 +29,14 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/user-form-mocks")
 );
-vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
-  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
+  ...(await original<
+    typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
+  >()),
   aofToast: vi.fn(),
 }));
 vi.mock(
-  "@allonfire/ui/components/aof-image",
+  "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/user-form-mocks")
 );
 // jscpd:ignore-end

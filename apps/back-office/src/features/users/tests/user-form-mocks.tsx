@@ -15,5 +15,5 @@ export const replace = vi.fn();
 /** The App's router (`@/features/i18n/navigation`): `replace` recorded. */
 export const useRouter = () => ({ replace });
 
-/** ui's `AOFImage` (`@allonfire/ui/components/aof-image`): what it was handed. */
+/** ui's `AOFImage` (`@allonfire/ui/shared/components/aof-image`): what it was handed. */
 export const AOFImage = ImageMock;

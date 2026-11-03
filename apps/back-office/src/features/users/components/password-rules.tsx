@@ -2,8 +2,8 @@
 
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectKeys } from "@allonfire/core/shared/utils/object";
-import { AOFCheckbox } from "@allonfire/ui/components/aof-checkbox";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFCheckbox } from "@allonfire/ui/shared/components/aof-checkbox";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 import type { passwordChecks } from "../utils/user-form-schema";

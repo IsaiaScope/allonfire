@@ -3,9 +3,12 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import type { App } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
-import { AOFReadOnlyField } from "@allonfire/ui/components/aof-read-only-field";
-import { useAOFForm } from "@allonfire/ui/lib/form";
-import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
+import { AOFReadOnlyField } from "@allonfire/ui/features/form/components/aof-read-only-field";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import {
+  formDataTo,
+  submitAOFForm,
+} from "@allonfire/ui/features/form/utils/form-submit";
 import { IconDeviceFloppy, IconMail, IconUserEdit } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { type SubmitEvent, useActionState, useCallback } from "react";

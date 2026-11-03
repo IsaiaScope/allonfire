@@ -1,5 +1,5 @@
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
-import { cn } from "@allonfire/ui/lib/utils";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 
 export type StationNumberProps = ComponentPropsWithoutChildren<"span"> & {
   /** The Section's number on the line (`stationNumber`). */

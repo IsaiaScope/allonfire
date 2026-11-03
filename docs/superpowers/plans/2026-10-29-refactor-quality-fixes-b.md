@@ -4,7 +4,7 @@
 
 **Goal:** Runs after Plan A. Fix, or accept with a reason, every layer-3 finding in the scan report. Settle the two outdated rules as the owner decided, and write the remaining "Rules to write" into their guides.
 
-**Status:** implemented (uncommitted) @ 2026-11-03T11:10:27Z
+**Status:** implemented @ 2026-11-03T11:10:27Z, committed in 8a4307f
 
 **Architecture:**
 - **The report is the spec.** After Plan A, the scan report's tables carry `layer` and `status` columns. This plan works every row with `layer 3` and `open (Plan B)`.
@@ -299,7 +299,7 @@ config-design-root-8 is already fixed. The production launch (ccf03a9) renamed `
 ## Implementation Log
 - Implemented: 2026-11-03T11:10:27Z
 - Workspace: current-branch — feat/instant-users-navigation
-- Committed: no — awaiting user review
+- Committed: yes — 8a4307f (owner asked to commit at the end of Plan B)
 - Tasks 5 to 12 and 12b ran as area agents in the shared tree; the lead recorded each row's status in `.superpowers/quality-scan/plan-a.json` and rebuilt the report (0 open).
 - Added during the run: rule 13 swept in the Back Office's tests too (guards moved to computed-style browser tests); a second HTTP-literal pass; core's `aofTranslators` and config's `asset-url.d.ts` (owner).
 - Final gate: lint, check-types, test, test:browser, test:e2e (322 passed), knip, knip:production, dupes, all exit 0.

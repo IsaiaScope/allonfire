@@ -1,5 +1,5 @@
 import type { SharedTranslations } from "@allonfire/core/features/next/i18n/translations/shared-translations";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { IconRefresh } from "@tabler/icons-react";
 import type { createTranslator } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";

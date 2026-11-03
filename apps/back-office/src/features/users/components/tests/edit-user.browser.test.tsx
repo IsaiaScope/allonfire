@@ -7,7 +7,7 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translat
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
@@ -28,12 +28,14 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/user-form-mocks")
 );
-vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
-  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
+  ...(await original<
+    typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
+  >()),
   aofToast: vi.fn(),
 }));
 vi.mock(
-  "@allonfire/ui/components/aof-image",
+  "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/user-form-mocks")
 );
 // jscpd:ignore-end

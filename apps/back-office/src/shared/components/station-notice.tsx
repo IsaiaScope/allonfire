@@ -1,6 +1,9 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { AOFPage, type AOFPageProps } from "@allonfire/ui/components/aof-page";
-import { cn } from "@allonfire/ui/lib/utils";
+import {
+  AOFPage,
+  type AOFPageProps,
+} from "@allonfire/ui/features/navigation/components/aof-page";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentType, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";

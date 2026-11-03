@@ -2,7 +2,7 @@
 
 Every form with fields.
 
-## Forms (`@allonfire/ui/lib/form`)
+## Forms (`@allonfire/ui/features/form/utils/form`)
 
 Every form with fields is an AOF form (ADR 0017): `useAOFForm` manages its
 fields, never bare `useForm`, and never `@tanstack/react-form` outside
@@ -15,7 +15,7 @@ page stays on the server. The server action keeps the last word:
   submit runs the `onChange` validators too.
 - `<form action={action} noValidate onSubmit={submit}>`, where `submit` is
   `(event) => submitAOFForm(form, event, formDataTo(action))` from
-  `@allonfire/ui/lib/form-submit`: it stops the browser's post; when the
+  `@allonfire/ui/features/form/utils/form-submit`: it stops the browser's post; when the
   checks pass it sends the form's own controls to the action in a transition,
   the same data a post before hydration sends; when they block it focuses the
   first invalid field; a validator that throws is reported. Before hydration
@@ -41,7 +41,7 @@ page stays on the server. The server action keeps the last word:
 - The zod schema with translated messages is built in the form; it repeats
   the action's rules, and the action's copy is the one that counts.
 - Fields two forms share are one field group, `withAOFFieldGroup` from
-  `@allonfire/ui/lib/form` (TanStack's `withFieldGroup`), never copied: each
+  `@allonfire/ui/features/form/utils/form` (TanStack's `withFieldGroup`), never copied: each
   form hands it `form` and the names it holds them under (`fields`), whatever
   else it holds; their shared copy has its own namespace (`Users.form`). A
   group's `render` is a plain function and calls no hooks. See

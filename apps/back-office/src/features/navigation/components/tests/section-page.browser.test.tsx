@@ -1,9 +1,9 @@
 // @module-tag integration
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
+import { computedValue } from "@allonfire/ui/shared/tests/computed-style";
 import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { computedValue } from "@/shared/tests/computed-style";
 import { SectionPage, type SectionPageProps } from "../section-page";
 
 /** Wider than a form's cap, as the page area beside the sidebar is. */

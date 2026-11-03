@@ -1,7 +1,7 @@
 // @module-tag integration
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
-import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
+import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";

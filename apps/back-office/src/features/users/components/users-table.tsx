@@ -8,15 +8,15 @@ import {
   AOFDataTable,
   type AOFRow,
   useAOFTable,
-} from "@allonfire/ui/components/aof-data-table";
+} from "@allonfire/ui/features/data-table/components/aof-data-table";
 import {
   type AOFDataTableLabels,
   AOFDataTablePagination,
-} from "@allonfire/ui/components/aof-data-table-pagination";
+} from "@allonfire/ui/features/data-table/components/aof-data-table-pagination";
 import {
   AOFRowCheckbox,
   aofSelectColumn,
-} from "@allonfire/ui/components/aof-data-table-select";
+} from "@allonfire/ui/features/data-table/components/aof-data-table-select";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";

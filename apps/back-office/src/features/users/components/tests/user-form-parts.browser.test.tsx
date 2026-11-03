@@ -4,7 +4,7 @@ import type { UserBody } from "@allonfire/auth/features/users/hono/constants/sch
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { App } from "@allonfire/database/enums";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { page } from "vitest/browser";
@@ -27,12 +27,14 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/user-form-mocks")
 );
-vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
-  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
+  ...(await original<
+    typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
+  >()),
   aofToast: vi.fn(),
 }));
 vi.mock(
-  "@allonfire/ui/components/aof-image",
+  "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/user-form-mocks")
 );
 // jscpd:ignore-end

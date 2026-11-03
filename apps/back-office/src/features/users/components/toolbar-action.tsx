@@ -1,5 +1,5 @@
-import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
-import { cn } from "@allonfire/ui/lib/utils";
+import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import type { ReactNode } from "react";
 import {

@@ -1,4 +1,3 @@
-import { AOFSeparator } from "@allonfire/ui/components/aof-separator";
 import {
   AOFSidebar,
   AOFSidebarContent,
@@ -11,7 +10,8 @@ import {
   AOFSidebarProvider,
   AOFSidebarRail,
   AOFSidebarTrigger,
-} from "@allonfire/ui/components/aof-sidebar";
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
+import { AOFSeparator } from "@allonfire/ui/shared/components/aof-separator";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
 import { Torii } from "@/shared/components/torii";

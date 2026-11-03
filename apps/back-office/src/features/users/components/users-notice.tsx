@@ -1,6 +1,6 @@
 "use client";
 
-import { AOFButton } from "@allonfire/ui/components/aof-button";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import {
   IconArrowBackUp,
   IconRefresh,

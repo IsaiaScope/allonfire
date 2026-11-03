@@ -29,7 +29,7 @@ vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
 vi.mock("@/features/i18n/navigation", async () => ({
   Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

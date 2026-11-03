@@ -3,7 +3,7 @@ import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { firstLoad } from "@allonfire/core/features/next/pwa/utils/install-hint-state";
-import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
+import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import { nextFrames, toastWouldHaveArrived } from "@/shared/tests/toast-timing";

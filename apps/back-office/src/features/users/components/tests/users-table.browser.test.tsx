@@ -14,8 +14,8 @@ import { aofErrorCaches } from "@allonfire/core/features/next/query/utils/aof-qu
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
-import { aofNotifyError } from "@allonfire/ui/components/aof-query-provider";
-import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
+import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
+import { aofNotifyError } from "@allonfire/ui/features/query/components/aof-query-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { delay, HttpResponse, http } from "msw";
 import { NextIntlClientProvider } from "next-intl";
@@ -86,7 +86,7 @@ const language = (messages: typeof EN) =>
   messages === EN ? I18N.DEFAULT_LANGUAGE : languageSchema.enum.it;
 
 // An App's mark (a User's card) only needs an element there.
-vi.mock("@allonfire/ui/components/aof-image", async () => ({
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 

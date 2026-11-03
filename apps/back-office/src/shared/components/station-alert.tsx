@@ -3,9 +3,9 @@
 import {
   AOFAlertDialog,
   type AOFAlertDialogProps,
-} from "@allonfire/ui/components/aof-alert-dialog";
-import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/shared/components/aof-alert-dialog";
+import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconArrowBackUp } from "@tabler/icons-react";
 import type { ReactNode } from "react";
 import { ACTION_KANJI } from "../constants/action-kanji";

@@ -1,5 +1,5 @@
 import { aofErrorMeta } from "@allonfire/core/features/next/query/utils/aof-query-errors";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";

@@ -19,11 +19,14 @@ env:
 jobs:
   # Turbo diffs against the PR's base branch and adds every dependent, so a
   # shared package lists each App that reads it; the changed files add what
-  # its graph does not see (root files, Markdown-only changes).
+  # its graph does not see (root files, Markdown-only changes). `browser` says
+  # whether an affected package has browser tests of its own (ui's), so they
+  # run whenever it changes, whatever App reads it.
   changes:
     runs-on: ubuntu-24.04
     outputs:
       apps: ${{ steps.affected.outputs.apps }}
+      browser: ${{ steps.browser.outputs.browser }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -34,6 +37,9 @@ jobs:
       - name: Affected Apps and Deploy units
         id: affected
         run: pnpm -s ci:affected "$TURBO_SCM_BASE" >> "$GITHUB_OUTPUT"
+      - name: Affected browser tests
+        id: browser
+        run: echo "browser=$(pnpm -s turbo run test:browser --affected --dry=json | jq '[.tasks[] | select(.task == "test:browser" and .command != "<NONEXISTENT>")] | length > 0')" >> "$GITHUB_OUTPUT"
 
   lint-types:
     runs-on: ubuntu-24.04
@@ -120,13 +126,14 @@ jobs:
       - name: Changelog matches the Prisma schema
         run: DATABASE_URL="$(pnpm -s -C packages/database test-database template)" pnpm db:drift
 
-  # Browser and end-to-end tests for the affected Apps, on the stack Local
+  # Browser tests for every affected package that has them (the Apps' and
+  # ui's), and end-to-end tests for the affected Apps, on the stack Local
   # runs: the database, Redis and Storage from the dev compose file, the API and the
   # App as production builds.
   e2e:
     runs-on: ubuntu-24.04
     needs: changes
-    if: needs.changes.outputs.apps != '[]'
+    if: needs.changes.outputs.apps != '[]' || needs.changes.outputs.browser == 'true'
     # Every value here exists only for this run's throwaway stack.
     env:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire

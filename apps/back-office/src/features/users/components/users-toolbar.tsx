@@ -3,10 +3,10 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
-import { AOFInput } from "@allonfire/ui/components/aof-input";
-import { AOFInputClear } from "@allonfire/ui/components/aof-input-clear";
-import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFInput } from "@allonfire/ui/features/form/components/aof-input";
+import { AOFInputClear } from "@allonfire/ui/shared/components/aof-input-clear";
+import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconSearch, IconUserPlus } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";

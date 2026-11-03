@@ -5,7 +5,7 @@ import { AOFThemeProvider } from "@allonfire/core/features/next/providers/compon
 import { AOFPwa } from "@allonfire/core/features/next/pwa/components/aof-pwa";
 import { ENV } from "@allonfire/core/shared/constants/env";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
-import { AOFQueryProvider } from "@allonfire/ui/components/aof-query-provider";
+import { AOFQueryProvider } from "@allonfire/ui/features/query/components/aof-query-provider";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";

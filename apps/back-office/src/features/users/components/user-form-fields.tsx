@@ -5,9 +5,9 @@ import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
 import type {
   AOFAvatarFieldLabels,
   AOFAvatarFieldProps,
-} from "@allonfire/ui/components/aof-avatar-field";
-import { withAOFFieldGroup } from "@allonfire/ui/lib/form";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/features/form/avatar-field/components/aof-avatar-field";
+import { withAOFFieldGroup } from "@allonfire/ui/features/form/utils/form";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconKey, IconKeyFilled, IconUser } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
