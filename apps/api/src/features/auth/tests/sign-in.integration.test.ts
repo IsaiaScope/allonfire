@@ -50,17 +50,17 @@ const signUp = (email: string, appHeader: Record<string, string>) =>
   app.request(`${API.PATH.AUTH}${AUTH.PATH.SIGN_UP_EMAIL}`, {
     body: stringifyJson({ email, name: "x", password: FIXTURE.PASSWORD }),
     headers: {
-      "content-type": HTTP.CONTENT_TYPE.JSON,
+      [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
       origin: ORIGIN,
       ...appHeader,
     },
-    method: "POST",
+    method: HTTP.METHOD.POST,
   });
 
 const joinApp = (headers: Record<string, string>) =>
   app.request(`${API.PATH.AUTH}${AUTH.PATH.JOIN_APP}`, {
     headers: { origin: ORIGIN, [AUTH.HEADER.APP]: App.BACK_OFFICE, ...headers },
-    method: "POST",
+    method: HTTP.METHOD.POST,
   });
 
 describe("sign-in against Postgres", () => {
@@ -75,15 +75,15 @@ describe("sign-in against Postgres", () => {
   it("refuses a Laura Viewer at requireApp(BACK_OFFICE)", async () => {
     const cookie = await cookieFor(app, LAURA_VIEWER);
     const res = await app.request(BACK_OFFICE_ROUTE, { headers: { cookie } });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
   });
 
   it.each([
-    { status: 200, user: FIXTURE.USER.BACK_OFFICE.ADMIN },
-    { status: 403, user: FIXTURE.USER.BACK_OFFICE.USER },
-    { status: 403, user: FIXTURE.USER.BACK_OFFICE.VIEWER },
-    { status: 403, user: FIXTURE.USER.NO_MEMBERSHIP },
-    { status: 403, user: LAURA_VIEWER },
+    { status: HTTP.STATUS.OK, user: FIXTURE.USER.BACK_OFFICE.ADMIN },
+    { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.BACK_OFFICE.USER },
+    { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.BACK_OFFICE.VIEWER },
+    { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.NO_MEMBERSHIP },
+    { status: HTTP.STATUS.FORBIDDEN, user: LAURA_VIEWER },
   ])(
     "signs $user.email into the Back Office: $status",
     async ({ status, user }) => {
@@ -104,7 +104,7 @@ describe("sign-in against Postgres", () => {
     const wrong = await signIn(app, FIXTURE.USER.BACK_OFFICE.ADMIN, {
       password: "wrong-password-1",
     });
-    expect(wrong.status).toBe(401);
+    expect(wrong.status).toBe(HTTP.STATUS.UNAUTHORIZED);
     expect((await signIn(app, { email: "nobody@allonfire.test" })).status).toBe(
       401
     );
@@ -117,7 +117,7 @@ describe("sign-in against Postgres", () => {
     );
     await app.request(`${API.PATH.AUTH}${AUTH.PATH.SIGN_OUT}`, {
       headers: { cookie, origin: ORIGIN },
-      method: "POST",
+      method: HTTP.METHOD.POST,
     });
     expect(await getSession(app, tokenOnly(cookie))).toBeNull();
   });
@@ -132,14 +132,14 @@ describe("Registration on the real ACCESS.APP_SETTINGS", () => {
   ])("refuses a User for %s with REGISTRATION_CLOSED", async (name, header) => {
     const email = `closed-${name.replace(" ", "-").toLowerCase()}@registration.allonfire.test`;
     const res = await signUp(email, header);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.REGISTRATION_CLOSED);
     expect(await prisma.user.count({ where: { email } })).toBe(0);
   });
 
   it("refuses joining a closed App and adds no Membership", async () => {
     const res = await joinApp({ cookie: await cookieFor(app, LAURA_VIEWER) });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.REGISTRATION_CLOSED);
     expect(
       await prisma.membership.count({
@@ -149,6 +149,6 @@ describe("Registration on the real ACCESS.APP_SETTINGS", () => {
   });
 
   it("refuses a signed-out visitor", async () => {
-    expect((await joinApp({})).status).toBe(401);
+    expect((await joinApp({})).status).toBe(HTTP.STATUS.UNAUTHORIZED);
   });
 });

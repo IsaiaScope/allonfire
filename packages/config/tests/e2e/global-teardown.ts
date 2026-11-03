@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { LOCAL } from "../../local/addresses";
-import { E2E } from "./run";
+import { E2E, e2eCliArgs } from "./run";
 
 const run = promisify(execFile);
 
@@ -16,8 +16,8 @@ export default async function teardown(): Promise<void> {
     return;
   }
   const results = await Promise.allSettled(
-    [E2E.CLI.DATABASE, E2E.CLI.BUCKET].map(({ dir, script }) =>
-      run("pnpm", ["-s", "-C", dir, script, "drop", E2E.LABEL, stamp], {
+    [E2E.CLI.DATABASE, E2E.CLI.BUCKET].map((cli) =>
+      run("pnpm", e2eCliArgs(cli, "drop", stamp), {
         env: { ...process.env, STORAGE_ENDPOINT: LOCAL.URL.STORAGE },
       })
     )

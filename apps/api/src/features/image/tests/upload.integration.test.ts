@@ -7,8 +7,9 @@ import { App } from "@allonfire/database/enums";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { problemOf } from "../../../shared/tests/problem-of";
 import { cookieFor, type TestApp } from "../../../shared/tests/sign-in";
-import { problemOf } from "../../errors/tests/problem-of";
 import {
   fetchObject,
   fixtureFile,
@@ -22,11 +23,11 @@ import {
 
 /** One source file per format `prepareImage` accepts. */
 const ACCEPTED = [
-  "photo.jpg",
-  "graphic.png",
-  "photo.webp",
-  "photo.avif",
-  "colors-no-alpha.heic",
+  IMAGE_FIXTURE.FILE.PHOTO,
+  IMAGE_FIXTURE.FILE.PNG,
+  IMAGE_FIXTURE.FILE.PHOTO_WEBP,
+  IMAGE_FIXTURE.FILE.PHOTO_AVIF,
+  IMAGE_FIXTURE.FILE.HEIC,
 ];
 const IN_BACK_OFFICE = [App.BACK_OFFICE];
 
@@ -65,14 +66,16 @@ describe("uploading Images on the real stack", () => {
     expect(key.endsWith(IMAGE.FORMAT.EXTENSION)).toBe(true);
     expect(image?.width).toBeGreaterThan(0);
     const object = await fetchObject(key);
-    expect(object.headers.get("content-type")).toBe(IMAGE.FORMAT.CONTENT_TYPE);
+    expect(object.headers.get(HTTP.HEADER.CONTENT_TYPE)).toBe(
+      IMAGE.FORMAT.CONTENT_TYPE
+    );
     expect(stored).toEqual([key]);
   });
 
   it.each([
     {
       code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
-      file: () => fixtureFile("animation.gif"),
+      file: () => fixtureFile(IMAGE_FIXTURE.FILE.GIF),
       what: "a GIF",
     },
     {
@@ -99,13 +102,13 @@ describe("uploading Images on the real stack", () => {
   it.each([
     {
       into: [App.BACK_OFFICE],
-      status: 403,
+      status: HTTP.STATUS.FORBIDDEN,
       user: FIXTURE.USER.BACK_OFFICE.USER,
     },
-    { into: [App.BACK_OFFICE], status: 401, user: null },
+    { into: [App.BACK_OFFICE], status: HTTP.STATUS.UNAUTHORIZED, user: null },
     {
       into: [App.BACK_OFFICE, App.LAURA],
-      status: 403,
+      status: HTTP.STATUS.FORBIDDEN,
       user: FIXTURE.USER.BACK_OFFICE.ADMIN,
     },
   ])(

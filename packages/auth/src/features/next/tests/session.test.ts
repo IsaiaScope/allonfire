@@ -4,11 +4,12 @@ import { App, Role } from "@allonfire/database/enums";
 import { cacheLife } from "next/cache";
 import { AUTH } from "../../../shared/constants/auth";
 import { getSession, requireAppSession } from "../utils/session";
+import { apiSends } from "./session-request-mocks";
 
 vi.mock("next/headers", () => import("./session-request-mocks"));
 vi.mock("next-intl/server", () => ({ getLocale: async () => "it" }));
 vi.mock(
-  "@allonfire/core/features/next/api/forwarded-for",
+  "@allonfire/core/features/next/api/visitor-headers",
   () => import("./session-request-mocks")
 );
 vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
@@ -17,20 +18,6 @@ vi.mock("next/navigation", () => ({
     throw new Error(`redirect ${url}`);
   },
 }));
-
-/** The API answers `get-session` with a User holding these Memberships. */
-const apiSends = (memberships: { app: App; role: Role }[] | null) =>
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () =>
-      Response.json(
-        memberships && {
-          session: { id: "session-1" },
-          user: { email: "someone@example.com", memberships },
-        }
-      )
-    )
-  );
 
 describe("requireAppSession", () => {
   it("hands the page the Session of someone this App lets in", async () => {

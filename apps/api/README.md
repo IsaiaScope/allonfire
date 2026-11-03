@@ -171,7 +171,8 @@ Where each signal comes from:
   Its two one-off startup spans are ignored.
 - **Logs**: a pino `mixin` stamps `trace_id`/`span_id` on lines logged inside a
   request, and `pino-opentelemetry-transport` ships every line to OpenObserve.
-  Request lines record only the headers in `API.LOGGED_REQUEST_HEADERS`.
+  Request lines record only the headers in `REQUEST_LOG.HEADERS`
+  (`features/logger/constants/request-log.ts`).
 - **Redis**: not traced. ioredis can only be traced by patching it at load,
   which needs an ESM loader hook; see ADR 0006.
 - **OpenTelemetry's own failures** (collector down, wrong password) appear in

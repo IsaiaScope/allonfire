@@ -1,14 +1,39 @@
 // @module-tag unit
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { REPO } from "@allonfire/config/local/repo";
 import { useQueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { ENV } from "../../../../shared/constants/env";
 import { HTTP } from "../../../http/constants/http";
-import { AOFNuqsAdapter } from "../aof-nuqs-adapter";
-import { AOFQueryClientProvider } from "../aof-query-client-provider";
-import { AOFReactQueryDevtools } from "../aof-react-query-devtools";
-import { AOFThemeProvider } from "../aof-theme-provider";
+import { AOFNuqsAdapter } from "../components/aof-nuqs-adapter";
+import { AOFQueryClientProvider } from "../components/aof-query-client-provider";
+import { AOFReactQueryDevtools } from "../components/aof-react-query-devtools";
+import { AOFThemeProvider } from "../components/aof-theme-provider";
+
+/** Where the Devtools tell an App what to pass as `enabled`. */
+const DEVTOOLS_DOCS = [
+  new URL("../components/aof-react-query-devtools.tsx", import.meta.url),
+  join(REPO.PACKAGES, "core", "README.md"),
+];
+
+/** The constant a doc compares `env.NODE_ENV` with. */
+const NODE_ENV_COMPARED = /env\.NODE_ENV === ([\w.]+)/g;
+
+/** The value a dotted name such as `ENV.NODE.DEVELOPMENT` reads from core's constants. */
+const lookup = (name: string): unknown =>
+  name
+    .split(".")
+    .reduce<unknown>(
+      (owner, key) =>
+        typeof owner === "object" && owner !== null && key in owner
+          ? Reflect.get(owner, key)
+          : undefined,
+      { ENV }
+    );
 
 const StaleTime = () => (
   <span>{String(useQueryClient().getDefaultOptions().queries?.staleTime)}</span>
@@ -44,6 +69,19 @@ describe("AOFReactQueryDevtools", () => {
   it("renders the lazy Devtools when the App turns it on", () => {
     expect(AOFReactQueryDevtools({ enabled: true })).not.toBeNull();
   });
+
+  it.each(DEVTOOLS_DOCS)(
+    "tells the App to compare NODE_ENV with a constant core has (%s)",
+    async (doc) => {
+      const named = [
+        ...(await readFile(doc, "utf8")).matchAll(NODE_ENV_COMPARED),
+      ];
+      expect(named).not.toHaveLength(0);
+      for (const [, name = ""] of named) {
+        expect(lookup(name), name).toBe(ENV.NODE.DEVELOPMENT);
+      }
+    }
+  );
 });
 
 describe("AOFThemeProvider", () => {

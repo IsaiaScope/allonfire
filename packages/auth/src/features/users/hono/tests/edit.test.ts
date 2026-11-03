@@ -1,41 +1,44 @@
 // @module-tag unit
+
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, Role } from "@allonfire/database/enums";
 import type {
   UserChange,
   UserRecord,
 } from "@allonfire/database/features/auth/user.service";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import type { z } from "zod";
-import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { errorOf, json } from "../../../../shared/tests/test-host";
 import { USER } from "../../constants/users";
 import type { userUpdateRequestSchema } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
-import { stubUserDeps, userHost } from "./stub-user-deps";
+import {
+  BACK_OFFICE_ADMIN as ADMIN,
+  stubUserDeps,
+  userHost,
+  userRow,
+} from "./stub-user-deps";
 
-const SELF_ID = "user-1";
+const SELF_ID = ADMIN.user.id;
 const OTHER_ID = "user-2";
 const ADMIN_HERE = { app: App.BACK_OFFICE, role: Role.ADMIN };
-const ADMIN = sessionFor({ id: SELF_ID, memberships: [ADMIN_HERE] });
-const PASSWORD = "A-long-password-1";
 const STORED = "avatar-user-2.avif";
-/** The Version every stored row answers, and so every edit form carries. */
-const VERSION = "version-1";
 /** The Version an edit leaves the User on. */
 const EDITED_VERSION = "version-2";
 
-const rowFor = (id: string, memberships = [ADMIN_HERE]): UserRecord => ({
-  createdAt: new Date("2026-10-01T10:00:00.000Z"),
-  email: `${id}@edit.test`,
-  id,
-  image: STORED,
-  imageBlurDataUrl: null,
-  memberships,
-  name: "Edited",
-  version: VERSION,
-});
+const rowFor = (id: string, memberships = [ADMIN_HERE]): UserRecord =>
+  userRow({
+    email: `${id}@edit.test`,
+    id,
+    image: STORED,
+    memberships,
+    name: "Edited",
+  });
+/** The Version every stored row answers, and so every edit form carries. */
+const VERSION = rowFor(OTHER_ID).version;
 
 type Update = {
   id: string;
@@ -76,7 +79,7 @@ const depsWith = ({
 };
 
 const pathOf = (id: string) =>
-  `${USER.PATH.BASE}${USER.PATH.ONE.replace(":id", id)}`;
+  `${USER.PATH.BASE}${fillPath(USER.PATH.ONE, { id })}`;
 
 const get = (host: ReturnType<typeof userHost>, id = OTHER_ID) =>
   host.request(pathOf(id));
@@ -117,7 +120,7 @@ describe("User module: GET one", () => {
     const res = await get(userHost(ADMIN, depsWith().deps));
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await res.json()).toMatchObject({
-      createdAt: "2026-10-01T10:00:00.000Z",
+      createdAt: rowFor(OTHER_ID).createdAt.toISOString(),
       id: OTHER_ID,
       image: `signed:${STORED}`,
     });
@@ -181,11 +184,11 @@ describe("User module: PATCH", () => {
   it("hashes a new password and keeps the caller's Session only when editing themselves", async () => {
     const { deps, updates } = depsWith();
     const host = userHost(ADMIN, deps);
-    await patch(host, { password: PASSWORD });
-    await patch(host, { password: PASSWORD }, SELF_ID);
+    await patch(host, { password: FIXTURE.PASSWORD });
+    await patch(host, { password: FIXTURE.PASSWORD }, SELF_ID);
     const [other, self] = updates;
     expect(other?.change.hashedPassword).toEqual(expect.any(String));
-    expect(other?.change.hashedPassword).not.toBe(PASSWORD);
+    expect(other?.change.hashedPassword).not.toBe(FIXTURE.PASSWORD);
     expect(other?.options?.keepSessionId).toBeUndefined();
     expect(self?.options?.keepSessionId).toBe(ADMIN.session.id);
   });

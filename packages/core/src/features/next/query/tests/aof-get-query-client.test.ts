@@ -1,7 +1,7 @@
 // @module-tag unit
 import { dehydrate } from "@tanstack/react-query";
 import { UNIT } from "../../../../shared/constants/units";
-import { AOFGetQueryClient } from "../aof-get-query-client";
+import { AOFGetQueryClient } from "../utils/aof-get-query-client";
 
 describe("AOFGetQueryClient on the server", () => {
   it("gives every call its own client", () => {

@@ -3,7 +3,7 @@
 import { objectValues } from "../../../../shared/utils/object";
 import { HTTP } from "../../../http/constants/http";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFLogoRoute, logoFile } from "../aof-logo-route";
+import { AOFLogoRoute, logoFile } from "../utils/aof-logo-route";
 
 const svgFor = vi.fn(
   (layout: string, scheme: string) => `<svg>${layout} ${scheme}</svg>`

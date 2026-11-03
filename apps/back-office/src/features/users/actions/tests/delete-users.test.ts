@@ -10,7 +10,7 @@ const IDS = ["user-2", "user-3"];
 vi.mock("@/features/api/utils/server-api", async () => ({
   serverApi: (await import("./fake-api")).fakeServerApi,
 }));
-vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 
 beforeEach(() => {
   resetFakeApi();

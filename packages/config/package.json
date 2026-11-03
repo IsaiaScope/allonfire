@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     "./local/addresses": "./local/addresses.ts",
+    "./local/repo": "./local/repo.ts",
     "./tests/browser": "./tests/browser/vitest.browser.config.ts",
+    "./tests/browser/asset-url": "./tests/browser/asset-url.d.ts",
     "./tests/browser/msw": "./tests/browser/msw.ts",
     "./tests/e2e": "./tests/e2e/playwright.config.ts",
     "./tests/e2e/run": "./tests/e2e/run.ts",
@@ -13,13 +15,16 @@
     "./tests/vitest": "./tests/vitest/vitest.config.ts"
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@types/node": "^24.19.2",
     "@vitest/browser-playwright": "^4.1.11",
     "msw": "^2.15.0",
     "playwright": "^1.63.0",
+    "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {

@@ -88,29 +88,6 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     environment: dev
-    services:
-      database:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: allonfire
-          POSTGRES_PASSWORD: allonfire
-          POSTGRES_DB: allonfire
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U allonfire"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
     env:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -133,9 +110,9 @@ jobs:
       - name: Generate Prisma client
         run: pnpm db:generate
       # Each package's integration tests make their own Test database and
-      # bucket; Storage comes from the dev compose file, as Local runs it.
-      - name: Start Storage
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait storage image-server cdn
+      # bucket; the stack comes from the dev compose file, as Local runs it.
+      - name: Start the database, Redis and Storage
+        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn
       - name: Run tests
         run: pnpm turbo run test --affected
       # The Test database template is the changelog plus the Fixtures: the

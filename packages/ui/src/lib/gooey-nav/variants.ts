@@ -33,7 +33,7 @@ export const optionVariants = cva(
     variants: {
       interactive: {
         false: "text-inherit",
-        true: "cursor-pointer text-(--gn-muted) transition-colors duration-200 [-webkit-tap-highlight-color:transparent] hover:text-(--gn-ink) focus-visible:outline-(--gn-ink) focus-visible:outline-2 focus-visible:outline-offset-2 group-data-active:text-(--gn-ink) group-not-data-ready/gooey:group-data-active:bg-(--gn-pill) group-not-data-ready/gooey:group-data-active:text-(--gn-active-ink)",
+        true: "text-(--gn-muted) transition-colors duration-200 [-webkit-tap-highlight-color:transparent] hover:text-(--gn-ink) focus-visible:outline-(--gn-ink) focus-visible:outline-2 focus-visible:outline-offset-2 group-data-active:text-(--gn-ink) group-not-data-ready/gooey:group-data-active:bg-(--gn-pill) group-not-data-ready/gooey:group-data-active:text-(--gn-active-ink)",
       },
     },
   }

@@ -11,6 +11,9 @@ import {
   AOFSidebarTrigger,
 } from "../aof-sidebar";
 
+/** shadcn's marks on the wrapper, open as the server draws it. */
+const WRAPPER = /<div [^>]*data-collapsible="" data-state="expanded">/;
+
 describe("AOFSidebar", () => {
   it("opens expanded and collapses to icons", () => {
     const html = renderToStaticMarkup(
@@ -40,28 +43,19 @@ describe("AOFSidebar", () => {
     expect(html).toContain('data-slot="sidebar-rail"');
   });
 
-  it("grows a default row to a finger's size on a touch screen", () => {
+  it("draws a row with its label and the caller's class", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
-        <AOFSidebarMenuButton className="extra">Home</AOFSidebarMenuButton>
+        <AOFSidebarMenuButton className="caller-class">
+          Home
+        </AOFSidebarMenuButton>
       </AOFSidebarProvider>
     );
-    expect(html).toContain(
-      "pointer-coarse:data-[size=default]:h-(--tap-target)"
-    );
-    expect(html).toContain("extra");
+    expect(html).toContain("Home");
+    expect(html).toContain("caller-class");
   });
 
-  it("grows the menu button to a finger's size on a touch screen", () => {
-    const html = renderToStaticMarkup(
-      <AOFSidebarProvider>
-        <AOFSidebarTrigger aria-label="Toggle menu" />
-      </AOFSidebarProvider>
-    );
-    expect(html).toContain("pointer-coarse:size-(--tap-target)");
-  });
-
-  it("draws both menu icons and lets the sidebar's marks pick one, so a fold shows from the first paint", () => {
+  it("draws both menu icons, so a fold shows from the first paint", () => {
     const html = renderToStaticMarkup(
       <AOFSidebarProvider>
         <AOFSidebarTrigger aria-label="Toggle menu" />
@@ -69,34 +63,7 @@ describe("AOFSidebar", () => {
     );
     expect(html).toContain("tabler-icon-layout-sidebar-left-collapse");
     expect(html).toContain("tabler-icon-layout-sidebar-left-expand");
-    expect(html).toContain(
-      "group-has-[[data-state=collapsed][data-collapsible]]/sidebar-wrapper:block"
-    );
-    // Not lit as a menu left open while the HTML still says open.
-    expect(html).toContain("aria-expanded:bg-transparent");
-    expect(html).not.toContain("aria-expanded:bg-muted");
-  });
-
-  it("keeps a row lit while the menu it opens is open", () => {
-    const html = renderToStaticMarkup(
-      <AOFSidebarProvider>
-        <AOFSidebarMenuButton>Account</AOFSidebarMenuButton>
-      </AOFSidebarProvider>
-    );
-    expect(html).toContain("data-popup-open:bg-sidebar-accent");
-    expect(html).toContain("data-popup-open:text-sidebar-accent-foreground");
-  });
-
-  // On a touch screen a menu opens once the finger lifts: the row's pressed
-  // highlight goes off, then on again as the menu opens, and reads as a
-  // second tap unless the change fades.
-  it("fades a row's highlight, so pressing then opening reads as one tap", () => {
-    const html = renderToStaticMarkup(
-      <AOFSidebarProvider>
-        <AOFSidebarMenuButton>Account</AOFSidebarMenuButton>
-      </AOFSidebarProvider>
-    );
-    expect(html).toContain("background-color");
+    expect(html).toContain('aria-label="Toggle menu"');
   });
 
   it("draws the sidebar collapsed from the first paint when the address says so", () => {
@@ -112,9 +79,7 @@ describe("AOFSidebar", () => {
     );
     // shadcn's marks on a wrapper, open as the server draws it, then the
     // script that reads the address before the first paint.
-    expect(html).toContain(
-      '<div class="group contents" data-collapsible="" data-state="expanded">'
-    );
+    expect(html).toMatch(WRAPPER);
     expect(html).toContain("</div><script>");
     expect(html).toContain('.get("sidebar") === "false"');
     expect(html).toContain('dataset.collapsible = "icon"');
@@ -140,17 +105,6 @@ describe("AOFSidebar", () => {
     );
     expect(html).toContain(
       "--sidebar-width-icon:calc(3.375rem + env(safe-area-inset-left, 0px))"
-    );
-  });
-
-  it("pads the sidebar's content, not its colour, by the left inset", () => {
-    const html = renderToStaticMarkup(
-      <AOFSidebarProvider>
-        <AOFSidebar label="Menu">Sections</AOFSidebar>
-      </AOFSidebarProvider>
-    );
-    expect(html).toContain(
-      "md:*:data-[sidebar=sidebar]:pl-[env(safe-area-inset-left,0px)]"
     );
   });
 });

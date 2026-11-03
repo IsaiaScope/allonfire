@@ -7,6 +7,7 @@ const stamp = () =>
     <EkiStamp code="404" kana="回送" station="Back Office" />
   );
 
+// How it is pressed in: its browser test.
 describe("EkiStamp", () => {
   it("prints the station, the code and the kana in the ring", () => {
     const html = stamp();
@@ -19,9 +20,5 @@ describe("EkiStamp", () => {
     const html = stamp();
     expect(html).toContain('aria-hidden="true"');
     expect(html).toContain('lang="ja"');
-  });
-
-  it("is pressed in once, and not for reduced motion", () => {
-    expect(stamp()).toContain("motion-safe:animate-stamp");
   });
 });

@@ -2,13 +2,11 @@
 
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
-import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { objectKeys, objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import {
   AOFDataTable,
   type AOFRow,
-  type AOFRowSelection,
   useAOFTable,
 } from "@allonfire/ui/components/aof-data-table";
 import {
@@ -21,10 +19,9 @@ import {
 } from "@allonfire/ui/components/aof-data-table-select";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useQueryStates } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { api } from "@/features/api/utils/api";
-import { usersParams } from "../constants/users-params";
+import { useUsersTableState } from "../hooks/use-users-table-state";
 import { userRow } from "../utils/user-row";
 import { useUsersBeingDeleted } from "../utils/users-mutations";
 import { usersQuery } from "../utils/users-queries";
@@ -107,12 +104,21 @@ const useSelectableRows = () => {
  * new page keeps the previous rows on screen until it arrives. Rows can be
  * selected for deletion, all but the signed-in User's own (`selfId`), and
  * fade while their deletion is on its way; the selection holds only for the
- * page in view and clears when the address changes.
+ * page in view and clears when the address changes (`useUsersTableState`).
  */
 export const UsersTable = ({ selfId }: { selfId: string }) => {
   const t = useTranslations("Users");
   const labels = useLabels();
-  const [params, setParams] = useQueryStates(usersParams);
+  const {
+    clearSearch,
+    clearSelection,
+    onPaginationChange,
+    pagination,
+    params,
+    selection,
+    setSelection,
+    toPage,
+  } = useUsersTableState();
   const list = useQuery({
     ...usersQuery(api, params),
     placeholderData: keepPreviousData,
@@ -124,45 +130,16 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
   );
   const { columns, userCard } = useSelectableRows();
 
-  // Selection belongs to the rows in view: a new page, page size or search
-  // starts it again.
-  const [selection, setSelection] = useState<AOFRowSelection>({});
-  const view = stringifyJson(params);
-  const [seenView, setSeenView] = useState(view);
-  if (view !== seenView) {
-    setSeenView(view);
-    setSelection({});
-  }
-  const clearSelection = useCallback(() => setSelection({}), []);
   const lastPage = list.data?.pageCount ?? USER.DEFAULT_PAGE;
-  const clearSearch = useCallback(
-    () => setParams({ [USER.PARAM.PAGE]: null, [USER.PARAM.SEARCH]: null }),
-    [setParams]
-  );
-  const toLastPage = useCallback(
-    () => setParams({ [USER.PARAM.PAGE]: lastPage }),
-    [lastPage, setParams]
-  );
+  const toLastPage = useCallback(() => toPage(lastPage), [lastPage, toPage]);
 
-  const pagination = {
-    pageIndex: params[USER.PARAM.PAGE] - 1,
-    pageSize: params[USER.PARAM.PER_PAGE],
-  };
   const table = useAOFTable({
     columns,
     data: list.data?.users ?? NO_USERS,
     enableRowSelection: (row) => row.original.id !== selfId,
     getRowId: ({ id }) => id,
     manualPagination: true,
-    onPaginationChange: (updater) => {
-      const next =
-        typeof updater === "function" ? updater(pagination) : updater;
-      setParams({
-        [USER.PARAM.PAGE]: next.pageIndex + 1,
-        [USER.PARAM.PER_PAGE]:
-          USER.PAGE_SIZES.find((size) => size === next.pageSize) ?? null,
-      });
-    },
+    onPaginationChange,
     onRowSelectionChange: setSelection,
     pageCount: list.data?.pageCount ?? -1,
     state: { pagination, rowSelection: selection },

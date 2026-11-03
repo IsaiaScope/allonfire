@@ -1,10 +1,11 @@
 // @module-tag unit
+
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: line checks over the text, no JSONC parser: config imports
 // nothing, core's helpers included.
@@ -101,7 +102,7 @@ const workspaceSources = () => {
       "apps/*/src/*",
       "packages/*/src/*",
     ],
-    { cwd: REPO, encoding: "utf8" }
+    { cwd: REPO.ROOT, encoding: "utf8" }
   )
     .split("\n")
     .filter(
@@ -109,7 +110,7 @@ const workspaceSources = () => {
         path !== "" &&
         !SIDECAR.test(path) &&
         !outside.some((dir) => path.startsWith(dir)) &&
-        existsSync(resolve(REPO, path))
+        existsSync(resolve(REPO.ROOT, path))
     );
 };
 

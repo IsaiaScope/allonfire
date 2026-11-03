@@ -1,9 +1,10 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: regexes over the exported text, like the other repo-wide checks:
 // this package does not depend on core, where the JSON helpers live.
@@ -47,7 +48,7 @@ const STORAGE_FIELD = /\$json\.body\??\.storage\??\.([a-z_]+)/g;
 const CHAT_ID_KEY = /^BACKUP_TELEGRAM_CHAT_ID=/m;
 
 const values = (text: string, pattern: RegExp) =>
-  [...text.matchAll(pattern)].map(([, value]) => value);
+  [...text.matchAll(pattern)].map(([, value = ""]) => value);
 
 it.each(Object.entries(WORKFLOWS))(
   "keeps only placeholders in %s",

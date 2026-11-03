@@ -51,7 +51,7 @@ services:
     image: ghcr.io/isaiascope/allonfire-api:prod
     pull_policy: always
     restart: "no"
-    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/cli.ts"]
+    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/utils/cli.ts"]
     depends_on:
       storage:
         condition: service_healthy
@@ -132,7 +132,7 @@ services:
       - API_AUTH_URL=http://api:3000/v1/auth
       - API_URL=http://api:3000
       - AUTH_APP=BACK_OFFICE
-      - BACK_OFFICE_URL=${BACK_OFFICE_URL}
+      - BACK_OFFICE_URL=${BACK_OFFICE_URL:?BACK_OFFICE_URL is required}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
       # Telemetry: required, as the API's.
       - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default

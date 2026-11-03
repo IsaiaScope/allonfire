@@ -1,9 +1,11 @@
 // @module-tag integration
+
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
 import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
@@ -12,6 +14,7 @@ import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type AddUserState, addUser } from "../../actions/add-user";
 import { USERS } from "../../constants/users";
@@ -41,12 +44,12 @@ const t = EN.Users.add;
 const FORM = EN.Users.form;
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: FORM.role.replace("{app}", APP_ENTRY[app].name),
+    name: enT("Users.form.role", { app: APP_ENTRY[app].name }),
   });
 const NEW = {
   email: "new@add-user.test",
   name: "New",
-  password: "A-long-password-1",
+  password: FIXTURE.PASSWORD,
 };
 
 const Providers = ({ children }: { children: ReactNode }) => (
@@ -142,7 +145,7 @@ describe("AddUser", () => {
     await renderForm();
     const password = page.getByLabelText(FORM.password, { exact: true });
     const length = rule(
-      FORM.rule.length.replace("{min}", String(USER.LIMIT.PASSWORD_MIN))
+      enT("Users.form.rule.length", { min: USER.LIMIT.PASSWORD_MIN })
     );
     await expect.element(length).not.toBeChecked();
     await password.fill("a");

@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { REPO } from "@allonfire/config/local/repo";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 
 /** Every Test database's name starts with it, the template's too. */
@@ -9,7 +10,7 @@ export const TEST_DATABASE = {
   /** Liquibase runs in Docker; the first build pulls the image. */
   DOCKER_TIMEOUT_MS: 5 * UNIT.MS_PER_MINUTE,
   /** The database package's folder: Liquibase runs there, the template's sources sit under it. */
-  PACKAGE_ROOT: resolve(import.meta.dirname, "../../../.."),
+  PACKAGE_ROOT: resolve(REPO.PACKAGES, "database"),
   PREFIX,
   TEMPLATE: {
     /** The template's name carries this much of the fingerprint. */

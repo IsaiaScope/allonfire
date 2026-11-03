@@ -1,5 +1,5 @@
-import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/local-env";
-import { fillLocalStorageEnv } from "./src/features/test-bucket/local-env";
+import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/utils/local-env";
+import { fillLocalStorageEnv } from "./src/features/test-bucket/utils/local-env";
 
 // `@allonfire/database` validates its env at import; the Prisma client never
 // connects unless a query runs, so no test needs Postgres up.

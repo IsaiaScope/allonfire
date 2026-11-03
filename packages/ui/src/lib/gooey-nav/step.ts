@@ -1,5 +1,5 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import { pillAt, planFlight } from "./drops";
+import { EMPTY_MASS, pillAt, planFlight } from "./drops";
 import { bezier, clamp01, travelEase } from "./geometry";
 import type { Drop, Sim } from "./types";
 
@@ -9,7 +9,6 @@ const ABSORB_TIME = 0.12;
 /** The pills' spring: stiffness, and the substep it is integrated at. */
 const OMEGA = 26;
 const SUBSTEP = 1 / 240;
-const EMPTY = 0.002;
 
 type Tick = { dt: number; now: number };
 
@@ -102,8 +101,8 @@ export const stepPills = (sim: Sim, dt: number) => {
       state.scale += state.velocity * h;
     }
     const empty =
-      state.mass <= EMPTY &&
-      state.outgoing <= EMPTY &&
+      state.mass <= EMPTY_MASS &&
+      state.outgoing <= EMPTY_MASS &&
       Math.abs(state.scale) < 0.004;
     if (index !== sim.target && empty) {
       sim.pills.delete(index);

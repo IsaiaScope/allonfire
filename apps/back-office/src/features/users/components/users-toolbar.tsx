@@ -28,6 +28,7 @@ import {
   ToolbarActionBody,
   tiledControl,
   toolbarActionClass,
+  toolbarLayout,
 } from "./toolbar-action";
 import { type UserSearch, UsersFilters } from "./users-filters";
 
@@ -121,8 +122,8 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
   // tile.
   return (
     <div className="@container">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 @4xl:basis-0 basis-full">
+      <div className={toolbarLayout({ part: "row" })}>
+        <div className={cn(toolbarLayout({ part: "search" }), "relative")}>
           <span
             aria-hidden="true"
             className={cn(
@@ -152,7 +153,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
           ) : null}
         </div>
         <UsersFilters search={search} write={write} />
-        <div className="ml-auto flex gap-2">
+        <div className={toolbarLayout({ part: "actions" })}>
           {children}
           {/* A link drawn as the primary action: it navigates, and opens in
               a new tab too. */}

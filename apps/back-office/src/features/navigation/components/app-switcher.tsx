@@ -12,7 +12,7 @@ import {
 import { cn } from "@allonfire/ui/lib/utils";
 import { getTranslations } from "next-intl/server";
 import { env } from "@/environment/environment";
-import { switcherApps } from "../constants/apps";
+import { switcherApps } from "../utils/switcher-apps";
 import { AppSwitcherMenu } from "./app-switcher-menu";
 import { CurrentAppMark, switcherButton } from "./current-app-mark";
 

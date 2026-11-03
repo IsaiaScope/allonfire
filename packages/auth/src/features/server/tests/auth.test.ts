@@ -1,6 +1,7 @@
 // @module-tag unit
 
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectKeys } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
@@ -40,7 +41,7 @@ describe("createAuth", () => {
       responses: {
         "200": {
           content: {
-            "application/json": {
+            [HTTP.CONTENT_TYPE.JSON]: {
               schema: {
                 properties: { app: { enum: [App.LAURA, App.BACK_OFFICE] } },
               },
@@ -55,32 +56,32 @@ describe("createAuth", () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.OPENAPI_SCHEMA}`)
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
   });
 
   it("does not serve Better Auth's password check: a guess per request, outside the auth limit", async () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.VERIFY_PASSWORD}`, {
-        method: "POST",
+        method: HTTP.METHOD.POST,
       })
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
   });
 
   it("does not serve Better Auth's update-user: nobody sets their own picture, which names a stored file", async () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.UPDATE_USER}`, {
-        method: "POST",
+        method: HTTP.METHOD.POST,
       })
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
   });
 
   it("does not serve the plugin's reference page", async () => {
     const res = await auth.handler(
       new Request(`${BASE_URL}${BASE_PATH}${AUTH.PATH.OPENAPI_REFERENCE}`)
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
   });
 
   it("keeps a Session 60 days, extended at most once a day", () => {

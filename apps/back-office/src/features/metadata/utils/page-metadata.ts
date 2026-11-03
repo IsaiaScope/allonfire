@@ -1,4 +1,4 @@
-import { AOFPageMetadata } from "@allonfire/core/features/next/metadata/aof-page-metadata";
+import { AOFPageMetadata } from "@allonfire/core/features/next/metadata/utils/aof-page-metadata";
 import { pageOpenGraph } from "./page-open-graph";
 
 /**

@@ -11,6 +11,19 @@ A vi.mock factory, stub or fixture that a second test file needs moves to the
 area's shared/tests (exported when another package needs it, as stub-auth and
 stub-image-deps are) instead of being copied. The HTTP modules' tests share
 auth's `moduleTestHost` (`@allonfire/auth/shared/tests/test-host`).
+Tests write HTTP statuses, methods, headers and media types through core's
+`HTTP` (`HTTP.STATUS.FORBIDDEN`, `HTTP.HEADER.COOKIE`), never as numbers or
+strings. Tests read copy from its source: the App's translations through
+`createTranslator` (the Back Office's `enT`/`itT`, `src/shared/tests/translators.ts`,
+which fills ICU placeholders: never `.replace("{email}", …)`), the API's
+`translate()` or `TRANSLATION.CATALOGUE`, `API.LOG_MESSAGE`, and Better Auth's
+cookie names from `AUTH.COOKIE`; only a renderer's own test pins rendered text.
+A markup test asserts roles, text and attributes a visitor depends on, never
+Tailwind class strings.
+An Image Fixture's bytes come from storage's `readFixtureImage(IMAGE_FIXTURE.FILE.*)`. A browser test fetches one through Vite's `?url` import of
+`@allonfire/storage/features/image/fixtures/files/<file>?url`, typed by
+config's `tests/browser/asset-url` (listed in the package's tsconfig `types`),
+never a `new URL` climbing `..` into another package.
 Vitest runs with globals (no `from "vitest"` import). Every test file's first
 line is `// @module-tag unit` or `// @module-tag integration`; a file with
 neither fails. Integration tests need a running service (database, cache,
@@ -24,7 +37,7 @@ Image Fixtures, and drops both when the run ends (`dropWhenRunEnds`); a
 run killed first leaves them, named with its process id, and the next run
 drops those whose process is gone (`isStaleTestRun`); e2e does the same per Playwright run, and drops an
 earlier e2e run's leftovers when it starts. A test signs in as a Fixture (`FIXTURE.USER.BACK_OFFICE.ADMIN`
-with `FIXTURE.PASSWORD`) and points at an Image Fixture, never a retyped
+with `FIXTURE.PASSWORD`, which meets the password rules; `FIXTURE.NEW_PASSWORD` for a change) and points at an Image Fixture, never a retyped
 email or key; local addresses come from `@allonfire/config/local/addresses`
 (`LOCAL.URL`, `LOCAL.PORT`; `LOCAL.URL.TEST_API`, the host MSW answers), checked against compose, CI and
 the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no tag: `tsc`

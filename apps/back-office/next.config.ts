@@ -1,6 +1,6 @@
 import { withProviderPictures } from "@allonfire/auth/features/next/utils/with-provider-pictures";
-import { AOFCreateNextConfig } from "@allonfire/core/features/next/config/aof-create-next-config";
-import { AOFWithLocalizedNotFound } from "@allonfire/core/features/next/config/aof-with-localized-not-found";
+import { AOFCreateNextConfig } from "@allonfire/core/features/next/config/utils/aof-create-next-config";
+import { AOFWithLocalizedNotFound } from "@allonfire/core/features/next/config/utils/aof-with-localized-not-found";
 import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import { routing } from "./src/features/i18n/routing";

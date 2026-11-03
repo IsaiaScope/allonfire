@@ -1,6 +1,6 @@
 "use client";
 
-import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/aof-query-client-provider";
+import { AOFQueryClientProvider } from "@allonfire/core/features/next/providers/components/aof-query-client-provider";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { aofToast } from "../lib/use-aof-toast";

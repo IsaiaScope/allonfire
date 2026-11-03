@@ -1,60 +1,28 @@
 // @module-tag integration
-import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
+// The storage's HEIC Fixture, served by Vite to the browser under test.
+import HEIC_URL from "@allonfire/storage/features/image/fixtures/files/colors-no-alpha.heic?url";
 import { avatarChangeOf } from "@allonfire/ui/lib/avatar-change";
 import { useAOFForm } from "@allonfire/ui/lib/form";
 import { useCallback } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { UserAvatar } from "@/shared/components/user-avatar";
 import { USERS } from "../../constants/users";
 
-/** The storage's HEIC Fixture, served by Vite to the browser under test. */
-const HEIC_URL = new URL(
-  "../../../../../../../packages/storage/src/features/image/fixtures/files/colors-no-alpha.heic",
-  import.meta.url
-).href;
+/*
+ * ui's AOFAvatarField, tested here rather than in ui: it crops on a canvas,
+ * reads real files a visitor picks and converts an iPhone's HEIC, which only
+ * a real browser does, and ui's tests run in Node; here it is bound to the
+ * App's form (`useAOFForm`) and posts what the User actions read.
+ */
+
 /** A size as the file row shows it: a number, then kB. */
 const KILOBYTES = /\d+(\.\d)?\s?kB/;
 
-// next/image reaches the browser as a CommonJS object, not a component: the
-// mock shows what AOFImage was handed instead.
-vi.mock("@allonfire/ui/components/aof-image", async () => {
-  const react = await import("react");
-  return {
-    AOFImage: ({
-      loader,
-      onError,
-      src,
-      unoptimized,
-    }: {
-      loader?: (args: { src: string; width: number }) => string;
-      onError?: (event: { currentTarget: HTMLElement }) => void;
-      src: string;
-      unoptimized?: boolean;
-    }) => {
-      // A "/broken" picture fails to load, as an expired link would.
-      const loaded = react.useCallback(
-        (element: HTMLElement | null) => {
-          if (element && src.startsWith("/broken")) {
-            onError?.({ currentTarget: element });
-          }
-        },
-        [onError, src]
-      );
-      return (
-        <span
-          data-optimizer={loader || unoptimized ? "none" : "app"}
-          data-src={loader ? loader({ src, width: 2048 }) : src}
-          data-testid="picture"
-          ref={loaded}
-        />
-      );
-    },
-  };
-});
+vi.mock("@allonfire/ui/components/aof-image", async () => ({
+  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+}));
 
 const LABELS = {
   busy: "Preparing the picture",
@@ -74,8 +42,6 @@ const LABELS = {
   zoomIn: "Zoom in",
   zoomOut: "Zoom out",
 };
-const SIGNED = `${LOCAL.URL.IMAGE_SERVER}/signature/rs:fit:256:0/plain/s3://image/avatar-u-1.avif`;
-const GOOGLE = `https://${AUTH.PICTURE_HOSTS[0]}/a/picture=s96-c`;
 
 /** A picture the browser can draw: a PNG drawn here, 800x600 unless told. */
 const photo = async (width = 800, height = 600) => {
@@ -428,56 +394,5 @@ describe("AOFAvatarField's crop dialog", () => {
         dialog().getByRole("button", { name }).element().querySelector("svg")
       ).not.toBeNull();
     }
-  });
-});
-
-describe("UserAvatar", () => {
-  const pictureOf = (container: HTMLElement) =>
-    container.querySelector<HTMLElement>('[data-testid="picture"]');
-
-  it("loads a stored Avatar from its signed link as it is, at every width", async () => {
-    const { container } = await render(
-      <UserAvatar image={SIGNED} name="Laura" side={36} />
-    );
-    expect(pictureOf(container)?.dataset).toMatchObject({
-      optimizer: "none",
-      src: SIGNED,
-    });
-  });
-
-  it("sends a sign-in provider's picture through the App's optimizer", async () => {
-    const { container } = await render(
-      <UserAvatar image={GOOGLE} name="Laura" side={36} />
-    );
-    expect(pictureOf(container)?.dataset).toMatchObject({
-      optimizer: "app",
-      src: GOOGLE,
-    });
-  });
-
-  it("shows only the initial when the picture fails, never a broken image", async () => {
-    const { container } = await render(
-      <UserAvatar image="/broken/picture.avif" name="Laura" side={36} />
-    );
-    await expect.poll(() => pictureOf(container)?.hidden).toBe(true);
-  });
-
-  it("shows a new link again after the old one failed", async () => {
-    const { container, rerender } = await render(
-      <UserAvatar image="/broken/picture.avif" name="Laura" side={36} />
-    );
-    await expect.poll(() => pictureOf(container)?.hidden).toBe(true);
-    await rerender(
-      <UserAvatar image="/fresh/picture.avif" name="Laura" side={36} />
-    );
-    expect(pictureOf(container)?.hidden).toBe(false);
-  });
-
-  it("shows only the initial without a picture", async () => {
-    const { container } = await render(
-      <UserAvatar image={null} name="Laura" side={36} />
-    );
-    expect(pictureOf(container)).toBeNull();
-    expect(container.textContent).toBe("L");
   });
 });

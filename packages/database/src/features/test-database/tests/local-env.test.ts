@@ -1,6 +1,6 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
-import { fillLocalDatabaseEnv } from "../local-env";
+import { fillLocalDatabaseEnv } from "../utils/local-env";
 
 const SET_URL = "postgresql://set@database.test:5432/set";
 

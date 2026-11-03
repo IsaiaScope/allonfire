@@ -16,6 +16,7 @@ config/
     nextjs.json            Next.js app config (extends base + DOM lib, JSX, plugin, Node types)
   local/
     addresses.ts           LOCAL (PORT, URL with URL.TEST_API, DATABASE, STORAGE): every Local and test address, once
+    repo.ts                REPO (ROOT, APPS, PACKAGES): the repository's folders, for a script or test that reads outside its package
     tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it; package-exports.test.ts checks each export key of auth, storage, database and config has a reader outside its package
   tests/                   One folder per test layer
     vitest/
@@ -24,6 +25,7 @@ config/
     browser/
       vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
+      asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/
       playwright.config.ts End-to-end: `aofPlaywrightConfig` builds and starts the App plus the API (`./e2e`) on the run's Test database and bucket, and runs each spec in Chromium and WebKit, desktop and phone
       global-teardown.ts   Drops them

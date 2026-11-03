@@ -21,7 +21,7 @@ import {
   saveAvatar,
 } from "@allonfire/storage/features/avatar/objects/avatar-objects";
 import { avatarLink } from "@allonfire/storage/features/avatar/utils/avatar-key";
-import type { LeftoverLog } from "@allonfire/storage/features/image/objects/delete-leftovers";
+import type { LeftoverLog } from "@allonfire/storage/features/image/objects/utils/delete-leftovers";
 
 /**
  * The rule for managing Users: an Admin in the Back Office. Written as that

@@ -12,12 +12,8 @@ import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import {
-  currentSection,
-  SECTION,
-  sectionHref,
-  stationNumber,
-} from "../constants/sections";
+import { SECTION } from "../constants/sections";
+import { currentSection, sectionHref, stationNumber } from "../utils/sections";
 import { StationNumber } from "./station-number";
 
 /**

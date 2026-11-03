@@ -1,13 +1,12 @@
 // @module-tag unit
+
 import { CodedError } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import type {
-  UserPicture,
-  UserRecord,
-} from "@allonfire/database/features/auth/user.service";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
+import type { UserPicture } from "@allonfire/database/features/auth/user.service";
 import { AUTH } from "../../../../shared/constants/auth";
 import { errorOf, json } from "../../../../shared/tests/test-host";
 import { USER } from "../../constants/users";
@@ -16,6 +15,7 @@ import {
   BACK_OFFICE_ADMIN as ADMIN,
   stubUserDeps,
   userHost,
+  userRow,
 } from "./stub-user-deps";
 
 const OTHER = "user-2";
@@ -30,19 +30,15 @@ const UNSUPPORTED = new CodedError({
   code: ERROR.CODE.BAD_REQUEST,
   status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
 });
-const AVATAR_PATH = `${USER.PATH.BASE}${USER.PATH.AVATAR.replace(":id", OTHER)}`;
-/** The User's Version the change was made on. */
-const VERSION = "version-1";
-const ROW: UserRecord = {
-  createdAt: new Date("2026-10-01T10:00:00.000Z"),
+const AVATAR_PATH = `${USER.PATH.BASE}${fillPath(USER.PATH.AVATAR, { id: OTHER })}`;
+const ROW = userRow({
   email: "pictured@allonfire.test",
   id: OTHER,
   image: SAVED,
   imageBlurDataUrl: BLUR,
-  memberships: [],
-  name: null,
-  version: "version-1",
-};
+});
+/** The User's Version the change was made on. */
+const VERSION = ROW.version;
 
 type Options = {
   allows?: boolean;

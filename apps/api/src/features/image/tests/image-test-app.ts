@@ -1,14 +1,13 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import type { App, ImageAccess } from "@allonfire/database/enums";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
-import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { readFixtureImage } from "@allonfire/storage/features/image/fixtures/utils/read-fixture-image";
 import { imageListBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
-import { putImageObject } from "@allonfire/storage/features/image/objects/image-objects";
+import { putImageObject } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { pictureLink } from "@allonfire/storage/features/image-server/sign";
 import { z } from "zod";
@@ -51,11 +50,11 @@ export const fetchObject = (key: string) =>
 
 /** An Image Fixture's source file. */
 export const fixtureFile = (name: string): UploadFile => ({
-  bytes: readFileSync(resolve(IMAGE_FIXTURE_FILES, name)),
+  bytes: readFixtureImage(name),
   name,
 });
 
-export const jpeg = () => fixtureFile("photo.jpg");
+export const jpeg = () => fixtureFile(IMAGE_FIXTURE.FILE.PHOTO);
 
 /**
  * `POST /v1/images`: every file under `file`, and one `meta` entry per file
@@ -87,7 +86,7 @@ export function upload(
   return app.request(API.PATH.IMAGES, {
     body: form,
     headers: { cookie, origin: ORIGIN },
-    method: "POST",
+    method: HTTP.METHOD.POST,
   });
 }
 

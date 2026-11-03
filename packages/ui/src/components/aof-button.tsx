@@ -52,14 +52,14 @@ const sized = (size: AOFButtonSize | undefined) => {
   return { extra: "", size };
 };
 
-// The shadcn Button plus a pointer cursor, which shadcn v4 leaves out, and
-// the field sizes. It exists so Apps import from @allonfire/ui (ADR 0010);
+// The shadcn Button plus the field sizes (its pointer comes from ui's
+// base.css, which gives one to every enabled button). It exists so Apps import from @allonfire/ui (ADR 0010);
 // customisations land here, not in packages/shadcn.
 export const AOFButton = ({ className, size, ...props }: AOFButtonProps) => {
   const shadcn = sized(size);
   return (
     <ShadcnButton
-      className={cn("cursor-pointer", shadcn.extra, className)}
+      className={cn(shadcn.extra, className)}
       size={shadcn.size}
       {...props}
     />
@@ -81,9 +81,5 @@ export const aofButtonVariants = ({
   variant,
 }: AOFButtonVariantsOptions = {}) => {
   const shadcn = sized(size);
-  return cn(
-    "cursor-pointer",
-    buttonVariants({ size: shadcn.size, variant }),
-    shadcn.extra
-  );
+  return cn(buttonVariants({ size: shadcn.size, variant }), shadcn.extra);
 };

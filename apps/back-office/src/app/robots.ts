@@ -1,4 +1,4 @@
-import { AOFRobots } from "@allonfire/core/features/next/metadata/aof-indexed";
+import { AOFRobots } from "@allonfire/core/features/next/metadata/utils/aof-indexed";
 import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import type { MetadataRoute } from "next";

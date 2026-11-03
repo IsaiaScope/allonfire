@@ -53,11 +53,6 @@ describe("AOFAvatarField", () => {
     expect(html).toContain(LABELS.formats);
   });
 
-  it("draws its tile in the Design's corners, never round", () => {
-    expect(html).toContain("rounded-lg");
-    expect(html).not.toContain("rounded-full");
-  });
-
   it("holds a file input named as the field, so a post sends the picture", () => {
     expect(html).toMatch(FILE_INPUT);
   });

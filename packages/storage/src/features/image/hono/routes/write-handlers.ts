@@ -13,13 +13,13 @@ import {
 } from "@allonfire/database/features/auth/access/access";
 import type {
   ImageChange,
-  ImageLinksById,
+  ImagePlacementsById,
 } from "@allonfire/database/features/image/image.service";
 import { bodyLimit } from "hono/body-limit";
 import { createFactory } from "hono/factory";
 import { validator } from "hono-openapi";
 import { IMAGE } from "../../constants/image";
-import { deleteLeftovers } from "../../objects/delete-leftovers";
+import { deleteLeftovers } from "../../objects/utils/delete-leftovers";
 import { imageKey } from "../../utils/image-key";
 import {
   deleteBodySchema,
@@ -228,7 +228,7 @@ export const deleteHandlers = (deps: ImageDeps) =>
       const { app, ids } = c.req.valid("json");
       const { user } = c.get(AUTH.VAR.SESSION);
       // Checked inside the write, like a PATCH.
-      const authorise = (current: ImageLinksById) =>
+      const authorise = (current: ImagePlacementsById) =>
         authoriseDelete(user, current, app);
       const keys = await (app
         ? deps.removeImagesFromApp(ids, app, authorise)

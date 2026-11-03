@@ -13,8 +13,8 @@ import type {
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { z } from "zod";
 import { API } from "../../../shared/constants/api";
+import { problemOf } from "../../../shared/tests/problem-of";
 import { cookieFor, ORIGIN, type TestApp } from "../../../shared/tests/sign-in";
-import { problemOf } from "../../errors/tests/problem-of";
 import {
   imageTestApp,
   jpeg,
@@ -57,13 +57,19 @@ const fresh = async (apps: App[], access: ImageAccess = ImageAccess.PUBLIC) => {
 const send = async (
   user: { email: string },
   request:
-    | { body: z.input<typeof patchBodySchema>; method: "PATCH" }
-    | { body: z.input<typeof deleteBodySchema>; method: "DELETE" }
+    | {
+        body: z.input<typeof patchBodySchema>;
+        method: typeof HTTP.METHOD.PATCH;
+      }
+    | {
+        body: z.input<typeof deleteBodySchema>;
+        method: typeof HTTP.METHOD.DELETE;
+      }
 ) =>
   app.request(API.PATH.IMAGES, {
     body: stringifyJson(request.body),
     headers: {
-      "content-type": HTTP.CONTENT_TYPE.JSON,
+      [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
       cookie: await cookieFor(app, user),
       origin: ORIGIN,
     },
@@ -72,11 +78,11 @@ const send = async (
 const patch = (
   user: { email: string },
   body: z.input<typeof patchBodySchema>
-) => send(user, { body, method: "PATCH" });
+) => send(user, { body, method: HTTP.METHOD.PATCH });
 const remove = (
   user: { email: string },
   body: z.input<typeof deleteBodySchema>
-) => send(user, { body, method: "DELETE" });
+) => send(user, { body, method: HTTP.METHOD.DELETE });
 
 describe("changing Images on the real stack", () => {
   it("changes alt only for an Admin of every App the Image is in", async () => {

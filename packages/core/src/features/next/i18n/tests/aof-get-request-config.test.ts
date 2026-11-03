@@ -1,7 +1,7 @@
 // @module-tag unit
 import { DATE } from "../../../i18n/constants/dates";
-import { AOFGetRequestConfig } from "../aof-get-request-config";
-import { SHARED_TRANSLATIONS } from "../shared-translations";
+import { SHARED_TRANSLATIONS } from "../translations/shared-translations";
+import { AOFGetRequestConfig } from "../utils/aof-get-request-config";
 
 vi.mock("next-intl/server", () => ({
   getRequestConfig: <T>(create: T) => create,

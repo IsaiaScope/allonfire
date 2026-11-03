@@ -6,13 +6,13 @@ describe("AOFSelect", () => {
   it("draws shadcn's trigger with the chosen value and the caller's classes", () => {
     const html = renderToStaticMarkup(
       <AOFSelect value="laura">
-        <AOFSelectTrigger aria-label="App" className="w-40">
+        <AOFSelectTrigger aria-label="App" className="caller-class">
           <AOFSelectValue />
         </AOFSelectTrigger>
       </AOFSelect>
     );
     expect(html).toContain('data-slot="select-trigger"');
-    expect(html).toContain("w-40");
+    expect(html).toContain("caller-class");
     expect(html).toContain('aria-label="App"');
   });
 });

@@ -9,10 +9,9 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import {
-  SECTION,
-  sectionHref,
-} from "../src/features/navigation/constants/sections";
+import { SECTION } from "../src/features/navigation/constants/sections";
+import { sectionHref } from "../src/features/navigation/utils/sections";
+import { enT } from "../src/shared/tests/translators";
 
 /** Any locale's Sign in page. */
 export const SIGN_IN_URL = new RegExp(`${AUTH.PAGE.SIGN_IN}$`);
@@ -80,7 +79,8 @@ export const usersSearchHref = (email: string) =>
     [USER.PARAM.SEARCH]: USER.SEARCH.serialize({ text: email }),
   })}`;
 
-/** Signs in as the Back Office Admin and waits for the frame. */
+/** Signs in as the Back Office Admin and waits for the frame: Sign in
+ *  submits without waiting, so a `goto` right after could beat its cookie. */
 export const signInAsAdmin = async (page: Page) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(
@@ -88,11 +88,20 @@ export const signInAsAdmin = async (page: Page) => {
   ).toBeVisible();
 };
 
+/** Opens the account menu, in the sidebar: a drawer on a phone. */
+export const openAccountMenu = async (page: Page) => {
+  await openSidebar(page);
+  await page
+    .getByRole("button", { name: EN.Navigation.account })
+    .filter({ visible: true })
+    .click();
+};
+
 /** A User's email as drawn on screen: a table row, or a card on a phone. */
 export const emailOf = (page: Page, email: string) =>
   page
     .getByRole("button", {
-      name: EN.Users.copy.label.replace("{email}", email),
+      name: enT("Users.copy.label", { email }),
     })
     .filter({ visible: true });
 

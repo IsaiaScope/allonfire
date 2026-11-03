@@ -1,9 +1,9 @@
 // @module-tag unit
 import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { deleteObjects, putObject } from "../objects";
+import { deleteObjects, putObject } from "../utils/objects";
 import { send } from "./s3-client-mock";
 
-vi.mock("../client", () => import("./s3-client-mock"));
+vi.mock("../utils/client", () => import("./s3-client-mock"));
 
 const sent = (index = 0): unknown => send.mock.calls[index]?.[0];
 

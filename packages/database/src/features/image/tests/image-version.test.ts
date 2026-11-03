@@ -1,6 +1,6 @@
 // @module-tag unit
 import { App, ImageAccess } from "../../../../generated/prisma/enums";
-import { imageVersion, type VersionedImage } from "../image-version";
+import { imageVersion, type VersionedImage } from "../utils/image-version";
 
 const IMAGE: VersionedImage = {
   access: ImageAccess.PRIVATE,

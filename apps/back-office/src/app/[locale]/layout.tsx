@@ -1,8 +1,8 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { AOFBaseViewport } from "@allonfire/core/features/next/metadata/aof-base-viewport";
-import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/aof-nuqs-adapter";
-import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
-import { AOFPwa } from "@allonfire/core/features/next/pwa/aof-pwa";
+import { AOFBaseViewport } from "@allonfire/core/features/next/metadata/utils/aof-base-viewport";
+import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/components/aof-nuqs-adapter";
+import { AOFThemeProvider } from "@allonfire/core/features/next/providers/components/aof-theme-provider";
+import { AOFPwa } from "@allonfire/core/features/next/pwa/components/aof-pwa";
 import { ENV } from "@allonfire/core/shared/constants/env";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
 import { AOFQueryProvider } from "@allonfire/ui/components/aof-query-provider";

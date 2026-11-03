@@ -1,13 +1,15 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
+import { SESSION_COOKIE } from "../../../shared/tests/stub-auth";
 import { signOutOfApi } from "../utils/sign-out";
 
 /** The `Secure` attribute, not the `__Secure-` in a cookie's name. */
 const SECURE_ATTRIBUTE = /; Secure(;|$)/i;
-const TOKEN = "__Secure-better-auth.session_token";
-const DATA = "__Secure-better-auth.session_data";
+const TOKEN = SESSION_COOKIE.SECURE_TOKEN;
+const DATA = SESSION_COOKIE.SECURE_DATA;
 /** The parent domain the API sets the Session cookies for. */
 const DOMAIN = ".example.test";
 const EXPIRED_BY_API = [
@@ -38,7 +40,7 @@ vi.mock("next/headers", () => ({
 }));
 // Core may resolve its own copy of `next`, which the mock above never
 // reaches; the visitor's headers come from here instead.
-vi.mock("@allonfire/core/features/next/api/forwarded-for", () => ({
+vi.mock("@allonfire/core/features/next/api/visitor-headers", () => ({
   readVisitorHeaders: async () => ({
     cookie: visit.cookies
       .map(({ name, value }) => `${name}=${value}`)
@@ -50,7 +52,7 @@ const fetchMock = vi.fn(
   async (_url: string | URL | Request, _init?: RequestInit) =>
     new Response("{}", {
       headers: [
-        ["content-type", "application/json"],
+        ["content-type", HTTP.CONTENT_TYPE.JSON],
         ...EXPIRED_BY_API.map((cookie): [string, string] => [
           "set-cookie",
           cookie,

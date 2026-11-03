@@ -3,11 +3,12 @@
 import { ENV } from "../../../../shared/constants/env";
 import { HTTP } from "../../../http/constants/http";
 import { METADATA } from "../../../metadata/constants/metadata";
+import { NEXT } from "../../constants/next";
 import { PWA } from "../../pwa/constants/pwa";
-import { AOFCreateNextConfig } from "../aof-create-next-config";
-import { tailnetHosts } from "../tailnet-hosts";
+import { AOFCreateNextConfig } from "../utils/aof-create-next-config";
+import { tailnetHosts } from "../utils/tailnet-hosts";
 
-vi.mock("../tailnet-hosts", () => ({ tailnetHosts: vi.fn(() => []) }));
+vi.mock("../utils/tailnet-hosts", () => ({ tailnetHosts: vi.fn(() => []) }));
 const runtime = vi.hoisted(() => ({
   CONFIG_E2E_TESTING_API: false,
   NODE_ENV: "test",
@@ -93,7 +94,7 @@ describe("AOFCreateNextConfig", () => {
       headers: async () => [{ headers: [APP_HEADER], source: "/embed" }],
     });
     expect(await config.headers?.()).toEqual([
-      { headers: UNINDEXED_HEADERS, source: "/(.*)" },
+      { headers: UNINDEXED_HEADERS, source: NEXT.EVERY_PATH },
       {
         headers: [
           {
@@ -111,7 +112,7 @@ describe("AOFCreateNextConfig", () => {
     const headers = await AOFCreateNextConfig().headers?.();
     expect(headers?.[0]).toEqual({
       headers: UNINDEXED_HEADERS,
-      source: "/(.*)",
+      source: NEXT.EVERY_PATH,
     });
   });
 
@@ -122,7 +123,7 @@ describe("AOFCreateNextConfig", () => {
     ).headers?.();
     expect(headers?.[0]).toEqual({
       headers: HTTP.SECURITY_HEADERS,
-      source: "/(.*)",
+      source: NEXT.EVERY_PATH,
     });
   });
 

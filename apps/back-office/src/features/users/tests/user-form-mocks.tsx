@@ -1,3 +1,4 @@
+import { ImageMock } from "@/shared/tests/image-mock";
 import { LinkMock } from "@/shared/tests/link-mock";
 
 /**
@@ -14,9 +15,5 @@ export const replace = vi.fn();
 /** The App's router (`@/features/i18n/navigation`): `replace` recorded. */
 export const useRouter = () => ({ replace });
 
-/**
- * next/image reaches the browser as a CommonJS object, not a component: ui's
- * `AOFImage` (`@allonfire/ui/components/aof-image`) shows the `src` it was
- * handed.
- */
-export const AOFImage = ({ src }: { src: string }) => <span data-src={src} />;
+/** ui's `AOFImage` (`@allonfire/ui/components/aof-image`): what it was handed. */
+export const AOFImage = ImageMock;

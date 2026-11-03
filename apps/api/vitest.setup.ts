@@ -1,7 +1,7 @@
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { LOG } from "@allonfire/core/features/logger/constants/logger";
-import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/local-env";
-import { fillLocalStorageEnv } from "@allonfire/storage/features/test-bucket/local-env";
+import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/utils/local-env";
+import { fillLocalStorageEnv } from "@allonfire/storage/features/test-bucket/utils/local-env";
 
 // env.ts validates at import, so these must exist before any test file loads.
 // `??=` keeps real values from CI and the shell authoritative.

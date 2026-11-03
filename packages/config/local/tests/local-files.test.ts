@@ -1,10 +1,11 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { LOCAL } from "../addresses";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no YAML parser; a reformatted line fails loudly.
 /** The files that cannot import the addresses, and the lines each must hold. */
@@ -118,6 +119,10 @@ describe.each(EXPECTED)("%s", (path, lines) => {
 
 const BUILD_STORAGE = /STORAGE_(ENDPOINT|BUCKET)/;
 const DOCKERFILE_STAGE = /^FROM /m;
+/** A stage's `FROM` line, past the split: `<image> AS builder`. */
+const BUILDER_STAGE = /^\S+ AS builder$/m;
+const COREPACK_RUN = /^RUN corepack /gm;
+const PNPM_PIN = /pnpm@/;
 const TURBO_PIN = /"turbo": "([^"]+)"/;
 /** deploy.yml's image job, up to the job after it. */
 const IMAGE_JOB = /\n {2}image:\n([\s\S]*?)\n {2}[a-z-]+:\n/;
@@ -129,9 +134,9 @@ const TURBO_BUILD_ENV = /"build": \{[^}]*?"env": \[([^\]]*)\]/;
 // The Back Office serves no stored file itself (pictures reach the browser
 // through the image server, ADR 0027), so its build reads no storage address.
 describe("the Back Office build", () => {
-  // The pruner, the deps, then the builder.
-  const [, , , builderStage] =
-    read("docker/Dockerfile").split(DOCKERFILE_STAGE);
+  const builderStage = read("docker/Dockerfile")
+    .split(DOCKERFILE_STAGE)
+    .find((stage) => BUILDER_STAGE.test(stage));
   // A split on a capturing pattern holds the capture second; no match, nothing.
   const [, deployBuildArgs] = read(".github/workflows/deploy.yml").split(
     DEPLOY_BUILD_ARGS
@@ -170,6 +175,15 @@ describe("the Docker prune", () => {
     );
     expect(read("docker/Dockerfile")).toContain(PRUNE_WITH_PINNED_TURBO);
   });
+});
+
+// package.json's packageManager pins pnpm: one base stage installs it, and
+// every stage that runs pnpm starts from it.
+it("installs pnpm once in the Dockerfile, the version packageManager pins", () => {
+  const dockerfile = read("docker/Dockerfile");
+  expect(dockerfile.match(COREPACK_RUN)).toHaveLength(1);
+  expect(dockerfile).not.toMatch(PNPM_PIN);
+  expect(dockerfile).toContain("RUN corepack enable && corepack install");
 });
 
 describe("the production images", () => {

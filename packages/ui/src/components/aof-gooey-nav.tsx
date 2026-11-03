@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  type ColorScheme,
+  METADATA,
+} from "@allonfire/core/features/metadata/constants/metadata";
+import {
   type CSSProperties,
   type MouseEvent,
   type ReactNode,
@@ -11,11 +15,7 @@ import {
 } from "react";
 import { contrastInk, parseColor } from "../lib/gooey-nav/colors";
 import { createGooeyEngine, type GooeyEngine } from "../lib/gooey-nav/engine";
-import {
-  GOOEY,
-  type GooeyPalette,
-  type GooeySize,
-} from "../lib/gooey-nav/looks";
+import { GOOEY, type GooeySize } from "../lib/gooey-nav/looks";
 import { optionCorner } from "../lib/gooey-nav/render";
 import type { GooeySettings } from "../lib/gooey-nav/types";
 import {
@@ -75,7 +75,7 @@ export type AOFGooeyNavProps = Omit<
   spread?: number;
   /** The nav's own style; its `--gn-*` variables override the theme's. */
   style?: CSSProperties & Partial<Record<`--gn-${string}`, string>>;
-  theme?: GooeyPalette;
+  theme?: ColorScheme;
   /** How much each drop's flight time varies, in ms. */
   timeVariance?: number;
   /** How much the pill overshoots as it fills, 0..1. */
@@ -164,7 +164,7 @@ export const AOFGooeyNav = ({
   initialActiveIndex = 0,
   activeIndex,
   onChange,
-  theme = "dark",
+  theme = METADATA.COLOR_SCHEME.DARK,
   color,
   activeTextColor,
   colors = GOOEY.NO_TINTS,
@@ -199,18 +199,17 @@ export const AOFGooeyNav = ({
   const corner = radius ?? cssRadius.current;
   const indexRef = useRef(current);
   indexRef.current = current;
-  const palette = theme === "light" ? "light" : "dark";
-  const pillColor = color || GOOEY.PILLS[palette].color;
+  const pillColor = color || GOOEY.PILLS[theme].color;
   const pillRgb = parseColor(pillColor);
   const settings: GooeySettings = {
     animationTime,
     gooeyness,
     hoverEffect,
-    hoverRgb: parseColor(GOOEY.PILLS[palette].hover),
+    hoverRgb: parseColor(GOOEY.PILLS[theme].hover),
     particleCount,
     pillRgb,
     radius: corner,
-    shadow: GOOEY.PILLS[palette].shadow,
+    shadow: GOOEY.PILLS[theme].shadow,
     spread,
     timeVariance,
     tints: colors.map(parseColor),
@@ -219,7 +218,7 @@ export const AOFGooeyNav = ({
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   // The settings that change the drawing without moving any option.
-  const look = [pillColor, palette, gooeyness, size, frame, corner].join(" ");
+  const look = [pillColor, theme, gooeyness, size, frame, corner].join(" ");
 
   const select = (index: number) => {
     const item = items[index];
@@ -283,7 +282,7 @@ export const AOFGooeyNav = ({
       ref={navRef}
       style={{
         ...GOOEY.SIZES[size],
-        ...GOOEY.THEMES[palette],
+        ...GOOEY.THEMES[theme],
         ...variables,
         ...style,
       }}

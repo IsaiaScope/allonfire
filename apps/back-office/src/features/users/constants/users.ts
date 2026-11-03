@@ -47,8 +47,6 @@ export const USERS = {
     },
     TAG: "users",
   },
-  /** Brushed in the Cancel button: 戻, to go back (the brush face carries it). */
-  CANCEL_KANJI: "戻",
   /** Brushed faint behind a User's card: 乗, a passenger (the brush face
    *  carries it). */
   CARD_KANJI: "乗",

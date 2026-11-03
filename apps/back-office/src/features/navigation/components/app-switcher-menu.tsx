@@ -14,7 +14,7 @@ import {
 import { IconArrowUpRight, IconCaretUpDown } from "@tabler/icons-react";
 import { AppTile } from "@/shared/components/app-tile";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import type { SwitcherApp } from "../constants/apps";
+import type { SwitcherApp } from "../utils/switcher-apps";
 import { CurrentAppMark, switcherButton } from "./current-app-mark";
 
 export type AppSwitcherMenuProps = {

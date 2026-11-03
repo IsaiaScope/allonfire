@@ -1,8 +1,9 @@
 // @module-tag unit
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { USER } from "../constants/users";
 import { meetsPasswordRules, passwordRules } from "../utils/password-rules";
 
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 
 describe("passwordRules", () => {
   it("meets none on an empty password", () => {
@@ -36,4 +37,8 @@ describe("meetsPasswordRules", () => {
     expect(meetsPasswordRules(STRONG)).toBe(true);
     expect(meetsPasswordRules(STRONG.toLowerCase())).toBe(false);
   });
+});
+
+it("is met by the Fixture password, which every test signs in with", () => {
+  expect(meetsPasswordRules(FIXTURE.PASSWORD)).toBe(true);
 });

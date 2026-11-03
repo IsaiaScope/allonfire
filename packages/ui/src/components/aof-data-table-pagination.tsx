@@ -12,6 +12,7 @@ import type { ComponentPropsWithoutChildren } from "../lib/types";
 import { cn } from "../lib/utils";
 import { AOFButton } from "./aof-button";
 import type { AOFTable } from "./aof-data-table";
+import { aofDataTablePager } from "./aof-data-table-skeleton";
 import {
   AOFSelect,
   AOFSelectContent,
@@ -71,13 +72,8 @@ export const AOFDataTablePagination = <TData extends RowData>({
   );
   return (
     <div
-      className={cn(
-        // One row everywhere: on a phone the rows-per-page select, the page
-        // as "2/3" and the arrows spread across it, their words left to
-        // assistive tech; from `sm` the words show, gathered to the right.
-        "flex items-center justify-between gap-3 sm:justify-end sm:gap-6",
-        className
-      )}
+      // On a phone the words are left to assistive tech; from `sm` they show.
+      className={cn(aofDataTablePager(), className)}
       data-slot="aof-data-table-pagination"
       {...props}
     >

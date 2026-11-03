@@ -4,7 +4,8 @@ import type { Drop, PillState, Sim } from "./types";
 
 /** The shortest a flight lasts, in seconds, however low `animationTime` is. */
 const MIN_FLIGHT = 0.15;
-const EMPTY = 0.002;
+/** The mass under which a pill counts as empty. */
+export const EMPTY_MASS = 0.002;
 
 /** Option `index`'s pill, created empty the first time it is asked for. */
 export const pillAt = (sim: Sim, index: number): PillState => {
@@ -79,7 +80,7 @@ export const emitDrops = (
     return;
   }
   const available = source.mass - source.outgoing;
-  if (available <= EMPTY) {
+  if (available <= EMPTY_MASS) {
     return;
   }
   const room = MAX_DROPS - sim.drops.length;

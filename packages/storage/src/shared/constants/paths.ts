@@ -5,5 +5,9 @@ const IMAGES = "/images";
 export const STORAGE = {
   PATH: {
     IMAGES,
+    /** The Images: `GET` lists them, `POST` uploads, `PATCH` edits, `DELETE` removes. */
+    LIST: "/",
+    /** One Image: `GET` reads it. */
+    ONE: "/:id",
   },
 } as const;

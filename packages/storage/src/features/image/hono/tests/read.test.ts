@@ -7,7 +7,9 @@ import {
 import { errorOf } from "@allonfire/auth/shared/tests/test-host";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import { STORAGE } from "../../../../shared/constants/paths";
 import { IMAGE_SERVER } from "../../../image-server/constants/image-server";
@@ -16,7 +18,11 @@ import { imageBodySchema } from "../../constants/schemas";
 import { imageListBodySchema } from "../constants/schemas";
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
-import { imageHost as app, imageRecord, VERSION } from "./stub-image-deps";
+import { imageHost as app, imageRecord } from "./stub-image-deps";
+
+/** One Image's path, as the module mounts it. */
+const onePath = (id: string) =>
+  `${STORAGE.PATH.IMAGES}${fillPath(STORAGE.PATH.ONE, { id })}`;
 
 const lauraUser = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.VIEWER }],
@@ -24,7 +30,8 @@ const lauraUser = sessionFor({
 const otherAppUser = sessionFor({ memberships: [] });
 const visitor: AuthSession | null = null;
 const NOW = new Date("2026-10-28T10:05:00Z");
-const KEY = "0b9a0c3e-0000-4000-8000-000000000001.webp";
+/** The Image every read here answers, unless a test says otherwise. */
+const RECORD = imageRecord();
 
 beforeEach(() => {
   vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
@@ -42,7 +49,7 @@ describe("GET /images", () => {
     const res = await app(lauraUser, { listImages }).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&limit=1`
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(listImages).toHaveBeenCalledWith({
       app: App.LAURA,
       enterable: [App.LAURA],
@@ -51,21 +58,21 @@ describe("GET /images", () => {
     expect(await res.json()).toEqual({
       images: [
         {
-          access: ImageAccess.PRIVATE,
-          alt: { en: "The sea", it: "Il mare" },
-          apps: [App.LAURA],
-          blurDataUrl: "data:image/webp;base64,AAAA",
-          createdAt: "2026-10-01T10:00:00.000Z",
-          height: 600,
-          id: "image-1",
-          srcSet: pictureSrcSet(KEY, privateLinkExpiry(NOW)),
-          version: VERSION,
-          width: 800,
+          access: RECORD.access,
+          alt: RECORD.alt,
+          apps: RECORD.apps,
+          blurDataUrl: RECORD.blurDataUrl,
+          createdAt: RECORD.createdAt.toISOString(),
+          height: RECORD.height,
+          id: RECORD.id,
+          srcSet: pictureSrcSet(RECORD.key, privateLinkExpiry(NOW)),
+          version: RECORD.version,
+          width: RECORD.width,
         },
       ],
       nextCursor: encodeCursor({
-        createdAt: new Date("2026-10-01T10:00:00.000Z"),
-        id: "image-1",
+        createdAt: RECORD.createdAt,
+        id: RECORD.id,
       }),
     });
   });
@@ -82,7 +89,7 @@ describe("GET /images", () => {
     const res = await app(lauraUser, { listImages }).request(
       STORAGE.PATH.IMAGES
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(listImages).toHaveBeenCalledWith({
       enterable: [App.LAURA],
       limit: 30,
@@ -123,7 +130,7 @@ describe("GET /images", () => {
     const res = await app(session, { listImages }).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(listImages).toHaveBeenCalledWith({
       app: App.LAURA,
       enterable: [],
@@ -133,10 +140,7 @@ describe("GET /images", () => {
 
   it("passes the decoded cursor to the service", async () => {
     const listImages = noImages();
-    const cursor = {
-      createdAt: new Date("2026-10-01T10:00:00.000Z"),
-      id: "image-1",
-    };
+    const cursor = { createdAt: RECORD.createdAt, id: RECORD.id };
     await app(lauraUser, { listImages }).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${encodeCursor(cursor)}`
     );
@@ -157,7 +161,7 @@ describe("GET /images refusals", () => {
     const res = await app(lauraUser, {}).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${cursor}`
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
     expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 
@@ -165,7 +169,7 @@ describe("GET /images refusals", () => {
     const res = await app(lauraUser, {}).request(
       `${STORAGE.PATH.IMAGES}?app=ALL`
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
     expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
   });
 
@@ -173,7 +177,7 @@ describe("GET /images refusals", () => {
     const res = await app(lauraUser, {}).request(
       `${STORAGE.PATH.IMAGES}?app=ALL&limit=0`
     );
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
     const body = await errorOf(res);
     expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
     expect(body.errors?.map(({ path }) => path).sort()).toEqual([
@@ -188,15 +192,15 @@ describe("GET /images/:id", () => {
   it("returns an Image of an App the User enters", async () => {
     const res = await app(lauraUser, {
       getImage: async () => imageRecord(),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
-    expect(res.status).toBe(200);
+    }).request(onePath(RECORD.id));
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(imageBodySchema.parse(await res.json()).apps).toEqual([App.LAURA]);
   });
 
   it("signs a private Image's links for the hour, one per width", async () => {
     const res = await app(lauraUser, {
       getImage: async () => imageRecord(),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    }).request(onePath(RECORD.id));
     const { srcSet } = imageBodySchema.parse(await res.json());
     expect(srcSet.map(({ width }) => width)).toEqual([...IMAGE_SERVER.WIDTHS]);
     const expiry = privateLinkExpiry(NOW).getTime() / UNIT.MS_PER_SECOND;
@@ -208,7 +212,7 @@ describe("GET /images/:id", () => {
   it("gives a public Image four links that never expire", async () => {
     const res = await app(visitor, {
       getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
+    }).request(onePath(RECORD.id));
     const { srcSet } = imageBodySchema.parse(await res.json());
     expect(srcSet).toHaveLength(IMAGE_SERVER.WIDTHS.length);
     for (const { url } of srcSet) {
@@ -219,8 +223,8 @@ describe("GET /images/:id", () => {
   it("returns a public Image to a visitor without a Session", async () => {
     const res = await app(visitor, {
       getImage: async () => imageRecord({ access: ImageAccess.PUBLIC }),
-    }).request(`${STORAGE.PATH.IMAGES}/image-1`);
-    expect(res.status).toBe(200);
+    }).request(onePath(RECORD.id));
+    expect(res.status).toBe(HTTP.STATUS.OK);
   });
 
   it.each([
@@ -231,17 +235,17 @@ describe("GET /images/:id", () => {
     async ({ session }) => {
       const res = await app(session, {
         getImage: async () => imageRecord(),
-      }).request(`${STORAGE.PATH.IMAGES}/image-1`);
-      expect(res.status).toBe(404);
+      }).request(onePath(RECORD.id));
+      expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
       expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
     }
   );
 
   it("answers 404 for an unknown id", async () => {
     const res = await app(lauraUser, { getImage: async () => null }).request(
-      `${STORAGE.PATH.IMAGES}/missing`
+      onePath("missing")
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
     expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });

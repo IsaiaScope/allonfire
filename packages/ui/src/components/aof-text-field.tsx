@@ -1,8 +1,7 @@
 "use client";
 
-import { useSelector } from "@tanstack/react-form";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
-import { Eye, EyeOff } from "lucide-react";
 import {
   type ChangeEvent,
   type ReactNode,
@@ -13,10 +12,15 @@ import {
   useState,
 } from "react";
 import { useFieldContext } from "../lib/form-context";
-import { shownErrors } from "../lib/form-errors";
+import { useShownErrors } from "../lib/use-shown-errors";
 import { cn } from "../lib/utils";
 import { AOFButton } from "./aof-button";
-import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
+import {
+  AOFField,
+  AOFFieldError,
+  type AOFFieldErrorProps,
+  AOFFieldLabel,
+} from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
 import { aofInputEndButton } from "./aof-input-clear";
 
@@ -44,6 +48,8 @@ export const AOFFieldTile = ({ children }: { children: ReactNode }) => (
  * The label, bold, with an asterisk beside it when the field is required:
  * outside the `<label>`, so the field's name stays its words alone, and
  * hidden from screen readers, as the input already says it is required.
+ * `htmlFor` names the input it labels; a field with no one input (the
+ * avatar's drop area) leaves it out.
  */
 export const AOFFieldTitle = ({
   children,
@@ -51,7 +57,7 @@ export const AOFFieldTitle = ({
   required,
 }: {
   children: ReactNode;
-  htmlFor: string;
+  htmlFor?: string | undefined;
   required?: boolean | undefined;
 }) => {
   const label = (
@@ -73,6 +79,19 @@ export const AOFFieldTitle = ({
     label
   );
 };
+
+/**
+ * The line under a field kept free for its errors, so an error appearing
+ * moves nothing below it; a field that never errs keeps the place empty, to
+ * line up with the fields beside it.
+ */
+export const AOFFieldErrorLine = (
+  props: Pick<AOFFieldErrorProps, "errors" | "id">
+) => (
+  <div className="min-h-6">
+    <AOFFieldError {...props} />
+  </div>
+);
 
 export type AOFTextFieldProps = Omit<
   AOFInputProps,
@@ -120,14 +139,7 @@ export const AOFTextField = ({
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const errorId = `${inputId}-error`;
-  const submissionAttempts = useSelector(
-    field.form.store,
-    (state) => state.submissionAttempts
-  );
-  const errors = shownErrors(field.state.meta.errors, {
-    isBlurred: field.state.meta.isBlurred,
-    submissionAttempts,
-  });
+  const errors = useShownErrors(field);
   const showsErrors = errors.length > 0;
   const marked = invalid || showsErrors;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -182,13 +194,11 @@ export const AOFTextField = ({
             type="button"
             variant="ghost"
           >
-            {revealed ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+            {revealed ? <IconEyeOff aria-hidden /> : <IconEye aria-hidden />}
           </AOFButton>
         ) : null}
       </div>
-      <div className="min-h-6">
-        <AOFFieldError errors={errors} id={errorId} />
-      </div>
+      <AOFFieldErrorLine errors={errors} id={errorId} />
     </AOFField>
   );
 };

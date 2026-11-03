@@ -1,4 +1,5 @@
 // @module-tag unit
+
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { Json } from "@allonfire/core/shared/utils/json";
 import { App, Role } from "@allonfire/database/enums";
@@ -6,6 +7,7 @@ import {
   EmailTakenError,
   type NewUser,
 } from "@allonfire/database/features/auth/user.service";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { errorOf, json } from "../../../../shared/tests/test-host";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
@@ -22,7 +24,7 @@ const VALID = {
   email: "new@create.test",
   memberships: [{ app: App.LAURA, role: Role.USER }],
   name: "New",
-  password: "A-long-password-1",
+  password: FIXTURE.PASSWORD,
 };
 
 /** Deps that record what they were asked to create. */
@@ -71,9 +73,9 @@ describe("User module: POST", () => {
     const host = userHost(ADMIN, deps);
     const statuses = await Promise.all(
       [
-        "a-long-password-1",
-        "A-LONG-PASSWORD-1",
-        "A-long-password-x",
+        FIXTURE.PASSWORD.toLowerCase(),
+        FIXTURE.PASSWORD.toUpperCase(),
+        `${FIXTURE.PASSWORD.slice(0, -1)}x`,
         "Along1password2x",
       ].map(
         async (password) => (await post(host, { ...VALID, password })).status

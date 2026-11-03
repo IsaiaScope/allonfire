@@ -1,7 +1,7 @@
 import { languageSchema } from "@allonfire/core/features/i18n/constants/locales";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { AOFBaseMetadata } from "@allonfire/core/features/next/metadata/aof-base-metadata";
-import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/launch-screens";
+import { AOFBaseMetadata } from "@allonfire/core/features/next/metadata/utils/aof-base-metadata";
+import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/utils/launch-screens";
 import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import { cache } from "react";

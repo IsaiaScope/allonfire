@@ -20,7 +20,7 @@ const fakeStorage = () => {
 /** The module as a new page load finds it: nothing asked yet this load. */
 const pageLoad = async () => {
   vi.resetModules();
-  return await import("../install-hint-state");
+  return await import("../utils/install-hint-state");
 };
 
 /** A visitor coming back: an earlier load already counted as the first. */

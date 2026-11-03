@@ -11,8 +11,8 @@ import sharp from "sharp";
 import { env } from "../../../environment/environment";
 import { storedObjectUrl } from "../../../shared/tests/stored-object-url";
 import { IMAGE } from "../../image/constants/image";
-import { s3 } from "../../s3/client";
-import { putObject } from "../../s3/objects";
+import { s3 } from "../../s3/utils/client";
+import { putObject } from "../../s3/utils/objects";
 import { IMAGE_SERVER } from "../constants/image-server";
 import { pictureLink } from "../sign";
 
@@ -148,7 +148,9 @@ describe("the image server, through signed links", () => {
       })
         .png()
         .toBuffer();
-      await putObject(OUTSIDE, key, picture, { contentType: "image/png" });
+      await putObject(OUTSIDE, key, picture, {
+        contentType: HTTP.CONTENT_TYPE.PNG,
+      });
       const outside = pictureLink({ bucket: OUTSIDE, key, width: WIDTH });
       expect((await fetch(outside)).status).toBe(HTTP.STATUS.NOT_FOUND);
     } finally {

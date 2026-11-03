@@ -1,4 +1,5 @@
-import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { SECURE_COOKIE_PREFIX } from "better-auth/cookies";
 import { cookies } from "next/headers";
@@ -37,7 +38,7 @@ export const signOutOfApi = async () => {
       jar.delete({
         domain: nextAuthEnv.AUTH_COOKIE_DOMAIN,
         name,
-        path: "/",
+        path: METADATA.PATH.ROOT,
         secure: name.startsWith(SECURE_COOKIE_PREFIX),
       });
     }

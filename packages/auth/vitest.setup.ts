@@ -1,6 +1,6 @@
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { App } from "@allonfire/database/enums";
-import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/local-env";
+import { fillLocalDatabaseEnv } from "@allonfire/database/features/test-database/utils/local-env";
 import { AUTH } from "./src/shared/constants/auth";
 
 // `@allonfire/database` validates its env at import; the Prisma client never

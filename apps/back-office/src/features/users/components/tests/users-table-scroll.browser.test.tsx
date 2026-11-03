@@ -1,7 +1,7 @@
 // @module-tag integration
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
@@ -29,11 +29,8 @@ vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
 vi.mock("@/features/i18n/navigation", async () => ({
   Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
-// Vite hands ui's next/image over as a module object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+vi.mock("@allonfire/ui/components/aof-image", async () => ({
+  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 
 /** A page in a box `height` tall and narrower than the list's columns, as
@@ -68,7 +65,7 @@ const renderInBox = async (
         <NextIntlClientProvider
           formats={DATE.FORMATS}
           locale={I18N.DEFAULT_LANGUAGE}
-          messages={{ ...SHARED_TRANSLATIONS.en, ...EN }}
+          messages={aofMessages("en", EN)}
           timeZone={DATE.TIME_ZONE}
         >
           <PageBox height={height}>

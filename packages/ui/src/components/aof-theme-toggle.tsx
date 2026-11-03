@@ -1,8 +1,8 @@
 "use client";
 
 import { mergeProps } from "@base-ui/react/merge-props";
+import { IconMoon, IconSun } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
-import { Moon, Sun } from "lucide-react";
 import type { ComponentPropsWithoutChildren } from "../lib/types";
 import { useAOFThemeSwitch } from "../lib/use-aof-theme-switch";
 import { cn } from "../lib/utils";
@@ -61,8 +61,8 @@ export const AOFThemeToggle = ({
       variant={variant}
       {...props}
     >
-      <Moon aria-hidden className={icon({ showIn: "light" })} />
-      <Sun aria-hidden className={icon({ showIn: "dark" })} />
+      <IconMoon aria-hidden className={icon({ showIn: "light" })} />
+      <IconSun aria-hidden className={icon({ showIn: "dark" })} />
     </AOFButton>
   );
 };

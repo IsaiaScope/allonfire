@@ -1,5 +1,5 @@
-import type { SharedTranslationsFor } from "../aof-get-request-config";
-import type { SharedTranslations } from "../shared-translations";
+import type { SharedTranslations } from "../translations/shared-translations";
+import type { SharedTranslationsFor } from "../utils/aof-get-request-config";
 
 // A Host speaking only base languages gets the shared text from core.
 expectTypeOf<SharedTranslationsFor<"en" | "it">>().toEqualTypeOf<{

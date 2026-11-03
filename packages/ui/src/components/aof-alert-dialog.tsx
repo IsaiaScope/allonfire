@@ -86,7 +86,7 @@ export const AOFAlertDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel
             {...cancelProps}
-            className={cn("cursor-pointer", cancelProps?.className)}
+            className={cancelProps?.className}
             disabled={pending}
           >
             {cancel}
@@ -95,7 +95,7 @@ export const AOFAlertDialog = ({
             aria-busy={pending}
             variant="destructive"
             {...confirmProps}
-            className={cn("cursor-pointer", confirmProps?.className)}
+            className={confirmProps?.className}
             disabled={pending}
             onClick={act}
           >

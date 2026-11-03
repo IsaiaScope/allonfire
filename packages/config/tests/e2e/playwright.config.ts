@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { LOCAL } from "../../local/addresses";
 import { testRunStamp } from "../run/test-run";
-import { E2E } from "./run";
+import { E2E, e2eCliArgs } from "./run";
 
 const isCi = Boolean(process.env.CI);
 /** Tests tagged for Chromium only, which the WebKit projects leave out. */
@@ -23,11 +23,18 @@ process.env.CONFIG_E2E_STAMP ??= testRunStamp();
 const STAMP = process.env.CONFIG_E2E_STAMP;
 /** Requests, and sign-ins, one e2e run may make; far above any run's need. */
 const E2E_RATE_LIMIT_MAX = 10_000;
-// `-C`, not `--filter`: a filtered run prints a banner into the captured name.
-const cli =
-  ({ dir, script }: { dir: string; script: string }) =>
-  (command: string) =>
-    `pnpm -s -C "${dir}" ${script} ${command} ${E2E.LABEL} ${STAMP}`;
+/**
+ * How long an assertion waits. Four browsers share one API process, and
+ * each sign-in hashes a password on its thread, so a page that redraws
+ * after a save (the list, its kept copy just dropped) can take past
+ * Playwright's default 5 s under a full run; a trace showed 5.4 s.
+ */
+const EXPECT_TIMEOUT_MS = 15_000;
+/** One e2e CLI call as a shell command, each argument quoted. */
+const cli = (target: { dir: string; script: string }) => (command: string) =>
+  ["pnpm", ...e2eCliArgs(target, command, STAMP).map((arg) => `"${arg}"`)].join(
+    " "
+  );
 const testDatabase = cli(E2E.CLI.DATABASE);
 const testBucket = cli(E2E.CLI.BUCKET);
 
@@ -68,6 +75,7 @@ export const aofPlaywrightConfig = ({
   const apiUrl = LOCAL.URL.API_E2E;
   const standalone = `.next/standalone/apps/${app}`;
   return defineConfig(playwrightConfig, {
+    expect: { timeout: EXPECT_TIMEOUT_MS },
     // Drops the run's database and bucket.
     globalTeardown: resolve(import.meta.dirname, "global-teardown.ts"),
     // Two engines at two widths: Chromium (Chrome, Edge) and WebKit (Safari,

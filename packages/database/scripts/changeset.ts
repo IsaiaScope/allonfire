@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import { readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
+import { TEST_DATABASE } from "../src/features/test-database/constants/test-database";
 import {
   buildChangeset,
   CHANGESET,
@@ -12,15 +13,13 @@ import {
   nextChangesetNumber,
 } from "./changeset-file";
 
-const PACKAGE_ROOT = resolve(import.meta.dirname, "..");
-const CHANGESETS_DIR = resolve(PACKAGE_ROOT, CHANGESET.DIR);
 const SCHEMA = "prisma/schema";
 
 function prismaDiff(from: string[], to: string[]): string {
   return execFileSync(
     "prisma",
     ["migrate", "diff", ...from, ...to, "--script"],
-    { cwd: PACKAGE_ROOT, encoding: "utf8" }
+    { cwd: TEST_DATABASE.PACKAGE_ROOT, encoding: "utf8" }
   );
 }
 
@@ -35,7 +34,7 @@ if (!PATTERN.CHANGESET.NAME.test(name)) {
 }
 
 execFileSync("bash", ["scripts/liquibase.sh", "update"], {
-  cwd: PACKAGE_ROOT,
+  cwd: TEST_DATABASE.PACKAGE_ROOT,
   stdio: "inherit",
 });
 
@@ -51,8 +50,8 @@ const rollback = prismaDiff(
   ["--to-schema-datasource", SCHEMA]
 );
 
-const id = `${nextChangesetNumber(readdirSync(CHANGESETS_DIR))}-${name}`;
-const file = resolve(CHANGESETS_DIR, `${id}.sql`);
+const id = `${nextChangesetNumber(readdirSync(CHANGESET.DIR))}-${name}`;
+const file = resolve(CHANGESET.DIR, `${id}.sql`);
 writeFileSync(file, buildChangeset({ forward, id, rollback }));
 process.stdout.write(
   `Wrote ${file}\nReview it (drops, renames, type changes), then run pnpm db:update.\n`

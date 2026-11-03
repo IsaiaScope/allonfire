@@ -10,7 +10,7 @@ import {
 describe("AOFCard", () => {
   it("draws shadcn's card and keeps the caller's classes", () => {
     const html = renderToStaticMarkup(
-      <AOFCard className="gap-2">
+      <AOFCard className="caller-class">
         <AOFCardHeader>
           <AOFCardTitle>Title</AOFCardTitle>
         </AOFCardHeader>
@@ -18,7 +18,7 @@ describe("AOFCard", () => {
       </AOFCard>
     );
     expect(html).toContain('data-slot="card"');
-    expect(html).toContain("gap-2");
+    expect(html).toContain("caller-class");
     expect(html).toContain("Title");
     expect(html).toContain("Body");
   });

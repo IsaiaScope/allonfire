@@ -6,11 +6,11 @@ import { TEST_DATABASE } from "../../src/features/test-database/constants/test-d
 import {
   databaseUrl,
   testDatabaseName,
-} from "../../src/features/test-database/names";
+} from "../../src/features/test-database/utils/names";
 import {
   createDatabase,
   dropDatabase as dropOnServer,
-} from "../../src/features/test-database/server";
+} from "../../src/features/test-database/utils/server";
 
 const LIQUIBASE_TABLE = /^databasechangelog/;
 /** This run's: two runs at once (a watch and the hook) never share a database. */

@@ -18,14 +18,17 @@ src/
       <sub-feature>/  any folder that is not a kind; same shape, recursively
 ```
 
-Only `environment/`, `shared/` and `features/` sit at the top of `src/`; routes
-live in their feature (`features/<name>/routes/`). Kind folders are the closed
+Only `environment/`, `shared/` and `features/` sit at the top of `src/`, plus
+the API's root files: `index.ts`, `app.ts`, `client.ts` and `shutdown.ts`, with
+their tests (`client.test-d.ts`, `shutdown.test.ts`), as `api.md` and
+`testing.md` say. Routes live in their feature (`features/<name>/routes/`). Kind folders are the closed
 list above; any other folder inside a feature is a sub-feature. Nest only when
 a feature really has sub-features. Code lives in the deepest feature that
 contains every reader: one sub-feature reads it, it lives there; two
 sub-features, their parent's kind folder; two top-level features, `shared/`.
 A feature's main file can sit directly in its folder when a kind folder would
-hold only that file. Every folder is optional (ADR 0016).
+hold only that file; once a feature has several peer files (helpers, a CLI, a
+global setup), each goes in its kind folder, a CLI in `utils/`. Every folder is optional (ADR 0016).
 
 **Packages are concepts.** One package per concept, usable by any Host (an App
 or the API, see `CONTEXT.md`). A framework adapter lives in a sub-folder
@@ -58,8 +61,11 @@ own key (`@allonfire/database/enums`). A package that serves HTTP for any host
 takes its dependencies as arguments, and throws `CodedError` from
 `@allonfire/core/features/errors/coded-error` instead of building responses (ADR 0015;
 routes Better Auth serves throw its `APIError`, which its handler answers).
-`packages/shadcn`, `packages/ui` and `packages/design` are exempt: the
-first two follow shadcn's `components/` and `lib/` so `shadcn add` works;
-`packages/design` holds Designs and Apps (ADR 0011).
+`packages/shadcn`, `packages/ui`, `packages/design` and `packages/config` are
+exempt: the first two follow shadcn's `components/` and `lib/` so `shadcn add`
+works; `packages/design` holds Designs and Apps (ADR 0011); `packages/config`
+has no `src/`, since its presets are addressed by path (the tsconfigs in
+`typescript/`, the Vitest and Playwright configs in `tests/`, the Local
+addresses in `local/`).
 
 - An env var that points at another service is required with no default (`z.url()`); its Local value sits in the git-ignored `.env.development`: `apps/back-office/src/environment/environment.ts`. (`docs/superpowers/specs/2026-10-02-package-architecture-design.md`)

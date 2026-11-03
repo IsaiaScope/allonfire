@@ -3,10 +3,10 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -18,6 +18,7 @@ import IT from "../src/features/i18n/translations/it.json" with {
 import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { enT } from "../src/shared/tests/translators";
 import {
   emailOf,
   openSidebar,
@@ -94,7 +95,7 @@ test("sends a signed-out visit to a User's page to Sign in", async ({
 /** A User's selection checkbox as drawn on screen: a table row, or a card. */
 const checkboxOf = (page: Page, email: string) =>
   page
-    .getByRole("checkbox", { name: t.delete.select.replace("{email}", email) })
+    .getByRole("checkbox", { name: enT("Users.delete.select", { email }) })
     .filter({ visible: true });
 
 /**
@@ -202,11 +203,20 @@ const addUser = async (page: Page, user: ReturnType<typeof addedBy>) => {
   await fillAddForm(page, user);
   await form
     .getByRole("radiogroup", {
-      name: t.form.role.replace("{app}", APP_ENTRY[App.BACK_OFFICE].name),
+      name: enT("Users.form.role", { app: APP_ENTRY[App.BACK_OFFICE].name }),
     })
     .getByRole("button", { name: EN.Navigation.role[Role.ADMIN] })
     .click();
   await form.getByRole("button", { name: t.add.submit }).click();
+};
+
+/** Adds a User through the form, as a Back Office Admin, and waits for the list. */
+const addedUser = async (page: Page, project: string) => {
+  const user = addedBy(project);
+  await page.goto(newUserHref());
+  await addUser(page, user);
+  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  return user;
 };
 
 test("adds a User from the list's Add button; they sign in with the password the Admin typed", async ({
@@ -273,10 +283,7 @@ test("deletes a User it added: confirmed, they leave the list", async ({
     }),
     (dismiss) => dismiss.click()
   );
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-deleted`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-deleted`);
   // A visit of its own keeps the list on the server: only the deletion's
   // `updateTag` drops it, so the reload below shows the User gone. Searched
   // by email: the Users other tests add can push anyone off the first page.
@@ -342,7 +349,7 @@ const addUserWithPicture = async (
   await signInAsAdmin(page);
   await page.goto(newUserHref());
   await picturePicker(page).setInputFiles(
-    resolve(IMAGE_FIXTURE_FILES, "photo.jpg")
+    resolve(IMAGE_FIXTURE.DIR, IMAGE_FIXTURE.FILE.PHOTO)
   );
   await page
     .getByRole("button", { exact: true, name: t.form.avatar.use })
@@ -397,16 +404,13 @@ test("renames a User and changes their Laura Role; the list shows both", async (
   page,
 }, info) => {
   await signInAsAdmin(page);
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-edited`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-edited`);
   await page.goto(await userPathOf(page, user.email));
   const form = editForm(page, user.email);
   await form.getByLabel(t.form.name, { exact: true }).fill("Renamed");
   await form
     .getByRole("radiogroup", {
-      name: t.form.role.replace("{app}", APP_ENTRY[App.LAURA].name),
+      name: enT("Users.form.role", { app: APP_ENTRY[App.LAURA].name }),
     })
     .getByRole("button", { name: EN.Navigation.role[Role.VIEWER] })
     .click();
@@ -429,10 +433,7 @@ test("a new password lets the User sign in with it", async ({
   page,
 }, info) => {
   await signInAsAdmin(page);
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-repassworded`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-repassworded`);
   await page.goto(await userPathOf(page, user.email));
   const password = "A-newer-e2e-password-2";
   const form = editForm(page, user.email);
@@ -457,7 +458,7 @@ test("your own page saves your name and keeps your Back Office Role", async ({
   await page.goto(await userPathOf(page, admin.email));
   await expect(
     editForm(page, admin.email).getByText(
-      t.edit.ownRoleLocked.replace("{app}", APP_ENTRY[App.BACK_OFFICE].name)
+      enT("Users.edit.ownRoleLocked", { app: APP_ENTRY[App.BACK_OFFICE].name })
     )
   ).toBeVisible();
   // The same name: the Fixture stays as other tests know it.
@@ -483,28 +484,11 @@ test("an unknown id shows the 404 inside the frame", async ({ page }) => {
 const searchFor = (page: Page, email: string) =>
   page.goto(usersSearchHref(email));
 
-/** Adds a User through the form, as a Back Office Admin, and waits for the list. */
-const addedUser = async (page: Page, project: string) => {
-  const user = addedBy(project);
-  await page.goto(newUserHref());
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
-  return user;
-};
-
 /** Deletes a User from the list in a second tab, as another Admin would. */
 const deleteInAnotherTab = async (page: Page, email: string) => {
   const other = await page.context().newPage();
   await other.goto(usersSearchHref(email));
-  await checkboxOf(other, email).click();
-  await other
-    .getByRole("button", { exact: true, name: t.delete.action })
-    .click();
-  await other
-    .getByRole("alertdialog")
-    .getByRole("button", { name: t.delete.confirm })
-    .click();
-  await expect(other.getByText("1 User deleted")).toBeVisible();
+  await deleteFromList(other, email);
   await other.close();
 };
 
@@ -611,6 +595,9 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   browser,
   page,
 }, info) => {
+  // Three sign-ins, an add and a new password, each hashing a password on
+  // the API's one thread: under a full run it can outlast the usual limit.
+  test.slow();
   await signInAsAdmin(page);
   const admin = await addedUser(page, `${info.project.name}-ended`);
   // Two Sessions of the same Admin: this one keeps a page open...
@@ -631,6 +618,11 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   const own = editForm(fresh, admin.email);
   await own.getByLabel(t.edit.password, { exact: true }).fill(password);
   await own.getByLabel(t.edit.confirmPassword, { exact: true }).fill(password);
+  // Typed right after the page loads: React keeps text typed before it
+  // hydrates, but not a click. The rule ticks only once it has.
+  await expect(
+    own.getByRole("checkbox", { name: t.form.rule.match })
+  ).toBeChecked();
   await saveEdit(fresh, admin.email);
 
   const form = editForm(stale, admin.email);

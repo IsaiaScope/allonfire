@@ -6,7 +6,7 @@ import { isStaleTestRun } from "@allonfire/config/tests/run/test-run";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { TEST_DATABASE } from "../constants/test-database";
-import { buildingName, templateFingerprint } from "../template";
+import { buildingName, templateFingerprint } from "../utils/template";
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 

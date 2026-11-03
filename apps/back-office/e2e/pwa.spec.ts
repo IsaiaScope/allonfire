@@ -1,7 +1,7 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { E2E } from "@allonfire/config/tests/e2e/run";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";

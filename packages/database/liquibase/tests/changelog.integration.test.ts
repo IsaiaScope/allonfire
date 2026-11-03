@@ -2,13 +2,14 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "@allonfire/config/local/repo";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { parseJsonWith } from "@allonfire/core/shared/utils/json";
 import { z } from "zod";
 import type { PrismaClient } from "../../generated/prisma/client";
 import { CHANGESET } from "../../scripts/changeset-file";
 import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
-import { liquibase } from "../../src/features/test-database/server";
+import { liquibase } from "../../src/features/test-database/utils/server";
 import {
   clientFor,
   dropDatabase,
@@ -41,11 +42,7 @@ const BASELINE_TABLES = [
   "QuizQuestion",
 ].sort();
 
-const BASELINE = resolve(
-  TEST_DATABASE.PACKAGE_ROOT,
-  CHANGESET.DIR,
-  "0000-baseline.sql"
-);
+const BASELINE = resolve(CHANGESET.DIR, "0000-baseline.sql");
 const EXISTING_USER = "existing-user";
 const LAURA_VIEWER = "laura-viewer";
 /** A User whose access was revoked by deleting their Memberships. */
@@ -53,9 +50,8 @@ const NO_MEMBERSHIP = "no-membership";
 
 /** Every changeset above the baseline, so the rollback test survives new ones. */
 const CHANGESETS_AFTER_BASELINE =
-  readdirSync(resolve(TEST_DATABASE.PACKAGE_ROOT, CHANGESET.DIR)).filter(
-    (file) => PATTERN.CHANGESET.FILE.test(file)
-  ).length - 1;
+  readdirSync(CHANGESET.DIR).filter((file) => PATTERN.CHANGESET.FILE.test(file))
+    .length - 1;
 
 describe("changelog on an empty database", () => {
   const database = throwawayName("changelog_fresh");
@@ -267,10 +263,7 @@ describe("rolling back the schema move", () => {
 });
 
 const { version } = parseJsonWith(
-  readFileSync(
-    resolve(TEST_DATABASE.PACKAGE_ROOT, "../../package.json"),
-    "utf8"
-  ),
+  readFileSync(resolve(REPO.ROOT, "package.json"), "utf8"),
   z.object({ version: z.string() })
 );
 const RELEASE_TAG = `v${version}`;

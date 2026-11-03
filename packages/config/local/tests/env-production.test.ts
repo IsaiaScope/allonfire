@@ -1,4 +1,5 @@
 // @module-tag unit
+
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
@@ -9,9 +10,9 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const SCRIPT = resolve(REPO, "packages/config/local/env-production.sh");
+const SCRIPT = resolve(REPO.ROOT, "packages/config/local/env-production.sh");
 const SECRET = "secret-1";
 
 let dir: string;
@@ -101,7 +102,7 @@ describe("env-production.sh", () => {
 
 describe(".env.production files", () => {
   const git = (...args: string[]) =>
-    spawnSync("git", args, { cwd: REPO, encoding: "utf8" });
+    spawnSync("git", args, { cwd: REPO.ROOT, encoding: "utf8" });
 
   it("none is tracked", () => {
     const tracked = git("ls-files", "*.env.production", ".env.production");

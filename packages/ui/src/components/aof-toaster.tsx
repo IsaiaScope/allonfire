@@ -70,7 +70,7 @@ const notice = cva("border-current/15! text-toast-foreground!", {
 
 const CLASS_NAMES = {
   closeButton: cn(
-    "transform-none! top-1.5! right-1.5! left-auto! size-7! cursor-pointer rounded-md! border-0! bg-transparent! text-current! shadow-none! outline-none hover:bg-current/20! focus-visible:ring-3! focus-visible:ring-current/50! [&_svg]:stroke-[2.5]"
+    "transform-none! top-1.5! right-1.5! left-auto! size-7! rounded-md! border-0! bg-transparent! text-current! shadow-none! outline-none hover:bg-current/20! focus-visible:ring-3! focus-visible:ring-current/50! [&_svg]:stroke-[2.5]"
   ),
   // Under the message, which then reads as its title (bold); both stop at
   // five lines with an ellipsis.

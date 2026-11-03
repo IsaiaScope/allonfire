@@ -1,9 +1,13 @@
-export type GooeyPalette = "dark" | "light";
+import {
+  type ColorScheme,
+  METADATA,
+} from "@allonfire/core/features/metadata/constants/metadata";
+
 export type GooeySize = "sm" | "md" | "lg";
 
-/** The frame's glass and the labels' ink, per palette. */
+/** The frame's glass and the labels' ink, per colour scheme. */
 const THEMES = {
-  dark: {
+  [METADATA.COLOR_SCHEME.DARK]: {
     "--gn-frame": "rgba(38, 35, 46, 0.66)",
     "--gn-frame-edge": "rgba(255, 255, 255, 0.08)",
     "--gn-frame-highlight": "rgba(255, 255, 255, 0.07)",
@@ -12,7 +16,7 @@ const THEMES = {
     "--gn-ink": "#f4f4f5",
     "--gn-muted": "rgba(244, 244, 245, 0.62)",
   },
-  light: {
+  [METADATA.COLOR_SCHEME.LIGHT]: {
     "--gn-frame": "rgba(240, 240, 243, 0.8)",
     "--gn-frame-edge": "rgba(24, 24, 27, 0.07)",
     "--gn-frame-highlight": "rgba(255, 255, 255, 0.95)",
@@ -21,14 +25,22 @@ const THEMES = {
     "--gn-ink": "#27272a",
     "--gn-muted": "rgba(39, 39, 42, 0.62)",
   },
-} as const satisfies Record<GooeyPalette, Record<`--gn-${string}`, string>>;
+} as const satisfies Record<ColorScheme, Record<`--gn-${string}`, string>>;
 
 /** The pill's default colour, the hover's tint and the shadow's strength. */
 const PILLS = {
-  dark: { color: "#f4f4f5", hover: "rgba(255, 255, 255, 0.08)", shadow: 0.4 },
-  light: { color: "#27272a", hover: "rgba(24, 24, 27, 0.06)", shadow: 0.2 },
+  [METADATA.COLOR_SCHEME.DARK]: {
+    color: "#f4f4f5",
+    hover: "rgba(255, 255, 255, 0.08)",
+    shadow: 0.4,
+  },
+  [METADATA.COLOR_SCHEME.LIGHT]: {
+    color: "#27272a",
+    hover: "rgba(24, 24, 27, 0.06)",
+    shadow: 0.2,
+  },
 } as const satisfies Record<
-  GooeyPalette,
+  ColorScheme,
   { color: string; hover: string; shadow: number }
 >;
 
@@ -60,5 +72,5 @@ const SIZES = {
 /** No drop colours: every drop takes the pill's. One array, so props stay stable. */
 const NO_TINTS: string[] = [];
 
-/** The gooey nav's looks: per palette and size, and its default drop colours. */
+/** The gooey nav's looks: per colour scheme and size, and its default drop colours. */
 export const GOOEY = { NO_TINTS, PILLS, SIZES, THEMES } as const;

@@ -1,11 +1,12 @@
 // @module-tag integration
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
-import { firstLoad } from "@allonfire/core/features/next/pwa/install-hint-state";
+import { firstLoad } from "@allonfire/core/features/next/pwa/utils/install-hint-state";
 import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
+import { nextFrames, toastWouldHaveArrived } from "@/shared/tests/toast-timing";
 import { InstallHint } from "../install-hint";
 
 const TEXT = SHARED_TRANSLATIONS[I18N.DEFAULT_LANGUAGE].Common.Install;
@@ -49,18 +50,6 @@ beforeEach(() => {
 });
 
 /** Sonner sends a dismissal a frame later: let the last test's land. */
-const nextFrames = () =>
-  new Promise((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve))
-  );
-
-/** Long enough for a hint to arrive: a frame late, then Sonner's own timer. */
-const HINT_ARRIVES_MS = 200;
-const hintArrives = async () => {
-  await nextFrames();
-  await new Promise((resolve) => setTimeout(resolve, HINT_ARRIVES_MS));
-};
-
 afterEach(async () => {
   window.dispatchEvent(new Event("appinstalled"));
   await nextFrames();
@@ -130,7 +119,7 @@ describe("Install hint", () => {
     screen.unmount();
     const again = await hint();
     // An absence holds at once: wait until a hint would have come.
-    await hintArrives();
+    await toastWouldHaveArrived();
     await expect
       .element(again.getByRole("complementary"))
       .not.toBeInTheDocument();

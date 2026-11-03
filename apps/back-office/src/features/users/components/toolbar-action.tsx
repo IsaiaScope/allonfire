@@ -60,6 +60,20 @@ export const tiledControl = cva(
   "h-(--field-height) border-input bg-transparent text-base text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:bg-transparent hover:text-muted-foreground aria-expanded:border-muted-foreground/50 aria-expanded:bg-transparent aria-expanded:text-muted-foreground md:text-base dark:bg-input/30 dark:aria-expanded:bg-input/30 dark:hover:bg-input/30"
 );
 
+/** Where the Users toolbar's parts sit, as its skeleton draws them too: one
+ *  wrapping row; the search box the whole first row while the toolbar is
+ *  narrow, sharing one row with the rest from `@4xl`; the actions at its
+ *  right end. */
+export const toolbarLayout = cva("", {
+  variants: {
+    part: {
+      actions: "ml-auto flex gap-2",
+      row: "flex flex-wrap items-center gap-2",
+      search: "min-w-0 flex-1 @4xl:basis-0 basis-full",
+    },
+  },
+});
+
 /** The classes of a toolbar action drawn as `variant`, in `shape`. */
 export const toolbarActionClass = (
   shape: ToolbarActionShape,

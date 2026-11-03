@@ -5,7 +5,7 @@ import { z } from "zod";
 import { parseJsonWith } from "../../../../shared/utils/json";
 import { I18N } from "../../../i18n/constants/locales";
 import { APPS, scaffoldedApps } from "../../tests/scaffolded-apps";
-import { SHARED_TRANSLATIONS } from "../shared-translations";
+import { SHARED_TRANSLATIONS } from "../translations/shared-translations";
 
 // `Common` is reserved for the shared translations: an App's own namespace of that
 // name would silently replace them in the merge.

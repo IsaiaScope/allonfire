@@ -1,5 +1,6 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
+import type { UserRecord } from "@allonfire/database/features/auth/user.service";
 import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { moduleTestHost } from "../../../../shared/tests/test-host";
 import type { AuthSession } from "../../../../shared/types/auth";
@@ -10,6 +11,22 @@ import type { UserDeps } from "../utils/deps";
 /** A Back Office Admin: who manages Users on `stubUserDeps`' `manageApp`. */
 export const BACK_OFFICE_ADMIN = sessionFor({
   memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
+});
+
+/**
+ * A stored User as the database answers it, on its first Version; override
+ * the fields a test is about.
+ */
+export const userRow = (overrides: Partial<UserRecord> = {}): UserRecord => ({
+  createdAt: new Date("2026-10-01T10:00:00.000Z"),
+  email: "user-2@allonfire.test",
+  id: "user-2",
+  image: null,
+  imageBlurDataUrl: null,
+  memberships: [],
+  name: null,
+  version: "version-1",
+  ...overrides,
 });
 
 const unexpected = (name: string) => () =>

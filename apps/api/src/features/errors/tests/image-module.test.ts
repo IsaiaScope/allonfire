@@ -4,6 +4,7 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
@@ -19,8 +20,8 @@ import { ImageTooLargeError } from "@allonfire/storage/features/image/prepare/pr
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
+import { problemOf } from "../../../shared/tests/problem-of";
 import { translate } from "../../i18n/translate";
-import { problemOf } from "./problem-of";
 
 const admin = sessionFor({ memberships: membershipsIn(Role.ADMIN) });
 
@@ -41,8 +42,8 @@ const upload = () => {
   );
   return {
     body: form,
-    headers: { "accept-language": "it" },
-    method: "POST",
+    headers: { [HTTP.HEADER.ACCEPT_LANGUAGE]: "it" },
+    method: HTTP.METHOD.POST,
   };
 };
 
@@ -51,7 +52,7 @@ describe("the Image module inside the API", () => {
     const res = await app({
       prepare: () => Promise.reject(new ImageTooLargeError()),
     }).request(API.PATH.IMAGES, upload());
-    expect(res.status).toBe(413);
+    expect(res.status).toBe(HTTP.STATUS.PAYLOAD_TOO_LARGE);
     const body = await problemOf(res);
     expect(body.code).toBe(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE);
     expect(body.detail).toBe(
@@ -87,7 +88,7 @@ describe("the Image module inside the API", () => {
       API.LIMIT.REQUEST_TIMEOUT_MS + UNIT.MS_PER_SECOND
     );
     release();
-    expect((await pending).status).toBe(201);
+    expect((await pending).status).toBe(HTTP.STATUS.CREATED);
   });
 });
 
@@ -97,7 +98,7 @@ describe("the Image module's reads and writes inside the API", () => {
     const res = await createApp(
       appDeps({ images: stubImageDeps({ listImages }) })
     ).request(`${API.PATH.IMAGES}?app=${App.LAURA}`);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(listImages).toHaveBeenCalledWith({
       app: App.LAURA,
       enterable: [],
@@ -108,10 +109,10 @@ describe("the Image module's reads and writes inside the API", () => {
   it("asks a visitor to sign in before a write, as a problem document", async () => {
     const res = await createApp(appDeps()).request(API.PATH.IMAGES, {
       body: stringifyJson({ ids: ["image-1"] }),
-      headers: { "content-type": "application/json" },
-      method: "DELETE",
+      headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
+      method: HTTP.METHOD.DELETE,
     });
-    expect(res.status).toBe(401);
-    expect((await problemOf(res)).status).toBe(401);
+    expect(res.status).toBe(HTTP.STATUS.UNAUTHORIZED);
+    expect((await problemOf(res)).status).toBe(HTTP.STATUS.UNAUTHORIZED);
   });
 });

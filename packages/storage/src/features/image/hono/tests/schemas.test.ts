@@ -9,11 +9,9 @@ import {
   uploadFormSchema,
   uploadItemSchema,
 } from "../constants/schemas";
+import { ALT, VERSION } from "./stub-image-deps";
 
-const ALT = { en: "The sea", it: "Il mare" };
 const LAURA_TWICE = [App.LAURA, App.LAURA];
-/** The Version a change was made on. */
-const VERSION = "version-1";
 
 describe("uploadItemSchema", () => {
   it("makes an Image sent without `access` private, and keeps one sent public", () => {

@@ -3,7 +3,8 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
@@ -12,6 +13,7 @@ import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type EditUserState, editUser } from "../../actions/edit-user";
 import { USERS } from "../../constants/users";
@@ -56,19 +58,18 @@ const USER: UserBody = {
 };
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: FORM.role.replace("{app}", APP_ENTRY[app].name),
+    name: enT("Users.form.role", { app: APP_ENTRY[app].name }),
   });
-const lockedNote = t.ownRoleLocked.replace(
-  "{app}",
-  APP_ENTRY[App.BACK_OFFICE].name
-);
+const lockedNote = enT("Users.edit.ownRoleLocked", {
+  app: APP_ENTRY[App.BACK_OFFICE].name,
+});
 
 const renderForm = (user = USER) =>
   render(
     <NextIntlClientProvider
       formats={DATE.FORMATS}
       locale={I18N.DEFAULT_LANGUAGE}
-      messages={{ ...SHARED_TRANSLATIONS.en, ...EN }}
+      messages={aofMessages("en", EN)}
       timeZone={DATE.TIME_ZONE}
     >
       <EditUser manageApp={App.BACK_OFFICE} selfId={SELF_ID} user={user} />

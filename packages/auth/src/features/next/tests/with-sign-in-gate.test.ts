@@ -7,10 +7,12 @@ import { serverLogger } from "@allonfire/core/features/next/logger/server-logger
 import { App, Role } from "@allonfire/database/enums";
 import { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
+import { SESSION_COOKIE } from "../../../shared/tests/stub-auth";
 import { withSignInGate } from "../utils/with-sign-in-gate";
+import { apiSends } from "./session-request-mocks";
 
 const ORIGIN = "http://back-office.test";
-const TOKEN = "__Secure-better-auth.session_token=t";
+const TOKEN = `${SESSION_COOKIE.SECURE_TOKEN}=t`;
 const IT = "it";
 const { HOME, SIGN_IN } = AUTH.PAGE;
 /** A page only the App knows: the gate must take it as a plain path. */
@@ -23,20 +25,6 @@ const gate = withSignInGate(proxy, {
 });
 const visit = (path: string, cookie = "") =>
   gate(new NextRequest(`${ORIGIN}${path}`, { headers: { cookie } }));
-
-/** The API answers `get-session` with a User holding these Memberships. */
-const apiSends = (memberships: { app: App; role: Role }[] | null) => {
-  const fetch = vi.fn(async () =>
-    Response.json(
-      memberships && {
-        session: { id: "session-1" },
-        user: { email: "someone@example.com", memberships },
-      }
-    )
-  );
-  vi.stubGlobal("fetch", fetch);
-  return fetch;
-};
 
 beforeEach(() => proxy.mockClear());
 

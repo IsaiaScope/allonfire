@@ -106,10 +106,10 @@
     "packages/auth/src/features/next/utils/with-provider-pictures.ts": [
       "exports"
     ],
-    "packages/core/src/features/next/config/aof-create-next-config.ts": [
+    "packages/core/src/features/next/config/utils/aof-create-next-config.ts": [
       "exports"
     ],
-    "packages/core/src/features/next/config/aof-with-localized-not-found.ts": [
+    "packages/core/src/features/next/config/utils/aof-with-localized-not-found.ts": [
       "exports"
     ],
     // Test helpers and test setup other packages' tests import, through
@@ -121,7 +121,9 @@
     "packages/auth/src/shared/tests/test-host.ts": ["exports"],
     "packages/config/tests/browser/msw.ts": ["exports"],
     "packages/config/tests/browser/vitest.browser.config.ts": ["exports"],
-    "packages/database/src/features/test-database/local-env.ts": ["exports"],
+    "packages/database/src/features/test-database/utils/local-env.ts": [
+      "exports"
+    ],
     "packages/storage/src/features/image/hono/tests/stub-image-deps.ts": [
       "exports"
     ],
@@ -136,10 +138,12 @@
     ],
     // For an indexed App's pages (alternates, sitemap); no App is indexed yet,
     // so only its test reads them.
-    "packages/core/src/features/next/metadata/aof-indexed.ts": ["exports"],
+    "packages/core/src/features/next/metadata/utils/aof-indexed.ts": [
+      "exports"
+    ],
     // Mounted by hand while debugging the query cache (the Back Office
     // layout's comment says where).
-    "packages/core/src/features/next/providers/aof-react-query-devtools.tsx": [
+    "packages/core/src/features/next/providers/components/aof-react-query-devtools.tsx": [
       "exports"
     ]
   },
@@ -199,7 +203,7 @@
       "entry": [
         "src/**/*.test-d.ts",
         "src/features/ci/print-affected.ts!",
-        "src/features/next/pwa/cli.ts!",
+        "src/features/next/pwa/utils/cli.ts!",
         "src/features/tailwind/canonicalize.ts!",
         "src/features/typescript/vendor-types.ts!"
       ],
@@ -220,8 +224,8 @@
     },
     "packages/database": {
       "entry": [
-        "src/features/seed/cli.ts!",
-        "src/features/test-database/cli.ts!",
+        "src/features/seed/utils/cli.ts!",
+        "src/features/test-database/utils/cli.ts!",
         "scripts/changeset.ts!"
       ],
       "project": [
@@ -256,8 +260,8 @@
     "packages/storage": {
       "entry": [
         "src/**/*.test-d.ts",
-        "src/features/image/setup/cli.ts!",
-        "src/features/test-bucket/cli.ts!",
+        "src/features/image/setup/utils/cli.ts!",
+        "src/features/test-bucket/utils/cli.ts!",
         "src/features/image/fixtures/scripts/describe-fixtures.ts!"
       ],
       "project": [

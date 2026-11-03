@@ -20,7 +20,7 @@ Default to Server Components. Only add `"use client"` when the component actuall
 - Fetch data in Server Components (pages, layouts), pass as props to client components
 - Use Server Actions for mutations — keep form logic in client components but action definitions server-side
 - Use `initialData` pattern with TanStack Query: server-fetch in page, hydrate in client component
-- A failed query or mutation is told in one place: an App mounts ui's `AOFQueryProvider` (`components/aof-query-provider`: core's `AOFQueryClientProvider` with `aofErrorCaches`, `features/next/query/aof-query-errors`, telling through `aofToast`). A mutation always toasts; a query only when refreshing what is on screen fails, since a first load shows its own error state (a table's). `meta: aofErrorMeta(t("…"))` gives the toast its own words, `aofErrorMeta(false)` silences it where the component shows the error; the default words are core's `Common.Request.failed`. Never an `aofToast` in a query's or mutation's own `onError`. A mutation's options live in its feature's `utils/<feature>-mutations.ts`, apart from `<feature>-queries.ts`, which the server reads too
+- A failed query or mutation is told in one place: an App mounts ui's `AOFQueryProvider` (`components/aof-query-provider`: core's `AOFQueryClientProvider` with `aofErrorCaches`, `features/next/query/utils/aof-query-errors`, telling through `aofToast`). A mutation always toasts; a query only when refreshing what is on screen fails, since a first load shows its own error state (a table's). `meta: aofErrorMeta(t("…"))` gives the toast its own words, `aofErrorMeta(false)` silences it where the component shows the error; the default words are core's `Common.Request.failed`. Never an `aofToast` in a query's or mutation's own `onError`. A mutation's options live in its feature's `utils/<feature>-mutations.ts`, apart from `<feature>-queries.ts`, which the server reads too
 - Providers must be client: an App composes the AOF providers from `@allonfire/core/features/next/providers/*` one by one in its `[locale]/layout.tsx` (ADR 0012), never a single all-in-one `Providers` component
 
 ## Instrumentation and server logs
@@ -48,6 +48,6 @@ and ship nothing.
 
 ## Pointers
 
-- robots.txt is core's `AOFRobots` (`Allow: /`, plus a sitemap line when indexed), never `Disallow: /`, which would hide an unindexed App's `noindex` from search engines and block link-preview bots: `packages/core/src/features/next/metadata/aof-indexed.ts`. (`docs/superpowers/specs/2026-10-08-back-office-special-pages-design.md`)
+- robots.txt is core's `AOFRobots` (`Allow: /`, plus a sitemap line when indexed), never `Disallow: /`, which would hide an unindexed App's `noindex` from search engines and block link-preview bots: `packages/core/src/features/next/metadata/utils/aof-indexed.ts`. (`docs/superpowers/specs/2026-10-08-back-office-special-pages-design.md`)
 - The App scaffolding (providers, i18n, PWA, the Next config), export by export: `packages/core/README.md`.
 - A Next App's side of auth (sign-in and sign-out actions, the Session, the proxy wrappers): `packages/auth/README.md`.

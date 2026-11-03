@@ -11,13 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@allonfire/shadcn/components/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@allonfire/shadcn/components/tooltip";
 import type { ComponentProps } from "react";
 import { cn } from "../lib/utils";
+import { AOFTooltip } from "./aof-tooltip";
 
 // ponytail: shadcn's menu under AOF names; the account menu is its one
 // user. Add behaviour here, never in packages/shadcn.
@@ -29,7 +25,8 @@ export const AOFDropdownMenuSeparator = DropdownMenuSeparator;
 export const AOFDropdownMenuTrigger = DropdownMenuTrigger;
 
 /**
- * A row of the menu, with the pointer (shadcn's is `cursor-default`). Its label is 16px; on a touch screen it grows to the
+ * A row of the menu (its pointer comes from ui's base.css, over shadcn's
+ * `cursor-default`). Its label is 16px; on a touch screen it grows to the
  * tap target (`--tap-target`, `--tap-icon`).
  */
 export const AOFDropdownMenuItem = ({
@@ -38,7 +35,7 @@ export const AOFDropdownMenuItem = ({
 }: ComponentProps<typeof DropdownMenuItem>) => (
   <DropdownMenuItem
     className={cn(
-      "pointer-coarse:min-h-(--tap-target) cursor-pointer text-base pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
+      "pointer-coarse:min-h-(--tap-target) text-base pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
       className
     )}
     {...props}
@@ -79,7 +76,7 @@ export const AOFDropdownMenuSegment = ({
       aria-label={label}
       className={cn(
         // 36 × 28px, the tap target on a touch screen.
-        "pointer-coarse:size-(--tap-target) h-7 w-9 cursor-pointer justify-center rounded-md px-0 pointer-coarse:text-base text-muted-foreground text-sm pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
+        "pointer-coarse:size-(--tap-target) h-7 w-9 justify-center rounded-md px-0 pointer-coarse:text-base text-muted-foreground text-sm pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
         // Another choice darkens a little under the pointer, both themes.
         "focus:bg-foreground/8 focus:text-foreground focus:**:text-foreground",
         // The current one, in primary, under the pointer too; no check mark.
@@ -89,12 +86,5 @@ export const AOFDropdownMenuSegment = ({
       {...props}
     />
   );
-  return label ? (
-    <Tooltip>
-      <TooltipTrigger render={segment} />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  ) : (
-    segment
-  );
+  return label ? <AOFTooltip label={label}>{segment}</AOFTooltip> : segment;
 };

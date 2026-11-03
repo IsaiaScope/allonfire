@@ -33,13 +33,13 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | Import | Content |
 |---|---|
 | `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client (no root entry, no barrel) |
-| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImageCursor`, `ImageLinksById`, `AuthoriseLinks`, `ResolveChanges` |
+| `@allonfire/database/features/image/image.service` | `createImages`, `listImages` (the Images visible in one App or any, for the Apps the caller enters), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImageCursor`, `ImagePlacementsById`, `AuthorisePlacements`, `ResolveChanges` |
 | `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
-| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) |
-| `@allonfire/database/features/seed/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
+| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD` (meets the password rules) and `FIXTURE.NEW_PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) |
+| `@allonfire/database/features/seed/utils/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
 | `@allonfire/database/features/test-database/{names,global-setup,local-env}` | The Test database: `global-setup` is the Vitest `globalSetup`, a Test database per run cloned from the template (built when missing, after a sweep of crashed runs), dropped when the run ends; `testDatabaseName` names it; `fillLocalDatabaseEnv()` fills an unset `DATABASE_URL` from `LOCAL`, for a test setup; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
@@ -142,7 +142,7 @@ Tests sign in and point at them, never at a retyped email or key.
 
 | Command | Does |
 |---|---|
-| `backup` | `pg_dump -Fc` into `/backups`, verified with `pg_restore --list` before it counts; keeps the newest `BACKUP_KEEP` (14) |
+| `backup` | `pg_dump -Fc` into `/backups`, verified with `pg_restore --list` before it counts; keeps the newest `DATABASE_BACKUP_KEEP` (14) |
 | `deploy` | `update` (which validates the changelog first), then tags the release (`v<root package.json version>`) only if something was applied |
 | anything else | passed to `liquibase` (`status --verbose` by default) |
 
@@ -200,7 +200,7 @@ packages/database/
     entrypoint.sh           backup | deploy | any Liquibase command
     database-url.sh         DATABASE_URL -> JDBC URL, libpq URL, user, password
     tests/                  URL split, changelog up/down/deploy, backup;
-                            throwaway-db.ts (scratch databases on test-database/server)
+                            throwaway-db.ts (scratch databases on test-database/utils/server)
   scripts/
     liquibase.sh            build and run the image locally
     changeset.ts            pnpm db:changeset

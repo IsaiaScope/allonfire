@@ -13,23 +13,25 @@
     "./features/image/constants/image": "./src/features/image/constants/image.ts",
     "./features/image/constants/schemas": "./src/features/image/constants/schemas.ts",
     "./features/image/fixtures/constants/files": "./src/features/image/fixtures/constants/files.ts",
+    "./features/image/fixtures/files/*": "./src/features/image/fixtures/files/*",
+    "./features/image/fixtures/utils/read-fixture-image": "./src/features/image/fixtures/utils/read-fixture-image.ts",
     "./features/image/hono/constants/schemas": "./src/features/image/hono/constants/schemas.ts",
     "./features/image/hono/routes": "./src/features/image/hono/routes/index.ts",
     "./features/image/hono/tests/stub-image-deps": "./src/features/image/hono/tests/stub-image-deps.ts",
     "./features/image/hono/utils/deps": "./src/features/image/hono/utils/deps.ts",
     "./features/image/hono/utils/upload": "./src/features/image/hono/utils/upload.ts",
-    "./features/image/objects/delete-leftovers": "./src/features/image/objects/delete-leftovers.ts",
-    "./features/image/objects/image-objects": "./src/features/image/objects/image-objects.ts",
+    "./features/image/objects/utils/delete-leftovers": "./src/features/image/objects/utils/delete-leftovers.ts",
+    "./features/image/objects/utils/image-objects": "./src/features/image/objects/utils/image-objects.ts",
     "./features/image/prepare/prepare-image": "./src/features/image/prepare/prepare-image.ts",
-    "./features/test-bucket/global-setup": "./src/features/test-bucket/global-setup.ts",
-    "./features/test-bucket/local-env": "./src/features/test-bucket/local-env.ts",
+    "./features/test-bucket/utils/global-setup": "./src/features/test-bucket/utils/global-setup.ts",
+    "./features/test-bucket/utils/local-env": "./src/features/test-bucket/utils/local-env.ts",
     "./shared/constants/paths": "./src/shared/constants/paths.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
-    "image:setup": "tsx --env-file-if-exists=.env src/features/image/setup/cli.ts",
+    "image:setup": "tsx --env-file-if-exists=.env src/features/image/setup/utils/cli.ts",
     "test": "vitest run",
-    "test-bucket": "tsx --env-file-if-exists=.env src/features/test-bucket/cli.ts"
+    "test-bucket": "tsx --env-file-if-exists=.env src/features/test-bucket/utils/cli.ts"
   },
   "dependencies": {
     "@allonfire/auth": "workspace:*",
@@ -46,18 +48,11 @@
   "devDependencies": {
     "@allonfire/config": "workspace:*",
     "hono": "^4.9.0",
-    "next": "^16.3.6",
     "tsx": "^4.19.0",
     "typescript": "~6.0.3",
     "vitest": "^4.1.11"
   },
   "peerDependencies": {
-    "hono": "^4.9.0",
-    "next": "^16.0.0"
-  },
-  "peerDependenciesMeta": {
-    "next": {
-      "optional": true
-    }
+    "hono": "^4.9.0"
   }
 }

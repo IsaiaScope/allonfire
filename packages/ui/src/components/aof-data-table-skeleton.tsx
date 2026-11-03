@@ -21,6 +21,23 @@ export const aofDataTableBox = cva(
   "relative min-h-[calc(var(--field-height)+(var(--data-table-row)+1px)*8+2px)] flex-1 overflow-hidden rounded-lg border"
 );
 
+/**
+ * The cards' column below `md`, the table's and its skeleton's alike: it
+ * takes the room the rows' box leaves.
+ */
+export const aofDataTableCards = cva(
+  "flex min-h-0 flex-1 flex-col gap-3 md:hidden"
+);
+
+/**
+ * The pager's row, the table's and its skeleton's alike. One row everywhere:
+ * on a phone the rows-per-page select, the page as "2/3" and the arrows
+ * spread across it; from `sm` they gather to the right.
+ */
+export const aofDataTablePager = cva(
+  "flex items-center justify-between gap-3 sm:justify-end sm:gap-6"
+);
+
 /** A column of the skeleton: its share of the width and what it holds. */
 export type AOFDataTableSkeletonColumn = {
   /** A selection column: a checkbox's box instead of a bar. */
@@ -178,7 +195,7 @@ export const AOFDataTableSkeleton = ({
       {cards ? (
         <ul
           aria-hidden="true"
-          className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden md:hidden"
+          className={cn(aofDataTableCards(), "overflow-hidden")}
         >
           {placeholders("card", cards).map((card, index) => (
             <li
@@ -204,7 +221,7 @@ export const AOFDataTableSkeleton = ({
       {pager ? (
         <div
           aria-hidden="true"
-          className="flex items-center justify-between gap-3 sm:justify-end sm:gap-6"
+          className={aofDataTablePager()}
           data-skeleton="pager"
         >
           <div className="flex items-center gap-2">

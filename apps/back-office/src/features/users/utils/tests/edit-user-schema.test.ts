@@ -1,5 +1,7 @@
 // @module-tag unit
+
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { USERS } from "../../constants/users";
 import { editUserSchema } from "../edit-user-schema";
 import type { UserFieldMessages } from "../user-form-schema";
@@ -9,7 +11,7 @@ const MESSAGES: UserFieldMessages = {
   passwordMismatch: "passwordMismatch",
   passwordWeak: "passwordWeak",
 };
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 const VALID = {
   avatar: null,
   confirmPassword: "",

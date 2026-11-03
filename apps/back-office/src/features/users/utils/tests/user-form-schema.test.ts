@@ -1,11 +1,13 @@
 // @module-tag unit
+
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { USERS } from "../../constants/users";
 import { membershipsOf, passwordChecks } from "../user-form-schema";
 
 const ROLES = { [App.BACK_OFFICE]: USERS.NO_ROLE, [App.LAURA]: Role.USER };
 /** Meets every rule: 12+ characters, each kind once at least. */
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 
 describe("passwordChecks", () => {
   it("meets nothing while the password is empty", () => {

@@ -7,7 +7,7 @@ import {
 import { cva } from "class-variance-authority";
 import { type ReactNode, Suspense, useCallback } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";
-import { isCurrentSection, sectionHref } from "../constants/sections";
+import { isCurrentSection, sectionHref } from "../utils/sections";
 
 /**
  * A Section's row, with room for a bar along its left edge. The Section you

@@ -1,5 +1,5 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { AOFIconImage } from "@allonfire/core/features/next/metadata/aof-icon-images";
+import { AOFIconImage } from "@allonfire/core/features/next/metadata/components/aof-icon-images";
 import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { AOFBrandLogo } from "@allonfire/ui/components/aof-brand-logo";
 import { BACK_OFFICE } from "@/shared/constants/back-office";

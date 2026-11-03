@@ -1,7 +1,7 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { objectEntries, objectKeys } from "@allonfire/core/shared/utils/object";
-import { fillLocalStorageEnv } from "../local-env";
+import { fillLocalStorageEnv } from "../utils/local-env";
 
 const SET_ENDPOINT = "http://storage.test";
 

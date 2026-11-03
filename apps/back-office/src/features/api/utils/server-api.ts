@@ -1,6 +1,6 @@
 import type { ApiType } from "@allonfire/api/client";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
 import { hc } from "hono/client";
 import { env } from "@/environment/environment";
 import type { ApiClient } from "./api";

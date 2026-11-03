@@ -1,7 +1,7 @@
 // @module-tag unit
 import { TELEMETRY } from "@allonfire/core/features/telemetry/constants/telemetry";
-import { captureLog } from "./features/logger/tests/capture";
 import { API } from "./shared/constants/api";
+import { captureLog } from "./shared/tests/capture";
 import { createCrashHandler, createShutdown } from "./shutdown";
 
 const recorder = (order: string[], name: string) => () => {

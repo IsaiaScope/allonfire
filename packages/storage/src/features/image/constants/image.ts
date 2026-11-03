@@ -37,6 +37,17 @@ const LIMIT = {
 
 /** Everything fixed about Images: where they live, how they are stored and served, and their limits. */
 export const IMAGE = {
+  /**
+   * A stored picture's blur, what next/image shows while it loads: a tiny
+   * WebP as a data URL, ready for `blurDataURL`.
+   */
+  BLUR: {
+    /** What every blur's data URL starts with. */
+    DATA_URL_PREFIX: "data:image/webp;base64,",
+    QUALITY: 50,
+    /** Next recommends a placeholder of 10px or less; 16px keeps a little shape. */
+    WIDTH: 16,
+  },
   BUCKET: {
     /**
      * The MinIO bucket every Image lives in (ADR 0013): Production's and the
@@ -90,6 +101,11 @@ export const IMAGE = {
   FORMAT: {
     CONTENT_TYPE: "image/avif",
     EXTENSION: ".avif",
+    /**
+     * The stored file is the optimizer's source, so it keeps near-full
+     * quality: AVIF 64 looks like JPEG 80, at roughly a third of WebP 90's size.
+     */
+    QUALITY: 64,
   },
   /**
    * What a picture may come in as, for a file input's `accept`: every format

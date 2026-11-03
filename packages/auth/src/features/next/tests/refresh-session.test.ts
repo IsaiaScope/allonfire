@@ -1,25 +1,29 @@
 // @module-tag unit
 
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
+import { SESSION_COOKIE } from "../../../shared/tests/stub-auth";
 import { refreshSession } from "../utils/refresh-session";
 
-const TOKEN = "__Secure-better-auth.session_token=t";
-const DATA = "__Secure-better-auth.session_data=d";
-const RENEWED =
-  "__Secure-better-auth.session_data=fresh; Max-Age=300; Path=/; HttpOnly";
+const TOKEN = `${SESSION_COOKIE.SECURE_TOKEN}=t`;
+const DATA = `${SESSION_COOKIE.SECURE_DATA}=d`;
+const RENEWED = `${SESSION_COOKIE.SECURE_DATA}=fresh; Max-Age=300; Path=/; HttpOnly`;
 
 const request = (cookie: string) =>
   new NextRequest("http://back-office.test/en", {
-    headers: { cookie, "x-forwarded-for": "203.0.113.7" },
+    headers: { cookie, [HTTP.HEADER.X_FORWARDED_FOR]: "203.0.113.7" },
   });
 
 const fetchMock = vi.fn(
   async (_url: string | URL | Request, _init?: RequestInit) =>
     new Response("{}", {
-      headers: { "content-type": "application/json", "set-cookie": RENEWED },
+      headers: {
+        [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
+        [HTTP.HEADER.SET_COOKIE]: RENEWED,
+      },
     })
 );
 
@@ -43,7 +47,7 @@ describe("refreshSession", () => {
     const renewed = await refreshSession(request(TOKEN));
     expect(renewed).toEqual([
       expect.objectContaining({
-        name: "__Secure-better-auth.session_data",
+        name: SESSION_COOKIE.SECURE_DATA,
         value: "fresh",
       }),
     ]);
@@ -51,7 +55,7 @@ describe("refreshSession", () => {
     expect(String(url)).toBe(
       `${LOCAL.URL.TEST_API}${AUTH.PATH.BASE}${AUTH.PATH.GET_SESSION}`
     );
-    expect(new Headers(init?.headers).get("x-forwarded-for")).toBe(
+    expect(new Headers(init?.headers).get(HTTP.HEADER.X_FORWARDED_FOR)).toBe(
       "203.0.113.7"
     );
   });

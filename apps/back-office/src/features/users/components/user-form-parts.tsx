@@ -23,6 +23,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect } from "react";
 import { Link, useRouter } from "@/features/i18n/navigation";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { USERS } from "../constants/users";
@@ -155,7 +156,7 @@ export const UserFormActions = ({
         // Back to the list with its rows already there (ADR 0028).
         prefetch
       >
-        <ActionKanji kanji={USERS.CANCEL_KANJI} />
+        <ActionKanji kanji={ACTION_KANJI.CANCEL} />
         <IconArrowBackUp aria-hidden />
         {t("Users.form.cancel")}
       </Link>

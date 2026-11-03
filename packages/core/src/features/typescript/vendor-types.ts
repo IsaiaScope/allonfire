@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { REPO } from "@allonfire/config/local/repo";
 import { writeDeclarations } from "./declarations";
 
 /**
@@ -14,9 +15,7 @@ const { values } = parseArgs({
 if (!values.project) {
   throw new Error("vendor:types needs --project <tsconfig>");
 }
-// `pnpm --filter` runs this from core's folder, so paths resolve from the repo.
-const REPO_DIR = resolve(import.meta.dirname, "../../../../..");
 
 for (const project of values.project) {
-  writeDeclarations(resolve(REPO_DIR, project));
+  writeDeclarations(resolve(REPO.ROOT, project));
 }

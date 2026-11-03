@@ -1,8 +1,4 @@
 {
-  "extends": "../config/typescript/base.json",
-  "compilerOptions": {
-    "lib": ["ES2022"],
-    "types": ["node", "vitest/globals"]
-  },
+  "extends": "../config/typescript/node.json",
   "include": ["src", "scripts", "vitest.config.ts"]
 }

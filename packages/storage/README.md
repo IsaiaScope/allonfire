@@ -17,7 +17,7 @@
 | Export Path | What it provides |
 |-------------|-----------------|
 | `./environment/environment` | `env` and `storageEnvSchema`: the provider's `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, and the image server's `STORAGE_IMAGE_SERVER_URL`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT` (hex) |
-| `./shared/constants/paths` | `STORAGE.PATH`: `IMAGES` (`/images`, where a Host mounts the Image module) |
+| `./shared/constants/paths` | `STORAGE.PATH`: `IMAGES` (`/images`, where a Host mounts the Image module), and the module's own `LIST` (`/`) and `ONE` (`/:id`) |
 | `./features/image-server/sign` | `pictureLink({ bucket?, key, width, expiresAt? })`: a signed imgproxy link (HMAC-SHA256 over salt and path), changed width or key answers 403, past `expiresAt` 404; `pictureSrcSet(key, expiresAt?)`, one per width; `privateLinkExpiry(now)`, the end of the hour after the next |
 | `./features/image-server/constants/image-server` | `IMAGE_SERVER`: `WIDTHS` (640, 1080, 1920, 2560), `AVATAR_WIDTH` (256), `PRIVATE_LINK_HOURS`, `CACHE_CHECK_SECONDS` (2: how stale a copy the image cache serves can be) |
 | `./features/avatar/constants/avatar` | `AVATAR`: `SIZE` (256), `CROP_SIZE` (512, the browser's crop), `INPUT_BYTES`, `KEY_PREFIX`, `QUALITY` |
@@ -25,13 +25,15 @@
 | `./features/avatar/objects/avatar-objects` | `saveAvatar(userId, file)` (prepares and stores, answers the name), `deleteAvatarsWith(log)(images)` (deletes our own files among them, logs a failure) in the `image` bucket |
 | `./features/image/constants/image` | `IMAGE`: `IMAGE.BUCKET.DEFAULT`, `IMAGE.CACHE.*` (`TTL_SECONDS`, `CONTROL`), `IMAGE.FORMAT.*` (`CONTENT_TYPE`, `EXTENSION`), `IMAGE.LIMIT.*` (file and upload bytes, files per upload, batch, list page, input pixels, stored dimension, upload timeout), `IMAGE.ERROR_CODE` (the module's own codes, `IMAGE_TOO_LARGE` and `UNSUPPORTED_IMAGE`; the standard ones it throws are core's `ERROR.CODE`), `IMAGE.DOC`, `IMAGE.OPENAPI_TAG`, `IMAGE.VAR` |
 | `./features/image/prepare/prepare-image` | `prepareImage(buffer)`: upright, metadata-free AVIF (quality 64) capped at 2560px plus a 16px WebP blur data URL; HEIC (iPhone, Mac) decodes through `heic-decode`; `UnsupportedImageError` for anything but JPEG, PNG, WebP, AVIF or HEIC |
-| `./features/image/objects/delete-leftovers` | `deleteLeftovers({ keys, log, reason, remove, retry? })`: deletes files no row names any more, logging a failure instead of throwing; `LeftoverLog` |
-| `./features/image/objects/image-objects` | `putImageObject(key, body, bucket?)`, `deleteImageObjects(keys)`, `copyImageObject(from, to)` in the `image` bucket |
+| `./features/image/objects/utils/delete-leftovers` | `deleteLeftovers({ keys, log, reason, remove, retry? })`: deletes files no row names any more, logging a failure instead of throwing; `LeftoverLog` |
+| `./features/image/objects/utils/image-objects` | `putImageObject(key, body, bucket?)`, `deleteImageObjects(keys)`, `copyImageObject(from, to)` in the `image` bucket |
 | `./features/image/hono/routes` | `imageRoutes(deps)`, the Image module |
 | `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host |
 | `./features/image/hono/utils/upload` | `isImageUpload(method, path, basePath)`, so a host skips its own body limit and timeout for the upload |
 | `./features/image/hono/tests/stub-image-deps` | `stubImageDeps`, `imageRecord` for host tests; `imageHost(session, images?)`, the module on auth's `moduleTestHost` |
-| `./features/image/fixtures/constants/files` | `IMAGE_FIXTURE_FILES`, the folder of source files (one per accepted format, plus `animation.gif`) |
+| `./features/image/fixtures/constants/files` | `IMAGE_FIXTURE`: `DIR`, the folder of source files (one per accepted format, plus `animation.gif`), and `FILE`, each one's name |
+| `./features/image/fixtures/files/*` | The source files themselves, for a browser test's `?url` import |
+| `./features/image/fixtures/utils/read-fixture-image` | `readFixtureImage(name)`, a source file's bytes |
 | `./features/test-bucket/{global-setup,local-env}` | `global-setup` is the Vitest `globalSetup`: a bucket per test run (`createTestBucket` sweeps crashed runs' buckets, then `setupImageBucket` with every Fixture; named `testBucketName`, the Test database's name with hyphens), dropped when the run ends; `fillLocalStorageEnv()` fills each unset `STORAGE_*` from `LOCAL`, for a test setup |
 
 ## 📁 Directory Structure
@@ -82,7 +84,7 @@ the setup Production runs. After changing a source file, run
 .route(API.PATH.IMAGES, imageRoutes(deps.images))
 ```
 
-`ImageDeps` is everything it touches: the `image.service` functions from `@allonfire/database` (`createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages`, `removeImagesFromApp`; a PATCH and a DELETE hand their check to the write itself, which runs it on the placements it locks), `putObject` and `deleteObjects` from `./features/image/objects/image-objects`, `prepare` (`prepareImage`) and `log` (`{ warn }`, pino's shape).
+`ImageDeps` is everything it touches: the `image.service` functions from `@allonfire/database` (`createImages`, `listImages`, `getImage`, `updateImages`, `deleteImages`, `removeImagesFromApp`; a PATCH and a DELETE hand their check to the write itself, which runs it on the placements it locks), `putObject` and `deleteObjects` from `./features/image/objects/utils/image-objects`, `prepare` (`prepareImage`) and `log` (`{ warn }`, pino's shape).
 
 - **Access** (ADR 0020): an Image is in one or more Apps, public or private in each. Reads need no Session: a visitor sees public placements, a User also the Apps they enter, and an Image they cannot see answers 404. Writes need one: placing an Image in an App, taking it out or switching it public needs the Admin Role there; its alt or deleting it everywhere needs it in every App it is in. A batch answers 404 for any Image the User cannot see before any 403. An upload from a User who is Admin in no App answers 403 before its body, up to 100 MiB, is read. `hono/utils/access.ts` holds these checks; `hono/tests/recap.test.ts` is the agreed table, one test per row.
 
@@ -107,7 +109,7 @@ The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image
 
 ```ts
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { putImageObject } from "@allonfire/storage/features/image/objects/image-objects";
+import { putImageObject } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 
 const image = await prepareImage(upload); // throws UnsupportedImageError

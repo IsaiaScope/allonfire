@@ -1,4 +1,5 @@
 /// <reference path="./types/heic-decode.d.ts" />
+
 import sharp, {
   type Metadata,
   type OutputInfo,
@@ -7,21 +8,12 @@ import sharp, {
 } from "sharp";
 import { IMAGE } from "../constants/image";
 
-/**
- * The stored file is the optimizer's source, so it keeps near-full quality:
- * AVIF 64 looks like JPEG 80, at roughly a third of WebP 90's size.
- */
-const SOURCE_QUALITY = 64;
-/** Next recommends a placeholder of 10px or less; 16px keeps a little shape. */
-const BLUR_WIDTH = 16;
-const BLUR_QUALITY = 50;
-
 export type PreparedImage = {
   buffer: Buffer;
   width: number;
   height: number;
   bytes: number;
-  /** `data:image/webp;base64,...`, ready for next/image's `blurDataURL`. */
+  /** `IMAGE.BLUR.DATA_URL_PREFIX` and the WebP, ready for next/image's `blurDataURL`. */
   blurDataUrl: string;
 };
 
@@ -117,10 +109,10 @@ export async function decodeUpright(input: Buffer): Promise<Sharp> {
  */
 export const blurDataUrlOf = async (stored: Buffer): Promise<string> => {
   const blur = await sharp(stored)
-    .resize({ width: BLUR_WIDTH })
-    .webp({ quality: BLUR_QUALITY })
+    .resize({ width: IMAGE.BLUR.WIDTH })
+    .webp({ quality: IMAGE.BLUR.QUALITY })
     .toBuffer();
-  return `data:image/webp;base64,${blur.toString("base64")}`;
+  return `${IMAGE.BLUR.DATA_URL_PREFIX}${blur.toString("base64")}`;
 };
 
 /**
@@ -152,7 +144,7 @@ export async function prepareImage(input: Buffer): Promise<PreparedImage> {
   // The source is decoded once. The blur comes from the stored AVIF, at most
   // 2560px, instead of a second full decode of the original.
   const { data, info } = await encodeAvif(await decodeUpright(input), {
-    quality: SOURCE_QUALITY,
+    quality: IMAGE.FORMAT.QUALITY,
     resize: {
       fit: "inside",
       height: IMAGE.LIMIT.DIMENSION,

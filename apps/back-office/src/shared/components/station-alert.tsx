@@ -8,12 +8,11 @@ import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
 import { cn } from "@allonfire/ui/lib/utils";
 import { IconArrowBackUp } from "@tabler/icons-react";
 import type { ReactNode } from "react";
+import { ACTION_KANJI } from "../constants/action-kanji";
 import { ActionKanji, BrushKanji, kanjiAction } from "./brush-kanji";
 
 /** The alert's signage, decoration only (the brush face carries each). */
 const SIGNAGE = {
-  /** Brushed in Cancel: 戻, to go back. */
-  CANCEL_KANJI: "戻",
   /** Brushed faint across the body: 注意, a station's caution sign. */
   WALL_KANJI: "注意",
 } as const;
@@ -76,7 +75,7 @@ export const StationAlert = ({
         <>
           <ActionKanji
             className="text-foreground/10"
-            kanji={SIGNAGE.CANCEL_KANJI}
+            kanji={ACTION_KANJI.CANCEL}
           />
           <IconArrowBackUp aria-hidden />
           {cancel}

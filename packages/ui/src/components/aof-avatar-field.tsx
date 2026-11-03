@@ -3,29 +3,29 @@
 import { AVATAR } from "@allonfire/storage/features/avatar/constants/avatar";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IconCrop, IconPhotoSquareRounded } from "@tabler/icons-react";
-import { useSelector } from "@tanstack/react-form";
 import { useCallback, useId, useState } from "react";
 import { avatarRemoval } from "../lib/avatar-change";
 import { useFieldContext } from "../lib/form-context";
-import { shownErrors } from "../lib/form-errors";
 import {
   useCropPictures,
   useHeldFile,
   useObjectUrl,
 } from "../lib/use-avatar-pictures";
+import { useShownErrors } from "../lib/use-shown-errors";
 import {
   AOFAvatarCropDialog,
   type AOFAvatarCropDialogProps,
   type AOFAvatarCropLabels,
 } from "./aof-avatar-crop-dialog";
 import { AOFButton } from "./aof-button";
-import { AOFField, AOFFieldError, AOFFieldLabel } from "./aof-field";
+import { AOFField } from "./aof-field";
 import {
   AOFFileUpload,
   type AOFFileUploadItem,
   type AOFFileUploadLabels,
   type AOFFileUploadProps,
 } from "./aof-file-upload";
+import { AOFFieldErrorLine, AOFFieldTitle } from "./aof-text-field";
 
 /**
  * The field's words, in the page's language: the drop area's own (`busy`
@@ -68,17 +68,8 @@ const useFieldErrors = (
   field: ReturnType<typeof useFieldContext<File | null>>,
   refusal: string | null
 ) => {
-  const submissionAttempts = useSelector(
-    field.form.store,
-    (state) => state.submissionAttempts
-  );
-  return [
-    ...(refusal ? [{ message: refusal }] : []),
-    ...shownErrors(field.state.meta.errors, {
-      isBlurred: field.state.meta.isBlurred,
-      submissionAttempts,
-    }),
-  ];
+  const shown = useShownErrors(field);
+  return refusal ? [{ message: refusal }, ...shown] : shown;
 };
 
 /**
@@ -202,7 +193,7 @@ export const AOFAvatarField = ({
 
   return (
     <AOFField data-invalid={errors.length > 0 || undefined} role="none">
-      <AOFFieldLabel className="font-bold">{label}</AOFFieldLabel>
+      <AOFFieldTitle>{label}</AOFFieldTitle>
       <AOFFileUpload
         accept={IMAGE.INPUT_ACCEPT}
         aria-describedby={errors.length > 0 ? errorId : undefined}
@@ -233,9 +224,7 @@ export const AOFAvatarField = ({
       {removed && !field.state.value ? (
         <input type="hidden" {...avatarRemoval(field.name)} />
       ) : null}
-      <div className="min-h-6">
-        <AOFFieldError errors={errors} id={errorId} />
-      </div>
+      <AOFFieldErrorLine errors={errors} id={errorId} />
       {crop.cropUrl ? (
         <AOFAvatarCropDialog
           {...cropProps}

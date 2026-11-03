@@ -8,6 +8,7 @@ import {
   accessUserFrom,
 } from "./access/access";
 import { lockUser, userVersion } from "./user-version";
+import { replaceMemberships, setPasswordLogin } from "./utils/user-writes";
 
 /** A User's stored picture: its file's name, and the blur shown while it loads. */
 export type UserPicture = { image: string; imageBlurDataUrl: string };
@@ -189,9 +190,6 @@ export type UserChange = {
   hashedPassword?: string;
 };
 
-/** Better Auth's provider id for a password login. */
-const CREDENTIAL = "credential";
-
 /**
  * Edits a User, all or nothing, and answers them as `readUser` does; null
  * for an unknown id, nothing written. `expectedVersion` is the Version the
@@ -222,30 +220,10 @@ export const updateUser = (
       await tx.user.update({ data: { name }, where: { id } });
     }
     if (memberships) {
-      await tx.membership.deleteMany({ where: { userId: id } });
-      await tx.membership.createMany({
-        data: memberships.map((membership) => ({ ...membership, userId: id })),
-      });
+      await replaceMemberships(tx, id, memberships);
     }
     if (hashedPassword !== undefined) {
-      // No compound unique on (userId, providerId): found, then written.
-      const credential = await tx.account.findFirst({
-        select: { id: true },
-        where: { providerId: CREDENTIAL, userId: id },
-      });
-      await (credential
-        ? tx.account.update({
-            data: { password: hashedPassword },
-            where: { id: credential.id },
-          })
-        : tx.account.create({
-            data: {
-              accountId: id,
-              password: hashedPassword,
-              providerId: CREDENTIAL,
-              userId: id,
-            },
-          }));
+      await setPasswordLogin(tx, id, hashedPassword);
       await tx.session.deleteMany({
         where: {
           userId: id,
@@ -309,14 +287,7 @@ export const createUser = async (
         },
       });
       const { id } = created;
-      await tx.account.create({
-        data: {
-          accountId: id,
-          password: hashedPassword,
-          providerId: CREDENTIAL,
-          userId: id,
-        },
-      });
+      await setPasswordLogin(tx, id, hashedPassword);
       return { id, version: userVersion(created) };
     });
   } catch (error) {

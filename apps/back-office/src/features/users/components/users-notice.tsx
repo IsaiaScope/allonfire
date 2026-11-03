@@ -15,6 +15,7 @@ import {
   type StationNoticeProps,
   type StationSignage,
 } from "@/shared/components/station-notice";
+import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 import { USERS } from "../constants/users";
 
 /** Each notice where the rows stand: its signage, its action's pictogram and
@@ -29,13 +30,13 @@ const NOTICE = {
   error: {
     action: "error.retry",
     icon: IconRefresh,
-    kanji: ERROR_SIGNAGE.ERROR.RETRY_KANJI,
+    kanji: ACTION_KANJI.RETRY,
     signage: ERROR_SIGNAGE.ERROR,
   },
   pastEnd: {
     action: "pastEnd.last",
     icon: IconArrowBackUp,
-    kanji: USERS.CANCEL_KANJI,
+    kanji: ACTION_KANJI.BACK,
     signage: USERS.SIGNAGE.PAST_END,
   },
 } as const satisfies Record<

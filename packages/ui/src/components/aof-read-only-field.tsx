@@ -2,7 +2,12 @@ import type { ReactNode } from "react";
 import { cn } from "../lib/utils";
 import { AOFField } from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
-import { AOFFieldTile, AOFFieldTitle, aofFieldInput } from "./aof-text-field";
+import {
+  AOFFieldErrorLine,
+  AOFFieldTile,
+  AOFFieldTitle,
+  aofFieldInput,
+} from "./aof-text-field";
 
 export type AOFReadOnlyFieldProps = Omit<
   AOFInputProps,
@@ -46,6 +51,6 @@ export const AOFReadOnlyField = ({
         value={value}
       />
     </div>
-    <div className="min-h-6" />
+    <AOFFieldErrorLine />
   </AOFField>
 );

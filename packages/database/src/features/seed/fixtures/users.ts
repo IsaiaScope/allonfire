@@ -3,13 +3,16 @@ import {
   objectValues,
 } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../generated/prisma/enums";
-import type { SeedUser } from "../seed-user";
+import { adminSeedUser, type SeedUser } from "../utils/seed-user";
 
 /**
  * The password of every Fixture User. Not a secret: Fixtures exist only in
  * Test databases.
  */
-export const PASSWORD = "fixture-password-1";
+export const PASSWORD = "Fixture-password-1";
+
+/** A second password that meets the rules, for a test that changes one. */
+export const NEW_PASSWORD = "Fixture-password-2";
 
 /** The Fixtures' email domain; nothing else in a Test database uses it. */
 export const DOMAIN = "allonfire.test";
@@ -34,11 +37,10 @@ export const USER = {
   ...objectFromEntries(
     objectValues(App).map((app) => [app, rolesIn(app)] as const)
   ),
-  ADMIN_EVERYWHERE: {
-    email: `admin-everywhere@${DOMAIN}`,
-    memberships: objectValues(App).map((app) => ({ app, role: Role.ADMIN })),
-    name: "admin-everywhere",
-  },
+  ADMIN_EVERYWHERE: adminSeedUser(
+    `admin-everywhere@${DOMAIN}`,
+    "admin-everywhere"
+  ),
   NO_MEMBERSHIP: {
     email: `no-membership@${DOMAIN}`,
     memberships: [],

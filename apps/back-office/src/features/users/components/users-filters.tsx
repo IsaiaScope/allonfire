@@ -81,10 +81,9 @@ export const UsersFilters = ({
     <AOFFilterPanel
       action={
         <AOFButton
-          // The line's deep green: white on it reads 5.2:1 (theme.test.ts).
           className={cn(
-            kanjiAction(),
-            "h-8 min-w-0 gap-1.5 bg-(--line-green-deep) pr-8 pl-3 text-(--line-green-deep-foreground) text-sm hover:bg-(--line-green-deep)/90"
+            kanjiAction({ tone: "green" }),
+            "h-8 min-w-0 gap-1.5 pr-8 pl-3 text-sm"
           )}
           disabled={count === 0}
           onClick={reset}

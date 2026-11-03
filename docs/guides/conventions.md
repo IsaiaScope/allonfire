@@ -53,12 +53,12 @@ survive. A schema crosses no package: a package's `storageItem` takes its own zo
   `ERROR_CODE`, `SIGN_IN_ERROR`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
   `@allonfire/auth/shared/constants/auth`); `IMAGE` (`BUCKET`, `CACHE`, `FORMAT`, `LIMIT`,
   `ERROR_CODE`, `DOC`, `OPENAPI_TAG`, `VAR`;
-  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`); core's `HTTP`
+  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `IMAGES`, `LIST`, `ONE`); core's `HTTP`
   (`STATUS`, `METHOD`, `HEADER`, `CONTENT_TYPE`), `LOG`, `TELEMETRY` (`PATH`, `ERROR`,
   `LIMIT`, `DEFAULT`, `ATTRIBUTE.RESOURCE`), `ENV`, `PATTERN` and `I18N`; and
-  config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`); the database's `ACCESS`
+  config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`) and `REPO`; the database's `ACCESS`
   (`APP_SETTINGS`, `ROLE_RANK`; `features/auth/access/constants/access`) and `FIXTURE`
-  (`USER`, `USERS`, `PASSWORD`, `IMAGE`; `features/seed/fixtures/fixtures`); the API's
+  (`USER`, `USERS`, `PASSWORD`, `NEW_PASSWORD`, `IMAGE`; `features/seed/fixtures/fixtures`); the API's
   `TRANSLATION` (`CATALOGUE`, `DEFAULT_LOCALE`). Core also holds `UNIT` (`MS_PER_SECOND`,
   `BYTES_PER_MIB`, …), `SEPARATOR` and `ERROR` (`CODE`, the standard error codes): what
   is most generic carries no owner's name. A regular expression lives in core's `PATTERN`
@@ -66,6 +66,13 @@ survive. A schema crosses no package: a package's `storageItem` takes its own zo
   owner's own constants object. An object literal cannot read its own
   keys: shared pieces are file-local consts above it. A path is never a string literal,
   tests included: compose it (`${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`).
+  A module names every route in its owner's `PATH` object (`USER.PATH.ONE`,
+  `STORAGE.PATH.ONE`), and a route param is filled with core's
+  `fillPath(path, params)` (`openApiPath` for the spec's `{id}`), never by a
+  `.replace` on `:id`. A path to the repo root or another package comes from
+  config's `REPO` (`ROOT`, `APPS`, `PACKAGES`; `@allonfire/config/local/repo`),
+  never from `..` counted from `import.meta`; a file inside the same package may
+  still be found relatively.
   The API's paths live once, in `API.PATH` (built from `API.VERSION.CURRENT`), exported as
   `@allonfire/api/shared/constants/api`: an App's tests and its `playwright.config.ts` import it
   and hand it to config's `aofPlaywrightConfig` (`apiPath`), since config, a leaf package,

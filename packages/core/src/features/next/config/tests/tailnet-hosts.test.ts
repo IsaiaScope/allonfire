@@ -1,7 +1,7 @@
 // @module-tag unit
 import { execFileSync } from "node:child_process";
 import { stringifyJson } from "../../../../shared/utils/json";
-import { tailnetHosts } from "../tailnet-hosts";
+import { tailnetHosts } from "../utils/tailnet-hosts";
 
 vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
 

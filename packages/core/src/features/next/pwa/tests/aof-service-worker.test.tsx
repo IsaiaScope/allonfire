@@ -1,6 +1,6 @@
 // @module-tag unit
 import { renderToStaticMarkup } from "react-dom/server";
-import { AOFServiceWorker } from "../aof-service-worker";
+import { AOFServiceWorker } from "../components/aof-service-worker";
 import { PWA } from "../constants/pwa";
 
 const { register, Workbox } = vi.hoisted(() => {

@@ -1,13 +1,11 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
-import { createApiAuthClient } from "./auth-client";
+import type { AppProxy } from "../types/proxy";
 import { entersApp } from "./enters-app";
-
-type Proxy = (request: NextRequest) => Promise<Response> | Response;
+import { sessionFromRequest } from "./session-from-request";
 
 /**
  * Whether the visitor's Session, asked of the API, is one this App lets in:
@@ -17,11 +15,7 @@ type Proxy = (request: NextRequest) => Promise<Response> | Response;
  */
 const entersAppNow = async (request: NextRequest) => {
   try {
-    const { data } = await createApiAuthClient().getSession({
-      fetchOptions: {
-        headers: visitorHeaders(request.cookies.toString(), request.headers),
-      },
-    });
+    const { data } = await sessionFromRequest(request);
     return entersApp(data);
   } catch (err) {
     serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_READ_FAILED);
@@ -43,9 +37,9 @@ const entersAppNow = async (request: NextRequest) => {
  * Every other path passes, so an unknown page still 404s.
  */
 export const withSignInGate = (
-  proxy: Proxy,
+  proxy: AppProxy,
   { locales, pages }: { locales: readonly string[]; pages: readonly string[] }
-): Proxy => {
+): AppProxy => {
   // Each page with and without a language in front (`/`, `/it`), to Sign in
   // in that same form; next-intl picks the language of an unprefixed one.
   const signInFor = new Map<string, string>(

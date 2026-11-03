@@ -8,7 +8,7 @@ describe("AOFThemeToggle", () => {
     expect(html).toContain('data-slot="button"');
     expect(html).toContain('aria-label="Switch theme"');
     expect(html).toContain('type="button"');
-    expect(html).toContain("dark:hidden");
-    expect(html).toContain("dark:block");
+    expect(html).toContain("tabler-icon-moon");
+    expect(html).toContain("tabler-icon-sun");
   });
 });

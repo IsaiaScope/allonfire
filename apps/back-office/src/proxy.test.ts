@@ -13,9 +13,12 @@ vi.mock("@allonfire/auth/features/next/utils/with-session-refresh", () => ({
 vi.mock("@allonfire/auth/features/next/utils/with-sign-in-gate", () => ({
   withSignInGate: (handler: unknown) => handler,
 }));
-vi.mock("@allonfire/core/features/next/i18n/aof-create-middleware", () => ({
-  AOFCreateMiddleware: () => () => undefined,
-}));
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-create-middleware",
+  () => ({
+    AOFCreateMiddleware: () => () => undefined,
+  })
+);
 
 const IT = "/it";
 const { PATH } = METADATA;

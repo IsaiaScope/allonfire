@@ -5,16 +5,12 @@ import {
 } from "@allonfire/shadcn/components/field";
 import type { ComponentProps } from "react";
 
-export type AOFFieldProps = ComponentProps<typeof ShadcnField>;
-export type AOFFieldLabelProps = ComponentProps<typeof ShadcnFieldLabel>;
 export type AOFFieldErrorProps = ComponentProps<typeof ShadcnFieldError>;
 
-// ponytail: shadcn's Field and FieldLabel as-is, like AOFButton's base; AOFTextField
-// composes them for an AOF form.
-export const AOFField = (props: AOFFieldProps) => <ShadcnField {...props} />;
-export const AOFFieldLabel = (props: AOFFieldLabelProps) => (
-  <ShadcnFieldLabel {...props} />
-);
+// ponytail: shadcn's Field and FieldLabel under AOF names, like AOFCard;
+// AOFTextField composes them for an AOF form.
+export const AOFField = ShadcnField;
+export const AOFFieldLabel = ShadcnFieldLabel;
 /**
  * shadcn's FieldError with `role="none"` in place of `role="alert"`: a field
  * error follows the typing, and a live region would interrupt the screen

@@ -1,6 +1,8 @@
 // @module-tag unit
+
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { USERS } from "../../constants/users";
 import { type AddUserFieldMessages, addUserSchema } from "../add-user-schema";
 
@@ -13,7 +15,7 @@ const MESSAGES: AddUserFieldMessages = {
 };
 const ROLES = { [App.BACK_OFFICE]: USERS.NO_ROLE, [App.LAURA]: Role.USER };
 /** Meets every rule: 12+ characters, each kind once at least. */
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 const VALID = {
   avatar: null,
   confirmPassword: STRONG,
@@ -39,7 +41,7 @@ describe("addUserSchema", () => {
     ["short", "Aa1-".repeat(USER.LIMIT.PASSWORD_MIN / 4).slice(1)],
     ["without a lowercase letter", STRONG.toUpperCase()],
     ["without an uppercase letter", STRONG.toLowerCase()],
-    ["without a number", "A-long-password-x"],
+    ["without a number", `${STRONG.slice(0, -1)}x`],
     ["without a symbol", "Along1password2x"],
   ])("refuses a password %s with one message", (_, password) => {
     const result = schema.safeParse({

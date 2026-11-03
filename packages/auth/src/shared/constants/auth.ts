@@ -31,6 +31,8 @@ export const AUTH = {
   API_TIMEOUT_MS: 10 * UNIT.MS_PER_SECOND,
   COOKIE: {
     MARKER: COOKIE_MARKER,
+    /** What Better Auth puts before every cookie name on https. */
+    SECURE_PREFIX: "__Secure-",
     /**
      * Better Auth's Session cookie, matched past any `__Secure-` prefix: the
      * signed copy of the Session that spares the API a database read until it

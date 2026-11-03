@@ -1,4 +1,5 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { Hono } from "hono";
 import { AUTH } from "../../../shared/constants/auth";
 import { HOST_AUTH_PATH, stubAuth } from "../../../shared/tests/stub-auth";
@@ -20,7 +21,7 @@ describe("authRoutes", () => {
     const app = new Hono().route("/", authRoutes(auth));
 
     expect(await (await app.request(GET_SESSION)).text()).toBe("handled");
-    await app.request(SIGN_IN, { method: "POST" });
+    await app.request(SIGN_IN, { method: HTTP.METHOD.POST });
 
     expect(seen).toEqual([`GET ${GET_SESSION}`, `POST ${SIGN_IN}`]);
   });
@@ -30,8 +31,8 @@ describe("authRoutes", () => {
       "/",
       authRoutes(stubAuth({ basePath: HOST_AUTH_PATH }))
     );
-    expect((await app.request(GET_SESSION, { method: "PUT" })).status).toBe(
-      404
-    );
+    expect(
+      (await app.request(GET_SESSION, { method: HTTP.METHOD.PUT })).status
+    ).toBe(HTTP.STATUS.NOT_FOUND);
   });
 });

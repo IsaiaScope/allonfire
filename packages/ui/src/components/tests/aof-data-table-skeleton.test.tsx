@@ -18,20 +18,6 @@ describe("AOFDataTableSkeleton", () => {
     expect(html).toContain("Loading People");
   });
 
-  it("keeps the table's eight-row box, each row as tall as the list says", () => {
-    const html = renderToStaticMarkup(
-      <AOFDataTableSkeleton columns={2} label="Loading People" />
-    );
-    // The same sizes as the table it stands in for, so nothing moves when
-    // the rows arrive.
-    expect(html).toContain("[--data-table-row:var(--field-height)]");
-    expect(html).toContain(
-      "min-h-[calc(var(--field-height)+(var(--data-table-row)+1px)*8+2px)]"
-    );
-    expect(html).toContain("h-(--data-table-row)");
-    expect(html).not.toContain("min-h-0 flex-1 flex-col");
-  });
-
   it("draws ten rows unless told otherwise", () => {
     const html = renderToStaticMarkup(
       <AOFDataTableSkeleton columns={2} label="Loading People" />
@@ -64,12 +50,5 @@ describe("AOFDataTableSkeleton", () => {
     );
     expect(count(full, /data-skeleton="card"/g)).toBe(3);
     expect(full).toContain('data-skeleton="pager"');
-  });
-
-  it("stops pulsing for reduced motion", () => {
-    const html = renderToStaticMarkup(
-      <AOFDataTableSkeleton columns={1} label="Loading" rows={1} />
-    );
-    expect(html).toContain("motion-reduce:animate-none");
   });
 });

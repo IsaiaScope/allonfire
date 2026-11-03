@@ -5,6 +5,7 @@ import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, GameType, Role } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
+import { ACCOUNT } from "../constants/account";
 import {
   accessUserById,
   createUser,
@@ -19,8 +20,7 @@ import {
   userImages,
 } from "../user.service";
 
-// The Fixtures share this domain; other files in the run may add Users to
-// it, so counts are "at least the Fixtures".
+// The Fixtures share this domain, and only they use it.
 const FIXTURES = FIXTURE.DOMAIN;
 /** A User made here, outside the Fixtures' domain so their counts hold. */
 const MIXED = {
@@ -46,6 +46,16 @@ const emailsOf = async (overrides: Partial<UserListQuery> = {}) =>
   (await listUsers(query(overrides))).users.map(({ email }) => email);
 /** The Version an edit form opened now would carry. */
 const current = async (id: string) => (await readUser(id))?.version ?? "";
+/** A Session of the User's, alive for `expiresInMs` from now. */
+const liveSession = (
+  userId: string,
+  token: string,
+  expiresInMs: number = UNIT.MS_PER_MINUTE
+) =>
+  prisma.session.create({
+    data: { expiresAt: new Date(Date.now() + expiresInMs), token, userId },
+    select: { id: true },
+  });
 
 beforeAll(async () => {
   await prisma.user.create({
@@ -186,7 +196,7 @@ const holder = (name: string) =>
   prisma.user.create({
     data: {
       accounts: {
-        create: { accountId: name, providerId: "credential" },
+        create: { accountId: name, providerId: ACCOUNT.PROVIDER.CREDENTIAL },
       },
       email: `${name}@${DELETABLE}`,
       gameScores: { create: { gameType: GameType.MEMORY, score: SIZE } },
@@ -295,7 +305,13 @@ describe("createUser", () => {
         password,
         providerId,
       }))
-    ).toEqual([{ accountId: id, password: HASH, providerId: "credential" }]);
+    ).toEqual([
+      {
+        accountId: id,
+        password: HASH,
+        providerId: ACCOUNT.PROVIDER.CREDENTIAL,
+      },
+    ]);
     expect(user.memberships.map(({ app, role }) => ({ app, role }))).toEqual([
       { app: App.LAURA, role: Role.USER },
     ]);
@@ -515,23 +531,14 @@ const edited = async () => {
     HASH
   );
   const sessions = await Promise.all(
-    ["a", "b"].map((tag) =>
-      prisma.session.create({
-        data: {
-          expiresAt: new Date(Date.now() + UNIT.MS_PER_MINUTE),
-          token: `edit-${count}-${tag}`,
-          userId: id,
-        },
-        select: { id: true },
-      })
-    )
+    ["a", "b"].map((tag) => liveSession(id, `edit-${count}-${tag}`))
   );
   return { id, sessions: sessions.map((session) => session.id) };
 };
 const passwordOf = async (userId: string) =>
   (
     await prisma.account.findFirst({
-      where: { providerId: "credential", userId },
+      where: { providerId: ACCOUNT.PROVIDER.CREDENTIAL, userId },
     })
   )?.password;
 const sessionsOf = (userId: string) =>
@@ -609,7 +616,7 @@ describe("readUser and updateUser", () => {
     });
     await updateNow(id, { hashedPassword: NEW_HASH });
     const credentials = await prisma.account.findMany({
-      where: { providerId: "credential", userId: id },
+      where: { providerId: ACCOUNT.PROVIDER.CREDENTIAL, userId: id },
     });
     expect(
       credentials.map(({ accountId, password }) => ({ accountId, password }))
@@ -678,10 +685,7 @@ describe("sessionAlive", () => {
       update: {},
       where: { email: OWNER },
     });
-    return prisma.session.create({
-      data: { expiresAt: new Date(Date.now() + expiresInMs), token, userId },
-      select: { id: true },
-    });
+    return liveSession(userId, token, expiresInMs);
   };
 
   afterAll(async () => {

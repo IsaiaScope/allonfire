@@ -1,5 +1,5 @@
 import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
-import { AOFGetQueryClient } from "@allonfire/core/features/next/query/aof-get-query-client";
+import { AOFGetQueryClient } from "@allonfire/core/features/next/query/utils/aof-get-query-client";
 import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";

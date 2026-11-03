@@ -2,7 +2,6 @@
 
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
@@ -12,11 +11,11 @@ import { USERS } from "../../constants/users";
 import { usersHydration } from "../users-hydration";
 import { usersListKey } from "../users-queries";
 
-vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
-// The App's env is read at import, which a unit test lacks.
-vi.mock("@/environment/environment", () => ({
-  env: { API_URL: LOCAL.URL.TEST_API },
-}));
+vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "@/environment/environment",
+  () => import("@/shared/tests/environment-mock")
+);
 const session = vi.hoisted(() => ({ cookie: "" }));
 vi.mock("@allonfire/auth/features/next/utils/session-cookie", () => ({
   readSessionCookie: vi.fn(async () => session.cookie),

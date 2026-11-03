@@ -4,6 +4,8 @@
 
 **Goal:** Runs after Plan A. Fix, or accept with a reason, every layer-3 finding in the scan report. Settle the two outdated rules as the owner decided, and write the remaining "Rules to write" into their guides.
 
+**Status:** implemented (uncommitted) @ 2026-11-03T11:10:27Z
+
 **Architecture:**
 - **The report is the spec.** After Plan A, the scan report's tables carry `layer` and `status` columns. This plan works every row with `layer 3` and `open (Plan B)`.
 - **Each row's `fix` cell, plus its verifier's correction, says what to change.** The plan fixes the order, the grouping, the decisions and the checks.
@@ -25,6 +27,16 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
 - **Task 13:** the production launch (ccf03a9) already renamed `MINIO_*` to `STORAGE_ACCESS_KEY`/`STORAGE_SECRET_KEY` with `:?` guards, and Dokploy holds the new pair. Only the `BACK_OFFICE_URL` guard is left (owner). The Watch out step is deleted.
 - **Plan A's remainders (2026-11-03):** Plan A fixed seven layer 2 rows only in their tool hit; their status ends `left for Plan B: …` (api-10, back-office-13, back-office-15, auth-9, auth-10, storage-15, storage-17). Tasks 5 to 12 now list each remainder, and Task 14's check counts them. config-design-root-5's remainder is accepted.
 - **Plan A, for awareness:** telemetry is `TELEMETRY_*` (not `OTEL_*`). It is required in production only (`:?` on `TELEMETRY_HEADERS` in the prod compose) and optional in Local and tests. Plan A Task 5 reuses core's `RESOURCE_CHANGED`, and Plan A Task 9 keeps a reduced scope. No step here assumes otherwise.
+
+## Reconciled 2026-11-03 (iso-write)
+
+Checked against HEAD `9fe593f` (Plan A committed after `4fdc2b3`, instant-users). Baseline lint, check-types, knip, knip:production and dupes exit 0.
+- **Guides moved:** `docs/agents/{testing,conventions,package-layout,design-system,api}.md` are now `docs/guides/…` (9fe593f). Every rule below goes into `docs/guides/`.
+- **Tree not clean:** three uncommitted files from other work (`apps/back-office/e2e/users.spec.ts`, `packages/config/tests/e2e/playwright.config.ts`, the service-quotas plan). The plan is implemented beside them, per iso-write.
+- **cross-4 sites today:** config's `local/tests/{backup-scripts,env-examples,env-production,knip-config,local-files,package-exports,prod-compose,service-names,workflows}.test.ts` (9 local `REPO`), `tests/e2e/run.ts:3`; core `ci/print-affected.ts:11`, `tailwind/canonicalize.ts:44`, `typescript/vendor-types.ts:18` (new), `next/tests/scaffolded-apps.ts:3`; database `test-database/constants/test-database.ts:12`, `scripts/changeset.ts:15`; design `scripts/sync.ts:6`; back-office `environment/tests/environment.test.ts:14`; ui `components/tests/shadcn-compat.test.tsx:39`. A path inside a file's own package (`../theme.css`, `../files`) stays.
+- **During the run (owner, 2026-11-03):** Vite's `?url` type lives in config (`tests/browser/asset-url.d.ts`, listed in an App's tsconfig `types`), and the Back Office's test translators became core's `aofTranslators`/`aofMessages` (`features/next/i18n/utils/aof-translators`) so a future App reuses them.
+- **Status spelling:** `build-report.js` groups a status up to its first comma, so a remainder closed here reads `fixed (Plan A and Plan B)`, and a row found fixed reads `fixed (before Plan B), <where>`. api-23 and cross-10 sit in "Rules outdated", which has no status cell: its table gained one (`report-head.md`).
+- **cross-6:** two tests also hold deliberately weak variants (`"A-long-password-x"`, no number): they derive from `FIXTURE.PASSWORD` so the Step 4 grep stays empty.
 
 ## Global Constraints
 
@@ -63,7 +75,7 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
 
 ### Task 1: Cross-package rows (layer 3)
 
-**Files:** the files named in the report's Cross-package rows tagged layer 3: cross-3, cross-4, cross-5, cross-6, cross-8, cross-16, cross-17, cross-18 and cross-19. Also `docs/agents/testing.md` (rules 2, 3 and 4) and `docs/agents/conventions.md` (rules 7 and 8). Re-checked 2026-11-02:
+**Files:** the files named in the report's Cross-package rows tagged layer 3: cross-3, cross-4, cross-5, cross-6, cross-8, cross-16, cross-17, cross-18 and cross-19. Also `docs/guides/testing.md` (rules 2, 3 and 4) and `docs/guides/conventions.md` (rules 7 and 8). Re-checked 2026-11-02:
 - **cross-3:** narrowed.
   - The Back Office tests already build the host from `LOCAL.URL.IMAGE_SERVER` (268edb1).
   - What is left:
@@ -93,13 +105,13 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
 - one SVG data-URL encoder, core's `svgDataUrl` (cross-8);
 - one Image Fixture reader, `readFixtureImage(name)`, in storage's fixtures (cross-19).
 
-- [ ] **Step 1: Write the failing tests** for the new helpers:
+- [x] **Step 1: Write the failing tests** for the new helpers:
   - `fillPath("/users/:id", { id: "u1" }) === "/users/u1"`, and it throws on a missing param;
   - `REPO.ROOT` ends in the repository's folder name;
   - `readFixtureImage(FIXTURE_IMAGE.PHOTO)` returns a non-empty Buffer;
   - in `password-rules.test.ts`, `meetsPasswordRules(FIXTURE.PASSWORD)` is true.
-- [ ] **Step 2: Run** them. Expected: FAIL.
-- [ ] **Step 3: Implement** the helpers, and change `FIXTURE.PASSWORD`. Switch every call site the rows list:
+- [x] **Step 2: Run** them. Expected: FAIL.
+- [x] **Step 3: Implement** the helpers, and change `FIXTURE.PASSWORD`. Switch every call site the rows list:
   - `.replace(":id", …)` becomes `fillPath`;
   - `..` counting becomes `REPO`;
   - literal LOCAL addresses become `LOCAL`;
@@ -110,10 +122,10 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
   - `"A-long-password-1"` becomes `FIXTURE.PASSWORD` in all 10 files.
 
   Write rules 2, 3, 4, 7 and 8.
-- [ ] **Step 4: Check.**
+- [x] **Step 4: Check.**
   - Run `git grep -nE '\.replace\(":id"|import\.meta.*\.\./\.\.|"(__Secure-)?better-auth\.session|A-long-password'` over `apps/api`, `apps/back-office` and `packages`. Expected: no output. Plain relative imports such as `../../../../shared/…` are allowed.
   - Reseed the Local dev database once with `pnpm db:seed`, then run `pnpm test:e2e`. Expected: green.
-- [ ] **Step 5: Gate.**
+- [x] **Step 5: Gate.**
 
 ### Task 2: cross-10 in core, loose feature files move into kind folders
 
@@ -128,30 +140,30 @@ Checked against HEAD `7c2b565` (v0.6.6) and the uncommitted instant-users-naviga
 - Each moves into `components/`, `utils/`, `constants/` or `types/` by kind, keeping one main file at the root where package-layout.md allows it. `api/` and `instrumentation/` hold one file each and stay.
 - Modify: `packages/core/package.json` exports, every importer, and `packages/core/README.md`. instant-users added `features/version` keys and edits `config/aof-create-next-config.ts`; work from the committed state.
 
-- [ ] **Step 1: Baseline.** Run `pnpm --filter @allonfire/core test` and `pnpm check-types`. Expected: PASS.
-- [ ] **Step 2: Move the files** with `git mv`, so history follows. Update the exports map and the importers.
-- [ ] **Step 3: Run** `pnpm check-types`, the core tests, and `pnpm --filter @allonfire/back-office build`. Expected: PASS.
-- [ ] **Step 4: Gate.**
+- [x] **Step 1: Baseline.** Run `pnpm --filter @allonfire/core test` and `pnpm check-types`. Expected: PASS.
+- [x] **Step 2: Move the files** with `git mv`, so history follows. Update the exports map and the importers.
+- [x] **Step 3: Run** `pnpm check-types`, the core tests, and `pnpm --filter @allonfire/back-office build`. Expected: PASS.
+- [x] **Step 4: Gate.**
 
 ### Task 3: cross-10 in database
 
 **Files:** `packages/database/src/features/test-database/` (6 loose), `seed/` (4) and `image/` (2), into kind folders. Also its `package.json` exports, its importers and its README.
 
-- [ ] **Step 1: Baseline.** Run the database tests. Expected: PASS.
-- [ ] **Step 2: `git mv`** the files, then update the exports and importers.
-- [ ] **Step 3: Run** the database, storage and api tests, and `pnpm db:seed`. Expected: PASS.
-- [ ] **Step 4: Gate.**
+- [x] **Step 1: Baseline.** Run the database tests. Expected: PASS.
+- [x] **Step 2: `git mv`** the files, then update the exports and importers.
+- [x] **Step 3: Run** the database, storage and api tests, and `pnpm db:seed`. Expected: PASS.
+- [x] **Step 4: Gate.**
 
 ### Task 4: cross-10 in storage, and api-23's guide exception
 
 **Files:**
 - Move: `packages/storage/src/features/s3/` (3 loose), `test-bucket/` (4), `image/setup/` (2) and `image/objects/` (2), into kind folders. `image-server/sign.ts` stays: it follows the rule.
-- Modify: storage's exports, importers and README. Also `docs/agents/package-layout.md`: the API's root files are named as allowed at the top of `apps/api/src/`, as `api.md` and `testing.md` say. They are `index.ts`, `app.ts`, `client.ts` and `shutdown.ts`, with their tests (`client.test-d.ts`, `shutdown.test.ts`).
+- Modify: storage's exports, importers and README. Also `docs/guides/package-layout.md`: the API's root files are named as allowed at the top of `apps/api/src/`, as `api.md` and `testing.md` say. They are `index.ts`, `app.ts`, `client.ts` and `shutdown.ts`, with their tests (`client.test-d.ts`, `shutdown.test.ts`).
 
-- [ ] **Step 1: Baseline.** Run the storage tests. Expected: PASS.
-- [ ] **Step 2: `git mv`,** then update the exports and importers. Write the exception into package-layout.md.
-- [ ] **Step 3: Run** the storage and api tests, `pnpm --filter @allonfire/storage image:setup` against local, and `pnpm --filter @allonfire/back-office build`. Expected: PASS.
-- [ ] **Step 4: Gate.** Then mark api-23 and cross-10 as `fixed` in the report.
+- [x] **Step 1: Baseline.** Run the storage tests. Expected: PASS.
+- [x] **Step 2: `git mv`,** then update the exports and importers. Write the exception into package-layout.md.
+- [x] **Step 3: Run** the storage and api tests, `pnpm --filter @allonfire/storage image:setup` against local, and `pnpm --filter @allonfire/back-office build`. Expected: PASS.
+- [x] **Step 4: Gate.** Then mark api-23 and cross-10 as `fixed` in the report.
 
 ### Tasks 5 to 12: each area's layer-3 rows
 
@@ -224,12 +236,12 @@ Every area task has the same steps. Its files are the ones its rows name.
   - config-design-root-4: the e2e services are `storage image-server cdn` (`ci.yml:138`), so the fix starts `database redis storage image-server cdn`.
   - config-design-root-5: Plan A Task 17 fixed the setup blocks; `pnpm db:generate` staying a step in each job is accepted (`plan-a.json`).
 
-- [ ] **Step 1: List** the section's rows marked `open (Plan B)`, plus its layer 2 rows whose status says `left for Plan B` (the remainders above). Re-read each one at its `file:line`, and mark any that are already fixed.
-- [ ] **Step 2: Write failing tests** for the rows that change behaviour. Each test is named for the row's visible effect: for example api-24, "translates every code in every locale without throwing", or core-12, a doc comment that names a constant that exists, checked by a grep in the area's tests.
-- [ ] **Step 3: Run** them. Expected: FAIL.
-- [ ] **Step 4: Fix every row** as its `fix` cell and correction say. Where a row turns out to need a decision the report doesn't settle, stop and ask the owner. Don't guess.
-- [ ] **Step 5: Run** the area's tests. Expected: PASS. Then set each row's `status` to `fixed (Plan B)` or `accepted: <reason>`.
-- [ ] **Step 6: Gate.**
+- [x] **Step 1: List** the section's rows marked `open (Plan B)`, plus its layer 2 rows whose status says `left for Plan B` (the remainders above). Re-read each one at its `file:line`, and mark any that are already fixed.
+- [x] **Step 2: Write failing tests** for the rows that change behaviour. Each test is named for the row's visible effect: for example api-24, "translates every code in every locale without throwing", or core-12, a doc comment that names a constant that exists, checked by a grep in the area's tests.
+- [x] **Step 3: Run** them. Expected: FAIL.
+- [x] **Step 4: Fix every row** as its `fix` cell and correction say. Where a row turns out to need a decision the report doesn't settle, stop and ask the owner. Don't guess.
+- [x] **Step 5: Run** the area's tests. Expected: PASS. Then set each row's `status` to `fixed (Plan B)` or `accepted: <reason>`.
+- [x] **Step 6: Gate.**
 
 ### Task 12b: The Users table and its delete flow, split by concern
 
@@ -249,14 +261,14 @@ Both stay as they are.
 
   The delete stays the `deleteUsers` action, with its `updateTag` calls.
 
-- [ ] **Step 1: Baseline.** Run this only after instant-users is committed: it edits `users-table.browser.test.tsx` and `users-table-scroll.browser.test.tsx`. Run `pnpm --filter @allonfire/back-office test:browser` on the users files. Expected: PASS. Record the count then.
-- [ ] **Step 2: Write the failing tests** for the hooks, through `renderHook`:
+- [x] **Step 1: Baseline.** Run this only after instant-users is committed: it edits `users-table.browser.test.tsx` and `users-table-scroll.browser.test.tsx`. Run `pnpm --filter @allonfire/back-office test:browser` on the users files. Expected: PASS. Record the count then.
+- [x] **Step 2: Write the failing tests** for the hooks, through `renderHook`:
   - "the selection clears when the search param changes";
   - "a confirmed delete calls deleteUsers with the selected ids, toasts, and clears the selection".
-- [ ] **Step 3: Run.** Expected: FAIL, with no hook.
-- [ ] **Step 4: Implement the split.** Move the selection and pagination out of `UsersTable`, and the dialog, toast and clear-selection out of `DeleteUsers`, into the two hooks. Keep every visible behaviour.
-- [ ] **Step 5: Run** the browser and unit tests. Expected: PASS, with the browser test count equal to Step 1's.
-- [ ] **Step 6: Gate.**
+- [x] **Step 3: Run.** Expected: FAIL, with no hook.
+- [x] **Step 4: Implement the split.** Move the selection and pagination out of `UsersTable`, and the dialog, toast and clear-selection out of `DeleteUsers`, into the two hooks. Keep every visible behaviour.
+- [x] **Step 5: Run** the browser and unit tests. Expected: PASS, with the browser test count equal to Step 1's.
+- [x] **Step 6: Gate.**
 
 ### Task 13: config-design-root-9, the Back Office's public URL is required in production
 
@@ -267,19 +279,27 @@ config-design-root-8 is already fixed. The production launch (ccf03a9) renamed `
 **Interfaces:**
 - `BACK_OFFICE_URL=${BACK_OFFICE_URL}` becomes `BACK_OFFICE_URL=${BACK_OFFICE_URL:?BACK_OFFICE_URL is required}`.
 
-- [ ] **Step 1: Write the failing test** in `prod-compose.test.ts`: "the prod compose reads no vendor variable and requires the Back Office's public URL".
+- [x] **Step 1: Write the failing test** in `prod-compose.test.ts`: "the prod compose reads no vendor variable and requires the Back Office's public URL".
   - The compose text contains no `${MINIO_`. The storage image's own `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` keys stay.
   - The back-office service holds `` `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}` ``.
-- [ ] **Step 2: Run** `pnpm --filter @allonfire/config test`. Expected: FAIL on `BACK_OFFICE_URL` only.
-- [ ] **Step 3: Check that Dokploy has it.** Run `pnpm env:prod check docker/.env.production`. Expected: `BACK_OFFICE_URL` is not reported empty. Otherwise stop and ask.
-- [ ] **Step 4: Implement** the guard.
-- [ ] **Step 5: Run.** Expected: PASS. The existing "has a .env.example line" test passes too: `docker/.env.example:15` holds `# BACK_OFFICE_URL=`.
-- [ ] **Step 6: Gate.**
+- [x] **Step 2: Run** `pnpm --filter @allonfire/config test`. Expected: FAIL on `BACK_OFFICE_URL` only.
+- [x] **Step 3: Check that Dokploy has it.** Run `pnpm env:prod check docker/.env.production`. Expected: `BACK_OFFICE_URL` is not reported empty. Otherwise stop and ask.
+- [x] **Step 4: Implement** the guard.
+- [x] **Step 5: Run.** Expected: PASS. The existing "has a .env.example line" test passes too: `docker/.env.example:15` holds `# BACK_OFFICE_URL=`.
+- [x] **Step 6: Gate.**
 
 ### Task 14: Close the report
 
 **Files:** `docs/superpowers/specs/2026-10-29-quality-scan-report.md`
 
-- [ ] **Step 1: Check.** Run `grep -cE "open \(Plan B\)|left for Plan B"` on the report. Expected: `0`. Every row is now `fixed` or `accepted: <reason>`, the remainders included (their status in `.superpowers/quality-scan/plan-a.json` becomes `fixed (Plan A, Plan B)`, then `node .superpowers/quality-scan/build-report.js` rewrites the report).
-- [ ] **Step 2: Check the rules.** For each rule 2, 3, 4, 7, 8, 11, 12 and 13, grep its guide. Expected: the rule's text is there, and the pattern it forbids no longer appears in the code.
-- [ ] **Step 3: Gate**, repo-wide: `pnpm lint && pnpm check-types && pnpm test && pnpm test:browser && pnpm test:e2e && pnpm knip && pnpm knip:production && pnpm dupes`. Expected: all green.
+- [x] **Step 1: Check.** Run `grep -cE "open \(Plan B\)|left for Plan B"` on the report. Expected: `0`. Every row is now `fixed` or `accepted: <reason>`, the remainders included (their status in `.superpowers/quality-scan/plan-a.json` becomes `fixed (Plan A, Plan B)`, then `node .superpowers/quality-scan/build-report.js` rewrites the report).
+- [x] **Step 2: Check the rules.** For each rule 2, 3, 4, 7, 8, 11, 12 and 13, grep its guide. Expected: the rule's text is there, and the pattern it forbids no longer appears in the code.
+- [x] **Step 3: Gate**, repo-wide: `pnpm lint && pnpm check-types && pnpm test && pnpm test:browser && pnpm test:e2e && pnpm knip && pnpm knip:production && pnpm dupes`. Expected: all green.
+
+## Implementation Log
+- Implemented: 2026-11-03T11:10:27Z
+- Workspace: current-branch — feat/instant-users-navigation
+- Committed: no — awaiting user review
+- Tasks 5 to 12 and 12b ran as area agents in the shared tree; the lead recorded each row's status in `.superpowers/quality-scan/plan-a.json` and rebuilt the report (0 open).
+- Added during the run: rule 13 swept in the Back Office's tests too (guards moved to computed-style browser tests); a second HTTP-literal pass; core's `aofTranslators` and config's `asset-url.d.ts` (owner).
+- Final gate: lint, check-types, test, test:browser, test:e2e (322 passed), knip, knip:production, dupes, all exit 0.

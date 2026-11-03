@@ -32,16 +32,22 @@ apps/api/
     │   │                 middleware/error-handler
     │   ├── i18n/         constants/locales, middleware/locale-resolver,
     │   │                 translate, translation-values, translations/*.json
+    │   ├── image/        image-deps (the Image module's Host deps),
+    │   │                 tests/image-test-app
     │   ├── logger/       logger (core's createLogger with the API's env),
+    │   │                 constants/request-log (REQUEST_LOG),
     │   │                 middleware/request-logger
     │   ├── rate-limit/   constants/limits, middleware/rate-limiter
     │   ├── redis/        redis, constants/redis (REDIS)
-    │   └── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
-    │                     + corrections), telemetry — OTel SDK
+    │   ├── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
+    │   │                 + corrections), telemetry — OTel SDK
+    │   └── users/        user-deps (the User module's Host deps)
     └── shared/           anything more than one feature reads, or no feature owns
         ├── constants/    api (API), error (API.ERROR, built on core's
         │                 ERROR.CODE and each module's codes) — no logic
         ├── middleware/   cors, security-headers
+        ├── tests/        app-deps, sign-in, seed-user, problem-of, capture,
+        │                 memory-store — helpers more than one feature's tests read
         ├── types/        bindings (AppBindings)
         └── utils/        outage (outageLatch), probe (isProbe)
 ```
@@ -141,7 +147,7 @@ many, and `middlewares/` reads wrong.
 - **`I18N.LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
   Apps (ADR 0012), which route by its derived `Language`. `I18N.SUPPORTED_LOCALES`
   there is the explicit preference order `match()` sees, main variant of each
-  language first; `src/features/i18n/tests/locales.test-d.ts` fails if a locale is
+  language first; `packages/core/src/features/i18n/tests/locales.test-d.ts` fails if a locale is
   missing from it or speaks a language outside `I18N.BASE_LANGUAGES`. The API's
   `features/i18n/constants/locales.ts` keeps `TRANSLATION.DEFAULT_LOCALE` and the catalogue.
   `TRANSLATION.CATALOGUE` uses computed `[I18N.LOCALE.X]` keys

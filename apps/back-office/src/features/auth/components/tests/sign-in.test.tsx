@@ -5,6 +5,7 @@ import { objectValues } from "@allonfire/core/shared/utils/object";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { BrushKanji } from "@/shared/components/brush-kanji";
 import en from "../../../i18n/translations/en.json" with { type: "json" };
 import itMessages from "../../../i18n/translations/it.json" with {
   type: "json",
@@ -13,11 +14,8 @@ import { SIGN_IN } from "../../constants/sign-in";
 import { SignIn } from "../sign-in";
 import { SignInForm } from "../sign-in-form";
 
-// next/image needs Next's loader; its alt and src are all the markup reads.
-vi.mock("next/image", () => ({
-  default: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+vi.mock("next/image", async () => ({
+  default: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 // The server action reaches the API; the markup only needs a function.
 vi.mock("@allonfire/auth/features/next/actions/sign-in", () => ({
@@ -26,10 +24,13 @@ vi.mock("@allonfire/auth/features/next/actions/sign-in", () => ({
 
 // The logo rides in the HTML as a data URL: no request, no wait.
 const HEADING =
-  /<h1[^>]*><span data-alt="Back Office" data-src="data:image\/svg\+xml/;
+  /<h1[^>]*><span data-alt="Back Office"[^>]*data-src="data:image\/svg\+xml/;
 const BOARD_SIGN_IN = /aria-live="polite"[^>]*>Sign in</;
 const CURRENT_LANGUAGE = new RegExp(
   `<a aria-current="true"[^>]*href="/en${AUTH.PAGE.SIGN_IN}"`
+);
+const ENTER_KANJI = new RegExp(
+  `<span aria-hidden="true"[^>]*lang="ja">${SIGN_IN.ENTER_KANJI}<`
 );
 const EMAIL_LABEL = /<label[^>]*for="sign-in-email"[^>]*>Email</;
 const EMAIL_AUTOCOMPLETE = /<input[^>]*autoComplete="username"/;
@@ -54,17 +55,16 @@ describe("SignIn", () => {
     expect(html).toMatch(BOARD_SIGN_IN);
   });
 
+  // How the brush paints it: BrushKanji's browser test.
   it("stands at the ticket gate: no photograph, its name brushed behind", () => {
-    const html = render(<SignIn />);
-    expect(html).toContain("font-brush");
+    expect(render(<SignIn />)).toContain(
+      renderToStaticMarkup(<BrushKanji kanji={SIGN_IN.BOARD_KANA} />)
+    );
   });
 
+  // Where it sits in the submit: the form's browser test.
   it("sets the kanji for enter behind the submit, hidden from assistive tech", () => {
-    const html = render(<SignInForm />);
-    expect(html).toContain(
-      `<span aria-hidden="true" class="pointer-events-none absolute`
-    );
-    expect(html).toContain(`lang="ja">${SIGN_IN.ENTER_KANJI}<`);
+    expect(render(<SignInForm />)).toMatch(ENTER_KANJI);
   });
 
   it("links to the page in each language, marking the current one", () => {
@@ -76,9 +76,8 @@ describe("SignIn", () => {
   });
 
   it("states who can sign in on the departure board", () => {
-    expect(render(<SignIn />)).toContain(
-      '<span class="sr-only">Authorized users only. Sign-up is closed.</span>'
-    );
+    // Read once, not as it runs: the board's browser test.
+    expect(render(<SignIn />)).toContain(`>${en.SignIn.notice}<`);
   });
 });
 

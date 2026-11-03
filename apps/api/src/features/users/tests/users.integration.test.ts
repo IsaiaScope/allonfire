@@ -1,7 +1,5 @@
 // @module-tag integration
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import {
   userBodySchema,
@@ -12,20 +10,28 @@ import {
 } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, Role } from "@allonfire/database/enums";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { upsertUser } from "@allonfire/database/features/seed/upsert-user";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { readFixtureImage } from "@allonfire/storage/features/image/fixtures/utils/read-fixture-image";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { pictureLink } from "@allonfire/storage/features/image-server/sign";
-import { hashPassword } from "better-auth/crypto";
 import { z } from "zod";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
+import { problemOf } from "../../../shared/tests/problem-of";
+import {
+  demotedAdminCookie,
+  seedAdmin,
+  seedUser,
+  userIdOf,
+} from "../../../shared/tests/seed-user";
 import {
   cookieFor,
   ORIGIN,
@@ -33,7 +39,7 @@ import {
   type TestApp,
 } from "../../../shared/tests/sign-in";
 import { auth } from "../../auth/auth";
-import { problemOf } from "../../errors/tests/problem-of";
+import { translate } from "../../i18n/translate";
 import { userDeps } from "../user-deps";
 
 const LIST = API.PATH.USERS;
@@ -55,35 +61,6 @@ const get = (path: string, cookie?: string) =>
   app.request(path, {
     headers: { origin: ORIGIN, ...(cookie && { cookie }) },
   });
-
-/** The Fixtures' Back Office Admin's id. */
-const backOfficeAdminId = async () =>
-  (
-    await prisma.user.findUniqueOrThrow({
-      select: { id: true },
-      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
-    })
-  ).id;
-
-/** A Back Office Admin with the Fixtures' password, made or reset. */
-const seedAdmin = async (email: string, name: string) => {
-  await upsertUser(
-    prisma,
-    { email, memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }], name },
-    await hashPassword(FIXTURE.PASSWORD)
-  );
-  return { email };
-};
-
-/** The cookie of a Back Office Admin made a User after signing in. */
-const demotedAdminCookie = async (email: string) => {
-  const cookie = await cookieFor(app, await seedAdmin(email, "demoted"));
-  await prisma.membership.updateMany({
-    data: { role: Role.USER },
-    where: { app: App.BACK_OFFICE, user: { email } },
-  });
-  return cookie;
-};
 
 describe("listing Users on the Fixtures", () => {
   it("lists every User to a Back Office Admin", async () => {
@@ -171,13 +148,15 @@ describe("deleting Users", () => {
 
   it("refuses your own id with CANNOT_DELETE_SELF", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const selfId = await backOfficeAdminId();
+    const selfId = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
     const { id } = await throwaway("beside-self");
     const res = await remove([id, selfId], cookie);
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.CANNOT_DELETE_SELF);
-    expect(problem.detail).toBe("You cannot delete yourself");
+    expect(problem.detail).toBe(
+      translate(API.ERROR.CODE.CANNOT_DELETE_SELF, I18N.LOCALE.EN_US)
+    );
     expect(await exists(selfId)).toBe(true);
     expect(await exists(id)).toBe(true);
   });
@@ -194,7 +173,7 @@ describe("deleting Users", () => {
   });
 
   it("refuses an Admin demoted since their cookie was cached", async () => {
-    const cookie = await demotedAdminCookie(`demoted@${DELETABLE}`);
+    const cookie = await demotedAdminCookie(app, `demoted@${DELETABLE}`);
     const { id } = await throwaway("kept");
     expect((await remove([id], cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await exists(id)).toBe(true);
@@ -230,7 +209,6 @@ describe("deleting Users", () => {
 
 // Users added here, in their own domain so the list's counts hold.
 const ADDED = "add-users-api.test";
-const PASSWORD = "A-long-password-1";
 const add = <T>(body: T & Json<T>, cookie?: string) =>
   app.request(LIST, {
     body: stringifyJson(body),
@@ -245,7 +223,7 @@ const newUser = (name: string) => ({
   email: `${name}@${ADDED}`,
   memberships: [{ app: App.LAURA, role: Role.USER }],
   name,
-  password: PASSWORD,
+  password: FIXTURE.PASSWORD,
 });
 
 describe("adding Users", () => {
@@ -262,9 +240,9 @@ describe("adding Users", () => {
     expect(created.id).toBeTruthy();
     // The Version a picture set next carries.
     expect(created.version).toBe(await currentVersion(created.id, cookie));
-    expect((await signIn(app, body, { password: PASSWORD })).status).toBe(
-      HTTP.STATUS.OK
-    );
+    expect(
+      (await signIn(app, body, { password: FIXTURE.PASSWORD })).status
+    ).toBe(HTTP.STATUS.OK);
   });
 
   it("answers 409 EMAIL_TAKEN with its message for a Fixture's email", async () => {
@@ -276,11 +254,13 @@ describe("adding Users", () => {
     expect(res.status).toBe(HTTP.STATUS.CONFLICT);
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.EMAIL_TAKEN);
-    expect(problem.detail).toBe("An account with this email already exists");
+    expect(problem.detail).toBe(
+      translate(API.ERROR.CODE.EMAIL_TAKEN, I18N.LOCALE.EN_US)
+    );
   });
 
   it("refuses an Admin demoted since their cookie was cached", async () => {
-    const cookie = await demotedAdminCookie(`demoted@${ADDED}`);
+    const cookie = await demotedAdminCookie(app, `demoted@${ADDED}`);
     const body = newUser("never");
     expect((await add(body, cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await prisma.user.count({ where: { email: body.email } })).toBe(0);
@@ -289,13 +269,13 @@ describe("adding Users", () => {
 
 // Users given an Avatar here live in their own domain.
 const PICTURED = "avatar.test";
-const PHOTO = readFileSync(resolve(IMAGE_FIXTURE_FILES, "photo.jpg"));
+const PHOTO = readFixtureImage(IMAGE_FIXTURE.FILE.PHOTO);
 const avatarPath = (id: string) =>
-  `${LIST}${USER.PATH.AVATAR.replace(":id", id)}`;
+  `${LIST}${fillPath(USER.PATH.AVATAR, { id })}`;
 /** A picture set on the User's Version read just before, unless one is given. */
 const put = async (id: string, cookie: string, version?: string) => {
   const form = new FormData();
-  form.append("file", new File([PHOTO], "photo.jpg"));
+  form.append("file", new File([PHOTO], IMAGE_FIXTURE.FILE.PHOTO));
   form.append("version", version ?? (await currentVersion(id, cookie)));
   return app.request(avatarPath(id), {
     body: form,
@@ -412,7 +392,7 @@ describe("a User's Avatar", () => {
 
   it("the Session answers a signed link with its blur, never the file's name", async () => {
     const admin = FIXTURE.USER.BACK_OFFICE.ADMIN;
-    const id = await backOfficeAdminId();
+    const id = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
     try {
       await put(id, await cookieFor(app, admin));
       const key = await imageOf(id);
@@ -438,8 +418,7 @@ describe("a User's Avatar", () => {
 
 // Users edited here, in their own domain so the list's counts hold.
 const EDITED = "edit-users-api.test";
-const NEW_PASSWORD = "Another-long-password-2";
-const onePath = (id: string) => `${LIST}${USER.PATH.ONE.replace(":id", id)}`;
+const onePath = (id: string) => `${LIST}${fillPath(USER.PATH.ONE, { id })}`;
 /** The User's Version now, as an edit form opened now would carry it. */
 const currentVersion = async (id: string, cookie: string) =>
   userBodySchema.parse(await (await get(onePath(id), cookie)).json()).version;
@@ -465,17 +444,10 @@ const edit = async (
   });
 /** A User with a password and a Laura Membership, signed in once. */
 const editable = async (name: string) => {
-  const email = `${name}@${EDITED}`;
-  await upsertUser(
-    prisma,
-    { email, memberships: [{ app: App.LAURA, role: Role.USER }], name },
-    await hashPassword(FIXTURE.PASSWORD)
-  );
-  const { id } = await prisma.user.findUniqueOrThrow({
-    select: { id: true },
-    where: { email },
-  });
-  return { email, id };
+  const user = await seedUser(`${name}@${EDITED}`, name, [
+    { app: App.LAURA, role: Role.USER },
+  ]);
+  return { ...user, id: await userIdOf(user) };
 };
 
 describe("editing Users", () => {
@@ -500,17 +472,17 @@ describe("editing Users", () => {
     await cookieFor(app, user);
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
     expect(
-      (await edit(user.id, { password: NEW_PASSWORD }, admin)).status
+      (await edit(user.id, { password: FIXTURE.NEW_PASSWORD }, admin)).status
     ).toBe(HTTP.STATUS.OK);
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
-    expect((await signIn(app, user, { password: NEW_PASSWORD })).status).toBe(
-      HTTP.STATUS.OK
-    );
+    expect(
+      (await signIn(app, user, { password: FIXTURE.NEW_PASSWORD })).status
+    ).toBe(HTTP.STATUS.OK);
   });
 
   it("answers 403 CANNOT_CHANGE_OWN_ROLE for your own Back Office Role", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const selfId = await backOfficeAdminId();
+    const selfId = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
     const res = await edit(selfId, { memberships: [] }, cookie);
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     const problem = await problemOf(res);

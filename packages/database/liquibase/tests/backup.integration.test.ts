@@ -4,7 +4,7 @@ import { TEST_DATABASE } from "../../src/features/test-database/constants/test-d
 import {
   liquibase,
   migrateImage,
-} from "../../src/features/test-database/server";
+} from "../../src/features/test-database/utils/server";
 import {
   dropDatabase,
   recreateDatabase,
@@ -33,7 +33,7 @@ function backups(): string[] {
 function backup(url: string): string {
   return migrateImage(
     url,
-    [`DB_BACKUPS_VOLUME=${VOLUME}`, `BACKUP_KEEP=${KEEP}`],
+    [`DATABASE_BACKUP_VOLUME=${VOLUME}`, `DATABASE_BACKUP_KEEP=${KEEP}`],
     "backup"
   );
 }

@@ -2,10 +2,14 @@
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { objectKeys } from "@allonfire/core/shared/utils/object";
 import { API } from "../../../shared/constants/api";
-import { captureLog } from "../../logger/tests/capture";
+import { captureLog } from "../../../shared/tests/capture";
 import { TRANSLATION } from "../constants/locales";
 import { translate, translateCode } from "../translate";
+
+/** A value for every ICU argument the catalogue holds; a message ignores the rest. */
+const SAMPLE_VALUES = { count: 2, limit: 1024, seconds: 5 };
 
 /** Any surviving brace means a placeholder was not substituted. */
 const UNRESOLVED_PLACEHOLDER = /[{}]/;
@@ -94,10 +98,16 @@ describe("translate — resilience", () => {
     expect(first).toBe(second);
   });
 
-  it("never throws for any code in any locale", () => {
+  it("renders every key in every locale without falling back to English", () => {
+    const { lines, logger } = captureLog();
+
     for (const locale of I18N.SUPPORTED_LOCALES) {
-      expect(() => translate(ERROR.CODE.INTERNAL_ERROR, locale)).not.toThrow();
+      for (const key of objectKeys(TRANSLATION.CATALOGUE[locale])) {
+        translateCode(key, locale, SAMPLE_VALUES, logger);
+      }
     }
+
+    expect(lines).toEqual([]);
   });
 
   it("a missing translation serves English and warns with the key and locale", () => {

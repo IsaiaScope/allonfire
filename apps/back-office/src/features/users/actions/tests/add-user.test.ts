@@ -1,8 +1,10 @@
 // @module-tag unit
+
 import { API } from "@allonfire/api/shared/constants/api";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { updateTag } from "next/cache";
 import { redirect } from "@/features/i18n/navigation";
 import { USERS } from "../../constants/users";
@@ -12,10 +14,10 @@ import { FAKE_API, resetFakeApi } from "./fake-api";
 vi.mock("@/features/api/utils/server-api", async () => ({
   serverApi: (await import("./fake-api")).fakeServerApi,
 }));
-vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock("@/features/i18n/navigation", () => ({ redirect: vi.fn() }));
 
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 
 const formOf = (fields: Record<string, string | File> = {}) => {
   const form = new FormData();

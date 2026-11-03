@@ -1,10 +1,12 @@
+import { resolve } from "node:path";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
+import { TEST_DATABASE } from "../src/features/test-database/constants/test-database";
 
 /** A changeset's own values: who writes it and where it is kept. */
 export const CHANGESET = {
   AUTHOR: "isaia",
-  /** The folder holding one formatted-SQL changeset per file, under the package. */
-  DIR: "changelog/changesets",
+  /** The folder holding one formatted-SQL changeset per file. */
+  DIR: resolve(TEST_DATABASE.PACKAGE_ROOT, "changelog/changesets"),
 } as const;
 
 const NUMBER_LENGTH = 4;

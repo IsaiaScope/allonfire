@@ -1,5 +1,5 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { nextAuthEnv } from "../../../environment/next-environment";

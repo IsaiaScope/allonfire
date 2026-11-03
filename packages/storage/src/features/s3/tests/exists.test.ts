@@ -1,10 +1,10 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { HeadBucketCommand, S3ServiceException } from "@aws-sdk/client-s3";
-import { bucketExists } from "../exists";
+import { bucketExists } from "../utils/exists";
 import { send } from "./s3-client-mock";
 
-vi.mock("../client", () => import("./s3-client-mock"));
+vi.mock("../utils/client", () => import("./s3-client-mock"));
 
 const refusal = (httpStatusCode: number) =>
   new S3ServiceException({

@@ -5,11 +5,10 @@ import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
-import {
-  SECTION,
-  sectionHref,
-} from "../src/features/navigation/constants/sections";
+import { SECTION } from "../src/features/navigation/constants/sections";
+import { sectionHref } from "../src/features/navigation/utils/sections";
 import { newUserHref } from "../src/features/users/utils/user-href";
+import { enT } from "../src/shared/tests/translators";
 import {
   onPhone,
   openSidebar,
@@ -31,7 +30,7 @@ const SHOWN = FIXTURE.USER.NO_MEMBERSHIP;
 /** Any User's email in the list: the rows came with the page. */
 const anyEmail = (page: Page) =>
   page
-    .getByRole("button", { name: t.copy.label.replace("{email}", "") })
+    .getByRole("button", { name: enT("Users.copy.label", { email: "" }) })
     .filter({ visible: true })
     .first();
 

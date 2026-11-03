@@ -8,6 +8,7 @@ import {
   resolve,
 } from "node:path";
 import { parseArgs } from "node:util";
+import { REPO } from "@allonfire/config/local/repo";
 import { __unstable__loadDesignSystem } from "@tailwindcss/node";
 import { canonicalizeSource } from "./canonicalize-source";
 
@@ -40,10 +41,8 @@ if (!(values.css && values.dir)) {
 const ROOT_FONT_SIZE_PX = 16;
 const SOURCE_FILE = /\.(tsx?|jsx?)$/;
 const SKIPPED_DIR = new Set(["node_modules", ".next", "dist"]);
-// `pnpm --filter` runs this from core's folder, so paths resolve from the repo.
-const REPO_DIR = resolve(import.meta.dirname, "../../../../..");
 
-const roots = values.dir.map((dir) => resolve(REPO_DIR, dir));
+const roots = values.dir.map((dir) => resolve(REPO.ROOT, dir));
 
 const isSource = (path: string) =>
   SOURCE_FILE.test(path) && !basename(path).startsWith("._");
@@ -73,14 +72,14 @@ const sourcesIn = async (dir: string): Promise<string[]> => {
 const files =
   positionals.length > 0
     ? positionals
-        .map((path) => resolve(REPO_DIR, path))
+        .map((path) => resolve(REPO.ROOT, path))
         .filter(
           (path) => isSource(path) && roots.some((root) => isInside(path, root))
         )
     : (await Promise.all(roots.map(sourcesIn))).flat();
 
 // Loaded only when there is a file to read: most commits stage none of them.
-const stylesheet = resolve(REPO_DIR, values.css);
+const stylesheet = resolve(REPO.ROOT, values.css);
 const designSystem =
   files.length > 0
     ? await __unstable__loadDesignSystem(await readFile(stylesheet, "utf8"), {
@@ -107,7 +106,7 @@ const changed = (
       if (!values.check) {
         await writeFile(path, after);
       }
-      return relative(REPO_DIR, path);
+      return relative(REPO.ROOT, path);
     })
   )
 ).filter((path) => path !== null);

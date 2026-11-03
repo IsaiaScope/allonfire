@@ -16,6 +16,7 @@ import {
   BrushKanji,
   kanjiAction,
 } from "@/shared/components/brush-kanji";
+import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 import { USERS } from "../constants/users";
 import { passwordChecks } from "../utils/user-form-schema";
 import { PasswordRules } from "./password-rules";
@@ -86,7 +87,7 @@ const AVATAR_DRESS = {
   cropProps: {
     cancelProps: {
       className: kanjiAction(),
-      decoration: <ActionKanji kanji={USERS.CANCEL_KANJI} />,
+      decoration: <ActionKanji kanji={ACTION_KANJI.CANCEL} />,
       size: "field",
       variant: "destructive",
     },
@@ -104,10 +105,7 @@ const AVATAR_DRESS = {
   },
   triggerProps: {
     // The smaller kanji action: inside the drop area, not a form's last row.
-    className: cn(
-      kanjiAction(),
-      "min-w-0 bg-(--line-green-deep) pr-10 text-(--line-green-deep-foreground) hover:bg-(--line-green-deep)/90"
-    ),
+    className: cn(kanjiAction({ tone: "green" }), "min-w-0 pr-10"),
     decoration: (
       <ActionKanji className="text-4xl" kanji={USERS.PICTURE_KANJI} />
     ),

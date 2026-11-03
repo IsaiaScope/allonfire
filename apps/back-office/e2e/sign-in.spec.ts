@@ -8,7 +8,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import { openSidebar, SIGN_IN_URL, signIn } from "./pages";
+import { openAccountMenu, SIGN_IN_URL, signIn } from "./pages";
 
 // Home is `/`; the locale middleware can answer it as `/en`.
 const HOME_URL = new RegExp(
@@ -68,12 +68,7 @@ test("signing out returns to sign-in and keeps home closed", async ({
 }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(page).toHaveURL(HOME_URL);
-  // Sign out is in the account menu, in the sidebar: a drawer on a phone.
-  await openSidebar(page);
-  await page
-    .getByRole("button", { name: EN.Navigation.account })
-    .filter({ visible: true })
-    .click();
+  await openAccountMenu(page);
   await page.getByRole("menuitem", { name: EN.Navigation.signOut }).click();
   await expect(page).toHaveURL(SIGN_IN_URL);
   // The browser kept the signed-in pages a while: Back must not show them.

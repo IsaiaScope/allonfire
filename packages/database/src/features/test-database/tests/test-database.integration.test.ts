@@ -3,20 +3,20 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../../environment/environment";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
 import { TEST_DATABASE } from "../constants/test-database";
-import { templateName, testDatabaseName } from "../names";
+import { templateName, testDatabaseName } from "../utils/names";
 import {
   createDatabase,
   databasesOnServer,
   dropDatabase,
   withClient,
-} from "../server";
-import { ensureTemplate, templateFingerprint } from "../template";
+} from "../utils/server";
+import { ensureTemplate, templateFingerprint } from "../utils/template";
 import {
   createTestDatabase,
   dropTestDatabase,
   dropTestDatabasesOf,
   sweepTestDatabases,
-} from "../test-database";
+} from "../utils/test-database";
 
 const SERVER = env.DATABASE_URL;
 const EPOCH = Math.floor(Date.now() / UNIT.MS_PER_SECOND);

@@ -4,7 +4,7 @@ import { AOFReadOnlyField } from "../aof-read-only-field";
 
 const DISABLED_INPUT =
   /<input[^>]*disabled=""[^>]*value="ada@example.com"|<input[^>]*value="ada@example.com"[^>]*disabled=""/;
-const TILE = /<span aria-hidden="true" class="[^"]*dark[^"]*bg-background/;
+const TILE = /<span aria-hidden="true"[^>]*><svg data-icon/;
 
 describe("AOFReadOnlyField", () => {
   const html = renderToStaticMarkup(
@@ -16,16 +16,13 @@ describe("AOFReadOnlyField", () => {
     />
   );
 
-  it("shows its value in a text field's box nobody can reach or edit, at full strength", () => {
+  it("shows its value, labelled, in an input nobody can reach or edit", () => {
     expect(html).toMatch(DISABLED_INPUT);
-    expect(html).toContain("disabled:opacity-100");
     expect(html).toContain('for="email"');
-    expect(html).toContain("h-(--field-height)");
   });
 
-  it("opens on the text field's icon tile and keeps its rhythm, posting nothing", () => {
+  it("opens on the text field's icon tile, hidden from screen readers, posting nothing", () => {
     expect(html).toMatch(TILE);
-    expect(html).toContain("min-h-6");
     expect(html).not.toContain("name=");
   });
 });

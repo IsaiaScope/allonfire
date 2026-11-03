@@ -1,5 +1,5 @@
 // @module-tag unit
-import { testBucketName } from "../names";
+import { testBucketName } from "../utils/names";
 
 const S3_BUCKET_NAME = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
 

@@ -1,7 +1,7 @@
 // @module-tag unit
 import { environmentManager } from "@tanstack/react-query";
 import { UNIT } from "../../../../shared/constants/units";
-import { AOFGetQueryClient } from "../aof-get-query-client";
+import { AOFGetQueryClient } from "../utils/aof-get-query-client";
 
 describe("AOFGetQueryClient in the browser", () => {
   it("returns one client for the whole page, ignoring later options", () => {

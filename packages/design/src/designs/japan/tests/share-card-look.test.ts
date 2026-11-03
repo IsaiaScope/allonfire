@@ -1,4 +1,5 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { JAPAN_IMAGE_COLOR } from "../image-colors";
 import { JAPAN_IMAGE_FONT } from "../image-font";
 import { JAPAN_SHARE_CARD } from "../share-card-look";
@@ -19,9 +20,7 @@ describe("JAPAN_SHARE_CARD", () => {
   it("runs the yellow tactile paving along the bottom edge", () => {
     const { edge } = JAPAN_SHARE_CARD.light;
     const [kind, data = ""] = edge.image.split(",");
-    expect(kind).toBe("data:image/svg+xml;base64");
-    expect(Buffer.from(data, "base64").toString()).toContain(
-      JAPAN_IMAGE_COLOR.TACTILE
-    );
+    expect(kind).toBe(`data:${HTTP.CONTENT_TYPE.SVG}`);
+    expect(decodeURIComponent(data)).toContain(JAPAN_IMAGE_COLOR.TACTILE);
   });
 });

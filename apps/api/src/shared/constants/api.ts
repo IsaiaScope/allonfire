@@ -1,6 +1,5 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { z } from "zod";
@@ -71,16 +70,6 @@ export const API = {
     TRANSLATION_FAILED: "translation failed, serving the English source",
     UNHANDLED_ERROR: "unhandled error",
   },
-  /**
-   * The only request headers the request log records. An allowlist, not a
-   * denylist: request lines ship to OpenObserve, and a header added later
-   * should have to earn its place.
-   */
-  LOGGED_REQUEST_HEADERS: [
-    HTTP.HEADER.ACCEPT_LANGUAGE,
-    HTTP.HEADER.CONTENT_LENGTH,
-    HTTP.HEADER.CONTENT_TYPE,
-  ],
   PATH: {
     /** Where the Auth module is mounted and what `createAuth` gets as `basePath`. */
     AUTH: `${VERSION_PATH}${AUTH.PATH.BASE}`,

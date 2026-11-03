@@ -1,10 +1,7 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { App, Role } from "@allonfire/database/enums";
-import type {
-  UserListQuery,
-  UserRecord,
-} from "@allonfire/database/features/auth/user.service";
+import type { UserListQuery } from "@allonfire/database/features/auth/user.service";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { USER } from "../../constants/users";
 import { userListBodySchema } from "../constants/schemas";
@@ -13,20 +10,16 @@ import {
   BACK_OFFICE_ADMIN as ADMIN,
   stubUserDeps,
   userHost,
+  userRow,
 } from "./stub-user-deps";
 
 const LIST = USER.PATH.BASE;
 const TOTAL = 60;
-const USER_ROW: UserRecord = {
-  createdAt: new Date("2026-10-01T10:00:00.000Z"),
+const USER_ROW = userRow({
   email: FIXTURE.USER.LAURA.ADMIN.email,
-  id: "user-2",
-  image: null,
-  imageBlurDataUrl: null,
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
   name: FIXTURE.USER.LAURA.ADMIN.name,
-  version: "version-1",
-};
+});
 
 /** Deps that record each list query and let in whom `allows` says. */
 const depsWith = (allows = true) => {

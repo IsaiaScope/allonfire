@@ -1,10 +1,11 @@
 // @module-tag unit
+
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: plain string checks, no JSON parser: config imports nothing,
 // core's helpers included.
@@ -48,13 +49,13 @@ const RUNS_ON = /^[\w./-]/;
 /** A package.json dependency line, which names the package but reads nothing. */
 const DEPENDENCY = /^": "workspace:/;
 
-const THIS_FILE = relative(REPO, import.meta.filename);
+const THIS_FILE = relative(REPO.ROOT, import.meta.filename);
 
 /** Every file a reader can sit in, tracked or new, with its text. */
 const readers = execFileSync(
   "git",
   ["ls-files", "--cached", "--others", "--exclude-standard", "--", ...SCANNED],
-  { cwd: REPO, encoding: "utf8" }
+  { cwd: REPO.ROOT, encoding: "utf8" }
 )
   .split("\n")
   .filter(
@@ -62,7 +63,7 @@ const readers = execFileSync(
       READABLE.test(path) &&
       !NOT_A_READER.test(path) &&
       path !== THIS_FILE &&
-      existsSync(resolve(REPO, path))
+      existsSync(resolve(REPO.ROOT, path))
   )
   .map((path) => ({ path, text: read(path) }));
 

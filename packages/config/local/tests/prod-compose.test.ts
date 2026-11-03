@@ -1,9 +1,10 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no YAML parser, like service-names.test.ts.
 const COMPOSE = read("docker/docker-compose.prod.yml");
@@ -32,7 +33,7 @@ const service = (name: string) => {
 };
 
 /** Every `${KEY:?…}` the compose requires, so a deploy cannot start without it. */
-const REQUIRED = [...COMPOSE.matchAll(REQUIRED_KEY)].map(([, key]) => key);
+const REQUIRED = [...COMPOSE.matchAll(REQUIRED_KEY)].map(([, key = ""]) => key);
 const EXAMPLES = [
   "docker/.env.example",
   "apps/api/.env.example",
@@ -171,7 +172,7 @@ it.each(REQUIRED)(
 it("gives storage-setup every storage key the API gets: both load the storage package's env", () => {
   const keys = (name: string) =>
     [...service(name).matchAll(STORAGE_KEY)]
-      .map(([, key]) => key)
+      .map(([, key = ""]) => key)
       .sort((a, b) => a.localeCompare(b));
   expect(keys("storage-setup")).toEqual(keys("api"));
 });
@@ -179,5 +180,13 @@ it("gives storage-setup every storage key the API gets: both load the storage pa
 it("keeps the storage console out of search results, ahead of its login", () => {
   expect(service("storage")).toContain(
     "traefik.http.routers.allonfire-storage.middlewares=noindex@file,admin-gate@file"
+  );
+});
+
+it("the prod compose reads no vendor variable and requires the Back Office's public URL", () => {
+  // The storage image's own MINIO_ROOT_* keys stay; what they read is ours.
+  expect(COMPOSE).not.toContain(interpolate("MINIO_"));
+  expect(service("back-office")).toContain(
+    `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}`
   );
 });

@@ -2,7 +2,7 @@ import {
   appSchema,
   imageAccessSchema,
 } from "@allonfire/database/features/auth/access/constants/schemas";
-import { imageAltSchema } from "@allonfire/database/features/image/alt";
+import { imageAltSchema } from "@allonfire/database/features/image/utils/alt";
 import { z } from "zod";
 
 /** The shared schemas, named as this module's Models. */

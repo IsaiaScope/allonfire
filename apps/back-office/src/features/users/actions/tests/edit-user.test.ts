@@ -1,9 +1,12 @@
 // @module-tag unit
+
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, Role } from "@allonfire/database/enums";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { avatarRemoval } from "@allonfire/ui/lib/avatar-change";
 import { updateTag } from "next/cache";
 import { USERS } from "../../constants/users";
@@ -15,12 +18,12 @@ const ID = "user-2";
 const VERSION = "version-1";
 /** The Version the PATCH answers: the User as just saved. */
 const SAVED_VERSION = "version-2";
-const STRONG = "A-long-password-1";
+const STRONG = FIXTURE.PASSWORD;
 
 vi.mock("@/features/api/utils/server-api", async () => ({
   serverApi: (await import("./fake-api")).fakeServerApi,
 }));
-vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 
 /** The removal the picture field posts. */
 const REMOVAL = avatarRemoval(USERS.AVATAR_FIELD);
@@ -170,8 +173,8 @@ describe("editUser, once saved", () => {
     expect(
       FAKE_API.sent.map(({ method, path }) => `${method} ${path}`)
     ).toEqual([
-      `${HTTP.METHOD.PATCH} ${API.PATH.USERS}${USER.PATH.ONE.replace(":id", ID)}`,
-      `${HTTP.METHOD.DELETE} ${API.PATH.USERS}${USER.PATH.AVATAR.replace(":id", ID)}`,
+      `${HTTP.METHOD.PATCH} ${API.PATH.USERS}${fillPath(USER.PATH.ONE, { id: ID })}`,
+      `${HTTP.METHOD.DELETE} ${API.PATH.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
     ]);
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(state).toEqual({ notice: USERS.EDIT_NOTICE.SAVED });

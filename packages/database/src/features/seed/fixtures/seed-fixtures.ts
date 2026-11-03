@@ -1,7 +1,7 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { hashPassword } from "better-auth/crypto";
 import type { PrismaClient } from "../../../../generated/prisma/client";
-import { upsertUser } from "../upsert-user";
+import { upsertUser } from "../utils/upsert-user";
 import { FIXTURE } from "./fixtures";
 import type { FixtureImage } from "./images";
 

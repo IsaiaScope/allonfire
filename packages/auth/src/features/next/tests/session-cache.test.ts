@@ -4,7 +4,7 @@ import { getSession } from "../utils/session";
 vi.mock("next/headers", () => import("./session-request-mocks"));
 vi.mock("next-intl/server", () => ({ getLocale: async () => "en" }));
 vi.mock(
-  "@allonfire/core/features/next/api/forwarded-for",
+  "@allonfire/core/features/next/api/visitor-headers",
   () => import("./session-request-mocks")
 );
 // React's cache memoizes only inside a server request; this one memoizes for

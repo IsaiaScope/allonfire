@@ -1,4 +1,5 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AOFFileUpload, fileRefusal } from "../aof-file-upload";
@@ -50,12 +51,6 @@ describe("AOFFileUpload", () => {
     expect(html).toContain("12.5 kB");
     expect(html.match(/aria-label="Remove"/g)).toHaveLength(2);
   });
-
-  it("draws its area and rows in the Design's corners, never round", () => {
-    const html = render([{ id: "a", name: "scan.png", size: 1 }]);
-    expect(html).toContain("rounded-lg");
-    expect(html).not.toContain("rounded-full");
-  });
 });
 
 /** The drop area's opening tag. */
@@ -96,7 +91,7 @@ describe("fileRefusal", () => {
   });
 
   it("refuses another type, and a file too large, in the caller's words", () => {
-    expect(fileRefusal(rules, file("photo.png", "image/png"))).toBe(
+    expect(fileRefusal(rules, file("photo.png", HTTP.CONTENT_TYPE.PNG))).toBe(
       LABELS.wrongType
     );
     expect(

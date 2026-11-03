@@ -9,8 +9,8 @@ import {
   getImage,
   type ImageChange,
   type ImageCursor,
-  type ImageLinksById,
   ImageNotFoundError,
+  type ImagePlacementsById,
   listImages,
   type NewImage,
   removeImagesFromApp,
@@ -63,7 +63,8 @@ beforeEach(async () => {
   await cleanUp();
   await prisma.user.deleteMany({ where: { id: USER_ID } });
   await prisma.user.create({
-    data: { email: "image-test@allonfire.test", id: USER_ID },
+    // Its own domain: the Fixtures' is theirs alone.
+    data: { email: "image-test@image-service.test", id: USER_ID },
   });
 });
 
@@ -416,9 +417,9 @@ describe("image.service deletes", () => {
     const id = one?.id ?? "";
     // Placed in the Back Office after the caller's own read: the check sees it.
     await prisma.imageApp.create({ data: { app: OFFICE, imageId: id } });
-    const seen: ImageLinksById[] = [];
-    const refuse = (links: ImageLinksById) => {
-      seen.push(links);
+    const seen: ImagePlacementsById[] = [];
+    const refuse = (placements: ImagePlacementsById) => {
+      seen.push(placements);
       throw new Error("refused");
     };
     await expect(deleteImages([id], refuse)).rejects.toThrow("refused");

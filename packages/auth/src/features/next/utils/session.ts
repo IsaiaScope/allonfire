@@ -1,4 +1,4 @@
-import { readVisitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import { cacheLife } from "next/cache";

@@ -1,8 +1,9 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { testClient } from "hono/testing";
 import type { Logger } from "pino";
 import { API } from "../../../shared/constants/api";
-import { captureLog } from "../../logger/tests/capture";
+import { captureLog } from "../../../shared/tests/capture";
 import { healthRoutes } from "../routes";
 import type { HealthDeps } from "../utils/status";
 
@@ -26,7 +27,7 @@ describe("GET /health", () => {
         throw new Error("must not be called");
       },
     }).health.$get();
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
 
     const body = await res.json();
     expect(body.status).toBe("ok");
@@ -38,7 +39,7 @@ describe("GET /health", () => {
 describe("GET /ready", () => {
   it("returns 200 when both dependencies are healthy", async () => {
     const res = await client().ready.$get();
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await res.json()).toEqual({
       checks: { database: "ok", redis: "ok" },
       status: "ok",
@@ -48,7 +49,7 @@ describe("GET /ready", () => {
   it("returns 503 when Postgres is down", async () => {
     const res = await client({ checkDatabase: async () => false }).ready.$get();
 
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(HTTP.STATUS.SERVICE_UNAVAILABLE);
     const body = await res.json();
     expect(body.checks.database).toBe("unreachable");
   });
@@ -58,7 +59,7 @@ describe("GET /ready", () => {
       checkDatabase: () => Promise.reject(new Error("refused")),
     }).ready.$get();
 
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(HTTP.STATUS.SERVICE_UNAVAILABLE);
   });
 
   it("a failed database check still answers 503 and logs the cause", async () => {
@@ -69,7 +70,7 @@ describe("GET /ready", () => {
       logger
     ).ready.$get();
 
-    expect(res.status).toBe(503);
+    expect(res.status).toBe(HTTP.STATUS.SERVICE_UNAVAILABLE);
     expect(lines).toEqual([
       expect.objectContaining({
         err: expect.objectContaining({ message: "refused" }),
@@ -102,7 +103,7 @@ describe("GET /ready", () => {
   it("stays 200 when only Redis is down", async () => {
     const res = await client({ checkRedis: async () => false }).ready.$get();
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     const body = await res.json();
     expect(body.status).toBe("degraded");
     expect(body.checks.redis).toBe("unreachable");

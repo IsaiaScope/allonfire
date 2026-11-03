@@ -5,6 +5,7 @@ import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import en from "../../../i18n/translations/en.json" with { type: "json" };
+import { SIGN_IN } from "../../constants/sign-in";
 import { SignInForm } from "../sign-in-form";
 
 const t = en.SignIn;
@@ -33,6 +34,25 @@ const fill = async (
 };
 
 describe("SignInForm", () => {
+  it("sets the kanji for enter behind the submit's label, on its ground, out of the pointer's way", async () => {
+    const screen = await renderForm();
+    const submit = screen.getByRole("button", { name: t.submit }).element();
+    const kanji = screen
+      .getByText(SIGN_IN.ENTER_KANJI, { exact: true })
+      .element();
+    expect(submit.contains(kanji)).toBe(true);
+    const { pointerEvents, position, zIndex } = getComputedStyle(kanji);
+    expect({ pointerEvents, position }).toEqual({
+      pointerEvents: "none",
+      // Out of the label's flow: the label keeps its place.
+      position: "absolute",
+    });
+    // Under the label, yet over the button's ground: the button is its own
+    // stacking context.
+    expect(Number(zIndex)).toBeLessThan(0);
+    expect(getComputedStyle(submit).isolation).toBe("isolate");
+  });
+
   it("names each empty field without calling the action", async () => {
     const screen = await renderForm();
     await screen.getByRole("button", { name: t.submit }).click();

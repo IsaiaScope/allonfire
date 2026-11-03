@@ -16,14 +16,14 @@ describe("AOFEmpty", () => {
   it("passes the caller's props to the frame", () => {
     const html = renderToStaticMarkup(
       <AOFEmpty
-        className="p-2"
+        className="caller-class"
         data-state="idle"
         description="d"
         icon={<svg />}
         title="t"
       />
     );
-    expect(html).toContain("p-2");
+    expect(html).toContain("caller-class");
     expect(html).toContain('data-state="idle"');
   });
 });

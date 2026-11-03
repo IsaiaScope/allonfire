@@ -30,6 +30,7 @@ import { cn } from "../lib/utils";
 import {
   AOFDataTableSkeleton,
   aofDataTableBox,
+  aofDataTableCards,
   aofDataTableFrame,
 } from "./aof-data-table-skeleton";
 
@@ -339,7 +340,7 @@ const AOFDataTableRows = <TData extends RowData>({
       {card ? (
         <ul
           aria-label={label}
-          className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:hidden"
+          className={cn(aofDataTableCards(), "overflow-auto")}
         >
           {rows.map((row) => (
             <li className={busyRow()} key={row.id} {...busyProps(row, busy)}>
