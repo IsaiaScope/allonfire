@@ -22,7 +22,7 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
   rules; this file holds only what every edit needs.
 - Next.js: read `packages/core/node_modules/next/dist/docs/` first (it matches
   the installed `next`), then Context7; check the Framework skills
-  (`docs/agents/tooling.md`).
+  (`docs/guides/tooling.md`).
 - Server Components by default; `"use client"` only for hooks, event
   handlers, browser APIs or client libraries.
 - Tests first. A test file's first line is `// @module-tag unit` or
@@ -45,11 +45,13 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 - exFAT drive: macOS writes `._*` sidecars; a new tool that scans folders
   ignores `**/._*`.
 
-## Guides (`docs/agents/`, read on demand)
+## Guides (`docs/guides/` and `docs/agents/`, read on demand)
 
 | When you work on | Read |
 |---|---|
 | helpers, constants, error codes | `conventions.md` |
+| TypeScript, React and CSS style; what lint enforces | `code-style.md` |
+| docs, READMEs, pull requests, diagrams | `writing.md` |
 | where a file or package goes, exports, env names | `package-layout.md` |
 | any Next App: SSR, server actions, TanStack, errors, providers | `next-apps.md` |
 | Back Office pages: metadata, signed-in pages, caching, frame, PWA | `back-office.md` |
@@ -60,6 +62,12 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 | Images, Avatars, the image server, signed links | `images.md` |
 | `packages/design`, `packages/ui`, shadcn, Tailwind rewrite | `design-system.md` |
 | VPS, Docker services, CI | `deployment.md` |
+| VPS inventory, access, services and history | `vps.md` |
+| VPS firewall, access and security | `vps-security.md` |
+| VPS backups, restoration and disaster recovery | `vps-backups.md` |
+| VPS workflows and notifications | `vps-workflow.md` |
+| VPS agent service | `vps-agent.md` |
+| VPS services outside AllOnFire | `vps-other-apps.md` |
 | Laura | `laura.md` |
 | docs lookup, skills, MCP, exFAT | `tooling.md` |
 | issues (GitHub, `gh`) | `issue-tracker.md` |

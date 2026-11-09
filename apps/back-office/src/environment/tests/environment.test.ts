@@ -1,4 +1,6 @@
 // @module-tag unit
+import { resolve } from "node:path";
+import { REPO } from "@allonfire/config/local/repo";
 // @vitest-environment node
 // Node, not jsdom: t3-env only validates server variables where `window` is
 // undefined, which is where the Back Office's server runs.
@@ -11,7 +13,7 @@ import { App } from "@allonfire/database/enums";
 import { z } from "zod";
 
 /** What CI and the Docker image build with, in Turbo's strict env mode. */
-const TURBO_JSON = new URL("../../../../../turbo.json", import.meta.url);
+const TURBO_JSON = resolve(REPO.ROOT, "turbo.json");
 const turboSchema = z.object({
   globalPassThroughEnv: z.array(z.string()).default([]),
   tasks: z.object({ build: z.object({ env: z.array(z.string()) }) }),
@@ -62,7 +64,7 @@ describe("environment", () => {
   });
 
   it("lets Turbo hand the build every variable it validates", () => {
-    // The App's zod parses: a schema crosses no package (docs/agents/conventions.md).
+    // The App's zod parses: a schema crosses no package (docs/guides/conventions.md).
     const turbo = turboSchema.parse(
       parseJson(readFileSync(TURBO_JSON, "utf8"))
     );

@@ -1,8 +1,8 @@
-import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
-import { createApiAuthClient } from "./auth-client";
+import { sessionFromRequest } from "./session-from-request";
 import { type ParsedCookie, parseSetCookies } from "./set-cookie";
 
 /**
@@ -25,15 +25,11 @@ export const refreshSession = async (
   }
   let renewed: string[] = [];
   try {
-    await createApiAuthClient().getSession({
-      fetchOptions: {
-        headers: visitorHeaders(request.cookies.toString(), request.headers),
-        onResponse: ({ response }) => {
-          renewed = response.headers.getSetCookie();
-        },
-      },
+    await sessionFromRequest(request, (response) => {
+      renewed = response.headers.getSetCookie();
     });
-  } catch {
+  } catch (err) {
+    serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_REFRESH_FAILED);
     return [];
   }
   return parseSetCookies(renewed);

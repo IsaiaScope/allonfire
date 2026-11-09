@@ -1,4 +1,4 @@
-import { AOFCreateNavigation } from "@allonfire/core/features/next/i18n/aof-create-navigation";
+import { AOFCreateNavigation } from "@allonfire/core/features/next/i18n/utils/aof-create-navigation";
 import { routing } from "./routing";
 
 export const {

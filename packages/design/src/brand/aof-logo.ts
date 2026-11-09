@@ -1,4 +1,3 @@
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   type ColorScheme,
   type LogoLayout,
@@ -131,12 +130,11 @@ export const monogramDataUrl = (scheme: ColorScheme) =>
 
 /**
  * An App's logo as a data URL, for a page that shows it inside its HTML:
- * painted with the page, no request of its own. URL-encoded rather than
- * base64 (`svgDataUrl`): shorter for SVG text, and it needs no Node `Buffer`,
- * so a client component (an error boundary) can build it too.
+ * painted with the page, no request of its own. A client component (an error
+ * boundary) can build it too: `svgDataUrl` needs no Node `Buffer`.
  */
 export const aofLogoDataUrl = (options: LogoSvgOptions) =>
-  `data:${HTTP.CONTENT_TYPE.SVG},${encodeURIComponent(aofLogoSvg(options))}`;
+  svgDataUrl(aofLogoSvg(options));
 
 /** Where the monogram's 512 square lands for a centre and scale. */
 export const monogramBox = ({ SCALE, X, Y }: Geometry["MONOGRAM"]) => ({

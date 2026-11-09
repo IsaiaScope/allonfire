@@ -7,7 +7,7 @@ import {
   AOFIconImage,
   AOFManifestIconRoute,
   AOFManifestIcons,
-} from "../aof-icon-images";
+} from "../components/aof-icon-images";
 import { pngSize } from "./png-size";
 
 const ICONS = objectValues(METADATA.ICON.MANIFEST);

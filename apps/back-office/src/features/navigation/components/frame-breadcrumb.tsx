@@ -7,18 +7,35 @@ import {
   AOFBreadcrumbList,
   AOFBreadcrumbPage,
   AOFBreadcrumbSeparator,
-} from "@allonfire/ui/components/aof-breadcrumb";
+} from "@allonfire/ui/features/navigation/components/aof-breadcrumb";
 import { useTranslations } from "next-intl";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Link, usePathname } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { SECTION } from "../constants/sections";
 import {
   currentSection,
-  SECTION,
+  currentSubPage,
   sectionHref,
   stationNumber,
-} from "../constants/sections";
+} from "../utils/sections";
 import { StationNumber } from "./station-number";
+
+/** The Section's crumb where you are: the page, or only a name over its own page's crumb. */
+const SectionCrumb = ({
+  children,
+  named,
+}: {
+  children: ReactNode;
+  named: boolean;
+}) =>
+  named ? (
+    <span className="flex items-center gap-1.5">{children}</span>
+  ) : (
+    <AOFBreadcrumbPage className="flex items-center gap-1.5">
+      {children}
+    </AOFBreadcrumbPage>
+  );
 
 /**
  * Where you are: the Back Office, then the Section (the App's name hides on
@@ -30,8 +47,11 @@ const CurrentBreadcrumb = () => {
   const pathname = usePathname();
   const section = currentSection(pathname);
   const home = section === SECTION.HOME;
-  // On a page under the Section (`/users/new`), the Section is a way back.
-  const below = pathname !== sectionHref(section.path);
+  // One of the Section's own pages (`/services/mail`) follows it as a crumb.
+  const sub = currentSubPage(section, pathname);
+  // On a page under the Section (`/users/new`), the Section is a way back;
+  // with its own pages, the Section only names where they sit.
+  const below = !sub && pathname !== sectionHref(section.path);
   const crumb = (
     <>
       <StationNumber number={stationNumber(section)} />
@@ -57,16 +77,30 @@ const CurrentBreadcrumb = () => {
           {below ? (
             <AOFBreadcrumbLink
               className="flex items-center gap-1.5"
-              render={<Link href={sectionHref(section.path)} />}
+              render={<Link href={sectionHref(section.path)} prefetch />}
             >
               {crumb}
             </AOFBreadcrumbLink>
           ) : (
-            <AOFBreadcrumbPage className="flex items-center gap-1.5">
-              {crumb}
-            </AOFBreadcrumbPage>
+            <SectionCrumb named={Boolean(sub)}>{crumb}</SectionCrumb>
           )}
         </AOFBreadcrumbItem>
+        {sub ? (
+          <>
+            <AOFBreadcrumbSeparator />
+            <AOFBreadcrumbItem>
+              {pathname === sectionHref(sub.path) ? (
+                <AOFBreadcrumbPage>{t(sub.label)}</AOFBreadcrumbPage>
+              ) : (
+                <AOFBreadcrumbLink
+                  render={<Link href={sectionHref(sub.path)} prefetch />}
+                >
+                  {t(sub.label)}
+                </AOFBreadcrumbLink>
+              )}
+            </AOFBreadcrumbItem>
+          </>
+        ) : null}
       </AOFBreadcrumbList>
     </AOFBreadcrumb>
   );

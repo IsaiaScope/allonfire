@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import { REPO } from "@allonfire/config/local/repo";
 
-export const REPO = new URL("../../../../../../", import.meta.url);
-export const APPS = new URL("apps/", REPO);
+export const APPS = pathToFileURL(`${REPO.APPS}/`);
 
 /** App folders on the scaffolding: their next.config.ts calls it. */
 export const scaffoldedApps = () =>

@@ -1,4 +1,5 @@
 const USERS = "users";
+const SERVICES = "services";
 
 /**
  * The Back Office's TanStack Query keys, every feature's in one place: a
@@ -6,6 +7,12 @@ const USERS = "users";
  * share a key only when both build it here.
  */
 export const QUERY = {
+  SERVICES: {
+    /** The prefix every Services key starts with: what any Services change refreshes. */
+    ALL: [SERVICES],
+    /** One Service type and its providers. */
+    LIST: <T extends string>(type: T) => [SERVICES, "list", type] as const,
+  },
   USERS: {
     /** The prefix every Users key starts with: what a deletion refreshes. */
     ALL: [USERS],

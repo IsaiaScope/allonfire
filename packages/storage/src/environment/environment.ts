@@ -1,3 +1,4 @@
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 import { IMAGE } from "../features/image/constants/image";
@@ -17,8 +18,13 @@ export const storageEnvSchema = {
   /** The image server's signing key and salt, hex (imgproxy's `IMGPROXY_KEY`, `IMGPROXY_SALT`). */
   STORAGE_IMAGE_SERVER_KEY: z.string().regex(HEX),
   STORAGE_IMAGE_SERVER_SALT: z.string().regex(HEX),
-  /** Where browsers reach the image server: every stored picture's link starts here. */
-  STORAGE_IMAGE_SERVER_URL: z.url(),
+  /**
+   * Where browsers reach the image server: every stored picture's link starts
+   * here, so its trailing slashes are dropped (a link never holds `//`).
+   */
+  STORAGE_IMAGE_SERVER_URL: z
+    .url()
+    .transform((url) => url.replace(PATTERN.TRAILING_SLASHES, "")),
   STORAGE_SECRET_KEY: z.string().min(1),
 };
 

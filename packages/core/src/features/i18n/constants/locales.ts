@@ -67,6 +67,7 @@ export type HostLanguages = readonly [
  * A Host's languages: every base language, then any content languages it
  * adds, `defineLanguages([...BASE_LANGUAGES, "fr"])`. Dropping a base
  * language, or adding one not in `CONTENT_LANGUAGES`, fails to compile.
+ * @internal
  */
 export const defineLanguages = <const L extends readonly ContentLanguage[]>(
   languages: readonly [...typeof BASE_LANGUAGES, ...L]

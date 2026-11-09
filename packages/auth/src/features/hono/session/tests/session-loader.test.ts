@@ -1,5 +1,8 @@
 // @module-tag unit
+
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { Hono } from "hono";
+import { AUTH } from "../../../../shared/constants/auth";
 import { sessionFor, stubAuth } from "../../../../shared/tests/stub-auth";
 import type { AuthEnv } from "../../types/variables";
 import { sessionLoader } from "../middleware/session-loader";
@@ -8,7 +11,7 @@ describe("sessionLoader", () => {
   it("passes on the cookies Better Auth sets while reading the Session", async () => {
     const auth = stubAuth({
       getSession: (_headers, setCookie) => {
-        setCookie?.("better-auth.session_data=fresh; Path=/; HttpOnly");
+        setCookie?.(`${AUTH.COOKIE.SESSION_DATA}=fresh; Path=/; HttpOnly`);
         return Promise.resolve(sessionFor());
       },
     });
@@ -19,7 +22,7 @@ describe("sessionLoader", () => {
     const res = await app.request("/");
 
     expect(res.headers.getSetCookie()).toEqual([
-      "better-auth.session_data=fresh; Path=/; HttpOnly",
+      `${AUTH.COOKIE.SESSION_DATA}=fresh; Path=/; HttpOnly`,
     ]);
   });
 
@@ -27,7 +30,7 @@ describe("sessionLoader", () => {
     let cookie: string | null = null;
     const auth = stubAuth({
       getSession: (headers) => {
-        cookie = headers.get("cookie");
+        cookie = headers.get(HTTP.HEADER.COOKIE);
         return Promise.resolve(null);
       },
     });
@@ -45,6 +48,8 @@ describe("sessionLoader", () => {
     const app = new Hono<AuthEnv>()
       .use(sessionLoader(auth))
       .get("/", (c) => c.text("ok"));
-    expect((await app.request("/")).status).toBe(500);
+    expect((await app.request("/")).status).toBe(
+      HTTP.STATUS.INTERNAL_SERVER_ERROR
+    );
   });
 });

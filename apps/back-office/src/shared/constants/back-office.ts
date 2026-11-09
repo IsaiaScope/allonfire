@@ -31,6 +31,10 @@ export const BACK_OFFICE = {
   NAME,
   /** The Back Office's own Sections' paths, after the locale. */
   PAGE: {
+    /** The shared Services and their providers. */
+    SERVICES: "/services",
+    /** The MAIL Service's page, under Services. */
+    SERVICES_MAIL: "/services/mail",
     STORAGE: "/storage",
     /** The Users list, at the path the User module serves them under. */
     USERS: USER.PATH.BASE,

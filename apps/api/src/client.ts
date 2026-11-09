@@ -3,8 +3,16 @@ import type { createApp } from "./app";
 import type { ProblemDetails } from "./features/errors/middleware/error-handler";
 import type { API } from "./shared/constants/api";
 
+/**
+ * The API app's type, as `hc` reads it.
+ * @internal
+ */
 export type AppType = ReturnType<typeof createApp>;
 
+/**
+ * The error contract a client reads, from the middleware that produces it.
+ * @internal
+ */
 export type {
   ErrorCode,
   ProblemDetails,

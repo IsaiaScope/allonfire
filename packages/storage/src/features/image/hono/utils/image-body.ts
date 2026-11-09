@@ -16,5 +16,6 @@ export const toImageBody = (image: ImageRecord, now: Date): ImageBody => ({
     image.key,
     image.access === ImageAccess.PRIVATE ? privateLinkExpiry(now) : undefined
   ),
+  version: image.version,
   width: image.width,
 });

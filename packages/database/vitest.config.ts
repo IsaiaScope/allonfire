@@ -8,7 +8,7 @@ export default mergeConfig(
     test: {
       fileParallelism: false,
       // A Test database per run, dropped after (CONTEXT.md).
-      globalSetup: ["./src/features/test-database/global-setup.ts"],
+      globalSetup: ["./src/features/test-database/utils/global-setup.ts"],
       hookTimeout: 30 * UNIT.MS_PER_SECOND,
       setupFiles: ["./vitest.setup.ts"],
     },

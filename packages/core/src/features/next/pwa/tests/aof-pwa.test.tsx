@@ -1,8 +1,10 @@
 // @module-tag unit
 import { renderToStaticMarkup } from "react-dom/server";
-import { AOFPwa } from "../aof-pwa";
+import { AOFPwa } from "../components/aof-pwa";
 
-vi.mock("../aof-service-worker", () => ({ AOFServiceWorker: () => null }));
+vi.mock("../components/aof-service-worker", () => ({
+  AOFServiceWorker: () => null,
+}));
 
 describe("AOFPwa", () => {
   it("renders the page, then the App's hint and banner", () => {

@@ -9,14 +9,10 @@ export const ERROR_SIGNAGE = {
     CODE: "停",
     /** 見合わせ, suspended: what a board shows when a line has stopped. */
     KANA: "見合わせ",
-    /** 再, again: brushed in the button that retries. */
-    RETRY_KANJI: "再",
     /** 運休, service suspended: brushed huge across the wall. */
     WALL_KANJI: "運休",
   },
   NOT_FOUND: {
-    /** 戻, return: brushed in the button that leads back. */
-    BACK_KANJI: "戻",
     /** The eki stamp's figure: a station the line does not have. */
     CODE: "404",
     /** 回送, not in service: a train that takes no passengers. */

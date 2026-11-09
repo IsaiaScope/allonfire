@@ -2,8 +2,8 @@
 # Builds the db-migrate image Production runs and runs it against the local
 # DATABASE_URL, so Local, CI and Production share one Liquibase. Arguments go
 # to the image's entrypoint: `update`, `status --verbose`, `deploy`, `backup`.
-# DB_BACKUPS_VOLUME names a Docker volume to mount at /backups; BACKUP_KEEP is
-# passed through when set.
+# DATABASE_BACKUP_VOLUME names a Docker volume to mount at /backups;
+# DATABASE_BACKUP_KEEP is passed through when set.
 set -Eeuo pipefail
 
 package_dir="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,8 +37,8 @@ image=$(docker build --quiet --tag allonfire-db-migrate \
   --file "$context/packages/database/liquibase/Dockerfile" "$context")
 
 volume=()
-if [[ -n "${DB_BACKUPS_VOLUME:-}" ]]; then
-  volume=(--volume "${DB_BACKUPS_VOLUME}:/backups")
+if [[ -n "${DATABASE_BACKUP_VOLUME:-}" ]]; then
+  volume=(--volume "${DATABASE_BACKUP_VOLUME}:/backups")
 fi
 
 # The same confinement Production uses: read-only root filesystem, no Linux
@@ -48,6 +48,6 @@ docker run --rm --init \
   --read-only --tmpfs /tmp \
   --cap-drop ALL --security-opt no-new-privileges \
   --add-host=host.docker.internal:host-gateway \
-  --env DATABASE_URL --env BACKUP_KEEP \
+  --env DATABASE_URL --env DATABASE_BACKUP_KEEP \
   ${volume[@]+"${volume[@]}"} \
   "$image" "$@"

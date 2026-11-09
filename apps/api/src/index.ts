@@ -1,13 +1,15 @@
-import { prisma } from "@allonfire/database";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";
 import { auth } from "./features/auth/auth";
 import { imageDeps } from "./features/image/image-deps";
 import { logger } from "./features/logger/logger";
+import { closeMailRedis } from "./features/mail/mail-deps";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { REDIS } from "./features/redis/constants/redis";
 import { createRedis } from "./features/redis/redis";
+import { servicesDeps } from "./features/services/services-deps";
 import {
   shutdownTelemetry,
   startTelemetry,
@@ -30,6 +32,7 @@ const app = createApp({
   },
   checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
   images: imageDeps(logger),
+  services: servicesDeps,
   store: createRedisStore(redis),
   users: userDeps(logger),
 });
@@ -41,7 +44,7 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
 const shutdown = createShutdown({
   closeDatabase: () => prisma.$disconnect(),
   closeRedis: async () => {
-    await redis.quit();
+    await Promise.all([redis.quit(), closeMailRedis()]);
   },
   closeServer: () =>
     new Promise<void>((resolve, reject) =>

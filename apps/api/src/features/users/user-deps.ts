@@ -21,7 +21,7 @@ import {
   saveAvatar,
 } from "@allonfire/storage/features/avatar/objects/avatar-objects";
 import { avatarLink } from "@allonfire/storage/features/avatar/utils/avatar-key";
-import type { LeftoverLog } from "@allonfire/storage/features/image/objects/delete-leftovers";
+import type { LeftoverLog } from "@allonfire/storage/features/image/objects/utils/delete-leftovers";
 
 /**
  * The rule for managing Users: an Admin in the Back Office. Written as that
@@ -35,6 +35,7 @@ import type { LeftoverLog } from "@allonfire/storage/features/image/objects/dele
  * 5-minute cookie cache can hide: a new password deletes every other
  * Session, and from then on that one changes nobody, though it may still
  * list Users until its cookie copy runs out.
+ * @internal
  */
 export const isBackOfficeAdmin = (user: AccessUser): boolean =>
   hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN);
@@ -45,7 +46,7 @@ export const isBackOfficeAdmin = (user: AccessUser): boolean =>
  * cookie copy can outlive (a new password deleted it). The User's own read
  * repeats what `customSession` already read for this request.
  */
-const canManageUsers = async ({
+export const canManageUsers = async ({
   sessionId,
   userId,
 }: {

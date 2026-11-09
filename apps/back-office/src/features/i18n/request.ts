@@ -1,5 +1,5 @@
 import type { Language } from "@allonfire/core/features/i18n/constants/locales";
-import { AOFGetRequestConfig } from "@allonfire/core/features/next/i18n/aof-get-request-config";
+import { AOFGetRequestConfig } from "@allonfire/core/features/next/i18n/utils/aof-get-request-config";
 import { locale } from "next/root-params";
 import { routing } from "./routing";
 import EN from "./translations/en.json" with { type: "json" };

@@ -1,16 +1,15 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
-import { App, Role } from "@allonfire/database/enums";
-import { sessionFor } from "../../../../shared/tests/stub-auth";
+import type { Json } from "@allonfire/core/shared/utils/json";
+import { errorOf, json } from "../../../../shared/tests/test-host";
 import { USER } from "../../constants/users";
 import type { UserDeps } from "../utils/deps";
-import { stubUserDeps } from "./stub-user-deps";
-import { testHost } from "./test-host";
+import {
+  BACK_OFFICE_ADMIN as ADMIN,
+  stubUserDeps,
+  userHost,
+} from "./stub-user-deps";
 
-const ADMIN = sessionFor({
-  memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
-});
 const SELF = ADMIN.user.id;
 const OTHER = "user-2";
 const DELETED = 1;
@@ -35,31 +34,27 @@ const depsWith = (allows = true) => {
   return { asked, deleted, deps };
 };
 
-const remove = <T>(host: ReturnType<typeof testHost>, body: T & Json<T>) =>
-  host.request(USER.PATH.BASE, {
-    body: stringifyJson(body),
-    headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
-    method: HTTP.METHOD.DELETE,
-  });
+const remove = <T>(host: ReturnType<typeof userHost>, body: T & Json<T>) =>
+  host.request(USER.PATH.BASE, json(HTTP.METHOD.DELETE, body));
 
 describe("User module: DELETE", () => {
   it("answers 401 without a Session", async () => {
     const { deleted, deps } = depsWith();
-    const res = await remove(testHost(null, deps), { ids: [OTHER] });
+    const res = await remove(userHost(null, deps), { ids: [OTHER] });
     expect(res.status).toBe(HTTP.STATUS.UNAUTHORIZED);
     expect(deleted).toEqual([]);
   });
 
   it("answers 403 when the Host refuses", async () => {
     const { deleted, deps } = depsWith(false);
-    const res = await remove(testHost(ADMIN, deps), { ids: [OTHER] });
+    const res = await remove(userHost(ADMIN, deps), { ids: [OTHER] });
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(deleted).toEqual([]);
   });
 
   it("answers 400 for an empty list, too many ids, or a non-string id", async () => {
     const { deleted, deps } = depsWith();
-    const host = testHost(ADMIN, deps);
+    const host = userHost(ADMIN, deps);
     const tooMany = Array.from(
       { length: USER.MAX_DELETE + 1 },
       (_, index) => `user-${index + 2}`
@@ -79,17 +74,15 @@ describe("User module: DELETE", () => {
 
   it("refuses a list holding your own id and deletes nobody", async () => {
     const { deleted, deps } = depsWith();
-    const res = await remove(testHost(ADMIN, deps), { ids: [OTHER, SELF] });
+    const res = await remove(userHost(ADMIN, deps), { ids: [OTHER, SELF] });
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
-    expect(await res.json()).toEqual({
-      code: USER.ERROR_CODE.CANNOT_DELETE_SELF,
-    });
+    expect((await errorOf(res)).code).toBe(USER.ERROR_CODE.CANNOT_DELETE_SELF);
     expect(deleted).toEqual([]);
   });
 
   it("deletes the ids and answers the count, asking the Host with the caller's Session and User ids", async () => {
     const { asked, deleted, deps } = depsWith();
-    const res = await remove(testHost(ADMIN, deps), { ids: [OTHER] });
+    const res = await remove(userHost(ADMIN, deps), { ids: [OTHER] });
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await res.json()).toEqual({ deleted: DELETED });
     expect(deleted).toEqual([[OTHER]]);

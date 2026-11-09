@@ -29,6 +29,9 @@ model Image {
   /// and removing the last placement deletes the Image).
   apps        ImageApp[]
   createdAt   DateTime   @default(now())
+  /// Moved by every change, its Apps' included: part of the Image's Version
+  /// (`imageVersion`, ADR 0028).
+  updatedAt   DateTime   @updatedAt
 
   @@index([createdAt, id])
   @@schema("image")

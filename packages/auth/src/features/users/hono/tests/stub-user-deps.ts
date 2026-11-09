@@ -1,6 +1,34 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import { App } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
+import type { UserRecord } from "@allonfire/database/features/auth/user.service";
+import { sessionFor } from "../../../../shared/tests/stub-auth";
+import { moduleTestHost } from "../../../../shared/tests/test-host";
+import type { AuthSession } from "../../../../shared/types/auth";
+import { USER } from "../../constants/users";
+import { userRoutes } from "../routes/index";
 import type { UserDeps } from "../utils/deps";
+
+/** A Back Office Admin: who manages Users on `stubUserDeps`' `manageApp`. */
+export const BACK_OFFICE_ADMIN = sessionFor({
+  memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
+});
+
+/**
+ * A stored User as the database answers it, on its first Version; override
+ * the fields a test is about.
+ */
+export const userRow = (overrides: Partial<UserRecord> = {}): UserRecord => ({
+  createdAt: new Date("2026-10-01T10:00:00.000Z"),
+  email: "user-2@allonfire.test",
+  emailVerified: true,
+  id: "user-2",
+  image: null,
+  imageBlurDataUrl: null,
+  memberships: [],
+  name: null,
+  version: "version-1",
+  ...overrides,
+});
 
 const unexpected = (name: string) => () =>
   Promise.reject(new Error(`${name} must not be called`));
@@ -28,3 +56,7 @@ export const stubUserDeps = (overrides: Partial<UserDeps> = {}): UserDeps => ({
   userImages: () => Promise.resolve([]),
   ...overrides,
 });
+
+/** The User module on `moduleTestHost`, at `USER.PATH.BASE`. */
+export const userHost = (session: AuthSession | null, deps: UserDeps) =>
+  moduleTestHost({ path: USER.PATH.BASE, routes: userRoutes(deps), session });

@@ -1,4 +1,4 @@
-import { prisma } from "@allonfire/database";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import sharp from "sharp";
 
 const MINIO_ENDPOINT = process.env.MINIO_ENDPOINT ?? "";

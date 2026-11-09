@@ -1,7 +1,7 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { AOF_LOGO, aofLogoDataUrl } from "@allonfire/design/brand/aof-logo";
-import { AOFImage } from "@allonfire/ui/components/aof-image";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFImage } from "@allonfire/ui/shared/components/aof-image";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import type { ComponentProps, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 

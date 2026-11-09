@@ -206,6 +206,30 @@ _Avoid_: permission level, rank
 A Role in an App that allows browsing and playing but no mutations.
 _Avoid_: guest, demo user, read-only user
 
+**Version**:
+What a saved thing looked like when it was read, as a short hash the API
+hands out with it (a User's: their row's last change and every Role they
+hold). A save carries the Version it was made on, and the API refuses it
+when the thing changed since, so nobody overwrites what they never saw.
+_Avoid_: revision, ETag, timestamp
+
+**Service**:
+A shared operational capability every App and the API lean on, carried by
+one or more providers used in slot order. Each Service has a type: MAIL
+first. Each type has providers and settings of its own; a provider reports its
+own usage through its API, so nothing counts it here, and the Back Office's
+Services page draws what the provider reports against limits an Admin sets.
+Where a provider is reached and its secret stay in the API's environment, never
+in the database.
+_Avoid_: service (the Docker or compose word), integration, vendor (for the
+capability; a provider is the vendor that carries it), kind (say type)
+
+**Provider**:
+One vendor's API carrying a Service, in a slot that fixes its order. The code
+names a provider's API by its shape (its driver), never by the vendor; the
+vendor's name is only an Admin-typed label.
+_Avoid_: gateway, backend, vendor name in code
+
 **App schema**:
 The Postgres schema holding one App's tables, named after the App (`laura`).
 `auth` is the one schema no App owns: it holds the user base every App shares.
@@ -220,15 +244,31 @@ plus the Apps and API running on the host.
 _Avoid_: dev environment — `dev` is an integration branch, not a place anything
 runs.
 
+**VPS**:
+The one Hetzner server. It runs Production and services that are not
+AllOnFire, which share its proxy, firewall and backups.
+_Avoid_: server (alone), box, Production (for the whole machine).
+
 **Production**:
-The VPS. The only deployed environment; the `test` and `prod` branches are
-promotion gates, not environments.
+AllOnFire running on the VPS. The only deployed environment; the `test` and
+`prod` branches are promotion gates, not environments.
 _Avoid_: prod server, staging — no staging exists.
 
 **Test database**:
 A database made for one test run from the Fixtures and dropped when the run
 ends. Never the Local database.
 _Avoid_: test DB, dev database (for this).
+
+**Test services**:
+The Local services a test run needs: the database, Redis, storage, the image
+server and the cdn. A test run starts these, never the rest of Local.
+_Avoid_: Local stack (for this subset), dev stack.
+
+**Stage**:
+One named group of checks a change must pass: static, test, e2e or build.
+The pre-commit hook and CI run a Stage by the same command, so passing it on a
+developer machine means passing it in CI.
+_Avoid_: job (where CI runs a Stage), step, phase.
 
 **Fixture**:
 A known User or Image every Test database holds, so a test can sign in with it

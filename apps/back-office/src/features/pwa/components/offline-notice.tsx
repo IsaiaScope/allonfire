@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
 import { ActionKanji } from "@/shared/components/brush-kanji";
 import { StationNotice } from "@/shared/components/station-notice";
+import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 import { ReloadButton } from "./reload-button";
 
 /**
@@ -16,7 +17,7 @@ export const OfflineNotice = () => {
     <StationNotice
       action={
         <ReloadButton>
-          <ActionKanji kanji={PWA_SIGNAGE.OFFLINE.RETRY_KANJI} />
+          <ActionKanji kanji={ACTION_KANJI.RETRY} />
           <IconRefresh aria-hidden />
           {t("retry")}
         </ReloadButton>

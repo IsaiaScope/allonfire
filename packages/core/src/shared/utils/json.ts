@@ -54,6 +54,7 @@ export type JsonText<T> = string & { readonly [writtenFrom]: T };
  *   `T` is a claim, not a check: text from outside goes through
  *   `parseJsonWith`. `NoInfer` keeps the variable the result lands in from
  *   setting `T` on its own.
+ * @internal
  */
 export function parseJson<T>(text: JsonText<T>): T;
 export function parseJson<T = unknown>(text: string): NoInfer<T>;

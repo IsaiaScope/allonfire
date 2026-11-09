@@ -1,25 +1,29 @@
 // @module-tag unit
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
+import { captureLog } from "../../../shared/tests/capture";
+import { memoryStore } from "../../../shared/tests/memory-store";
+import { problemOf } from "../../../shared/tests/problem-of";
 import { onError } from "../../errors/middleware/error-handler";
-import { problemOf } from "../../errors/tests/problem-of";
 import { localeResolver } from "../../i18n/middleware/locale-resolver";
-import { captureLog } from "../../logger/tests/capture";
+import { translate } from "../../i18n/translate";
 import { RATE_LIMIT } from "../constants/limits";
 import {
   createRateLimiter,
   failOpen,
   type RateLimitStore,
 } from "../middleware/rate-limiter";
-import { memoryStore } from "./memory-store";
 
 function appWith(
   store: RateLimitStore,
   trustedHops: number,
   limit = 2,
-  windowMs = 60_000
+  windowMs = UNIT.MS_PER_MINUTE
 ) {
   return new Hono()
     .use(requestId())
@@ -29,7 +33,9 @@ function appWith(
     .onError(onError);
 }
 
-const forwarded = (ip: string) => ({ headers: { "x-forwarded-for": ip } });
+const forwarded = (ip: string) => ({
+  headers: { [HTTP.HEADER.X_FORWARDED_FOR]: ip },
+});
 
 describe("rate limiter keying", () => {
   it("gives distinct forwarded clients distinct buckets", async () => {
@@ -77,8 +83,8 @@ describe("rate limited response", () => {
     await app.request("/ping", forwarded("3.3.3.3"));
     const res = await app.request("/ping", forwarded("3.3.3.3"));
 
-    expect(res.status).toBe(429);
-    expect(res.headers.get("retry-after")).toBeTruthy();
+    expect(res.status).toBe(HTTP.STATUS.TOO_MANY_REQUESTS);
+    expect(res.headers.get(HTTP.HEADER.RETRY_AFTER)).toBeTruthy();
     expect(res.headers.get("ratelimit-limit")).toBe("1");
 
     const body = await problemOf(res);
@@ -94,8 +100,10 @@ describe("rate limited response", () => {
     const res = await app.request("/ping", forwarded("4.4.4.4"));
 
     const body = await problemOf(res);
-    expect(body.detail).toContain("5 seconds");
-    expect(res.headers.get("retry-after")).toBe("5");
+    expect(body.detail).toBe(
+      translate(ERROR.CODE.RATE_LIMITED, I18N.LOCALE.EN_US, { seconds: 5 })
+    );
+    expect(res.headers.get(HTTP.HEADER.RETRY_AFTER)).toBe("5");
   });
 
   it("tells the client the time left in the window, not the whole window", async () => {
@@ -108,14 +116,16 @@ describe("rate limited response", () => {
           totalHits: 2,
         }),
     };
-    const res = await appWith(store, 1, 1, 60_000).request(
+    const res = await appWith(store, 1, 1, UNIT.MS_PER_MINUTE).request(
       "/ping",
       forwarded("5.5.5.5")
     );
 
-    expect(res.status).toBe(429);
-    expect(res.headers.get("retry-after")).toBe("5");
-    expect((await problemOf(res)).detail).toContain("5 seconds");
+    expect(res.status).toBe(HTTP.STATUS.TOO_MANY_REQUESTS);
+    expect(res.headers.get(HTTP.HEADER.RETRY_AFTER)).toBe("5");
+    expect((await problemOf(res)).detail).toBe(
+      translate(ERROR.CODE.RATE_LIMITED, I18N.LOCALE.EN_US, { seconds: 5 })
+    );
   });
 
   it("renders the message in the requested locale", async () => {
@@ -124,7 +134,7 @@ describe("rate limited response", () => {
       const init = forwarded(ip);
       return {
         ...init,
-        headers: { ...init.headers, "Accept-Language": "it" },
+        headers: { ...init.headers, [HTTP.HEADER.ACCEPT_LANGUAGE]: "it" },
       };
     };
 
@@ -133,7 +143,9 @@ describe("rate limited response", () => {
 
     const body = await problemOf(res);
     expect(body.code).toBe(ERROR.CODE.RATE_LIMITED);
-    expect(body.detail).toContain("Riprova tra 5 secondi");
+    expect(body.detail).toBe(
+      translate(ERROR.CODE.RATE_LIMITED, I18N.LOCALE.IT_IT, { seconds: 5 })
+    );
   });
 });
 
@@ -145,7 +157,7 @@ const unreachable = (): RateLimitStore => {
 describe("store outage", () => {
   it("lets requests through when the store is unreachable", async () => {
     const res = await appWith(failOpen(unreachable()), 0).request("/ping");
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
   });
 
   it("logs the outage once, and again only after the store recovers", async () => {
@@ -164,10 +176,10 @@ describe("store outage", () => {
       logger
     );
 
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
-    await store.increment("a", 60_000);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
+    await store.increment("a", UNIT.MS_PER_MINUTE);
 
     expect(lines.map((line) => line.msg)).toEqual([
       "rate limit store unreachable, failing open",
@@ -187,7 +199,7 @@ describe("createRateLimiter keyPrefix", () => {
           limit: 10,
           store,
           trustedHops: 0,
-          windowMs: 60_000,
+          windowMs: UNIT.MS_PER_MINUTE,
         })
       )
       .get("/", (context) => context.text("ok"));
@@ -220,7 +232,7 @@ describe("one store behind several limiters", () => {
         windowMs,
       });
     const app = new Hono()
-      .use(limiter("", 60_000))
+      .use(limiter("", UNIT.MS_PER_MINUTE))
       .use(limiter("sign-in:", 900_000))
       .get("/", (context) => context.text("ok"));
 
@@ -228,7 +240,7 @@ describe("one store behind several limiters", () => {
 
     expect(windows).toEqual(
       new Map([
-        [RATE_LIMIT.UNKNOWN_CLIENT, 60_000],
+        [RATE_LIMIT.UNKNOWN_CLIENT, UNIT.MS_PER_MINUTE],
         [`sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`, 900_000],
       ])
     );

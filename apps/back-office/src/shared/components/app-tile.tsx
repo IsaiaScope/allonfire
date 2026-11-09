@@ -1,8 +1,8 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import type { App } from "@allonfire/database/enums";
 import { type AppLogo, aofLogoDataUrl } from "@allonfire/design/brand/aof-logo";
-import { AOFImage } from "@allonfire/ui/components/aof-image";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFImage } from "@allonfire/ui/shared/components/aof-image";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import { APP_ENTRY } from "@/shared/constants/apps";
 

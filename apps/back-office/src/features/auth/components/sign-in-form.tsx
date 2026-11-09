@@ -3,17 +3,16 @@
 import { signIn } from "@allonfire/auth/features/next/actions/sign-in";
 import type { SignInState } from "@allonfire/auth/features/next/constants/api";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { AOFSubmitButton } from "@allonfire/ui/components/aof-submit-button";
-import { useAOFForm } from "@allonfire/ui/lib/form";
-import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { cn } from "@allonfire/ui/lib/utils";
-import { KeyRound, LoaderCircle, Mail, Nfc } from "lucide-react";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
+import { KeyRound, Mail, Nfc } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { type SubmitEvent, useActionState, useCallback } from "react";
-import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import { useActionState } from "react";
+import { Link } from "@/features/i18n/navigation";
 import { FormAlert } from "@/shared/components/form-alert";
 import { SIGN_IN } from "../constants/sign-in";
 import { signInSchema } from "../utils/sign-in-schema";
+import { GateSubmit } from "./gate-submit";
 
 /**
  * The email and password form, an AOF form (ADR 0017). `useAOFForm` checks
@@ -26,8 +25,11 @@ import { signInSchema } from "../utils/sign-in-schema";
  * home.
  */
 export const SignInForm = ({
+  callbackURL,
   initialState = {},
 }: {
+  /** Where a verification link sent on this sign-in lands: this page, in its language. */
+  callbackURL?: string | undefined;
   /** The state to start from, e.g. an error the page already knows. */
   initialState?: SignInState;
 }) => {
@@ -48,25 +50,23 @@ export const SignInForm = ({
       }),
     },
   });
-  const submit = useCallback(
-    (event: SubmitEvent<HTMLFormElement>) =>
-      submitAOFForm(form, event, formDataTo(action)),
-    [form, action]
-  );
+  const formProps = useAOFFormAction(form, action);
   // A server-side refusal or outage is not the fields' fault.
   const invalid =
     error === AUTH.SIGN_IN_ERROR.INVALID ||
     error === AUTH.SIGN_IN_ERROR.MISSING;
+  const unverified = error === AUTH.SIGN_IN_ERROR.UNVERIFIED;
 
   return (
     <form
-      action={action}
       aria-label={t("submit")}
       // The form rhythm: each field leaves 32px below itself (its error line).
       className="flex flex-col p-3"
-      noValidate
-      onSubmit={submit}
+      {...formProps}
     >
+      {callbackURL ? (
+        <input name="callbackURL" type="hidden" value={callbackURL} />
+      ) : null}
       <form.AppField name="email">
         {(email) => (
           <email.TextField
@@ -98,26 +98,30 @@ export const SignInForm = ({
           />
         )}
       </form.AppField>
-      {/* Why the last try failed, in its kept place above the button. */}
-      <FormAlert className="mb-2">
-        {error ? t(`error.${error}`) : null}
+      <Link
+        className="-mt-4 mb-4 self-end rounded-sm text-muted-foreground text-sm underline-offset-4 outline-none hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+        href={AUTH.PAGE.FORGOT_PASSWORD}
+      >
+        {t("forgot")}
+      </Link>
+      {/* The place kept above the button: why the last try failed, or, for a
+          right password on an unverified email, that a link went out. */}
+      <FormAlert
+        className="mb-2"
+        notice={unverified ? t("note.unverified") : null}
+      >
+        {error && !unverified ? t(`error.${error}`) : null}
       </FormAlert>
       {/* The gate's card reader: the one action, touched to pass. */}
-      <AOFSubmitButton
-        className={cn(kanjiAction(), "w-full")}
+      <GateSubmit
+        className="w-full"
+        icon={<Nfc aria-hidden />}
+        kanji={SIGN_IN.ENTER_KANJI}
         pending={pending}
-        pendingChildren={
-          <>
-            <LoaderCircle aria-hidden className="animate-spin" />
-            {t("submitting")}
-          </>
-        }
-        size="field"
+        pendingLabel={t("submitting")}
       >
-        <ActionKanji kanji={SIGN_IN.ENTER_KANJI} />
-        <Nfc aria-hidden />
         {t("submit")}
-      </AOFSubmitButton>
+      </GateSubmit>
     </form>
   );
 };

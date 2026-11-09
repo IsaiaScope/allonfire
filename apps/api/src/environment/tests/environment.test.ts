@@ -1,5 +1,6 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { parseEnv } from "../environment";
 
 const valid = {
@@ -24,7 +25,7 @@ describe("parseEnv", () => {
     expect(env.API_TRUSTED_PROXY_HOPS).toBe(0);
     expect(env.API_ENABLE_DOCS).toBe(false);
     expect(env.AUTH_RATE_LIMIT_MAX).toBe(10);
-    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(900_000);
+    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(15 * UNIT.MS_PER_MINUTE);
     expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth:");
   });
 
@@ -33,10 +34,10 @@ describe("parseEnv", () => {
       ...valid,
       AUTH_RATE_LIMIT_KEY_PREFIX: "auth-v2:",
       AUTH_RATE_LIMIT_MAX: "5",
-      AUTH_RATE_LIMIT_WINDOW_MS: "60000",
+      AUTH_RATE_LIMIT_WINDOW_MS: String(UNIT.MS_PER_MINUTE),
     });
     expect(env.AUTH_RATE_LIMIT_MAX).toBe(5);
-    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(60_000);
+    expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(UNIT.MS_PER_MINUTE);
     expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth-v2:");
     expect(() => parseEnv({ ...valid, AUTH_RATE_LIMIT_MAX: "0" })).toThrow();
   });

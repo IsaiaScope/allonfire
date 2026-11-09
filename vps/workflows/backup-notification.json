@@ -1,0 +1,190 @@
+{
+  "id": "NRLX4aFGv2uNotfc",
+  "name": "Main VPS Backup Notification",
+  "description": null,
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 💾 Backup Notification\n\n`backup.sh` (cron 02:00 UTC, main-vps) POSTs manifest.json here → Telegram.\n\n**Auth**: header `X-Backup-Token`, credential of the same name.\nToken in `/opt/backups/.env`. Anonymous calls → 403.\n\n**On crash**: Settings → Error Workflow → *Error Handler (global)*.\n\n### Gotchas\n- **Save ≠ Publish.** Runtime serves the newest `workflow_history` row; Save\n  only writes the draft. Re-pasting identical text creates no version, so Save\n  looks like it did nothing.\n- **Expression errors render as an empty string** and still record `success`.\n  A payload missing `components` produced `✅ Backup OK · / componenti · NaN MB`\n  with no error logged anywhere. Both templates guard with `?.` / `??` because\n  the error workflow cannot see this class of failure.\n- **parse_mode: HTML** lives under Telegram → Additional Fields. Missing it\n  prints the tags literally.\n- Test without running a backup:\n  `sudo /opt/backups/scripts/backup.sh --test-notify`\n  → sends `status:\"test\"` → failure branch → `0/12 componenti ok`.\n\nRunbook: `repo/vps/08-disaster-recovery.md`",
+        "height": 584,
+        "width": 664,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [352, -528],
+      "id": "64cf1bd1-0646-4f44-96ef-35ef5a961fd2",
+      "name": "Flow Documentation"
+    },
+    {
+      "parameters": {
+        "chatId": "<telegram-chat-id>",
+        "text": "=✅ <b>Backup OK</b>\n📅 <code>{{ $json.body?.date ?? '?' }}</code> · {{ $json.body?.tier ?? '?' }}\n\n📦 {{ $json.body?.components ? $json.body.components.length + ' components' : '⚠️ invalid payload' }}\n💾 {{ (($json.body?.total_size_bytes ?? 0)/1048576).toFixed(1) }} MB\n{{ !$json.body?.storage ? '⚠️ Storage status missing' : $json.body.storage.age_days < 0 ? '⚠️ Storage never synced' : ($json.body.storage.status === 'ok' || $json.body.storage.age_days === 0) ? '🖼 Storage ' + ($json.body.storage.mirror_bytes/1048576).toFixed(0) + ' MB · today' : $json.body.storage.age_days > 8 ? '⚠️ Storage stale · ' + $json.body.storage.age_days + 'd ago' : '🖼 Storage ' + ($json.body.storage.mirror_bytes/1048576).toFixed(0) + ' MB · ' + $json.body.storage.age_days + 'd ago' }}\n\n<blockquote expandable>{{ ($json.body?.components ?? []).map(c => c.name + ' · ' + (c.size >= 1048576 ? (c.size/1048576).toFixed(1) + ' MB' : c.size >= 1024 ? Math.round(c.size/1024) + ' KB' : c.size ? c.size + ' B' : c.status)).join('\\n') || '—' }}</blockquote>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [896, 128],
+      "id": "5cd87497-5719-43c2-8e96-653b9b7b351b",
+      "name": "Telegram Success",
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<credential-id>",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "<telegram-chat-id>",
+        "text": "=🚨 <b>Backup failed</b>\n📅 <code>{{ $json.body?.date ?? '?' }}</code> · {{ $json.body?.tier ?? '?' }}\n\n📊 {{ $json.body?.components ? $json.body.components.filter(c => ['ok','daily_skip'].includes(c.status)).length + '/' + $json.body.components.length + ' ok' : '⚠️ invalid payload' }}\n\n❌ <b>Errors</b>\n<blockquote>{{ ($json.body?.errors ?? []).join('\\n') || '—' }}</blockquote>\n\n📦 <b>Failed</b>\n<blockquote>{{ ($json.body?.components ?? []).filter(c => !['ok','daily_skip'].includes(c.status)).map(c => c.name + ' → ' + c.status).join('\\n') || '—' }}</blockquote>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [880, 352],
+      "id": "b5c00b11-e395-448c-b728-abc5cae62d03",
+      "name": "Telegram Failure",
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<credential-id>",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true, \"status\": \"notified\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1152, 256],
+      "id": "03597b9c-e029-4993-8e4f-bf9462f6630c",
+      "name": "Respond OK"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "<backup-webhook-path>",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [272, 240],
+      "id": "edcdf9b4-54a9-44a9-8258-428a91478813",
+      "name": "POST /backup-notify 🔒",
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<credential-id>",
+          "name": "X-Backup-Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.body.status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [544, 256],
+      "id": "6ec1e7e6-75a9-4c9e-b20e-aa0d59104e97",
+      "name": "status === 'success'?"
+    }
+  ],
+  "connections": {
+    "Telegram Success": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Failure": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /backup-notify 🔒": {
+      "main": [
+        [
+          {
+            "node": "status === 'success'?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "status === 'success'?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Europe/Rome",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "KX1CQrEVzEvV747w"
+  }
+}

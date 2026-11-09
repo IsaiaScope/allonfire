@@ -70,7 +70,7 @@ it in their tab; a declined look is reverted.
    impeccable the repo rules and the owner's taste below before the command.
 6. **Wire.**
    - New strings go into the App's `src/features/i18n/translations/en.json`
-     and `it.json` (run `pnpm i18n:check`); components read them with
+     and `it.json` (run `pnpm static:i18n`); components read them with
      `useTranslations` (Server Components too) or `getTranslations` in an
      async page. A name (the App's, the brand's) is never a translation: it
      comes from its constant (`BACK_OFFICE.NAME`, `BRAND.NAME`).
@@ -164,13 +164,15 @@ and reads `PRODUCT.md`/`DESIGN.md` only by walking up from the App, ignoring
   with the App's `en.json` (next/image mocked). Server Component unless it
   needs state, effects or event handlers; then `"use client"` on the smallest
   part, ideally an AOF component passed in or imported as a leaf.
-- Components come from `@allonfire/ui/components/aof-*` (AOF components) or
+- Components come from `@allonfire/ui/shared/components/aof-*` and
+  `@allonfire/ui/features/<feature>/components/aof-*` (AOF components) or
   the App itself (the Back Office's departure board, hanko and station sign
   sit in `features/auth/components/`; the eki stamp, brush kanji and station
   notice, which several pages share, in `shared/components/`: a special page
   (not found, an error, a wait) is a `StationNotice`). A missing AOF
   component is created in
-  `packages/ui/src/components/aof-<name>.tsx` with a test, composing shadcn
+  `packages/ui/src/features/<feature>/components/aof-<name>.tsx` (or
+  `shared/components/` when two ui features read it) with a test, composing shadcn
   components. Never import `@allonfire/shadcn` outside `packages/ui`, never
   edit `packages/shadcn`: a missing primitive is `npx shadcn@4.21.0 add <name>`
   from `apps/back-office`, then `pnpm --filter @allonfire/shadcn canonicalize` (core's Tailwind rewrite).
@@ -290,11 +292,11 @@ Base UI, so focus, keyboard and ARIA come from it (`AOFThemeToggle` is a ghost
 icon `AOFButton`). Native elements stay native where they are the right
 semantics (links for navigation, a checkbox for a pause). Visual states are
 `cva` variants (`class-variance-authority`), not ternaries of class strings,
-and classes are joined with `cn` from `@allonfire/ui/lib/utils`, never a
+and classes are joined with `cn` from `@allonfire/ui/shared/utils/utils`, never a
 template string (`cn` lets a caller's `className` override a default). A
 component's props extend the element or component it renders
 (`ComponentProps<"div">`, or `ComponentPropsWithoutChildren<...>` from
-`@allonfire/ui/lib/types` when it draws its own content), spread the rest onto
+`@allonfire/ui/shared/types/types` when it draws its own content), spread the rest onto
 it, and expose its variants through `VariantProps`: see
 `features/auth/components/hanko.tsx` and `AOFThemeToggle`. Never retype a
 wrapped component's props one by one (`open`, `onOpenChange`, `side`,

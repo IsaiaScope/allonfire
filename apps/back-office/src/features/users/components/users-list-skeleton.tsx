@@ -4,12 +4,15 @@ import {
   AOFDataTableSkeleton,
   type AOFDataTableSkeletonColumn,
   aofDataTableFrame,
-} from "@allonfire/ui/components/aof-data-table-skeleton";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/features/data-table/components/aof-data-table-skeleton";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
+import {
+  tiledControl,
+  toolbarLayout,
+} from "@/shared/components/toolbar-action";
 import { userRow } from "../utils/user-row";
-import { tiledControl } from "./toolbar-action";
 
 /** The table's columns as the list lays them out: the selection box, the
  *  email (the widest, filling the rest), a Role per App, the date (the
@@ -71,10 +74,8 @@ export const UsersRowsSkeleton = () => {
 export const UsersListSkeleton = () => (
   <div className={aofDataTableFrame()}>
     <div aria-hidden className="@container">
-      <div className="flex flex-wrap items-center gap-2">
-        <div
-          className={cn(control(), "min-w-0 flex-1 @4xl:basis-0 basis-full")}
-        >
+      <div className={toolbarLayout({ part: "row" })}>
+        <div className={cn(control(), toolbarLayout({ part: "search" }))}>
           <div className={cn(ink({ tone: "faint" }), "size-(--field-tile)")} />
           <div className={cn(ink({ tone: "faint" }), "ml-2 h-3.5 w-28")} />
         </div>
@@ -82,7 +83,7 @@ export const UsersListSkeleton = () => (
           <div className={cn(ink({ tone: "faint" }), "size-(--field-tile)")} />
           <div className={cn(ink({ tone: "faint" }), "h-3.5 w-12")} />
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className={toolbarLayout({ part: "actions" })}>
           <div
             className={cn(
               ink({ tone: "destructive" }),

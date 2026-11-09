@@ -1,10 +1,12 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { TEST_RUN } from "../../tests/run/test-run";
 import { LOCAL } from "../addresses";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no YAML parser; a reformatted line fails loudly.
 /** The files that cannot import the addresses, and the lines each must hold. */
@@ -71,6 +73,8 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `"${LOCAL.PORT.CDN}:8080"`,
       `IMGPROXY_KEY: \${STORAGE_IMAGE_SERVER_KEY:-${LOCAL.IMAGE_SERVER.KEY}}`,
       `IMGPROXY_SALT: \${STORAGE_IMAGE_SERVER_SALT:-${LOCAL.IMAGE_SERVER.SALT}}`,
+      // A test run's bucket (`testRunName` with `-`) and no other.
+      `IMGPROXY_ALLOWED_SOURCES: "s3://image/,s3://${TEST_RUN.PREFIX.replaceAll("_", "-")}"`,
       `POSTGRES_USER: \${POSTGRES_USER:-${LOCAL.DATABASE.USER}}`,
       `POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-${LOCAL.DATABASE.PASSWORD}}`,
       `POSTGRES_DB: \${POSTGRES_DB:-${LOCAL.DATABASE.NAME}}`,
@@ -118,6 +122,10 @@ describe.each(EXPECTED)("%s", (path, lines) => {
 
 const BUILD_STORAGE = /STORAGE_(ENDPOINT|BUCKET)/;
 const DOCKERFILE_STAGE = /^FROM /m;
+/** A stage's `FROM` line, past the split: `<image> AS builder`. */
+const BUILDER_STAGE = /^\S+ AS builder$/m;
+const COREPACK_RUN = /^RUN corepack /gm;
+const PNPM_PIN = /pnpm@/;
 const TURBO_PIN = /"turbo": "([^"]+)"/;
 /** deploy.yml's image job, up to the job after it. */
 const IMAGE_JOB = /\n {2}image:\n([\s\S]*?)\n {2}[a-z-]+:\n/;
@@ -129,9 +137,9 @@ const TURBO_BUILD_ENV = /"build": \{[^}]*?"env": \[([^\]]*)\]/;
 // The Back Office serves no stored file itself (pictures reach the browser
 // through the image server, ADR 0027), so its build reads no storage address.
 describe("the Back Office build", () => {
-  // The pruner, the deps, then the builder.
-  const [, , , builderStage] =
-    read("docker/Dockerfile").split(DOCKERFILE_STAGE);
+  const builderStage = read("docker/Dockerfile")
+    .split(DOCKERFILE_STAGE)
+    .find((stage) => BUILDER_STAGE.test(stage));
   // A split on a capturing pattern holds the capture second; no match, nothing.
   const [, deployBuildArgs] = read(".github/workflows/deploy.yml").split(
     DEPLOY_BUILD_ARGS
@@ -172,6 +180,15 @@ describe("the Docker prune", () => {
   });
 });
 
+// package.json's packageManager pins pnpm: one base stage installs it, and
+// every stage that runs pnpm starts from it.
+it("installs pnpm once in the Dockerfile, the version packageManager pins", () => {
+  const dockerfile = read("docker/Dockerfile");
+  expect(dockerfile.match(COREPACK_RUN)).toHaveLength(1);
+  expect(dockerfile).not.toMatch(PNPM_PIN);
+  expect(dockerfile).toContain("RUN corepack enable && corepack install");
+});
+
 describe("the production images", () => {
   // The VPS is arm64 (aarch64); an amd64-only image has no manifest it can run.
   it("are built natively for arm64, the VPS's architecture", () => {
@@ -179,4 +196,23 @@ describe("the production images", () => {
     expect(job).toContain("runs-on: ubuntu-24.04-arm");
     expect(job).toContain("platforms: linux/arm64");
   });
+});
+
+/** One `$TURBO_ROOT$/…` entry of a turbo.json, its repo path captured. */
+const TURBO_ROOT_INPUT = /"\$TURBO_ROOT\$\/([^"]+)"/g;
+/** The repo files outside config that config's tests read. */
+const READ_FROM_REPO = [
+  "docker/docker-compose.prod.yml",
+  ".husky/pre-commit",
+  "package.json",
+  "pnpm-lock.yaml",
+] as const;
+
+// ponytail: turbo.json is JSONC and config cannot import core's parseJson
+// (core depends on config), so the entries are matched in the text.
+it("config's turbo test inputs list every repo file its tests read", () => {
+  const inputs = [
+    ...read("packages/config/turbo.json").matchAll(TURBO_ROOT_INPUT),
+  ].map(([, path]) => path);
+  expect(inputs).toEqual(expect.arrayContaining([...READ_FROM_REPO]));
 });

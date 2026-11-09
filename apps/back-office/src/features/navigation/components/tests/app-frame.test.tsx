@@ -1,15 +1,13 @@
 // @module-tag unit
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { SECTIONS, sectionHref } from "../../constants/sections";
+import { SECTIONS } from "../../constants/sections";
+import { sectionEntry } from "../../utils/sections";
 import { AppFrame } from "../app-frame";
 
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   usePathname: () => "/",
 }));
 
@@ -24,14 +22,16 @@ const renderFrame = () =>
 
 const count = (html: string, text: string) => html.split(text).length - 1;
 
+// Its gutters on a notched screen: its browser test, beside the breadcrumb's.
 describe("AppFrame", () => {
   it("names the menu and lists every Section once", () => {
     const html = renderFrame();
     expect(count(html, `aria-label="${EN.Navigation.menu}"`)).toBe(1);
-    for (const { path } of SECTIONS) {
-      expect(count(html, `href="${sectionHref(path)}"`)).toBeGreaterThanOrEqual(
-        1
-      );
+    // A Section with its own pages is reached through the first.
+    for (const section of SECTIONS) {
+      expect(
+        count(html, `href="${sectionEntry(section)}"`)
+      ).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -43,19 +43,5 @@ describe("AppFrame", () => {
 
   it("marks Home current on the root, and only Home", () => {
     expect(renderFrame().match(/<a[^>]*aria-current="page"/g)).toHaveLength(1);
-  });
-
-  it("keeps the frame clear of the screen's edges at every width", () => {
-    const html = renderFrame();
-    expect(
-      count(html, "pb-[max(--spacing(2),env(safe-area-inset-bottom))]")
-    ).toBe(1);
-    expect(
-      count(html, "max-md:pb-[max(--spacing(2),env(safe-area-inset-bottom))]")
-    ).toBe(0);
-    expect(
-      count(html, "pr-[calc(--spacing(4)+env(safe-area-inset-right,0px))]")
-    ).toBe(1);
-    expect(count(html, "md:[--gutter-left:var(--page-gutter)]")).toBe(1);
   });
 });

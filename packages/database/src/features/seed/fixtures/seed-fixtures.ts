@@ -1,7 +1,7 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { hashPassword } from "better-auth/crypto";
 import type { PrismaClient } from "../../../../generated/prisma/client";
-import { upsertUser } from "../upsert-user";
+import { upsertUser } from "../utils/upsert-user";
 import { FIXTURE } from "./fixtures";
 import type { FixtureImage } from "./images";
 
@@ -23,6 +23,13 @@ async function upsertImage(
   ]);
 }
 
+/** The MAIL providers every Test database has on; their rows exist from the changelog. */
+const enableMailProvider = (client: PrismaClient) =>
+  client.mailProvider.updateMany({
+    data: { enabled: true, fromAddress: FIXTURE.MAIL_PROVIDER.fromAddress },
+    where: { slot: { in: [...FIXTURE.MAIL_PROVIDER.slots] } },
+  });
+
 /** Every Fixture into `client`'s database; safe to run again. */
 export async function seedFixtures(client: PrismaClient): Promise<void> {
   // One hash for every Fixture User: same password, and hashing is the slow part.
@@ -31,5 +38,6 @@ export async function seedFixtures(client: PrismaClient): Promise<void> {
   await Promise.all([
     ...FIXTURE.USERS.map((user) => upsertUser(client, user, hash)),
     ...images.map((image) => upsertImage(client, image)),
+    enableMailProvider(client),
   ]);
 }

@@ -3,72 +3,32 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import type { App } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
-import { AOFReadOnlyField } from "@allonfire/ui/components/aof-read-only-field";
-import { useAOFForm } from "@allonfire/ui/lib/form";
-import { formDataTo, submitAOFForm } from "@allonfire/ui/lib/form-submit";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
-import {
-  IconDeviceFloppy,
-  IconKey,
-  IconKeyFilled,
-  IconMail,
-  IconUser,
-  IconUserEdit,
-} from "@tabler/icons-react";
+import { AOFReadOnlyField } from "@allonfire/ui/features/form/components/aof-read-only-field";
+import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
+import { IconDeviceFloppy, IconMail, IconUserEdit } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import {
-  type ReactNode,
-  type SubmitEvent,
-  useActionState,
-  useCallback,
-  useEffect,
-} from "react";
-import { useRouter } from "@/features/i18n/navigation";
+import { useActionState } from "react";
 import { FormAlert } from "@/shared/components/form-alert";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { editUser } from "../actions/edit-user";
 import { USERS } from "../constants/users";
 import {
   type EditUserFields,
-  type EditUserNotice,
   type EditUserValues,
   editUserSchema,
 } from "../utils/edit-user-schema";
+import { perApp, type RoleChoice } from "../utils/user-form-schema";
+import { AvatarField, NameField, PasswordFields } from "./user-form-fields";
 import {
-  passwordChecks,
-  perApp,
-  type RoleChoice,
-} from "../utils/user-form-schema";
-import { PasswordRules } from "./password-rules";
-import {
-  AVATAR_DRESS,
   RoleRows,
   UserFormActions,
-  useAvatarLabels,
+  useToastThenList,
+  useUserFieldMessages,
+  VerificationRow,
 } from "./user-form-parts";
 
 /** The read-only email's input, named by its label. */
 const EMAIL_ID = "edit-user-email";
-
-/**
- * The User was saved: says so in a toast (a warning when their picture was
- * not) and opens the list.
- */
-const useSaved = (notice: EditUserNotice | undefined) => {
-  const t = useTranslations("Users.edit");
-  const router = useRouter();
-  useEffect(() => {
-    if (!notice) {
-      return;
-    }
-    if (notice === USERS.EDIT_NOTICE.SAVED) {
-      aofToast(t("saved"), "success");
-    } else {
-      aofToast(t("avatarFailed"), "warning");
-    }
-    router.replace(BACK_OFFICE.PAGE.USERS);
-  }, [notice, router, t]);
-};
 
 /** The form's start: the User as stored, no password typed. */
 const fieldsOf = (user: UserBody): EditUserFields => ({
@@ -76,14 +36,13 @@ const fieldsOf = (user: UserBody): EditUserFields => ({
   name: user.name ?? "",
   password: "",
   roles: perApp((app): RoleChoice => roleIn(user, app) ?? USERS.NO_ROLE),
+  verification: user.emailVerified
+    ? USERS.VERIFICATION.VERIFIED
+    : USERS.VERIFICATION.REQUIRED,
 });
 
-/** The password rules met by what the form holds. */
-const checksOf = ({ values }: { values: EditUserValues }) =>
-  passwordChecks(values);
-
 /**
- * The Edit a User form, an AOF form (ADR 0017) built from Add a User's
+ * The Edit a User form, an AOF form (ADR 0017) built from the User forms'
  * pieces: the email shown, never edited; the name; the picture they hold,
  * changed or removed; a new password, typed twice, or both fields left
  * empty to keep theirs; and a Role per App. Editing yourself, your Role in
@@ -101,11 +60,31 @@ export const EditUser = ({
 }) => {
   const t = useTranslations();
   const [{ error, notice, values }, action, pending] = useActionState(
-    editUser.bind(null, user.id),
+    editUser.bind(null, {
+      id: user.id,
+      version: user.version,
+      wasVerified: user.emailVerified,
+    }),
     {}
   );
-  useSaved(notice);
-  const avatarLabels = useAvatarLabels();
+  // The User was saved: a toast (a warning when their picture was not),
+  // then the list.
+  useToastThenList(notice, {
+    [USERS.EDIT_NOTICE.AVATAR_FAILED]: {
+      kind: "warning",
+      message: t("Users.edit.avatarFailed"),
+    },
+    [USERS.EDIT_NOTICE.SAVED]: {
+      kind: "success",
+      message: t("Users.edit.saved"),
+    },
+  });
+  // A User changed elsewhere says so in every App's words (`Common`).
+  const errorText =
+    error === USERS.EDIT_ERROR.CHANGED
+      ? t("Common.Request.changed")
+      : error && t(`Users.edit.error.${error}`);
+  const fieldMessages = useUserFieldMessages();
   // The picture is the form's own: the action never hands it back.
   const startValues: EditUserValues = {
     avatar: null,
@@ -115,24 +94,10 @@ export const EditUser = ({
     defaultValues: startValues,
     // A submit runs the onChange validators too.
     validators: {
-      onChange: editUserSchema({
-        nameRequired: t("Users.add.field.nameRequired"),
-        passwordMismatch: t("Users.add.field.passwordMismatch"),
-        passwordWeak: t("Users.add.field.passwordWeak"),
-      }),
+      onChange: editUserSchema(fieldMessages),
     },
   });
-  const roleField = useCallback(
-    (app: App, choice: ReactNode) => (
-      <form.AppField name={`roles.${app}`}>{() => choice}</form.AppField>
-    ),
-    [form]
-  );
-  const submit = useCallback(
-    (event: SubmitEvent<HTMLFormElement>) =>
-      submitAOFForm(form, event, formDataTo(action)),
-    [form, action]
-  );
+  const formProps = useAOFFormAction(form, action);
   // The email, which never changes: the name is a field below.
   const title = user.email;
 
@@ -143,13 +108,7 @@ export const EditUser = ({
         <IconUserEdit aria-hidden className="size-7 shrink-0" />
         <span className="truncate">{title}</span>
       </h1>
-      <form
-        action={action}
-        aria-label={title}
-        className="flex flex-1 flex-col"
-        noValidate
-        onSubmit={submit}
-      >
+      <form aria-label={title} className="flex flex-1 flex-col" {...formProps}>
         {/* Add a User's rhythm: 8px from a label to its control, 32px
             between blocks. */}
         {/* `grid-cols-1` is minmax(0, 1fr): a long email truncates instead
@@ -163,62 +122,36 @@ export const EditUser = ({
               label={t("Users.edit.email")}
               value={user.email}
             />
-            <form.AppField name="name">
-              {(field) => (
-                <field.TextField
-                  autoComplete="off"
-                  icon={<IconUser />}
-                  label={t("Users.add.name")}
-                  required
-                />
-              )}
-            </form.AppField>
-            <form.AppField name={USERS.AVATAR_FIELD}>
-              {(field) => (
-                <field.AvatarField
-                  {...AVATAR_DRESS}
-                  current={user.image}
-                  label={t("Users.add.avatar.label")}
-                  labels={avatarLabels}
-                />
-              )}
-            </form.AppField>
+            <NameField fields={USERS.FORM_FIELDS.NAME} form={form} />
+            <AvatarField
+              current={user.image}
+              fields={USERS.FORM_FIELDS.AVATAR}
+              form={form}
+            />
           </div>
           <div className="flex flex-col">
-            <form.AppField name="password">
-              {(field) => (
-                <field.TextField
-                  autoComplete="new-password"
-                  icon={<IconKey />}
-                  label={t("Users.edit.password")}
-                  reveal={t("Users.add.showPassword")}
-                  type="password"
-                />
-              )}
-            </form.AppField>
-            <form.AppField name="confirmPassword">
-              {(field) => (
-                <field.TextField
-                  autoComplete="new-password"
-                  icon={<IconKeyFilled />}
-                  label={t("Users.edit.confirmPassword")}
-                  reveal={t("Users.add.showPassword")}
-                  type="password"
-                />
-              )}
-            </form.AppField>
-            <form.Subscribe selector={checksOf}>
-              {(checks) => <PasswordRules checks={checks} />}
-            </form.Subscribe>
+            {/* Both left empty keep the password the User has. */}
+            <PasswordFields
+              fields={USERS.FORM_FIELDS.PASSWORD}
+              form={form}
+              labels={{
+                confirmPassword: t("Users.edit.confirmPassword"),
+                password: t("Users.edit.password"),
+              }}
+              required={false}
+            />
           </div>
           <RoleRows
-            field={roleField}
+            fields={USERS.FORM_FIELDS.ROLES}
+            form={form}
             locked={user.id === selfId ? manageApp : undefined}
           />
+          <VerificationRow
+            fields={USERS.FORM_FIELDS.VERIFICATION}
+            form={form}
+          />
           {/* The end of the form: why the last submit failed, in its kept place. */}
-          <FormAlert className="@2xl:col-span-2 mt-4">
-            {error ? t(`Users.edit.error.${error}`) : null}
-          </FormAlert>
+          <FormAlert className="@2xl:col-span-2 mt-4">{errorText}</FormAlert>
         </div>
         <UserFormActions
           pending={pending}

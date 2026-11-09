@@ -1,5 +1,9 @@
 import type { Context } from "hono";
+import type { Logger } from "pino";
 import pkg from "../../../../package.json" with { type: "json" };
+import { API } from "../../../shared/constants/api";
+import { outageLatch } from "../../../shared/utils/outage";
+import { logger as defaultLogger } from "../../logger/logger";
 import {
   HEALTH,
   type HealthBody,
@@ -22,28 +26,56 @@ export const healthHandler = (context: Context) => {
   return context.json(body);
 };
 
-export const readyHandler = (deps: HealthDeps) => async (context: Context) => {
-  const [database, redis] = await Promise.all([
-    deps.checkDatabase().catch(() => false),
-    deps.checkRedis().catch(() => false),
-  ]);
-
-  // Postgres is required; Redis failing open must not remove a container
-  // that is still serving traffic correctly.
-  if (!database) {
-    const body = {
-      checks: {
-        database: HEALTH.CHECK_STATUS.UNREACHABLE,
-        redis: checkStatus(redis),
+/**
+ * Probes call `/ready` every few seconds: a database outage is logged once
+ * when it starts and once when it ends, with the cause. A Redis outage is
+ * already logged by the client's own latch (`watchRedis`).
+ */
+export const readyHandler = (
+  deps: HealthDeps,
+  logger: Logger = defaultLogger
+) => {
+  const latch = outageLatch(logger, {
+    down: API.LOG_MESSAGE.DATABASE_DOWN,
+    recovered: API.LOG_MESSAGE.DATABASE_RECOVERED,
+  });
+  const checkDatabase = () =>
+    deps.checkDatabase().then(
+      (reachable) => {
+        if (reachable) {
+          latch.ok();
+        }
+        return reachable;
       },
-      status: HEALTH.READY_STATUS.UNAVAILABLE,
-    } as const satisfies ReadyUnavailableBody;
-    return context.json(body, HEALTH.READY_STATUS_CODE.NOT_READY);
-  }
+      (err: unknown) => {
+        latch.fail(err);
+        return false;
+      }
+    );
 
-  const body = {
-    checks: { database: HEALTH.CHECK_STATUS.OK, redis: checkStatus(redis) },
-    status: redis ? HEALTH.READY_STATUS.OK : HEALTH.READY_STATUS.DEGRADED,
-  } as const satisfies ReadyServingBody;
-  return context.json(body, HEALTH.READY_STATUS_CODE.READY);
+  return async (context: Context) => {
+    const [database, redis] = await Promise.all([
+      checkDatabase(),
+      deps.checkRedis().catch(() => false),
+    ]);
+
+    // Postgres is required; Redis failing open must not remove a container
+    // that is still serving traffic correctly.
+    if (!database) {
+      const body = {
+        checks: {
+          database: HEALTH.CHECK_STATUS.UNREACHABLE,
+          redis: checkStatus(redis),
+        },
+        status: HEALTH.READY_STATUS.UNAVAILABLE,
+      } as const satisfies ReadyUnavailableBody;
+      return context.json(body, HEALTH.READY_STATUS_CODE.NOT_READY);
+    }
+
+    const body = {
+      checks: { database: HEALTH.CHECK_STATUS.OK, redis: checkStatus(redis) },
+      status: redis ? HEALTH.READY_STATUS.OK : HEALTH.READY_STATUS.DEGRADED,
+    } as const satisfies ReadyServingBody;
+    return context.json(body, HEALTH.READY_STATUS_CODE.READY);
+  };
 };

@@ -2,7 +2,7 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
-import { AOFSidebarProvider } from "@allonfire/ui/components/aof-sidebar";
+import { AOFSidebarProvider } from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";

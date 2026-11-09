@@ -905,13 +905,13 @@ The leading `│` on the continuation line belongs to `features/`, which still h
 Replace:
 
 ```
-- VPS: Hetzner CAX11 at 188.245.174.30 (ssh main-vps)
+- VPS: Hetzner CAX11 at <vps-ip> (ssh main-vps)
 ```
 
 with:
 
 ```
-- VPS: Hetzner, 4 vCPU / 8 GB RAM, no swap, at 188.245.174.30 (ssh main-vps)
+- VPS: Hetzner, 4 vCPU / 8 GB RAM, no swap, at <vps-ip> (ssh main-vps)
 - Observability: self-hosted OpenObserve + Umami (Local only so far) — see `docs/adr/0006-self-hosted-observability.md`
 ```
 

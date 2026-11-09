@@ -1,15 +1,16 @@
 // @module-tag unit
+import { AUTH } from "../../../shared/constants/auth";
 import { adoptSetCookies, parseSetCookies } from "../utils/set-cookie";
 
 describe("parseSetCookies", () => {
   it("reads Better Auth's session cookie", () => {
     expect(
       parseSetCookies([
-        "better-auth.session_token=abc.def%3D; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax",
+        `${AUTH.COOKIE.SESSION_TOKEN}=abc.def%3D; Max-Age=604800; Path=/; HttpOnly; Secure; SameSite=Lax`,
       ])
     ).toEqual([
       {
-        name: "better-auth.session_token",
+        name: AUTH.COOKIE.SESSION_TOKEN,
         options: {
           httpOnly: true,
           maxAge: 604_800,

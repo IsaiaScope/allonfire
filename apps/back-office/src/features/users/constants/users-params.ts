@@ -1,9 +1,6 @@
 // nuqs/server: the parsers without nuqs' "use client" entry, so the page (a
 // Server Component) and the table read the address through the same ones.
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import {
   createLoader,
   createParser,
@@ -31,7 +28,7 @@ const pageParser = createParser({
  * pushes one, so Back goes to the previous page.
  */
 const searchParser = createParser({
-  parse: (value) => USER_SEARCH.serialize(USER_SEARCH.parse(value)) || null,
+  parse: (value) => USER.SEARCH.serialize(USER.SEARCH.parse(value)) || null,
   serialize: String,
 })
   .withDefault("")

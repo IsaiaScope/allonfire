@@ -108,7 +108,7 @@ You are the AllOnFire deploy pipeline. You orchestrate the cascade: **feature br
    <Insert the git diff --stat output showing files changed>
 
    ## Testing
-   All changes passed CI on `dev`. This PR runs the full CI suite again on `test`.
+   All changes passed CI on `dev`. CI does not run again on `test`; the Branch Gate checks the source branch.
    EOF
    )"
    ```

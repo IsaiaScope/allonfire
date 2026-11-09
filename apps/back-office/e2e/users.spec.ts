@@ -1,15 +1,12 @@
 import { resolve } from "node:path";
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -18,49 +15,35 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
-import {
-  SECTION,
-  sectionHref,
-} from "../src/features/navigation/constants/sections";
 import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
-import { openSidebar, SIGN_IN_URL, signIn } from "./pages";
+import { enT } from "../src/shared/tests/translators";
+import { addedBy, addedUser, addForm, addUser, fillAddForm } from "./add-user";
+import {
+  emailOf,
+  openSidebar,
+  rowOf,
+  SIGN_IN_URL,
+  signIn,
+  signInAsAdmin,
+  USERS,
+  usersSearchHref,
+} from "./pages";
 
 const t = EN.Users;
-const USERS = sectionHref(SECTION.USERS.path);
-
-/** Signs in as the Back Office Admin and waits for the frame. */
-const signInAsAdmin = async (page: Page) => {
-  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
-  await expect(
-    page.getByRole("button", { name: EN.Navigation.toggleMenu })
-  ).toBeVisible();
-};
-
-/** A User's email as drawn on screen: a table row, or a card on a phone. */
-const emailOf = (page: Page, email: string) =>
-  page
-    .getByRole("button", { name: t.copy.label.replace("{email}", email) })
-    .filter({ visible: true });
-
-/** The row, or the card on a phone, that holds a User. */
-const rowOf = (page: Page, email: string) =>
-  page
-    .getByRole("row")
-    .or(page.getByRole("listitem"))
-    .filter({ has: emailOf(page, email) });
-
 test("sends the first page with the HTML, already filled", async ({ page }) => {
   await signInAsAdmin(page);
-  const html = await (await page.request.get(USERS)).text();
+  const html = await (
+    await page.request.get(usersSearchHref(FIXTURE.USER.NO_MEMBERSHIP.email))
+  ).text();
   expect(html).toContain(FIXTURE.USER.NO_MEMBERSHIP.email);
 });
 
 test("filters by App and Role from the address", async ({ page }) => {
   await signInAsAdmin(page);
   const search = encodeURIComponent(
-    USER_SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN], text: "" })
+    USER.SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN], text: "" })
   );
   await page.goto(`${USERS}?${USER.PARAM.SEARCH}=${search}`);
   await expect(emailOf(page, FIXTURE.USER.LAURA.ADMIN.email)).toBeVisible();
@@ -73,7 +56,9 @@ test("reads a hand-edited page and page size as the defaults", async ({
   page,
 }) => {
   await signInAsAdmin(page);
-  await page.goto(`${USERS}?${USER.PARAM.PAGE}=abc&${USER.PARAM.PER_PAGE}=7`);
+  await page.goto(
+    `${usersSearchHref(FIXTURE.USER.NO_MEMBERSHIP.email)}&${USER.PARAM.PAGE}=abc&${USER.PARAM.PER_PAGE}=7`
+  );
   await expect(
     page.getByRole("combobox", { name: t.pagination.rowsPerPage })
     // Base UI's select icon adds a glyph after the value.
@@ -83,7 +68,7 @@ test("reads a hand-edited page and page size as the defaults", async ({
 
 test("opens a User's page, still under Users", async ({ page }) => {
   await signInAsAdmin(page);
-  await page.goto(USERS);
+  await page.goto(usersSearchHref(FIXTURE.USER.NO_MEMBERSHIP.email));
   const row = rowOf(page, FIXTURE.USER.NO_MEMBERSHIP.email);
   const href = await row.getByRole("link").getAttribute("href");
   // Off the email, which copies: the row's link covers the rest of it.
@@ -111,14 +96,34 @@ test("sends a signed-out visit to a User's page to Sign in", async ({
 /** A User's selection checkbox as drawn on screen: a table row, or a card. */
 const checkboxOf = (page: Page, email: string) =>
   page
-    .getByRole("checkbox", { name: t.delete.select.replace("{email}", email) })
+    .getByRole("checkbox", { name: enT("Users.delete.select", { email }) })
     .filter({ visible: true });
+
+/**
+ * Ticks the User's box, presses Delete and confirms, then waits for the
+ * API's answer: only then can a reload not cut the request short.
+ */
+const deleteFromList = async (page: Page, email: string) => {
+  await checkboxOf(page, email).click();
+  await page
+    .getByRole("button", { exact: true, name: t.delete.action })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: t.delete.confirm })
+    .click();
+  await expect(page.getByText("1 User deleted")).toBeVisible();
+};
 
 test("your own row has no checkbox", async ({ page }) => {
   await signInAsAdmin(page);
-  await page.goto(USERS);
+  await page.goto(usersSearchHref(FIXTURE.USER.NO_MEMBERSHIP.email));
   await expect(
     checkboxOf(page, FIXTURE.USER.NO_MEMBERSHIP.email)
+  ).toBeVisible();
+  await page.goto(usersSearchHref(FIXTURE.USER.BACK_OFFICE.ADMIN.email));
+  await expect(
+    emailOf(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email)
   ).toBeVisible();
   await expect(
     checkboxOf(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email)
@@ -129,7 +134,7 @@ test("selecting a User enables Delete; it asks first and Cancel deletes nobody",
   page,
 }) => {
   await signInAsAdmin(page);
-  await page.goto(USERS);
+  await page.goto(usersSearchHref(FIXTURE.USER.NO_MEMBERSHIP.email));
   const remove = page.getByRole("button", {
     exact: true,
     name: t.delete.action,
@@ -157,46 +162,16 @@ test("filters by App through the Filter panel's list", async ({ page }) => {
   await page.getByRole("option", { name: laura }).click();
   await expect
     .poll(() => new URL(page.url()).searchParams.get(USER.PARAM.SEARCH))
-    .toBe(USER_SEARCH.serialize({ app: [App.LAURA], text: "" }));
+    .toBe(USER.SEARCH.serialize({ app: [App.LAURA], text: "" }));
   await expect(emailOf(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email)).toHaveCount(
     0
   );
 });
 
-/** A User this project adds, its email unique to the run and the project. */
-const addedBy = (project: string) => ({
-  email: `add-${project}-${Date.now()}@e2e.test`,
-  name: "Added",
-  password: "An-e2e-password-1",
-});
-
-/**
- * The Add page's form; a role query skips the hidden copy Next keeps of a
- * page it has left, which a label query would also find.
- */
-const addForm = (page: Page) => page.getByRole("form", { name: t.add.title });
 /** The picture field's drop area input, the one a visitor picks with: the
  *  field posts through its own input, named as the field. */
 const picturePicker = (page: Page) =>
   addForm(page).locator('input[type="file"]:not([name])');
-
-/** Fills the Add page and adds the User as a Back Office Admin. */
-const addUser = async (page: Page, user: ReturnType<typeof addedBy>) => {
-  const form = addForm(page);
-  await form.getByLabel(t.add.email, { exact: true }).fill(user.email);
-  await form.getByLabel(t.add.name, { exact: true }).fill(user.name);
-  await form.getByLabel(t.add.password, { exact: true }).fill(user.password);
-  await form
-    .getByLabel(t.add.confirmPassword, { exact: true })
-    .fill(user.password);
-  await form
-    .getByRole("radiogroup", {
-      name: t.add.role.replace("{app}", APP_ENTRY[App.BACK_OFFICE].name),
-    })
-    .getByRole("button", { name: EN.Navigation.role[Role.ADMIN] })
-    .click();
-  await form.getByRole("button", { name: t.add.submit }).click();
-};
 
 test("adds a User from the list's Add button; they sign in with the password the Admin typed", async ({
   browser,
@@ -243,7 +218,7 @@ test("leaving Add a User and coming back opens it empty, the last answer gone", 
     email: FIXTURE.USER.LAURA.ADMIN.email,
   });
   await expect(page.getByText(t.add.error.taken)).toBeVisible();
-  await addForm(page).getByRole("link", { name: t.add.cancel }).click();
+  await addForm(page).getByRole("link", { name: t.form.cancel }).click();
   await expect(page).toHaveURL(new RegExp(`${USERS}$`));
   await page.getByRole("link", { exact: true, name: t.add.button }).click();
   await expect(
@@ -262,33 +237,27 @@ test("deletes a User it added: confirmed, they leave the list", async ({
     }),
     (dismiss) => dismiss.click()
   );
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-deleted`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-deleted`);
   // A visit of its own keeps the list on the server: only the deletion's
-  // `updateTag` drops it, so the reload below shows the User gone.
-  await page.reload();
+  // `updateTag` drops it, so the reload below shows the User gone. Searched
+  // by email: the Users other tests add can push anyone off the first page.
+  await page.goto(usersSearchHref(user.email));
   await expect(emailOf(page, user.email).first()).toBeVisible();
-  await checkboxOf(page, user.email).click();
-  await page
-    .getByRole("button", { exact: true, name: t.delete.action })
-    .click();
-  await page
-    .getByRole("alertdialog")
-    .getByRole("button", { name: t.delete.confirm })
-    .click();
-  // The API answered: only now can a reload not cut the request short.
-  await expect(page.getByText("1 User deleted")).toBeVisible();
+  await deleteFromList(page, user.email);
   await expect(emailOf(page, user.email)).toHaveCount(0);
   await page.reload();
-  await expect(emailOf(page, FIXTURE.USER.NO_MEMBERSHIP.email)).toBeVisible();
+  await expect(
+    page.getByText(t.empty.description).filter({ visible: true })
+  ).toBeVisible();
   await expect(emailOf(page, user.email)).toHaveCount(0);
 });
 
-/** A User's own page, as their row links it. */
+/**
+ * A User's own page, as their row links it: searched by email, since the
+ * Users other tests add can push them off the first page.
+ */
 const userPathOf = async (page: Page, email: string) => {
-  await page.goto(USERS);
+  await page.goto(usersSearchHref(email));
   return (
     (await rowOf(page, email).getByRole("link").getAttribute("href")) ?? ""
   );
@@ -334,10 +303,10 @@ const addUserWithPicture = async (
   await signInAsAdmin(page);
   await page.goto(newUserHref());
   await picturePicker(page).setInputFiles(
-    resolve(IMAGE_FIXTURE_FILES, "photo.jpg")
+    resolve(IMAGE_FIXTURE.DIR, IMAGE_FIXTURE.FILE.PHOTO)
   );
   await page
-    .getByRole("button", { exact: true, name: t.add.avatar.use })
+    .getByRole("button", { exact: true, name: t.form.avatar.use })
     .click();
   await addUser(page, user);
   await expect(page).toHaveURL(new RegExp(`${USERS}$`));
@@ -362,15 +331,7 @@ test("deleting that User removes the picture", async ({ page }, info) => {
   await addUserWithPicture(page, user);
   const link = await pictureOf(page, user.email).getAttribute("src");
   expect((await page.request.get(link ?? "")).status()).toBe(HTTP.STATUS.OK);
-  await checkboxOf(page, user.email).click();
-  await page
-    .getByRole("button", { exact: true, name: t.delete.action })
-    .click();
-  await page
-    .getByRole("alertdialog")
-    .getByRole("button", { name: t.delete.confirm })
-    .click();
-  await expect(page.getByText("1 User deleted")).toBeVisible();
+  await deleteFromList(page, user.email);
   // Dead once the image cache asked imgproxy again.
   await expect
     .poll(async () => (await page.request.get(link ?? "")).status(), {
@@ -397,16 +358,13 @@ test("renames a User and changes their Laura Role; the list shows both", async (
   page,
 }, info) => {
   await signInAsAdmin(page);
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-edited`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-edited`);
   await page.goto(await userPathOf(page, user.email));
   const form = editForm(page, user.email);
-  await form.getByLabel(t.add.name, { exact: true }).fill("Renamed");
+  await form.getByLabel(t.form.name, { exact: true }).fill("Renamed");
   await form
     .getByRole("radiogroup", {
-      name: t.add.role.replace("{app}", APP_ENTRY[App.LAURA].name),
+      name: enT("Users.form.role", { app: APP_ENTRY[App.LAURA].name }),
     })
     .getByRole("button", { name: EN.Navigation.role[Role.VIEWER] })
     .click();
@@ -414,6 +372,14 @@ test("renames a User and changes their Laura Role; the list shows both", async (
   const row = rowOf(page, user.email).first();
   await expect(row).toContainText("Renamed");
   await expect(row).toContainText(EN.Navigation.role[Role.VIEWER]);
+  // Reopened, the saved User is read again, not the copy kept before the
+  // save: their new Version lets a second save through.
+  await row.getByRole("link").click();
+  const name = form.getByLabel(t.form.name, { exact: true });
+  await expect(name).toHaveValue("Renamed");
+  await name.fill("Renamed again");
+  await saveEdit(page, user.email);
+  await expect(rowOf(page, user.email).first()).toContainText("Renamed again");
 });
 
 test("a new password lets the User sign in with it", async ({
@@ -421,10 +387,7 @@ test("a new password lets the User sign in with it", async ({
   page,
 }, info) => {
   await signInAsAdmin(page);
-  await page.goto(newUserHref());
-  const user = addedBy(`${info.project.name}-repassworded`);
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
+  const user = await addedUser(page, `${info.project.name}-repassworded`);
   await page.goto(await userPathOf(page, user.email));
   const password = "A-newer-e2e-password-2";
   const form = editForm(page, user.email);
@@ -449,11 +412,12 @@ test("your own page saves your name and keeps your Back Office Role", async ({
   await page.goto(await userPathOf(page, admin.email));
   await expect(
     editForm(page, admin.email).getByText(
-      t.edit.ownRoleLocked.replace("{app}", APP_ENTRY[App.BACK_OFFICE].name)
+      enT("Users.edit.ownRoleLocked", { app: APP_ENTRY[App.BACK_OFFICE].name })
     )
   ).toBeVisible();
   // The same name: the Fixture stays as other tests know it.
   await saveEdit(page, admin.email);
+  await page.goto(usersSearchHref(admin.email));
   await expect(emailOf(page, admin.email)).toBeVisible();
 });
 
@@ -472,34 +436,13 @@ test("an unknown id shows the 404 inside the frame", async ({ page }) => {
 
 /** The list searched for one email, so no page hides them. */
 const searchFor = (page: Page, email: string) =>
-  page.goto(
-    `${USERS}?${new URLSearchParams({
-      [USER.PARAM.SEARCH]: USER_SEARCH.serialize({ text: email }),
-    })}`
-  );
-
-/** Adds a User through the form, as a Back Office Admin, and waits for the list. */
-const addedUser = async (page: Page, project: string) => {
-  const user = addedBy(project);
-  await page.goto(newUserHref());
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
-  return user;
-};
+  page.goto(usersSearchHref(email));
 
 /** Deletes a User from the list in a second tab, as another Admin would. */
 const deleteInAnotherTab = async (page: Page, email: string) => {
   const other = await page.context().newPage();
-  await other.goto(USERS);
-  await checkboxOf(other, email).click();
-  await other
-    .getByRole("button", { exact: true, name: t.delete.action })
-    .click();
-  await other
-    .getByRole("alertdialog")
-    .getByRole("button", { name: t.delete.confirm })
-    .click();
-  await expect(other.getByText("1 User deleted")).toBeVisible();
+  await other.goto(usersSearchHref(email));
+  await deleteFromList(other, email);
   await other.close();
 };
 
@@ -510,7 +453,7 @@ test("an empty Add a User says what each field needs and adds nobody", async ({
   await page.goto(newUserHref());
   await addForm(page).getByRole("button", { name: t.add.submit }).click();
   await expect(page.getByText(t.add.field.emailRequired)).toBeVisible();
-  await expect(page.getByText(t.add.field.nameRequired)).toBeVisible();
+  await expect(page.getByText(t.form.field.nameRequired)).toBeVisible();
   await expect(page).toHaveURL(new RegExp(`${newUserHref()}$`));
 });
 
@@ -518,15 +461,9 @@ test("mismatched passwords say so and add nobody", async ({ page }, info) => {
   await signInAsAdmin(page);
   await page.goto(newUserHref());
   const user = addedBy(`${info.project.name}-mismatched`);
-  const form = addForm(page);
-  await form.getByLabel(t.add.email, { exact: true }).fill(user.email);
-  await form.getByLabel(t.add.name, { exact: true }).fill(user.name);
-  await form.getByLabel(t.add.password, { exact: true }).fill(user.password);
-  await form
-    .getByLabel(t.add.confirmPassword, { exact: true })
-    .fill(`${user.password}x`);
-  await form.getByRole("button", { name: t.add.submit }).click();
-  await expect(page.getByText(t.add.field.passwordMismatch)).toBeVisible();
+  await fillAddForm(page, user, `${user.password}x`);
+  await addForm(page).getByRole("button", { name: t.add.submit }).click();
+  await expect(page.getByText(t.form.field.passwordMismatch)).toBeVisible();
   await searchFor(page, user.email);
   await expect(
     page.getByText(t.empty.description).filter({ visible: true })
@@ -543,7 +480,7 @@ test("a file that is not a picture is refused in the picture field", async ({
     mimeType: "image/jpeg",
     name: "photo.jpg",
   });
-  await expect(page.getByText(t.add.avatar.unreadable)).toBeVisible();
+  await expect(page.getByText(t.form.avatar.unreadable)).toBeVisible();
 });
 
 test("a User deleted by another Admin before Save: the form says so and keeps what was typed", async ({
@@ -554,10 +491,10 @@ test("a User deleted by another Admin before Save: the form says so and keeps wh
   await page.goto(await userPathOf(page, user.email));
   await deleteInAnotherTab(page, user.email);
   const form = editForm(page, user.email);
-  await form.getByLabel(t.add.name, { exact: true }).fill("Too late");
+  await form.getByLabel(t.form.name, { exact: true }).fill("Too late");
   await form.getByRole("button", { name: t.edit.submit }).click();
   await expect(form.getByText(t.edit.error.gone)).toBeVisible();
-  await expect(form.getByLabel(t.add.name, { exact: true })).toHaveValue(
+  await expect(form.getByLabel(t.form.name, { exact: true })).toHaveValue(
     "Too late"
   );
 });
@@ -570,10 +507,10 @@ test("an empty name or mismatched passwords say so and save nothing", async ({
   await page.goto(await userPathOf(page, user.email));
   const form = editForm(page, user.email);
   const save = form.getByRole("button", { name: t.edit.submit });
-  await form.getByLabel(t.add.name, { exact: true }).fill("");
+  await form.getByLabel(t.form.name, { exact: true }).fill("");
   await save.click();
-  await expect(form.getByText(t.add.field.nameRequired)).toBeVisible();
-  await form.getByLabel(t.add.name, { exact: true }).fill("Changed");
+  await expect(form.getByText(t.form.field.nameRequired)).toBeVisible();
+  await form.getByLabel(t.form.name, { exact: true }).fill("Changed");
   await form
     .getByLabel(t.edit.password, { exact: true })
     .fill("A-newer-e2e-password-2");
@@ -581,7 +518,7 @@ test("an empty name or mismatched passwords say so and save nothing", async ({
     .getByLabel(t.edit.confirmPassword, { exact: true })
     .fill("A-different-password-3");
   await save.click();
-  await expect(form.getByText(t.add.field.passwordMismatch)).toBeVisible();
+  await expect(form.getByText(t.form.field.passwordMismatch)).toBeVisible();
   await searchFor(page, user.email);
   await expect(emailOf(page, user.email)).toBeVisible();
   await expect(rowOf(page, user.email).first()).not.toContainText("Changed");
@@ -603,7 +540,7 @@ test("deleting a User another Admin already deleted says so", async ({
     .getByRole("button", { name: t.delete.confirm })
     .click();
   await expect(
-    page.getByText("This User had already been deleted")
+    page.getByText(enT("Users.delete.gone", { count: 1 }))
   ).toBeVisible();
   await expect(emailOf(page, user.email)).toHaveCount(0);
 });
@@ -612,6 +549,9 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   browser,
   page,
 }, info) => {
+  // Three sign-ins, an add and a new password, each hashing a password on
+  // the API's one thread: under a full run it can outlast the usual limit.
+  test.slow();
   await signInAsAdmin(page);
   const admin = await addedUser(page, `${info.project.name}-ended`);
   // Two Sessions of the same Admin: this one keeps a page open...
@@ -632,10 +572,15 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   const own = editForm(fresh, admin.email);
   await own.getByLabel(t.edit.password, { exact: true }).fill(password);
   await own.getByLabel(t.edit.confirmPassword, { exact: true }).fill(password);
+  // Typed right after the page loads: React keeps text typed before it
+  // hydrates, but not a click. The rule ticks only once it has.
+  await expect(
+    own.getByRole("checkbox", { name: EN.Password.rule.match })
+  ).toBeChecked();
   await saveEdit(fresh, admin.email);
 
   const form = editForm(stale, admin.email);
-  await form.getByLabel(t.add.name, { exact: true }).fill("Stale");
+  await form.getByLabel(t.form.name, { exact: true }).fill("Stale");
   await form.getByRole("button", { name: t.edit.submit }).click();
   await expect(form.getByText(t.edit.error.refused)).toBeVisible();
   await stale.context().close();

@@ -5,12 +5,12 @@ import {
   type LaunchOrientation,
   METADATA,
 } from "../../../metadata/constants/metadata";
-import { AOFLaunchScreenRoute } from "../aof-launch-screen-route";
+import { AOFLaunchScreenRoute } from "../utils/aof-launch-screen-route";
 import {
   AOFLaunchScreenLinks,
   launchScreenFile,
   launchScreenVariants,
-} from "../launch-screens";
+} from "../utils/launch-screens";
 import { pngSize } from "./png-size";
 
 const DEVICE = { height: 844, ratio: 3, width: 390 } as const;

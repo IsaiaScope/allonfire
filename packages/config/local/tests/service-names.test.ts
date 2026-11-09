@@ -1,10 +1,11 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { LOCAL } from "../addresses";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no YAML parser, like local-files.test.ts.
 /** The software a service used to be named after; its purpose names it now. */

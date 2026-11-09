@@ -12,7 +12,8 @@
       "reference": "Reference {digest}"
     },
     "Request": {
-      "failed": "Something went wrong."
+      "failed": "Something went wrong.",
+      "changed": "Someone changed this meanwhile. Reload to see the latest and edit again."
     },
     "Toast": {
       "close": "Close notification",

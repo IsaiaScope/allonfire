@@ -26,6 +26,9 @@ model User {
   image         String?
   /// The blur next/image shows while `image` loads, set and cleared with it.
   imageBlurDataUrl String?
+  /// When an Admin last required verification: a link issued before it never
+  /// verifies the User.
+  verificationRequiredAt DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   sessions      Session[]

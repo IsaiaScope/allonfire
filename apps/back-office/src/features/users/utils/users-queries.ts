@@ -1,6 +1,7 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { queryOptions } from "@tanstack/react-query";
 import { DetailedError, parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
@@ -11,6 +12,7 @@ import type { UsersParams } from "../constants/users-params";
 /**
  * Asks once more after a server or network failure; never after the API
  * refused (a 401, 403 or 400), so the error shows at once.
+ * @internal
  */
 export const retryUsers = (failureCount: number, error: unknown) =>
   failureCount < USERS.RETRIES &&
@@ -49,12 +51,15 @@ export const usersListKey = (params: UsersParams) =>
   }).queryKey;
 
 /**
- * One page of Users. The page reads it on the server (`readUsers`) and the
- * table reads it back under the same key.
+ * One page of Users. The page reads it on the server (`usersHydration`) and the
+ * table reads it back under the same key, fresh as long as the browser keeps
+ * the page's copy (`USERS.CACHE.LIFE.stale`): a shorter clock would read a
+ * kept copy again the moment a link brings it back.
  */
 export const usersQuery = (client: ApiClient, params: UsersParams) =>
   queryOptions({
     queryFn: () => fetchUsers(client, params),
     queryKey: usersListKey(params),
     retry: retryUsers,
+    staleTime: USERS.CACHE.LIFE.stale * UNIT.MS_PER_SECOND,
   });

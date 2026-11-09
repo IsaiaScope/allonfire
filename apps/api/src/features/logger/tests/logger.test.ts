@@ -1,5 +1,5 @@
 // @module-tag unit
-import { captureLog } from "./capture";
+import { captureLog } from "../../../shared/tests/capture";
 
 describe("createLogger", () => {
   it("redacts the authorization header", () => {

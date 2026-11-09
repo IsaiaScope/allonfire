@@ -1,3 +1,4 @@
+import { versionSchema } from "@allonfire/core/features/version/constants/version";
 import {
   appSchema,
   roleSchema,
@@ -40,6 +41,8 @@ export const userBodySchema = z
   .object({
     createdAt: z.iso.datetime(),
     email: z.string(),
+    /** Whether they verified their email; false while an Admin requires it. */
+    emailVerified: z.boolean(),
     id: z.string(),
     /** Their picture's address, when they have one. */
     image: z.string().nullable(),
@@ -48,6 +51,8 @@ export const userBodySchema = z
     memberships: z.array(membershipSchema),
     /** What they are called, when they gave a name. */
     name: z.string().nullable(),
+    /** Their Version: an edit sends it back, and is refused (409) once the User changed. */
+    version: z.string(),
   })
   .meta({ ref: "ListedUser" });
 export type UserBody = z.infer<typeof userBodySchema>;
@@ -83,26 +88,37 @@ export const userCreateRequestSchema = z.object({
   memberships: membershipsSchema,
   name: nameSchema,
   password: passwordSchema,
+  /** True: they verify their email at their first sign-in; else an Admin vouches for it. */
+  requireVerification: z.boolean().optional(),
 });
 
 /**
- * An edit: any of the name, the whole set of Memberships and a new
- * password, at least one; the email is not among them.
+ * An edit: any of the name, the whole set of Memberships, a new password and
+ * whether the email counts as verified, at least one; the email itself is not
+ * among them.
  */
 export const userUpdateRequestSchema = z
   .object({
+    /** False requires them to verify their email again; true vouches for it. */
+    emailVerified: z.boolean().optional(),
     memberships: membershipsSchema.optional(),
     name: nameSchema.optional(),
     password: passwordSchema.optional(),
+    /** The Version the edit was made on (`ListedUser.version`). */
+    version: versionSchema,
   })
   .refine(
-    ({ memberships, name, password }) =>
-      memberships !== undefined || name !== undefined || password !== undefined,
+    ({ emailVerified, memberships, name, password }) =>
+      emailVerified !== undefined ||
+      memberships !== undefined ||
+      name !== undefined ||
+      password !== undefined,
     { message: "Nothing to change" }
   );
 
+/** The new User: their id, and their Version, which a picture set next carries. */
 export const userCreatedBodySchema = z
-  .object({ id: z.string() })
+  .object({ id: z.string(), version: z.string() })
   .meta({ ref: "UserCreated" });
 export type UserCreatedBody = z.infer<typeof userCreatedBodySchema>;
 
@@ -119,8 +135,17 @@ export type UserDeleteBody = z.infer<typeof userDeleteBodySchema>;
 /** One User's id, as the path names them. */
 export const userIdParamSchema = z.object({ id: z.string().min(1) });
 
-/** An Avatar's request: one picture, as multipart/form-data `file`. */
-export const avatarFormSchema = z.object({ file: z.instanceof(File) });
+/**
+ * An Avatar's request: one picture, as multipart/form-data `file`, and the
+ * User's `version` the change was made on.
+ */
+export const avatarFormSchema = z.object({
+  file: z.instanceof(File),
+  version: versionSchema,
+});
+
+/** An Avatar's removal: the User's `version` the change was made on. */
+export const avatarDeleteRequestSchema = z.object({ version: versionSchema });
 
 /** A User's new picture, as the listed User holds it: its link signed for
  *  the hour, and the blur to show while it loads. */

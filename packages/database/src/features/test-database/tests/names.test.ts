@@ -1,7 +1,7 @@
 // @module-tag unit
 import { isStaleTestRun } from "@allonfire/config/tests/run/test-run";
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import { templateName, testDatabaseName } from "../names";
+import { templateName, testDatabaseName } from "../utils/names";
 
 const NOW = new Date("2026-10-09T12:00:00Z");
 const EPOCH = NOW.getTime() / UNIT.MS_PER_SECOND;

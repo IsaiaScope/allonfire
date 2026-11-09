@@ -3,43 +3,52 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type EditUserState, editUser } from "../../actions/edit-user";
 import { USERS } from "../../constants/users";
+import { replace } from "../../tests/user-form-mocks";
 import { EditUser } from "../edit-user";
 
 vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
-const replace = vi.fn();
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
-  useRouter: () => ({ replace }),
-}));
-vi.mock("@allonfire/ui/lib/use-aof-toast", async (original) => ({
-  ...(await original<typeof import("@allonfire/ui/lib/use-aof-toast")>()),
+// jscpd:ignore-start
+// Every User form test mocks the same modules: Vitest hoists each vi.mock
+// within its own file, so only the factories are shared (user-form-mocks).
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
+vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
+  ...(await original<
+    typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
+  >()),
   aofToast: vi.fn(),
 }));
-// next/image reaches the browser as a CommonJS object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ src }: { src: string }) => <span data-src={src} />,
-}));
+vi.mock(
+  "@allonfire/ui/shared/components/aof-image",
+  () => import("../../tests/user-form-mocks")
+);
+// jscpd:ignore-end
 
 const t = EN.Users.edit;
+/** The words both User forms share. */
+const FORM = EN.Users.form;
 const SELF_ID = "user-self";
 const NAME = "Edited";
 const USER: UserBody = {
   createdAt: "2026-10-02T10:00:00.000Z",
   email: "edited@edit-user.test",
+  emailVerified: true,
   id: "user-2",
   image: null,
   imageBlurDataUrl: null,
@@ -48,28 +57,29 @@ const USER: UserBody = {
     { app: App.LAURA, role: Role.VIEWER },
   ],
   name: NAME,
+  version: "version-1",
 };
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: EN.Users.add.role.replace("{app}", APP_ENTRY[app].name),
+    name: enT("Users.form.role", { app: APP_ENTRY[app].name }),
   });
-const lockedNote = t.ownRoleLocked.replace(
-  "{app}",
-  APP_ENTRY[App.BACK_OFFICE].name
-);
+const lockedNote = enT("Users.edit.ownRoleLocked", {
+  app: APP_ENTRY[App.BACK_OFFICE].name,
+});
 
 const renderForm = (user = USER) =>
   render(
     <NextIntlClientProvider
       formats={DATE.FORMATS}
       locale={I18N.DEFAULT_LANGUAGE}
-      messages={EN}
+      messages={aofMessages("en", EN)}
       timeZone={DATE.TIME_ZONE}
     >
       <EditUser manageApp={App.BACK_OFFICE} selfId={SELF_ID} user={user} />
     </NextIntlClientProvider>
   );
 const save = () => page.getByRole("button", { name: t.submit }).click();
+// The bound id and Version come first, then the action's state and the form.
 const posted = () => vi.mocked(editUser).mock.calls[0]?.[2];
 
 beforeEach(() => {
@@ -93,7 +103,7 @@ describe("EditUser", () => {
     await expect.element(email).toBeDisabled();
     expect(email.element().getAttribute("name")).toBeNull();
     await expect
-      .element(page.getByLabelText(EN.Users.add.name, { exact: true }))
+      .element(page.getByLabelText(FORM.name, { exact: true }))
       .toHaveValue(NAME);
     await expect
       .element(
@@ -137,6 +147,10 @@ describe("EditUser", () => {
       .toHaveAttribute("aria-disabled", "true");
     await save();
     await expect.poll(() => vi.mocked(editUser).mock.calls.length).toBe(1);
+    expect(vi.mocked(editUser).mock.calls[0]?.[0]).toMatchObject({
+      id: SELF_ID,
+      version: USER.version,
+    });
     expect(posted()?.get(`roles.${App.BACK_OFFICE}`)).toBe(Role.ADMIN);
   });
 
@@ -171,6 +185,17 @@ describe("EditUser", () => {
     await save();
     await expect.poll(() => replace.mock.calls.length).toBe(1);
     expect(aofToast).toHaveBeenCalledWith(t.avatarFailed, "warning");
+  });
+
+  it("a CHANGED answer shows every App's changed-elsewhere alert and stays", async () => {
+    const changed: EditUserState = { error: USERS.EDIT_ERROR.CHANGED };
+    vi.mocked(editUser).mockResolvedValue(changed);
+    await renderForm();
+    await save();
+    await expect
+      .element(page.getByText(SHARED_TRANSLATIONS.en.Common.Request.changed))
+      .toBeVisible();
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("a GONE answer shows the alert and stays", async () => {

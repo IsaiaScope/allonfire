@@ -1,6 +1,9 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { AOFPage, type AOFPageProps } from "@allonfire/ui/components/aof-page";
-import { cn } from "@allonfire/ui/lib/utils";
+import {
+  AOFPage,
+  type AOFPageProps,
+} from "@allonfire/ui/features/navigation/components/aof-page";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import type { ComponentType, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -49,7 +52,7 @@ export type StationSignage = {
 
 export type StationNoticeProps = {
   /** What follows the notice, rising in after its words. */
-  action?: ReactNode;
+  action?: ReactNode | undefined;
   /** More words under the description (a reference, a status). */
   children?: ReactNode;
   description?: string;
@@ -59,10 +62,10 @@ export type StationNoticeProps = {
   entrance?: boolean;
   /** The notice's heading: on a page its `h1`, which also names the tab (a
    *  special page takes no metadata exports); in a part, an `h2`. */
-  heading?: string;
+  heading?: string | undefined;
   /** What frames the notice: the whole screen (`AOFPage`) unless it fills
    *  another frame's page area. */
-  page?: ComponentType<AOFPageProps>;
+  page?: ComponentType<AOFPageProps> | undefined;
   /** A whole page (the default) or a part of one; a part ignores `page`. */
   scope?: "page" | "part";
   signage: StationSignage;

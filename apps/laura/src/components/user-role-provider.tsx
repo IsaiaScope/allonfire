@@ -1,6 +1,6 @@
 "use client";
 
-import type { Role } from "@allonfire/database";
+import type { Role } from "@allonfire/database/enums";
 import { createContext, useContext } from "react";
 
 const UserRoleContext = createContext<Role>("USER");

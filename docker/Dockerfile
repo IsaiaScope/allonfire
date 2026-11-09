@@ -1,11 +1,16 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=24
 
-# Stage 1: Prune monorepo to only the target app's dependency tree
-FROM node:${NODE_VERSION}-alpine AS pruner
+# The base of every stage that runs pnpm: corepack installs the pnpm that
+# package.json's packageManager pins, so the version is written only there.
+FROM node:${NODE_VERSION}-alpine AS base
 RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
 WORKDIR /app
+COPY package.json ./
+RUN corepack enable && corepack install
+
+# Stage 1: Prune monorepo to only the target app's dependency tree
+FROM base AS pruner
 COPY . .
 ARG APP_NAME
 # The lockfile's turbo, pinned exactly in package.json: a bare `npx turbo`
@@ -14,18 +19,12 @@ ARG APP_NAME
 RUN npx "turbo@$(node -p "require('./package.json').devDependencies.turbo")" prune @allonfire/${APP_NAME} --docker
 
 # Stage 2: Install dependencies (cached unless package.jsons change)
-FROM node:${NODE_VERSION}-alpine AS deps
-RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
-WORKDIR /app
+FROM base AS deps
 COPY --from=pruner /app/out/json/ .
 RUN pnpm install --frozen-lockfile
 
 # Stage 3: Build the app
-FROM node:${NODE_VERSION}-alpine AS builder
-RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@9.1.1 --activate
-WORKDIR /app
+FROM base AS builder
 COPY --from=deps /app/ .
 COPY --from=pruner /app/out/full/ .
 ARG APP_NAME

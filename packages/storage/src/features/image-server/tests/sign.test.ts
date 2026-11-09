@@ -1,5 +1,8 @@
 // @module-tag unit
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../../environment/environment";
+import { IMAGE } from "../../image/constants/image";
 import { IMAGE_SERVER } from "../constants/image-server";
 import {
   pictureLink,
@@ -17,8 +20,12 @@ const DOCS = {
 };
 const KEY = "photo.avif";
 const SIGNATURE = /^[\w-]{43}$/;
-const SIGNED_640 =
-  /^http:\/\/localhost:9010\/image\/[\w-]{43}\/rs:fit:640:0\/plain\/s3:\/\/image\/photo\.avif$/;
+const BUCKET = IMAGE.BUCKET.DEFAULT;
+const REGEX_SPECIAL = /[.*+?^${}()|[\]\\]/g;
+const literally = (text: string) => text.replace(REGEX_SPECIAL, "\\$&");
+const SIGNED_640 = new RegExp(
+  `^${literally(LOCAL.URL.IMAGE_SERVER)}/[\\w-]{43}/rs:fit:640:0/plain/${literally(`s3://${BUCKET}/${KEY}`)}$`
+);
 const IN_AN_HOUR = new Date("2026-10-28T12:00:00Z");
 
 describe("signPath", () => {
@@ -29,19 +36,19 @@ describe("signPath", () => {
 
 describe("pictureLink", () => {
   it("asks the image server for the key in the bucket at a width, signed", () => {
-    const link = pictureLink({ bucket: "image", key: KEY, width: 640 });
+    const link = pictureLink({ bucket: BUCKET, key: KEY, width: 640 });
     expect(link).toMatch(SIGNED_640);
   });
 
   it("adds the expiry only when given", () => {
     const link = pictureLink({
-      bucket: "image",
+      bucket: BUCKET,
       expiresAt: IN_AN_HOUR,
       key: KEY,
       width: 640,
     });
     expect(link).toContain(
-      `/rs:fit:640:0/exp:${IN_AN_HOUR.getTime() / 1000}/plain/`
+      `/rs:fit:640:0/exp:${IN_AN_HOUR.getTime() / UNIT.MS_PER_SECOND}/plain/`
     );
   });
 

@@ -4,7 +4,6 @@
     "paths": {
       "@/*": ["./src/*"],
       "@allonfire/ui/*": ["../../packages/ui/src/*"],
-      "@allonfire/database": ["../../packages/database/src/index.ts"],
       "@allonfire/storage": ["../../packages/storage/src/index.ts"],
       "@allonfire/storage/*": ["../../packages/storage/src/*"],
       "@allonfire/auth/*": ["../../packages/auth/src/*"],

@@ -1,9 +1,9 @@
 {
   "extends": "../../packages/config/typescript/node.json",
   "compilerOptions": {
+    // Email templates are React components (ui's features/email).
+    "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./src/*"],
-      "@allonfire/database": ["../../packages/database/src/index.ts"],
       "@allonfire/core/*": ["../../packages/core/src/*"]
     }
   },

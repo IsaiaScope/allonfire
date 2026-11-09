@@ -1,4 +1,4 @@
-import type { GameType } from "@allonfire/database";
+import type { GameType } from "@allonfire/database/enums";
 import {
   getGameStats,
   getLeaderboard,

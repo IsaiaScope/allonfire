@@ -1,5 +1,6 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { BASE_ERROR_CODES } from "better-auth";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { nextAuthEnv } from "../../../environment/next-environment";
@@ -9,6 +10,8 @@ import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
 import { adoptSetCookies } from "./set-cookie";
 
 const credentialsSchema = z.object({
+  /** Where a verification link sent on this sign-in lands: the App's Sign in. */
+  callbackURL: z.url().optional(),
   email: z.email(),
   password: z.string().min(1),
 });
@@ -24,6 +27,9 @@ const text = (value: FormDataEntryValue | null) =>
  */
 const errorFor = ({ code, status }: { code?: string; status: number }) => {
   if (status === HTTP.STATUS.FORBIDDEN) {
+    if (code === BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code) {
+      return AUTH.SIGN_IN_ERROR.UNVERIFIED;
+    }
     return code === AUTH.ERROR_CODE.APP_FORBIDDEN
       ? AUTH.SIGN_IN_ERROR.FORBIDDEN
       : AUTH.SIGN_IN_ERROR.UNAVAILABLE;
@@ -38,7 +44,8 @@ const errorFor = ({ code, status }: { code?: string; status: number }) => {
 
 /**
  * Signs in through the API's Better Auth with the form's email and password,
- * naming this App: the API refuses anyone the App does not let in and opens
+ * naming this App, and the page a verification link should land on
+ * (`callbackURL`, when the form posts one): the API refuses anyone the App does not let in and opens
  * no Session for them. Someone let in gets the Session cookies on the App's
  * own response and no error back.
  */
@@ -50,7 +57,12 @@ export const signInWithEmail = async (
   if (!(email && typeof password === "string" && password)) {
     return AUTH.SIGN_IN_ERROR.MISSING;
   }
-  const credentials = credentialsSchema.safeParse({ email, password });
+  const callbackURL = text(formData.get("callbackURL")) || undefined;
+  const credentials = credentialsSchema.safeParse({
+    callbackURL,
+    email,
+    password,
+  });
   if (!credentials.success) {
     return AUTH.SIGN_IN_ERROR.INVALID;
   }

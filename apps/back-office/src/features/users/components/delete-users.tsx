@@ -1,43 +1,24 @@
 "use client";
 
-import { aofErrorMeta } from "@allonfire/core/features/next/query/aof-query-errors";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
-import { aofToast } from "@allonfire/ui/lib/use-aof-toast";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
 import { IconTrashX } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
 import { StationAlert } from "@/shared/components/station-alert";
+import {
+  ToolbarActionBody,
+  toolbarActionClass,
+} from "@/shared/components/toolbar-action";
 import { USERS } from "../constants/users";
-import { deleteUsersMutation } from "../utils/users-mutations";
-import { ToolbarActionBody, toolbarActionClass } from "./toolbar-action";
-
-/**
- * What a deletion says: how many went, and how many another Admin had
- * deleted already (the list on screen is a snapshot; deleting them again
- * changes nothing).
- */
-const doneMessage = (
-  t: ReturnType<typeof useTranslations<"Users.delete">>,
-  asked: number,
-  deleted: number
-) => {
-  const gone = asked - deleted;
-  if (gone === 0) {
-    return t("done", { count: deleted });
-  }
-  return deleted === 0
-    ? t("gone", { count: gone })
-    : t("partly", { deleted, gone });
-};
+import { useDeleteUsersFlow } from "../hooks/use-delete-users-flow";
 
 /**
  * The toolbar's Delete button, enabled while Users are selected, and the
- * question before they are deleted. Confirming closes the question at once
- * and the list fades the Users on their way out (`useUsersBeingDeleted`)
- * until the list read again has them gone; a deletion then clears the
- * selection, a failure keeps it, so trying again is one click.
+ * question before they are deleted (`useDeleteUsersFlow`). Confirming closes
+ * the question at once and the list fades the Users on their way out
+ * (`useUsersBeingDeleted`) until the list read again has them gone; a
+ * deletion then clears the selection, a failure keeps it, so trying again is
+ * one click.
  */
 export const DeleteUsers = ({
   ids,
@@ -48,24 +29,11 @@ export const DeleteUsers = ({
   onClear: () => void;
 }) => {
   const t = useTranslations("Users.delete");
-  const [asking, setAsking] = useState(false);
-  // A failure is told by the App's error handler, in these words.
-  const { isPending, mutate } = useMutation({
-    ...deleteUsersMutation,
-    meta: aofErrorMeta(t("failed")),
-  });
+  const { ask, asking, confirm, isPending, setAsking } = useDeleteUsersFlow(
+    ids,
+    onClear
+  );
   const count = ids.length;
-
-  const ask = useCallback(() => setAsking(true), []);
-  const confirm = useCallback(() => {
-    setAsking(false);
-    mutate(ids, {
-      onSuccess: ({ deleted }, sent) => {
-        onClear();
-        aofToast(doneMessage(t, sent.length, deleted), "success");
-      },
-    });
-  }, [ids, mutate, onClear, t]);
 
   return (
     <>

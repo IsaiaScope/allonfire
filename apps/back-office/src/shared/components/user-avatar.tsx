@@ -2,11 +2,11 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
   AOFAvatar,
   AOFAvatarFallback,
-} from "@allonfire/ui/components/aof-avatar";
-import { AOFImage } from "@allonfire/ui/components/aof-image";
-import { tileBlur } from "@allonfire/ui/lib/tile-blur";
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/features/image/components/aof-avatar";
+import { tileBlur } from "@allonfire/ui/features/image/utils/tile-blur";
+import { AOFImage } from "@allonfire/ui/shared/components/aof-image";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 /** The initial's tile, in the colour of where it stands: the account's

@@ -1,4 +1,4 @@
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { vitestBrowserConfig } from "@allonfire/config/tests/browser";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { defineConfig, mergeConfig } from "vitest/config";
@@ -10,7 +10,7 @@ export default mergeConfig(
   mergeConfig(vitestBrowserConfig, appViteOptions),
   defineConfig({
     define: {
-      "process.env": stringifyJson({ NEXT_PUBLIC_API_URL: TEST_API_URL }),
+      "process.env": stringifyJson({ NEXT_PUBLIC_API_URL: LOCAL.URL.TEST_API }),
     },
     test: { setupFiles: ["./vitest.browser.setup.ts"] },
   })

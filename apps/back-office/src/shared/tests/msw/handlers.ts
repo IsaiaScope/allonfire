@@ -1,5 +1,5 @@
 import { API } from "@allonfire/api/shared/constants/api";
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import type { HTTP } from "@allonfire/core/features/http/constants/http";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import type { InferResponseType } from "hono/client";
@@ -14,7 +14,7 @@ export const HEALTH_OK = {
 } satisfies InferResponseType<typeof api.health.$get, typeof HTTP.STATUS.OK>;
 
 /** Where the browser asks for Users. */
-export const USERS_URL = `${TEST_API_URL}${API.PATH.USERS}`;
+export const USERS_URL = `${LOCAL.URL.TEST_API}${API.PATH.USERS}`;
 
 /** Two Fixtures: Laura's Admin, and the User in no App. */
 export const USERS_PAGE = {
@@ -24,20 +24,24 @@ export const USERS_PAGE = {
     {
       createdAt: "2026-10-02T10:00:00.000Z",
       email: FIXTURE.USER.LAURA.ADMIN.email,
+      emailVerified: true,
       id: "user-laura",
       image: null,
       imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.LAURA.ADMIN.memberships],
       name: FIXTURE.USER.LAURA.ADMIN.name,
+      version: "version-laura",
     },
     {
       createdAt: "2026-10-01T10:00:00.000Z",
       email: FIXTURE.USER.NO_MEMBERSHIP.email,
+      emailVerified: true,
       id: "user-none",
       image: null,
       imageBlurDataUrl: null,
       memberships: [...FIXTURE.USER.NO_MEMBERSHIP.memberships],
       name: FIXTURE.USER.NO_MEMBERSHIP.name,
+      version: "version-none",
     },
   ],
 } satisfies InferResponseType<
@@ -47,7 +51,7 @@ export const USERS_PAGE = {
 
 /** The API's answers when a test does not set its own. */
 export const handlers = [
-  http.get(`${TEST_API_URL}${API.PATH.HEALTH}`, () =>
+  http.get(`${LOCAL.URL.TEST_API}${API.PATH.HEALTH}`, () =>
     HttpResponse.json(HEALTH_OK)
   ),
   http.get(USERS_URL, () => HttpResponse.json(USERS_PAGE)),

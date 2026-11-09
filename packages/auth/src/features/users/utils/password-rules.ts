@@ -4,14 +4,17 @@ import { USER } from "../constants/users";
 
 /**
  * Each rule an added User's password must meet, met or not: its length
- * (UTF-16 units, as zod counts) and one character of each kind
- * (`PATTERN.CHARACTER`). The one list of them: the API refuses a
+ * (UTF-16 units, as zod counts), one character of each kind
+ * (`PATTERN.CHARACTER`) and no whitespace anywhere (a space is no symbol, and
+ * a password never starts or ends in one by mistake: `noSpaces` is met only
+ * by a password that was typed). The one list of them: the API refuses a
  * password missing any (`meetsPasswordRules`), a form ticks them while
  * typing, so a rule added here reaches both.
  */
 export const passwordRules = (password: string) => ({
   length: password.length >= USER.LIMIT.PASSWORD_MIN,
   lowercase: PATTERN.CHARACTER.LOWERCASE.test(password),
+  noSpaces: password !== "" && !PATTERN.CHARACTER.WHITESPACE.test(password),
   number: PATTERN.CHARACTER.DIGIT.test(password),
   symbol: PATTERN.CHARACTER.SYMBOL.test(password),
   uppercase: PATTERN.CHARACTER.UPPERCASE.test(password),

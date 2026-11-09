@@ -1,6 +1,6 @@
 // @module-tag unit
 import { renderToStaticMarkup } from "react-dom/server";
-import { AOFServiceWorker } from "../aof-service-worker";
+import { AOFServiceWorker } from "../components/aof-service-worker";
 import { PWA } from "../constants/pwa";
 
 const { register, Workbox } = vi.hoisted(() => {
@@ -40,6 +40,17 @@ describe("AOFServiceWorker", () => {
   it("registers nothing when disabled", () => {
     renderToStaticMarkup(<AOFServiceWorker enabled={false} />);
     expect(Workbox).not.toHaveBeenCalled();
+  });
+
+  it("reports a failed registration, still rendering nothing", async () => {
+    const failure = new Error("registration failed");
+    const reportError = vi.fn();
+    vi.stubGlobal("reportError", reportError);
+    register.mockRejectedValueOnce(failure);
+
+    expect(renderToStaticMarkup(<AOFServiceWorker enabled />)).toBe("");
+
+    await vi.waitFor(() => expect(reportError).toHaveBeenCalledWith(failure));
   });
 
   it("registers nothing in a browser without service workers", () => {

@@ -1,13 +1,16 @@
 import { z } from "zod";
 import { type Json, parseJsonWith, stringifyJson } from "./json";
 
-/** The browser's two Web Storage areas, by their global's name. */
+/**
+ * The browser's two Web Storage areas, by their global's name.
+ * @internal
+ */
 export const STORAGE_AREA = {
   LOCAL: "localStorage",
   SESSION: "sessionStorage",
 } as const;
 
-export const storageAreaSchema = z.enum(STORAGE_AREA);
+const storageAreaSchema = z.enum(STORAGE_AREA);
 export type StorageArea = z.infer<typeof storageAreaSchema>;
 
 /**

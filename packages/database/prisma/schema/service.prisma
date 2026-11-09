@@ -1,0 +1,48 @@
+// Services: shared operational capabilities every App and the API lean on,
+// each with the providers that carry it. Only non-secret settings live here;
+// a provider's secret sits in the host's environment under its slot.
+
+/// A capability a Service provides. One row per type.
+enum ServiceType {
+  MAIL @map("mail")
+
+  @@schema("service")
+}
+
+model Service {
+  id        String         @id @default(cuid(2))
+  type      ServiceType    @unique
+  enabled   Boolean        @default(true)
+  providers MailProvider[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@schema("service")
+}
+
+/// One mail provider, used in slot order. Where it is reached (URL, key, driver)
+/// lives in the host's environment under its slot, never here; what it has
+/// used, the provider's own API reports. Each Service type has a provider
+/// table of its own (ADR 0029).
+model MailProvider {
+  id             String    @id @default(cuid(2))
+  serviceId      String
+  service        Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  /// Picks the environment: `API_MAIL_PROVIDER_<slot>_URL`, `_KEY`, `_DRIVER`.
+  slot           Int
+  name           String
+  enabled        Boolean   @default(true)
+  fromAddress    String
+  /// Sizes the Services page's day ring when the provider reports no limit; never enforced.
+  dailyLimit     Int
+  /// Sizes the month ring when the provider reports no limit; never enforced.
+  monthlyLimit   Int?
+  /// The last acceptance, written by a send in raw SQL so it never moves the Version.
+  lastAcceptedAt DateTime?
+  createdAt      DateTime  @default(now())
+  /// Moved by every settings change: the provider's Version (ADR 0028).
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([serviceId, slot])
+  @@schema("service")
+}

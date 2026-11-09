@@ -1,7 +1,7 @@
 // @module-tag integration
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
@@ -23,19 +23,20 @@ const SHORT_BOX_HEIGHT_PX = 100;
 const SCROLL_LEFT_PX = 80;
 /** The rows the box always has room for, under its header. */
 const MIN_ROWS = 8;
+/**
+ * How long the list may load before its skeleton gives way: `vi.waitFor`'s
+ * default second is short for WebKit on a CI runner, and under Vitest's 5 s
+ * test timeout, so a real failure still reads as the missing table.
+ */
+const LOAD_TIMEOUT_MS = 4000;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
-// Vite hands ui's next/image over as a module object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
+  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 
 /** A page in a box `height` tall and narrower than the list's columns, as
@@ -70,7 +71,7 @@ const renderInBox = async (
         <NextIntlClientProvider
           formats={DATE.FORMATS}
           locale={I18N.DEFAULT_LANGUAGE}
-          messages={{ ...SHARED_TRANSLATIONS.en, ...EN }}
+          messages={aofMessages("en", EN)}
           timeZone={DATE.TIME_ZONE}
         >
           <PageBox height={height}>
@@ -81,11 +82,13 @@ const renderInBox = async (
     </QueryClientProvider>
   );
   // The rows, not the skeleton drawn while the list loads.
-  await vi.waitFor(() =>
-    screen
-      .getByRole("table", { name: t.list })
-      .getByText(t.column.email, { exact: true })
-      .element()
+  await vi.waitFor(
+    () =>
+      screen
+        .getByRole("table", { name: t.list })
+        .getByText(t.column.email, { exact: true })
+        .element(),
+    { timeout: LOAD_TIMEOUT_MS }
   );
   const rows = document.querySelector<HTMLElement>(
     '[data-slot="data-table-rows"]'

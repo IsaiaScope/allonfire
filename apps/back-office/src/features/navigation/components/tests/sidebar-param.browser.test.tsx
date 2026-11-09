@@ -5,7 +5,7 @@ import {
   AOFSidebar,
   AOFSidebarProvider,
   AOFSidebarTrigger,
-} from "@allonfire/ui/components/aof-sidebar";
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";

@@ -1,11 +1,10 @@
 // @module-tag unit
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
 import sharp from "sharp";
 import { IMAGE } from "../../constants/image";
-import { IMAGE_FIXTURE_FILES } from "../../fixtures/constants/files";
+import { IMAGE_FIXTURE } from "../../fixtures/constants/files";
+import { readFixtureImage } from "../../fixtures/utils/read-fixture-image";
 import {
   ImageTooLargeError,
   prepareImage,
@@ -14,7 +13,7 @@ import {
 
 const RED = { b: 40, g: 40, r: 200 };
 /** 64x64 HEVC HEIC from libheif's test corpus, what an iPhone writes. */
-const HEIC = readFileSync(resolve(IMAGE_FIXTURE_FILES, "colors-no-alpha.heic"));
+const HEIC = readFixtureImage(IMAGE_FIXTURE.FILE.HEIC);
 const BLUR_MAX_BYTES = 1024;
 
 const jpeg = (width: number, height: number, orientation = 1) =>
@@ -111,7 +110,7 @@ describe("prepareImage", () => {
 
   it("makes a tiny WebP data URL for the blur placeholder", async () => {
     const { blurDataUrl } = await prepareImage(await jpeg(800, 600));
-    expect(blurDataUrl.startsWith("data:image/webp;base64,")).toBe(true);
+    expect(blurDataUrl.startsWith(IMAGE.BLUR.DATA_URL_PREFIX)).toBe(true);
     expect(blurDataUrl.length).toBeLessThan(BLUR_MAX_BYTES);
   });
 

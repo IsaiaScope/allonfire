@@ -7,8 +7,8 @@ export default mergeConfig(
     test: {
       // A Test database and a bucket per run, dropped after (CONTEXT.md).
       globalSetup: [
-        "@allonfire/database/features/test-database/global-setup",
-        "@allonfire/storage/features/test-bucket/global-setup",
+        "@allonfire/database/features/test-database/utils/global-setup",
+        "@allonfire/storage/features/test-bucket/utils/global-setup",
       ],
       include: ["src/**/*.test.ts"],
       setupFiles: ["./vitest.setup.ts"],

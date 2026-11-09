@@ -1,5 +1,5 @@
 // @module-tag unit
-import { deleteLeftovers } from "../delete-leftovers";
+import { deleteLeftovers } from "../utils/delete-leftovers";
 
 const REASON = "files left behind";
 const KEYS = ["a.avif", "b.avif"];

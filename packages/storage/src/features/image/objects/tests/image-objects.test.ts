@@ -1,12 +1,12 @@
 // @module-tag unit
 import { env } from "../../../../environment/environment";
-import { deleteImageObjects, putImageObject } from "../image-objects";
+import { deleteImageObjects, putImageObject } from "../utils/image-objects";
 
 const objects = vi.hoisted(() => ({
   deleteObjects: vi.fn(() => Promise.resolve()),
   putObject: vi.fn(() => Promise.resolve()),
 }));
-vi.mock("../../../s3/objects", () => objects);
+vi.mock("../../../s3/utils/objects", () => objects);
 
 describe("image objects", () => {
   it("stores an Image as immutable AVIF in the configured bucket", async () => {

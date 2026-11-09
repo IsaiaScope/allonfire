@@ -75,7 +75,10 @@ const assertNoShadowingContext = (root: string) => {
   }
 };
 
-/** App folder name to the Design its styles.css imports. */
+/**
+ * App folder name to the Design its styles.css imports.
+ * @internal
+ */
 export const wornDesigns = (root: string): Map<string, string> => {
   const worn = new Map<string, string>();
   const appsDir = join(root, APPS_DIR);

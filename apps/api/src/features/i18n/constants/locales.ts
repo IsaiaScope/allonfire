@@ -15,7 +15,7 @@ const DEFAULT_LOCALE: Locale = I18N.LOCALE.EN_US;
 export type TranslationKey = keyof typeof EN;
 
 /** Derived from the source language, so no key list or value type is retyped. */
-export type Translations = typeof EN;
+type Translations = typeof EN;
 
 /**
  * Locale to its messages. Variants share their language's object by reference —

@@ -7,18 +7,23 @@ import { join, resolve } from "node:path";
 const SCRIPT = resolve(import.meta.dirname, "../database-url.sh");
 const TRAILING_NEWLINE = /\n$/;
 
+/** The argv that sources database-url.sh and runs `fn` on `url`. */
+const bashArgs = (fn: string, url: string) => [
+  "-c",
+  `source "${SCRIPT}"; ${fn} "$1"`,
+  fn,
+  url,
+];
+
 function call(fn: string, url: string) {
-  return spawnSync("bash", ["-c", `source "${SCRIPT}"; ${fn} "$1"`, fn, url], {
-    encoding: "utf8",
-  });
+  return spawnSync("bash", bashArgs(fn, url), { encoding: "utf8" });
 }
 
-function run(fn: string, url: string): string {
-  return execFileSync(
-    "bash",
-    ["-c", `source "${SCRIPT}"; ${fn} "$1"`, fn, url],
-    { encoding: "utf8" }
-  ).replace(TRAILING_NEWLINE, "");
+function run(fn: string, url: string, cwd?: string): string {
+  return execFileSync("bash", bashArgs(fn, url), {
+    cwd,
+    encoding: "utf8",
+  }).replace(TRAILING_NEWLINE, "");
 }
 
 describe("jdbc_url", () => {
@@ -169,19 +174,13 @@ describe("query parameters", () => {
     const dir = mkdtempSync(join(tmpdir(), "database-url-"));
     writeFileSync(join(dir, "application_name=a"), "");
     try {
-      const out = execFileSync(
-        "bash",
-        [
-          "-c",
-          `source "${SCRIPT}"; jdbc_url "$1"`,
+      expect(
+        run(
           "jdbc_url",
           "postgresql://app:secret@db/allonfire?application_name=[a]",
-        ],
-        { cwd: dir, encoding: "utf8" }
-      );
-      expect(out.replace(TRAILING_NEWLINE, "")).toBe(
-        "jdbc:postgresql://db/allonfire?application_name=[a]"
-      );
+          dir
+        )
+      ).toBe("jdbc:postgresql://db/allonfire?application_name=[a]");
     } finally {
       rmSync(dir, { force: true, recursive: true });
     }
