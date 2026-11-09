@@ -4,34 +4,37 @@ import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
-import { page, userEvent } from "vitest/browser";
+import { cdp, page, server, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { NAVIGATION } from "../../constants/navigation";
-import { SECTION, SECTIONS, sectionHref } from "../../constants/sections";
+import { SECTION, SECTIONS } from "../../constants/sections";
+import { sectionHref } from "../../utils/sections";
 import { AppFrame } from "../app-frame";
+import { SectionPage } from "../section-page";
 
 const t = EN.Navigation;
 
 /** The address the mocked router reports; a test moves it to navigate. */
 const at = { pathname: sectionHref(SECTION.USERS.path) };
 
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
   usePathname: () => at.pathname,
 }));
 
 /** Following a link would reload the test's own page: links stay put. */
 const stayPut = (event: MouseEvent) => event.preventDefault();
 
-const frame = (search = "") => (
+const ACCOUNT = "Account";
+const PAGE = "Page";
+
+const frame = (search = "", content: ReactNode = <p>{PAGE}</p>) => (
   <NuqsTestingAdapter searchParams={search}>
     <NextIntlClientProvider locale="en" messages={EN}>
-      <AppFrame account={<span>Account</span>} switcher={<span>Apps</span>}>
-        <p>Page</p>
+      <AppFrame account={<span>{ACCOUNT}</span>} switcher={<span>Apps</span>}>
+        {content}
       </AppFrame>
     </NextIntlClientProvider>
   </NuqsTestingAdapter>
@@ -157,3 +160,124 @@ describe("AppFrame", () => {
     await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
   });
 });
+
+/** A phone's notch and home indicator, larger than the gutters they meet. */
+const NOTCH = { bottom: 34, left: 47, right: 47, top: 47 } as const;
+
+/** Draws the screen with `insets` (`env(safe-area-inset-*)`), as a notched
+ *  phone does; `{}` takes them away. Only Chromium can. */
+const notch = (insets: Partial<typeof NOTCH>) =>
+  cdp().send("Emulation.setSafeAreaInsetsOverride", { insets });
+
+const px = (
+  element: Element | null | undefined,
+  side: "Bottom" | "Left" | "Right" | "Top"
+) => {
+  if (!element) {
+    throw new Error("the frame's part is missing");
+  }
+  return Number.parseFloat(getComputedStyle(element)[`padding${side}`]);
+};
+
+// WebKit has no way to draw a notch.
+describe.runIf(server.browser === "chromium")(
+  "AppFrame on a notched screen",
+  () => {
+    afterEach(() => notch({}));
+
+    /** The sidebar's footer: what holds the account menu. */
+    const footer = () =>
+      page
+        .getByText(ACCOUNT, { exact: true })
+        .element()
+        .closest('[data-slot="sidebar-footer"]');
+
+    it("keeps the account menu above the home indicator beside the page", async () => {
+      await render(frame());
+      await notch(NOTCH);
+      expect(px(footer(), "Bottom")).toBe(NOTCH.bottom);
+    });
+
+    it("keeps the account menu above the home indicator in the phone's drawer", async () => {
+      await page.viewport(
+        SCREEN.VIEWPORT.PHONE.WIDTH,
+        SCREEN.VIEWPORT.PHONE.HEIGHT
+      );
+      const screen = await render(frame());
+      await notch(NOTCH);
+      await screen.getByRole("button", { name: t.toggleMenu }).click();
+      await expect.element(page.getByRole("dialog")).toBeVisible();
+      expect(px(footer(), "Bottom")).toBe(NOTCH.bottom);
+    });
+
+    it("keeps the header's right end clear of a notch on that side", async () => {
+      const screen = await render(frame());
+      const header = screen
+        .getByRole("button", { name: t.toggleMenu })
+        .element()
+        .closest("header");
+      const clear = px(header, "Right");
+      await notch(NOTCH);
+      expect(px(header, "Right")).toBe(clear + NOTCH.right);
+    });
+
+    /** The page's header, the frame's top bar. */
+    const header = () =>
+      page
+        .getByRole("button", { name: t.toggleMenu })
+        .element()
+        .closest("header");
+    /** The sidebar's header: the App switcher's band. */
+    const sidebarHeader = () =>
+      page
+        .getByText("Apps", { exact: true })
+        .element()
+        .closest('[data-slot="sidebar-header"]');
+    const height = (element: Element | null) =>
+      element?.getBoundingClientRect().height;
+
+    it("keeps the header's menu button clear of a notch on the left with no sidebar beside it", async () => {
+      await page.viewport(
+        SCREEN.VIEWPORT.PHONE.WIDTH,
+        SCREEN.VIEWPORT.PHONE.HEIGHT
+      );
+      await render(frame());
+      const clear = px(header(), "Left");
+      await notch(NOTCH);
+      expect(px(header(), "Left")).toBe(clear + NOTCH.left);
+    });
+
+    it("leaves the left notch to the sidebar beside the header", async () => {
+      await render(frame());
+      const clear = px(header(), "Left");
+      await notch(NOTCH);
+      expect(px(header(), "Left")).toBe(clear);
+    });
+
+    it("keeps both top bars below a notch above, their lines level", async () => {
+      await render(frame());
+      const clear = height(header());
+      await notch(NOTCH);
+      expect(px(header(), "Top")).toBe(NOTCH.top);
+      expect(px(sidebarHeader(), "Top")).toBe(NOTCH.top);
+      // The bar grows by the notch: its row keeps its own height.
+      expect(height(header())).toBe((clear ?? 0) + NOTCH.top);
+      expect(height(sidebarHeader())).toBe(height(header()));
+    });
+
+    it("drops the left notch from the page's gutter beside the sidebar, which clears it", async () => {
+      const section = () =>
+        page.getByText(PAGE, { exact: true }).element().closest("section");
+      await render(frame("", <SectionPage>{PAGE}</SectionPage>));
+      const clear = px(section(), "Left");
+      await notch(NOTCH);
+      expect(px(section(), "Left")).toBe(clear);
+      // A phone's page meets the left edge: it keeps the notch out.
+      await page.viewport(
+        SCREEN.VIEWPORT.PHONE.WIDTH,
+        SCREEN.VIEWPORT.PHONE.HEIGHT
+      );
+      expect(px(section(), "Left")).toBe(NOTCH.left);
+    });
+  }
+);

@@ -1,3 +1,4 @@
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
@@ -8,6 +9,12 @@ const SESSION_TTL_MS = UNIT.MS_PER_MINUTE;
 
 /** Where a made-up host mounts the module in these tests; the module never knows the prefix. */
 export const HOST_AUTH_PATH = `/host${AUTH.PATH.BASE}` as const;
+
+/** Better Auth's Session cookie names as an https host sets them, behind `__Secure-`. */
+export const SESSION_COOKIE = {
+  SECURE_DATA: `${AUTH.COOKIE.SECURE_PREFIX}${AUTH.COOKIE.SESSION_DATA}`,
+  SECURE_TOKEN: `${AUTH.COOKIE.SECURE_PREFIX}${AUTH.COOKIE.SESSION_TOKEN}`,
+} as const;
 
 /** The cookies a response set, as one `cookie` header a request sends back. */
 export const cookieOf = (res: Response) =>
@@ -44,7 +51,8 @@ export function stubAuth(overrides: Partial<AuthLike> = {}): AuthLike {
   return {
     basePath: AUTH.PATH.BASE,
     getSession: () => Promise.resolve(null),
-    handler: () => Promise.resolve(new Response(null, { status: 404 })),
+    handler: () =>
+      Promise.resolve(new Response(null, { status: HTTP.STATUS.NOT_FOUND })),
     openApi: () => Promise.resolve({ paths: {} }),
     ...overrides,
   };

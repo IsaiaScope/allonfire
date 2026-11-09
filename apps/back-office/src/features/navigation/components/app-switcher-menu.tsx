@@ -1,20 +1,20 @@
 import {
+  AOFSidebarDropdownContent,
+  AOFSidebarMenu,
+  AOFSidebarMenuButton,
+  AOFSidebarMenuItem,
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
+import {
   AOFDropdownMenu,
   AOFDropdownMenuGroup,
   AOFDropdownMenuItem,
   AOFDropdownMenuLabel,
   AOFDropdownMenuTrigger,
-} from "@allonfire/ui/components/aof-dropdown-menu";
-import {
-  AOFSidebarDropdownContent,
-  AOFSidebarMenu,
-  AOFSidebarMenuButton,
-  AOFSidebarMenuItem,
-} from "@allonfire/ui/components/aof-sidebar";
+} from "@allonfire/ui/shared/components/aof-dropdown-menu";
 import { IconArrowUpRight, IconCaretUpDown } from "@tabler/icons-react";
 import { AppTile } from "@/shared/components/app-tile";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import type { SwitcherApp } from "../constants/apps";
+import type { SwitcherApp } from "../utils/switcher-apps";
 import { CurrentAppMark, switcherButton } from "./current-app-mark";
 
 export type AppSwitcherMenuProps = {

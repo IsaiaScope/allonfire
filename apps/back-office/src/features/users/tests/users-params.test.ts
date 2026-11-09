@@ -1,10 +1,7 @@
 // @module-tag unit
 import type { ApiType } from "@allonfire/api/client";
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { USER } from "@allonfire/auth/features/users/constants/users";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { App } from "@allonfire/database/enums";
 import { DetailedError, hc } from "hono/client";
@@ -14,7 +11,7 @@ import { loadUsersParams } from "../constants/users-params";
 import { retryUsers, usersQuery } from "../utils/users-queries";
 
 // A client of its own: the App's `api` reads the env, which a unit test lacks.
-const api = hc<ApiType>(TEST_API_URL);
+const api = hc<ApiType>(LOCAL.URL.TEST_API);
 /** Any page past the first. */
 const SOME_PAGE = 3;
 const TEXT = "isa";
@@ -60,7 +57,7 @@ describe("loadUsersParams", () => {
       loadUsersParams({ [USER.PARAM.SEARCH]: `role:boss APP:Laura ${TEXT}` })
     ).toEqual({
       ...DEFAULTS,
-      [USER.PARAM.SEARCH]: USER_SEARCH.serialize({
+      [USER.PARAM.SEARCH]: USER.SEARCH.serialize({
         app: [App.LAURA],
         text: TEXT,
       }),

@@ -21,16 +21,17 @@ import type { ErrorDetail, ProblemDetails } from "../constants/problem-details";
 
 // Re-exported so callers import the error contract from the middleware that
 // produces it, without reaching into constants/ themselves.
+/** @internal */
 export type { ErrorCode } from "../../../shared/constants/error";
-export type {
-  ErrorDetail,
-  ProblemDetails,
-} from "../constants/problem-details";
+export type { ProblemDetails } from "../constants/problem-details";
 
 const isErrorStatus = (status: number): status is ErrorStatus =>
   errorStatusSchema.safeParse(status).success;
 
-/** Generic, so a literal status gives its exact code: `codeForStatus(404)` is `"NOT_FOUND"`. */
+/**
+ * Generic, so a literal status gives its exact code: `codeForStatus(404)` is `"NOT_FOUND"`.
+ * @internal
+ */
 export const codeForStatus = <S extends ErrorStatus>(
   status: S
 ): (typeof API.ERROR.CODE_OF_STATUS)[S] => API.ERROR.CODE_OF_STATUS[status];
@@ -48,6 +49,7 @@ type StatusErrorCode = ValueOf<typeof API.ERROR.CODE_OF_STATUS>;
  * `CodedError` with its own values and never reaches here. The switch is
  * exhaustive: a new status code with values fails to compile here until it is
  * handled.
+ * @internal
  */
 export function fallbackMessage(code: StatusErrorCode, locale: Locale): string {
   switch (code) {

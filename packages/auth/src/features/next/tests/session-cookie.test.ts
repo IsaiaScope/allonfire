@@ -23,8 +23,9 @@ describe("readSessionCookie", () => {
   });
 
   it("finds it behind the __Secure- prefix", async () => {
-    sent = asCookies(`__Secure-${TOKEN}`);
-    expect(await readSessionCookie()).toBe(`__Secure-${TOKEN}`);
+    const secure = `${AUTH.COOKIE.SECURE_PREFIX}${TOKEN}`;
+    sent = asCookies(secure);
+    expect(await readSessionCookie()).toBe(secure);
   });
 
   it("is empty when signed out", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAOFSidebar } from "@allonfire/ui/components/aof-sidebar";
+import { useAOFSidebar } from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
 import { NAVIGATION, sidebarParam } from "../constants/navigation";

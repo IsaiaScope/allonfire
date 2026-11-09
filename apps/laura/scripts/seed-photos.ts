@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
-import { prisma } from "@allonfire/database";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import {
   createPhoto,
   getPhotoCount,

@@ -1,8 +1,10 @@
 // @module-tag unit
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { z } from "zod";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
-import { appDeps } from "../../../shared/tests/app-deps";
-import { captureLog, infoLevel } from "./capture";
+import { appDeps, UNMATCHED_PATH } from "../../../shared/tests/app-deps";
+import { captureLog, infoLevel } from "../../../shared/tests/capture";
 
 describe("probe logging", () => {
   it("does not emit an info line for /health", async () => {
@@ -20,12 +22,17 @@ describe("probe logging", () => {
     const { lines, logger } = captureLog();
     const app = createApp(appDeps({ logger }));
 
-    await app.request("/nothing-here");
+    await app.request(UNMATCHED_PATH);
 
     const infoLines = lines.filter((entry) => entry.level >= infoLevel(logger));
 
     expect(infoLines.length).toBeGreaterThan(0);
   });
+});
+
+/** A request line's headers, parsed rather than cast. */
+const requestLineSchema = z.looseObject({
+  req: z.object({ headers: z.record(z.string(), z.string()) }),
 });
 
 describe("request log headers", () => {
@@ -35,14 +42,16 @@ describe("request log headers", () => {
 
     await app.request(API.PATH.OPENAPI, {
       headers: {
-        "accept-language": "it",
+        [HTTP.HEADER.ACCEPT_LANGUAGE]: "it",
         traceparent: "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01",
-        "user-agent": "curl/8",
-        "x-forwarded-for": "203.0.113.7",
+        [HTTP.HEADER.USER_AGENT]: "curl/8",
+        [HTTP.HEADER.X_FORWARDED_FOR]: "203.0.113.7",
       },
     });
 
-    const [entry] = lines as { req?: { headers?: object } }[];
-    expect(entry?.req?.headers).toEqual({ "accept-language": "it" });
+    const entry = requestLineSchema.parse(lines[0]);
+    expect(entry.req.headers).toEqual({
+      [HTTP.HEADER.ACCEPT_LANGUAGE]: "it",
+    });
   });
 });

@@ -1,0 +1,66 @@
+// @module-tag unit
+
+import { USER } from "@allonfire/auth/features/users/constants/users";
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
+import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
+import { cacheLife, cacheTag } from "next/cache";
+import { USERS_PAGE } from "@/shared/tests/msw/handlers";
+import { USERS } from "../../constants/users";
+import { usersHydration } from "../users-hydration";
+import { usersListKey } from "../users-queries";
+
+vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "@/environment/environment",
+  () => import("@/shared/tests/environment-mock")
+);
+const session = vi.hoisted(() => ({ cookie: "" }));
+vi.mock("@allonfire/auth/features/next/utils/session-cookie", () => ({
+  readSessionCookie: vi.fn(async () => session.cookie),
+}));
+
+const COOKIE = `${AUTH.COOKIE.SESSION_TOKEN}=token`;
+const PARAMS = {
+  [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
+  [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
+  [USER.PARAM.SEARCH]: "",
+};
+
+beforeEach(() => {
+  session.cookie = COOKIE;
+});
+
+describe("usersHydration", () => {
+  // TanStack stamps the time into what it dehydrates: inside the private
+  // cache, that read is part of the kept result, so a prefetch carries the
+  // list (outside one, it keeps the list out of every prefetch).
+  it("reads the page as the Session's cookie and dehydrates it under the table's key, tagged and kept 5 minutes", async () => {
+    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) =>
+      Response.json(USERS_PAGE)
+    );
+    vi.stubGlobal("fetch", fetch);
+    const state = await usersHydration(PARAMS);
+    expect(
+      state.queries.map(({ queryKey, state: { data } }) => ({ data, queryKey }))
+    ).toEqual([{ data: USERS_PAGE, queryKey: usersListKey(PARAMS) }]);
+    expect(cacheTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+    expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);
+    // The rows hold Avatar links signed for an hour: never kept longer.
+    expect(USERS.CACHE.LIFE.expire).toBeLessThanOrEqual(
+      IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR
+    );
+    const [, init] = fetch.mock.calls[0] ?? [];
+    expect(new Headers(init?.headers).get(HTTP.HEADER.COOKIE)).toBe(COOKIE);
+  });
+
+  it("throws when signed out, so no empty list is kept", async () => {
+    session.cookie = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json({}, { status: HTTP.STATUS.UNAUTHORIZED }))
+    );
+    await expect(usersHydration(PARAMS)).rejects.toThrow();
+  });
+});

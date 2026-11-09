@@ -1,12 +1,9 @@
 // @module-tag unit
 import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { deleteObjects, putObject } from "../objects";
+import { deleteObjects, putObject } from "../utils/objects";
+import { send } from "./s3-client-mock";
 
-const send = vi.hoisted(() =>
-  vi.fn<(command: unknown) => Promise<unknown>>(() => Promise.resolve({}))
-);
-// The real client validates STORAGE_* at import; these tests need no provider.
-vi.mock("../client", () => ({ s3: { send } }));
+vi.mock("../utils/client", () => import("./s3-client-mock"));
 
 const sent = (index = 0): unknown => send.mock.calls[index]?.[0];
 

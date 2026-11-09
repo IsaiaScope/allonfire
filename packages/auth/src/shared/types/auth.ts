@@ -11,19 +11,19 @@ export type AuthSession = {
   };
 };
 
-export type OpenApiOperation = { tags?: string[] } & Record<string, unknown>;
+type OpenApiOperation = { tags?: string[] } & Record<string, unknown>;
 
 /**
  * Better Auth only answers GET and POST. Named keys, not a `Record`: its own
  * `Path` is an interface, and an interface has no index signature to match.
  */
-export type OpenApiPathItem = {
+type OpenApiPathItem = {
   get?: OpenApiOperation | undefined;
   post?: OpenApiOperation | undefined;
 };
 
 /** Only the parts of an OpenAPI document the merge reads. */
-export type OpenApiDocument = {
+type OpenApiDocument = {
   paths: Record<string, OpenApiPathItem>;
   components?: Record<string, Record<string, unknown>>;
 };

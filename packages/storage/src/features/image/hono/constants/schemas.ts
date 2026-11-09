@@ -1,3 +1,4 @@
+import { versionSchema } from "@allonfire/core/features/version/constants/version";
 import { jsonFrom } from "@allonfire/core/shared/utils/json";
 import { type App, ImageAccess } from "@allonfire/database/enums";
 import { z } from "zod";
@@ -44,7 +45,10 @@ const appsSchema = z
   .min(1)
   .refine(eachAppOnce, EACH_APP_ONCE);
 
-/** One entry per uploaded file, in the same order; private unless `access` says. */
+/**
+ * One entry per uploaded file, in the same order; private unless `access` says.
+ * @internal
+ */
 export const uploadItemSchema = z
   .object({
     access: imageAccessBodySchema.optional(),
@@ -92,6 +96,8 @@ export const patchBodySchema = z
         alt: imageAltBodySchema.optional(),
         apps: appsSchema.optional(),
         id: z.string().min(1),
+        /** The Version the change was made on (`Image.version`). */
+        version: versionSchema,
       })
       .meta({ ref: "ImageChange" })
   )

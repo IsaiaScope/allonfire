@@ -51,7 +51,7 @@ export function createRedisStore(redis: Redis): RateLimitStore {
     },
     async increment(key, windowMs) {
       const namespaced = rateLimitKey(key);
-      // ponytail: plain EVAL resends the ~100-byte script each call; switch to
+      // ponytail: plain EVAL ships the ~100-byte script again on each call; switch to
       // EVALSHA if Redis bandwidth ever matters.
       const [totalHits, ttl] = incrementReplySchema.parse(
         await redis.eval(INCREMENT_SCRIPT, 1, namespaced, String(windowMs))
@@ -67,7 +67,7 @@ export function createRedisStore(redis: Redis): RateLimitStore {
   };
 }
 
-export function clientKey(context: Context, trustedHops: number): string {
+function clientKey(context: Context, trustedHops: number): string {
   if (trustedHops > 0) {
     const chain = (context.req.header(HTTP.HEADER.X_FORWARDED_FOR) ?? "")
       .split(SEPARATOR.LIST)

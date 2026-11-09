@@ -1,6 +1,6 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { AOFManifestIcons } from "@allonfire/core/features/next/metadata/aof-icon-images";
+import { AOFManifestIcons } from "@allonfire/core/features/next/metadata/components/aof-icon-images";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
 import type { MetadataRoute } from "next";
 import { metadataText } from "@/features/metadata/utils/metadata-text";

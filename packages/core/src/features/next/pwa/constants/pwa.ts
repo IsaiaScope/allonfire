@@ -68,9 +68,9 @@ export const PWA = {
   },
 } as const;
 
-export const installPlatformSchema = z.enum(PLATFORM);
+const installPlatformSchema = z.enum(PLATFORM);
 export type InstallPlatform = z.infer<typeof installPlatformSchema>;
-export const installStepSchema = z.enum(STEP);
+const installStepSchema = z.enum(STEP);
 export type InstallStep = z.infer<typeof installStepSchema>;
-export const installStatusSchema = z.enum(INSTALL_STATUS);
+const installStatusSchema = z.enum(INSTALL_STATUS);
 export type InstallStatus = z.infer<typeof installStatusSchema>;

@@ -13,6 +13,7 @@ import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { enT, itT } from "../src/shared/tests/translators";
 import { SIGN_IN_URL } from "./pages";
 
 const collectErrors = (page: Page) => {
@@ -54,11 +55,11 @@ test("serves Italian at /it/sign-in", async ({ page }) => {
 test("renders the localized 404 for an unknown path", async ({ page }) => {
   await page.goto("/does-not-exist");
   await expect(
-    page.getByRole("heading", { name: "Page not found" })
+    page.getByRole("heading", { name: enT("Common.NotFound.title") })
   ).toBeVisible();
   await page.goto("/it/non-esiste");
   await expect(
-    page.getByRole("heading", { name: "Pagina non trovata" })
+    page.getByRole("heading", { name: itT("Common.NotFound.title") })
   ).toBeVisible();
 });
 

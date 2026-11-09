@@ -1,7 +1,7 @@
 // @module-tag unit
 import { createTranslator } from "next-intl";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFPageMetadata } from "../aof-page-metadata";
+import { AOFPageMetadata } from "../utils/aof-page-metadata";
 
 const LOCALE = "it";
 const MESSAGES = { Things: { list: { title: "Le cose" } } };

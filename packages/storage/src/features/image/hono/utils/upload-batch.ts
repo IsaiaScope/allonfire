@@ -5,10 +5,10 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 import { createMiddleware } from "hono/factory";
 import { IMAGE } from "../../constants/image";
 import type { PreparedImage } from "../../prepare/prepare-image";
+import { asImageError } from "../../utils/image-error";
 import { imageKey } from "../../utils/image-key";
 import type { UploadItem } from "../constants/schemas";
 import type { ImageDeps } from "./deps";
-import { asImageError } from "./errors";
 
 /** The file bytes as sharp reads them; a decode failure is the client's 415, too many pixels a 413. */
 const prepareFile = async (deps: ImageDeps, file: File) => {

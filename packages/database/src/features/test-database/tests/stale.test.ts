@@ -1,6 +1,10 @@
 // @module-tag unit
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import { staleTestDatabases, templateName, testDatabaseName } from "../names";
+import {
+  staleTestDatabases,
+  templateName,
+  testDatabaseName,
+} from "../utils/names";
 
 const NOW = new Date("2026-10-13T12:00:00Z");
 const EPOCH = NOW.getTime() / UNIT.MS_PER_SECOND;

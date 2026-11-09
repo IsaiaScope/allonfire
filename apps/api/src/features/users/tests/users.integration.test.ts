@@ -1,33 +1,37 @@
 // @module-tag integration
 
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import {
   userBodySchema,
   userCreatedBodySchema,
   userDeleteBodySchema,
   userListBodySchema,
+  type userUpdateRequestSchema,
 } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { type Json, stringifyJson } from "@allonfire/core/shared/utils/json";
-import { prisma } from "@allonfire/database";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, Role } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { upsertUser } from "@allonfire/database/features/seed/upsert-user";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { IMAGE_FIXTURE_FILES } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { readFixtureImage } from "@allonfire/storage/features/image/fixtures/utils/read-fixture-image";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { pictureLink } from "@allonfire/storage/features/image-server/sign";
-import { hashPassword } from "better-auth/crypto";
 import { z } from "zod";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
+import { problemOf } from "../../../shared/tests/problem-of";
+import {
+  demotedAdminCookie,
+  seedAdmin,
+  seedUser,
+  userIdOf,
+} from "../../../shared/tests/seed-user";
 import {
   cookieFor,
   ORIGIN,
@@ -35,7 +39,7 @@ import {
   type TestApp,
 } from "../../../shared/tests/sign-in";
 import { auth } from "../../auth/auth";
-import { problemOf } from "../../errors/tests/problem-of";
+import { translate } from "../../i18n/translate";
 import { userDeps } from "../user-deps";
 
 const LIST = API.PATH.USERS;
@@ -77,7 +81,7 @@ describe("listing Users on the Fixtures", () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
     const query = new URLSearchParams({
       [USER.PARAM.PER_PAGE]: String(LARGEST_PAGE),
-      [USER.PARAM.SEARCH]: USER_SEARCH.serialize({
+      [USER.PARAM.SEARCH]: USER.SEARCH.serialize({
         app: [App.LAURA],
         role: [Role.ADMIN],
         text: FIXTURE.DOMAIN,
@@ -144,17 +148,16 @@ describe("deleting Users", () => {
 
   it("refuses your own id with CANNOT_DELETE_SELF", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const self = await prisma.user.findUniqueOrThrow({
-      select: { id: true },
-      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
-    });
+    const selfId = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
     const { id } = await throwaway("beside-self");
-    const res = await remove([id, self.id], cookie);
+    const res = await remove([id, selfId], cookie);
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.CANNOT_DELETE_SELF);
-    expect(problem.detail).toBe("You cannot delete yourself");
-    expect(await exists(self.id)).toBe(true);
+    expect(problem.detail).toBe(
+      translate(API.ERROR.CODE.CANNOT_DELETE_SELF, I18N.LOCALE.EN_US)
+    );
+    expect(await exists(selfId)).toBe(true);
     expect(await exists(id)).toBe(true);
   });
 
@@ -170,21 +173,7 @@ describe("deleting Users", () => {
   });
 
   it("refuses an Admin demoted since their cookie was cached", async () => {
-    const demoted = { email: `demoted@${DELETABLE}` };
-    await upsertUser(
-      prisma,
-      {
-        ...demoted,
-        memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
-        name: "demoted",
-      },
-      await hashPassword(FIXTURE.PASSWORD)
-    );
-    const cookie = await cookieFor(app, demoted);
-    await prisma.membership.updateMany({
-      data: { role: Role.USER },
-      where: { app: App.BACK_OFFICE, user: { email: demoted.email } },
-    });
+    const cookie = await demotedAdminCookie(app, `demoted@${DELETABLE}`);
     const { id } = await throwaway("kept");
     expect((await remove([id], cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await exists(id)).toBe(true);
@@ -208,16 +197,7 @@ describe("deleting Users", () => {
   });
 
   it("a deleted Session stops writing at once", async () => {
-    const signedOut = { email: `signed-out@${DELETABLE}` };
-    await upsertUser(
-      prisma,
-      {
-        ...signedOut,
-        memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
-        name: "signed out",
-      },
-      await hashPassword(FIXTURE.PASSWORD)
-    );
+    const signedOut = await seedAdmin(`signed-out@${DELETABLE}`, "signed out");
     const cookie = await cookieFor(app, signedOut);
     // As a new password ends it; the cookie keeps its signed copy.
     await prisma.session.deleteMany({ where: { user: signedOut } });
@@ -229,7 +209,6 @@ describe("deleting Users", () => {
 
 // Users added here, in their own domain so the list's counts hold.
 const ADDED = "add-users-api.test";
-const PASSWORD = "A-long-password-1";
 const add = <T>(body: T & Json<T>, cookie?: string) =>
   app.request(LIST, {
     body: stringifyJson(body),
@@ -244,7 +223,7 @@ const newUser = (name: string) => ({
   email: `${name}@${ADDED}`,
   memberships: [{ app: App.LAURA, role: Role.USER }],
   name,
-  password: PASSWORD,
+  password: FIXTURE.PASSWORD,
 });
 
 describe("adding Users", () => {
@@ -257,10 +236,13 @@ describe("adding Users", () => {
     const body = newUser("signs-in");
     const res = await add(body, cookie);
     expect(res.status).toBe(HTTP.STATUS.CREATED);
-    expect(userCreatedBodySchema.parse(await res.json()).id).toBeTruthy();
-    expect((await signIn(app, body, { password: PASSWORD })).status).toBe(
-      HTTP.STATUS.OK
-    );
+    const created = userCreatedBodySchema.parse(await res.json());
+    expect(created.id).toBeTruthy();
+    // The Version a picture set next carries.
+    expect(created.version).toBe(await currentVersion(created.id, cookie));
+    expect(
+      (await signIn(app, body, { password: FIXTURE.PASSWORD })).status
+    ).toBe(HTTP.STATUS.OK);
   });
 
   it("answers 409 EMAIL_TAKEN with its message for a Fixture's email", async () => {
@@ -272,68 +254,66 @@ describe("adding Users", () => {
     expect(res.status).toBe(HTTP.STATUS.CONFLICT);
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.EMAIL_TAKEN);
-    expect(problem.detail).toBe("An account with this email already exists");
+    expect(problem.detail).toBe(
+      translate(API.ERROR.CODE.EMAIL_TAKEN, I18N.LOCALE.EN_US)
+    );
   });
 
   it("refuses an Admin demoted since their cookie was cached", async () => {
-    const demoted = { email: `demoted@${ADDED}` };
-    await upsertUser(
-      prisma,
-      {
-        ...demoted,
-        memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
-        name: "demoted",
-      },
-      await hashPassword(FIXTURE.PASSWORD)
-    );
-    const cookie = await cookieFor(app, demoted);
-    await prisma.membership.updateMany({
-      data: { role: Role.USER },
-      where: { app: App.BACK_OFFICE, user: { email: demoted.email } },
-    });
+    const cookie = await demotedAdminCookie(app, `demoted@${ADDED}`);
     const body = newUser("never");
     expect((await add(body, cookie)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await prisma.user.count({ where: { email: body.email } })).toBe(0);
   });
 });
 
-describe("a User's Avatar", () => {
-  const PICTURED = "avatar.test";
-  const PHOTO = readFileSync(resolve(IMAGE_FIXTURE_FILES, "photo.jpg"));
-  const avatarPath = (id: string) =>
-    `${LIST}${USER.PATH.AVATAR.replace(":id", id)}`;
-  const put = (id: string, cookie: string) => {
-    const form = new FormData();
-    form.append("file", new File([PHOTO], "photo.jpg"));
-    return app.request(avatarPath(id), {
-      body: form,
-      headers: { cookie, origin: ORIGIN },
-      method: HTTP.METHOD.PUT,
-    });
-  };
-  const removeAvatar = (id: string, cookie: string) =>
-    app.request(avatarPath(id), {
-      headers: { cookie, origin: ORIGIN },
-      method: HTTP.METHOD.DELETE,
-    });
-  const imageOf = async (id: string) =>
-    (await prisma.user.findUniqueOrThrow({ where: { id } })).image;
-  /** Whether the image server still finds the file. */
-  const stored = async (key: string | null) =>
-    (
-      await fetch(
-        pictureLink({ key: key ?? "", width: IMAGE_SERVER.AVATAR_WIDTH })
-      )
-    ).status === HTTP.STATUS.OK;
-  const linkSchema = z.object({
-    image: z.string(),
-    imageBlurDataUrl: z.string(),
+// Users given an Avatar here live in their own domain.
+const PICTURED = "avatar.test";
+const PHOTO = readFixtureImage(IMAGE_FIXTURE.FILE.PHOTO);
+const avatarPath = (id: string) =>
+  `${LIST}${fillPath(USER.PATH.AVATAR, { id })}`;
+/** A picture set on the User's Version read just before, unless one is given. */
+const put = async (id: string, cookie: string, version?: string) => {
+  const form = new FormData();
+  form.append("file", new File([PHOTO], IMAGE_FIXTURE.FILE.PHOTO));
+  form.append("version", version ?? (await currentVersion(id, cookie)));
+  return app.request(avatarPath(id), {
+    body: form,
+    headers: { cookie, origin: ORIGIN },
+    method: HTTP.METHOD.PUT,
   });
-  /** A deleted file's link is dead once the image cache asked imgproxy again. */
-  const UNTIL_CACHE_CHECKED = {
-    timeout: IMAGE_SERVER.GONE_WITHIN_MS,
-  };
+};
+const removeAvatar = async (id: string, cookie: string, version?: string) =>
+  app.request(avatarPath(id), {
+    body: stringifyJson({
+      version: version ?? (await currentVersion(id, cookie)),
+    }),
+    headers: {
+      [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
+      cookie,
+      origin: ORIGIN,
+    },
+    method: HTTP.METHOD.DELETE,
+  });
+const imageOf = async (id: string) =>
+  (await prisma.user.findUniqueOrThrow({ where: { id } })).image;
+/** Whether the image server still finds the file. */
+const stored = async (key: string | null) =>
+  (
+    await fetch(
+      pictureLink({ key: key ?? "", width: IMAGE_SERVER.AVATAR_WIDTH })
+    )
+  ).status === HTTP.STATUS.OK;
+const linkSchema = z.object({
+  image: z.string(),
+  imageBlurDataUrl: z.string(),
+});
+/** A deleted file's link is dead once the image cache asked imgproxy again. */
+const UNTIL_CACHE_CHECKED = {
+  timeout: IMAGE_SERVER.GONE_WITHIN_MS,
+};
 
+describe("a User's Avatar", () => {
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { email: { endsWith: PICTURED } } });
   });
@@ -380,6 +360,24 @@ describe("a User's Avatar", () => {
     await expect.poll(() => stored(second), UNTIL_CACHE_CHECKED).toBe(false);
   });
 
+  it("a stale Version answers 409 RESOURCE_CHANGED and keeps the old picture", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await prisma.user.create({
+      data: { email: `stale@${PICTURED}` },
+      select: { id: true },
+    });
+    const opened = await currentVersion(id, cookie);
+    await put(id, cookie, opened);
+    const kept = await imageOf(id);
+    const late = await put(id, cookie, opened);
+    expect(late.status).toBe(HTTP.STATUS.CONFLICT);
+    expect((await problemOf(late)).code).toBe(API.ERROR.CODE.RESOURCE_CHANGED);
+    const lateRemoval = await removeAvatar(id, cookie, opened);
+    expect(lateRemoval.status).toBe(HTTP.STATUS.CONFLICT);
+    expect(await imageOf(id)).toBe(kept);
+    expect(await stored(kept)).toBe(true);
+  });
+
   it("deleting the User deletes their picture", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
     const { id } = await prisma.user.create({
@@ -394,9 +392,7 @@ describe("a User's Avatar", () => {
 
   it("the Session answers a signed link with its blur, never the file's name", async () => {
     const admin = FIXTURE.USER.BACK_OFFICE.ADMIN;
-    const { id } = await prisma.user.findUniqueOrThrow({
-      where: { email: admin.email },
-    });
+    const id = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
     try {
       await put(id, await cookieFor(app, admin));
       const key = await imageOf(id);
@@ -422,11 +418,23 @@ describe("a User's Avatar", () => {
 
 // Users edited here, in their own domain so the list's counts hold.
 const EDITED = "edit-users-api.test";
-const NEW_PASSWORD = "Another-long-password-2";
-const onePath = (id: string) => `${LIST}${USER.PATH.ONE.replace(":id", id)}`;
-const edit = <T>(id: string, body: T & Json<T>, cookie: string) =>
+const onePath = (id: string) => `${LIST}${fillPath(USER.PATH.ONE, { id })}`;
+/** The User's Version now, as an edit form opened now would carry it. */
+const currentVersion = async (id: string, cookie: string) =>
+  userBodySchema.parse(await (await get(onePath(id), cookie)).json()).version;
+/** An edit as the Back Office sends it: on the Version read just before. */
+type EditBody = Omit<z.input<typeof userUpdateRequestSchema>, "version">;
+const edit = async (
+  id: string,
+  body: EditBody,
+  cookie: string,
+  version?: string
+) =>
   app.request(onePath(id), {
-    body: stringifyJson(body),
+    body: stringifyJson({
+      ...body,
+      version: version ?? (await currentVersion(id, cookie)),
+    }),
     headers: {
       [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
       cookie,
@@ -436,17 +444,10 @@ const edit = <T>(id: string, body: T & Json<T>, cookie: string) =>
   });
 /** A User with a password and a Laura Membership, signed in once. */
 const editable = async (name: string) => {
-  const email = `${name}@${EDITED}`;
-  await upsertUser(
-    prisma,
-    { email, memberships: [{ app: App.LAURA, role: Role.USER }], name },
-    await hashPassword(FIXTURE.PASSWORD)
-  );
-  const { id } = await prisma.user.findUniqueOrThrow({
-    select: { id: true },
-    where: { email },
-  });
-  return { email, id };
+  const user = await seedUser(`${name}@${EDITED}`, name, [
+    { app: App.LAURA, role: Role.USER },
+  ]);
+  return { ...user, id: await userIdOf(user) };
 };
 
 describe("editing Users", () => {
@@ -471,25 +472,39 @@ describe("editing Users", () => {
     await cookieFor(app, user);
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
     expect(
-      (await edit(user.id, { password: NEW_PASSWORD }, admin)).status
+      (await edit(user.id, { password: FIXTURE.NEW_PASSWORD }, admin)).status
     ).toBe(HTTP.STATUS.OK);
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
-    expect((await signIn(app, user, { password: NEW_PASSWORD })).status).toBe(
-      HTTP.STATUS.OK
-    );
+    expect(
+      (await signIn(app, user, { password: FIXTURE.NEW_PASSWORD })).status
+    ).toBe(HTTP.STATUS.OK);
   });
 
   it("answers 403 CANNOT_CHANGE_OWN_ROLE for your own Back Office Role", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const self = await prisma.user.findUniqueOrThrow({
-      select: { id: true },
-      where: { email: FIXTURE.USER.BACK_OFFICE.ADMIN.email },
-    });
-    const res = await edit(self.id, { memberships: [] }, cookie);
+    const selfId = await userIdOf(FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const res = await edit(selfId, { memberships: [] }, cookie);
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     const problem = await problemOf(res);
     expect(problem.code).toBe(API.ERROR.CODE.CANNOT_CHANGE_OWN_ROLE);
     expect(problem.detail).toBe("You cannot change your own Role here");
+  });
+
+  it("answers 409 RESOURCE_CHANGED when the User changed since it was read", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await editable("changed-meanwhile");
+    const opened = await currentVersion(id, cookie);
+    // Another Admin's edit lands first.
+    expect((await edit(id, { name: "First" }, cookie)).status).toBe(
+      HTTP.STATUS.OK
+    );
+    const res = await edit(id, { name: "Late" }, cookie, opened);
+    expect(res.status).toBe(HTTP.STATUS.CONFLICT);
+    const problem = await problemOf(res);
+    expect(problem.code).toBe(API.ERROR.CODE.RESOURCE_CHANGED);
+    expect(
+      userBodySchema.parse(await (await get(onePath(id), cookie)).json()).name
+    ).toBe("First");
   });
 
   it("answers 404 for an unknown id", async () => {

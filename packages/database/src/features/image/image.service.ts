@@ -1,24 +1,33 @@
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import type { Image, Prisma } from "../../../generated/prisma/client";
 import { type App, ImageAccess } from "../../../generated/prisma/enums";
 import type { ImageVisibility } from "../auth/access/access";
 import { prisma } from "../prisma/client";
-import { type ImageAlt, readAlt } from "./alt";
+import { type ImageAlt, readAlt } from "./utils/alt";
+import { checkImageVersions, imageVersion } from "./utils/image-version";
 
 /** Where the last page ended: its last Image's sort key, not a row reference. */
 export type ImageCursor = { createdAt: Date; id: string };
 
 /**
  * An Image, its access and every App it is placed in, ordered by App
- * (ADR 0020, ADR 0027).
+ * (ADR 0020, ADR 0027), and its Version.
  */
 export type ImageRecord = Omit<Image, "alt"> & {
   alt: ImageAlt;
   apps: App[];
+  /** Its Version (`imageVersion`): a change must carry it to be written. */
+  version: string;
 };
 /** A new Image: private unless `access` says otherwise. */
-export type NewImage = Omit<ImageRecord, "id" | "createdAt" | "access"> & {
+export type NewImage = Omit<
+  ImageRecord,
+  "id" | "createdAt" | "updatedAt" | "access" | "version"
+> & {
   access?: ImageAccess | undefined;
 };
+/** An Image a change names, and the Version the change was made on. */
+export type OpenedImage = { id: string; version: string };
 export type ImageChange = {
   id: string;
   /** Apps to place it in; one it is already in is left alone. */
@@ -45,18 +54,21 @@ export class ImageNotFoundError extends Error {
 }
 
 /** Every read brings the Image's placements, ordered by App. */
-const withLinks = {
+const withPlacements = {
   apps: { orderBy: { app: "asc" }, select: { app: true } },
 } as const satisfies Prisma.ImageInclude;
 
-type ImageRow = Prisma.ImageGetPayload<{ include: typeof withLinks }>;
+type ImageRow = Prisma.ImageGetPayload<{ include: typeof withPlacements }>;
 
 // `alt` is a Json column; parsing narrows it instead of casting.
-const toRecord = (row: ImageRow): ImageRecord => ({
-  ...row,
-  alt: readAlt(row.alt),
-  apps: row.apps.map(({ app }) => app),
-});
+const toRecord = (row: ImageRow): ImageRecord => {
+  const record = {
+    ...row,
+    alt: readAlt(row.alt),
+    apps: row.apps.map(({ app }) => app),
+  };
+  return { ...record, version: imageVersion(record) };
+};
 
 /** Throws unless every id exists; duplicates in `ids` count once. */
 async function assertAllExist(
@@ -65,7 +77,14 @@ async function assertAllExist(
 ) {
   const unique = [...new Set(ids)];
   const found = await tx.image.findMany({
-    select: { access: true, apps: withLinks.apps, id: true, key: true },
+    select: {
+      access: true,
+      alt: true,
+      apps: withPlacements.apps,
+      id: true,
+      key: true,
+      updatedAt: true,
+    },
     where: { id: { in: unique } },
   });
   const foundIds = new Set(found.map(({ id }) => id));
@@ -88,25 +107,28 @@ const lockImages = async (
   await tx.$queryRaw`SELECT "id" FROM image."Image" WHERE "id" = ANY(${[...ids]}) ORDER BY "id" FOR UPDATE`;
 };
 
-/** A locked Image's access and Apps, and the file its row names now. */
-export type ImageLink = ImageVisibility & { key: string };
+/**
+ * A locked Image's access and Apps, and the file its row names now.
+ * @internal
+ */
+export type ImagePlacement = ImageVisibility & { key: string };
 
 /** Each locked Image's access, Apps and file name, by id. */
-export type ImageLinksById = ReadonlyMap<string, ImageLink>;
+export type ImagePlacementsById = ReadonlyMap<string, ImagePlacement>;
 
 /**
  * The caller's check on a delete, run inside its transaction against the
  * placements just locked: it throws to refuse, and nothing is written. A
  * placement added after the caller's own read is seen, so it is checked too.
  */
-export type AuthoriseLinks = (links: ImageLinksById) => void;
+export type AuthorisePlacements = (placements: ImagePlacementsById) => void;
 
 /**
  * The caller's changes, worked out inside the transaction against the
- * placements just locked, the same way `AuthoriseLinks` checks a delete: it
+ * placements just locked, the same way `AuthorisePlacements` checks a delete: it
  * throws to refuse, and nothing is written.
  */
-export type ResolveChanges = (links: ImageLinksById) => ImageChange[];
+export type ResolveChanges = (placements: ImagePlacementsById) => ImageChange[];
 
 /**
  * Locks the Images, throws unless every one exists, then runs `check` on
@@ -115,7 +137,7 @@ export type ResolveChanges = (links: ImageLinksById) => ImageChange[];
 const lockedAndChecked = async <T>(
   tx: Prisma.TransactionClient,
   ids: readonly string[],
-  check: (links: ImageLinksById) => T
+  check: (placements: ImagePlacementsById) => T
 ) => {
   await lockImages(tx, ids);
   const found = await assertAllExist(tx, ids);
@@ -142,7 +164,7 @@ export async function createImages(images: NewImage[]): Promise<ImageRecord[]> {
           ...(access && { access }),
           apps: { create: apps.map((app) => ({ app })) },
         },
-        include: withLinks,
+        include: withPlacements,
       })
     )
   );
@@ -168,7 +190,7 @@ export async function listImages({
   limit: number;
 }): Promise<ImageRecord[]> {
   const rows = await prisma.image.findMany({
-    include: withLinks,
+    include: withPlacements,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit,
     where: {
@@ -194,13 +216,17 @@ export async function listImages({
 
 export async function getImage(id: string): Promise<ImageRecord | null> {
   const row = await prisma.image.findUnique({
-    include: withLinks,
+    include: withPlacements,
     where: { id },
   });
   return row && toRecord(row);
 }
 
-/** One change, its statements in order: take out, then place or switch. */
+/**
+ * One change, its statements in order: take out, then place or switch. Any
+ * change moves the Image's `updatedAt`, an App-only one too, so every change
+ * is a new Version.
+ */
 const applyChange = async (
   tx: Prisma.TransactionClient,
   { access, alt, id, key, place = [], remove = [] }: ImageChange
@@ -216,9 +242,10 @@ const applyChange = async (
       skipDuplicates: true,
     });
   }
-  if (alt || access || key) {
+  if (alt || access || key || place.length > 0 || remove.length > 0) {
     await tx.image.update({
       data: {
+        updatedAt: new Date(),
         ...(alt && { alt }),
         ...(access && { access }),
         ...(key && { key }),
@@ -230,33 +257,44 @@ const applyChange = async (
 };
 
 /**
- * Writes what `resolve` works out from the placements of `ids`, locked; the
- * Images come back in the order of its changes. All or nothing: an unknown
- * id (before `resolve` runs), or an Image the batch would leave in no App,
- * rolls the whole batch back with `ImageNotFoundError`. One change at a
+ * Writes what `resolve` works out from the placements of the `opened`
+ * Images, locked; the Images come back in the order of its changes. All or
+ * nothing: an unknown id (before `resolve` runs) throws `ImageNotFoundError`;
+ * an Image changed since the Version it was opened on (checked after
+ * `resolve`, before any write), or one the batch would leave in no App,
+ * throws `ResourceChangedError`, and nothing is written. One change at a
  * time (a reduce chain): a batch may name the same Image twice, and its
  * changes apply in order.
  */
 export function updateImages(
-  ids: readonly string[],
+  opened: readonly OpenedImage[],
   resolve: ResolveChanges
 ): Promise<ImageRecord[]> {
+  const ids = opened.map(({ id }) => id);
   return prisma.$transaction(async (tx) => {
-    const { checked: changes } = await lockedAndChecked(tx, ids, resolve);
+    const { checked: changes, found } = await lockedAndChecked(
+      tx,
+      ids,
+      resolve
+    );
+    // After the caller's checks, so a refusal never tells an Image exists
+    // that the caller cannot see.
+    checkImageVersions(opened, found);
     await changes.reduce<Promise<void>>(async (done, change) => {
       await done;
       await applyChange(tx, change);
     }, Promise.resolve());
     // One read once every change is in, back in the order asked.
     const rows = await tx.image.findMany({
-      include: withLinks,
+      include: withPlacements,
       where: { id: { in: [...ids] } },
     });
     // A batch whose changes take an Image out of every App must not leave a
-    // row nobody sees and nobody can delete: throwing rolls it all back.
+    // row nobody sees and nobody can delete: throwing rolls it all back. The
+    // Image exists, another change took it out of its other Apps first.
     const emptied = rows.filter(({ apps }) => apps.length === 0);
     if (emptied.length > 0) {
-      throw new ImageNotFoundError(emptied.map(({ id }) => id));
+      throw new ResourceChangedError(emptied.map(({ id }) => id));
     }
     const byId = new Map(rows.map((row) => [row.id, toRecord(row)]));
     return changes.flatMap(({ id }) => byId.get(id) ?? []);
@@ -271,7 +309,7 @@ export function updateImages(
 export function removeImagesFromApp(
   ids: readonly string[],
   app: App,
-  authorise: AuthoriseLinks
+  authorise: AuthorisePlacements
 ): Promise<string[]> {
   return prisma.$transaction(async (tx) => {
     await lockedAndChecked(tx, ids, authorise);
@@ -290,24 +328,11 @@ export function removeImagesFromApp(
 /** All or nothing, everywhere; returns the deleted keys so the caller removes the files. */
 export function deleteImages(
   ids: string[],
-  authorise: AuthoriseLinks
+  authorise: AuthorisePlacements
 ): Promise<string[]> {
   return prisma.$transaction(async (tx) => {
     const { found } = await lockedAndChecked(tx, ids, authorise);
     await tx.image.deleteMany({ where: { id: { in: ids } } });
     return found.map(({ key }) => key);
-  });
-}
-
-/**
- * Points the Image at a new file name, the old file still in the bucket; the
- * caller copied it first and deletes the old one after. Making a public
- * Image private does this, so its never-expiring links stop at once.
- */
-export async function renameImageKey(id: string, key: string): Promise<void> {
-  await prisma.image.update({
-    data: { key },
-    select: { id: true },
-    where: { id },
   });
 }

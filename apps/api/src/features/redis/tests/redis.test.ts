@@ -1,6 +1,6 @@
 // @module-tag unit
 import { EventEmitter } from "node:events";
-import { captureLog } from "../../logger/tests/capture";
+import { captureLog } from "../../../shared/tests/capture";
 import { REDIS } from "../constants/redis";
 import { watchRedis } from "../redis";
 

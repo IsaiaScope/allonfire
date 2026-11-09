@@ -1,8 +1,6 @@
 // @module-tag integration
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { worker } from "@allonfire/config/tests/browser/msw";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
@@ -10,22 +8,23 @@ import {
   I18N,
   languageSchema,
 } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
-import { aofErrorCaches } from "@allonfire/core/features/next/query/aof-query-errors";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
+import { aofErrorCaches } from "@allonfire/core/features/next/query/utils/aof-query-errors";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
-import { aofNotifyError } from "@allonfire/ui/components/aof-query-provider";
-import { AOFToaster } from "@allonfire/ui/components/aof-toaster";
+import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
+import { aofNotifyError } from "@allonfire/ui/features/query/components/aof-query-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { delay, HttpResponse, http } from "msw";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
-import type { ReactNode } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS_PAGE, USERS_URL } from "@/shared/tests/msw/handlers";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import IT from "../../../i18n/translations/it.json" with { type: "json" };
 import { deleteUsers } from "../../actions/delete-users";
@@ -48,25 +47,25 @@ const HIT_AREA_SLACK_PX = 8;
 const TEXT = "isa";
 const LAURA = APP_ENTRY[App.LAURA].name;
 /** The search as the address holds it: the words, then with a filter or two. */
-const WORDS = USER_SEARCH.serialize({ text: TEXT });
-const IN_LAURA = USER_SEARCH.serialize({ app: [App.LAURA], text: TEXT });
-const ADMIN_IN_LAURA = USER_SEARCH.serialize({
+const WORDS = USER.SEARCH.serialize({ text: TEXT });
+const IN_LAURA = USER.SEARCH.serialize({ app: [App.LAURA], text: TEXT });
+const ADMIN_IN_LAURA = USER.SEARCH.serialize({
   app: [App.LAURA],
   role: [Role.ADMIN],
   text: TEXT,
 });
-/** A list two pages long, and a page past its end. */
+/** The list's answer when nobody matches. */
+const NOBODY = { pageCount: 0, total: 0, users: [] };
+/** A list two pages long, and the address of a page past its end. */
 const TWO_PAGES = { pageCount: 2, total: 30 };
-const PAST_THE_END = 5;
+const PAST_THE_END = `?${USER.PARAM.PAGE}=5`;
 /** How long the next page's answer is held back. */
 const SLOW_MS = 400;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", () => ({
-  Link: ({ children, ...props }: { children: ReactNode; href: string }) => (
-    <a {...props}>{children}</a>
-  ),
+vi.mock("@/features/i18n/navigation", async () => ({
+  Link: (await import("@/shared/tests/link-mock")).LinkMock,
 }));
 
 /** Every query the list sent, as its search params. */
@@ -79,23 +78,30 @@ const listAnswering = (answer: () => Response | Promise<Response>) =>
     })
   );
 
+/** The list answering two pages long, with nobody on the page asked for. */
+const answerPastTheEnd = () =>
+  listAnswering(() => HttpResponse.json({ ...TWO_PAGES, users: [] }));
+
 const language = (messages: typeof EN) =>
   messages === EN ? I18N.DEFAULT_LANGUAGE : languageSchema.enum.it;
 
-// Vite hands ui's next/image over as a module object, not a component; an
-// App's mark (a User's card) only needs an element there.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+// An App's mark (a User's card) only needs an element there.
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
+  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 
-const renderAt = (
+/** The table at an address (`search`), in a language, signed in as `selfId`. */
+const renderAt = ({
+  messages = EN,
+  onUrlUpdate = vi.fn(),
   search = "",
-  onUrlUpdate: (event: UrlUpdateEvent) => void = vi.fn(),
-  messages: typeof EN = EN,
-  selfId = ""
-) =>
+  selfId = "",
+}: {
+  messages?: typeof EN;
+  onUrlUpdate?: (event: UrlUpdateEvent) => void;
+  search?: string;
+  selfId?: string;
+} = {}) =>
   render(
     <QueryClientProvider
       client={
@@ -118,7 +124,7 @@ const renderAt = (
           locale={language(messages)}
           // The App's words over core's shared ones (the toaster's), as the
           // App's request config merges them.
-          messages={{ ...SHARED_TRANSLATIONS[language(messages)], ...messages }}
+          messages={aofMessages(language(messages), messages)}
           timeZone={DATE.TIME_ZONE}
         >
           <UsersTable selfId={selfId} />
@@ -127,6 +133,27 @@ const renderAt = (
       </NuqsTestingAdapter>
     </QueryClientProvider>
   );
+
+type Screen = Awaited<ReturnType<typeof renderAt>>;
+
+/** The first User's copy button in the table, and their email. */
+const copyButtonOfFirst = (screen: Screen) => {
+  const email = USERS_PAGE.users[0]?.email ?? "";
+  return {
+    button: screen
+      .getByRole("table", { name: t.list })
+      .getByRole("button", { name: enT("Users.copy.label", { email }) }),
+    email,
+  };
+};
+
+/** Opens the Filter panel and resets every filter. */
+const resetAllFilters = async (screen: Screen) => {
+  await screen.getByRole("button", { name: t.filter.button }).click();
+  await page
+    .getByRole("button", { exact: true, name: t.filter.resetAll })
+    .click();
+};
 
 /** What the open tooltip says (Base UI's popup carries no role). */
 const tipText = () =>
@@ -175,7 +202,7 @@ describe("UsersTable", () => {
     await expect
       .element(
         table.getByRole("link", {
-          name: t.open.replace("{email}", laura?.email ?? ""),
+          name: enT("Users.open", { email: laura?.email ?? "" }),
         })
       )
       .toHaveAttribute("href", userHref(laura?.id ?? ""));
@@ -203,13 +230,8 @@ describe("UsersTable", () => {
     const writeText = vi
       .spyOn(navigator.clipboard, "writeText")
       .mockResolvedValue();
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const email = laura?.email ?? "";
-    await screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", { name: t.copy.label.replace("{email}", email) })
-      .click();
+    const { button, email } = copyButtonOfFirst(await renderAt());
+    await button.click();
     expect(writeText).toHaveBeenCalledWith(email);
     await expect.poll(tipText).toBe(t.copy.done);
     expect(document.querySelector("[data-sonner-toast]")).toBeNull();
@@ -217,13 +239,7 @@ describe("UsersTable", () => {
 
   it("a second copy keeps the tip open its full time again", async () => {
     vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const button = screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", {
-        name: t.copy.label.replace("{email}", laura?.email ?? ""),
-      });
+    const { button } = copyButtonOfFirst(await renderAt());
     await button.click();
     await expect.poll(tipText).toBe(t.copy.done);
     await new Promise((resolve) => setTimeout(resolve, USERS.COPIED_MS / 2));
@@ -239,13 +255,7 @@ describe("UsersTable", () => {
     vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(
       new Error("denied")
     );
-    const screen = await renderAt();
-    const [laura] = USERS_PAGE.users;
-    const button = screen
-      .getByRole("table", { name: t.list })
-      .getByRole("button", {
-        name: t.copy.label.replace("{email}", laura?.email ?? ""),
-      });
+    const { button } = copyButtonOfFirst(await renderAt());
     await expect.element(button).toBeVisible();
     button.element().focus();
     await userEvent.keyboard("{Enter}");
@@ -291,7 +301,10 @@ describe("UsersTable controls", () => {
   it("searches by email once typing rests, back on the first page", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
     listAnswering(() => HttpResponse.json(USERS_PAGE));
-    const screen = await renderAt(`?${USER.PARAM.PAGE}=2`, onUrlUpdate);
+    const screen = await renderAt({
+      onUrlUpdate,
+      search: `?${USER.PARAM.PAGE}=2`,
+    });
     await screen.getByRole("searchbox", { name: t.search.label }).fill(TEXT);
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH), {
@@ -304,7 +317,7 @@ describe("UsersTable controls", () => {
 
   it("keeps a field still being typed in the box, the words searched", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    const screen = await renderAt("", onUrlUpdate);
+    const screen = await renderAt({ onUrlUpdate });
     const box = screen.getByRole("searchbox", { name: t.search.label });
     // Half a field: no App starts the search yet, and the box keeps it.
     const halfTyped = `${TEXT} app:lau`;
@@ -320,7 +333,7 @@ describe("UsersTable controls", () => {
 
   it("turns a field typed in the box into its filter, which then clears", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    const screen = await renderAt("", onUrlUpdate);
+    const screen = await renderAt({ onUrlUpdate });
     const box = screen.getByRole("searchbox", { name: t.search.label });
     await box.fill(IN_LAURA);
     await expect
@@ -332,10 +345,7 @@ describe("UsersTable controls", () => {
     expect(onUrlUpdate.mock.lastCall?.[0].options.history).toBe(
       USERS.HISTORY.SEARCH.history
     );
-    await screen.getByRole("button", { name: t.filter.button }).click();
-    await page
-      .getByRole("button", { exact: true, name: t.filter.resetAll })
-      .click();
+    await resetAllFilters(screen);
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
@@ -353,7 +363,7 @@ const openList = async (name: string, filter = t.filter.button) => {
 describe("UsersTable filters", () => {
   it("writes any number of Apps and Roles into the search, the lists staying open", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    await renderAt(`?${USER.PARAM.SEARCH}=${TEXT}`, onUrlUpdate);
+    await renderAt({ onUrlUpdate, search: `?${USER.PARAM.SEARCH}=${TEXT}` });
     await openList(t.filter.app);
     await page.getByRole("option", { name: LAURA }).click();
     await expect
@@ -369,7 +379,7 @@ describe("UsersTable filters", () => {
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(
-        USER_SEARCH.serialize({
+        USER.SEARCH.serialize({
           app: [App.LAURA],
           role: [Role.ADMIN, Role.USER],
           text: TEXT,
@@ -383,14 +393,14 @@ describe("UsersTable filters", () => {
   });
 
   it("counts the values chosen on the Filter button, and a list's past two", async () => {
-    const screen = await renderAt(
-      `?${USER.PARAM.SEARCH}=${USER_SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN, Role.USER, Role.VIEWER], text: "" })}`
-    );
+    const screen = await renderAt({
+      search: `?${USER.PARAM.SEARCH}=${USER.SEARCH.serialize({ app: [App.LAURA], role: [Role.ADMIN, Role.USER, Role.VIEWER], text: "" })}`,
+    });
     await screen.getByRole("button", { name: `${t.filter.button} 4` }).click();
     await expect
       .element(
         page.getByRole("button", {
-          name: `${t.filter.role} ${t.filter.selected.replace("{count}", "3")}`,
+          name: `${t.filter.role} ${enT("Users.filter.selected", { count: 3 })}`,
         })
       )
       .toBeVisible();
@@ -401,7 +411,7 @@ describe("UsersTable filters", () => {
 
   it("searches a list by its labels", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    await renderAt("", onUrlUpdate);
+    await renderAt({ onUrlUpdate });
     await openList(t.filter.app);
     await page
       .getByRole("combobox", { name: t.filter.search })
@@ -414,12 +424,15 @@ describe("UsersTable filters", () => {
     await page.getByRole("option", { name: LAURA }).click();
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
-      .toBe(USER_SEARCH.serialize({ app: [App.LAURA], text: "" }));
+      .toBe(USER.SEARCH.serialize({ app: [App.LAURA], text: "" }));
   });
 
   it("a list's Reset clears only that list", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    await renderAt(`?${USER.PARAM.SEARCH}=${ADMIN_IN_LAURA}`, onUrlUpdate);
+    await renderAt({
+      onUrlUpdate,
+      search: `?${USER.PARAM.SEARCH}=${ADMIN_IN_LAURA}`,
+    });
     await openList(t.filter.role, `${t.filter.button} 2`);
     await page.getByRole("option", { name: t.filter.reset }).click();
     await expect
@@ -429,14 +442,11 @@ describe("UsersTable filters", () => {
 
   it("Reset filters clears every list, keeps the words, and goes back to the first page", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    const screen = await renderAt(
-      `?${new URLSearchParams({ [USER.PARAM.PAGE]: "3", [USER.PARAM.SEARCH]: ADMIN_IN_LAURA })}`,
-      onUrlUpdate
-    );
-    await screen.getByRole("button", { name: t.filter.button }).click();
-    await page
-      .getByRole("button", { exact: true, name: t.filter.resetAll })
-      .click();
+    const screen = await renderAt({
+      onUrlUpdate,
+      search: `?${new URLSearchParams({ [USER.PARAM.PAGE]: "3", [USER.PARAM.SEARCH]: ADMIN_IN_LAURA })}`,
+    });
+    await resetAllFilters(screen);
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
@@ -454,7 +464,10 @@ describe("UsersTable filters", () => {
   });
 
   it("the panel speaks the page's language", async () => {
-    await renderAt(`?${USER.PARAM.SEARCH}=${IN_LAURA}`, vi.fn(), IT);
+    await renderAt({
+      messages: IT,
+      search: `?${USER.PARAM.SEARCH}=${IN_LAURA}`,
+    });
     await openList(IT.Users.filter.app, IT.Users.filter.button);
     await expect
       .element(page.getByRole("heading", { name: IT.Users.filter.button }))
@@ -486,7 +499,7 @@ describe("UsersTable paging", () => {
       }
       return HttpResponse.json({ ...USERS_PAGE, ...TWO_PAGES });
     });
-    const screen = await renderAt("", onUrlUpdate);
+    const screen = await renderAt({ onUrlUpdate });
     const [laura] = USERS_PAGE.users;
     const row = screen
       .getByRole("table")
@@ -521,24 +534,22 @@ describe("UsersTable paging", () => {
 describe("UsersTable notices", () => {
   it("nobody matching, clears the search back to the first page", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    listAnswering(() =>
-      HttpResponse.json({ pageCount: 0, total: 0, users: [] })
-    );
-    const screen = await renderAt(
-      `?${USER.PARAM.SEARCH}=nobody&${USER.PARAM.PAGE}=2`,
-      onUrlUpdate
-    );
+    listAnswering(() => HttpResponse.json(NOBODY));
+    const screen = await renderAt({
+      onUrlUpdate,
+      search: `?${USER.PARAM.SEARCH}=nobody&${USER.PARAM.PAGE}=2`,
+    });
     await screen.getByRole("button", { name: t.empty.clear }).click();
     await expect.poll(() => lastQuery(onUrlUpdate).toString()).toBe("");
   });
 
   it("past the last page, goes to the last page", async () => {
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    listAnswering(() => HttpResponse.json({ ...TWO_PAGES, users: [] }));
-    const screen = await renderAt(
-      `?${USER.PARAM.PAGE}=${PAST_THE_END}`,
-      onUrlUpdate
-    );
+    answerPastTheEnd();
+    const screen = await renderAt({
+      onUrlUpdate,
+      search: PAST_THE_END,
+    });
     await screen.getByRole("button", { name: t.pastEnd.last }).click();
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.PAGE))
@@ -548,16 +559,16 @@ describe("UsersTable notices", () => {
 
 describe("UsersTable states", () => {
   it("says when no User matches", async () => {
-    listAnswering(() =>
-      HttpResponse.json({ pageCount: 0, total: 0, users: [] })
-    );
+    listAnswering(() => HttpResponse.json(NOBODY));
     const screen = await renderAt();
     await expect.element(screen.getByText(t.empty.title)).toBeVisible();
   });
 
   it("past the last page, shows the empty state and the way back", async () => {
-    listAnswering(() => HttpResponse.json({ ...TWO_PAGES, users: [] }));
-    const screen = await renderAt(`?${USER.PARAM.PAGE}=${PAST_THE_END}`);
+    answerPastTheEnd();
+    const screen = await renderAt({
+      search: PAST_THE_END,
+    });
     await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
     await expect
       .element(screen.getByRole("button", { name: t.pagination.first }))
@@ -565,10 +576,10 @@ describe("UsersTable states", () => {
   });
 
   it("past the end of a search nobody matches, says nobody matches", async () => {
-    listAnswering(() =>
-      HttpResponse.json({ pageCount: 0, total: 0, users: [] })
-    );
-    const screen = await renderAt(`?${USER.PARAM.PAGE}=${PAST_THE_END}`);
+    listAnswering(() => HttpResponse.json(NOBODY));
+    const screen = await renderAt({
+      search: PAST_THE_END,
+    });
     await expect.element(screen.getByText(t.empty.title)).toBeVisible();
   });
 
@@ -578,11 +589,11 @@ describe("UsersTable states", () => {
       SCREEN.VIEWPORT.PHONE.HEIGHT
     );
     const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    listAnswering(() => HttpResponse.json({ ...TWO_PAGES, users: [] }));
-    const screen = await renderAt(
-      `?${USER.PARAM.PAGE}=${PAST_THE_END}`,
-      onUrlUpdate
-    );
+    answerPastTheEnd();
+    const screen = await renderAt({
+      onUrlUpdate,
+      search: PAST_THE_END,
+    });
     await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
     await screen.getByRole("button", { name: t.pagination.previous }).click();
     await expect
@@ -624,8 +635,8 @@ const del = t.delete;
 /** The copy the plural ICU strings give for one User. */
 const DELETE_ONE = "Delete 1 User?";
 const ONE_DELETED = "1 User deleted";
-const ALREADY_GONE_ONE = "This User had already been deleted";
-const selectLabel = (email: string) => del.select.replace("{email}", email);
+const ALREADY_GONE_ONE = "User already deleted";
+const selectLabel = (email: string) => enT("Users.delete.select", { email });
 
 /** Every deletion the table sent, as the ids it named. */
 const deletions: string[][] = [];
@@ -638,11 +649,22 @@ const deleteAnswering = (
     return Promise.resolve(answer(ids));
   });
 
-const renderAsSelf = (search = "") => renderAt(search, vi.fn(), EN, SELF);
+const renderAsSelf = (search = "") => renderAt({ search, selfId: SELF });
 /** The toolbar's Delete; exact, so the dialog's own Delete never matches. */
 const deleteButton = () =>
   page.getByRole("button", { exact: true, name: del.action });
 const dialog = () => page.getByRole("alertdialog");
+/** Ticks OTHER_EMAIL's row in the table. */
+const tickOther = (screen: Screen) =>
+  screen
+    .getByRole("table")
+    .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
+    .click();
+/** Presses Delete, then confirms in the dialog. */
+const confirmDelete = async () => {
+  await deleteButton().click();
+  await dialog().getByRole("button", { name: del.confirm }).click();
+};
 
 describe("UsersTable selection", () => {
   beforeEach(() => {
@@ -700,10 +722,7 @@ describe("UsersTable selection", () => {
   it("a page change clears the selection", async () => {
     listAnswering(() => HttpResponse.json({ ...USERS_PAGE, ...TWO_PAGES }));
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     await expect.element(deleteButton()).toBeEnabled();
     await screen.getByRole("button", { name: t.pagination.next }).click();
     await expect.element(deleteButton()).toBeDisabled();
@@ -757,17 +776,13 @@ describe("UsersTable deletion", () => {
       .getByRole("table")
       .getByRole("checkbox", { name: del.selectAll })
       .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.poll(() => deletions).toEqual([[NO_APP?.id]]);
   });
 
   it("Delete asks first; Cancel keeps the selection", async () => {
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     await deleteButton().click();
     await expect.element(dialog().getByText(DELETE_ONE)).toBeVisible();
     await expect.element(dialog().getByText(del.description)).toBeVisible();
@@ -784,8 +799,7 @@ describe("UsersTable deletion", () => {
       .getByRole("table")
       .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) });
     await box.click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.poll(() => deletions.length).toBe(1);
     await expect.element(dialog()).not.toBeInTheDocument();
     const row = box.element().closest("tr");
@@ -797,13 +811,9 @@ describe("UsersTable deletion", () => {
   it("confirming deletes, says how many, clears the selection and refetches the list", async () => {
     listAnswering(() => HttpResponse.json(USERS_PAGE));
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     const asked = sent.length;
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.element(page.getByText(ONE_DELETED)).toBeVisible();
     await expect.element(deleteButton()).toBeDisabled();
     await expect.poll(() => sent.length).toBeGreaterThan(asked);
@@ -817,13 +827,9 @@ describe("UsersTable deletion, past the usual path", () => {
     listAnswering(() => HttpResponse.json(USERS_PAGE));
     deleteAnswering(() => 0);
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
+    await tickOther(screen);
     const asked = sent.length;
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await confirmDelete();
     await expect.element(page.getByText(ALREADY_GONE_ONE)).toBeVisible();
     await expect.poll(() => sent.length).toBeGreaterThan(asked);
   });
@@ -831,12 +837,8 @@ describe("UsersTable deletion, past the usual path", () => {
   it("keeps the selection and says so when the delete fails", async () => {
     deleteAnswering(() => null);
     const screen = await renderAsSelf();
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    await tickOther(screen);
+    await confirmDelete();
     await expect.element(page.getByText(del.failed)).toBeVisible();
     await expect.element(dialog()).not.toBeInTheDocument();
     await expect.element(deleteButton()).toBeEnabled();
@@ -866,18 +868,12 @@ describe("UsersTable deletion, past the usual path", () => {
       gone = true;
       return ids.length;
     });
-    const screen = await renderAt(
-      `?${USER.PARAM.PAGE}=${TWO_PAGES.pageCount}`,
-      vi.fn(),
-      EN,
-      SELF
-    );
-    await screen
-      .getByRole("table")
-      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-      .click();
-    await deleteButton().click();
-    await dialog().getByRole("button", { name: del.confirm }).click();
+    const screen = await renderAt({
+      search: `?${USER.PARAM.PAGE}=${TWO_PAGES.pageCount}`,
+      selfId: SELF,
+    });
+    await tickOther(screen);
+    await confirmDelete();
     await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
   });
 });

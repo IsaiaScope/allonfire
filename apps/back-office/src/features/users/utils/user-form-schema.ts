@@ -1,8 +1,5 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
-import {
-  meetsPasswordRules,
-  passwordRules,
-} from "@allonfire/auth/features/users/utils/password-rules";
+import { meetsPasswordRules } from "@allonfire/auth/features/users/utils/password-rules";
 import {
   objectEntries,
   objectFromEntries,
@@ -10,6 +7,7 @@ import {
 } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { z } from "zod";
+import type { PasswordPair } from "@/shared/utils/password-checks";
 import { USERS } from "../constants/users";
 
 /** The field messages both User forms share, translated by the form. */
@@ -23,6 +21,13 @@ export type UserFieldMessages = {
 // values, plus the row's "Not a member".
 export const roleChoiceSchema = z.enum([...objectValues(Role), USERS.NO_ROLE]);
 export type RoleChoice = z.infer<typeof roleChoiceSchema>;
+
+/** Whether the email counts as verified, or the User must verify it. */
+export const verificationChoiceSchema = z.enum([
+  USERS.VERIFICATION.VERIFIED,
+  USERS.VERIFICATION.REQUIRED,
+]);
+export type VerificationChoice = z.infer<typeof verificationChoiceSchema>;
 
 /** One value per App, every App present: `perApp((app) => ...)`. */
 export const perApp = <T>(of: (app: App) => T): Record<App, T> =>
@@ -40,25 +45,11 @@ export const membershipsOf = (roles: Record<App, RoleChoice>) =>
     role === USERS.NO_ROLE ? [] : [{ app, role }]
   );
 
-/** The password and its confirmation, as typed. */
-type PasswordPair = { confirmPassword: string; password: string };
-
-/**
- * The rules the form ticks live: the User module's, and the confirmation
- * typed the same.
- */
-export const passwordChecks = ({
-  confirmPassword,
-  password,
-}: PasswordPair) => ({
-  ...passwordRules(password),
-  match: password !== "" && password === confirmPassword,
-});
-
 /**
  * The fields both User forms hold (ADR 0017), checked against the API's
  * limits: the picture, the name, the password typed twice (`keepable`: both
- * empty keep the one the User has) and a Role choice per App.
+ * empty keep the one the User has), a Role choice per App and whether the
+ * User must verify their email.
  */
 export const userFormFields = (
   messages: UserFieldMessages | undefined,
@@ -82,7 +73,10 @@ export const userFormFields = (
       messages?.passwordWeak
     ),
   roles: rolesSchema,
+  verification: verificationChoiceSchema,
 });
+
+/** The password and its confirmation, as typed. */
 
 /** The confirmation typed as the password. */
 export const samePasswords = ({ confirmPassword, password }: PasswordPair) =>

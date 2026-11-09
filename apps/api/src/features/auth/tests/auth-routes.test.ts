@@ -2,6 +2,7 @@
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
@@ -15,7 +16,8 @@ describe("/v1/auth/*", () => {
         Promise.resolve(
           new Response("{}", {
             headers: {
-              "set-cookie": "better-auth.session_token=abc; Path=/; HttpOnly",
+              [HTTP.HEADER.SET_COOKIE]:
+                `${AUTH.COOKIE.SESSION_TOKEN}=abc; Path=/; HttpOnly`,
             },
           })
         ),
@@ -23,9 +25,9 @@ describe("/v1/auth/*", () => {
     const res = await createApp(appDeps({ auth })).request(GET_SESSION_ROUTE, {
       headers: { origin: LOCAL.URL.LAURA },
     });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(res.headers.getSetCookie()).toEqual([
-      "better-auth.session_token=abc; Path=/; HttpOnly",
+      `${AUTH.COOKIE.SESSION_TOKEN}=abc; Path=/; HttpOnly`,
     ]);
     expect(res.headers.get("access-control-allow-credentials")).toBe("true");
   });

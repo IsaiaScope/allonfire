@@ -1,4 +1,5 @@
 // @module-tag unit
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { IMAGE_SERVER } from "../../image-server/constants/image-server";
 import { privateLinkExpiry } from "../../image-server/sign";
 import { avatarKey, avatarKeyOf, avatarLink } from "../utils/avatar-key";
@@ -38,7 +39,9 @@ describe("avatarLink", () => {
     const key = avatarKey("u1");
     const link = avatarLink(key, NOW) ?? "";
     expect(link).toContain(`/rs:fit:${IMAGE_SERVER.AVATAR_WIDTH}:0/`);
-    expect(link).toContain(`/exp:${privateLinkExpiry(NOW).getTime() / 1000}/`);
+    expect(link).toContain(
+      `/exp:${privateLinkExpiry(NOW).getTime() / UNIT.MS_PER_SECOND}/`
+    );
     expect(link).toContain(key);
   });
 

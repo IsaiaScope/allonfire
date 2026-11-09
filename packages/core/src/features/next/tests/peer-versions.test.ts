@@ -1,10 +1,12 @@
 // @module-tag unit
 
 import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+import { REPO } from "@allonfire/config/local/repo";
 import { z } from "zod";
 import { parseJsonWith } from "../../../shared/utils/json";
 import { objectKeys } from "../../../shared/utils/object";
-import { APPS, REPO, scaffoldedApps } from "./scaffolded-apps";
+import { APPS, scaffoldedApps } from "./scaffolded-apps";
 
 // core is a symlinked workspace package: src/features/next/* resolves React
 // Query, next-intl, next-themes and nuqs from core's own devDependencies, not
@@ -22,7 +24,7 @@ const manifest = (dir: URL) =>
     manifestSchema
   );
 
-const core = manifest(new URL("packages/core/", REPO));
+const core = manifest(pathToFileURL(`${REPO.PACKAGES}/core/`));
 
 const scaffolded = scaffoldedApps();
 

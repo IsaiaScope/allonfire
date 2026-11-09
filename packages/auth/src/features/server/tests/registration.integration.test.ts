@@ -3,10 +3,10 @@
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { prisma } from "@allonfire/database";
 import { App, Role } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import type { AppSettingsTable } from "@allonfire/database/features/auth/access/constants/app-settings";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
 import { cookieOf, HOST_AUTH_PATH } from "../../../shared/tests/stub-auth";
@@ -39,9 +39,10 @@ vi.mock(
 const BASE_URL = LOCAL.URL.API;
 const BASE_PATH = HOST_AUTH_PATH;
 const ORIGIN = LOCAL.URL.LAURA;
-const PASSWORD = "registration-password-1";
+/** Meets every password rule, as the API requires of a new one. */
+const PASSWORD = "Registration-password-1!";
 const EMAIL_DOMAIN = "@registration.allonfire.test";
-const TOKEN_COOKIE = `${AUTH.COOKIE.MARKER}session_token=`;
+const TOKEN_COOKIE = `${AUTH.COOKIE.SESSION_TOKEN}=`;
 const DATA_COOKIE = `${AUTH.COOKIE.SESSION_DATA}=`;
 
 /** Both Apps open, so registering and joining can be watched. */
@@ -91,7 +92,7 @@ const post = (
         origin: ORIGIN,
         ...headers,
       },
-      method: "POST",
+      method: HTTP.METHOD.POST,
     })
   );
 };
@@ -141,7 +142,7 @@ describe("Registration", () => {
   it("creates the User with one Membership: the App, at its Registration Role", async () => {
     const email = nextEmail();
     const res = await signUp(open, email, App.LAURA);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await membershipsOf(email)).toEqual([
       { app: App.LAURA, role: Role.VIEWER },
     ]);
@@ -160,7 +161,7 @@ describe("Registration", () => {
       },
       { [AUTH.HEADER.APP]: App.LAURA }
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     const { image } = await prisma.user.findUniqueOrThrow({ where: { email } });
     expect(image).toBeNull();
   });
@@ -176,7 +177,7 @@ describe("Registration", () => {
     expect(liveSessionCookies(res)).toEqual([]);
     expect(await prisma.user.count({ where: { email } })).toBe(0);
     // The email is free again: the retry registers.
-    expect((await signUp(open, email, App.LAURA)).status).toBe(200);
+    expect((await signUp(open, email, App.LAURA)).status).toBe(HTTP.STATUS.OK);
   });
 
   it.each([
@@ -187,7 +188,7 @@ describe("Registration", () => {
   ])("refuses %s with 403 and writes nothing", async (_, app) => {
     const email = nextEmail();
     const res = await signUp(closed, email, app);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(errorBody.parse(await res.json()).code).toBe(
       AUTH.ERROR_CODE.REGISTRATION_CLOSED
     );
@@ -198,7 +199,7 @@ describe("Registration", () => {
     const email = nextEmail();
     await signUp(open, email, App.LAURA);
     const res = await signUp(closed, email, App.LAURA);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(errorBody.parse(await res.json()).code).toBe(
       AUTH.ERROR_CODE.REGISTRATION_CLOSED
     );
@@ -215,7 +216,7 @@ describe("joining another App", () => {
       {},
       { cookie, [AUTH.HEADER.APP]: App.BACK_OFFICE }
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await membershipsOf(email)).toEqual([
       { app: App.LAURA, role: Role.VIEWER },
       { app: App.BACK_OFFICE, role: Role.USER },
@@ -235,7 +236,7 @@ describe("joining another App", () => {
       {},
       { cookie, [AUTH.HEADER.APP]: App.LAURA }
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await membershipsOf(email)).toEqual([
       { app: App.LAURA, role: Role.ADMIN },
     ]);
@@ -250,7 +251,7 @@ describe("joining another App", () => {
       {},
       { cookie, [AUTH.HEADER.APP]: App.BACK_OFFICE }
     );
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await membershipsOf(email)).toHaveLength(1);
   });
 
@@ -261,7 +262,7 @@ describe("joining another App", () => {
       {},
       { [AUTH.HEADER.APP]: App.LAURA }
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(HTTP.STATUS.UNAUTHORIZED);
   });
 });
 
@@ -271,7 +272,7 @@ describe("sign-in naming an App", () => {
     await signUp(open, email, App.LAURA);
     await prisma.session.deleteMany({ where: { user: { email } } });
     const res = await signIn(closed, email, App.BACK_OFFICE);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(errorBody.parse(await res.json()).code).toBe(
       AUTH.ERROR_CODE.APP_FORBIDDEN
     );
@@ -284,21 +285,25 @@ describe("sign-in naming an App", () => {
     await signUp(open, email, App.LAURA);
     const written = vi.spyOn(prisma.session, "create");
     const res = await signIn(closed, email, App.BACK_OFFICE);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(written).not.toHaveBeenCalled();
   });
 
   it("refuses an unknown App with 403", async () => {
     const email = nextEmail();
     await signUp(open, email, App.LAURA);
-    expect((await signIn(closed, email, "back-office")).status).toBe(403);
+    expect((await signIn(closed, email, "back-office")).status).toBe(
+      HTTP.STATUS.FORBIDDEN
+    );
   });
 
   it("lets in a User the App admits, and anyone when no App is named", async () => {
     const email = nextEmail();
     await signUp(open, email, App.LAURA);
-    expect((await signIn(closed, email, App.LAURA)).status).toBe(200);
-    expect((await signIn(closed, email)).status).toBe(200);
+    expect((await signIn(closed, email, App.LAURA)).status).toBe(
+      HTTP.STATUS.OK
+    );
+    expect((await signIn(closed, email)).status).toBe(HTTP.STATUS.OK);
   });
 
   it("hands the Session out with the User's Memberships", async () => {

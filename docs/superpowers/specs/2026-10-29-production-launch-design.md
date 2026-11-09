@@ -93,7 +93,7 @@ and B. When it ends:
      - the endpoint `http://telemetry:5080/api/default`.
 5. **The new hostnames**, each added before the old one goes: `storage.`
    (was `minio.`), `board.` (was `multica.`) and `workflow.` (was `n8n.`).
-   - Each is an A record on `188.245.174.30`, DNS only for now, with the
+   - Each is an A record on `<vps-ip>`, DNS only for now, with the
      same comment as the old one.
    - Every config points at the new name:
      - the `allonfire-storage` Traefik rule;
@@ -129,7 +129,7 @@ and B. When it ends:
    - `allonfire-minio-data`, only after `storage-move` is verified.
 9. **Cloudflare's proxy, all of it together**, after the renames, since half
    done is worse than DNS only:
-   1. **Proxied** on every record that points at `188.245.174.30`, at once.
+   1. **Proxied** on every record that points at `<vps-ip>`, at once.
       `observe.` is included.
    2. **SSL/TLS mode "Full (strict)".**
    3. **Hetzner firewall** (`hcloud`): ports 80 and 443 only from
@@ -190,7 +190,7 @@ and B. When it ends:
 
 - **An address production still uses, deleted before its replacement
   serves.**
-- **A half-proxied IP:** one DNS-only record left on `188.245.174.30` gives
+- **A half-proxied IP:** one DNS-only record left on `<vps-ip>` gives
   the origin away for all of them.
 - **A secret value typed by the agent:** every value comes from the owner.
 

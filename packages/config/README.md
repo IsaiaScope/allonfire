@@ -15,41 +15,49 @@ config/
     node.json              Node code (extends base + Node types, ES2022 lib, no emit)
     nextjs.json            Next.js app config (extends base + DOM lib, JSX, plugin, Node types)
   local/
-    addresses.ts           LOCAL (PORT, URL, DATABASE, STORAGE), TEST_API_URL: every Local and test address, once
-    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it
+    addresses.ts           LOCAL (PORT, URL with URL.TEST_API, DATABASE, STORAGE): every Local and test address, once
+    repo.ts                REPO (ROOT, APPS, PACKAGES): the repository's folders, for a script or test that reads outside its package
+    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it; package-exports.test.ts checks each export key of auth, storage, database and config has a reader outside its package
+  stages/
+    stages.ts              STAGE: each Stage's tools (static, test, e2e, build), each a root script with why it runs; CHECK, what `pnpm check` and the hook run
+    run.ts                 runStage(stage, options): runs the tools in order, fail-fast unless keepGoing, appends a Markdown summary when asked
+    summary.ts             stageSummary, testCount, turboCache: the job summary's table and counts
+    scripts/stage.ts       `pnpm <stage>` / `pnpm check` [--affected] [--keep-going]; CI's GITHUB_STEP_SUMMARY gets the summary
   tests/                   One folder per test layer
     vitest/
-      vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags
+      vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags; VITEST.BROWSER_FILES, the files only the browser config collects
       vitest.setup.ts      Fails a test file with no `// @module-tag`
     browser/
-      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit
+      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit: the Back Office's and ui's
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
+      asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/
       playwright.config.ts End-to-end: `aofPlaywrightConfig` builds and starts the App plus the API (`./e2e`) on the run's Test database and bucket, and runs each spec in Chromium and WebKit, desktop and phone
       global-teardown.ts   Drops them
-      run.ts               E2E_LABEL, the e2e run's label beside its stamp
+      run.ts               E2E: LABEL, the e2e run's label beside its stamp; CLI, the scripts making and dropping its Test database and bucket; TAG, the tags its tests take
     run/
       test-run.ts          `testRunStamp()` names a run's Test database and bucket; `isStaleTestRun(name, now)` finds an ended run's, its process gone or a day old; `isTestRunOf(name, label)` finds a label's; `dropWhenRunEnds(drop)` is a global setup's teardown, run on SIGHUP too; `runsIntegration(tagsFilter)` says whether a run needs them
 ```
 
 ## 🔧 Usage
 
-Each app or package extends the appropriate preset:
+Each app or package extends the appropriate preset by its relative path (the
+presets have no export key):
 
 ```json
-// Next.js apps (apps/laura)
+// Next.js apps (apps/back-office)
 {
-  "extends": "@allonfire/config/typescript/nextjs.json"
+  "extends": "../../packages/config/typescript/nextjs.json"
 }
 
-// Node packages and apps (packages/database, apps/api)
+// Node packages and apps (packages/core, apps/api)
 {
-  "extends": "@allonfire/config/typescript/node.json"
+  "extends": "../../packages/config/typescript/node.json"
 }
 
 // Custom (extend base directly)
 {
-  "extends": "@allonfire/config/typescript/base.json"
+  "extends": "../../packages/config/typescript/base.json"
 }
 ```
 
@@ -64,7 +72,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(vitestConfig, defineConfig({ test: { setupFiles: ["./vitest.setup.ts"] } }));
 
-// vitest.browser.config.ts (an App): `*.browser.test.tsx` in headless Chromium and WebKit
+// vitest.browser.config.ts (an App, or ui): `*.browser.test.tsx` in headless Chromium and WebKit
 import { vitestBrowserConfig } from "@allonfire/config/tests/browser";
 
 export default mergeConfig(vitestBrowserConfig, defineConfig({ test: { setupFiles: ["./vitest.browser.setup.ts"] } }));
@@ -93,13 +101,15 @@ them as projects):
 
 | Script | Runs |
 |---|---|
-| `pnpm test` | each package through turbo, cached |
+| `pnpm test` | the `test` Stage: the Test services up, every package's tests through turbo (cached), then the changelog against Prisma |
+| `pnpm test:run` | every package's tests through turbo, cached, without the rest of the Stage |
 | `pnpm test:unit` | tests tagged `unit`: no Docker needed |
 | `pnpm test:integration` | tests tagged `integration` |
 | `pnpm test:coverage` | everything, one merged report in `coverage/` |
 | `pnpm test:ui` | the Vitest UI with coverage on :51204. It runs nothing at start (`--standalone`), only what a save touches; press Run all in the UI for the full suite |
 | `pnpm dev` | runs `test` through turbo (unchanged packages come from cache, a change re-runs that package) next to the apps and the UI |
-| `pnpm test:e2e` | Playwright, through turbo, cached: an App re-runs only when it or a package it reads changed |
+| `pnpm e2e` | the `e2e` Stage: the Test services up, the browser tests, then end-to-end |
+| `pnpm e2e:run` | Playwright, through turbo, cached: an App re-runs only when it or a package it reads changed |
 
 End-to-end tests run each spec once per project, on one build and one Test
 database:
@@ -116,18 +126,18 @@ differences, not what only a real iPhone does (the collapsing toolbar, the
 keyboard, safe areas). Browser tests run each component in Chromium and
 WebKit.
 
-Every run is headless. To watch one, from the root (every App that has the
-script, one after another, never through turbo: nothing to cache) or for one
-App with `pnpm --filter @allonfire/<app>`:
+Every run is headless. To watch one, from the root (every App or package that
+has the script, one after another, never through turbo: nothing to cache) or
+for one with `pnpm --filter @allonfire/<name>`:
 
 | Script | Shows |
 |---|---|
-| `pnpm test:e2e:headed` | each project's browser window while its specs run |
-| `pnpm test:e2e:ui` | Playwright's UI: pick a spec and project, step through its actions |
-| `pnpm test:browser:headed` | the browser tests' Chromium and WebKit windows |
+| `pnpm e2e:headed` | each project's browser window while its specs run |
+| `pnpm e2e:ui` | Playwright's UI: pick a spec and project, step through its actions |
+| `pnpm e2e:browser:headed` | the browser tests' Chromium and WebKit windows |
 
 Narrow a run with Playwright's own flags after the script name:
-`pnpm test:e2e:headed --project=mobile-safari -g "signs in"`.
+`pnpm e2e:headed --project=mobile-safari -g "signs in"`.
 
 The package must list `@allonfire/config` as a dev dependency. Turbo's cache
 key follows declared dependencies, so a change here re-runs its tests and type
@@ -139,7 +149,7 @@ checks.
 where TypeScript is run from. `node.json` and `nextjs.json` list `"types": ["node"]`
 explicitly: `process`, `Buffer` and `node:*` resolve the same in the editor, in
 `tsc` and in CI. `@types/node` is installed once, at the repo root. Every
-package has a `check-types` script, so `pnpm check-types` covers all of them.
+package has a `check-types` script, so `pnpm static:types` covers all of them.
 
 ## Strictness
 

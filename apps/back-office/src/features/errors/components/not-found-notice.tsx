@@ -1,6 +1,6 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { aofButtonVariants } from "@allonfire/ui/components/aof-button";
-import { cn } from "@allonfire/ui/lib/utils";
+import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconArrowBackUp } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
@@ -10,6 +10,7 @@ import {
   StationNotice,
   type StationNoticeProps,
 } from "@/shared/components/station-notice";
+import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 
 /**
  * What every 404 shows: a station the line does not have. Its eki stamp
@@ -28,7 +29,7 @@ export const NotFoundNotice = ({ page }: Pick<StationNoticeProps, "page">) => {
           className={cn(aofButtonVariants({ size: "field" }), kanjiAction())}
           href={METADATA.PATH.ROOT}
         >
-          <ActionKanji kanji={ERROR_SIGNAGE.NOT_FOUND.BACK_KANJI} />
+          <ActionKanji kanji={ACTION_KANJI.BACK} />
           <IconArrowBackUp aria-hidden />
           {t("back")}
         </Link>

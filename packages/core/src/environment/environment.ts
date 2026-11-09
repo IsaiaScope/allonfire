@@ -1,4 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
+import { z } from "zod";
 import { ENV, nodeEnvSchema } from "../shared/constants/env";
 
 /**
@@ -16,5 +17,13 @@ export const runtimeEnvSchema = {
 
 export const env = createEnv({
   runtimeEnv: process.env,
-  server: runtimeEnvSchema,
+  server: {
+    ...runtimeEnvSchema,
+    /**
+     * Set only by config's e2e stack for the App build it tests: exposes
+     * Next's testing API (`instant()`) in that production build. Never set
+     * for the image that serves traffic.
+     */
+    CONFIG_E2E_TESTING_API: z.stringbool().default(false),
+  },
 });

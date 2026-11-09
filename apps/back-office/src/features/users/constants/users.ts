@@ -5,6 +5,9 @@ import type { StationSignage } from "@/shared/components/station-notice";
 /** How long the Avatar links a list holds stay valid, at least. */
 const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
 
+/** The picture field's name in both User forms. */
+const AVATAR_FIELD = "avatar";
+
 /** The Back Office's Users list: its tunables, each written once. */
 export const USERS = {
   /** Why the Add a User action refused, each with its message over the form. */
@@ -26,11 +29,11 @@ export const USERS = {
    * The picture field's name in both User forms; its removal posts under
    * `avatarRemoval(AVATAR_FIELD)` (ui's `avatar-change`).
    */
-  AVATAR_FIELD: "avatar",
+  AVATAR_FIELD,
   /**
-   * The list's rows, kept on this server per Session and address
-   * (`readUsers`) until a change to Users calls `updateTag(TAG)`, which drops
-   * every kept list and this browser's copy. The rows hold Avatar links
+   * The list's rows (`usersHydration`) and one User (`readUser`), kept in
+   * the visitor's browser per address (ADR 0028) until a change to Users
+   * calls `updateTag(TAG)`, which drops this browser's copies. The rows hold Avatar links
    * signed for an hour, and a cache never outlives them: gone after an hour
    * (`expire`), read again in the background after half of it (`revalidate`),
    * and another Admin's browser reuses its copy for 5 minutes (`stale`,
@@ -44,8 +47,6 @@ export const USERS = {
     },
     TAG: "users",
   },
-  /** Brushed in the Cancel button: 戻, to go back (the brush face carries it). */
-  CANCEL_KANJI: "戻",
   /** Brushed faint behind a User's card: 乗, a passenger (the brush face
    *  carries it). */
   CARD_KANJI: "乗",
@@ -61,6 +62,8 @@ export const USERS = {
   DELETE_KANJI: "消",
   /** Why the Edit a User action refused, each with its message over the form. */
   EDIT_ERROR: {
+    /** Someone changed the User since the form was opened (the API's 409). */
+    CHANGED: "changed",
     FAILED: "failed",
     GONE: "gone",
     INVALID: "invalid",
@@ -73,6 +76,17 @@ export const USERS = {
    * or all but their picture. The form toasts either and opens the list.
    */
   EDIT_NOTICE: { AVATAR_FAILED: "avatarFailed", SAVED: "saved" },
+  /**
+   * Where each part both User forms share (`user-form-parts`) finds its
+   * fields: the part's names mapped to the form's, the same in both forms.
+   */
+  FORM_FIELDS: {
+    AVATAR: { avatar: AVATAR_FIELD },
+    NAME: { name: "name" },
+    PASSWORD: { confirmPassword: "confirmPassword", password: "password" },
+    ROLES: { roles: "roles" },
+    VERIFICATION: { verification: "verification" },
+  },
   /**
    * How the address changes: a search replaces the history entry (Back should
    * not walk through each keystroke); a page or page size pushes one.
@@ -107,6 +121,11 @@ export const USERS = {
   } satisfies Record<string, StationSignage>,
   /** How long typing rests before the address changes. */
   TYPING_REST_MS: 300,
+  /**
+   * The verification row's choices: the email counts as verified (an Admin
+   * vouches), or the User verifies it at their next sign-in.
+   */
+  VERIFICATION: { REQUIRED: "required", VERIFIED: "verified" },
   /** Brushed in the crop dialog's Zoom in: 拡, to enlarge (the brush face
    *  carries it). */
   ZOOM_IN_KANJI: "拡",

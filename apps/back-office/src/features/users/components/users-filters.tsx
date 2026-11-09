@@ -1,12 +1,12 @@
 "use client";
 
-import type { USER_SEARCH } from "@allonfire/auth/features/users/constants/users";
+import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { AOFFaceted } from "@allonfire/ui/components/aof-faceted";
-import { AOFFilterPanel } from "@allonfire/ui/components/aof-filter-panel";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
+import { AOFFilterPanel } from "@allonfire/ui/features/data-table/components/aof-filter-panel";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
   IconFilter2Search,
   IconRefresh,
@@ -15,10 +15,13 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import {
+  pictogramTile,
+  tiledControl,
+} from "@/shared/components/toolbar-action";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
 import { FilterKanji } from "./filter-kanji";
-import { pictogramTile, tiledControl } from "./toolbar-action";
 
 /** The App list's options, in the order the enum declares them. */
 const APPS = objectValues(App).map((app) => ({
@@ -26,7 +29,7 @@ const APPS = objectValues(App).map((app) => ({
   value: app,
 }));
 
-export type UserSearch = ReturnType<typeof USER_SEARCH.parse>;
+export type UserSearch = ReturnType<typeof USER.SEARCH.parse>;
 
 /**
  * The Users list's Filter button, opening on the toolbar's pictogram tile,
@@ -62,6 +65,7 @@ export const UsersFilters = ({
     value: role,
   }));
   const list = {
+    add: t("Users.filter.add"),
     clear: t("Users.search.clear"),
     empty: t("Users.filter.empty"),
     reset: t("Users.filter.reset"),
@@ -81,10 +85,9 @@ export const UsersFilters = ({
     <AOFFilterPanel
       action={
         <AOFButton
-          // The line's deep green: white on it reads 5.2:1 (theme.test.ts).
           className={cn(
-            kanjiAction(),
-            "h-8 min-w-0 gap-1.5 bg-(--line-green-deep) pr-8 pl-3 text-(--line-green-deep-foreground) text-sm hover:bg-(--line-green-deep)/90"
+            kanjiAction({ tone: "green" }),
+            "h-8 min-w-0 gap-1.5 pr-8 pl-3 text-sm"
           )}
           disabled={count === 0}
           onClick={reset}

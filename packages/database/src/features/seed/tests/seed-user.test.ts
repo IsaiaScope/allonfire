@@ -1,6 +1,6 @@
 // @module-tag unit
 import { App, Role } from "../../../../generated/prisma/enums";
-import { adminSeedUser } from "../seed-user";
+import { adminSeedUser } from "../utils/seed-user";
 
 describe("adminSeedUser", () => {
   it("is an Admin of every App there is", () => {

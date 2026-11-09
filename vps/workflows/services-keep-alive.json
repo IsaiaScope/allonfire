@@ -1,0 +1,155 @@
+{
+  "id": "AofKeepAlive2611",
+  "name": "Main VPS AllOnFire API Services Keep-alive",
+  "description": null,
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 🔄 Services Keep-alive\n\nDaily at 03:00 Europe/Rome: `POST /v1/services/keep-alive` on the API.\nEach MAIL provider idle for 30 days sends the owner one check email, through\nitself only, so no provider deactivates an idle key (90 idle days).\n\n**Auth**: header `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>`, the\ncredential *Keep-alive Token* (Header Auth). Wrong or missing → 401.\n\n**Alerts**: Telegram when any provider answers `rejected` or `uncertain`\n(a dead key, a refused send). A failed call (401, 5xx, timeout) fails the\nHTTP node, and Settings → Error Workflow → *Error Handler (global)* reports it.\n\n**URL**: `<keep-alive-url>` is filled on import from `BACKUP_KEEP_ALIVE_URL`\nin /opt/backups/.env.\n\nRunbook: `docs/guides/vps-workflow.md`",
+        "height": 440,
+        "width": 620,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-96, -640],
+      "id": "5786bf35-30d6-408a-9d0e-f19d815f6d74",
+      "name": "Flow Documentation"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 3 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-96, -32],
+      "id": "a184e831-d804-4ec5-b0e6-c10da492d21b",
+      "name": "Daily 03:00"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "<keep-alive-url>",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [112, -32],
+      "id": "ec1aad3b-96ad-4260-9796-750415c93fdd",
+      "name": "Keep-alive",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "<credential-id>",
+          "name": "Keep-alive Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ ($json.services ?? []).some(s => (s.providers ?? []).some(p => p.result === 'rejected' || p.result === 'uncertain')) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [320, -32],
+      "id": "282bd808-a750-4bee-a9c9-d00b2a19b724",
+      "name": "Any provider failing?"
+    },
+    {
+      "parameters": {
+        "chatId": "<telegram-chat-id>",
+        "text": "=🚨 <b>Keep-alive failed</b>\n📅 <code>{{ $now.toFormat('dd/MM HH:mm') }}</code>\n\n📊 {{ ($json.services ?? []).flatMap(s => s.providers ?? []).filter(p => !(p.result === 'rejected' || p.result === 'uncertain')).length + '/' + ($json.services ?? []).flatMap(s => s.providers ?? []).length + ' ok' }}\n\n❌ <b>Failing</b>\n<blockquote>{{ ($json.services ?? []).flatMap(s => (s.providers ?? []).filter(p => p.result === 'rejected' || p.result === 'uncertain').map(p => s.type + ' · ' + String(p.name).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + ' (slot ' + p.slot + ') → ' + p.result)).join('\\n') || '—' }}</blockquote>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [544, -112],
+      "id": "c5fd188f-ec5c-4771-8541-ccccb70ff260",
+      "name": "Telegram · Provider failing",
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<credential-id>",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily 03:00": {
+      "main": [
+        [
+          {
+            "node": "Keep-alive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep-alive": {
+      "main": [
+        [
+          {
+            "node": "Any provider failing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any provider failing?": {
+      "main": [
+        [
+          {
+            "node": "Telegram · Provider failing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Rome",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "KX1CQrEVzEvV747w"
+  }
+}

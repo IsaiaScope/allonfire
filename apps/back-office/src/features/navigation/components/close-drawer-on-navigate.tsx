@@ -1,6 +1,6 @@
 "use client";
 
-import { useAOFSidebar } from "@allonfire/ui/components/aof-sidebar";
+import { useAOFSidebar } from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { useEffect } from "react";
 import { usePathname } from "@/features/i18n/navigation";
 

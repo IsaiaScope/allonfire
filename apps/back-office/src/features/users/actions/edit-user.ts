@@ -2,8 +2,14 @@
 
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
+import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { updateTag } from "next/cache";
+import {
+  type ApiRefusalKey,
+  refusalOf,
+  textOf,
+} from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
 import {
@@ -14,11 +20,10 @@ import {
 } from "../utils/edit-user-schema";
 import {
   pictureOf,
-  refusalOf,
   rolesOf,
   sendAvatarChange,
-  textOf,
   userAvatarChangeOf,
+  verificationOf,
 } from "../utils/user-form-data";
 import { membershipsOf } from "../utils/user-form-schema";
 
@@ -38,17 +43,30 @@ const valuesOf = (form: FormData): EditUserFields => ({
   name: textOf(form, "name"),
   password: textOf(form, "password"),
   roles: rolesOf(form),
+  verification: verificationOf(form),
 });
 
 /**
  * Saves a User through the API as the visitor (an Admin, checked there):
- * their name, their Roles, a new password when one was typed, then their
- * picture. It never redirects: the form toasts what it answers and opens the
- * list. A refusal hands back why and what was typed. The checks here are the
- * ones that count.
+ * their name, their Roles, a new password when one was typed, whether their
+ * email counts as verified when the Admin changed it, on the
+ * `version` the form was opened with, then their picture on the Version that
+ * save answered: when the User changed since either, the API refuses
+ * (`CHANGED`) and nothing more is written. It never redirects: the form
+ * toasts what it answers and opens the list. A refusal hands back why and
+ * what was typed. The checks here are the ones that count.
  */
 export const editUser = async (
-  id: string,
+  {
+    id,
+    version,
+    wasVerified,
+  }: {
+    id: string;
+    version: string;
+    /** Whether the form opened on a verified email: only a change is sent. */
+    wasVerified: boolean;
+  },
   _state: EditUserState,
   form: FormData
 ): Promise<EditUserState> => {
@@ -61,13 +79,17 @@ export const editUser = async (
   if (!parsed.success) {
     return { error: USERS.EDIT_ERROR.INVALID, values };
   }
-  const { name, password, roles } = parsed.data;
+  const { name, password, roles, verification } = parsed.data;
+  const verified = verification === USERS.VERIFICATION.VERIFIED;
   const client = await serverApi();
   const res = await client[API.VERSION.CURRENT].users[":id"].$patch({
     json: {
       memberships: membershipsOf(roles),
       name,
       ...(password && { password }),
+      // Only a change: requiring it again would void the links already sent.
+      ...(verified !== wasVerified && { emailVerified: verified }),
+      version,
     },
     param: { id },
   });
@@ -75,20 +97,32 @@ export const editUser = async (
     const error = await refusalOf(
       res,
       USERS.EDIT_ERROR,
-      new Map<number | string, EditUserError>([
+      new Map<ApiRefusalKey, EditUserError>([
         [HTTP.STATUS.NOT_FOUND, USERS.EDIT_ERROR.GONE],
         [USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE, USERS.EDIT_ERROR.OWN_ROLE],
+        [ERROR.CODE.RESOURCE_CHANGED, USERS.EDIT_ERROR.CHANGED],
       ])
     );
+    // No `updateTag` on a refusal, `CHANGED` included: it would redraw this
+    // form on the newer version under what was typed, and a second Save
+    // would overwrite the change the Admin never saw. They reload instead.
     return { error, values };
   }
-  const sent = await sendAvatarChange(client, id, avatar);
-  // The kept list holds the old values.
+  const sent = await sendAvatarChange(client, {
+    change: avatar,
+    id,
+    version: (await res.json()).version,
+  });
+  // The kept list and this User's kept page hold the old values.
   updateTag(USERS.CACHE.TAG);
   // Deleted by another Admin between the save and their picture.
   if (sent?.status === HTTP.STATUS.NOT_FOUND) {
     return { error: USERS.EDIT_ERROR.GONE, values };
   }
+  // Saved, their picture not; a 409 included (changed by someone else
+  // between the save and the picture): the page re-reads them, so a form kept
+  // on screen would bind the newer Version under what was typed. The list
+  // follows instead.
   return {
     notice:
       !sent || sent.ok

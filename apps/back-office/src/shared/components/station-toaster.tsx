@@ -1,7 +1,7 @@
 import {
   type AOFToastBackdrops,
   AOFToaster,
-} from "@allonfire/ui/components/aof-toaster";
+} from "@allonfire/ui/features/feedback/components/aof-toaster";
 import type { ComponentProps } from "react";
 import { BrushKanji } from "./brush-kanji";
 

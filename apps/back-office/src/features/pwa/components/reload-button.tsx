@@ -1,7 +1,7 @@
 "use client";
 
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import type { ComponentProps } from "react";
 import { kanjiAction } from "@/shared/components/brush-kanji";
 

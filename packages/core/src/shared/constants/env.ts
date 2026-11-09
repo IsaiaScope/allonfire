@@ -4,7 +4,6 @@ import { z } from "zod";
 const BOOLEAN = { FALSE: "false", TRUE: "true" } as const;
 
 export const booleanEnvSchema = z.enum(BOOLEAN);
-export type BooleanEnv = z.infer<typeof booleanEnvSchema>;
 
 /**
  * The values `NODE_ENV` can take, shared by every package and app. Comparing

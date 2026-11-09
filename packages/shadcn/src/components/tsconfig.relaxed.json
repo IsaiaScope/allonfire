@@ -1,0 +1,16 @@
+{
+  // The generated components that are strict TypeScript but for two flags
+  // (calendar.tsx, faceted.tsx, sonner.tsx: an optional prop handed
+  // `undefined`; scroll-area.tsx: an unused import), under the rules they were
+  // written for. Add a file here and to the package tsconfig's "exclude", then
+  // run `pnpm vendor:types`. `check-types` checks these files here; the editor
+  // reads only a tsconfig.json, so it opens them on their own.
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "exactOptionalPropertyTypes": false,
+    "noUnusedLocals": false
+  },
+  "files": ["calendar.tsx", "faceted.tsx", "scroll-area.tsx", "sonner.tsx"],
+  "include": [],
+  "exclude": []
+}

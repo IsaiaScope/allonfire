@@ -34,12 +34,12 @@ export const signIn = (
   app.request(`${API.PATH.AUTH}${AUTH.PATH.SIGN_IN_EMAIL}`, {
     body: stringifyJson({ email, password }),
     headers: {
-      "content-type": HTTP.CONTENT_TYPE.JSON,
+      [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON,
       origin: ORIGIN,
       ...(appName && { [AUTH.HEADER.APP]: appName }),
-      ...(userAgent && { "user-agent": userAgent }),
+      ...(userAgent && { [HTTP.HEADER.USER_AGENT]: userAgent }),
     },
-    method: "POST",
+    method: HTTP.METHOD.POST,
   });
 
 /**
@@ -49,7 +49,7 @@ export const signIn = (
 export const tokenOnly = (cookie: string) =>
   cookie
     .split("; ")
-    .filter((part) => part.includes("session_token"))
+    .filter((part) => part.includes(AUTH.COOKIE.SESSION_TOKEN))
     .join("; ");
 
 /** Better Auth's refusal code; its handler answers with `{ code, message }`. */

@@ -1,8 +1,9 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import {
   IconHome,
+  IconMail,
   IconServer2,
+  IconServerCog,
   IconUsers,
   type TablerIcon,
 } from "@tabler/icons-react";
@@ -12,12 +13,27 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
  * A Section's key in `Navigation` (its menu label and page title); `t()`
  * checks each against the translations where it is read.
  */
-type SectionLabel = "home" | "storage" | "users";
+type SectionLabel = "home" | "services" | "storage" | "users";
+
+/** A Section's own page's key in `Navigation`, as the sub-menu names it. */
+type SectionPageLabel = "mail";
+
+/** One of a Section's own pages, listed under it in the sidebar. */
+type SectionSubPage = {
+  icon: TablerIcon;
+  label: SectionPageLabel;
+  path: string;
+};
 
 export type Section = {
   icon: TablerIcon;
   label: SectionLabel;
   path: string;
+  /**
+   * Its own pages, under its path, in the sidebar's sub-menu; the Section's
+   * row opens the first. None: the Section is one page.
+   */
+  pages?: readonly SectionSubPage[];
 };
 
 /**
@@ -28,6 +44,14 @@ export type Section = {
  */
 export const SECTION = {
   HOME: { icon: IconHome, label: "home", path: AUTH.PAGE.HOME },
+  SERVICES: {
+    icon: IconServerCog,
+    label: "services",
+    pages: [
+      { icon: IconMail, label: "mail", path: BACK_OFFICE.PAGE.SERVICES_MAIL },
+    ],
+    path: BACK_OFFICE.PAGE.SERVICES,
+  },
   STORAGE: {
     icon: IconServer2,
     label: "storage",
@@ -37,30 +61,9 @@ export const SECTION = {
 } as const satisfies Record<string, Section>;
 
 /** The menu's order: an explicit list, since Biome sorts the object's keys. */
-export const SECTIONS = [SECTION.HOME, SECTION.USERS, SECTION.STORAGE] as const;
-
-/**
- * A Section's number on the Back Office's line, as a station's on a JR
- * sign: its place in the menu, two digits (Home is 01).
- */
-export const stationNumber = (section: Section) =>
-  String(SECTIONS.findIndex(({ path }) => path === section.path) + 1).padStart(
-    2,
-    "0"
-  );
-
-/** What a link to a Section points at: Home's empty path is the root. */
-export const sectionHref = (path: string) => path || METADATA.PATH.ROOT;
-
-/**
- * Whether `pathname` (next-intl's, without the locale) is that Section or a
- * page under it (`/users/<id>`). Never by prefix for Home, whose root would
- * match everything.
- */
-export const isCurrentSection = (pathname: string, path: string) =>
-  pathname === sectionHref(path) ||
-  (path !== AUTH.PAGE.HOME && pathname.startsWith(`${path}/`));
-
-/** The Section `pathname` is on; Home when it is none of them. */
-export const currentSection = (pathname: string): Section =>
-  SECTIONS.find(({ path }) => isCurrentSection(pathname, path)) ?? SECTION.HOME;
+export const SECTIONS = [
+  SECTION.HOME,
+  SECTION.USERS,
+  SECTION.STORAGE,
+  SECTION.SERVICES,
+] as const;

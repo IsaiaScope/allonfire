@@ -1,4 +1,4 @@
-import { BROWSER_TESTS, vitestConfig } from "@allonfire/config/tests/vitest";
+import { VITEST, vitestConfig } from "@allonfire/config/tests/vitest";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
@@ -23,7 +23,7 @@ export const vitestBrowserConfig = defineConfig({
       provider: playwright(),
       screenshotFailures: false,
     },
-    exclude: exclude.filter((pattern) => pattern !== BROWSER_TESTS),
-    include: [`src/${BROWSER_TESTS}`],
+    exclude: exclude.filter((pattern) => pattern !== VITEST.BROWSER_FILES),
+    include: [`src/${VITEST.BROWSER_FILES}`],
   },
 });

@@ -1,6 +1,6 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { JAPAN_SHARE_CARD } from "@allonfire/design/designs/japan/share-card-look";
-import { AOFShareCard } from "@allonfire/ui/components/aof-share-card";
+import { AOFShareCard } from "@allonfire/ui/features/image/components/aof-share-card";
 import { ImageResponse } from "next/og";
 import { imageFonts } from "@/features/metadata/utils/image-fonts";
 import { BACK_OFFICE } from "@/shared/constants/back-office";

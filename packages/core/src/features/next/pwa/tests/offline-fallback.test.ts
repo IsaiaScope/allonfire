@@ -1,6 +1,6 @@
 // @module-tag unit
 import { PWA } from "../constants/pwa";
-import { offlineFallback } from "../offline-fallback";
+import { offlineFallback } from "../utils/offline-fallback";
 
 const ORIGIN = "https://example.test";
 const EN_PAGE = new Response("en");

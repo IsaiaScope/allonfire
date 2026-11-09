@@ -1,9 +1,9 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { z } from "zod";
+import { SERVICES } from "../../features/services/constants/services";
 import { API_ERROR } from "./error";
 
 /** The version the API serves today, written once: a new one changes this line only. */
@@ -49,16 +49,12 @@ export const API = {
     /** Request body ceiling. Larger bodies get 413 before a handler sees them. */
     BODY_BYTES: UNIT.BYTES_PER_MIB,
     REQUEST_TIMEOUT_MS: 30 * UNIT.MS_PER_SECOND,
-    /**
-     * How long the final telemetry flush is allowed to take. The OTLP exporter
-     * retries an unreachable collector for ~8s; tsx watch force-kills after 5s
-     * and Docker after 10s, so the flush gets less than either.
-     */
-    TELEMETRY_FLUSH_TIMEOUT_MS: 2 * UNIT.MS_PER_SECOND,
   },
   /** Log messages emitted outside a request, where there is no requestId. */
   LOG_MESSAGE: {
     CRASHED: "uncaught error, exiting",
+    DATABASE_DOWN: "database unreachable, not ready",
+    DATABASE_RECOVERED: "database reachable again",
     DRAIN_TIMEOUT: "drain timed out, closing dependencies anyway",
     LISTENING: "api listening",
     NON_ERROR_THROWN: "a non-Error value was thrown",
@@ -72,18 +68,9 @@ export const API = {
     SHUTTING_DOWN: "shutting down",
     TELEMETRY_FLUSH_ABANDONED:
       "telemetry flush failed or timed out, spans dropped",
+    TRANSLATION_FAILED: "translation failed, serving the English source",
     UNHANDLED_ERROR: "unhandled error",
   },
-  /**
-   * The only request headers the request log records. An allowlist, not a
-   * denylist: request lines ship to OpenObserve, and a header added later
-   * should have to earn its place.
-   */
-  LOGGED_REQUEST_HEADERS: [
-    HTTP.HEADER.ACCEPT_LANGUAGE,
-    HTTP.HEADER.CONTENT_LENGTH,
-    HTTP.HEADER.CONTENT_TYPE,
-  ],
   PATH: {
     /** Where the Auth module is mounted and what `createAuth` gets as `basePath`. */
     AUTH: `${VERSION_PATH}${AUTH.PATH.BASE}`,
@@ -96,6 +83,8 @@ export const API = {
     REFERENCE: "/reference",
     /** Where sub-routers mount onto the base app. */
     ROOT: "/",
+    /** Where the Services routes mount. */
+    SERVICES: `${VERSION_PATH}${SERVICES.PATH.BASE}`,
     /** Where the User module mounts. */
     USERS: `${VERSION_PATH}${USER.PATH.BASE}`,
     /** The version prefix every domain route mounts under. */
@@ -117,7 +106,7 @@ export const API = {
   VERSION: { CURRENT: CURRENT_VERSION },
 } as const;
 
-export const shutdownStepSchema = z.enum(API.SHUTDOWN.STEP);
+const shutdownStepSchema = z.enum(API.SHUTDOWN.STEP);
 export type ShutdownStep = z.infer<typeof shutdownStepSchema>;
 
 /** Derived from the paths the health router serves, so it cannot drift from them. */

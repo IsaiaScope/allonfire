@@ -1,0 +1,68 @@
+{
+  "id": "KX1CQrEVzEvV747w",
+  "name": "Main VPS Bot Error Workflow",
+  "description": null,
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [-96, -32],
+      "id": "b70acc6e-cb64-4993-bc4a-bb4f3da01bf6",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "<telegram-chat-id>",
+        "text": "=🔥 <b>Workflow crashed</b>\n📅 <code>{{ $now.toFormat('dd/MM HH:mm') }}</code>\n\n📋 {{ $json.workflow?.name ?? '?' }}\n💥 <code>{{ $json.execution?.lastNodeExecuted ?? '?' }}</code>\n⚙️ {{ $json.execution?.mode ?? '?' }}\n\n❌ <b>Error</b>\n<blockquote expandable>{{ ($json.execution?.error?.message ?? 'unknown error').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }}</blockquote>\n{{ $json.execution?.url ? '🔗 <a href=\"' + $json.execution.url + '\">Open execution</a>' : '' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [112, -32],
+      "id": "eb5f0242-bffb-42ee-806e-5ebd932df7e2",
+      "name": "Telegram · Crash alert",
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<credential-id>",
+          "name": "Bot - Main VPS Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🔥 Error Handler (global)\n\nFires when a subscribed workflow **hard-fails** (API rejection, credential error).\n\n**Subscribe a workflow**: its Settings → Error Workflow → this one.\nActive is not enough — nothing calls this without that pointer.\n\n**Does NOT catch expression errors.** n8n resolves a failed expression inside a\ntext field to an empty string and records the execution as `success`. Templates\nmust guard their own fields.\n\n**parse_mode: HTML** (Additional Fields). `error.message` is escaped inline —\n`&` first, then `<` and `>`, or the ampersand of `&lt;` gets re-escaped. Without\nit a `<` in an error message 400s Telegram and the crash alert itself vanishes.\n\n**Test**: set a subscriber's Telegram Chat ID to `1` → Publish → trigger it →\nTelegram returns 400 → this fires. Revert the Chat ID after.\n\nSubscribers: Backup Notification",
+        "height": 464,
+        "width": 624
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-256, -560],
+      "typeVersion": 1,
+      "id": "4eca66cb-9d08-433a-9318-e6a8aacc8adf",
+      "name": "Sticky Note"
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Telegram · Crash alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  }
+}

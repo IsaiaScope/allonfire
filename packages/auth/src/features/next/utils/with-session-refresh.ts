@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import type { AppProxy } from "../types/proxy";
 import { refreshSession } from "./refresh-session";
 
 /**
@@ -7,7 +8,7 @@ import { refreshSession } from "./refresh-session";
  * request, so the page asks the API with the fresh ones.
  */
 export const withSessionRefresh =
-  (proxy: (request: NextRequest) => Promise<Response> | Response) =>
+  (proxy: AppProxy) =>
   async (request: NextRequest): Promise<Response> => {
     const [renewed, response] = await Promise.all([
       refreshSession(request),

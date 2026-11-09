@@ -1,4 +1,4 @@
-import { AOFLogoRoute } from "@allonfire/core/features/next/metadata/aof-logo-route";
+import { AOFLogoRoute } from "@allonfire/core/features/next/metadata/utils/aof-logo-route";
 import { aofLogoSvg } from "@allonfire/design/brand/aof-logo";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 

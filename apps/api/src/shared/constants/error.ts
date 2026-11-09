@@ -9,6 +9,7 @@ import {
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { z } from "zod";
 import type { TranslationKey } from "../../features/i18n/constants/locales";
+import { SERVICES } from "../../features/services/constants/services";
 
 /**
  * The statuses this API answers with a problem document. Drives the error arms
@@ -45,6 +46,7 @@ export type ErrorStatus = z.infer<typeof errorStatusSchema>;
 const ERROR_CODE = {
   ...ERROR.CODE,
   ...IMAGE.ERROR_CODE,
+  ...SERVICES.ERROR_CODE,
   ...USER.ERROR_CODE,
 } as const satisfies Record<string, TranslationKey>;
 
@@ -92,7 +94,9 @@ const ERROR_CODE_STATUS = {
   [ERROR_CODE.INTERNAL_ERROR]: HTTP.STATUS.INTERNAL_SERVER_ERROR,
   [ERROR_CODE.NOT_FOUND]: HTTP.STATUS.NOT_FOUND,
   [ERROR_CODE.PAYLOAD_TOO_LARGE]: HTTP.STATUS.PAYLOAD_TOO_LARGE,
+  [ERROR_CODE.PROVIDER_INCOMPLETE]: HTTP.STATUS.BAD_REQUEST,
   [ERROR_CODE.RATE_LIMITED]: HTTP.STATUS.TOO_MANY_REQUESTS,
+  [ERROR_CODE.RESOURCE_CHANGED]: HTTP.STATUS.CONFLICT,
   [ERROR_CODE.TIMEOUT]: HTTP.STATUS.SERVICE_UNAVAILABLE,
   [ERROR_CODE.UNAUTHORIZED]: HTTP.STATUS.UNAUTHORIZED,
   [ERROR_CODE.UNSUPPORTED_IMAGE]: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,

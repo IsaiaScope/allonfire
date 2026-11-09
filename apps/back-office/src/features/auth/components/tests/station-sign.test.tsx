@@ -3,20 +3,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { StationSign } from "../station-sign";
 
-// next/image needs Next's loader; its alt and src are all the markup reads.
-vi.mock("next/image", () => ({
-  default: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+vi.mock("next/image", async () => ({
+  default: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 
 const LOGO_HEADING = new RegExp(
-  `<h1[^>]*><span data-alt="${BACK_OFFICE.NAME}" data-src="data:image/svg\\+xml,`
+  `<h1[^>]*><span data-alt="${BACK_OFFICE.NAME}"[^>]*data-src="data:image/svg\\+xml,`
 );
 
 const sign = () =>
   renderToStaticMarkup(<StationSign seal={<i data-seal />}>body</StationSign>);
 
+// Its band at night, and both parts see-through: its browser test.
 describe("StationSign", () => {
   it("heads the page with the App's logo, inside the page's HTML", () => {
     const html = sign();
@@ -24,15 +22,7 @@ describe("StationSign", () => {
     expect(html).toContain(">body<");
   });
 
-  it("keeps the band at night in either theme, the seal at its end", () => {
-    const html = sign();
-    expect(html).toContain('class="dark ');
-    expect(html).toContain("data-seal");
-  });
-
-  it("lets what is painted behind show through band and body", () => {
-    const html = sign();
-    expect(html).toContain("bg-card/75");
-    expect(html).toContain("bg-led-panel/75");
+  it("ends the band with the seal", () => {
+    expect(sign()).toContain("data-seal");
   });
 });

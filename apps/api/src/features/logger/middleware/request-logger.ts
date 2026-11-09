@@ -3,8 +3,8 @@ import { LOG } from "@allonfire/core/features/logger/constants/logger";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { pinoLogger } from "hono-pino";
 import type { Logger } from "pino";
-import { API } from "../../../shared/constants/api";
 import { isProbe } from "../../../shared/utils/probe";
+import { REQUEST_LOG } from "../constants/request-log";
 import { logger as defaultLogger } from "../logger";
 
 /** One line per request, levelled by outcome. */
@@ -17,7 +17,7 @@ export const requestLogger = (logger: Logger = defaultLogger) =>
       onReqBindings: (context) => ({
         req: {
           headers: objectFromEntries(
-            API.LOGGED_REQUEST_HEADERS.flatMap((name) => {
+            REQUEST_LOG.HEADERS.flatMap((name) => {
               const value = context.req.header(name);
               return value === undefined ? [] : [[name, value] as const];
             })

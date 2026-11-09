@@ -1,7 +1,7 @@
 // @module-tag unit
 import { objectValues } from "../../../../shared/utils/object";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFBaseViewport } from "../aof-base-viewport";
+import { AOFBaseViewport } from "../utils/aof-base-viewport";
 
 const SCHEME_COLORS = {
   dark: { background: "#101010" },

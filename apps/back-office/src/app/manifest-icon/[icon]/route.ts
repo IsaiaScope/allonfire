@@ -1,4 +1,4 @@
-import { AOFManifestIconRoute } from "@allonfire/core/features/next/metadata/aof-icon-images";
+import { AOFManifestIconRoute } from "@allonfire/core/features/next/metadata/components/aof-icon-images";
 import { iconImage } from "@/features/metadata/utils/icon-image";
 
 // The folder METADATA.PATH.MANIFEST_ICON names: the manifest's PNGs, each

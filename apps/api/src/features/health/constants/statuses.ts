@@ -19,7 +19,7 @@ const CHECK_STATUS = {
   UNREACHABLE: "unreachable",
 } as const;
 
-export const checkStatusSchema = z.enum(CHECK_STATUS);
+const checkStatusSchema = z.enum(CHECK_STATUS);
 export type CheckStatus = z.infer<typeof checkStatusSchema>;
 
 export const healthBodySchema = z

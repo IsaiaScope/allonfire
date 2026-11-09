@@ -9,7 +9,7 @@ import { objectFromEntries } from "../../../shared/utils/object";
 export const problemResponseName = <S extends number>(status: S) =>
   `Problem${status}` as const;
 
-export const problemResponseRef = <S extends number>(status: S) =>
+const problemResponseRef = <S extends number>(status: S) =>
   `#/components/responses/${problemResponseName(status)}` as const;
 
 /**

@@ -1,7 +1,7 @@
 // @module-tag integration
 
 import { API } from "@allonfire/api/shared/constants/api";
-import { TEST_API_URL } from "@allonfire/config/local/addresses";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { takeUnhandled, worker } from "@allonfire/config/tests/browser/msw";
 import { HttpResponse, http } from "msw";
 import { HEALTH_OK } from "@/shared/tests/msw/handlers";
@@ -12,7 +12,7 @@ describe("api", () => {
     let credentials: RequestCredentials | undefined;
     worker.use(
       http.get(
-        `${TEST_API_URL}${API.PATH.HEALTH}`,
+        `${LOCAL.URL.TEST_API}${API.PATH.HEALTH}`,
         ({ request: { credentials: sent } }) => {
           credentials = sent;
           return HttpResponse.json(HEALTH_OK);
@@ -25,7 +25,7 @@ describe("api", () => {
   });
 
   it("fails a test whose request no handler answers", async () => {
-    const url = `${TEST_API_URL}/nobody-faked-this`;
+    const url = `${LOCAL.URL.TEST_API}/nobody-faked-this`;
     await expect(fetch(url)).rejects.toThrow();
     // Read here so this test passes; any other test fails in the setup.
     expect(takeUnhandled()).toEqual([`GET ${url}`]);

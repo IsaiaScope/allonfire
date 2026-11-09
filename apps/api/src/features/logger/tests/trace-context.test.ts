@@ -2,7 +2,7 @@
 import { context } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
 import { TracerProvider } from "@opentelemetry/sdk-trace";
-import { captureLog } from "./capture";
+import { captureLog } from "../../../shared/tests/capture";
 
 const tracer = new TracerProvider().getTracer("trace-context-test");
 

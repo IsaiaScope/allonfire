@@ -87,8 +87,7 @@ describe("aofLogoSvg", () => {
 
 describe("monogramDataUrl", () => {
   it("is the Brand monogram itself on dark, recoloured on light", () => {
-    const decode = (url: string) =>
-      Buffer.from(url.split(",")[1] ?? "", "base64").toString();
+    const decode = (url: string) => decodeURIComponent(url.split(",")[1] ?? "");
     expect(decode(monogramDataUrl("dark"))).toBe(BRAND.MONOGRAM_SVG);
     expect(decode(monogramDataUrl("light"))).toContain(LIGHT.letter);
     expect(decode(monogramDataUrl("light"))).not.toContain(BRAND.LETTER);

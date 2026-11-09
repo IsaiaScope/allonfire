@@ -2,15 +2,15 @@ import { execFileSync } from "node:child_process";
 import { testRunStamp } from "@allonfire/config/tests/run/test-run";
 import { PrismaClient } from "../../generated/prisma/client";
 import { env } from "../../src/environment/environment";
+import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
 import {
   databaseUrl,
   testDatabaseName,
-} from "../../src/features/test-database/names";
+} from "../../src/features/test-database/utils/names";
 import {
   createDatabase,
   dropDatabase as dropOnServer,
-  PACKAGE_DIR,
-} from "../../src/features/test-database/server";
+} from "../../src/features/test-database/utils/server";
 
 const LIQUIBASE_TABLE = /^databasechangelog/;
 /** This run's: two runs at once (a watch and the hook) never share a database. */
@@ -43,7 +43,7 @@ export function executeFile(url: string, file: string): void {
   execFileSync(
     "pnpm",
     ["exec", "prisma", "db", "execute", "--file", file, "--url", url],
-    { cwd: PACKAGE_DIR, encoding: "utf8", stdio: "pipe" }
+    { cwd: TEST_DATABASE.PACKAGE_ROOT, encoding: "utf8", stdio: "pipe" }
   );
 }
 

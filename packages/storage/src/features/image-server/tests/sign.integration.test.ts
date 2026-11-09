@@ -9,10 +9,10 @@ import {
 } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { env } from "../../../environment/environment";
-import { storedObjectUrl } from "../../../shared/utils/stored-object-url";
+import { storedObjectUrl } from "../../../shared/tests/stored-object-url";
 import { IMAGE } from "../../image/constants/image";
-import { s3 } from "../../s3/client";
-import { putObject } from "../../s3/objects";
+import { s3 } from "../../s3/utils/client";
+import { putObject } from "../../s3/utils/objects";
 import { IMAGE_SERVER } from "../constants/image-server";
 import { pictureLink } from "../sign";
 
@@ -24,7 +24,6 @@ const LINK_MS = 2 * UNIT.MS_PER_SECOND;
 const SIGNATURE = /\/[\w-]{43}\//;
 const AVIF = { [HTTP.HEADER.ACCEPT]: IMAGE.FORMAT.CONTENT_TYPE };
 const WEBP = { [HTTP.HEADER.ACCEPT]: "image/webp" };
-const AN_HOUR_MS = UNIT.SECONDS_PER_HOUR * UNIT.MS_PER_SECOND;
 /** A link signed for this test alone: no earlier run left it in the cache. */
 const freshLink = (lifeMs: number) =>
   pictureLink({ expiresAt: new Date(Date.now() + lifeMs), key, width: WIDTH });
@@ -37,7 +36,7 @@ const maxAgeOf = (response: Response) => {
 };
 /** What the image cache says it did with a request. */
 const CACHE_STATUS = "X-Cache-Status";
-const AN_HOUR_AGO = new Date(Date.now() - AN_HOUR_MS);
+const AN_HOUR_AGO = new Date(Date.now() - UNIT.MS_PER_HOUR);
 /** A bucket outside the image server's allowed sources: neither the Apps' nor a test run's. */
 const OUTSIDE = `allonfire-outside-${process.pid}`;
 
@@ -69,7 +68,7 @@ describe("the image server, through signed links", () => {
   it("answers a link it has seen from the cache in front of it, never a tampered one", async () => {
     // An expiry to this second, so no earlier run cached this link.
     const signed = pictureLink({
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + UNIT.MS_PER_HOUR),
       key,
       width: WIDTH,
     });
@@ -84,7 +83,7 @@ describe("the image server, through signed links", () => {
 
   it("once its copy is older than the check window, asks imgproxy whether it changed and keeps it (304), never draws it again", async () => {
     // Its own expiry: the other tests' links, signed in the same second, differ.
-    const link = freshLink(2 * AN_HOUR_MS);
+    const link = freshLink(2 * UNIT.MS_PER_HOUR);
     expect(
       (await fetch(link, { headers: AVIF })).headers.get(CACHE_STATUS)
     ).toBe("MISS");
@@ -97,14 +96,16 @@ describe("the image server, through signed links", () => {
 
   it("tells the browser to keep a public picture a year, a private one only until its link expires", async () => {
     const forever = await fetch(pictureLink({ key, width: WIDTH }));
-    const forAnHour = await fetch(freshLink(AN_HOUR_MS));
+    const forAnHour = await fetch(freshLink(UNIT.MS_PER_HOUR));
     expect(maxAgeOf(forever)).toBe(IMAGE.CACHE.TTL_SECONDS);
     expect(maxAgeOf(forAnHour)).toBeLessThanOrEqual(UNIT.SECONDS_PER_HOUR);
-    expect(maxAgeOf(forAnHour)).toBeGreaterThan(UNIT.SECONDS_PER_HOUR - 60);
+    expect(maxAgeOf(forAnHour)).toBeGreaterThan(
+      UNIT.SECONDS_PER_HOUR - UNIT.SECONDS_PER_MINUTE
+    );
   });
 
   it("answers WebP to a browser without AVIF, even once the AVIF is cached", async () => {
-    const link = freshLink(AN_HOUR_MS);
+    const link = freshLink(UNIT.MS_PER_HOUR);
     const avif = await fetch(link, { headers: AVIF });
     const webp = await fetch(link, { headers: WEBP });
     expect(avif.headers.get(HTTP.HEADER.CONTENT_TYPE)).toBe(
@@ -147,7 +148,9 @@ describe("the image server, through signed links", () => {
       })
         .png()
         .toBuffer();
-      await putObject(OUTSIDE, key, picture, { contentType: "image/png" });
+      await putObject(OUTSIDE, key, picture, {
+        contentType: HTTP.CONTENT_TYPE.PNG,
+      });
       const outside = pictureLink({ bucket: OUTSIDE, key, width: WIDTH });
       expect((await fetch(outside)).status).toBe(HTTP.STATUS.NOT_FOUND);
     } finally {

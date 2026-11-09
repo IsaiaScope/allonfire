@@ -8,7 +8,7 @@ import {
   AOFSidebarMenu,
   AOFSidebarMenuButton,
   AOFSidebarMenuItem,
-} from "@allonfire/ui/components/aof-sidebar";
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { getTranslations } from "next-intl/server";
 import { NAVIGATION } from "../constants/navigation";
 import { AccountMenu } from "./account-menu";

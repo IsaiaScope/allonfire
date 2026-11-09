@@ -1,9 +1,10 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no YAML parser, like service-names.test.ts.
 const COMPOSE = read("docker/docker-compose.prod.yml");
@@ -32,7 +33,7 @@ const service = (name: string) => {
 };
 
 /** Every `${KEY:?…}` the compose requires, so a deploy cannot start without it. */
-const REQUIRED = [...COMPOSE.matchAll(REQUIRED_KEY)].map(([, key]) => key);
+const REQUIRED = [...COMPOSE.matchAll(REQUIRED_KEY)].map(([, key = ""]) => key);
 const EXAMPLES = [
   "docker/.env.example",
   "apps/api/.env.example",
@@ -136,13 +137,13 @@ describe.each([
   ["api", "allonfire-api"],
   ["back-office", "allonfire-back-office"],
 ])("%s's telemetry", (name, serviceName) => {
-  it("is wired, and stays off until the ingestion token's headers are set", () => {
+  it("gets the plain endpoint, and the deploy fails without TELEMETRY_HEADERS", () => {
     const block = service(name);
     expect(block).toContain(
-      `TELEMETRY_ENDPOINT=${interpolate("TELEMETRY_HEADERS:+http://telemetry:5080/api/default")}`
+      "TELEMETRY_ENDPOINT=http://telemetry:5080/api/default"
     );
     expect(block).toContain(
-      `TELEMETRY_HEADERS=${interpolate("TELEMETRY_HEADERS:-")}`
+      `TELEMETRY_HEADERS=${required("TELEMETRY_HEADERS")}`
     );
     expect(block).toContain(`TELEMETRY_SERVICE_NAME=${serviceName}`);
   });
@@ -153,6 +154,20 @@ it("reads the API's proxy hops from Dokploy, one (Traefik) by default", () => {
   expect(service("api")).toContain(
     `API_TRUSTED_PROXY_HOPS=${interpolate("API_TRUSTED_PROXY_HOPS:-1")}`
   );
+});
+
+it.each([
+  "API_KEEP_ALIVE_RECIPIENT",
+  "API_KEEP_ALIVE_TOKEN",
+  // The URL, key and driver of each provider slot a row names (`providerEndpoint`).
+  "API_MAIL_PROVIDER_0_DRIVER",
+  "API_MAIL_PROVIDER_0_KEY",
+  "API_MAIL_PROVIDER_0_URL",
+  "API_MAIL_PROVIDER_1_DRIVER",
+  "API_MAIL_PROVIDER_1_KEY",
+  "API_MAIL_PROVIDER_1_URL",
+])("hands the API %s from Dokploy, empty when unset", (key) => {
+  expect(service("api")).toContain(`- ${key}=${interpolate(`${key}:-`)}`);
 });
 
 it("serves the storage console at storage.isaiariva.com", () => {
@@ -171,7 +186,7 @@ it.each(REQUIRED)(
 it("gives storage-setup every storage key the API gets: both load the storage package's env", () => {
   const keys = (name: string) =>
     [...service(name).matchAll(STORAGE_KEY)]
-      .map(([, key]) => key)
+      .map(([, key = ""]) => key)
       .sort((a, b) => a.localeCompare(b));
   expect(keys("storage-setup")).toEqual(keys("api"));
 });
@@ -179,5 +194,13 @@ it("gives storage-setup every storage key the API gets: both load the storage pa
 it("keeps the storage console out of search results, ahead of its login", () => {
   expect(service("storage")).toContain(
     "traefik.http.routers.allonfire-storage.middlewares=noindex@file,admin-gate@file"
+  );
+});
+
+it("the prod compose reads no vendor variable and requires the Back Office's public URL", () => {
+  // The storage image's own MINIO_ROOT_* keys stay; what they read is ours.
+  expect(COMPOSE).not.toContain(interpolate("MINIO_"));
+  expect(service("back-office")).toContain(
+    `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}`
   );
 });

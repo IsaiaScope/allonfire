@@ -1,15 +1,12 @@
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { REPO } from "@allonfire/config/local/repo";
 import { syncDesigns } from "./sync-core";
-
-// packages/design/scripts/ -> repo root, whatever directory pnpm runs from.
-const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 
 const { values } = parseArgs({
   options: { check: { type: "boolean" }, from: { type: "string" } },
 });
 
-const { changed } = syncDesigns(ROOT, {
+const { changed } = syncDesigns(REPO.ROOT, {
   check: values.check,
   from: values.from,
 });

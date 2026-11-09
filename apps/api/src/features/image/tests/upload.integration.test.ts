@@ -3,12 +3,13 @@
 import { randomUUID } from "node:crypto";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { prisma } from "@allonfire/database";
 import { App } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
+import { problemOf } from "../../../shared/tests/problem-of";
 import { cookieFor, type TestApp } from "../../../shared/tests/sign-in";
-import { problemOf } from "../../errors/tests/problem-of";
 import {
   fetchObject,
   fixtureFile,
@@ -22,11 +23,11 @@ import {
 
 /** One source file per format `prepareImage` accepts. */
 const ACCEPTED = [
-  "photo.jpg",
-  "graphic.png",
-  "photo.webp",
-  "photo.avif",
-  "colors-no-alpha.heic",
+  IMAGE_FIXTURE.FILE.PHOTO,
+  IMAGE_FIXTURE.FILE.PNG,
+  IMAGE_FIXTURE.FILE.PHOTO_WEBP,
+  IMAGE_FIXTURE.FILE.PHOTO_AVIF,
+  IMAGE_FIXTURE.FILE.HEIC,
 ];
 const IN_BACK_OFFICE = [App.BACK_OFFICE];
 
@@ -65,21 +66,35 @@ describe("uploading Images on the real stack", () => {
     expect(key.endsWith(IMAGE.FORMAT.EXTENSION)).toBe(true);
     expect(image?.width).toBeGreaterThan(0);
     const object = await fetchObject(key);
-    expect(object.headers.get("content-type")).toBe(IMAGE.FORMAT.CONTENT_TYPE);
+    expect(object.headers.get(HTTP.HEADER.CONTENT_TYPE)).toBe(
+      IMAGE.FORMAT.CONTENT_TYPE
+    );
     expect(stored).toEqual([key]);
   });
 
-  it("refuses a GIF and stores nothing", async () => {
+  it.each([
+    {
+      code: IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE,
+      file: () => fixtureFile(IMAGE_FIXTURE.FILE.GIF),
+      what: "a GIF",
+    },
+    {
+      code: ERROR.CODE.PAYLOAD_TOO_LARGE,
+      file: () => ({
+        bytes: Buffer.alloc(IMAGE.LIMIT.FILE_BYTES + 1),
+        name: "big.jpg",
+      }),
+      what: "a file over the size limit",
+    },
+  ])("refuses $what and stores nothing", async ({ code, file }) => {
     const marker = randomUUID();
     const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
     const res = await upload(app, cookie, {
       alt: { en: marker, it: marker },
       apps: IN_BACK_OFFICE,
-      files: [fixtureFile("animation.gif")],
+      files: [file()],
     });
-    expect((await problemOf(res)).code).toBe(
-      IMAGE.ERROR_CODE.UNSUPPORTED_IMAGE
-    );
+    expect((await problemOf(res)).code).toBe(code);
     expect(await rowsMarked(marker)).toBe(0);
     expect(await anyServed()).toBe(false);
   });
@@ -87,13 +102,13 @@ describe("uploading Images on the real stack", () => {
   it.each([
     {
       into: [App.BACK_OFFICE],
-      status: 403,
+      status: HTTP.STATUS.FORBIDDEN,
       user: FIXTURE.USER.BACK_OFFICE.USER,
     },
-    { into: [App.BACK_OFFICE], status: 401, user: null },
+    { into: [App.BACK_OFFICE], status: HTTP.STATUS.UNAUTHORIZED, user: null },
     {
       into: [App.BACK_OFFICE, App.LAURA],
-      status: 403,
+      status: HTTP.STATUS.FORBIDDEN,
       user: FIXTURE.USER.BACK_OFFICE.ADMIN,
     },
   ])(
@@ -107,19 +122,4 @@ describe("uploading Images on the real stack", () => {
       expect(res.status).toBe(status);
     }
   );
-
-  it("refuses a file over the size limit and stores nothing", async () => {
-    const marker = randomUUID();
-    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
-    const res = await upload(app, cookie, {
-      alt: { en: marker, it: marker },
-      apps: IN_BACK_OFFICE,
-      files: [
-        { bytes: Buffer.alloc(IMAGE.LIMIT.FILE_BYTES + 1), name: "big.jpg" },
-      ],
-    });
-    expect((await problemOf(res)).code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
-    expect(await rowsMarked(marker)).toBe(0);
-    expect(await anyServed()).toBe(false);
-  });
 });

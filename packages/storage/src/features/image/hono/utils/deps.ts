@@ -6,12 +6,12 @@ import type {
   removeImagesFromApp,
   updateImages,
 } from "@allonfire/database/features/image/image.service";
-import type { LeftoverLog } from "../../objects/delete-leftovers";
+import type { LeftoverLog } from "../../objects/utils/delete-leftovers";
 import type {
   copyImageObject,
   deleteImageObjects,
   putImageObject,
-} from "../../objects/image-objects";
+} from "../../objects/utils/image-objects";
 import type { prepareImage } from "../../prepare/prepare-image";
 
 /** What the Image module needs; the host passes the real ones, tests stubs. */

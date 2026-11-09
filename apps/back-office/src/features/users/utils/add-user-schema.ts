@@ -15,7 +15,7 @@ export type AddUserFieldMessages = UserFieldMessages & {
 };
 
 /** Why the Add a User action refused. */
-export const addUserErrorSchema = z.enum(USERS.ADD_ERROR);
+const addUserErrorSchema = z.enum(USERS.ADD_ERROR);
 export type AddUserError = z.infer<typeof addUserErrorSchema>;
 
 /**
@@ -42,5 +42,5 @@ export type AddUserValues = z.input<ReturnType<typeof addUserSchema>>;
 export type AddUserFields = Omit<AddUserValues, "avatar">;
 
 /** Why the action, past adding the User, still has something to say. */
-export const addUserNoticeSchema = z.enum(USERS.ADD_NOTICE);
+const addUserNoticeSchema = z.enum(USERS.ADD_NOTICE);
 export type AddUserNotice = z.infer<typeof addUserNoticeSchema>;

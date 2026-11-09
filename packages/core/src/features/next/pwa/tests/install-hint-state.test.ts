@@ -3,9 +3,8 @@ import { UNIT } from "../../../../shared/constants/units";
 import { STORAGE_AREA } from "../../../../shared/utils/storage";
 import { PWA } from "../constants/pwa";
 
-const MS_PER_DAY = UNIT.SECONDS_PER_DAY * UNIT.MS_PER_SECOND;
 const NOW = Date.UTC(2026, 9, 16);
-const daysAgo = (days: number) => NOW - days * MS_PER_DAY;
+const daysAgo = (days: number) => NOW - days * UNIT.MS_PER_DAY;
 
 /** A Web Storage area backed by a Map, as the browser's would be. */
 const fakeStorage = () => {
@@ -21,7 +20,7 @@ const fakeStorage = () => {
 /** The module as a new page load finds it: nothing asked yet this load. */
 const pageLoad = async () => {
   vi.resetModules();
-  return await import("../install-hint-state");
+  return await import("../utils/install-hint-state");
 };
 
 /** A visitor coming back: an earlier load already counted as the first. */

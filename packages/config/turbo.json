@@ -3,9 +3,14 @@
   "extends": ["//"],
   "tasks": {
     "test": {
-      // local/tests/*.test.ts read these: a change to one re-runs it.
+      // local/tests/*.test.ts read these (service-names.test.ts the hook,
+      // local-files.test.ts the root package.json and the lockfile): a change
+      // to one re-runs it.
       "inputs": [
         "$TURBO_EXTENDS$",
+        "$TURBO_ROOT$/.husky/pre-commit",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/pnpm-lock.yaml",
         "$TURBO_ROOT$/.github/workflows/ci.yml",
         "$TURBO_ROOT$/.github/workflows/deploy.yml",
         "$TURBO_ROOT$/.gitignore",
@@ -18,7 +23,21 @@
         "$TURBO_ROOT$/apps/*/package.json",
         "$TURBO_ROOT$/apps/*/src/environment/*.ts",
         "$TURBO_ROOT$/packages/*/.env.example",
-        "$TURBO_ROOT$/packages/*/src/environment/*.ts"
+        "$TURBO_ROOT$/packages/*/src/environment/*.ts",
+        "$TURBO_ROOT$/vps/**",
+        // knip-config.test.ts reads knip's config and the workspace list.
+        "$TURBO_ROOT$/knip.jsonc",
+        "$TURBO_ROOT$/pnpm-workspace.yaml",
+        // package-exports.test.ts reads every App and package, and the root
+        // configs, for an export key's readers.
+        "$TURBO_ROOT$/apps/**",
+        "$TURBO_ROOT$/packages/**",
+        "$TURBO_ROOT$/vitest.config.ts",
+        "!$TURBO_ROOT$/**/node_modules/**",
+        "!$TURBO_ROOT$/**/.next/**",
+        "!$TURBO_ROOT$/**/.turbo/**",
+        "!$TURBO_ROOT$/**/coverage/**",
+        "!$TURBO_ROOT$/**/*.md"
       ]
     }
   }

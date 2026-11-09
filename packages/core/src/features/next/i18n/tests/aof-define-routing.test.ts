@@ -1,6 +1,6 @@
 // @module-tag unit
 import { I18N } from "../../../i18n/constants/locales";
-import { AOFDefineRouting } from "../aof-define-routing";
+import { AOFDefineRouting } from "../utils/aof-define-routing";
 
 describe("AOFDefineRouting", () => {
   it("routes the Host's languages, the default first, prefix only when needed", () => {

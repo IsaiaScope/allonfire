@@ -1,5 +1,5 @@
 // @module-tag unit
-import { captureLog } from "../../../features/logger/tests/capture";
+import { captureLog } from "../../tests/capture";
 import { outageLatch } from "../outage";
 
 describe("outageLatch", () => {
