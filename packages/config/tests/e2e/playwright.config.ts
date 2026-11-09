@@ -4,6 +4,7 @@ import { LOCAL } from "../../local/addresses";
 import { REPO } from "../../local/repo";
 import { testRunStamp } from "../run/test-run";
 import { E2E, e2eCliArgs } from "./run";
+import { E2E_STORAGE_ENV } from "./storage-env";
 
 const isCi = Boolean(process.env.CI);
 /** Tests tagged for Chromium only, which the WebKit projects leave out. */
@@ -151,12 +152,7 @@ export const aofPlaywrightConfig = ({
           // The fake provider's throwaway certificate.
           NODE_EXTRA_CA_CERTS: E2E.MAIL_SINK.CERT,
           PORT: String(LOCAL.PORT.API_E2E),
-          STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
-          // The Local image server signs nothing itself: the API signs the
-          // links it serves with the same throwaway key and salt.
-          STORAGE_IMAGE_SERVER_KEY: LOCAL.IMAGE_SERVER.KEY,
-          STORAGE_IMAGE_SERVER_SALT: LOCAL.IMAGE_SERVER.SALT,
-          STORAGE_IMAGE_SERVER_URL: LOCAL.URL.IMAGE_SERVER,
+          ...E2E_STORAGE_ENV,
         },
         timeout: START_TIMEOUT_MS,
         url: `${apiUrl}${apiPath.HEALTH}`,
