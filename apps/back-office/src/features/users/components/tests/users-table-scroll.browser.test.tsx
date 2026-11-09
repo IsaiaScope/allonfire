@@ -23,6 +23,12 @@ const SHORT_BOX_HEIGHT_PX = 100;
 const SCROLL_LEFT_PX = 80;
 /** The rows the box always has room for, under its header. */
 const MIN_ROWS = 8;
+/**
+ * How long the list may load before its skeleton gives way: `vi.waitFor`'s
+ * default second is short for WebKit on a CI runner, and under Vitest's 5 s
+ * test timeout, so a real failure still reads as the missing table.
+ */
+const LOAD_TIMEOUT_MS = 4000;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
@@ -76,11 +82,13 @@ const renderInBox = async (
     </QueryClientProvider>
   );
   // The rows, not the skeleton drawn while the list loads.
-  await vi.waitFor(() =>
-    screen
-      .getByRole("table", { name: t.list })
-      .getByText(t.column.email, { exact: true })
-      .element()
+  await vi.waitFor(
+    () =>
+      screen
+        .getByRole("table", { name: t.list })
+        .getByText(t.column.email, { exact: true })
+        .element(),
+    { timeout: LOAD_TIMEOUT_MS }
   );
   const rows = document.querySelector<HTMLElement>(
     '[data-slot="data-table-rows"]'
