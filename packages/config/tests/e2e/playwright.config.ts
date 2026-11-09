@@ -1,12 +1,14 @@
 import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { LOCAL } from "../../local/addresses";
+import { REPO } from "../../local/repo";
 import { testRunStamp } from "../run/test-run";
-import { E2E_CLI, E2E_LABEL, E2E_TAG } from "./run";
+import { E2E, e2eCliArgs } from "./run";
+import { E2E_STORAGE_ENV } from "./storage-env";
 
 const isCi = Boolean(process.env.CI);
 /** Tests tagged for Chromium only, which the WebKit projects leave out. */
-const CHROMIUM_ONLY = new RegExp(E2E_TAG.CHROMIUM_ONLY);
+const CHROMIUM_ONLY = new RegExp(E2E.TAG.CHROMIUM_ONLY);
 
 /**
  * `next build` runs before the App answers; the API waits for its Test
@@ -23,13 +25,20 @@ process.env.CONFIG_E2E_STAMP ??= testRunStamp();
 const STAMP = process.env.CONFIG_E2E_STAMP;
 /** Requests, and sign-ins, one e2e run may make; far above any run's need. */
 const E2E_RATE_LIMIT_MAX = 10_000;
-// `-C`, not `--filter`: a filtered run prints a banner into the captured name.
-const cli =
-  ({ dir, script }: { dir: string; script: string }) =>
-  (command: string) =>
-    `pnpm -s -C "${dir}" ${script} ${command} ${E2E_LABEL} ${STAMP}`;
-const testDatabase = cli(E2E_CLI.DATABASE);
-const testBucket = cli(E2E_CLI.BUCKET);
+/**
+ * How long an assertion waits. Four browsers share one API process, and
+ * each sign-in hashes a password on its thread, so a page that redraws
+ * after a save (the list, its kept copy just dropped) can take past
+ * Playwright's default 5 s under a full run; a trace showed 5.4 s.
+ */
+const EXPECT_TIMEOUT_MS = 15_000;
+/** One e2e CLI call as a shell command, each argument quoted. */
+const cli = (target: { dir: string; script: string }) => (command: string) =>
+  ["pnpm", ...e2eCliArgs(target, command, STAMP).map((arg) => `"${arg}"`)].join(
+    " "
+  );
+const testDatabase = cli(E2E.CLI.DATABASE);
+const testBucket = cli(E2E.CLI.BUCKET);
 
 export const playwrightConfig = defineConfig({
   forbidOnly: isCi,
@@ -51,23 +60,28 @@ export const playwrightConfig = defineConfig({
  * beside `pnpm dev`. The stack's addresses are set here, so neither CI nor
  * a local `.env` decides them; `env` adds the App's own runtime values.
  * `apiPath` is the API's own `API.PATH`, which config, a leaf package,
- * cannot import.
+ * cannot import. `localStorage` is what every browser context starts with
+ * (the App's own keys, which config cannot know): a hint that shows from a
+ * visitor's second page on would otherwise sit over a button a slow run taps.
  */
 export const aofPlaywrightConfig = ({
   apiPath,
   app,
   env,
+  localStorage = [],
   port,
 }: {
   apiPath: { AUTH: string; HEALTH: string };
   app: string;
   env: Record<string, string>;
+  localStorage?: { name: string; value: string }[];
   port: number;
 }) => {
   const baseURL = `http://localhost:${port}`;
   const apiUrl = LOCAL.URL.API_E2E;
   const standalone = `.next/standalone/apps/${app}`;
   return defineConfig(playwrightConfig, {
+    expect: { timeout: EXPECT_TIMEOUT_MS },
     // Drops the run's database and bucket.
     globalTeardown: resolve(import.meta.dirname, "global-teardown.ts"),
     // Two engines at two widths: Chromium (Chrome, Edge) and WebKit (Safari,
@@ -87,8 +101,21 @@ export const aofPlaywrightConfig = ({
         use: { ...devices["iPhone 15"] },
       },
     ],
-    use: { baseURL },
+    use: {
+      baseURL,
+      storageState: {
+        cookies: [],
+        origins: [{ localStorage, origin: baseURL }],
+      },
+    },
     webServer: [
+      {
+        // The fake mail provider, first: it makes the certificate the API
+        // trusts. Playwright starts the servers one after the other.
+        command: `pnpm -s -C ${REPO.ROOT} exec tsx ${resolve(import.meta.dirname, "mail-sink-server.ts")}`,
+        ignoreHTTPSErrors: true,
+        url: `${LOCAL.URL.MAIL_SINK_E2E}${E2E.MAIL_SINK.PATH.SENT}`,
+      },
       {
         // Playwright starts web servers before global setup, so the API's
         // command makes the run's Test database and bucket.
@@ -97,6 +124,18 @@ export const aofPlaywrightConfig = ({
         command: `DB="$(${testDatabase("create")})" && BUCKET="$(${testBucket("create")})" && DATABASE_URL="$DB" STORAGE_BUCKET="$BUCKET" pnpm --filter @allonfire/api start`,
         env: {
           API_CORS_ORIGINS: baseURL,
+          // The owner's address and the workflow's token, for the keep-alive.
+          API_KEEP_ALIVE_RECIPIENT: E2E.KEEP_ALIVE.RECIPIENT,
+          API_KEEP_ALIVE_TOKEN: E2E.KEEP_ALIVE.TOKEN,
+          // The MAIL providers: slot 0 is the fake one every email goes to;
+          // slot 1 has no key, so a run never reaches a real provider
+          // whatever the Local `.env` holds.
+          API_MAIL_PROVIDER_0_DRIVER: "bearer-flat",
+          API_MAIL_PROVIDER_0_KEY: E2E.MAIL_SINK.KEY,
+          API_MAIL_PROVIDER_0_URL: LOCAL.URL.MAIL_SINK_E2E,
+          API_MAIL_PROVIDER_1_DRIVER: "bearer-flat",
+          API_MAIL_PROVIDER_1_KEY: E2E.MAIL_SINK.KEY,
+          API_MAIL_PROVIDER_1_URL: `${LOCAL.URL.MAIL_SINK_E2E}${E2E.MAIL_SINK.SECOND_PREFIX}`,
           // Every project's requests come from one address: the global limit
           // would refuse a run of four browsers. The limiter has its own test.
           API_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),
@@ -110,13 +149,10 @@ export const aofPlaywrightConfig = ({
           // the limit itself is covered by the API's integration test.
           AUTH_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),
           AUTH_URL: apiUrl,
+          // The fake provider's throwaway certificate.
+          NODE_EXTRA_CA_CERTS: E2E.MAIL_SINK.CERT,
           PORT: String(LOCAL.PORT.API_E2E),
-          STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
-          // The Local image server signs nothing itself: the API signs the
-          // links it serves with the same throwaway key and salt.
-          STORAGE_IMAGE_SERVER_KEY: LOCAL.IMAGE_SERVER.KEY,
-          STORAGE_IMAGE_SERVER_SALT: LOCAL.IMAGE_SERVER.SALT,
-          STORAGE_IMAGE_SERVER_URL: LOCAL.URL.IMAGE_SERVER,
+          ...E2E_STORAGE_ENV,
         },
         timeout: START_TIMEOUT_MS,
         url: `${apiUrl}${apiPath.HEALTH}`,
@@ -136,6 +172,8 @@ export const aofPlaywrightConfig = ({
           ...env,
           API_AUTH_URL: `${apiUrl}${apiPath.AUTH}`,
           API_URL: apiUrl,
+          // This build alone exposes Next's testing API, for `instant()`.
+          CONFIG_E2E_TESTING_API: "true",
           NEXT_PUBLIC_API_URL: apiUrl,
           PORT: String(port),
         },

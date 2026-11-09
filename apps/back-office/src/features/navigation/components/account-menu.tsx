@@ -2,7 +2,13 @@
 
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { AOFBadge } from "@allonfire/ui/components/aof-badge";
+import {
+  AOFSidebarDropdownContent,
+  AOFSidebarMenu,
+  AOFSidebarMenuButton,
+  AOFSidebarMenuItem,
+} from "@allonfire/ui/features/navigation/components/aof-sidebar";
+import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import {
   AOFDropdownMenu,
   AOFDropdownMenuGroup,
@@ -12,14 +18,8 @@ import {
   AOFDropdownMenuSegments,
   AOFDropdownMenuSeparator,
   AOFDropdownMenuTrigger,
-} from "@allonfire/ui/components/aof-dropdown-menu";
-import {
-  AOFSidebarDropdownContent,
-  AOFSidebarMenu,
-  AOFSidebarMenuButton,
-  AOFSidebarMenuItem,
-} from "@allonfire/ui/components/aof-sidebar";
-import { useAOFColorScheme } from "@allonfire/ui/lib/use-aof-theme-switch";
+} from "@allonfire/ui/shared/components/aof-dropdown-menu";
+import { useAOFColorScheme } from "@allonfire/ui/shared/hooks/use-aof-theme-switch";
 import {
   IconCaretUpDown,
   IconLogout,
@@ -50,7 +50,7 @@ export type AccountMenuProps = {
   /** The User's Role in the Back Office, translated. */
   role: string;
   /** The Role's seal (`NAVIGATION.ROLE_SEAL`), pressed beside the User. */
-  seal?: string;
+  seal?: string | undefined;
 };
 
 const { DARK, LIGHT } = METADATA.COLOR_SCHEME;

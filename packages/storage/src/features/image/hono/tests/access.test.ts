@@ -108,10 +108,12 @@ describe("authoriseDelete everywhere", () => {
 });
 
 describe("authorisePatch", () => {
+  /** The Version each change was made on; the service checks it, not this. */
+  const VERSION = "version-1";
   const current = new Map([["a", privately(App.LAURA, App.BACK_OFFICE)]]);
 
   it("sets access only for an Admin in every App the Image is in", () => {
-    const change = [{ access: ImageAccess.PUBLIC, id: "a" }];
+    const change = [{ access: ImageAccess.PUBLIC, id: "a", version: VERSION }];
     expect(statusOf(() => authorisePatch(lauraAdmin, current, change))).toBe(
       HTTP.STATUS.FORBIDDEN
     );
@@ -123,14 +125,14 @@ describe("authorisePatch", () => {
   it("writes no access that does not change", () => {
     expect(
       authorisePatch(everywhereAdmin, current, [
-        { access: ImageAccess.PRIVATE, id: "a" },
+        { access: ImageAccess.PRIVATE, id: "a", version: VERSION },
       ])
     ).toEqual([{ id: "a" }]);
   });
 
   it("places and takes out only the Apps that change, each by its own Admin", () => {
     const inLaura = new Map([["a", privately(App.LAURA)]]);
-    const moved = [{ apps: [App.BACK_OFFICE], id: "a" }];
+    const moved = [{ apps: [App.BACK_OFFICE], id: "a", version: VERSION }];
     expect(statusOf(() => authorisePatch(lauraAdmin, inLaura, moved))).toBe(
       HTTP.STATUS.FORBIDDEN
     );
@@ -145,7 +147,7 @@ describe("authorisePatch", () => {
       authorisePatch(
         lauraAdmin,
         open,
-        [{ access: ImageAccess.PRIVATE, id: "a" }],
+        [{ access: ImageAccess.PRIVATE, id: "a", version: VERSION }],
         new Map([["a", "new.avif"]])
       )
     ).toEqual([{ access: ImageAccess.PRIVATE, id: "a", key: "new.avif" }]);
@@ -158,7 +160,7 @@ describe("authorisePatch", () => {
     expect(
       statusOf(() =>
         authorisePatch(lauraAdmin, open, [
-          { access: ImageAccess.PRIVATE, id: "a" },
+          { access: ImageAccess.PRIVATE, id: "a", version: VERSION },
         ])
       )
     ).toBe(HTTP.STATUS.CONFLICT);

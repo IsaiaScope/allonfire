@@ -1,7 +1,7 @@
 "use server";
 
 import { checkAppAccess, checkMutationAccess } from "@allonfire/auth/guard";
-import type { GameType } from "@allonfire/database";
+import type { GameType } from "@allonfire/database/enums";
 import {
   getGlobalBestScore,
   getUserBestScore,

@@ -13,6 +13,20 @@ Every constant follows one pattern: an `as const` object is the source,
 `z.infer` of that schema — never a hand-written union, never `ValueOf`.
 Number values work too (`z.enum(HTTP.STATUS)`).
 
+### `./features/mail/*` and `./environment/mail-environment`
+
+Transactional mail through a Service's providers, any host. Core reaches no
+database: the host hands `sendMail` a `MailStore` (the API's is
+`features/mail/database-store`).
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `MAIL` (`constants/mail`) | Constant | The drivers (`DRIVER`, named for the API's shape), what a driver's send made of a handoff (`ATTEMPT`), the outcomes (`accepted`, `rejected`, `uncertain`, `unavailable`), the purposes (`PURPOSE`, a log field), the environment's names (`ENV`), the driver paths and timeouts |
+| `sendMail(message, { purpose, only }, deps)` (`utils/send-mail`) | Function | Enabled providers in slot order, each handed the message by its driver; one with no room or that refuses is skipped for the next; an uncertain outcome stops the send; `only` sends through one provider, never failing over |
+| `MAIL_DRIVERS` (`utils/drivers`) | `Record<MailDriver, MailDriverImpl>` | Each driver's `send` (an attempt: accepted, quota, rejected, uncertain) and `usage` (what the provider's API says it sent today and in 31 days, and the limits it reports) over `fetch`, https only |
+| `MailStore`, `MailDeps`, `MailUsage`, `SendResult` (`types/mail`) | Types | What a host provides: the providers and a last-acceptance stamp, the endpoint of a slot, `fetch` |
+| `providerEndpoint(slot)` (`environment/mail-environment`) | Function | `API_MAIL_PROVIDER_<slot>_URL`, `_KEY` and `_DRIVER`, read when sending; anything missing or invalid (a URL that is not https, an unknown driver) reads as no endpoint |
+
 ### `./features/errors/coded-error`
 
 | Export | Type | Description |
@@ -28,6 +42,15 @@ Number values work too (`z.enum(HTTP.STATUS)`).
 | Export | Type | Description |
 |--------|------|-------------|
 | `ERROR` | Constant | `ERROR.CODE`, the error codes every Host and module shares: `BAD_REQUEST`, `FORBIDDEN`, `INTERNAL_ERROR`, `NOT_FOUND`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `TIMEOUT`, `UNAUTHORIZED`, `VALIDATION_FAILED`. A module adds only its own; a Host answers with these plus its modules' and owns each code's message and status |
+
+### `./features/version/*` (ADR 0028)
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `versionOf(...parts)` (`utils/version-of`) | Function | A resource's Version: a hash of the parts a save could overwrite; server only |
+| `VERSION`, `versionSchema` (`constants/version`) | Constant, schema | How a Version is made; the `version` a save sends (non-empty) |
+| `checkVersion(expected, actual)` (`utils/resource-changed-error`) | Function | The one Version check every versioned save runs under its row lock, before any write: throws `ResourceChangedError` on a mismatch |
+| `ResourceChangedError` (`utils/resource-changed-error`) | Class | A `CodedError`, 409 `ERROR.CODE.RESOURCE_CHANGED`, with the `ids` that changed when known; a service throws it and every host's `onError` answers it, so no module maps it |
 
 ### `./features/ci/affected`
 
@@ -49,6 +72,13 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 | `JsonText<T>` | Type | A string written from a `T`; `parseJson` reads the `T` back |
 | `Json<T>` | Type | `T` when all of it is JSON; the parts that are not become `never` |
 | `jsonFrom<T>(message)` | Function | zod step for text that must be JSON; one issue with `message` when it is not |
+
+### `./shared/utils/route-path`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `fillPath(path, params)` | Function | A Hono route path with its `:params` filled, each URI-encoded; throws on a param left out. never filled by hand |
+| `openApiPath(path)` | Function | A Hono route path as OpenAPI writes it: `/users/:id` → `/users/{id}` |
 
 ### `./shared/utils/storage`
 
@@ -76,28 +106,29 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `HTTP.STATUS`, `httpStatusSchema`, `HttpStatus` | const / zod / type | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
-| `HTTP.METHOD`, `httpMethodSchema`, `HttpMethod` | const / zod / type | Every RFC 9110 method plus `PATCH` |
-| `HTTP.CONTENT_TYPE`, `contentTypeSchema`, `ContentType` | const / zod / type | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
-| `HTTP.HEADER`, `httpHeaderSchema`, `HttpHeader` | const / zod / type | Common request, response and security header names, lower-case |
+| `HTTP.STATUS`, `httpStatusSchema` | const / zod | RFC 9110 statuses a web app can send (1xx–5xx), as numeric literals: `http-status-codes` enums break Hono's typed responses |
+| `HTTP.METHOD`, `HttpMethod` | const / type | Every RFC 9110 method plus `PATCH` |
+| `HTTP.CONTENT_TYPE` | const | JSON, `application/problem+json` (RFC 9457), HTML, text, form, multipart, octet-stream, event-stream |
+| `HTTP.HEADER`, `httpHeaderSchema` | const / zod | Common request, response and security header names, lower-case |
 
 ### `./shared/constants/env`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `ENV.BOOLEAN`, `booleanEnvSchema`, `BooleanEnv` | const / zod / type | `"true"` / `"false"`, the only accepted spellings of an env flag |
+| `ENV.BOOLEAN`, `booleanEnvSchema` | const / zod | `"true"` / `"false"`, the only accepted spellings of an env flag |
 | `NODE_ENV`, `nodeEnvSchema`, `NodeEnv` | const / zod / type | `development`, `production`, `test`: compare against these, not bare strings; `nodeEnvSchema.default(...)` in each env module |
 
 ### `./shared/constants/separators`
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `SEPARATOR`, `separatorSchema`, `Separator` | const / zod / type | `LIST` (`,`), `PAIR` (`=`), `PATH` (`.`) |
+| `SEPARATOR` | const | `LIST` (`,`), `PAIR` (`=`), `PATH` (`.`) |
 
 ### `./shared/constants/patterns`
 
 | Export | Type | Description |
 |--------|------|-------------|
+| `PATTERN.CHANGESET.FILE`, `PATTERN.CHANGESET.NAME` | RegExp | A Liquibase changeset's numbered `.sql` file, and the kebab-case name `pnpm db:changeset` takes |
 | `PATTERN.TRAILING_SLASHES` | RegExp | `/\/+$/`, stripped from a URL or path before comparing or appending |
 
 ### `./features/logger/constants/logger`
@@ -111,14 +142,14 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `UNIT.MS_PER_SECOND`, `UNIT.SECONDS_PER_MINUTE`, `UNIT.MS_PER_MINUTE`, `UNIT.SECONDS_PER_HOUR`, `UNIT.SECONDS_PER_DAY` | number | Time conversions, so no bare `1000` or `60_000` |
+| `UNIT.MS_PER_SECOND`, `UNIT.SECONDS_PER_MINUTE`, `UNIT.MS_PER_MINUTE`, `UNIT.SECONDS_PER_HOUR`, `UNIT.MS_PER_HOUR`, `UNIT.SECONDS_PER_DAY`, `UNIT.MS_PER_DAY`, `UNIT.DAYS_PER_YEAR` | number | Time conversions, so no bare `1000`, `60_000` or `60 * 60 * 1000` |
 | `UNIT.BYTES_PER_KIB`, `UNIT.BYTES_PER_MIB` | number | Size conversions |
 
 ### `./features/http/constants/http` (security headers)
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `HTTP.SECURITY_HEADERS` | `{ key: HttpHeader; value: string }[]` | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
+| `HTTP.SECURITY_HEADERS` | `{ key, value }[]` (a header name and its value) | Headers every allonfire app sends: `X-Frame-Options` (DENY), `X-Content-Type-Options` (nosniff), `Referrer-Policy` (strict-origin-when-cross-origin), `X-DNS-Prefetch-Control` (on), `Strict-Transport-Security` (two years, includeSubDomains). Mutable, as Next's `headers()` wants |
 
 ### `./features/i18n/constants/locales`
 
@@ -144,26 +175,27 @@ imports these.
 
 | Export | Wraps | Notes |
 |--------|-------|-------|
-| `./features/next/providers/aof-query-client-provider` | `QueryClientProvider` | client from `AOFGetQueryClient`; `staleTime` prop |
-| `./features/next/providers/aof-react-query-devtools` | `ReactQueryDevtools` | lazy; `enabled` from the App's env (development); inside the Query provider |
-| `./features/next/providers/aof-theme-provider` | next-themes `ThemeProvider` | `class`, `system`; every prop overrides |
-| `./features/next/providers/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
-| `./features/next/query/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
-| `./features/next/i18n/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
-| `./features/next/i18n/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
-| `./features/next/api/forwarded-for` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API |
-| `./features/next/i18n/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`I18N.BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
-| `./features/next/i18n/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing, plus `languageLinks(href, locale)`: one always-prefixed link per language, the current one marked |
-| `./features/next/i18n/shared-translations` | — | `SHARED_TRANSLATIONS` and `SharedTranslations`: the `Common` namespace every App gets, merged under its own translations; an App never defines `Common`, and `global-error.tsx` reads it in `I18N.DEFAULT_LANGUAGE` |
-| `./features/next/pwa/aof-pwa` | — | `AOFPwa({ children, hint, banner, enabled })`: the page, then the App's own Install hint and offline banner, then the service worker (ADR 0023) |
-| `./features/next/pwa/aof-service-worker` | `workbox-window` | `AOFServiceWorker({ enabled })` registers `/sw.js`; the layout passes `enabled` for production only (ADR 0023) |
-| `./features/next/pwa/build-service-worker` | `workbox-build` `generateSW` | `buildServiceWorker`, run by the `pwa:build` script after `next build` (`pnpm --filter @allonfire/core pwa:build --app <App folder> [--languages en,it]`): writes `public/sw.js`, precaching `.next/static` and each language's Offline page, page loads network only with the Offline page as fallback, navigation preload on |
-| `./features/next/pwa/offline-fallback` | — | the worker's `handlerDidError` plugin: the URL's language's Offline page, else the default's; reads only `globalThis.AOF_PWA`, since Workbox copies its source |
-| `./features/next/pwa/install-platform` | — | `installPlatform({ installable, standalone, touch, userAgent })`: `installable` where the browser offered its install dialog, `ios` or `mac-safari` for steps, or null |
-| `./features/next/pwa/install-prompt` | — | holds Chrome's `beforeinstallprompt` from module load (`installPrompt`, `subscribeInstallPrompt`, for `useSyncExternalStore`), cleared on `appinstalled` |
-| `./features/next/pwa/use-install-hint` | — | `useInstallHint()`: after mount, `{ dismiss, install: { onInstall, installing, failed } }` where the browser offers its dialog, else `{ dismiss, steps }`, or null; never on a first visit, a year away once dismissed (`install-hint-state`, kept through `storageItem`) |
+| `./features/next/providers/components/aof-query-client-provider` | `QueryClientProvider` | client from `AOFGetQueryClient`; `staleTime` prop |
+| `./features/next/providers/components/aof-react-query-devtools` | `ReactQueryDevtools` | lazy; `enabled` from the App's env (development); inside the Query provider |
+| `./features/next/providers/components/aof-theme-provider` | next-themes `ThemeProvider` | `class`, `system`; every prop overrides |
+| `./features/next/providers/components/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
+| `./features/next/query/utils/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
+| `./features/next/i18n/utils/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
+| `./features/next/i18n/utils/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
+| `./features/next/api/visitor-headers` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API; `readVisitorHeaders()`, the same read from the request being answered |
+| `./features/next/i18n/utils/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`I18N.BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
+| `./features/next/i18n/utils/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing, plus `languageLinks(href, locale)`: one always-prefixed link per language, the current one marked |
+| `./features/next/i18n/utils/aof-translators` | next-intl `createTranslator` | tests only: `aofTranslators({ en, it })`, one translator per base language over an App's messages with the shared `Common` text under them (`t.en("Users.copy.label", { email })` fills placeholders as the page does); `aofMessages(language, messages)`, the same merge for a test's `NextIntlClientProvider` |
+| `./features/next/i18n/translations/shared-translations` | — | `SHARED_TRANSLATIONS` and `SharedTranslations`: the `Common` namespace every App gets, merged under its own translations; an App never defines `Common`, and `global-error.tsx` reads it in `I18N.DEFAULT_LANGUAGE` |
+| `./features/next/pwa/components/aof-pwa` | — | `AOFPwa({ children, hint, banner, enabled })`: the page, then the App's own Install hint and offline banner, then the service worker (ADR 0023) |
+| `./features/next/pwa/components/aof-service-worker` | `workbox-window` | `AOFServiceWorker({ enabled })` registers `/sw.js`; the layout passes `enabled` for production only (ADR 0023) |
+| `./features/next/pwa/utils/build-service-worker` | `workbox-build` `generateSW` | `buildServiceWorker`, run by the `pwa:build` script after `next build` (`pnpm --filter @allonfire/core pwa:build --app <App folder> [--languages en,it]`): writes `public/sw.js`, precaching `.next/static` and each language's Offline page, page loads network only with the Offline page as fallback, navigation preload on |
+| `./features/next/pwa/utils/offline-fallback` | — | the worker's `handlerDidError` plugin: the URL's language's Offline page, else the default's; reads only `globalThis.AOF_PWA`, since Workbox copies its source |
+| `./features/next/pwa/utils/install-platform` | — | `installPlatform({ installable, standalone, touch, userAgent })`: `installable` where the browser offered its install dialog, `ios` or `mac-safari` for steps, or null |
+| `./features/next/pwa/utils/install-prompt` | — | holds Chrome's `beforeinstallprompt` from module load (`installPrompt`, `subscribeInstallPrompt`, for `useSyncExternalStore`), cleared on `appinstalled` |
+| `./features/next/pwa/hooks/use-install-hint` | — | `useInstallHint()`: after mount, `{ dismiss, install: { onInstall, installing, failed } }` where the browser offers its dialog, else `{ dismiss, steps }`, or null; never on a first visit, a year away once dismissed (`install-hint-state`, kept through `storageItem`) |
 | `./features/next/pwa/constants/pwa` | — | `PWA` (`PATH.OFFLINE`, `PATH.SERVICE_WORKER`, `OUTPUT`, `INSTALL_HINT` with each platform's `STEPS`, `PLATFORM`, `TOAST` ids), `InstallPlatform`, `InstallStep`, `InstallStatus` (the hook's own) |
-| `./features/next/config/aof-create-next-config` | `NextConfig` | base config, security headers, next-intl plugin |
+| `./features/next/config/utils/aof-create-next-config` | `NextConfig` | base config, security headers, next-intl plugin |
 
 An App composes the providers in its `[locale]/layout.tsx` and drops any it does
 not need:
@@ -173,7 +205,7 @@ not need:
   <AOFThemeProvider>
     <AOFNuqsAdapter>{children}</AOFNuqsAdapter>
   </AOFThemeProvider>
-  <AOFReactQueryDevtools enabled={env.NODE_ENV === NODE_ENV.DEVELOPMENT} />
+  <AOFReactQueryDevtools enabled={env.NODE_ENV === ENV.NODE.DEVELOPMENT} />
 </AOFQueryClientProvider>
 ```
 

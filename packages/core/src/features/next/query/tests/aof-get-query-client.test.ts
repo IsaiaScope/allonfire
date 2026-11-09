@@ -1,6 +1,7 @@
 // @module-tag unit
 import { dehydrate } from "@tanstack/react-query";
-import { AOFGetQueryClient } from "../aof-get-query-client";
+import { UNIT } from "../../../../shared/constants/units";
+import { AOFGetQueryClient } from "../utils/aof-get-query-client";
 
 describe("AOFGetQueryClient on the server", () => {
   it("gives every call its own client", () => {
@@ -9,7 +10,7 @@ describe("AOFGetQueryClient on the server", () => {
 
   it("keeps fetched data fresh for 60 s by default", () => {
     expect(AOFGetQueryClient().getDefaultOptions().queries?.staleTime).toBe(
-      60_000
+      UNIT.MS_PER_MINUTE
     );
   });
 

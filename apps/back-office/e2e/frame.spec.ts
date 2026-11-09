@@ -13,10 +13,17 @@ import {
 import {
   SECTION,
   type SECTIONS,
-  sectionHref,
 } from "../src/features/navigation/constants/sections";
+import { sectionHref } from "../src/features/navigation/utils/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
-import { onPhone, openSidebar, SIGN_IN_URL, signIn } from "./pages";
+import {
+  onPhone,
+  openAccountMenu,
+  openSidebar,
+  SIGN_IN_URL,
+  signIn,
+  signInAsAdmin,
+} from "./pages";
 
 const t = EN.Navigation;
 const ITALIAN = "it";
@@ -30,21 +37,6 @@ const TRANSPARENT = "rgba(0, 0, 0, 0)";
 /** The menu on screen: the sidebar, or the drawer on a phone. */
 const menuOf = (page: Page) =>
   page.getByRole("navigation", { name: t.menu }).filter({ visible: true });
-
-/** Signs in as the Back Office Admin and waits for the frame: Sign in
- *  submits without waiting, so a `goto` right after could beat its cookie. */
-const signInAsAdmin = async (page: Page) => {
-  await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
-  await expect(page.getByRole("button", { name: t.toggleMenu })).toBeVisible();
-};
-
-const openAccountMenu = async (page: Page) => {
-  await openSidebar(page);
-  await page
-    .getByRole("button", { name: t.account })
-    .filter({ visible: true })
-    .click();
-};
 
 /** Clicks a Section in the menu on screen and checks it is the one marked. */
 const visit = async (page: Page, section: (typeof SECTIONS)[number]) => {

@@ -2,13 +2,15 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
-import { seed } from "../seed";
+import { seed } from "../utils/seed";
 
+// Its own domain: the Fixtures' is theirs alone.
+const SEED_DOMAIN = "seed.test";
 const ADMIN = {
-  DATABASE_SEED_ADMIN_EMAIL: "seed-admin@allonfire.test",
+  DATABASE_SEED_ADMIN_EMAIL: `seed-admin@${SEED_DOMAIN}`,
   DATABASE_SEED_ADMIN_PASSWORD: "seed-admin-password",
 } as const;
-const KEEP = "keep-me@allonfire.test";
+const KEEP = `keep-me@${SEED_DOMAIN}`;
 
 const emails = async () =>
   (await prisma.user.findMany({ select: { email: true } })).map(

@@ -2,7 +2,7 @@
 import { HTTP } from "../../../http/constants/http";
 import { I18N } from "../../../i18n/constants/locales";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFBaseMetadata } from "../aof-base-metadata";
+import { AOFBaseMetadata } from "../utils/aof-base-metadata";
 
 const APP_NAME = "Any App";
 const base = {

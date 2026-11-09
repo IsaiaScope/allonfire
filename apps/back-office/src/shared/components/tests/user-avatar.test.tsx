@@ -1,9 +1,10 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { renderToStaticMarkup } from "react-dom/server";
 import { UserAvatar } from "../user-avatar";
 
-const SIGNED = `${LOCAL.URL.IMAGE_SERVER}/sig/rs:fit:256:0/exp:1793199600/plain/s3://image/avatar-u1-x.avif`;
+const SIGNED = `${LOCAL.URL.IMAGE_SERVER}/sig/rs:fit:256:0/exp:1793199600/plain/s3://${IMAGE.BUCKET.DEFAULT}/avatar-u1-x.avif`;
 const BLUR = "data:image/webp;base64,UklGRhoAAABXRUJQ";
 
 /** The markup, and whatever next/image warned while rendering it. */

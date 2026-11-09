@@ -11,7 +11,7 @@ const promptEvent = () =>
 const load = async () => {
   vi.resetModules();
   vi.stubGlobal("window", new EventTarget());
-  return await import("../install-prompt");
+  return await import("../utils/install-prompt");
 };
 
 afterEach(() => {

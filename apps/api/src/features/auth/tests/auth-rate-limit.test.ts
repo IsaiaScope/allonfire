@@ -5,8 +5,8 @@ import { createApp } from "../../../app";
 import { env } from "../../../environment/environment";
 import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
+import { memoryStore } from "../../../shared/tests/memory-store";
 import { RATE_LIMIT } from "../../rate-limit/constants/limits";
-import { memoryStore } from "../../rate-limit/tests/memory-store";
 
 const SIGN_IN_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.SIGN_IN_EMAIL}`;
 const CHANGE_PASSWORD_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.CHANGE_PASSWORD}`;
@@ -19,15 +19,17 @@ describe("auth bucket", () => {
     const app = createApp(appDeps({ auth: ok }));
     const allowed = await Promise.all(
       Array.from({ length: env.AUTH_RATE_LIMIT_MAX }, async () => {
-        const res = await app.request(SIGN_IN_ROUTE, { method: "POST" });
+        const res = await app.request(SIGN_IN_ROUTE, {
+          method: HTTP.METHOD.POST,
+        });
         return res.status;
       })
     );
     expect(allowed).toEqual(new Array(env.AUTH_RATE_LIMIT_MAX).fill(200));
-    const res = await app.request(SIGN_IN_ROUTE, { method: "POST" });
-    expect(res.status).toBe(429);
-    expect(res.headers.get("content-type")).toContain(
-      "application/problem+json"
+    const res = await app.request(SIGN_IN_ROUTE, { method: HTTP.METHOD.POST });
+    expect(res.status).toBe(HTTP.STATUS.TOO_MANY_REQUESTS);
+    expect(res.headers.get(HTTP.HEADER.CONTENT_TYPE)).toContain(
+      HTTP.CONTENT_TYPE.PROBLEM_JSON
     );
     expect(res.headers.get(HTTP.HEADER.RETRY_AFTER)).not.toBeNull();
   });
@@ -38,7 +40,7 @@ describe("auth bucket", () => {
     await app.request(`${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`);
     expect(store.hits.has(AUTH_KEY)).toBe(false);
 
-    await app.request(SIGN_IN_ROUTE, { method: "POST" });
+    await app.request(SIGN_IN_ROUTE, { method: HTTP.METHOD.POST });
     expect([...store.hits.keys()].sort()).toEqual(
       [AUTH_KEY, RATE_LIMIT.UNKNOWN_CLIENT].sort()
     );
@@ -47,7 +49,7 @@ describe("auth bucket", () => {
   it("counts a trailing-slash variant too", async () => {
     const store = memoryStore();
     const app = createApp(appDeps({ auth: ok, store }));
-    await app.request(`${SIGN_IN_ROUTE}/`, { method: "POST" });
+    await app.request(`${SIGN_IN_ROUTE}/`, { method: HTTP.METHOD.POST });
     expect(store.hits.get(AUTH_KEY)).toBe(1);
   });
 
@@ -55,8 +57,8 @@ describe("auth bucket", () => {
     const store = memoryStore();
     const app = createApp(appDeps({ auth: ok, store }));
 
-    await app.request(SIGN_IN_ROUTE, { method: "POST" });
-    await app.request(CHANGE_PASSWORD_ROUTE, { method: "POST" });
+    await app.request(SIGN_IN_ROUTE, { method: HTTP.METHOD.POST });
+    await app.request(CHANGE_PASSWORD_ROUTE, { method: HTTP.METHOD.POST });
 
     expect(store.hits.get(AUTH_KEY)).toBe(2);
   });

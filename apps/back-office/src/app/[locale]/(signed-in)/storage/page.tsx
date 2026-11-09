@@ -1,4 +1,4 @@
-import { AOFEmpty } from "@allonfire/ui/components/aof-empty";
+import { AOFEmpty } from "@allonfire/ui/features/feedback/components/aof-empty";
 import { useTranslations } from "next-intl";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionPage } from "@/features/navigation/components/section-page";

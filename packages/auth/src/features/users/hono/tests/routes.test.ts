@@ -1,32 +1,25 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { App, Role } from "@allonfire/database/enums";
-import type {
-  UserListQuery,
-  UserRecord,
-} from "@allonfire/database/features/auth/user.service";
+import type { UserListQuery } from "@allonfire/database/features/auth/user.service";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { sessionFor } from "../../../../shared/tests/stub-auth";
 import { USER } from "../../constants/users";
 import { userListBodySchema } from "../constants/schemas";
 import type { UserDeps } from "../utils/deps";
-import { stubUserDeps } from "./stub-user-deps";
-import { testHost } from "./test-host";
+import {
+  BACK_OFFICE_ADMIN as ADMIN,
+  stubUserDeps,
+  userHost,
+  userRow,
+} from "./stub-user-deps";
 
 const LIST = USER.PATH.BASE;
-const ADMIN = sessionFor({
-  memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
-});
 const TOTAL = 60;
-const USER_ROW: UserRecord = {
-  createdAt: new Date("2026-10-01T10:00:00.000Z"),
+const USER_ROW = userRow({
   email: FIXTURE.USER.LAURA.ADMIN.email,
-  id: "user-2",
-  image: null,
-  imageBlurDataUrl: null,
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
   name: FIXTURE.USER.LAURA.ADMIN.name,
-};
+});
 
 /** Deps that record each list query and let in whom `allows` says. */
 const depsWith = (allows = true) => {
@@ -50,21 +43,21 @@ const [, MIDDLE_PAGE_SIZE] = USER.PAGE_SIZES;
 
 const listWith = async (search: string) => {
   const { deps, queries } = depsWith();
-  const res = await testHost(ADMIN, deps).request(`${LIST}?${search}`);
+  const res = await userHost(ADMIN, deps).request(`${LIST}?${search}`);
   return { query: queries[0], status: res.status };
 };
 
 describe("User module", () => {
   it("answers 401 without a Session and never lists", async () => {
     const { deps, queries } = depsWith();
-    const host = testHost(null, deps);
+    const host = userHost(null, deps);
     expect((await host.request(LIST)).status).toBe(HTTP.STATUS.UNAUTHORIZED);
     expect(queries).toEqual([]);
   });
 
   it("answers 403 to a User the Host does not let list Users", async () => {
     const { deps, queries } = depsWith(false);
-    const host = testHost(ADMIN, deps);
+    const host = userHost(ADMIN, deps);
     expect((await host.request(LIST)).status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(queries).toEqual([]);
   });
@@ -128,7 +121,7 @@ describe("User module", () => {
 
   it("answers the page, the total and how many pages it makes", async () => {
     const { deps } = depsWith();
-    const res = await testHost(ADMIN, deps).request(
+    const res = await userHost(ADMIN, deps).request(
       `${LIST}?${queryOf({ [USER.PARAM.PER_PAGE]: String(USER.DEFAULT_PAGE_SIZE) })}`
     );
     expect(userListBodySchema.parse(await res.json())).toEqual({

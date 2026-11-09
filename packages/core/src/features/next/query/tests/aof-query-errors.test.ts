@@ -4,7 +4,7 @@ import {
   type AOFErrorMeta,
   aofErrorCaches,
   aofErrorMeta,
-} from "../aof-query-errors";
+} from "../utils/aof-query-errors";
 
 const FALLBACK = "Something went wrong.";
 const OWN = "The Users could not be deleted.";

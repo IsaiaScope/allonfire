@@ -1,5 +1,5 @@
 // @module-tag unit
-import { imageAltSchema, readAlt } from "../alt";
+import { imageAltSchema, readAlt } from "../utils/alt";
 
 describe("imageAltSchema", () => {
   it("needs every base language", () => {

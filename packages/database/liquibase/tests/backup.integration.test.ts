@@ -1,10 +1,10 @@
 // @module-tag integration
 import { execFileSync } from "node:child_process";
+import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
 import {
-  DOCKER_TIMEOUT,
   liquibase,
   migrateImage,
-} from "../../src/features/test-database/server";
+} from "../../src/features/test-database/utils/server";
 import {
   dropDatabase,
   recreateDatabase,
@@ -33,7 +33,7 @@ function backups(): string[] {
 function backup(url: string): string {
   return migrateImage(
     url,
-    [`DB_BACKUPS_VOLUME=${VOLUME}`, `BACKUP_KEEP=${KEEP}`],
+    [`DATABASE_BACKUP_VOLUME=${VOLUME}`, `DATABASE_BACKUP_KEEP=${KEEP}`],
     "backup"
   );
 }
@@ -45,7 +45,7 @@ describe("backup", () => {
     docker("volume", "rm", "--force", VOLUME);
     await recreateDatabase(DATABASE);
     liquibase(url, "update");
-  }, DOCKER_TIMEOUT);
+  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
 
   afterAll(async () => {
     docker("volume", "rm", "--force", VOLUME);
@@ -68,7 +68,7 @@ describe("backup", () => {
       }
       expect(files).toEqual(written.slice(-KEEP));
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 
   it(
@@ -89,7 +89,7 @@ describe("backup", () => {
       expect(contents).toContain("TABLE DATA laura GameScore");
       expect(contents).toContain("TABLE DATA image Image");
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 
   it(
@@ -101,6 +101,6 @@ describe("backup", () => {
       ).toThrow();
       expect(backups()).toEqual(before);
     },
-    DOCKER_TIMEOUT
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
   );
 });

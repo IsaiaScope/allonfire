@@ -1,4 +1,8 @@
-import { blurDataUrlOf, decodeUpright } from "../image/prepare/prepare-image";
+import {
+  blurDataUrlOf,
+  decodeUpright,
+  encodeAvif,
+} from "../image/prepare/prepare-image";
 import { AVATAR } from "./constants/avatar";
 
 /** An Avatar ready to store: its file, and the blur shown while it loads. */
@@ -11,14 +15,14 @@ export type PreparedAvatar = { buffer: Buffer; blurDataUrl: string };
  * (`asImageError` answers them).
  */
 export const prepareAvatar = async (input: Buffer): Promise<PreparedAvatar> => {
-  const buffer = await (await decodeUpright(input))
-    .resize({
+  const { data } = await encodeAvif(await decodeUpright(input), {
+    quality: AVATAR.QUALITY,
+    resize: {
       fit: "cover",
       height: AVATAR.SIZE,
       position: "centre",
       width: AVATAR.SIZE,
-    })
-    .avif({ quality: AVATAR.QUALITY })
-    .toBuffer();
-  return { blurDataUrl: await blurDataUrlOf(buffer), buffer };
+    },
+  });
+  return { blurDataUrl: await blurDataUrlOf(data), buffer: data };
 };

@@ -1,5 +1,13 @@
 // @module-tag unit
-import { CodedError, invalidHook, validationError } from "../coded-error";
+import { HTTP } from "../../http/constants/http";
+import {
+  CodedError,
+  forbidden,
+  invalidHook,
+  notFound,
+  payloadTooLarge,
+  validationError,
+} from "../coded-error";
 import { ERROR } from "../constants/error-codes";
 
 describe("CodedError", () => {
@@ -53,5 +61,35 @@ describe("validationError", () => {
     expect(() => invalidHook({ error: [], success: false })).toThrow(
       CodedError
     );
+  });
+});
+
+describe("the standard errors", () => {
+  it("notFound is a 404 NOT_FOUND, keeping its cause", () => {
+    const cause = new Error("no such row");
+    const error = notFound({ cause });
+    expect(error).toBeInstanceOf(CodedError);
+    expect(error.status).toBe(HTTP.STATUS.NOT_FOUND);
+    expect(error.code).toBe(ERROR.CODE.NOT_FOUND);
+    expect(error.values).toEqual({});
+    expect(error.cause).toBe(cause);
+    expect(notFound().cause).toBeUndefined();
+  });
+
+  it("forbidden is a 403 FORBIDDEN", () => {
+    const error = forbidden();
+    expect(error).toBeInstanceOf(CodedError);
+    expect(error.status).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(error.code).toBe(ERROR.CODE.FORBIDDEN);
+    expect(error.values).toEqual({});
+  });
+
+  it("payloadTooLarge is a 413 PAYLOAD_TOO_LARGE naming its limit", () => {
+    const limit = 2048;
+    const error = payloadTooLarge(limit);
+    expect(error).toBeInstanceOf(CodedError);
+    expect(error.status).toBe(HTTP.STATUS.PAYLOAD_TOO_LARGE);
+    expect(error.code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
+    expect(error.values).toEqual({ limit });
   });
 });

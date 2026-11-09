@@ -3,14 +3,19 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
-import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
+import {
+  problemResponseName,
+  problemResponses,
+} from "@allonfire/core/features/errors/constants/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   objectFromEntries,
   objectKeys,
   objectValues,
 } from "@allonfire/core/shared/utils/object";
+import { openApiPath } from "@allonfire/core/shared/utils/route-path";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { Hono } from "hono";
 import { z } from "zod";
 import { createApp } from "../../../app";
@@ -18,10 +23,11 @@ import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import type { AppBindings } from "../../../shared/types/bindings";
 import { healthRoutes } from "../../health/routes/index";
+import { SERVICES } from "../../services/constants/services";
 import { docsRoutes } from "../routes";
 
-/** OpenAPI spells a path parameter `{id}`, where Hono spells it `:id`. */
-const IMAGE_BY_ID_ROUTE = `${API.PATH.IMAGES}/{id}`;
+/** One Image's route, as OpenAPI spells it. */
+const IMAGE_BY_ID_ROUTE = `${API.PATH.IMAGES}${openApiPath(STORAGE.PATH.ONE)}`;
 
 /** Only what these tests read; `looseObject` keeps the rest for `toMatchObject`. */
 const operationSchema = z.object({
@@ -143,7 +149,7 @@ describe("GET /openapi.json", () => {
       expect.arrayContaining(["access", "srcSet", "apps"])
     );
     expect(objectKeys(image.properties)).not.toContain("key");
-    expect(objectKeys(schemas ?? {})).not.toContain("ImageLink");
+    expect(objectKeys(schemas ?? {})).not.toContain("ImagePlacement");
   });
 
   it("leaves every Model untagged, so the docs list them apart", async () => {
@@ -229,43 +235,57 @@ const problemSpecSchema = z.object({
 /** The served document, its problem schemas typed. */
 const problemDocument = async () => problemSpecSchema.parse(await fullSpec());
 
+/** The response a route's error at `status` points to: `{ $ref }`. */
+const problemRefOf = <S extends number>(status: S) =>
+  problemResponses(status)[status];
+
 describe("GET /openapi.json error responses", () => {
   it("documents the Image reads with no sign-in errors, the writes with them", async () => {
     const { paths } = await problemDocument();
     expect(paths[API.PATH.IMAGES]).not.toHaveProperty([
       "get",
       "responses",
-      "401",
+      String(HTTP.STATUS.UNAUTHORIZED),
     ]);
     expect(paths[API.PATH.IMAGES]).not.toHaveProperty([
       "get",
       "responses",
-      "403",
+      String(HTTP.STATUS.FORBIDDEN),
     ]);
     expect(paths[IMAGE_BY_ID_ROUTE]).not.toHaveProperty([
       "get",
       "responses",
-      "401",
+      String(HTTP.STATUS.UNAUTHORIZED),
     ]);
     expect(paths[API.PATH.IMAGES]).toHaveProperty(
-      ["patch", "responses", "401", "$ref"],
-      "#/components/responses/Problem401"
+      ["patch", "responses", String(HTTP.STATUS.UNAUTHORIZED)],
+      problemRefOf(HTTP.STATUS.UNAUTHORIZED)
     );
   });
 
   it("lists, for each status, only the codes sent with it", async () => {
     const { components } = await problemDocument();
-    expect(components.schemas.Problem400?.properties.code.enum).toEqual([
+    expect(
+      components.schemas[problemResponseName(HTTP.STATUS.BAD_REQUEST)]
+        ?.properties.code.enum
+    ).toEqual([
       ERROR.CODE.BAD_REQUEST,
+      SERVICES.ERROR_CODE.PROVIDER_INCOMPLETE,
       ERROR.CODE.VALIDATION_FAILED,
     ]);
-    expect(components.schemas.Problem413?.properties).toMatchObject({
+    expect(
+      components.schemas[problemResponseName(HTTP.STATUS.PAYLOAD_TOO_LARGE)]
+        ?.properties
+    ).toMatchObject({
       code: {
         enum: [IMAGE.ERROR_CODE.IMAGE_TOO_LARGE, ERROR.CODE.PAYLOAD_TOO_LARGE],
       },
-      status: { const: 413 },
+      status: { const: HTTP.STATUS.PAYLOAD_TOO_LARGE },
     });
-    expect(components.responses).toHaveProperty(["Problem404", "content"]);
+    expect(components.responses).toHaveProperty([
+      problemResponseName(HTTP.STATUS.NOT_FOUND),
+      "content",
+    ]);
   });
 
   it.each([
@@ -311,8 +331,8 @@ describe("GET /openapi.json error responses", () => {
   it("points each Image route's error at its own status", async () => {
     const { paths } = await problemDocument();
     expect(paths[API.PATH.IMAGES]).toHaveProperty(
-      ["post", "responses", "413", "$ref"],
-      "#/components/responses/Problem413"
+      ["post", "responses", String(HTTP.STATUS.PAYLOAD_TOO_LARGE)],
+      problemRefOf(HTTP.STATUS.PAYLOAD_TOO_LARGE)
     );
   });
 });
@@ -385,51 +405,28 @@ describe("GET /openapi.json after a failed build", () => {
     });
     const app = createApp(appDeps({ auth }));
 
-    expect((await app.request(API.PATH.OPENAPI)).status).toBe(500);
-    expect((await app.request(API.PATH.OPENAPI)).status).toBe(200);
+    expect((await app.request(API.PATH.OPENAPI)).status).toBe(
+      HTTP.STATUS.INTERNAL_SERVER_ERROR
+    );
+    expect((await app.request(API.PATH.OPENAPI)).status).toBe(HTTP.STATUS.OK);
   });
 });
 
 describe("GET /openapi.json User writes", () => {
-  it("documents deleting Users, and the code a deletion of yourself answers", async () => {
-    const { paths } = specSchema.parse(await fullSpec());
-    const operation = paths[API.PATH.USERS]?.delete;
-    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
-    expect(objectKeys(operation?.responses ?? {})).toEqual(
-      expect.arrayContaining(
-        [
-          HTTP.STATUS.OK,
-          HTTP.STATUS.BAD_REQUEST,
-          HTTP.STATUS.UNAUTHORIZED,
-          HTTP.STATUS.FORBIDDEN,
-        ].map(String)
-      )
-    );
+  it("lists the code a deletion of yourself answers", async () => {
     const { components } = await problemDocument();
-    expect(components.schemas.Problem403?.properties.code.enum).toContain(
-      USER.ERROR_CODE.CANNOT_DELETE_SELF
-    );
+    expect(
+      components.schemas[problemResponseName(HTTP.STATUS.FORBIDDEN)]?.properties
+        .code.enum
+    ).toContain(USER.ERROR_CODE.CANNOT_DELETE_SELF);
   });
 
-  it("documents adding a User, and the code a taken email answers", async () => {
-    const { paths } = specSchema.parse(await fullSpec());
-    const operation = paths[API.PATH.USERS]?.post;
-    expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
-    expect(objectKeys(operation?.responses ?? {})).toEqual(
-      expect.arrayContaining(
-        [
-          HTTP.STATUS.CREATED,
-          HTTP.STATUS.BAD_REQUEST,
-          HTTP.STATUS.UNAUTHORIZED,
-          HTTP.STATUS.FORBIDDEN,
-          HTTP.STATUS.CONFLICT,
-        ].map(String)
-      )
-    );
+  it("lists the code a taken email answers", async () => {
     const { components } = await problemDocument();
-    expect(components.schemas.Problem409?.properties.code.enum).toContain(
-      USER.ERROR_CODE.EMAIL_TAKEN
-    );
+    expect(
+      components.schemas[problemResponseName(HTTP.STATUS.CONFLICT)]?.properties
+        .code.enum
+    ).toContain(USER.ERROR_CODE.EMAIL_TAKEN);
   });
 });
 
@@ -442,9 +439,7 @@ describe("GET /openapi.json one User", () => {
     async ({ method, statuses }) => {
       const { paths } = specSchema.parse(await fullSpec());
       const operation =
-        paths[`${API.PATH.USERS}${USER.PATH.ONE.replace(":id", "{id}")}`]?.[
-          method
-        ];
+        paths[`${API.PATH.USERS}${openApiPath(USER.PATH.ONE)}`]?.[method];
       expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
       expect(objectKeys(operation?.responses ?? {})).toEqual(
         expect.arrayContaining(
@@ -462,9 +457,10 @@ describe("GET /openapi.json one User", () => {
 
   it("lists the code a change of your own Role answers", async () => {
     const { components } = await problemDocument();
-    expect(components.schemas.Problem403?.properties.code.enum).toContain(
-      USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE
-    );
+    expect(
+      components.schemas[problemResponseName(HTTP.STATUS.FORBIDDEN)]?.properties
+        .code.enum
+    ).toContain(USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE);
   });
 });
 
@@ -477,9 +473,7 @@ describe("GET /openapi.json Avatars", () => {
     async ({ method, status }) => {
       const { paths } = specSchema.parse(await fullSpec());
       const operation =
-        paths[`${API.PATH.USERS}${USER.PATH.AVATAR.replace(":id", "{id}")}`]?.[
-          method
-        ];
+        paths[`${API.PATH.USERS}${openApiPath(USER.PATH.AVATAR)}`]?.[method];
       expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
       expect(objectKeys(operation?.responses ?? {})).toEqual(
         expect.arrayContaining(

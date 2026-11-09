@@ -1,5 +1,5 @@
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
-import { cn } from "@allonfire/ui/lib/utils";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const kanji = cva(
@@ -72,10 +72,21 @@ export const BrushKanji = ({
  * (`ActionKanji`), as a notice, Sign in and a form end on. Drawn with the
  * button's `field` size (`AOFButton size="field"`, `aofButtonVariants`), as
  * tall as the fields; the label keeps clear of the kanji, which has the
- * right end to itself.
+ * right end to itself. Its colours are the button variant's, unless `tone`
+ * gives it the line's.
  */
 export const kanjiAction = cva(
-  "relative isolate min-w-40 overflow-hidden pr-12 font-bold"
+  "relative isolate min-w-40 overflow-hidden pr-12 font-bold",
+  {
+    variants: {
+      tone: {
+        /** The line's deep green, on a filled button (`variant="default"`):
+         *  white on it reads 5.2:1 (the Japan Design's `theme.test.ts`). */
+        green:
+          "bg-(--line-green-deep) text-(--line-green-deep-foreground) hover:bg-(--line-green-deep)/90",
+      },
+    },
+  }
 );
 
 /** The kanji brushed in a `kanjiAction`; `className` for its ink on a button

@@ -29,6 +29,7 @@ describe("JAPAN_IMAGE_COLOR", () => {
       "line-green-deep-foreground",
       JAPAN_IMAGE_COLOR.LINE.GREEN_DEEP_FOREGROUND,
     ],
+    ["hanko", JAPAN_IMAGE_COLOR.HANKO],
     ["line-orange", JAPAN_IMAGE_COLOR.LINE.ORANGE],
     ["tactile", JAPAN_IMAGE_COLOR.TACTILE],
   ] as const)("matches --%s", (token, value) => {

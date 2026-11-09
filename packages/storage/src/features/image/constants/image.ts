@@ -37,6 +37,17 @@ const LIMIT = {
 
 /** Everything fixed about Images: where they live, how they are stored and served, and their limits. */
 export const IMAGE = {
+  /**
+   * A stored picture's blur, what next/image shows while it loads: a tiny
+   * WebP as a data URL, ready for `blurDataURL`.
+   */
+  BLUR: {
+    /** What every blur's data URL starts with. */
+    DATA_URL_PREFIX: "data:image/webp;base64,",
+    QUALITY: 50,
+    /** Next recommends a placeholder of 10px or less; 16px keeps a little shape. */
+    WIDTH: 16,
+  },
   BUCKET: {
     /**
      * The MinIO bucket every Image lives in (ADR 0013): Production's and the
@@ -65,7 +76,7 @@ export const IMAGE = {
     LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, ${LIMIT.LIST.DEFAULT} per page (\`limit\` up to ${LIMIT.LIST.MAX}). Send \`nextCursor\` back as \`cursor\` for the next page.`,
     LIST_SUMMARY: "List Images",
     PATCH_200: "The updated Images",
-    PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. All or nothing.`,
+    PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. Each change carries the \`version\` it was made on (\`Image.version\`): an Image changed since, or one the batch would leave in no App, answers 409 \`RESOURCE_CHANGED\`. All or nothing.`,
     PATCH_SUMMARY: "Place Images in Apps or change their alt",
     UPLOAD_201: "The new Images, in file order",
     UPLOAD_DESCRIPTION: `Signed in, Admin in every App named. multipart/form-data: up to ${LIMIT.FILES_PER_UPLOAD} \`file\` parts and one \`meta\` JSON part, \`[{ apps: [App], alt, access? }]\` in file order, at least one App each, each App once, private when \`access\` is left out. JPEG, PNG, WebP, AVIF or HEIC in; each file is stored as AVIF with a blur placeholder. Limits: ${LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB} MiB a file, ${LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB} MiB a request, ${LIMIT.INPUT_MEGAPIXELS} megapixels, ${LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_MINUTE} minutes. All or nothing: one bad file rejects the batch.`,
@@ -90,6 +101,11 @@ export const IMAGE = {
   FORMAT: {
     CONTENT_TYPE: "image/avif",
     EXTENSION: ".avif",
+    /**
+     * The stored file is the optimizer's source, so it keeps near-full
+     * quality: AVIF 64 looks like JPEG 80, at roughly a third of WebP 90's size.
+     */
+    QUALITY: 64,
   },
   /**
    * What a picture may come in as, for a file input's `accept`: every format
@@ -99,6 +115,14 @@ export const IMAGE = {
   INPUT_ACCEPT:
     "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif",
   LIMIT,
+  /** What a file the Image module leaves behind is logged as. */
+  LOG_MESSAGE: {
+    CLEANUP_FAILED: "image cleanup failed",
+    OBJECT_DELETE_FAILED: "image object delete failed",
+    /** The old file of an Image made private: its public links still answer
+     *  until it is deleted, so this one is deleted by hand. */
+    PUBLIC_FILE_LEFT: "public image file left behind after making it private",
+  },
   /** The tag the Image module's routes appear under. */
   OPENAPI_TAG: "Image",
   /** Context keys the Image module sets. */

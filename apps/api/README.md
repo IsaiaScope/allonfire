@@ -64,7 +64,7 @@ problem documents. Files go to the closed
 `image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
 decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
 `image."Image"`, placements in `image."ImageApp"`. Apps show them through the
-image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
+image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
 
 | Endpoint | Guard | Does |
 |---|---|---|
@@ -89,8 +89,72 @@ image server, by the links the API signs (`docs/agents/images.md`, ADR 0027).
   `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
   any bucket policy (`setupImageBucket`), as does every test run's bucket. A
   browser reaches a picture only through a link the API signs, served by the
-  image server (docs/agents/images.md). Never give the bucket an anonymous
+  image server (docs/guides/images.md). Never give the bucket an anonymous
   policy again, read-only included.
+
+## Mail and Services
+
+Verification and password reset emails go through the MAIL Service's
+providers in slot order, each reached over its own HTTP API. Everything but
+where a provider is reached is edited on the Back Office's Services page.
+
+- **Environment, per slot.** `API_MAIL_PROVIDER_<slot>_URL` (the provider's API
+  base, https only), `_KEY` (its API key) and `_DRIVER` (the API shape it
+  speaks) in the API's environment (Dokploy in Production; never the repo).
+  Two drivers exist: `key-header-envelope` (an `api-key` header and a nested
+  sender, Brevo's v3 API: URL `https://api.brevo.com/v3`) and `bearer-flat`
+  (`Authorization: Bearer` and a flat body, Resend's API: URL
+  `https://api.resend.com`). A slot missing any of the three is skipped and
+  logged (`mail provider has no usable URL, key and driver in the
+  environment`). Rotating a key replaces its value and redeploys the API.
+- **Keys.** The SMTP keys of the old setup do not work: Brevo's REST API needs
+  a v3 API key (`xkeysib-…`), Resend's an API key. Brevo: a Full access key
+  works; a Restricted key needs Transactional email: All and Account: Read.
+  Resend: the key must be allowed to read metrics (a sending-only key may be
+  refused; the rings then draw empty and an error toast says so).
+- **Provider setup.** Brevo: allow the VPS's IP under Security, Authorized
+  IPs, then turn blocking on. Resend: verify the sending domain (one on the
+  free plan). Each provider's sender address goes on the Services page; it is
+  required, and a provider is enabled only with one. Names are labels an
+  Admin types; the seed names them `Provider 1` and `Provider 2`.
+- **DNS.** Before sending from the deployment domain, read the existing SPF,
+  DKIM, DMARC and return-path records, then add each provider's own beside
+  them (one SPF record, every sender included); never replace a record
+  another service relies on. A sending address is not an inbox.
+- **Quota.** Nothing here counts it. A provider that answers for want of room
+  (its daily or monthly quota, or a rate limit) or refuses is skipped for the
+  next one. The Services page's two rings read what each provider's own API
+  says it sent (today, the UTC day, and the last 31 days), kept 30 seconds in
+  Redis: a page and its prefetch ask the vendor once. A Resend-shaped
+  provider's metrics are built in buckets and trail a send by up to ~10
+  minutes; that lag is accepted, the count catches up on its own. `GET /v1/services`
+  takes `?type=` so a page asks only its own type's providers. A Brevo-shaped
+  provider's report is built with a delay while its credits move at once, so on
+  a `free` plan the day's count is the larger of the report and the card's
+  daily limit less the credits left (the ring's maximum is the card's);
+  the limits are the one the provider reports, else the day and month
+  limits an Admin set on the provider's card. They only size the rings and
+  never stop a send. Sends made outside AllOnFire count too, since the
+  provider counts them.
+- **Uncertain sends.** A timeout after the handoff is `uncertain`: never
+  retried through another provider, so nobody gets an email twice. The reader
+  asks again (sign in, or Forgot password), at most five emails per address in
+  any rolling hour.
+- **Keep-alive.** `POST /v1/services/keep-alive` with
+  `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>`, daily from the workflow
+  service (`docs/guides/vps-workflow.md`): a provider with no acceptance in 30
+  days sends one check email to `API_KEEP_ALIVE_RECIPIENT`, so no provider
+  deactivates an idle key (Brevo: after 90 days).
+- **What to watch.** The Services page (the rings, the last acceptance) and
+  the log lines `mail provider rejected the message`, `mail provider outcome
+  unknown; not retried elsewhere`, `no mail provider could take the message`,
+  `mail provider has no room left; trying the next`, `mail provider usage
+  could not be read` and `email refused: the per-address limit cannot count`.
+- **Rollback.** Turn the MAIL Service off on the Services page: nothing
+  sends, and sign-in of an unverified User answers that a link is on its way
+  without one leaving. Liquibase's rollback of `0007-service-mail` drops the
+  `service` schema and `User.verificationRequiredAt`; roll back the code that
+  reads them first.
 
 ## Writing routes
 
@@ -171,14 +235,16 @@ Where each signal comes from:
   Its two one-off startup spans are ignored.
 - **Logs**: a pino `mixin` stamps `trace_id`/`span_id` on lines logged inside a
   request, and `pino-opentelemetry-transport` ships every line to OpenObserve.
-  Request lines record only the headers in `API.LOGGED_REQUEST_HEADERS`.
+  Request lines record only the headers in `REQUEST_LOG.HEADERS`
+  (`features/logger/constants/request-log.ts`).
 - **Redis**: not traced. ioredis can only be traced by patching it at load,
   which needs an ESM loader hook; see ADR 0006.
 - **OpenTelemetry's own failures** (collector down, wrong password) appear in
   the API log as errors and warnings, instead of vanishing.
 
 Traces, metrics and logs carry the same resource: `service.name`,
-`service.version` and `deployment.environment.name` (`features/telemetry/resource.ts`).
+`service.version` and `deployment.environment.name` (core's
+`features/telemetry/otlp.ts`).
 
 `index.ts` calls `startTelemetry()` before `createApp`, because `@hono/otel`
 binds its meter when the app is built. Nothing is patched, so there is no

@@ -2,6 +2,9 @@ import type { CodedErrorValues } from "@allonfire/core/features/errors/coded-err
 import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import { memoize, strategies } from "@formatjs/fast-memoize";
 import { type Formatters, IntlMessageFormat } from "intl-messageformat";
+import type { Logger } from "pino";
+import { API } from "../../shared/constants/api";
+import { logger as defaultLogger } from "../logger/logger";
 import { TRANSLATION, type TranslationKey } from "./constants/locales";
 import type { TranslationValues } from "./translation-values";
 
@@ -72,20 +75,23 @@ export function translate<K extends TranslationKey>(
 
 /**
  * For a code whose values arrive at runtime, a module's `CodedError`:
- * unchecked against `TranslationValues`, so a value the module forgot renders
- * ICU's fallback instead of failing the build.
+ * unchecked against `TranslationValues`, so a value the module forgot serves
+ * the English source instead of failing the build, and warns with the code
+ * and locale so the gap is found. `logger` is optional so tests can capture it.
  */
 export function translateCode(
   key: TranslationKey,
   locale: Locale,
-  values?: CodedErrorValues
+  values?: CodedErrorValues,
+  logger: Logger = defaultLogger
 ): string {
   try {
     // `never`: the catalogue has no rich-text tags, so no part is anything but
     // a string. Parts only come back as an array when a tag splits the message.
     const parts = formatterFor(key, locale).format<never>(values);
     return typeof parts === "string" ? parts : parts.join("");
-  } catch {
+  } catch (err) {
+    logger.warn({ code: key, err, locale }, API.LOG_MESSAGE.TRANSLATION_FAILED);
     return TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][key];
   }
 }

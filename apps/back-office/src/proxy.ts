@@ -1,6 +1,6 @@
 import { withSessionRefresh } from "@allonfire/auth/features/next/utils/with-session-refresh";
 import { withSignInGate } from "@allonfire/auth/features/next/utils/with-sign-in-gate";
-import { AOFCreateMiddleware } from "@allonfire/core/features/next/i18n/aof-create-middleware";
+import { AOFCreateMiddleware } from "@allonfire/core/features/next/i18n/utils/aof-create-middleware";
 import { routing } from "./features/i18n/routing";
 import { SECTIONS } from "./features/navigation/constants/sections";
 

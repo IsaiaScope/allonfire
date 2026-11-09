@@ -1,0 +1,88 @@
+{
+  "id": "100",
+  "name": "AllOnFire — Notifications",
+  "description": null,
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 304]
+    },
+    {
+      "parameters": {
+        "jsCode": "const execution = $input.first().json.execution || {};\nconst workflow = $input.first().json.workflow || {};\nconst lastNode = execution.lastNodeExecuted || 'unknown';\nconst error = execution.error?.message || 'Unknown error';\nconst mode = execution.mode || 'unknown';\n\nreturn [{\n  json: {\n    text: `🔥 <b>Workflow Crashed</b>\\n\\n📋 <b>${workflow.name || 'Unknown'}</b>\\n💥 Node: <code>${lastNode}</code>\\n❌ ${error}\\n🔄 Mode: ${mode}\\n📅 ${new Date().toISOString()}`\n  }\n}];"
+      },
+      "id": "format-error",
+      "name": "Format Error Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [304, 304]
+    },
+    {
+      "parameters": {
+        "chatId": "<telegram-chat-id>",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-alert",
+      "name": "Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [608, 304],
+      "webhookId": "<webhook-id>",
+      "credentials": {
+        "telegramApi": {
+          "id": "<credential-id>",
+          "name": "allonfire_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 🔥 SHARED ERROR HANDLER\n\nTriggered by n8n when ANY workflow with this set as its\nerrorWorkflow fails with an unhandled exception.\nReusable across all workflows in this instance.\nSends crash details to Telegram.",
+        "height": 264,
+        "width": 340
+      },
+      "id": "sticky-info",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-112, 32]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error Message": {
+      "main": [
+        [
+          {
+            "node": "Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}

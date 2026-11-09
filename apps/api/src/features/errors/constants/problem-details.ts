@@ -6,7 +6,7 @@ import {
   errorCodeSchema,
 } from "../../../shared/constants/error";
 
-export const errorDetailSchema = z.object({
+const errorDetailSchema = z.object({
   message: z.string(),
   path: z.string(),
 });
@@ -29,6 +29,7 @@ export const errorDetailSchema = z.object({
  * `requestId` and `errors` are extension members, which §3.2 allows. `errors`
  * rather than `details` because `detail` singular is already a standard member
  * and the two would read as the same thing.
+ * @internal
  */
 export const problemDetailsSchema = z.object({
   code: errorCodeSchema,

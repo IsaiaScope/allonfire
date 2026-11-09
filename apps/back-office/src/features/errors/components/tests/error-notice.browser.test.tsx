@@ -1,7 +1,7 @@
 // @module-tag integration
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { createTranslator } from "next-intl";
 import { render } from "vitest-browser-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";

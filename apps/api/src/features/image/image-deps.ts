@@ -11,7 +11,7 @@ import {
   copyImageObject,
   deleteImageObjects,
   putImageObject,
-} from "@allonfire/storage/features/image/objects/image-objects";
+} from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 
 /** The Image module on the real stack: Prisma, sharp and MinIO. */

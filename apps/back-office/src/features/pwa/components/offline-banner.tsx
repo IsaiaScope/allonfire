@@ -1,7 +1,10 @@
 "use client";
 
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
-import { AOF_TOAST, useAOFToast } from "@allonfire/ui/lib/use-aof-toast";
+import {
+  AOF_TOAST,
+  useAOFToast,
+} from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { useOffline } from "next/offline";
 import { useTranslations } from "next-intl";
 import { OfflineCard } from "./offline-card";

@@ -1,0 +1,19 @@
+# Every job's toolchain, written once: pnpm from package.json's
+# `packageManager`, Node from package.json with the pnpm store cached, and the
+# locked dependencies. The job checks the repo out first (`fetch-depth: 0`
+# where it diffs), since GitHub reads this file from that checkout.
+name: Setup
+description: pnpm, Node.js and the locked dependencies
+runs:
+  using: composite
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v6
+    - name: Setup Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version-file: package.json
+        cache: pnpm
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

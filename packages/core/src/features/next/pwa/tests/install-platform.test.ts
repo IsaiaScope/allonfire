@@ -1,6 +1,6 @@
 // @module-tag unit
 import { PWA } from "../constants/pwa";
-import { installPlatform } from "../install-platform";
+import { installPlatform } from "../utils/install-platform";
 
 const UA = {
   ANDROID_CHROME:

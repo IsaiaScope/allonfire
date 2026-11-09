@@ -19,6 +19,7 @@
       "emailRequired": "Enter your email.",
       "passwordRequired": "Enter your password."
     },
+    "forgot": "Forgot password?",
     "language": "Language",
     "notice": "Authorized users only. Sign-up is closed.",
     "password": "Password",
@@ -26,7 +27,55 @@
     "showPassword": "Show password",
     "submit": "Sign in",
     "submitting": "Signing in…",
-    "theme": "Switch theme"
+    "theme": "Switch theme",
+    "note": {
+      "unverified": "Check your inbox: we sent you a link to verify your email. Open it, then sign in."
+    }
+  },
+  "EmailVerified": {
+    "failed": "That link no longer works. Sign in to get a new one.",
+    "signIn": "Go to Sign in",
+    "title": "Email verification",
+    "verified": "Your email is verified. You can sign in now."
+  },
+  "ForgotPassword": {
+    "back": "Back to Sign in",
+    "email": "Email",
+    "error": {
+      "invalid": "Enter a valid email address.",
+      "rateLimited": "Too many requests. Try again later.",
+      "unavailable": "Sending links is not available right now. Try again later."
+    },
+    "field": {
+      "emailInvalid": "Enter a valid email address.",
+      "emailRequired": "Enter your email."
+    },
+    "intro": "Enter your email and we will send you a link to choose a new password.",
+    "submit": "Send link",
+    "submitting": "Sending…",
+    "title": "Reset your password",
+    "note": {
+      "sent": "If an account uses this address, a link to reset its password is on its way. Check your inbox."
+    }
+  },
+  "ResetPassword": {
+    "askAgain": "Ask for a new link",
+    "confirmPassword": "Confirm new password",
+    "error": {
+      "invalid": "The passwords must match and meet every rule.",
+      "invalidToken": "This link no longer works. Ask for a new one.",
+      "rateLimited": "Too many attempts. Try again later.",
+      "unavailable": "Saving the password is not available now. Try again later."
+    },
+    "field": {
+      "passwordMismatch": "The passwords differ",
+      "passwordWeak": "Not every rule below is met yet"
+    },
+    "password": "New password",
+    "showPassword": "Show password",
+    "submit": "Save password",
+    "submitting": "Saving…",
+    "title": "Choose a new password"
   },
   "Navigation": {
     "account": "Account",
@@ -34,12 +83,14 @@
     "breadcrumb": "Breadcrumb",
     "home": "Home",
     "language": "Language",
+    "mail": "Mail",
     "menu": "Main menu",
     "role": {
       "ADMIN": "Admin",
       "USER": "User",
       "VIEWER": "Viewer"
     },
+    "services": "Services",
     "signOut": "Sign out",
     "storage": "Storage",
     "switchApp": "Switch App",
@@ -48,6 +99,75 @@
     "themeLight": "Light",
     "toggleMenu": "Collapse or expand the menu",
     "users": "Users"
+  },
+  "Services": {
+    "empty": {
+      "title": "No Services yet",
+      "description": "Services appear here once the database holds them."
+    },
+    "enabled": {
+      "label": "Provider",
+      "on": "Enabled",
+      "off": "Disabled"
+    },
+    "error": {
+      "changed": "Someone changed this provider. Reload and try again.",
+      "failed": "Saving did not work. Try again.",
+      "incomplete": "An enabled provider needs a sender address.",
+      "invalid": "Check the highlighted fields.",
+      "refused": "Your session can no longer change Services. Sign in again.",
+      "removed": "This provider was removed. Reload the page."
+    },
+    "field": {
+      "dailyLimit": "Daily limit",
+      "fromAddress": "Sender address",
+      "monthlyLimit": "Monthly limit",
+      "name": "Name"
+    },
+    "fieldError": {
+      "email": "Enter a valid email address.",
+      "limit": "Enter a whole number, 0 or more.",
+      "limitTooHigh": "That limit is too high.",
+      "nameTooLong": "That name is too long.",
+      "required": "Fill this in."
+    },
+    "key": {
+      "missing": "No key in the environment"
+    },
+    "save": "Save",
+    "saved": "Provider saved",
+    "saving": "Saving…",
+    "service": {
+      "MAIL": "Mail"
+    },
+    "serviceEnabled": {
+      "failed": "The Service did not change. Try again.",
+      "label": "Service",
+      "on": "On",
+      "off": "Off"
+    },
+    "slot": "Slot {slot}",
+    "test": {
+      "button": "Send test email",
+      "accepted": "Accepted, not yet delivered: check your inbox.",
+      "rejected": "The provider refused it. Check the key and the settings.",
+      "uncertain": "Unknown whether it left: it counts, and was not sent again.",
+      "unavailable": "Not sent: Service off, no key, or quota full.",
+      "rateLimited": "Too many emails to this address. Try again later.",
+      "removed": "This provider was removed. Reload the page.",
+      "failed": "The test could not be sent. Try again.",
+      "sending": "Sending…"
+    },
+    "usage": {
+      "day": "Today: {used} of {limit}",
+      "month": "Last 31 days: {used} of {limit}",
+      "monthNone": "Last 31 days: {used}, no limit",
+      "today": "Today",
+      "lastMonth": "Last 31 days",
+      "of": "of {limit}",
+      "noLimit": "no limit",
+      "unread": "{name}: usage unavailable."
+    }
   },
   "Storage": {
     "empty": {
@@ -71,6 +191,7 @@
       "title": "The Users could not be loaded"
     },
     "filter": {
+      "add": "Add",
       "app": "App",
       "button": "Filters",
       "empty": "No match",
@@ -127,36 +248,15 @@
       "description": "Each User leaves every App and is signed out everywhere. This cannot be undone.",
       "done": "{count, plural, one {# User deleted} other {# Users deleted}}",
       "failed": "The Users could not be deleted.",
-      "gone": "{count, plural, one {This User had already been deleted} other {These Users had already been deleted}}",
-      "partly": "{deleted, plural, one {# User deleted} other {# Users deleted}}; {gone, plural, one {# had already been deleted} other {# had already been deleted}}",
+      "gone": "{count, plural, one {User already deleted} other {Users already deleted}}",
+      "partly": "{deleted, plural, one {# User deleted} other {# Users deleted}}, {gone} already gone",
       "select": "Select {email}",
       "selectAll": "Select every User on this page",
       "title": "{count, plural, one {Delete # User?} other {Delete # Users?}}"
     },
     "add": {
-      "avatar": {
-        "cancel": "Cancel",
-        "change": "Change",
-        "choose": "Select a picture",
-        "cropAgain": "Crop again",
-        "current": "Current picture",
-        "dialogTitle": "Crop the picture",
-        "drop": "Drop your picture here",
-        "failed": "User added; the picture was not saved.",
-        "formats": "JPEG, PNG, WebP, AVIF or HEIC, up to {size} MB",
-        "label": "Picture",
-        "preparing": "Preparing the picture…",
-        "remove": "Remove the picture",
-        "tooLarge": "That picture is too large",
-        "unreadable": "That picture could not be read. Try another one.",
-        "use": "Use",
-        "wrongType": "That file is not a picture. Try a JPEG, PNG, WebP, AVIF or HEIC.",
-        "zoomIn": "Zoom in",
-        "zoomOut": "Zoom out"
-      },
+      "avatarFailed": "User added; the picture was not saved.",
       "button": "Add",
-      "cancel": "Cancel",
-      "confirmPassword": "Confirm password",
       "email": "Email",
       "error": {
         "failed": "The User could not be added. Try again.",
@@ -166,7 +266,35 @@
       },
       "field": {
         "emailInvalid": "Enter a valid email",
-        "emailRequired": "Enter an email",
+        "emailRequired": "Enter an email"
+      },
+      "submit": "Add User",
+      "submitting": "Adding…",
+      "title": "Add a User"
+    },
+    "form": {
+      "avatar": {
+        "cancel": "Cancel",
+        "change": "Change",
+        "choose": "Select a picture",
+        "cropAgain": "Crop again",
+        "current": "Current picture",
+        "dialogTitle": "Crop the picture",
+        "drop": "Drop your picture here",
+        "formats": "JPEG, PNG, WebP, AVIF or HEIC, up to {size} MB",
+        "label": "Picture",
+        "preparing": "Preparing the picture…",
+        "remove": "Remove the picture",
+        "tooLarge": "That picture is too large",
+        "unreadable": "That picture could not be read. Try another one.",
+        "use": "Use",
+        "wrongType": "Not a picture. Try JPEG, PNG, WebP, AVIF or HEIC.",
+        "zoomIn": "Zoom in",
+        "zoomOut": "Zoom out"
+      },
+      "cancel": "Cancel",
+      "confirmPassword": "Confirm password",
+      "field": {
         "nameRequired": "Enter a name",
         "passwordMismatch": "The passwords differ",
         "passwordWeak": "Not every rule below is met yet"
@@ -176,19 +304,10 @@
       "password": "Password",
       "role": "Role in {app}",
       "roles": "Roles",
-      "rule": {
-        "length": "At least {min} characters",
-        "lowercase": "A lowercase letter",
-        "match": "Both passwords match",
-        "number": "A number",
-        "symbol": "A symbol",
-        "uppercase": "An uppercase letter"
-      },
-      "rules": "The password needs",
       "showPassword": "Show password",
-      "submit": "Add User",
-      "submitting": "Adding…",
-      "title": "Add a User"
+      "verification": "Email verification",
+      "verified": "Verified",
+      "mustVerify": "Must verify"
     },
     "open": "Open {email}",
     "copy": {
@@ -197,5 +316,17 @@
       "label": "Copy {email}",
       "tip": "Copy email"
     }
+  },
+  "Password": {
+    "rule": {
+      "length": "At least {min} characters",
+      "lowercase": "A lowercase letter",
+      "match": "Both passwords match",
+      "noSpaces": "No spaces",
+      "number": "A number",
+      "symbol": "A symbol",
+      "uppercase": "An uppercase letter"
+    },
+    "rules": "The password needs"
   }
 }

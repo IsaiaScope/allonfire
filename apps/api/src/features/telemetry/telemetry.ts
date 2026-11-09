@@ -15,39 +15,33 @@
  * compression, `OTEL_SDK_DISABLED`); none are set by this project.
  *
  * Export failures (OpenObserve down, wrong credentials) reach the API log as
- * warnings through `pinoDiagLogger`, and never throw into a request.
+ * warnings through core's `pinoDiagLogger`, and never throw into a request.
  */
-import { type DiagLogger, DiagLogLevel, diag } from "@opentelemetry/api";
+
+import { TELEMETRY as CORE_TELEMETRY } from "@allonfire/core/features/telemetry/constants/telemetry";
+import { pinoDiagLogger } from "@allonfire/core/features/telemetry/diag-logger";
+import {
+  otlpExporterOptions,
+  otlpTargetFrom,
+  telemetryResourceAttributes,
+} from "@allonfire/core/features/telemetry/otlp";
+import { DiagLogLevel, diag } from "@opentelemetry/api";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
-import type { Logger } from "pino";
+import pkg from "../../../package.json" with { type: "json" };
 import { env } from "../../environment/environment";
 import { logger as defaultLogger } from "../logger/logger";
 import { TELEMETRY } from "./constants/telemetry";
-import { otlpExporterOptions, telemetryResourceAttributes } from "./resource";
 
 let sdk: NodeSDK | undefined;
 
-/**
- * OpenTelemetry reports its own failures through `diag`, which discards them
- * until a logger is installed. Without this, a wrong password or a down
- * collector means empty dashboards and no clue why.
- */
-export const pinoDiagLogger = (logger: Logger): DiagLogger => ({
-  debug: (message, ...args) => logger.debug({ args }, message),
-  error: (message, ...args) => logger.error({ args }, message),
-  info: (message, ...args) => logger.info({ args }, message),
-  verbose: (message, ...args) => logger.trace({ args }, message),
-  warn: (message, ...args) => logger.warn({ args }, message),
-});
-
 export function startTelemetry(): void {
-  const endpoint = env.TELEMETRY_ENDPOINT;
-  if (sdk || !endpoint) {
+  const target = otlpTargetFrom(env);
+  if (sdk || !target) {
     return;
   }
   diag.setLogger(pinoDiagLogger(defaultLogger), DiagLogLevel.WARN);
@@ -66,14 +60,16 @@ export function startTelemetry(): void {
     metricReaders: [
       new PeriodicExportingMetricReader({
         exporter: new OTLPMetricExporter(
-          otlpExporterOptions(endpoint, TELEMETRY.PATH.METRICS)
+          otlpExporterOptions(target, CORE_TELEMETRY.PATH.METRICS)
         ),
       }),
     ],
-    resource: resourceFromAttributes(telemetryResourceAttributes()),
-    serviceName: env.TELEMETRY_SERVICE_NAME,
+    resource: resourceFromAttributes(
+      telemetryResourceAttributes(target, pkg.version)
+    ),
+    serviceName: target.serviceName,
     traceExporter: new OTLPTraceExporter(
-      otlpExporterOptions(endpoint, TELEMETRY.PATH.TRACES)
+      otlpExporterOptions(target, CORE_TELEMETRY.PATH.TRACES)
     ),
   });
   sdk.start();

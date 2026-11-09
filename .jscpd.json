@@ -1,8 +1,10 @@
 {
-  "path": ["apps/api", "apps/back-office", "packages"],
-  "format": ["typescript", "tsx", "javascript"],
+  "path": ["apps/api", "apps/back-office", "packages", ".github", "docker"],
+  "format": ["typescript", "tsx", "javascript", "yaml"],
   "minTokens": 60,
   "minLines": 6,
+  "absolute": true,
+  "exitCode": 1,
   "reporters": ["console", "json"],
   "output": ".jscpd",
   "gitignore": true,

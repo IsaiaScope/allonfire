@@ -1,7 +1,7 @@
 // @module-tag unit
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import {
   buildChangeset,
-  CHANGESET_NAME,
   isEmptySql,
   nextChangesetNumber,
 } from "../changeset-file";
@@ -53,14 +53,14 @@ describe("nextChangesetNumber", () => {
   });
 });
 
-describe("CHANGESET_NAME", () => {
+describe("PATTERN.CHANGESET.NAME", () => {
   it("accepts kebab case", () => {
-    expect(CHANGESET_NAME.test("add-photo-alt")).toBe(true);
+    expect(PATTERN.CHANGESET.NAME.test("add-photo-alt")).toBe(true);
   });
 
   it("rejects anything else", () => {
     for (const name of ["", "Add", "add_alt", "-add", "add-", "a b"]) {
-      expect(CHANGESET_NAME.test(name)).toBe(false);
+      expect(PATTERN.CHANGESET.NAME.test(name)).toBe(false);
     }
   });
 });

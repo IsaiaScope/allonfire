@@ -2,13 +2,13 @@
 
 import { I18N } from "../../../i18n/constants/locales";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFDefineRouting } from "../../i18n/aof-define-routing";
+import { AOFDefineRouting } from "../../i18n/utils/aof-define-routing";
 import {
   AOFAlternates,
   AOFRobots,
   AOFSitemapEntries,
   localizedPath,
-} from "../aof-indexed";
+} from "../utils/aof-indexed";
 
 const routing = AOFDefineRouting(I18N.BASE_LANGUAGES);
 const ORIGIN = "https://example.test";

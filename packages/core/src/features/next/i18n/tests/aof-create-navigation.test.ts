@@ -1,7 +1,7 @@
 // @module-tag unit
 import { I18N } from "../../../i18n/constants/locales";
-import { AOFCreateNavigation } from "../aof-create-navigation";
-import { AOFDefineRouting } from "../aof-define-routing";
+import { AOFCreateNavigation } from "../utils/aof-create-navigation";
+import { AOFDefineRouting } from "../utils/aof-define-routing";
 
 const navigation = AOFCreateNavigation(AOFDefineRouting(I18N.BASE_LANGUAGES));
 const [FIRST, SECOND] = I18N.BASE_LANGUAGES;

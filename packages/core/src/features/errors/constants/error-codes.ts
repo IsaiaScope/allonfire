@@ -13,6 +13,8 @@ export const ERROR = {
     NOT_FOUND: "NOT_FOUND",
     PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
     RATE_LIMITED: "RATE_LIMITED",
+    /** A save carried an older Version than the resource holds now. */
+    RESOURCE_CHANGED: "RESOURCE_CHANGED",
     TIMEOUT: "TIMEOUT",
     UNAUTHORIZED: "UNAUTHORIZED",
     VALIDATION_FAILED: "VALIDATION_FAILED",

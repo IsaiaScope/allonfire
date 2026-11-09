@@ -4,20 +4,35 @@ import {
   membershipsIn,
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
+import { json } from "@allonfire/auth/shared/tests/test-host";
 import type { AuthSession } from "@allonfire/auth/shared/types/auth";
-import { stringifyJson } from "@allonfire/core/shared/utils/json";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectValues } from "@allonfire/core/shared/utils/object";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import {
   type ImageChange,
-  type ImageLinksById,
   ImageNotFoundError,
+  type ImagePlacementsById,
 } from "@allonfire/database/features/image/image.service";
 import { STORAGE } from "../../../../shared/constants/paths";
 import { imageListBodySchema } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
-import { ALT, imageRecord, PREPARED } from "./stub-image-deps";
-import { json, testHost } from "./test-host";
+import {
+  ALT,
+  imageHost,
+  imageRecord,
+  PREPARED,
+  upload,
+  VERSION,
+} from "./stub-image-deps";
+
+const { CREATED, FORBIDDEN, NOT_FOUND, NO_CONTENT, OK, UNAUTHORIZED } =
+  HTTP.STATUS;
+
+/** One Image's path, as the module mounts it. */
+const onePath = (id: string) =>
+  `${STORAGE.PATH.IMAGES}${fillPath(STORAGE.PATH.ONE, { id })}`;
 
 /**
  * The recap agreed for ADR 0020 and ADR 0027, one test per row. P is public,
@@ -78,7 +93,7 @@ const listImages: ImageDeps["listImages"] = async ({ app, enterable }) =>
   );
 
 /** The placements a write locks, as the database finds them in P, Q and R. */
-const linksOf = (ids: readonly string[]): Promise<ImageLinksById> => {
+const placementsOf = (ids: readonly string[]): Promise<ImagePlacementsById> => {
   const missing = ids.filter((id) => !IMAGES.some((image) => image.id === id));
   if (missing.length > 0) {
     return Promise.reject(new ImageNotFoundError(missing));
@@ -118,37 +133,29 @@ const host = (session: AuthSession | null) => {
       changes.map(({ id }) => imageRecord({ id }))
     ),
   };
-  const app = testHost(session, {
+  const app = imageHost(session, {
     ...writes,
     // As the database runs a delete: the check on the placements, then the rows.
     deleteImages: async (ids, authorise) => {
-      authorise(await linksOf(ids));
+      authorise(await placementsOf(ids));
       return writes.deleteImages(ids);
     },
     getImage: async (id) => IMAGES.find((image) => image.id === id) ?? null,
     listImages,
     prepare: async () => PREPARED,
     removeImagesFromApp: async (ids, fromApp, authorise) => {
-      authorise(await linksOf(ids));
+      authorise(await placementsOf(ids));
       return writes.removeImagesFromApp(ids, fromApp);
     },
     // As the database runs an update: the changes worked out on the placements.
-    updateImages: async (ids, resolve) =>
-      writes.updateImages(resolve(await linksOf(ids))),
+    updateImages: async (opened, resolve) =>
+      writes.updateImages(
+        resolve(await placementsOf(opened.map(({ id }) => id)))
+      ),
   });
   const wrote = () =>
     objectValues(writes).some((write) => write.mock.calls.length > 0);
   return { app, writes, wrote };
-};
-
-const uploadToLauraAndBackOffice = () => {
-  const form = new FormData();
-  form.append("file", new File([new Uint8Array(10)], "a.jpg"));
-  form.append(
-    "meta",
-    stringifyJson([{ alt: ALT, apps: [App.LAURA, App.BACK_OFFICE] }])
-  );
-  return { body: form, method: "POST" };
 };
 
 const listed = async (session: AuthSession | null, query: string) => {
@@ -185,16 +192,24 @@ describe("recap: reads", () => {
   });
 
   it.each([
-    ["a visitor", visitor, 404, 404],
-    ["Giulia", giulia, 200, 404],
-    ["Mario", mario, 200, 404],
-    ["an Admin", admin, 200, 200],
+    ["a visitor", visitor, NOT_FOUND, NOT_FOUND],
+    ["Giulia", giulia, OK, NOT_FOUND],
+    ["Mario", mario, OK, NOT_FOUND],
+    ["an Admin", admin, OK, OK],
   ])("GET {Q} / GET {R} answer %s %i / %i", async (_, session, q, r) => {
     const { app } = host(session);
-    expect((await app.request(`${STORAGE.PATH.IMAGES}/Q`)).status).toBe(q);
-    expect((await app.request(`${STORAGE.PATH.IMAGES}/R`)).status).toBe(r);
+    expect((await app.request(onePath("Q"))).status).toBe(q);
+    expect((await app.request(onePath("R"))).status).toBe(r);
   });
 });
+
+/** A PATCH of one change, on the Version every Image here holds. */
+const patchOne = (change: {
+  id: string;
+  access?: ImageAccess;
+  alt?: typeof ALT;
+  apps?: App[];
+}) => json(HTTP.METHOD.PATCH, [{ ...change, version: VERSION }]);
 
 describe("recap: writes", () => {
   /** Each write row: its request, and what a visitor, Giulia, Mario and an Admin get. */
@@ -205,53 +220,53 @@ describe("recap: writes", () => {
   ][] = [
     [
       "Upload to Laura + Back Office",
-      uploadToLauraAndBackOffice,
-      [401, 403, 403, 201],
+      () => upload(1, { apps: [App.LAURA, App.BACK_OFFICE] }),
+      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, CREATED],
     ],
     [
       "PATCH Q make public",
-      () => json("PATCH", [{ access: ImageAccess.PUBLIC, id: "Q" }]),
-      [401, 403, 200, 200],
+      () => patchOne({ access: ImageAccess.PUBLIC, id: "Q" }),
+      [UNAUTHORIZED, FORBIDDEN, OK, OK],
     ],
     [
       "PATCH P make private",
-      () => json("PATCH", [{ access: ImageAccess.PRIVATE, id: "P" }]),
-      [401, 403, 403, 200],
+      () => patchOne({ access: ImageAccess.PRIVATE, id: "P" }),
+      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, OK],
     ],
     [
       "PATCH P apps: [BACK_OFFICE]",
-      () => json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }]),
-      [401, 403, 200, 200],
+      () => patchOne({ apps: [App.BACK_OFFICE], id: "P" }),
+      [UNAUTHORIZED, FORBIDDEN, OK, OK],
     ],
     [
       "PATCH P alt",
-      () => json("PATCH", [{ alt: ALT, id: "P" }]),
-      [401, 403, 403, 200],
+      () => patchOne({ alt: ALT, id: "P" }),
+      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, OK],
     ],
     [
       "PATCH R",
-      () => json("PATCH", [{ alt: ALT, id: "R" }]),
-      [401, 404, 404, 200],
+      () => patchOne({ alt: ALT, id: "R" }),
+      [UNAUTHORIZED, NOT_FOUND, NOT_FOUND, OK],
     ],
     [
       "DELETE { [P], LAURA }",
-      () => json("DELETE", { app: App.LAURA, ids: ["P"] }),
-      [401, 403, 204, 204],
+      () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["P"] }),
+      [UNAUTHORIZED, FORBIDDEN, NO_CONTENT, NO_CONTENT],
     ],
     [
       "DELETE { [Q], LAURA }",
-      () => json("DELETE", { app: App.LAURA, ids: ["Q"] }),
-      [401, 403, 204, 204],
+      () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["Q"] }),
+      [UNAUTHORIZED, FORBIDDEN, NO_CONTENT, NO_CONTENT],
     ],
     [
       "DELETE { [P] }",
-      () => json("DELETE", { ids: ["P"] }),
-      [401, 403, 403, 204],
+      () => json(HTTP.METHOD.DELETE, { ids: ["P"] }),
+      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, NO_CONTENT],
     ],
     [
       "DELETE { [Q, R] }",
-      () => json("DELETE", { ids: ["Q", "R"] }),
-      [401, 404, 404, 204],
+      () => json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] }),
+      [UNAUTHORIZED, NOT_FOUND, NOT_FOUND, NO_CONTENT],
     ],
   ];
 
@@ -273,7 +288,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("PATCH", [{ apps: [App.BACK_OFFICE], id: "P" }])
+      patchOne({ apps: [App.BACK_OFFICE], id: "P" })
     );
     expect(done.updateImages).toHaveBeenCalledWith([
       { id: "P", remove: [App.LAURA] },
@@ -284,7 +299,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["P"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["P"] })
     );
     expect(done.removeImagesFromApp).toHaveBeenCalledWith(["P"], App.LAURA);
     expect(done.deleteImages).not.toHaveBeenCalled();
@@ -295,7 +310,7 @@ describe("recap: writes", () => {
     const { app, writes: done } = host(mario);
     await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { app: App.LAURA, ids: ["Q"] })
+      json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["Q"] })
     );
     expect(done.deleteObjects).toHaveBeenCalledWith(["q.avif"]);
   });
@@ -304,9 +319,9 @@ describe("recap: writes", () => {
     const { app, wrote } = host(mario);
     const res = await app.request(
       STORAGE.PATH.IMAGES,
-      json("DELETE", { ids: ["Q", "R"] })
+      json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] })
     );
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
     expect(wrote()).toBe(false);
   });
 });

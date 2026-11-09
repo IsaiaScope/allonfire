@@ -1,30 +1,30 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { visitorHeaders } from "@allonfire/core/features/next/api/forwarded-for";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
-import { createApiAuthClient } from "./auth-client";
+import type { AppProxy } from "../types/proxy";
 import { entersApp } from "./enters-app";
-
-type Proxy = (request: NextRequest) => Promise<Response> | Response;
+import { sessionFromRequest } from "./session-from-request";
 
 /**
  * Whether the visitor's Session, asked of the API, is one this App lets in:
  * the real check, never the cookie alone, since a cookie the API refuses
- * would bounce between Home and Sign in. `false` when the API cannot say.
+ * would bounce between Home and Sign in. `false` when the API cannot say
+ * (logged).
  */
 const entersAppNow = async (request: NextRequest) => {
   try {
-    const { data } = await createApiAuthClient().getSession({
-      fetchOptions: {
-        headers: visitorHeaders(request.cookies.toString(), request.headers),
-      },
-    });
+    const { data } = await sessionFromRequest(request);
     return entersApp(data);
-  } catch {
+  } catch (err) {
+    serverLogger().error({ err }, AUTH.LOG_MESSAGE.SESSION_READ_FAILED);
     return false;
   }
 };
+
+/** The pages someone the App already lets in is sent Home from. */
+const SIGNED_OUT_PAGES = [AUTH.PAGE.SIGN_IN, AUTH.PAGE.FORGOT_PASSWORD];
 
 /**
  * Wraps an App's proxy so a visit with no Session cookie to one of its
@@ -34,15 +34,17 @@ const entersAppNow = async (request: NextRequest) => {
  * otherwise stream a 200 shell before its `withAppSession` check redirects.
  * Only an optimistic check: the page's own
  * `withAppSession` still decides, so a cookie the API refuses is sent on
- * from there. The other way round, a visit to Sign in by someone the App
- * already lets in goes Home (307), asked of the API (`entersAppNow`): only
- * a visit carrying a Session cookie asks, so a signed-out one costs nothing.
+ * from there. The other way round, a visit to Sign in or Forgot password by
+ * someone the App already lets in goes Home (307), asked of the API
+ * (`entersAppNow`): only a visit carrying a Session cookie asks, so a
+ * signed-out one costs nothing. Reset password always renders: its link may
+ * be for an account other than the one signed in.
  * Every other path passes, so an unknown page still 404s.
  */
 export const withSignInGate = (
-  proxy: Proxy,
+  proxy: AppProxy,
   { locales, pages }: { locales: readonly string[]; pages: readonly string[] }
-): Proxy => {
+): AppProxy => {
   // Each page with and without a language in front (`/`, `/it`), to Sign in
   // in that same form; next-intl picks the language of an unprefixed one.
   const signInFor = new Map<string, string>(
@@ -58,15 +60,18 @@ export const withSignInGate = (
   const signInUnder = [...signInFor].filter(
     ([page]) => page !== METADATA.PATH.ROOT && !locales.includes(page.slice(1))
   );
-  // Sign in, in each language form, and the Home it sends away to.
-  const homeFor = new Map<string, string>([
-    // Home with no language in front is the root (`AUTH.PAGE.HOME` is `""`).
-    [AUTH.PAGE.SIGN_IN, METADATA.PATH.ROOT],
-    ...locales.map((locale): [string, string] => [
-      `/${locale}${AUTH.PAGE.SIGN_IN}`,
-      `/${locale}${AUTH.PAGE.HOME}`,
-    ]),
-  ]);
+  // Sign in and Forgot password, in each language form, and the Home they
+  // send away to. Never Reset password: its link may be for another account.
+  const homeFor = new Map<string, string>(
+    SIGNED_OUT_PAGES.flatMap((page): [string, string][] => [
+      // Home with no language in front is the root (`AUTH.PAGE.HOME` is `""`).
+      [page, METADATA.PATH.ROOT],
+      ...locales.map((locale): [string, string] => [
+        `/${locale}${page}`,
+        `/${locale}${AUTH.PAGE.HOME}`,
+      ]),
+    ])
+  );
   const signInOf = (pathname: string) =>
     signInFor.get(pathname) ??
     signInUnder.find(([page]) => pathname.startsWith(`${page}/`))?.[1];

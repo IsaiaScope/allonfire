@@ -3,12 +3,10 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { isStaleTestRun } from "@allonfire/config/tests/run/test-run";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
-import {
-  buildingName,
-  TEMPLATE_SOURCES,
-  templateFingerprint,
-} from "../template";
+import { TEST_DATABASE } from "../constants/test-database";
+import { buildingName, templateFingerprint } from "../utils/template";
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
@@ -48,7 +46,7 @@ it("ignores dotfiles and tests, which build nothing", () => {
 });
 
 it("builds from the changelog, the Fixtures and the db-migrate image", () => {
-  expect(TEMPLATE_SOURCES).toEqual([
+  expect(TEST_DATABASE.TEMPLATE.SOURCES).toEqual([
     "changelog",
     "liquibase",
     "src/features/seed",
@@ -57,7 +55,7 @@ it("builds from the changelog, the Fixtures and the db-migrate image", () => {
 
 it("names a template being built after the process building it, so a dead build is dropped at once", () => {
   const now = new Date();
-  const epoch = Math.floor(now.getTime() / 1000);
+  const epoch = Math.floor(now.getTime() / UNIT.MS_PER_SECOND);
   const name = buildingName("74ef91", epoch, 4242);
   expect(isStaleTestRun(name, now, (pid) => pid === 4242)).toBe(false);
   expect(isStaleTestRun(name, now, () => false)).toBe(true);

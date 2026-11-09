@@ -1,13 +1,14 @@
 // @module-tag unit
+import { IMAGE } from "../../image/constants/image";
 import {
   deleteImageObjects,
   putImageObject,
-} from "../../image/objects/image-objects";
+} from "../../image/objects/utils/image-objects";
 import { deleteAvatarsWith, saveAvatar } from "../objects/avatar-objects";
 import { prepareAvatar } from "../prepare-avatar";
 import { avatarKey } from "../utils/avatar-key";
 
-vi.mock("../../image/objects/image-objects", () => ({
+vi.mock("../../image/objects/utils/image-objects", () => ({
   deleteImageObjects: vi.fn(() => Promise.resolve()),
   putImageObject: vi.fn(() => Promise.resolve()),
 }));
@@ -19,7 +20,7 @@ vi.mock("../prepare-avatar", () => ({
 }));
 
 const PROVIDER_PICTURE = "https://lh3.googleusercontent.com/a/x";
-const BLUR = "data:image/webp;base64,AAAA";
+const BLUR = `${IMAGE.BLUR.DATA_URL_PREFIX}AAAA`;
 const AVATAR_OF_U1 = /^avatar-u1-[0-9a-f-]{36}\.avif$/;
 
 describe("saveAvatar", () => {

@@ -1,7 +1,7 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { E2E_TAG } from "@allonfire/config/tests/e2e/run";
+import { E2E } from "@allonfire/config/tests/e2e/run";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";
@@ -15,7 +15,7 @@ const IT_SIGN_IN = `/it${AUTH.PAGE.SIGN_IN}`;
 /** Refused by the API: retried once back online, a sign-in that changes nothing. */
 const WRONG_PASSWORD = "wrong-password-1";
 /** Playwright's WebKit fails a reload while offline with a worker active ("internal error"). */
-const WORKER_OFFLINE = { tag: E2E_TAG.CHROMIUM_ONLY };
+const WORKER_OFFLINE = { tag: E2E.TAG.CHROMIUM_ONLY };
 
 /** Loads a page and waits until the worker controls it, its precache filled. */
 const withWorker = async (page: Page, path: string) => {

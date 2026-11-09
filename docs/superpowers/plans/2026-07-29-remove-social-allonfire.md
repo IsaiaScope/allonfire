@@ -570,7 +570,7 @@ Expected: `laura=200`. Then open the site, log in, and load the gallery and the 
 
 - [ ] **Step 1: Delete the DNS record (manual — the user does this)**
 
-In Cloudflare, open zone `isaiariva.com` → **DNS** → find the `social` record pointing to `188.245.174.30` → delete it.
+In Cloudflare, open zone `isaiariva.com` → **DNS** → find the `social` record pointing to `<vps-ip>` → delete it.
 
 It is a DNS-only record (not proxied — `dig` returns the origin IP directly), so deletion takes effect as soon as the TTL expires. Leave `laura`, `minio`, `www`, and the apex records alone.
 
@@ -617,7 +617,7 @@ Expected: no output from `git status` (workflows unmodified) and the n8n service
 | Tasks 2-5 | Local commits — `git revert` the offending commit and re-run `pnpm build` |
 | Task 6 redeploy breaks Laura | Revert the Task 2-5 commits and redeploy. The schema is still intact at this point, so Laura returns to a fully working state |
 | Task 7 drops something needed | `ssh main-vps 'PG=$(docker ps --filter name=dokploy-postgres --format "{{.Names}}" \| head -1); docker exec -i $PG psql -U $(docker exec $PG printenv POSTGRES_USER) -d allonfire' < ~/allonfire-2026-07-29.sql` |
-| Task 8 DNS deleted by mistake | Recreate an A record `social` → `188.245.174.30`, DNS-only (grey cloud) |
+| Task 8 DNS deleted by mistake | Recreate an A record `social` → `<vps-ip>`, DNS-only (grey cloud) |
 
 ## Done When
 

@@ -8,8 +8,6 @@ export const PWA_SIGNAGE = {
     CODE: "断",
     /** 不通, line cut: what a board shows when a line is severed. */
     KANA: "不通",
-    /** 再, again: brushed in the button that reloads. */
-    RETRY_KANJI: "再",
     /** 圏外, out of range: what a phone shows with no signal, brushed huge. */
     WALL_KANJI: "圏外",
   },

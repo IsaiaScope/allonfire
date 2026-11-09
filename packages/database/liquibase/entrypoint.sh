@@ -2,7 +2,7 @@
 # Entrypoint of the db-migrate image.
 #
 #   entrypoint.sh backup        custom-format pg_dump into /backups, verified
-#                               with pg_restore; keeps the newest BACKUP_KEEP
+#                               with pg_restore; keeps the newest DATABASE_BACKUP_KEEP
 #                               (default 14)
 #   entrypoint.sh deploy        update (it validates first), and tag the
 #                               release when the update applied something
@@ -76,10 +76,10 @@ deploy() {
 # read them, so a failed or interrupted run never replaces a good dump and
 # never counts towards the ones kept.
 backup() {
-  local keep="${BACKUP_KEEP:-$DEFAULT_BACKUP_KEEP}" file excess
+  local keep="${DATABASE_BACKUP_KEEP:-$DEFAULT_BACKUP_KEEP}" file excess
   local -a dumps
   if [[ ! "$keep" =~ ^[1-9][0-9]*$ ]]; then
-    echo "entrypoint: BACKUP_KEEP must be a positive integer" >&2
+    echo "entrypoint: DATABASE_BACKUP_KEEP must be a positive integer" >&2
     return 1
   fi
   file="${BACKUP_DIR}/allonfire-$(date -u +%Y%m%dT%H%M%S%NZ).dump"

@@ -1,3 +1,8 @@
-/** An SVG as a data URL, which any image renderer loads (Satori included). */
+import { HTTP } from "../../features/http/constants/http";
+
+/**
+ * An SVG as a URL-encoded data URL, which any image renderer loads (Satori
+ * included). No Node `Buffer`, so a client component can build one too.
+ */
 export const svgDataUrl = (svg: string) =>
-  `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+  `data:${HTTP.CONTENT_TYPE.SVG},${encodeURIComponent(svg)}`;

@@ -6,8 +6,9 @@ import {
 } from "next/experimental/testing/server";
 import { I18N } from "../../../i18n/constants/locales";
 import { METADATA } from "../../../metadata/constants/metadata";
-import { AOFDefineRouting } from "../../i18n/aof-define-routing";
-import { AOFWithLocalizedNotFound } from "../aof-with-localized-not-found";
+import { NEXT } from "../../constants/next";
+import { AOFDefineRouting } from "../../i18n/utils/aof-define-routing";
+import { AOFWithLocalizedNotFound } from "../utils/aof-with-localized-not-found";
 
 const ORIGIN = "https://example.test";
 const routing = AOFDefineRouting(I18N.BASE_LANGUAGES);
@@ -48,7 +49,7 @@ describe("AOFWithLocalizedNotFound", () => {
     "/it/any-page",
     "/it/file.png",
     `/${I18N.DEFAULT_LANGUAGE}/any-page`,
-    "/_next/static/chunk.js",
+    `${NEXT.STATIC_URL}chunk.js`,
     `${KEPT}/any-screen.png`,
   ])("leaves %s to the route that serves it", async (path) => {
     expect(await rewrittenPath(path)).toBeNull();

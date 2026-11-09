@@ -1,13 +1,13 @@
 import type { UserPicture } from "@allonfire/database/features/auth/user.service";
-import { asImageError } from "../../image/hono/utils/errors";
 import {
   deleteLeftovers,
   type LeftoverLog,
-} from "../../image/objects/delete-leftovers";
+} from "../../image/objects/utils/delete-leftovers";
 import {
   deleteImageObjects,
   putImageObject,
-} from "../../image/objects/image-objects";
+} from "../../image/objects/utils/image-objects";
+import { asImageError } from "../../image/utils/image-error";
 import { prepareAvatar } from "../prepare-avatar";
 import { avatarKey, avatarKeyOf } from "../utils/avatar-key";
 

@@ -5,7 +5,8 @@
 @import "@allonfire/shadcn/styles/globals.css";
 
 @source "../../../shadcn/src";
-@source "../components";
+@source "../shared";
+@source "../features";
 
 /* Anything clickable shows the pointer. Tailwind v4's preflight dropped
    `cursor: pointer` from buttons, so shadcn's buttons (the sidebar's toggle,

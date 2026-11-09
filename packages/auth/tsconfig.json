@@ -6,7 +6,6 @@
     // features/next/components holds the signed-in page wrapper.
     "jsx": "react-jsx",
     "paths": {
-      "@allonfire/database": ["../database/src/index.ts"],
       "@allonfire/core/*": ["../core/src/*"]
     }
   },

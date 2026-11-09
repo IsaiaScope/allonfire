@@ -8,9 +8,9 @@ import {
   AOFCardContent,
   AOFCardHeader,
   AOFCardTitle,
-} from "@allonfire/ui/components/aof-card";
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
-import { cn } from "@allonfire/ui/lib/utils";
+} from "@allonfire/ui/shared/components/aof-card";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconCalendar } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";

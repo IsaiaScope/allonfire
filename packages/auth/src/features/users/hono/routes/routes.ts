@@ -85,6 +85,7 @@ export const avatarPutRoute = describeRoute({
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
       HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.CONFLICT,
       HTTP.STATUS.PAYLOAD_TOO_LARGE,
       HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE
     ),
@@ -98,9 +99,11 @@ export const avatarDeleteRoute = describeRoute({
   responses: {
     [HTTP.STATUS.NO_CONTENT]: { description: USER.DOC.AVATAR_DELETE_204 },
     ...problemResponses(
+      HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.CONFLICT
     ),
   },
   summary: USER.DOC.AVATAR_DELETE_SUMMARY,
@@ -133,7 +136,8 @@ export const updateRoute = describeRoute({
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.CONFLICT
     ),
   },
   summary: USER.DOC.UPDATE_SUMMARY,

@@ -1,0 +1,7 @@
+/* What an App's stylesheet gives ui's components, without any App: ui's base
+   (shadcn's tokens, Tailwind, the `@source` of ui's own classes) and the
+   Japan Design's tokens on top, as an App's stylesheet in
+   @allonfire/design imports them. The browser tests' only stylesheet
+   (vitest.browser.setup.ts). */
+@import "../../styles/base.css";
+@import "@allonfire/design/designs/japan/theme.css";

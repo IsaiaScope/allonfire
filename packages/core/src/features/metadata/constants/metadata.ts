@@ -10,13 +10,13 @@ const INDEXING = {
   UNINDEXED: "unindexed",
 } as const;
 
-export const indexingSchema = z.enum(INDEXING);
+const indexingSchema = z.enum(INDEXING);
 export type Indexing = z.infer<typeof indexingSchema>;
 
 /** The OS themes `prefers-color-scheme` reports; generated images come in both. */
 const COLOR_SCHEME = { DARK: "dark", LIGHT: "light" } as const;
 
-export const colorSchemeSchema = z.enum(COLOR_SCHEME);
+const colorSchemeSchema = z.enum(COLOR_SCHEME);
 export type ColorScheme = z.infer<typeof colorSchemeSchema>;
 
 const LAUNCH_ORIENTATION = {
@@ -24,7 +24,7 @@ const LAUNCH_ORIENTATION = {
   PORTRAIT: "portrait",
 } as const;
 
-export const launchOrientationSchema = z.enum(LAUNCH_ORIENTATION);
+const launchOrientationSchema = z.enum(LAUNCH_ORIENTATION);
 export type LaunchOrientation = z.infer<typeof launchOrientationSchema>;
 
 /** A device's screen in CSS pixels, portrait, and its pixel ratio. */
@@ -119,9 +119,9 @@ const LOGO = {
   LAYOUT: { HORIZONTAL: "horizontal", SQUARE: "square" },
   SCHEME: { ...COLOR_SCHEME, AUTO: "auto" },
 } as const;
-export const logoLayoutSchema = z.enum(LOGO.LAYOUT);
+const logoLayoutSchema = z.enum(LOGO.LAYOUT);
 export type LogoLayout = z.infer<typeof logoLayoutSchema>;
-export const logoSchemeSchema = z.enum(LOGO.SCHEME);
+const logoSchemeSchema = z.enum(LOGO.SCHEME);
 export type LogoScheme = z.infer<typeof logoSchemeSchema>;
 
 /** What an App says about its pages: to search engines, link previews and iOS. */

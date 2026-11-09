@@ -1,16 +1,20 @@
 // @module-tag unit
+
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { App, Role } from "@allonfire/database/enums";
 import { NextRequest } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
+import { SESSION_COOKIE } from "../../../shared/tests/stub-auth";
 import { withSignInGate } from "../utils/with-sign-in-gate";
+import { apiSends } from "./session-request-mocks";
 
 const ORIGIN = "http://back-office.test";
-const TOKEN = "__Secure-better-auth.session_token=t";
+const TOKEN = `${SESSION_COOKIE.SECURE_TOKEN}=t`;
 const IT = "it";
-const { HOME, SIGN_IN } = AUTH.PAGE;
+const { FORGOT_PASSWORD, HOME, RESET_PASSWORD, SIGN_IN } = AUTH.PAGE;
 /** A page only the App knows: the gate must take it as a plain path. */
 const APP_PAGE = { REPORTS: "/reports" } as const;
 
@@ -21,20 +25,6 @@ const gate = withSignInGate(proxy, {
 });
 const visit = (path: string, cookie = "") =>
   gate(new NextRequest(`${ORIGIN}${path}`, { headers: { cookie } }));
-
-/** The API answers `get-session` with a User holding these Memberships. */
-const apiSends = (memberships: { app: App; role: Role }[] | null) => {
-  const fetch = vi.fn(async () =>
-    Response.json(
-      memberships && {
-        session: { id: "session-1" },
-        user: { email: "someone@example.com", memberships },
-      }
-    )
-  );
-  vi.stubGlobal("fetch", fetch);
-  return fetch;
-};
 
 beforeEach(() => proxy.mockClear());
 
@@ -131,9 +121,50 @@ describe("withSignInGate", () => {
     expect(proxy).toHaveBeenCalledTimes(2);
   });
 
+  it("logs the error when the API call rejects, and lets the visit through", async () => {
+    const failure = new Error("API down");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(failure))
+    );
+    const error = vi
+      .spyOn(serverLogger(), "error")
+      .mockImplementation(() => undefined);
+
+    await visit(SIGN_IN, TOKEN);
+
+    expect(proxy).toHaveBeenCalledOnce();
+    expect(error).toHaveBeenCalledWith(
+      { err: failure },
+      AUTH.LOG_MESSAGE.SESSION_READ_FAILED
+    );
+  });
+
   it("asks the API nothing for a signed-out visit to Sign in", async () => {
     const fetch = apiSends(null);
     await visit(`/${IT}${SIGN_IN}`);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+});
+
+describe("withSignInGate on the password pages", () => {
+  it("sends someone the App lets in from Forgot password to Home, in the same language form", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    const response = await visit(`/${IT}${FORGOT_PASSWORD}`, TOKEN);
+    expect(response.status).toBe(HTTP.STATUS.TEMPORARY_REDIRECT);
+    expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
+      `${ORIGIN}/${IT}${HOME}`
+    );
+    expect(
+      (await visit(FORGOT_PASSWORD, TOKEN)).headers.get(HTTP.HEADER.LOCATION)
+    ).toBe(`${ORIGIN}${METADATA.PATH.ROOT}`);
+    expect(proxy).not.toHaveBeenCalled();
+  });
+
+  it("lets someone signed in open a reset link, which may be for another account", async () => {
+    const fetch = apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    await visit(`/${IT}${RESET_PASSWORD}`, TOKEN);
     expect(fetch).not.toHaveBeenCalled();
     expect(proxy).toHaveBeenCalledOnce();
   });

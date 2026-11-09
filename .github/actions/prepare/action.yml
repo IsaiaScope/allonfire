@@ -1,0 +1,14 @@
+# What every Stage job needs before its Stage runs: the toolchain and locked
+# dependencies (./.github/actions/setup), then the Prisma client, which the
+# database package exports and every type check and test imports. The job
+# checks the repo out first (`fetch-depth: 0`, since `--affected` diffs).
+name: Prepare
+description: Setup, then the Prisma client
+runs:
+  using: composite
+  steps:
+    - name: Setup
+      uses: ./.github/actions/setup
+    - name: Generate Prisma client
+      shell: bash
+      run: pnpm db:generate

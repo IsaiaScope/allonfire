@@ -51,18 +51,22 @@ services:
     image: ghcr.io/isaiascope/allonfire-api:prod
     pull_policy: always
     restart: "no"
-    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/cli.ts"]
+    command: ["node_modules/.bin/tsx", "../../packages/storage/src/features/image/setup/utils/cli.ts"]
     depends_on:
       storage:
         condition: service_healthy
     # The storage package's env is loaded whole: the image server's keys too.
     environment:
+      # jscpd:ignore-start
+      # The API's storage keys, on purpose: both load the storage package's
+      # env, and prod-compose.test.ts fails when the two lists differ.
       - STORAGE_ENDPOINT=http://storage:9000
       - STORAGE_ACCESS_KEY=${STORAGE_ACCESS_KEY:?STORAGE_ACCESS_KEY is required}
       - STORAGE_SECRET_KEY=${STORAGE_SECRET_KEY:?STORAGE_SECRET_KEY is required}
       - STORAGE_IMAGE_SERVER_URL=https://${CDN_HOST:?CDN_HOST is required}/image
       - STORAGE_IMAGE_SERVER_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
       - STORAGE_IMAGE_SERVER_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
+      # jscpd:ignore-end
     networks:
       - allonfire
 
@@ -94,11 +98,22 @@ services:
       - STORAGE_IMAGE_SERVER_URL=https://${CDN_HOST:?CDN_HOST is required}/image
       - STORAGE_IMAGE_SERVER_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
       - STORAGE_IMAGE_SERVER_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
-      # Telemetry (ADR 0006): the endpoint is set only once the ingest
-      # account's headers are, so the first deploy, before that account
-      # exists, runs with telemetry off instead of failing every export.
-      - TELEMETRY_ENDPOINT=${TELEMETRY_HEADERS:+http://telemetry:5080/api/default}
-      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:-}
+      # Mail: each provider slot's secret, and the keep-alive's token and
+      # recipient. Optional: unset, mail is unavailable and the keep-alive
+      # refuses every call.
+      - API_MAIL_PROVIDER_0_DRIVER=${API_MAIL_PROVIDER_0_DRIVER:-}
+      - API_MAIL_PROVIDER_0_KEY=${API_MAIL_PROVIDER_0_KEY:-}
+      - API_MAIL_PROVIDER_0_URL=${API_MAIL_PROVIDER_0_URL:-}
+      - API_MAIL_PROVIDER_1_DRIVER=${API_MAIL_PROVIDER_1_DRIVER:-}
+      - API_MAIL_PROVIDER_1_KEY=${API_MAIL_PROVIDER_1_KEY:-}
+      - API_MAIL_PROVIDER_1_URL=${API_MAIL_PROVIDER_1_URL:-}
+      - API_KEEP_ALIVE_TOKEN=${API_KEEP_ALIVE_TOKEN:-}
+      - API_KEEP_ALIVE_RECIPIENT=${API_KEEP_ALIVE_RECIPIENT:-}
+      # Telemetry (ADR 0006) is required in production: a deploy without the
+      # ingestion token's headers fails here, never starts an App that ships
+      # nothing. One TELEMETRY_HEADERS for both Apps.
+      - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default
+      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:?TELEMETRY_HEADERS is required}
       - TELEMETRY_SERVICE_NAME=allonfire-api
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/health"]
@@ -128,11 +143,11 @@ services:
       - API_AUTH_URL=http://api:3000/v1/auth
       - API_URL=http://api:3000
       - AUTH_APP=BACK_OFFICE
-      - BACK_OFFICE_URL=${BACK_OFFICE_URL}
+      - BACK_OFFICE_URL=${BACK_OFFICE_URL:?BACK_OFFICE_URL is required}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
-      # Telemetry: on only once the ingestion token's headers are set.
-      - TELEMETRY_ENDPOINT=${TELEMETRY_HEADERS:+http://telemetry:5080/api/default}
-      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:-}
+      # Telemetry: required, as the API's.
+      - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default
+      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:?TELEMETRY_HEADERS is required}
       - TELEMETRY_SERVICE_NAME=allonfire-back-office
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
@@ -356,6 +371,10 @@ networks:
     external: true
     name: dokploy-network
 
+# jscpd:ignore-start
+# The same cdn config in both compose files, on purpose: Dokploy deploys the
+# prod compose alone, so each file carries it inline, and service-names.test.ts
+# fails when the two drift.
 configs:
   cdn:
     content: |
@@ -403,3 +422,4 @@ configs:
               add_header X-Cache-Status $$upstream_cache_status always;
           }
       }
+# jscpd:ignore-end

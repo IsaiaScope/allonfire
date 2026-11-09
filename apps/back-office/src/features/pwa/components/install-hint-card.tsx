@@ -2,9 +2,9 @@ import {
   type InstallStep,
   PWA,
 } from "@allonfire/core/features/next/pwa/constants/pwa";
-import { AOFButton } from "@allonfire/ui/components/aof-button";
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/lib/types";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
+import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
   AppWindow,
   Download,

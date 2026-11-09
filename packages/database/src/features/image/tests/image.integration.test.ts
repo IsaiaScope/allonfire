@@ -1,4 +1,5 @@
 // @module-tag integration
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { App, ImageAccess } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
@@ -8,12 +9,11 @@ import {
   getImage,
   type ImageChange,
   type ImageCursor,
-  type ImageLinksById,
   ImageNotFoundError,
+  type ImagePlacementsById,
   listImages,
   type NewImage,
   removeImagesFromApp,
-  renameImageKey,
   updateImages,
 } from "../image.service";
 
@@ -24,12 +24,17 @@ const { BACK_OFFICE: OFFICE, LAURA } = App;
 const IN_LAURA: App[] = [LAURA];
 /** The check a caller runs inside the write; these tests let everything through. */
 const ALLOW = () => undefined;
-/** Writes `changes` as given, whatever the locked placements are. */
-const update = (...changes: ImageChange[]) =>
-  updateImages(
-    changes.map(({ id }) => id),
-    () => changes
+/** Each Image named, with the Version a form opened now would carry. */
+const openedNow = (ids: readonly string[]) =>
+  Promise.all(
+    ids.map(async (id) => ({
+      id,
+      version: (await getImage(id))?.version ?? "",
+    }))
   );
+/** Writes `changes` as given, on the Images as they are now, whatever the locked placements are. */
+const update = async (...changes: ImageChange[]) =>
+  updateImages(await openedNow(changes.map(({ id }) => id)), () => changes);
 
 const image = (
   key: string,
@@ -58,7 +63,8 @@ beforeEach(async () => {
   await cleanUp();
   await prisma.user.deleteMany({ where: { id: USER_ID } });
   await prisma.user.create({
-    data: { email: "image-test@allonfire.test", id: USER_ID },
+    // Its own domain: the Fixtures' is theirs alone.
+    data: { email: "image-test@image-service.test", id: USER_ID },
   });
 });
 
@@ -214,13 +220,6 @@ describe("image.service writes", () => {
     expect((await getImage(one?.id ?? ""))?.access).toBe(ImageAccess.PUBLIC);
   });
 
-  it("points an Image at a new file name", async () => {
-    const [one] = await createImages([image("renamed")]);
-    const key = `${KEY_PREFIX}renamed-new.avif`;
-    await renameImageKey(one?.id ?? "", key);
-    expect((await getImage(one?.id ?? ""))?.key).toBe(key);
-  });
-
   it("keeps a placement added since the caller read the Image", async () => {
     const [one] = await createImages([image("raced", [LAURA])]);
     const id = one?.id ?? "";
@@ -244,7 +243,7 @@ describe("image.service writes", () => {
     // Another Admin takes it out of Laura before this write locks it.
     await removeImagesFromApp([id], LAURA, ALLOW);
     const seen = vi.fn((): ImageChange[] => [{ id, place: [LAURA] }]);
-    const [changed] = await updateImages([id, id], seen);
+    const [changed] = await updateImages(await openedNow([id, id]), seen);
     expect(seen).toHaveBeenCalledWith(
       new Map([
         [id, { access: ImageAccess.PRIVATE, apps: [OFFICE], key: one?.key }],
@@ -259,7 +258,7 @@ describe("image.service writes, worked out in the transaction", () => {
     const [one] = await createImages([image("unknown")]);
     const resolve = vi.fn((): ImageChange[] => []);
     await expect(
-      updateImages([one?.id ?? "", "missing"], resolve)
+      updateImages(await openedNow([one?.id ?? "", "missing"]), resolve)
     ).rejects.toMatchObject({ ids: ["missing"] });
     expect(resolve).not.toHaveBeenCalled();
   });
@@ -268,7 +267,7 @@ describe("image.service writes, worked out in the transaction", () => {
     const [one] = await createImages([image("refused", [LAURA])]);
     const id = one?.id ?? "";
     await expect(
-      updateImages([id], () => {
+      updateImages(await openedNow([id]), () => {
         throw new Error("refused");
       })
     ).rejects.toThrow("refused");
@@ -332,14 +331,14 @@ describe("image.service writes, worked out in the transaction", () => {
 });
 
 describe("image.service never leaves an Image in no App", () => {
-  it("refuses a change that would leave an Image in no App, writing nothing", async () => {
+  it("a batch that leaves an Image in no App throws ResourceChangedError with its id", async () => {
     const [one] = await createImages([image("emptied", [LAURA, OFFICE])]);
     const id = one?.id ?? "";
     // Another Admin takes it out of Laura after this caller read both placements.
     await removeImagesFromApp([id], LAURA, ALLOW);
-    await expect(update({ id, remove: [OFFICE] })).rejects.toMatchObject({
-      ids: [id],
-    });
+    const refused = update({ id, remove: [OFFICE] });
+    await expect(refused).rejects.toBeInstanceOf(ResourceChangedError);
+    await expect(refused).rejects.toMatchObject({ ids: [id] });
     expect((await getImage(id))?.apps).toEqual([OFFICE]);
   });
 
@@ -364,15 +363,63 @@ describe("image.service never leaves an Image in no App", () => {
   });
 });
 
+describe("image.service writes on a Version", () => {
+  it("an Image change on an older Version throws ResourceChangedError and writes nothing", async () => {
+    const [one] = await createImages([image("stale", [LAURA])]);
+    const id = one?.id ?? "";
+    const opened = await openedNow([id]);
+    // Another Admin changes its alt after this caller opened it.
+    await update({ alt: { en: "theirs", it: "loro" }, id });
+    await expect(
+      updateImages(opened, () => [{ access: ImageAccess.PUBLIC, id }])
+    ).rejects.toBeInstanceOf(ResourceChangedError);
+    expect(await getImage(id)).toMatchObject({
+      access: ImageAccess.PRIVATE,
+      alt: { en: "theirs", it: "loro" },
+    });
+  });
+
+  it("an App-only change moves the Image's Version", async () => {
+    const [one] = await createImages([image("moved", [LAURA])]);
+    const id = one?.id ?? "";
+    // Placed and taken out again: the Apps end as they were, the Version not.
+    const [, changed] = await update(
+      { id, place: [OFFICE] },
+      { id, remove: [OFFICE] }
+    );
+    expect(changed?.apps).toEqual([LAURA]);
+    expect(changed?.updatedAt).not.toEqual(one?.updatedAt);
+    expect(changed?.version).not.toBe(one?.version);
+  });
+
+  it("two changes made on one Version at once: the second throws", async () => {
+    const [one] = await createImages([image("together", [LAURA])]);
+    const id = one?.id ?? "";
+    const opened = await openedNow([id]);
+    const settled = await Promise.allSettled(
+      ["first", "second"].map((tag) =>
+        updateImages(opened, () => [
+          { alt: { en: `${tag} en`, it: `${tag} it` }, id },
+        ])
+      )
+    );
+    const refused = settled.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : []
+    );
+    expect(refused).toHaveLength(1);
+    expect(refused[0]).toBeInstanceOf(ResourceChangedError);
+  });
+});
+
 describe("image.service deletes", () => {
   it("checks the placements it locked, and writes nothing when the check refuses", async () => {
     const [one] = await createImages([image("checked", [LAURA])]);
     const id = one?.id ?? "";
     // Placed in the Back Office after the caller's own read: the check sees it.
     await prisma.imageApp.create({ data: { app: OFFICE, imageId: id } });
-    const seen: ImageLinksById[] = [];
-    const refuse = (links: ImageLinksById) => {
-      seen.push(links);
+    const seen: ImagePlacementsById[] = [];
+    const refuse = (placements: ImagePlacementsById) => {
+      seen.push(placements);
       throw new Error("refused");
     };
     await expect(deleteImages([id], refuse)).rejects.toThrow("refused");

@@ -2,8 +2,21 @@
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { objectKeys } from "@allonfire/core/shared/utils/object";
+import { API } from "../../../shared/constants/api";
+import { captureLog } from "../../../shared/tests/capture";
 import { TRANSLATION } from "../constants/locales";
-import { translate } from "../translate";
+import { translate, translateCode } from "../translate";
+
+/** A value for every ICU argument the catalogue holds; a message ignores the rest. */
+const SAMPLE_VALUES = {
+  app: "Back Office",
+  count: 2,
+  limit: 1024,
+  minutes: 60,
+  provider: "Provider 1",
+  seconds: 5,
+};
 
 /** Any surviving brace means a placeholder was not substituted. */
 const UNRESOLVED_PLACEHOLDER = /[{}]/;
@@ -92,9 +105,39 @@ describe("translate — resilience", () => {
     expect(first).toBe(second);
   });
 
-  it("never throws for any code in any locale", () => {
+  it("renders every key in every locale without falling back to English", () => {
+    const { lines, logger } = captureLog();
+
     for (const locale of I18N.SUPPORTED_LOCALES) {
-      expect(() => translate(ERROR.CODE.INTERNAL_ERROR, locale)).not.toThrow();
+      for (const key of objectKeys(TRANSLATION.CATALOGUE[locale])) {
+        translateCode(key, locale, SAMPLE_VALUES, logger);
+      }
     }
+
+    expect(lines).toEqual([]);
+  });
+
+  it("a missing translation serves English and warns with the key and locale", () => {
+    const { lines, logger } = captureLog();
+
+    // A runtime code whose value never arrived: ICU cannot render it.
+    const rendered = translateCode(
+      ERROR.CODE.RATE_LIMITED,
+      I18N.LOCALE.IT_IT,
+      undefined,
+      logger
+    );
+
+    expect(rendered).toBe(
+      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][ERROR.CODE.RATE_LIMITED]
+    );
+    expect(lines).toEqual([
+      expect.objectContaining({
+        code: ERROR.CODE.RATE_LIMITED,
+        err: expect.objectContaining({ message: expect.any(String) }),
+        locale: I18N.LOCALE.IT_IT,
+        msg: API.LOG_MESSAGE.TRANSLATION_FAILED,
+      }),
+    ]);
   });
 });

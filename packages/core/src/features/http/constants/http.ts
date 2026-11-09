@@ -55,8 +55,11 @@ const STATUS = {
   URI_TOO_LONG: 414,
 } as const;
 
+/**
+ * Every status in `HTTP.STATUS`.
+ * @internal
+ */
 export const httpStatusSchema = z.enum(STATUS);
-export type HttpStatus = z.infer<typeof httpStatusSchema>;
 
 /** Every method RFC 9110 defines, plus PATCH (RFC 5789). */
 const METHOD = {
@@ -71,7 +74,7 @@ const METHOD = {
   TRACE: "TRACE",
 } as const;
 
-export const httpMethodSchema = z.enum(METHOD);
+const httpMethodSchema = z.enum(METHOD);
 export type HttpMethod = z.infer<typeof httpMethodSchema>;
 
 const CONTENT_TYPES = {
@@ -91,9 +94,6 @@ const CONTENT_TYPES = {
   SVG: "image/svg+xml",
   TEXT: "text/plain",
 } as const;
-
-export const contentTypeSchema = z.enum(CONTENT_TYPES);
-export type ContentType = z.infer<typeof contentTypeSchema>;
 
 /**
  * Lower-case, the form HTTP/2 puts on the wire and the Fetch `Headers` class
@@ -128,8 +128,12 @@ const HEADER = {
   X_ROBOTS_TAG: "x-robots-tag",
 } as const;
 
+/**
+ * Every header name in `HTTP.HEADER`.
+ * @internal
+ */
 export const httpHeaderSchema = z.enum(HEADER);
-export type HttpHeader = z.infer<typeof httpHeaderSchema>;
+type HttpHeader = z.infer<typeof httpHeaderSchema>;
 
 /** Two years, the HSTS preload list's minimum. */
 const HSTS_MAX_AGE_S = 2 * UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY;

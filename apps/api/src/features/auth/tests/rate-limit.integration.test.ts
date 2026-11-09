@@ -1,4 +1,5 @@
 // @module-tag integration
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 // The auth bucket on real Redis, under a key prefix of its own so no other
 // run's attempts count.
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
@@ -33,5 +34,5 @@ it("answers 429 once the auth limit is spent inside the window", async () => {
     )
   );
   expect(attempts.map(({ status }) => status)).toEqual(attempts.map(() => 401));
-  expect((await signIn(app, admin)).status).toBe(429);
+  expect((await signIn(app, admin)).status).toBe(HTTP.STATUS.TOO_MANY_REQUESTS);
 });

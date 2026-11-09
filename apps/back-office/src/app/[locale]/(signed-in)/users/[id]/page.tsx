@@ -1,7 +1,6 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
-import { readSessionCookie } from "@allonfire/auth/features/next/utils/session-cookie";
 import { App } from "@allonfire/database/enums";
-import { AOFFreshOnReturn } from "@allonfire/ui/components/aof-fresh-on-return";
+import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
@@ -23,17 +22,19 @@ export const generateMetadata = async ({ params }: UserPageProps) =>
   pageMetadata(userHref((await params).id), "Users.detail.page");
 
 /**
- * The User, read afresh on the server through `readUser`, and the form on
- * them; an unknown id is the 404. The Session is the page check's own read:
- * whose page it is, so their own Back Office Role stays locked.
+ * The User, read through `readUser` (kept in the visitor's browser, so a
+ * link prefetches it; the save is version-checked), and the form on them;
+ * an unknown id is the 404. The Session is the page check's own read: whose
+ * page it is, so their own Back Office Role stays locked.
  */
 const UserForm = async ({ params }: UserPageProps) => {
-  const [{ id }, sessionCookie, session] = await Promise.all([
-    params,
-    readSessionCookie(),
+  const { id } = await params;
+  // The User needs only the id, so both run at once (the API checks the
+  // Session on the read itself).
+  const [session, user] = await Promise.all([
     requireAppSession(),
+    readUser(id),
   ]);
-  const user = await readUser(sessionCookie, id);
   if (!user) {
     notFound();
   }

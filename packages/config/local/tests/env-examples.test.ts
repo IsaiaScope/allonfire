@@ -1,9 +1,10 @@
 // @module-tag unit
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { REPO } from "../repo";
 
-const REPO = resolve(import.meta.dirname, "../../../..");
-const read = (path: string) => readFileSync(resolve(REPO, path), "utf8");
+const read = (path: string) => readFileSync(resolve(REPO.ROOT, path), "utf8");
 
 // ponytail: exact-text checks, no TypeScript or YAML parser, like the other
 // local/ tests. A schema key is a `KEY: ` property line in an env file.
@@ -15,31 +16,47 @@ const BLOCK = /\n\s*\n/;
 const TOOL_SET = new Set(["NODE_ENV"]);
 
 const keys = (text: string, pattern: RegExp) =>
-  [...text.matchAll(pattern)].map(([, key]) => key);
+  [...text.matchAll(pattern)].map(([, key = ""]) => key);
 const sorted = (list: string[]) => [...new Set(list)].sort();
 const fromSchemas = (...paths: string[]) =>
   sorted(paths.flatMap((path) => keys(read(path), SCHEMA_KEY))).filter(
     (key) => !TOOL_SET.has(key)
   );
 
+/**
+ * The API reads a mail provider's endpoint by slot (`providerEndpoint`), so no
+ * schema lists the keys: the example names them for the slots the changeset
+ * seeds.
+ */
+const MAIL_KEYS = [0, 1].flatMap((slot) =>
+  ["_DRIVER", "_KEY", "_URL"].map(
+    (suffix) => `API_MAIL_PROVIDER_${slot}${suffix}`
+  )
+);
+
 // Laura keeps its old names until it is rebuilt (package-layout.md).
 const OWNERS = [
   [
     "apps/api/.env.example",
     () =>
-      fromSchemas(
-        "apps/api/src/environment/environment.ts",
-        "packages/auth/src/environment/environment.ts",
-        "packages/database/src/environment/environment.ts",
-        "packages/storage/src/environment/environment.ts"
-      ),
+      sorted([
+        ...fromSchemas(
+          "apps/api/src/environment/environment.ts",
+          "packages/auth/src/environment/environment.ts",
+          "packages/core/src/environment/telemetry-environment.ts",
+          "packages/database/src/environment/environment.ts",
+          "packages/storage/src/environment/environment.ts"
+        ),
+        ...MAIL_KEYS,
+      ]),
   ],
   [
     "apps/back-office/.env.example",
     () =>
       fromSchemas(
         "apps/back-office/src/environment/environment.ts",
-        "packages/auth/src/environment/next-environment.ts"
+        "packages/auth/src/environment/next-environment.ts",
+        "packages/core/src/environment/telemetry-environment.ts"
       ),
   ],
   [

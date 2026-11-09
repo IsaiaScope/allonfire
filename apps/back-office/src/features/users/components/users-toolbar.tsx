@@ -1,15 +1,12 @@
 "use client";
 
-import {
-  USER,
-  USER_SEARCH,
-} from "@allonfire/auth/features/users/constants/users";
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
-import { AOFInput } from "@allonfire/ui/components/aof-input";
-import { AOFInputClear } from "@allonfire/ui/components/aof-input-clear";
-import { AOFTooltip } from "@allonfire/ui/components/aof-tooltip";
-import { cn } from "@allonfire/ui/lib/utils";
+import { AOFInput } from "@allonfire/ui/features/form/components/aof-input";
+import { AOFInputClear } from "@allonfire/ui/shared/components/aof-input-clear";
+import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
+import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconSearch, IconUserPlus } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
@@ -23,15 +20,16 @@ import {
   useState,
 } from "react";
 import { Link } from "@/features/i18n/navigation";
-import { USERS } from "../constants/users";
-import { usersParams } from "../constants/users-params";
-import { newUserHref } from "../utils/user-href";
 import {
   pictogramTile,
   ToolbarActionBody,
   tiledControl,
   toolbarActionClass,
-} from "./toolbar-action";
+  toolbarLayout,
+} from "@/shared/components/toolbar-action";
+import { USERS } from "../constants/users";
+import { usersParams } from "../constants/users-params";
+import { newUserHref } from "../utils/user-href";
 import { type UserSearch, UsersFilters } from "./users-filters";
 
 /** Typed text as the address will hold it. */
@@ -46,13 +44,13 @@ const tidy = (text: string) =>
  */
 const keptInBox = (typed: string) =>
   [
-    USER_SEARCH.parse(typed).text,
+    USER.SEARCH.parse(typed).text,
     ...tidy(typed)
       .split(SEPARATOR.WORD)
       .filter(
         (part) =>
           part.includes(SEPARATOR.FIELD) &&
-          USER_SEARCH.serialize(USER_SEARCH.parse(part)) === ""
+          USER.SEARCH.serialize(USER.SEARCH.parse(part)) === ""
       ),
   ]
     .filter(Boolean)
@@ -68,14 +66,14 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
   const t = useTranslations();
   const [params, setParams] = useQueryStates(usersParams);
   const raw = params[USER.PARAM.SEARCH];
-  const search = useMemo(() => USER_SEARCH.parse(raw), [raw]);
+  const search = useMemo(() => USER.SEARCH.parse(raw), [raw]);
   const [draft, setDraft] = useState(search.text);
   // The address changed under the box (Back, a link): the box follows it,
   // unless its words already say the same (a field still being typed stays).
   const [seen, setSeen] = useState(search.text);
   if (search.text !== seen) {
     setSeen(search.text);
-    if (USER_SEARCH.parse(draft).text !== search.text) {
+    if (USER.SEARCH.parse(draft).text !== search.text) {
       setDraft(search.text);
     }
   }
@@ -87,7 +85,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
       setParams(
         {
           [USER.PARAM.PAGE]: null,
-          [USER.PARAM.SEARCH]: USER_SEARCH.serialize(next) || null,
+          [USER.PARAM.SEARCH]: USER.SEARCH.serialize(next) || null,
         },
         USERS.HISTORY.SEARCH
       ),
@@ -101,7 +99,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
     // A field typed in the box (`app:laura`) becomes its filter, and the
     // box keeps only the words.
     const timer = setTimeout(() => {
-      write({ ...search, ...USER_SEARCH.parse(draft) });
+      write({ ...search, ...USER.SEARCH.parse(draft) });
       setDraft(keptInBox(draft));
     }, USERS.TYPING_REST_MS);
     return () => clearTimeout(timer);
@@ -124,8 +122,8 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
   // tile.
   return (
     <div className="@container">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 @4xl:basis-0 basis-full">
+      <div className={toolbarLayout({ part: "row" })}>
+        <div className={cn(toolbarLayout({ part: "search" }), "relative")}>
           <span
             aria-hidden="true"
             className={cn(
@@ -155,7 +153,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
           ) : null}
         </div>
         <UsersFilters search={search} write={write} />
-        <div className="ml-auto flex gap-2">
+        <div className={toolbarLayout({ part: "actions" })}>
           {children}
           {/* A link drawn as the primary action: it navigates, and opens in
               a new tab too. */}

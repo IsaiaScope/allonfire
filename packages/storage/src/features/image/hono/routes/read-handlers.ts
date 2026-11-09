@@ -1,6 +1,9 @@
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { invalidHook } from "@allonfire/core/features/errors/coded-error";
+import {
+  invalidHook,
+  notFound,
+} from "@allonfire/core/features/errors/coded-error";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   canSeeImage,
@@ -15,7 +18,6 @@ import {
 } from "../constants/schemas";
 import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
-import { notFound } from "../utils/errors";
 import { toImageBody } from "../utils/image-body";
 import { getRoute, listRoute } from "./routes";
 

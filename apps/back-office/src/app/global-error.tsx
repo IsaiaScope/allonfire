@@ -1,8 +1,8 @@
 "use client";
 
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
-import { AOFThemeProvider } from "@allonfire/core/features/next/providers/aof-theme-provider";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { AOFThemeProvider } from "@allonfire/core/features/next/providers/components/aof-theme-provider";
 import { createTranslator } from "next-intl";
 import {
   type ErrorBoundaryProps,

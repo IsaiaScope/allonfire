@@ -4,9 +4,9 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/shared-translations";
-import { logoFile } from "@allonfire/core/features/next/metadata/aof-logo-route";
-import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/launch-screens";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { logoFile } from "@allonfire/core/features/next/metadata/utils/aof-logo-route";
+import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/utils/launch-screens";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { expect, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {

@@ -2,7 +2,7 @@
 import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { appDeps } from "../../../shared/tests/app-deps";
-import { memoryStore } from "./memory-store";
+import { memoryStore } from "../../../shared/tests/memory-store";
 
 describe("which routes are rate-limited", () => {
   it("never rate-limits /health or /ready", async () => {

@@ -1,8 +1,11 @@
 // @module-tag integration
+import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, GameType, Role } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
+import { ACCOUNT } from "../constants/account";
 import {
   accessUserById,
   createUser,
@@ -15,10 +18,10 @@ import {
   type UserListQuery,
   updateUser,
   userImages,
+  verifyEmailIssuedAt,
 } from "../user.service";
 
-// The Fixtures share this domain; other files in the run may add Users to
-// it, so counts are "at least the Fixtures".
+// The Fixtures share this domain, and only they use it.
 const FIXTURES = FIXTURE.DOMAIN;
 /** A User made here, outside the Fixtures' domain so their counts hold. */
 const MIXED = {
@@ -42,6 +45,18 @@ const query = (overrides: Partial<UserListQuery> = {}): UserListQuery => ({
 });
 const emailsOf = async (overrides: Partial<UserListQuery> = {}) =>
   (await listUsers(query(overrides))).users.map(({ email }) => email);
+/** The Version an edit form opened now would carry. */
+const current = async (id: string) => (await readUser(id))?.version ?? "";
+/** A Session of the User's, alive for `expiresInMs` from now. */
+const liveSession = (
+  userId: string,
+  token: string,
+  expiresInMs: number = UNIT.MS_PER_MINUTE
+) =>
+  prisma.session.create({
+    data: { expiresAt: new Date(Date.now() + expiresInMs), token, userId },
+    select: { id: true },
+  });
 
 beforeAll(async () => {
   await prisma.user.create({
@@ -182,7 +197,7 @@ const holder = (name: string) =>
   prisma.user.create({
     data: {
       accounts: {
-        create: { accountId: name, providerId: "credential" },
+        create: { accountId: name, providerId: ACCOUNT.PROVIDER.CREDENTIAL },
       },
       email: `${name}@${DELETABLE}`,
       gameScores: { create: { gameType: GameType.MEMORY, score: SIZE } },
@@ -198,7 +213,10 @@ const holder = (name: string) =>
       },
       memberships: { create: { app: App.LAURA, role: Role.USER } },
       sessions: {
-        create: { expiresAt: new Date(Date.now() + 60_000), token: name },
+        create: {
+          expiresAt: new Date(Date.now() + UNIT.MS_PER_MINUTE),
+          token: name,
+        },
       },
     },
     select: { id: true, images: { select: { id: true } } },
@@ -288,10 +306,28 @@ describe("createUser", () => {
         password,
         providerId,
       }))
-    ).toEqual([{ accountId: id, password: HASH, providerId: "credential" }]);
+    ).toEqual([
+      {
+        accountId: id,
+        password: HASH,
+        providerId: ACCOUNT.PROVIDER.CREDENTIAL,
+      },
+    ]);
     expect(user.memberships.map(({ app, role }) => ({ app, role }))).toEqual([
       { app: App.LAURA, role: Role.USER },
     ]);
+  });
+
+  it("answers the new User's Version", async () => {
+    const { id, version } = await createUser(
+      {
+        email: `versioned@${ADDED}`,
+        memberships: [{ app: App.LAURA, role: Role.USER }],
+        name: "Versioned",
+      },
+      HASH
+    );
+    expect(version).toBe(await current(id));
   });
 
   it("creates a User in no App", async () => {
@@ -324,17 +360,27 @@ describe("createUser", () => {
   });
 });
 
+// Users given a picture here live in their own domain.
+const PICTURE_DOMAIN = "set-user-image.test";
+const FIRST = "avatar-u-first.avif";
+const SECOND = "avatar-u-second.avif";
+const BLUR = "data:image/webp;base64,AAAA";
+const pictureOf = async (id: string) =>
+  await prisma.user.findUniqueOrThrow({
+    select: { image: true, imageBlurDataUrl: true },
+    where: { id },
+  });
+/** A picture set on the User as they are now, as a form opened now sets it. */
+const setNow = async (
+  id: string,
+  picture: Parameters<typeof setUserImage>[1]
+) => setUserImage(id, picture, { expectedVersion: await current(id) });
+const removePictured = () =>
+  prisma.user.deleteMany({ where: { email: { endsWith: PICTURE_DOMAIN } } });
+
 describe("a User's picture", () => {
-  const PICTURED = "picture@set-user-image.test";
-  const BARE = "bare@set-user-image.test";
-  const FIRST = "avatar-u-first.avif";
-  const SECOND = "avatar-u-second.avif";
-  const BLUR = "data:image/webp;base64,AAAA";
-  const pictureOf = async (id: string) =>
-    await prisma.user.findUniqueOrThrow({
-      select: { image: true, imageBlurDataUrl: true },
-      where: { id },
-    });
+  const PICTURED = `picture@${PICTURE_DOMAIN}`;
+  const BARE = `bare@${PICTURE_DOMAIN}`;
   let pictured = "";
   let bare = "";
 
@@ -350,17 +396,15 @@ describe("a User's picture", () => {
   });
 
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: { email: { endsWith: "@set-user-image.test" } },
-    });
+    await removePictured();
   });
 
   it("sets it with its blur, then replaces both, answering what it held before", async () => {
     expect(
-      await setUserImage(pictured, { image: FIRST, imageBlurDataUrl: BLUR })
+      await setNow(pictured, { image: FIRST, imageBlurDataUrl: BLUR })
     ).toEqual({ previous: null });
     expect(
-      await setUserImage(pictured, {
+      await setNow(pictured, {
         image: SECOND,
         imageBlurDataUrl: `${BLUR}2`,
       })
@@ -371,31 +415,13 @@ describe("a User's picture", () => {
     });
   });
 
-  // Each replaced file is answered once, so it is deleted once: two pictures
-  // set at the same time never both answer the first and leave the loser's
-  // file behind with no row pointing at it.
-  it("answers each replaced file once when two pictures land together", async () => {
-    const { id } = await prisma.user.create({
-      data: { email: "together@set-user-image.test" },
-      select: { id: true },
-    });
-    await setUserImage(id, { image: FIRST, imageBlurDataUrl: BLUR });
-    const answers = await Promise.all(
-      ["a", "b", "c", "d"].map((tag) =>
-        setUserImage(id, { image: `${SECOND}-${tag}`, imageBlurDataUrl: BLUR })
-      )
-    );
-    const previous = answers.map((answer) => answer?.previous);
-    expect(new Set(previous).size).toBe(previous.length);
-  });
-
   it("removing it clears its blur too", async () => {
     const { id } = await prisma.user.create({
-      data: { email: "removed@set-user-image.test" },
+      data: { email: `removed@${PICTURE_DOMAIN}` },
       select: { id: true },
     });
-    await setUserImage(id, { image: FIRST, imageBlurDataUrl: BLUR });
-    expect(await setUserImage(id, null)).toEqual({ previous: FIRST });
+    await setNow(id, { image: FIRST, imageBlurDataUrl: BLUR });
+    expect(await setNow(id, null)).toEqual({ previous: FIRST });
     expect(await pictureOf(id)).toEqual({
       image: null,
       imageBlurDataUrl: null,
@@ -411,10 +437,11 @@ describe("a User's picture", () => {
 
   it("answers null for a User who does not exist", async () => {
     expect(
-      await setUserImage("no-such-user", {
-        image: FIRST,
-        imageBlurDataUrl: BLUR,
-      })
+      await setUserImage(
+        "no-such-user",
+        { image: FIRST, imageBlurDataUrl: BLUR },
+        { expectedVersion: "any" }
+      )
     ).toBeNull();
   });
 
@@ -425,46 +452,106 @@ describe("a User's picture", () => {
   });
 });
 
+describe("a User's picture on a Version", () => {
+  afterAll(async () => {
+    await removePictured();
+  });
+
+  // Each replaced file is answered once, so it is deleted once: of pictures
+  // set on one Version at the same time, one lands and answers the first; the
+  // others are refused, so the caller deletes their own files.
+  it("two pictures set on one Version at once: one lands, the others throw", async () => {
+    const { id } = await prisma.user.create({
+      data: { email: `together@${PICTURE_DOMAIN}` },
+      select: { id: true },
+    });
+    await setNow(id, { image: FIRST, imageBlurDataUrl: BLUR });
+    const opened = await current(id);
+    const settled = await Promise.allSettled(
+      ["a", "b", "c", "d"].map((tag) =>
+        setUserImage(
+          id,
+          { image: `${SECOND}-${tag}`, imageBlurDataUrl: BLUR },
+          { expectedVersion: opened }
+        )
+      )
+    );
+    const landed = settled.flatMap((result) =>
+      result.status === "fulfilled" ? [result.value] : []
+    );
+    const refused = settled.flatMap((result) =>
+      result.status === "rejected" ? [result.reason] : []
+    );
+    expect(landed).toEqual([{ previous: FIRST }]);
+    expect(refused).toHaveLength(3);
+    for (const reason of refused) {
+      expect(reason).toBeInstanceOf(ResourceChangedError);
+    }
+  });
+
+  it("setUserImage on an older Version throws and keeps the old picture", async () => {
+    const { id } = await prisma.user.create({
+      data: { email: `stale@${PICTURE_DOMAIN}` },
+      select: { id: true },
+    });
+    await setNow(id, { image: FIRST, imageBlurDataUrl: BLUR });
+    const opened = await current(id);
+    // Renamed elsewhere after the form was opened.
+    await prisma.user.update({ data: { name: "Renamed" }, where: { id } });
+    await expect(
+      setUserImage(
+        id,
+        { image: SECOND, imageBlurDataUrl: BLUR },
+        { expectedVersion: opened }
+      )
+    ).rejects.toBeInstanceOf(ResourceChangedError);
+    await expect(
+      setUserImage(id, null, { expectedVersion: opened })
+    ).rejects.toBeInstanceOf(ResourceChangedError);
+    expect(await pictureOf(id)).toEqual({
+      image: FIRST,
+      imageBlurDataUrl: BLUR,
+    });
+  });
+});
+
 // Users edited here live in their own domain, so the list's counts hold.
 const EDITED = "edit-users.test";
 const NEW_HASH = "new-hash";
 
-describe("readUser and updateUser", () => {
-  let count = 0;
-  /** A User with a password, a Laura Membership and two Sessions. */
-  const edited = async () => {
-    count += 1;
-    const { id } = await createUser(
-      {
-        email: `edited-${count}@${EDITED}`,
-        memberships: [{ app: App.LAURA, role: Role.USER }],
-        name: "Edited",
-      },
-      HASH
-    );
-    const sessions = await Promise.all(
-      ["a", "b"].map((tag) =>
-        prisma.session.create({
-          data: {
-            expiresAt: new Date(Date.now() + 60_000),
-            token: `edit-${count}-${tag}`,
-            userId: id,
-          },
-          select: { id: true },
-        })
-      )
-    );
-    return { id, sessions: sessions.map((session) => session.id) };
-  };
-  const passwordOf = async (userId: string) =>
-    (
-      await prisma.account.findFirst({
-        where: { providerId: "credential", userId },
-      })
-    )?.password;
-  const sessionsOf = (userId: string) =>
-    prisma.session.findMany({ select: { id: true }, where: { userId } });
+let count = 0;
+/** A User with a password, a Laura Membership and two Sessions. */
+const edited = async () => {
+  count += 1;
+  const { id } = await createUser(
+    {
+      email: `edited-${count}@${EDITED}`,
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+      name: "Edited",
+    },
+    HASH
+  );
+  const sessions = await Promise.all(
+    ["a", "b"].map((tag) => liveSession(id, `edit-${count}-${tag}`))
+  );
+  return { id, sessions: sessions.map((session) => session.id) };
+};
+const passwordOf = async (userId: string) =>
+  (
+    await prisma.account.findFirst({
+      where: { providerId: ACCOUNT.PROVIDER.CREDENTIAL, userId },
+    })
+  )?.password;
+const sessionsOf = (userId: string) =>
+  prisma.session.findMany({ select: { id: true }, where: { userId } });
+/** An edit made on the User as they are now, as a form opened now makes it. */
+const updateNow = async (
+  id: string,
+  change: Parameters<typeof updateUser>[1],
+  options: { keepSessionId?: string | undefined } = {}
+) => updateUser(id, change, { ...options, expectedVersion: await current(id) });
 
+describe("readUser and updateUser", () => {
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
   });
@@ -484,16 +571,18 @@ describe("readUser and updateUser", () => {
 
   it("renames, leaving the rest", async () => {
     const { id } = await edited();
-    const after = await updateUser(id, { name: "Renamed" });
-    expect(after?.name).toBe("Renamed");
-    expect(after?.memberships).toEqual([{ app: App.LAURA, role: Role.USER }]);
+    const after = await updateNow(id, { name: "Renamed" });
+    expect(after).toMatchObject({
+      memberships: [{ app: App.LAURA, role: Role.USER }],
+      name: "Renamed",
+    });
     expect(await passwordOf(id)).toBe(HASH);
     expect(await sessionsOf(id)).toHaveLength(2);
   });
 
   it("replaces the Memberships with the set given", async () => {
     const { id } = await edited();
-    await updateUser(id, {
+    await updateNow(id, {
       memberships: [{ app: App.BACK_OFFICE, role: Role.VIEWER }],
     });
     expect((await readUser(id))?.memberships).toEqual([
@@ -503,14 +592,14 @@ describe("readUser and updateUser", () => {
 
   it("sets the password on the credential Account and ends every Session", async () => {
     const { id } = await edited();
-    await updateUser(id, { hashedPassword: NEW_HASH });
+    await updateNow(id, { hashedPassword: NEW_HASH });
     expect(await passwordOf(id)).toBe(NEW_HASH);
     expect(await sessionsOf(id)).toHaveLength(0);
   });
 
   it("keeps the Session named in keepSessionId", async () => {
     const { id, sessions } = await edited();
-    await updateUser(
+    await updateNow(
       id,
       { hashedPassword: NEW_HASH },
       { keepSessionId: sessions[0] }
@@ -526,9 +615,9 @@ describe("readUser and updateUser", () => {
       },
       select: { id: true },
     });
-    await updateUser(id, { hashedPassword: NEW_HASH });
+    await updateNow(id, { hashedPassword: NEW_HASH });
     const credentials = await prisma.account.findMany({
-      where: { providerId: "credential", userId: id },
+      where: { providerId: ACCOUNT.PROVIDER.CREDENTIAL, userId: id },
     });
     expect(
       credentials.map(({ accountId, password }) => ({ accountId, password }))
@@ -537,13 +626,72 @@ describe("readUser and updateUser", () => {
 
   it("leaves Sessions alone without a password", async () => {
     const { id } = await edited();
-    await updateUser(id, { memberships: [] });
+    await updateNow(id, { memberships: [] });
     expect(await sessionsOf(id)).toHaveLength(2);
   });
 
   it("answers null and writes nothing for an unknown id", async () => {
-    expect(await updateUser(MISSING_ID, { name: "Nobody" })).toBeNull();
+    expect(
+      await updateUser(
+        MISSING_ID,
+        { name: "Nobody" },
+        { expectedVersion: "any" }
+      )
+    ).toBeNull();
     expect(await prisma.user.count({ where: { id: MISSING_ID } })).toBe(0);
+  });
+});
+
+describe("updateUser on a Version", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: EDITED } } });
+  });
+
+  it("refuses a stale version and writes nothing", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    // Removed elsewhere after the form was opened: no row, no timestamp.
+    await prisma.membership.deleteMany({ where: { userId: id } });
+    await expect(
+      updateUser(
+        id,
+        { memberships: [{ app: App.LAURA, role: Role.USER }], name: "Late" },
+        { expectedVersion: opened }
+      )
+    ).rejects.toBeInstanceOf(ResourceChangedError);
+    const after = await readUser(id);
+    expect(after?.name).toBe("Edited");
+    expect(after?.memberships).toEqual([]);
+  });
+
+  it("writes with the current version and answers a new one", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    const after = await updateUser(
+      id,
+      { name: "Renamed" },
+      { expectedVersion: opened }
+    );
+    expect(after).toMatchObject({ name: "Renamed" });
+    expect(after?.version).not.toBe(opened);
+  });
+
+  it("answers a new Version for a password alone, so a second form on the old one is refused", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    const after = await updateUser(
+      id,
+      { hashedPassword: "first-hash" },
+      { expectedVersion: opened }
+    );
+    expect(after?.version).not.toBe(opened);
+    await expect(
+      updateUser(
+        id,
+        { hashedPassword: "second-hash" },
+        { expectedVersion: opened }
+      )
+    ).rejects.toBeInstanceOf(ResourceChangedError);
   });
 });
 
@@ -556,10 +704,7 @@ describe("sessionAlive", () => {
       update: {},
       where: { email: OWNER },
     });
-    return prisma.session.create({
-      data: { expiresAt: new Date(Date.now() + expiresInMs), token, userId },
-      select: { id: true },
-    });
+    return liveSession(userId, token, expiresInMs);
   };
 
   afterAll(async () => {
@@ -567,18 +712,93 @@ describe("sessionAlive", () => {
   });
 
   it("is true for a live Session", async () => {
-    const { id } = await sessionOf("alive-live", 60_000);
+    const { id } = await sessionOf("alive-live", UNIT.MS_PER_MINUTE);
     expect(await sessionAlive(id)).toBe(true);
   });
 
   it("is false once deleted", async () => {
-    const { id } = await sessionOf("alive-deleted", 60_000);
+    const { id } = await sessionOf("alive-deleted", UNIT.MS_PER_MINUTE);
     await prisma.session.delete({ where: { id } });
     expect(await sessionAlive(id)).toBe(false);
   });
 
   it("is false once expired", async () => {
-    const { id } = await sessionOf("alive-expired", -1000);
+    const { id } = await sessionOf("alive-expired", -UNIT.MS_PER_SECOND);
     expect(await sessionAlive(id)).toBe(false);
+  });
+});
+
+const VERIFIED = "verify-users.test";
+let verifiedCount = 0;
+const nextVerifiedEmail = () => {
+  verifiedCount += 1;
+  return `user-${verifiedCount}@${VERIFIED}`;
+};
+
+describe("requiring verification", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: VERIFIED } } });
+  });
+
+  const added = (requireVerification: boolean) =>
+    createUser(
+      {
+        email: nextVerifiedEmail(),
+        memberships: [],
+        name: "Verify",
+        requireVerification,
+      },
+      HASH
+    );
+
+  it("adds a User verified unless verification is required", async () => {
+    const verified = await added(false);
+    const pending = await added(true);
+    expect(await readUser(verified.id)).toMatchObject({ emailVerified: true });
+    expect(await readUser(pending.id)).toMatchObject({ emailVerified: false });
+  });
+
+  it("requires it again on an edit, stamping when", async () => {
+    const { id, version } = await added(false);
+    const before = new Date();
+    const after = await updateUser(
+      id,
+      { emailVerified: false },
+      { expectedVersion: version }
+    );
+    expect(after).toMatchObject({ emailVerified: false });
+    const row = await prisma.user.findUniqueOrThrow({ where: { id } });
+    expect(row.verificationRequiredAt?.getTime()).toBeGreaterThanOrEqual(
+      before.getTime() - UNIT.MS_PER_SECOND
+    );
+  });
+
+  it("verifies only through a link issued after the last requirement", async () => {
+    const { id } = await added(true);
+    const { email, verificationRequiredAt } =
+      await prisma.user.findUniqueOrThrow({ where: { id } });
+    const requiredAt = verificationRequiredAt?.getTime() ?? 0;
+    const older = new Date(requiredAt - UNIT.MS_PER_MINUTE);
+    const newer = new Date(requiredAt + UNIT.MS_PER_MINUTE);
+    expect(await verifyEmailIssuedAt(email, older)).toBe(false);
+    expect(await readUser(id)).toMatchObject({ emailVerified: false });
+    expect(await verifyEmailIssuedAt(email.toUpperCase(), newer)).toBe(true);
+    expect(await readUser(id)).toMatchObject({ emailVerified: true });
+  });
+
+  it("verifies through any link while nothing was ever required", async () => {
+    const { id } = await added(false);
+    await prisma.user.update({
+      data: { emailVerified: false },
+      where: { id },
+    });
+    const { email } = await prisma.user.findUniqueOrThrow({ where: { id } });
+    expect(await verifyEmailIssuedAt(email, new Date(0))).toBe(true);
+  });
+
+  it("answers false for an unknown email", async () => {
+    expect(await verifyEmailIssuedAt(`nobody@${VERIFIED}`, new Date())).toBe(
+      false
+    );
   });
 });

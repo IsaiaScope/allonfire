@@ -109,7 +109,7 @@
 | `@allonfire/database/features/laura/photo.service` | Random photos and photo count for the memory board |
 | `@allonfire/database/features/laura/game-score.service` | Score submission, best scores, leaderboard, stats |
 | `@allonfire/database/features/laura/quiz.service` | Quiz questions CRUD and random selection |
-| `@allonfire/database` | `GameType` type |
+| `@allonfire/database/enums` | `GameType` type |
 | `@allonfire/auth/guard` | `checkAppAccess`, `checkMutationAccess`, `checkAdminAccess` for server action authorization |
 | `@allonfire/storage` | `blurHashToDataURL`, `processPhoto`, `uploadFile` for image handling |
 | `@allonfire/core` | `formatErrorMessage` for error normalization in quiz CRUD |

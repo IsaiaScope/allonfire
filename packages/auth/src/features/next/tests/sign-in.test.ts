@@ -1,12 +1,16 @@
 // @module-tag unit
+
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App } from "@allonfire/database/enums";
+import { BASE_ERROR_CODES } from "better-auth";
 import { NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
 import { signInWithEmail } from "../utils/sign-in";
+import { call, fetchMock, refusedWith, stubFetch } from "./api-fetch-mocks";
 
-const TOKEN = "better-auth.session_token";
+const TOKEN = AUTH.COOKIE.SESSION_TOKEN;
 const NEW_SESSION = `${TOKEN}=fresh; Path=/; HttpOnly; SameSite=Lax`;
 
 let response = new NextResponse();
@@ -19,7 +23,7 @@ vi.mock("next/headers", () => ({
   headers: async () =>
     new Headers({
       origin: LOCAL.URL.BACK_OFFICE,
-      "x-forwarded-for": "1.2.3.4",
+      [HTTP.HEADER.X_FORWARDED_FOR]: "1.2.3.4",
     }),
 }));
 
@@ -33,31 +37,11 @@ const signedIn = () =>
     }),
     {
       headers: [
-        ["content-type", "application/json"],
+        [HTTP.HEADER.CONTENT_TYPE, HTTP.CONTENT_TYPE.JSON],
         ["set-cookie", NEW_SESSION],
       ],
     }
   );
-
-const refusedWith = (status: number, code = "REFUSED") =>
-  new Response(stringifyJson({ code, message: "no" }), {
-    headers: { "content-type": "application/json" },
-    status,
-  });
-
-const fetchMock = vi.fn(
-  async (_url: string | URL | Request, _init?: RequestInit) =>
-    new Response("{}", { headers: { "content-type": "application/json" } })
-);
-
-/** The request fetch made, as a `Request`. */
-const call = (index: number) => {
-  const [url, init] = fetchMock.mock.calls[index] ?? [];
-  if (url === undefined) {
-    throw new Error(`no fetch call ${index}`);
-  }
-  return new Request(url, init);
-};
 
 const form = (email = "a@b.test", password = "secret") => {
   const data = new FormData();
@@ -70,8 +54,7 @@ const sentCookies = () => response.headers.getSetCookie();
 
 beforeEach(() => {
   response = new NextResponse();
-  fetchMock.mockReset();
-  vi.stubGlobal("fetch", fetchMock);
+  stubFetch();
 });
 
 describe("signInWithEmail", () => {
@@ -81,9 +64,9 @@ describe("signInWithEmail", () => {
     expect(
       sentCookies().some((cookie) => cookie.startsWith(`${TOKEN}=fresh`))
     ).toBe(true);
-    expect(call(0).headers.get("x-aof-app")).toBe(App.BACK_OFFICE);
-    expect(call(0).headers.get("origin")).toBe(LOCAL.URL.BACK_OFFICE);
-    expect(call(0).headers.get("x-forwarded-for")).toBe("1.2.3.4");
+    expect(call(0).headers.get(AUTH.HEADER.APP)).toBe(App.BACK_OFFICE);
+    expect(call(0).headers.get(HTTP.HEADER.ORIGIN)).toBe(LOCAL.URL.BACK_OFFICE);
+    expect(call(0).headers.get(HTTP.HEADER.X_FORWARDED_FOR)).toBe("1.2.3.4");
   });
 
   it("answers forbidden when the API refuses the App, and sets no cookie", async () => {
@@ -97,17 +80,38 @@ describe("signInWithEmail", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it("answers unverified when the API sent a verification link instead", async () => {
+    fetchMock.mockResolvedValueOnce(
+      refusedWith(403, BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code)
+    );
+    await expect(signInWithEmail(form())).resolves.toBe(
+      AUTH.SIGN_IN_ERROR.UNVERIFIED
+    );
+  });
+
+  it("passes the page a verification link lands on", async () => {
+    fetchMock.mockResolvedValueOnce(signedIn());
+    const data = form();
+    data.set("callbackURL", `${LOCAL.URL.BACK_OFFICE}/en/email-verified`);
+    await signInWithEmail(data);
+    expect(await call(0).json()).toMatchObject({
+      callbackURL: `${LOCAL.URL.BACK_OFFICE}/en/email-verified`,
+    });
+  });
+
   it("answers unavailable to any other 403, such as an untrusted origin", async () => {
-    fetchMock.mockResolvedValueOnce(refusedWith(403, "INVALID_ORIGIN"));
+    fetchMock.mockResolvedValueOnce(
+      refusedWith(403, BASE_ERROR_CODES.INVALID_ORIGIN.code)
+    );
     await expect(signInWithEmail(form())).resolves.toBe(
       AUTH.SIGN_IN_ERROR.UNAVAILABLE
     );
   });
 
   it.each([
-    [401, AUTH.SIGN_IN_ERROR.INVALID],
-    [429, AUTH.SIGN_IN_ERROR.RATE_LIMITED],
-    [503, AUTH.SIGN_IN_ERROR.UNAVAILABLE],
+    [HTTP.STATUS.UNAUTHORIZED, AUTH.SIGN_IN_ERROR.INVALID],
+    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.SIGN_IN_ERROR.RATE_LIMITED],
+    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.SIGN_IN_ERROR.UNAVAILABLE],
   ])("maps the API's %i to %s", async (status, error) => {
     fetchMock.mockResolvedValueOnce(refusedWith(status));
     await expect(signInWithEmail(form())).resolves.toBe(error);

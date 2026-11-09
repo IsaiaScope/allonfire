@@ -1,21 +1,18 @@
 // @module-tag integration
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { App } from "@allonfire/database/enums";
-import { AOFSidebarProvider } from "@allonfire/ui/components/aof-sidebar";
+import { AOFSidebarProvider } from "@allonfire/ui/features/navigation/components/aof-sidebar";
 import { NextIntlClientProvider } from "next-intl";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { type SwitcherApp, switcherApps } from "../../constants/apps";
+import { type SwitcherApp, switcherApps } from "../../utils/switcher-apps";
 import { AppSwitcherMenu } from "../app-switcher-menu";
 
-// next/image reaches the browser as a CommonJS object, not a component.
-vi.mock("@allonfire/ui/components/aof-image", () => ({
-  AOFImage: ({ alt, src }: { alt: string; src: string }) => (
-    <span data-alt={alt} data-src={src} />
-  ),
+vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
+  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
 }));
 
 const t = EN.Navigation;

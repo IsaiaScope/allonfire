@@ -1,5 +1,5 @@
 import { I18N } from "../../../i18n/constants/locales";
-import { AOFDefineRouting } from "../aof-define-routing";
+import { AOFDefineRouting } from "../utils/aof-define-routing";
 
 // The default locale is one of the Host's languages.
 // @ts-expect-error "de" is not a language this Host routes

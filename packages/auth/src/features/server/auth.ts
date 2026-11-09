@@ -1,5 +1,5 @@
-import { prisma } from "@allonfire/database";
 import { canEnterApp } from "@allonfire/database/features/auth/access/access";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { type BetterAuthOptions, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -12,10 +12,17 @@ import {
 } from "../../shared/utils/linked-picture";
 import { joinApp } from "./routes/join-app";
 import {
+  type AuthMail,
+  mailOptions,
+  refuseWhileLimitDown,
+  verifyIssuedLink,
+} from "./utils/mail-options";
+import {
   namedApp,
   registrationClosed,
   registrationFor,
 } from "./utils/registration";
+import { setsWeakPassword } from "./utils/weak-password";
 
 export type CreateAuthOptions = {
   secret: string;
@@ -37,6 +44,11 @@ export type CreateAuthOptions = {
    * is.
    */
   avatarLink?: AvatarLink | undefined;
+  /**
+   * The host's mail: with it, sign-in needs a verified email and a password
+   * can be reset; without it, neither email is ever sent.
+   */
+  mail?: AuthMail | undefined;
 };
 
 /**
@@ -64,15 +76,18 @@ const membershipsOf = (userId: string) =>
 export function createAuth({
   avatarLink = (image) => image,
   cookieDomain,
+  mail,
   ...options
 }: CreateAuthOptions) {
   return betterAuth({
     ...options,
-    ...(cookieDomain && {
-      advanced: {
+    advanced: {
+      // Sends run after the response; Better Auth logs a failed one.
+      backgroundTasks: { handler: () => undefined },
+      ...(cookieDomain && {
         crossSubDomainCookies: { domain: cookieDomain, enabled: true },
-      },
-    }),
+      }),
+    },
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     databaseHooks: {
       session: {
@@ -137,6 +152,7 @@ export function createAuth({
                 })
               : Promise.reject(registrationClosed()),
         },
+        update: { before: verifyIssuedLink },
       },
     },
     disabledPaths: [
@@ -144,15 +160,29 @@ export function createAuth({
       AUTH.PATH.UPDATE_USER,
       AUTH.PATH.VERIFY_PASSWORD,
     ],
-    emailAndPassword: { enabled: true },
+    ...(mail ? mailOptions(mail) : { emailAndPassword: { enabled: true } }),
     hooks: {
       // Refused before Better Auth looks the email up: a closed App never
-      // tells whether an account exists.
-      before: createAuthMiddleware((ctx) =>
-        ctx.path === AUTH.PATH.SIGN_UP_EMAIL && !registrationFor(ctx.headers)
-          ? Promise.reject(registrationClosed())
-          : Promise.resolve()
-      ),
+      // tells whether an account exists, and neither does a refused email.
+      before: createAuthMiddleware(async (ctx) => {
+        if (
+          ctx.path === AUTH.PATH.SIGN_UP_EMAIL &&
+          !registrationFor(ctx.headers)
+        ) {
+          throw registrationClosed();
+        }
+        // Better Auth checks only a password's length: every route that
+        // sets one meets the same rules as an Admin's added User.
+        if (setsWeakPassword(ctx.path, ctx.body)) {
+          throw new APIError("BAD_REQUEST", {
+            code: AUTH.ERROR_CODE.PASSWORD_WEAK,
+            message: "The password misses one of the password rules",
+          });
+        }
+        if (mail) {
+          await refuseWhileLimitDown(mail, ctx.path);
+        }
+      }),
     },
     plugins: [
       openAPI({ disableDefaultReference: true }),

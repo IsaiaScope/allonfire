@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { REPO } from "@allonfire/config/local/repo";
 import { stringifyJson } from "../../shared/utils/json";
 import { affectedFrom, everything } from "./affected";
 
@@ -8,7 +9,7 @@ const [base] = process.argv.slice(2);
 const run = (command: string, args: string[]) =>
   execFileSync(command, args, {
     // The repo root: run from a package's folder, Turbo scopes to it.
-    cwd: new URL("../../../../..", import.meta.url),
+    cwd: REPO.ROOT,
     encoding: "utf8",
   });
 

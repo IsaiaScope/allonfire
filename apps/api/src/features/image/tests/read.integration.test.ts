@@ -1,8 +1,8 @@
 // @module-tag integration
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { prisma } from "@allonfire/database";
 import { App } from "@allonfire/database/enums";
+import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { API } from "../../../shared/constants/api";
 import { cookieFor, ORIGIN, type TestApp } from "../../../shared/tests/sign-in";

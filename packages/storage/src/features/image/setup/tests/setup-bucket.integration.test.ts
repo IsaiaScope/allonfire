@@ -7,14 +7,15 @@ import {
   GetBucketPolicyCommand,
   ListObjectsV2Command,
   PutBucketPolicyCommand,
+  S3ServiceException,
 } from "@aws-sdk/client-s3";
 import { env } from "../../../../environment/environment";
-import { storedObjectUrl } from "../../../../shared/utils/stored-object-url";
-import { s3 } from "../../../s3/client";
-import { putObject } from "../../../s3/objects";
-import { dropTestBucket } from "../../../test-bucket/bucket";
-import { testBucketName } from "../../../test-bucket/names";
-import { setupImageBucket } from "../setup-bucket";
+import { storedObjectUrl } from "../../../../shared/tests/stored-object-url";
+import { s3 } from "../../../s3/utils/client";
+import { putObject } from "../../../s3/utils/objects";
+import { dropTestBucket } from "../../../test-bucket/utils/bucket";
+import { testBucketName } from "../../../test-bucket/utils/names";
+import { setupImageBucket } from "../utils/setup-bucket";
 
 const STAMP = testRunStamp();
 const bucket = testBucketName("setup", STAMP);
@@ -36,11 +37,25 @@ const OLD_POLICY = stringifyJson({
 const anonymousGet = async () =>
   (await fetch(storedObjectUrl(env.STORAGE_ENDPOINT, bucket, KEY))).status;
 
-const hasPolicy = () =>
-  s3.send(new GetBucketPolicyCommand({ Bucket: bucket })).then(
-    () => true,
-    () => false
-  );
+/** The error S3 and MinIO answer for a bucket with no policy. */
+const NO_POLICY = "NoSuchBucketPolicy";
+
+/**
+ * Whether the bucket has a policy. Only `NO_POLICY` says no: any other
+ * failure (a refused call, a wrong bucket) is thrown, so it never reads as
+ * "closed".
+ */
+const hasPolicy = async () => {
+  try {
+    await s3.send(new GetBucketPolicyCommand({ Bucket: bucket }));
+    return true;
+  } catch (error) {
+    if (error instanceof S3ServiceException && error.name === NO_POLICY) {
+      return false;
+    }
+    throw error;
+  }
+};
 
 afterAll(async () => {
   await dropTestBucket("setup", STAMP);
@@ -54,7 +69,7 @@ describe("setting up a deploy's Image bucket", () => {
     );
     expect(Contents).toEqual([]);
     await putObject(bucket, KEY, Buffer.from("x"), {
-      contentType: "text/plain",
+      contentType: HTTP.CONTENT_TYPE.TEXT,
     });
     expect(await anonymousGet()).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await hasPolicy()).toBe(false);

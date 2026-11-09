@@ -7,7 +7,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { UsersListSkeleton } from "../users-list-skeleton";
 
-const HIDDEN_TOOLBAR = /<div aria-hidden="true" class="@container"/;
+/** The frame's first part, the toolbar, hidden whole. */
+const HIDDEN_TOOLBAR = /^<div[^>]*><div aria-hidden="true"/;
 
 const html = () =>
   renderToStaticMarkup(
@@ -16,6 +17,7 @@ const html = () =>
     </NextIntlClientProvider>
   );
 
+// How the toolbar lays itself out: its browser test.
 describe("UsersListSkeleton", () => {
   it("says the Users are loading, and hides the toolbar's shapes", () => {
     const markup = html();
