@@ -24,6 +24,7 @@ export const USERS_PAGE = {
     {
       createdAt: "2026-10-02T10:00:00.000Z",
       email: FIXTURE.USER.LAURA.ADMIN.email,
+      emailVerified: true,
       id: "user-laura",
       image: null,
       imageBlurDataUrl: null,
@@ -34,6 +35,7 @@ export const USERS_PAGE = {
     {
       createdAt: "2026-10-01T10:00:00.000Z",
       email: FIXTURE.USER.NO_MEMBERSHIP.email,
+      emailVerified: true,
       id: "user-none",
       image: null,
       imageBlurDataUrl: null,

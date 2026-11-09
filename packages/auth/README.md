@@ -47,13 +47,14 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/hono/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User is allowed into it (`canEnterApp` from `@allonfire/database/features/auth/access/access`: a Membership there whose Role reaches the App's floor in `ACCESS.APP_SETTINGS`); mount it once per App |
 | `./features/hono/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
 | `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL` and `AUTH_APP`, required; `AUTH_COOKIE_DOMAIN`, optional: the API's own value, so Sign out clears the cookies even when the API does not answer) for a Next App to extend its env with |
+| `./features/next/actions/password-reset` | `requestPasswordReset(locale, resetPage, previous, formData)` (`{ sent: true }` for any address, else `{ error }`) and `resetPassword(locale, token, previous, formData)` (Sign in once set, else `{ error }`): server actions for the Forgot and Reset password forms |
 | `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
 | `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
 | `./features/next/components/with-app-session` | `withAppSession(Page, fallback)` — wraps every signed-in page: `requireAppSession` runs beside the page behind its own `<Suspense>` and redirects anyone the App keeps out; the page sits in its own `<Suspense>` showing `fallback` for its data, so a page without request-time data is in the static shell |
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
 | `./features/next/utils/with-provider-pictures` | `withProviderPictures(config)` — lets an App's next/image optimize a sign-in provider's picture (`AUTH.PICTURE_HOSTS`, Google's today, over https), added to the App's own `remotePatterns`; a new provider adds its host there first |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
-| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` (`pages`: the App's signed-in paths after the locale, `""` for Home) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in by someone the App already lets in (asked of the API) to Home (307) |
+| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` (`pages`: the App's signed-in paths after the locale, `""` for Home) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in or Forgot password by someone the App already lets in (asked of the API) to Home (307); Reset password always renders |
 | `./features/next/constants/api` | `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
 | `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession()` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`), or a redirect to Sign in |
 | `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
@@ -61,7 +62,7 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
 | `./features/hono/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
 | `./features/hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
-| `./shared/constants/errors` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `REGISTRATION_CLOSED`) |
+| `./shared/constants/errors` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `MAIL_UNAVAILABLE`, `PASSWORD_WEAK`, `REGISTRATION_CLOSED`) |
 | `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.SECRET_MIN_LENGTH`, `AUTH.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.ERROR_CODE`, `AUTH.SIGN_IN_ERROR` (an App translates each), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
 | `./features/users/hono/tests/stub-user-deps` | `stubUserDeps(overrides?)`: the User module's deps for a test (no access, writes throw, Avatars quiet); `userHost(session, deps)`, the module on `moduleTestHost` |
 | `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` (a User in every App by default), `membershipsIn(role)` (that Role in every App), `cookieOf(response)` (the cookies it set, as one `cookie` header), `HOST_AUTH_PATH` |
@@ -126,6 +127,19 @@ module decides which requests count (every route that checks or hashes a passwor
 `AUTH.LIMITED_PATHS`), the host owns the store,
 the proxy hop count and the 429 body.
 
+## Verification and password reset
+
+`createAuth({ mail })` turns them on: a host's `AuthMail` (`sendVerification`,
+`sendPasswordReset`, `ready`). Sign-in then needs a verified email (a right
+password sends a fresh link, answering `EMAIL_NOT_VERIFIED`), links last an
+hour, and a reset ends every Session of the User. Sending runs after the
+response, so neither its time nor its failure tells whether an account
+exists. While `ready()` is false, the sending routes answer 503
+`MAIL_UNAVAILABLE` for every address. On `/verify-email` the `user.update`
+hook verifies with one conditional write (`verifyEmailIssuedAt`): a link
+issued before an Admin required verification again never counts. Without
+`mail`, neither email is ever sent and sign-in needs no verification.
+
 ## Registration
 
 Each App declares in `ACCESS.APP_SETTINGS` whether a visitor can register there
@@ -140,6 +154,9 @@ enum key (`BACK_OFFICE`):
   a Membership already there is left alone, so a Role is never lowered.
 - `POST /sign-in/email` with `x-aof-app` answers 403 `APP_FORBIDDEN` to a
   User the App does not let in, and leaves no Session or cookie behind.
+- `POST /sign-up/email`, `/reset-password` and `/change-password` answer 400
+  `PASSWORD_WEAK` to a new password that misses one of `passwordRules`:
+  Better Auth checks only its length.
 
 The codes are `AUTH.ERROR_CODE` in `./shared/constants/auth`. These
 refusals are Better Auth's `APIError`, not `CodedError`: Better Auth's handler

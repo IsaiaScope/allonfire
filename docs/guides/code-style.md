@@ -17,6 +17,7 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 
 ## React
 
+- A component that wraps another takes the wrapped component's props (`ComponentProps<typeof X>`, minus what it sets itself) plus only the few it adds, and spreads the rest (`{...props}`); it never lists `children`, `className`, `disabled` and the like one by one, so its props stay few. Example: `apps/back-office/src/features/auth/components/gate-submit.tsx`.
 - An animation that changes layout (width plus content plus timing) uses Framer Motion (`motion`, `AnimatePresence`, `layout`); CSS transitions are for one property; never coordinate with `setTimeout`. Example: `apps/laura/src/components/motion-provider.tsx`.
 - Every `<img>` or `<Image>` gets `width` and `height`, or `fill` inside a sized box, so nothing shifts as it loads. Example: `packages/ui/src/shared/components/aof-image.tsx`.
 

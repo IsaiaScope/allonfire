@@ -21,6 +21,8 @@ export const JAPAN_IMAGE_COLOR = {
     mutedForeground: "#a3acb6",
     primary: "#3a9ee0",
   },
+  /** The seal vermilion, a hanko's ink. */
+  HANKO: "#e04a32",
   /** The line palette: each App picks its own (the Line Rule). */
   LINE: {
     GREEN: "#00a650",

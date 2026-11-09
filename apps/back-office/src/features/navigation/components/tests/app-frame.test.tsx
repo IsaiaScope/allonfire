@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { SECTIONS } from "../../constants/sections";
-import { sectionHref } from "../../utils/sections";
+import { sectionEntry } from "../../utils/sections";
 import { AppFrame } from "../app-frame";
 
 vi.mock("@/features/i18n/navigation", async () => ({
@@ -27,10 +27,11 @@ describe("AppFrame", () => {
   it("names the menu and lists every Section once", () => {
     const html = renderFrame();
     expect(count(html, `aria-label="${EN.Navigation.menu}"`)).toBe(1);
-    for (const { path } of SECTIONS) {
-      expect(count(html, `href="${sectionHref(path)}"`)).toBeGreaterThanOrEqual(
-        1
-      );
+    // A Section with its own pages is reached through the first.
+    for (const section of SECTIONS) {
+      expect(
+        count(html, `href="${sectionEntry(section)}"`)
+      ).toBeGreaterThanOrEqual(1);
     }
   });
 

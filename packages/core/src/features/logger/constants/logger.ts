@@ -49,6 +49,8 @@ export const LOG = {
     CENSOR: "[Redacted]",
     PATHS: REDACT_PATHS,
   },
+  /** The file descriptor a Host writes its lines to. */
+  STDOUT_FD: 1,
   /** pino transport targets, resolved by pino from the logger's own package. */
   TRANSPORT: {
     /** Ships every line to the OTLP collector. */

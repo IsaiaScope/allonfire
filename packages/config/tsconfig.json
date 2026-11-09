@@ -4,5 +4,5 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "ES2022"]
   },
-  "include": ["local", "tests", "vitest.config.ts"]
+  "include": ["local", "stages", "tests", "vitest.config.ts"]
 }

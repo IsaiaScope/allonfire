@@ -4,6 +4,8 @@ import {
   isStaleTestRun,
   isTestRunOf,
   runsIntegration,
+  TEST_RUN,
+  testRunName,
   testRunStamp,
 } from "../test-run";
 
@@ -86,6 +88,35 @@ it.each([
   ["allonfire", "e2e", false],
 ])("says whether %s is a run labelled %s", (name, label, expected) => {
   expect(isTestRunOf(name, label)).toBe(expected);
+});
+
+describe("testRunName", () => {
+  it.each([
+    ["_", "allonfire_test_back_office_1760011200_ab12cd"],
+    ["-", "allonfire-test-back-office-1760011200-ab12cd"],
+  ] as const)("spells a run's name with %s", (separator, expected) => {
+    expect(testRunName("back-office", "1760011200_ab12cd", separator)).toBe(
+      expected
+    );
+  });
+
+  it.each([
+    ["api; DROP", "1_abcdef"],
+    ["api", "1_ABCDEF"],
+    ["api.v1", "1_abcdef"],
+  ])("refuses %s, %s before any name is built", (label, stamp) => {
+    expect(() => testRunName(label, stamp)).toThrow();
+  });
+
+  it("names what its own stamp and suffix length parse back", () => {
+    const fingerprint = "a".repeat(TEST_RUN.SUFFIX_LENGTH);
+    const run = testRunName("e2e", testRunStamp(NOW), "-");
+    const template = testRunName("template", `${EPOCH}_${fingerprint}`);
+    expect(isTestRunOf(run, "e2e")).toBe(true);
+    expect(
+      isStaleTestRun(template, new Date(NOW.getTime() + 2 * DAY * 1000))
+    ).toBe(true);
+  });
 });
 
 describe("dropWhenRunEnds", () => {

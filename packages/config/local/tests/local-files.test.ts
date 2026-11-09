@@ -2,6 +2,7 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { TEST_RUN } from "../../tests/run/test-run";
 import { LOCAL } from "../addresses";
 import { REPO } from "../repo";
 
@@ -72,6 +73,8 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
       `"${LOCAL.PORT.CDN}:8080"`,
       `IMGPROXY_KEY: \${STORAGE_IMAGE_SERVER_KEY:-${LOCAL.IMAGE_SERVER.KEY}}`,
       `IMGPROXY_SALT: \${STORAGE_IMAGE_SERVER_SALT:-${LOCAL.IMAGE_SERVER.SALT}}`,
+      // A test run's bucket (`testRunName` with `-`) and no other.
+      `IMGPROXY_ALLOWED_SOURCES: "s3://image/,s3://${TEST_RUN.PREFIX.replaceAll("_", "-")}"`,
       `POSTGRES_USER: \${POSTGRES_USER:-${LOCAL.DATABASE.USER}}`,
       `POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-${LOCAL.DATABASE.PASSWORD}}`,
       `POSTGRES_DB: \${POSTGRES_DB:-${LOCAL.DATABASE.NAME}}`,

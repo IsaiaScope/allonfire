@@ -5,13 +5,10 @@ import type { App } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
 import { AOFReadOnlyField } from "@allonfire/ui/features/form/components/aof-read-only-field";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
-import {
-  formDataTo,
-  submitAOFForm,
-} from "@allonfire/ui/features/form/utils/form-submit";
+import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import { IconDeviceFloppy, IconMail, IconUserEdit } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { type SubmitEvent, useActionState, useCallback } from "react";
+import { useActionState } from "react";
 import { FormAlert } from "@/shared/components/form-alert";
 import { editUser } from "../actions/edit-user";
 import { USERS } from "../constants/users";
@@ -27,6 +24,7 @@ import {
   UserFormActions,
   useToastThenList,
   useUserFieldMessages,
+  VerificationRow,
 } from "./user-form-parts";
 
 /** The read-only email's input, named by its label. */
@@ -38,6 +36,9 @@ const fieldsOf = (user: UserBody): EditUserFields => ({
   name: user.name ?? "",
   password: "",
   roles: perApp((app): RoleChoice => roleIn(user, app) ?? USERS.NO_ROLE),
+  verification: user.emailVerified
+    ? USERS.VERIFICATION.VERIFIED
+    : USERS.VERIFICATION.REQUIRED,
 });
 
 /**
@@ -59,7 +60,11 @@ export const EditUser = ({
 }) => {
   const t = useTranslations();
   const [{ error, notice, values }, action, pending] = useActionState(
-    editUser.bind(null, user.id, user.version),
+    editUser.bind(null, {
+      id: user.id,
+      version: user.version,
+      wasVerified: user.emailVerified,
+    }),
     {}
   );
   // The User was saved: a toast (a warning when their picture was not),
@@ -92,11 +97,7 @@ export const EditUser = ({
       onChange: editUserSchema(fieldMessages),
     },
   });
-  const submit = useCallback(
-    (event: SubmitEvent<HTMLFormElement>) =>
-      submitAOFForm(form, event, formDataTo(action)),
-    [form, action]
-  );
+  const formProps = useAOFFormAction(form, action);
   // The email, which never changes: the name is a field below.
   const title = user.email;
 
@@ -107,13 +108,7 @@ export const EditUser = ({
         <IconUserEdit aria-hidden className="size-7 shrink-0" />
         <span className="truncate">{title}</span>
       </h1>
-      <form
-        action={action}
-        aria-label={title}
-        className="flex flex-1 flex-col"
-        noValidate
-        onSubmit={submit}
-      >
+      <form aria-label={title} className="flex flex-1 flex-col" {...formProps}>
         {/* Add a User's rhythm: 8px from a label to its control, 32px
             between blocks. */}
         {/* `grid-cols-1` is minmax(0, 1fr): a long email truncates instead
@@ -150,6 +145,10 @@ export const EditUser = ({
             fields={USERS.FORM_FIELDS.ROLES}
             form={form}
             locked={user.id === selfId ? manageApp : undefined}
+          />
+          <VerificationRow
+            fields={USERS.FORM_FIELDS.VERIFICATION}
+            form={form}
           />
           {/* The end of the form: why the last submit failed, in its kept place. */}
           <FormAlert className="@2xl:col-span-2 mt-4">{errorText}</FormAlert>

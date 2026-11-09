@@ -63,6 +63,44 @@ describe("SignInForm", () => {
     expect(signIn).not.toHaveBeenCalled();
   });
 
+  it("says a link was sent, never as a failure, when the email is not verified", async () => {
+    vi.mocked(signIn).mockResolvedValue({
+      error: AUTH.SIGN_IN_ERROR.UNVERIFIED,
+    });
+    const screen = await renderForm();
+    const form = screen.getByRole("form", { name: t.submit });
+    const heightBefore = form.element().getBoundingClientRect().height;
+    await fill(screen, FIXTURE.USER.BACK_OFFICE.ADMIN.email, FIXTURE.PASSWORD);
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent(t.note.unverified);
+    await expect.element(screen.getByRole("alert")).toHaveTextContent("");
+    // It takes the place kept for a failure, so the form never grows.
+    expect(form.element().getBoundingClientRect().height).toBe(heightBefore);
+  });
+
+  it("posts where a verification link should land, and links to Forgot password", async () => {
+    vi.mocked(signIn).mockResolvedValue({ error: AUTH.SIGN_IN_ERROR.INVALID });
+    const landing = "https://back-office.test/en/email-verified";
+    const screen = await render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <SignInForm callbackURL={landing} />
+      </NextIntlClientProvider>
+    );
+    await expect
+      .element(screen.getByRole("link", { name: t.forgot }))
+      .toHaveAttribute(
+        "href",
+        expect.stringContaining(AUTH.PAGE.FORGOT_PASSWORD)
+      );
+    await fill(screen, FIXTURE.USER.BACK_OFFICE.ADMIN.email, FIXTURE.PASSWORD);
+    await expect
+      .poll(() => vi.mocked(signIn).mock.calls.length)
+      .toBeGreaterThan(0);
+    const posted = vi.mocked(signIn).mock.calls.at(-1)?.[2];
+    expect(posted?.get("callbackURL")).toBe(landing);
+  });
+
   it("shows the action's refusal as an alert", async () => {
     vi.mocked(signIn).mockResolvedValue({
       error: AUTH.SIGN_IN_ERROR.FORBIDDEN,

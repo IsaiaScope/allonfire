@@ -23,6 +23,13 @@ async function upsertImage(
   ]);
 }
 
+/** The MAIL provider every Test database has on; its row exists from the changelog. */
+const enableMailProvider = (client: PrismaClient) =>
+  client.mailProvider.updateMany({
+    data: { enabled: true, fromAddress: FIXTURE.MAIL_PROVIDER.fromAddress },
+    where: { slot: FIXTURE.MAIL_PROVIDER.slot },
+  });
+
 /** Every Fixture into `client`'s database; safe to run again. */
 export async function seedFixtures(client: PrismaClient): Promise<void> {
   // One hash for every Fixture User: same password, and hashing is the slow part.
@@ -31,5 +38,6 @@ export async function seedFixtures(client: PrismaClient): Promise<void> {
   await Promise.all([
     ...FIXTURE.USERS.map((user) => upsertUser(client, user, hash)),
     ...images.map((image) => upsertImage(client, image)),
+    enableMailProvider(client),
   ]);
 }

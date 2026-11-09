@@ -14,7 +14,7 @@ import { apiSends } from "./session-request-mocks";
 const ORIGIN = "http://back-office.test";
 const TOKEN = `${SESSION_COOKIE.SECURE_TOKEN}=t`;
 const IT = "it";
-const { HOME, SIGN_IN } = AUTH.PAGE;
+const { FORGOT_PASSWORD, HOME, RESET_PASSWORD, SIGN_IN } = AUTH.PAGE;
 /** A page only the App knows: the gate must take it as a plain path. */
 const APP_PAGE = { REPORTS: "/reports" } as const;
 
@@ -143,6 +143,28 @@ describe("withSignInGate", () => {
   it("asks the API nothing for a signed-out visit to Sign in", async () => {
     const fetch = apiSends(null);
     await visit(`/${IT}${SIGN_IN}`);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+});
+
+describe("withSignInGate on the password pages", () => {
+  it("sends someone the App lets in from Forgot password to Home, in the same language form", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    const response = await visit(`/${IT}${FORGOT_PASSWORD}`, TOKEN);
+    expect(response.status).toBe(HTTP.STATUS.TEMPORARY_REDIRECT);
+    expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
+      `${ORIGIN}/${IT}${HOME}`
+    );
+    expect(
+      (await visit(FORGOT_PASSWORD, TOKEN)).headers.get(HTTP.HEADER.LOCATION)
+    ).toBe(`${ORIGIN}${METADATA.PATH.ROOT}`);
+    expect(proxy).not.toHaveBeenCalled();
+  });
+
+  it("lets someone signed in open a reset link, which may be for another account", async () => {
+    const fetch = apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    await visit(`/${IT}${RESET_PASSWORD}`, TOKEN);
     expect(fetch).not.toHaveBeenCalled();
     expect(proxy).toHaveBeenCalledOnce();
   });

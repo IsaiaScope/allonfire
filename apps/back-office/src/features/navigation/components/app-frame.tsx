@@ -1,3 +1,4 @@
+import { AOFFrameHeader } from "@allonfire/ui/features/navigation/components/aof-frame-header";
 import {
   AOFSidebar,
   AOFSidebarContent,
@@ -16,7 +17,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
 import { Torii } from "@/shared/components/torii";
 import { NAVIGATION, sidebarParam } from "../constants/navigation";
-import { SECTIONS } from "../constants/sections";
+import { SECTIONS, type Section } from "../constants/sections";
 
 import { CloseDrawerOnNavigate } from "./close-drawer-on-navigate";
 import { FrameBreadcrumb } from "./frame-breadcrumb";
@@ -60,18 +61,25 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
       >
         <SidebarKanji />
         {/* The station sign's band: the App's line under its name, level
-              with the page header's line. On a phone the drawer runs to the
-              screen's edges: keep clear of the notch above. */}
-        <AOFSidebarHeader className="relative justify-center border-line/50 border-b-2 max-md:pt-[max(--spacing(3),env(safe-area-inset-top))] max-md:pb-3 md:h-16 md:py-0">
+              with the page header's line (ui keeps both below a notch). */}
+        <AOFSidebarHeader className="relative justify-center border-line/50 border-b-2">
           {switcher}
         </AOFSidebarHeader>
         <AOFSidebarContent className="relative">
           <AOFSidebarGroup className="py-4">
             <nav aria-label={t("menu")}>
               <AOFSidebarMenu>
-                {SECTIONS.map(({ icon: Icon, label, path }) => (
+                {SECTIONS.map(({ icon: Icon, label, pages, path }: Section) => (
                   <AOFSidebarMenuItem key={label}>
-                    <SidebarSectionLink label={t(label)} path={path}>
+                    <SidebarSectionLink
+                      label={t(label)}
+                      pages={pages?.map(({ icon: PageIcon, ...page }) => ({
+                        icon: <PageIcon aria-hidden />,
+                        label: t(page.label),
+                        path: page.path,
+                      }))}
+                      path={path}
+                    >
                       <Icon aria-hidden />
                     </SidebarSectionLink>
                   </AOFSidebarMenuItem>
@@ -92,14 +100,12 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
       {/* On a wider screen the page area is the screen's height and scrolls
           itself, so a list's table fills what is left and keeps its own
           scroll bars on screen; a phone scrolls the page, pull to refresh
-          included. Beside the sidebar the page no longer meets the left
-          edge, so its left gutter drops the inset the sidebar already
-          clears; the right keeps it, for a notch on that side. */}
-      <AOFSidebarInset className="md:h-svh md:overflow-y-auto md:[--gutter-left:var(--page-gutter)]">
+          included. Its pages' gutters clear every inset; the left one only
+          when no sidebar stands beside it (AOFSidebarInset). */}
+      <AOFSidebarInset className="md:h-svh md:overflow-y-auto">
         {/* The sidebar header's line runs on across the page's: one station
-            sign, the App's line under it. Its right end, the torii, stays
-            clear of a notch on the right. */}
-        <header className="relative isolate flex h-16 shrink-0 items-center gap-2 border-line/50 border-b-2 px-4 pr-[calc(--spacing(4)+env(safe-area-inset-right,0px))]">
+            sign, the App's line under it. */}
+        <AOFFrameHeader className="border-line/50 border-b-2">
           <HeaderKanji />
           <AOFSidebarTrigger
             aria-label={t("toggleMenu")}
@@ -111,7 +117,7 @@ export const AppFrame = ({ account, children, switcher }: AppFrameProps) => {
           />
           <FrameBreadcrumb />
           <Torii className="ml-auto h-10.5 w-12.5" />
-        </header>
+        </AOFFrameHeader>
         {children}
       </AOFSidebarInset>
     </AOFSidebarProvider>

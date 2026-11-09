@@ -36,8 +36,8 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 2
 fi
 
-# shellcheck source=/dev/null
 set -a
+# shellcheck source=/dev/null
 source "$ENV_FILE"
 set +a
 
@@ -503,7 +503,11 @@ if [[ -f "$MINIO_STATUS_FILE" ]]; then
   minio_mirror_bytes="${minio_mirror_bytes:-0}"
 fi
 
-if [[ "$TIER" == "weekly" || "$TIER" == "monthly" ]]; then
+if [[ "$DRY_RUN" == "true" && ( "$TIER" == "weekly" || "$TIER" == "monthly" ) ]]; then
+  # The mirror and its status file are what a real run changes: neither moves.
+  log "[dry-run] Skipping storage S3 sync"
+  minio_status="dry_run"
+elif [[ "$TIER" == "weekly" || "$TIER" == "monthly" ]]; then
   log "Syncing storage data to S3 mirror..."
   MINIO_CONTAINER="$(find_container "$BACKUP_STORAGE_CONTAINER_PATTERN")"
   MINIO_SYNC_DIR="${STAGING_DIR}/minio-sync"

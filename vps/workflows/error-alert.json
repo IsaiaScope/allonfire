@@ -64,11 +64,5 @@
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
-  },
-  "nodeGroups": [],
-  "sourceWorkflowId": null,
-  "versionMetadata": {
-    "name": "Version 51a773cb",
-    "description": ""
   }
 }

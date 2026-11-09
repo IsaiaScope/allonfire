@@ -19,6 +19,7 @@ import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT } from "../src/shared/tests/translators";
+import { addedBy, addedUser, addForm, addUser, fillAddForm } from "./add-user";
 import {
   emailOf,
   openSidebar,
@@ -167,57 +168,10 @@ test("filters by App through the Filter panel's list", async ({ page }) => {
   );
 });
 
-/** A User this project adds, its email unique to the run and the project. */
-const addedBy = (project: string) => ({
-  email: `add-${project}-${Date.now()}@e2e.test`,
-  name: "Added",
-  password: "An-e2e-password-1",
-});
-
-/**
- * The Add page's form; a role query skips the hidden copy Next keeps of a
- * page it has left, which a label query would also find.
- */
-const addForm = (page: Page) => page.getByRole("form", { name: t.add.title });
 /** The picture field's drop area input, the one a visitor picks with: the
  *  field posts through its own input, named as the field. */
 const picturePicker = (page: Page) =>
   addForm(page).locator('input[type="file"]:not([name])');
-
-/** Types the User's email, name and password, `confirm` as its repeat. */
-const fillAddForm = async (
-  page: Page,
-  user: ReturnType<typeof addedBy>,
-  confirm = user.password
-) => {
-  const form = addForm(page);
-  await form.getByLabel(t.add.email, { exact: true }).fill(user.email);
-  await form.getByLabel(t.form.name, { exact: true }).fill(user.name);
-  await form.getByLabel(t.form.password, { exact: true }).fill(user.password);
-  await form.getByLabel(t.form.confirmPassword, { exact: true }).fill(confirm);
-};
-
-/** Fills the Add page and adds the User as a Back Office Admin. */
-const addUser = async (page: Page, user: ReturnType<typeof addedBy>) => {
-  const form = addForm(page);
-  await fillAddForm(page, user);
-  await form
-    .getByRole("radiogroup", {
-      name: enT("Users.form.role", { app: APP_ENTRY[App.BACK_OFFICE].name }),
-    })
-    .getByRole("button", { name: EN.Navigation.role[Role.ADMIN] })
-    .click();
-  await form.getByRole("button", { name: t.add.submit }).click();
-};
-
-/** Adds a User through the form, as a Back Office Admin, and waits for the list. */
-const addedUser = async (page: Page, project: string) => {
-  const user = addedBy(project);
-  await page.goto(newUserHref());
-  await addUser(page, user);
-  await expect(page).toHaveURL(new RegExp(`${USERS}$`));
-  return user;
-};
 
 test("adds a User from the list's Add button; they sign in with the password the Admin typed", async ({
   browser,
@@ -586,7 +540,7 @@ test("deleting a User another Admin already deleted says so", async ({
     .getByRole("button", { name: t.delete.confirm })
     .click();
   await expect(
-    page.getByText("This User had already been deleted")
+    page.getByText(enT("Users.delete.gone", { count: 1 }))
   ).toBeVisible();
   await expect(emailOf(page, user.email)).toHaveCount(0);
 });
@@ -621,7 +575,7 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   // Typed right after the page loads: React keeps text typed before it
   // hydrates, but not a click. The rule ticks only once it has.
   await expect(
-    own.getByRole("checkbox", { name: t.form.rule.match })
+    own.getByRole("checkbox", { name: EN.Password.rule.match })
   ).toBeChecked();
   await saveEdit(fresh, admin.email);
 

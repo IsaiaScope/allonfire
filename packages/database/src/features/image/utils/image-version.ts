@@ -20,7 +20,6 @@ export type VersionedImage = {
  * since an `ImageApp` row has no timestamp on the Image, sorted so their
  * order never counts. The alt is one part, JSON in Language order, so no
  * text can pass for another Language's.
- * @internal
  */
 export const imageVersion = ({
   access,
@@ -44,12 +43,7 @@ type ImageRowVersioned = Omit<VersionedImage, "alt" | "apps"> & {
 };
 
 /** A row's Version, its `alt` read as `readAlt` reads it. */
-export const rowVersion = ({
-  access,
-  alt,
-  apps,
-  updatedAt,
-}: ImageRowVersioned) =>
+const rowVersion = ({ access, alt, apps, updatedAt }: ImageRowVersioned) =>
   imageVersion({
     access,
     alt: readAlt(alt),

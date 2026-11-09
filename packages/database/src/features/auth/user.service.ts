@@ -24,6 +24,8 @@ export type UserRecord = {
   /** The blur shown while their stored picture loads; none for any other. */
   imageBlurDataUrl: string | null;
   createdAt: Date;
+  /** Whether they verified their email; false while an Admin requires it. */
+  emailVerified: boolean;
   memberships: AccessMembership[];
   /** Their Version (`userVersion`): an edit must carry it to be written. */
   version: string;
@@ -46,6 +48,7 @@ export type UserListQuery = {
 const userRecord = {
   createdAt: true,
   email: true,
+  emailVerified: true,
   id: true,
   image: true,
   imageBlurDataUrl: true,
@@ -188,7 +191,18 @@ export type UserChange = {
   memberships?: readonly AccessMembership[];
   /** A new password, hashed as Better Auth hashes it. */
   hashedPassword?: string;
+  /**
+   * False requires them to verify their email again, from the next sign-in
+   * on; true marks it verified, an Admin vouching for it.
+   */
+  emailVerified?: boolean;
 };
+
+/** An email's verified state as written, stamping when verification was required. */
+const verificationData = (emailVerified: boolean, now = new Date()) => ({
+  emailVerified,
+  ...(!emailVerified && { verificationRequiredAt: now }),
+});
 
 /**
  * Edits a User, all or nothing, and answers them as `readUser` does; null
@@ -202,7 +216,7 @@ export type UserChange = {
  */
 export const updateUser = (
   id: string,
-  { hashedPassword, memberships, name }: UserChange,
+  { emailVerified, hashedPassword, memberships, name }: UserChange,
   {
     expectedVersion,
     keepSessionId,
@@ -216,8 +230,21 @@ export const updateUser = (
       return null;
     }
     checkVersion(expectedVersion, locked.version);
-    if (name !== undefined) {
-      await tx.user.update({ data: { name }, where: { id } });
+    // A new password lives on the Account, not the User: their timestamp
+    // moves too, so it is a new Version and a form opened before is refused.
+    if (
+      name !== undefined ||
+      emailVerified !== undefined ||
+      hashedPassword !== undefined
+    ) {
+      await tx.user.update({
+        data: {
+          ...(name !== undefined && { name }),
+          ...(emailVerified !== undefined && verificationData(emailVerified)),
+          updatedAt: new Date(),
+        },
+        where: { id },
+      });
     }
     if (memberships) {
       await replaceMemberships(tx, id, memberships);
@@ -250,6 +277,8 @@ export type NewUser = {
   email: string;
   name: string;
   memberships: readonly AccessMembership[];
+  /** Verified unless the Admin requires them to verify it themselves. */
+  requireVerification?: boolean | undefined;
 };
 
 /** The email asked for already belongs to a User. */
@@ -264,11 +293,11 @@ const UNIQUE_VIOLATION = "P2002";
  * Adds a User with a password login and their Memberships, all or nothing,
  * and answers their id and Version (what a picture set next carries). The
  * email is stored trimmed and lowercased, as Better Auth stores it, so the
- * unique email holds whatever case was typed. Already verified: an Admin
- * vouches for it.
+ * unique email holds whatever case was typed. Verified, an Admin vouching
+ * for it, unless they require the User to verify it.
  */
 export const createUser = async (
-  { email, memberships, name }: NewUser,
+  { email, memberships, name, requireVerification = false }: NewUser,
   hashedPassword: string
 ): Promise<{ id: string; version: string }> => {
   try {
@@ -276,7 +305,7 @@ export const createUser = async (
       const created = await tx.user.create({
         data: {
           email: email.trim().toLowerCase(),
-          emailVerified: true,
+          ...verificationData(!requireVerification),
           memberships: { create: [...memberships] },
           name,
         },
@@ -300,3 +329,23 @@ export const createUser = async (
     throw error;
   }
 };
+
+/**
+ * Marks an email verified through a link issued at `issuedAt`, in one
+ * conditional write: refused (false) when an Admin required verification
+ * after the link was issued, so an older link never satisfies a newer
+ * requirement, whichever of the two commits first. A token's issue time is
+ * in whole seconds, so the requirement is compared to the second: a link
+ * issued in the same second as the requirement counts as newer. False for an
+ * unknown email too.
+ */
+export const verifyEmailIssuedAt = async (
+  email: string,
+  issuedAt: Date
+): Promise<boolean> =>
+  (await prisma.$executeRaw`
+    UPDATE auth."User" SET "emailVerified" = true, "updatedAt" = ${new Date()}
+    WHERE "email" = ${email.trim().toLowerCase()}
+      AND ("verificationRequiredAt" IS NULL
+        OR date_trunc('second', "verificationRequiredAt") <= ${issuedAt})`) ===
+  1;

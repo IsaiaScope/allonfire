@@ -70,6 +70,9 @@ export const signIn = async (
 /** The Users list. */
 export const USERS = sectionHref(SECTION.USERS.path);
 
+/** The Services and their providers. */
+export const SERVICES = sectionHref(SECTION.SERVICES.path);
+
 /**
  * The Users list searched for one email: the Users other tests add can push
  * anyone off the first page.

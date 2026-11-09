@@ -39,7 +39,8 @@ vi.mock(
 const BASE_URL = LOCAL.URL.API;
 const BASE_PATH = HOST_AUTH_PATH;
 const ORIGIN = LOCAL.URL.LAURA;
-const PASSWORD = "registration-password-1";
+/** Meets every password rule, as the API requires of a new one. */
+const PASSWORD = "Registration-password-1!";
 const EMAIL_DOMAIN = "@registration.allonfire.test";
 const TOKEN_COOKIE = `${AUTH.COOKIE.SESSION_TOKEN}=`;
 const DATA_COOKIE = `${AUTH.COOKIE.SESSION_DATA}=`;

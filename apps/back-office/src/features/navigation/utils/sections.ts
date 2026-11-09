@@ -24,6 +24,14 @@ export const isCurrentSection = (pathname: string, path: string) =>
   pathname === sectionHref(path) ||
   (path !== AUTH.PAGE.HOME && pathname.startsWith(`${path}/`));
 
+/** Where a Section's row goes: its first own page, else the Section itself. */
+export const sectionEntry = (section: Section) =>
+  sectionHref(section.pages?.[0]?.path ?? section.path);
+
+/** The Section's own page `pathname` is on (`/services/mail/...`), if any. */
+export const currentSubPage = (section: Section, pathname: string) =>
+  section.pages?.find(({ path }) => isCurrentSection(pathname, path));
+
 /** The Section `pathname` is on; Home when it is none of them. */
 export const currentSection = (pathname: string): Section =>
   SECTIONS.find(({ path }) => isCurrentSection(pathname, path)) ?? SECTION.HOME;

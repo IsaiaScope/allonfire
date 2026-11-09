@@ -18,6 +18,7 @@ import {
   type UserListQuery,
   updateUser,
   userImages,
+  verifyEmailIssuedAt,
 } from "../user.service";
 
 // The Fixtures share this domain, and only they use it.
@@ -674,6 +675,24 @@ describe("updateUser on a Version", () => {
     expect(after).toMatchObject({ name: "Renamed" });
     expect(after?.version).not.toBe(opened);
   });
+
+  it("answers a new Version for a password alone, so a second form on the old one is refused", async () => {
+    const { id } = await edited();
+    const opened = await current(id);
+    const after = await updateUser(
+      id,
+      { hashedPassword: "first-hash" },
+      { expectedVersion: opened }
+    );
+    expect(after?.version).not.toBe(opened);
+    await expect(
+      updateUser(
+        id,
+        { hashedPassword: "second-hash" },
+        { expectedVersion: opened }
+      )
+    ).rejects.toBeInstanceOf(ResourceChangedError);
+  });
 });
 
 describe("sessionAlive", () => {
@@ -706,5 +725,80 @@ describe("sessionAlive", () => {
   it("is false once expired", async () => {
     const { id } = await sessionOf("alive-expired", -UNIT.MS_PER_SECOND);
     expect(await sessionAlive(id)).toBe(false);
+  });
+});
+
+const VERIFIED = "verify-users.test";
+let verifiedCount = 0;
+const nextVerifiedEmail = () => {
+  verifiedCount += 1;
+  return `user-${verifiedCount}@${VERIFIED}`;
+};
+
+describe("requiring verification", () => {
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: { endsWith: VERIFIED } } });
+  });
+
+  const added = (requireVerification: boolean) =>
+    createUser(
+      {
+        email: nextVerifiedEmail(),
+        memberships: [],
+        name: "Verify",
+        requireVerification,
+      },
+      HASH
+    );
+
+  it("adds a User verified unless verification is required", async () => {
+    const verified = await added(false);
+    const pending = await added(true);
+    expect(await readUser(verified.id)).toMatchObject({ emailVerified: true });
+    expect(await readUser(pending.id)).toMatchObject({ emailVerified: false });
+  });
+
+  it("requires it again on an edit, stamping when", async () => {
+    const { id, version } = await added(false);
+    const before = new Date();
+    const after = await updateUser(
+      id,
+      { emailVerified: false },
+      { expectedVersion: version }
+    );
+    expect(after).toMatchObject({ emailVerified: false });
+    const row = await prisma.user.findUniqueOrThrow({ where: { id } });
+    expect(row.verificationRequiredAt?.getTime()).toBeGreaterThanOrEqual(
+      before.getTime() - UNIT.MS_PER_SECOND
+    );
+  });
+
+  it("verifies only through a link issued after the last requirement", async () => {
+    const { id } = await added(true);
+    const { email, verificationRequiredAt } =
+      await prisma.user.findUniqueOrThrow({ where: { id } });
+    const requiredAt = verificationRequiredAt?.getTime() ?? 0;
+    const older = new Date(requiredAt - UNIT.MS_PER_MINUTE);
+    const newer = new Date(requiredAt + UNIT.MS_PER_MINUTE);
+    expect(await verifyEmailIssuedAt(email, older)).toBe(false);
+    expect(await readUser(id)).toMatchObject({ emailVerified: false });
+    expect(await verifyEmailIssuedAt(email.toUpperCase(), newer)).toBe(true);
+    expect(await readUser(id)).toMatchObject({ emailVerified: true });
+  });
+
+  it("verifies through any link while nothing was ever required", async () => {
+    const { id } = await added(false);
+    await prisma.user.update({
+      data: { emailVerified: false },
+      where: { id },
+    });
+    const { email } = await prisma.user.findUniqueOrThrow({ where: { id } });
+    expect(await verifyEmailIssuedAt(email, new Date(0))).toBe(true);
+  });
+
+  it("answers false for an unknown email", async () => {
+    expect(await verifyEmailIssuedAt(`nobody@${VERIFIED}`, new Date())).toBe(
+      false
+    );
   });
 });

@@ -147,32 +147,32 @@ describe("AddUser", () => {
     await renderForm();
     const password = page.getByLabelText(FORM.password, { exact: true });
     const length = rule(
-      enT("Users.form.rule.length", { min: USER.LIMIT.PASSWORD_MIN })
+      enT("Password.rule.length", { min: USER.LIMIT.PASSWORD_MIN })
     );
     await expect.element(length).not.toBeChecked();
     await password.fill("a");
-    await expect.element(rule(FORM.rule.lowercase)).toBeChecked();
-    await expect.element(rule(FORM.rule.uppercase)).not.toBeChecked();
+    await expect.element(rule(EN.Password.rule.lowercase)).toBeChecked();
+    await expect.element(rule(EN.Password.rule.uppercase)).not.toBeChecked();
     await password.fill(NEW.password);
     await Promise.all(
       [
         length,
-        rule(FORM.rule.uppercase),
-        rule(FORM.rule.number),
-        rule(FORM.rule.symbol),
+        rule(EN.Password.rule.uppercase),
+        rule(EN.Password.rule.number),
+        rule(EN.Password.rule.symbol),
       ].map((met) => expect.element(met).toBeChecked())
     );
-    await expect.element(rule(FORM.rule.match)).not.toBeChecked();
+    await expect.element(rule(EN.Password.rule.match)).not.toBeChecked();
     await page
       .getByLabelText(FORM.confirmPassword, { exact: true })
       .fill(NEW.password);
-    await expect.element(rule(FORM.rule.match)).toBeChecked();
+    await expect.element(rule(EN.Password.rule.match)).toBeChecked();
   });
 
   it("keeps the rules out of the tab order: they only report", async () => {
     await renderForm();
     await expect
-      .element(rule(FORM.rule.match))
+      .element(rule(EN.Password.rule.match))
       .toHaveAttribute("tabindex", "-1");
   });
 

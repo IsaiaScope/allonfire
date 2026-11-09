@@ -19,6 +19,7 @@
       "emailRequired": "Inserisci la tua email.",
       "passwordRequired": "Inserisci la password."
     },
+    "forgot": "Password dimenticata?",
     "language": "Lingua",
     "notice": "Solo utenti autorizzati. Registrazione chiusa.",
     "password": "Password",
@@ -26,7 +27,55 @@
     "showPassword": "Mostra password",
     "submit": "Accedi",
     "submitting": "Accesso in corso…",
-    "theme": "Cambia tema"
+    "theme": "Cambia tema",
+    "note": {
+      "unverified": "Controlla la posta: ti abbiamo inviato un link per verificare l'email. Aprilo, poi accedi."
+    }
+  },
+  "EmailVerified": {
+    "failed": "Questo link non funziona più. Accedi per riceverne uno nuovo.",
+    "signIn": "Vai al login",
+    "title": "Verifica email",
+    "verified": "La tua email è verificata. Ora puoi accedere."
+  },
+  "ForgotPassword": {
+    "back": "Torna all'accesso",
+    "email": "Email",
+    "error": {
+      "invalid": "Inserisci un indirizzo email valido.",
+      "rateLimited": "Troppe richieste. Riprova più tardi.",
+      "unavailable": "L'invio dei link non è disponibile ora. Riprova più tardi."
+    },
+    "field": {
+      "emailInvalid": "Inserisci un indirizzo email valido.",
+      "emailRequired": "Inserisci la tua email."
+    },
+    "intro": "Inserisci la tua email e ti invieremo un link per scegliere una nuova password.",
+    "submit": "Invia link",
+    "submitting": "Invio…",
+    "title": "Reimposta la password",
+    "note": {
+      "sent": "Se un account usa questo indirizzo, ti arriva un link per reimpostare la password. Controlla la posta."
+    }
+  },
+  "ResetPassword": {
+    "askAgain": "Chiedi un nuovo link",
+    "confirmPassword": "Conferma la nuova password",
+    "error": {
+      "invalid": "Le password devono coincidere e rispettare ogni regola.",
+      "invalidToken": "Questo link non funziona più. Chiedine uno nuovo.",
+      "rateLimited": "Troppi tentativi. Riprova più tardi.",
+      "unavailable": "Salvataggio non disponibile ora. Riprova più tardi."
+    },
+    "field": {
+      "passwordMismatch": "Le password sono diverse",
+      "passwordWeak": "Non tutte le regole sotto sono ancora rispettate"
+    },
+    "password": "Nuova password",
+    "showPassword": "Mostra password",
+    "submit": "Salva password",
+    "submitting": "Salvataggio…",
+    "title": "Scegli una nuova password"
   },
   "Navigation": {
     "account": "Account",
@@ -34,12 +83,14 @@
     "breadcrumb": "Percorso",
     "home": "Home",
     "language": "Lingua",
+    "mail": "Email",
     "menu": "Menu principale",
     "role": {
       "ADMIN": "Admin",
       "USER": "Utente",
       "VIEWER": "Visualizzatore"
     },
+    "services": "Service",
     "signOut": "Esci",
     "storage": "Archivio",
     "switchApp": "Cambia App",
@@ -48,6 +99,75 @@
     "themeLight": "Chiaro",
     "toggleMenu": "Comprimi o espandi il menu",
     "users": "Utenti"
+  },
+  "Services": {
+    "empty": {
+      "title": "Ancora nessun Service",
+      "description": "I Service compaiono qui quando il database li contiene."
+    },
+    "enabled": {
+      "label": "Provider",
+      "on": "Abilitato",
+      "off": "Disabilitato"
+    },
+    "error": {
+      "changed": "Qualcuno ha modificato questo provider. Ricarica e riprova.",
+      "failed": "Il salvataggio non è riuscito. Riprova.",
+      "incomplete": "Un provider attivo richiede un indirizzo mittente.",
+      "invalid": "Controlla i campi evidenziati.",
+      "refused": "La tua sessione non può più modificare i Service. Accedi di nuovo.",
+      "removed": "Questo provider è stato rimosso. Ricarica la pagina."
+    },
+    "field": {
+      "dailyLimit": "Limite giornaliero",
+      "fromAddress": "Indirizzo mittente",
+      "monthlyLimit": "Limite mensile",
+      "name": "Nome"
+    },
+    "fieldError": {
+      "email": "Inserisci un indirizzo email valido.",
+      "limit": "Inserisci un numero intero, 0 o più.",
+      "limitTooHigh": "Questo limite è troppo alto.",
+      "nameTooLong": "Questo nome è troppo lungo.",
+      "required": "Compila questo campo."
+    },
+    "key": {
+      "missing": "Nessuna chiave nell'ambiente"
+    },
+    "save": "Salva",
+    "saved": "Provider salvato",
+    "saving": "Salvataggio…",
+    "service": {
+      "MAIL": "Email"
+    },
+    "serviceEnabled": {
+      "failed": "Il Servizio non è cambiato. Riprova.",
+      "label": "Service",
+      "on": "Attivo",
+      "off": "Spento"
+    },
+    "slot": "Slot {slot}",
+    "test": {
+      "button": "Invia email di prova",
+      "accepted": "Accettata, non ancora consegnata: controlla la posta.",
+      "rejected": "Rifiutata dal provider. Controlla chiave e impostazioni.",
+      "uncertain": "Non si sa se è partita: conta, non è stata rinviata.",
+      "unavailable": "Non inviata: Service spento, senza chiave o quota piena.",
+      "rateLimited": "Troppe email a questo indirizzo. Riprova più tardi.",
+      "removed": "Questo provider è stato rimosso. Ricarica la pagina.",
+      "failed": "La prova non è stata inviata. Riprova.",
+      "sending": "Invio…"
+    },
+    "usage": {
+      "day": "Oggi: {used} su {limit}",
+      "month": "Ultimi 31 giorni: {used} su {limit}",
+      "monthNone": "Ultimi 31 giorni: {used}, nessun limite",
+      "today": "Oggi",
+      "lastMonth": "Ultimi 31 giorni",
+      "of": "su {limit}",
+      "noLimit": "nessun limite",
+      "unread": "{name}: uso non disponibile."
+    }
   },
   "Storage": {
     "empty": {
@@ -128,8 +248,8 @@
       "description": "Ogni Utente lascia tutte le App ed esce ovunque. Non si può annullare.",
       "done": "{count, plural, one {# Utente eliminato} other {# Utenti eliminati}}",
       "failed": "Non è stato possibile eliminare gli Utenti.",
-      "gone": "{count, plural, one {Questo Utente era già stato eliminato} other {Questi Utenti erano già stati eliminati}}",
-      "partly": "{deleted, plural, one {# Utente eliminato} other {# Utenti eliminati}}; {gone, plural, one {# era già stato eliminato} other {# erano già stati eliminati}}",
+      "gone": "{count, plural, one {Utente già eliminato} other {Utenti già eliminati}}",
+      "partly": "{deleted, plural, one {# Utente eliminato} other {# Utenti eliminati}}, {gone} già eliminati",
       "select": "Seleziona {email}",
       "selectAll": "Seleziona tutti gli Utenti di questa pagina",
       "title": "{count, plural, one {Eliminare # Utente?} other {Eliminare # Utenti?}}"
@@ -168,7 +288,7 @@
         "tooLarge": "La foto è troppo grande",
         "unreadable": "Non riesco a leggere la foto. Provane un'altra.",
         "use": "Usa",
-        "wrongType": "Il file non è una foto. Prova con JPEG, PNG, WebP, AVIF o HEIC.",
+        "wrongType": "Non è una foto. Prova JPEG, PNG, WebP, AVIF o HEIC.",
         "zoomIn": "Ingrandisci",
         "zoomOut": "Rimpicciolisci"
       },
@@ -184,16 +304,10 @@
       "password": "Password",
       "role": "Ruolo in {app}",
       "roles": "Ruoli",
-      "rule": {
-        "length": "Almeno {min} caratteri",
-        "lowercase": "Una lettera minuscola",
-        "match": "Le due password coincidono",
-        "number": "Un numero",
-        "symbol": "Un simbolo",
-        "uppercase": "Una lettera maiuscola"
-      },
-      "rules": "La password deve avere",
-      "showPassword": "Mostra password"
+      "showPassword": "Mostra password",
+      "verification": "Verifica email",
+      "verified": "Verificata",
+      "mustVerify": "Da verificare"
     },
     "open": "Apri {email}",
     "copy": {
@@ -202,5 +316,17 @@
       "label": "Copia {email}",
       "tip": "Copia email"
     }
+  },
+  "Password": {
+    "rule": {
+      "length": "Almeno {min} caratteri",
+      "lowercase": "Una lettera minuscola",
+      "match": "Le due password coincidono",
+      "noSpaces": "Nessuno spazio",
+      "number": "Un numero",
+      "symbol": "Un simbolo",
+      "uppercase": "Una lettera maiuscola"
+    },
+    "rules": "La password deve avere"
   }
 }

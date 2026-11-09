@@ -23,6 +23,9 @@ const entersAppNow = async (request: NextRequest) => {
   }
 };
 
+/** The pages someone the App already lets in is sent Home from. */
+const SIGNED_OUT_PAGES = [AUTH.PAGE.SIGN_IN, AUTH.PAGE.FORGOT_PASSWORD];
+
 /**
  * Wraps an App's proxy so a visit with no Session cookie to one of its
  * signed-in `pages` (the App's paths after the locale, `""` for Home), or to
@@ -31,9 +34,11 @@ const entersAppNow = async (request: NextRequest) => {
  * otherwise stream a 200 shell before its `withAppSession` check redirects.
  * Only an optimistic check: the page's own
  * `withAppSession` still decides, so a cookie the API refuses is sent on
- * from there. The other way round, a visit to Sign in by someone the App
- * already lets in goes Home (307), asked of the API (`entersAppNow`): only
- * a visit carrying a Session cookie asks, so a signed-out one costs nothing.
+ * from there. The other way round, a visit to Sign in or Forgot password by
+ * someone the App already lets in goes Home (307), asked of the API
+ * (`entersAppNow`): only a visit carrying a Session cookie asks, so a
+ * signed-out one costs nothing. Reset password always renders: its link may
+ * be for an account other than the one signed in.
  * Every other path passes, so an unknown page still 404s.
  */
 export const withSignInGate = (
@@ -55,15 +60,18 @@ export const withSignInGate = (
   const signInUnder = [...signInFor].filter(
     ([page]) => page !== METADATA.PATH.ROOT && !locales.includes(page.slice(1))
   );
-  // Sign in, in each language form, and the Home it sends away to.
-  const homeFor = new Map<string, string>([
-    // Home with no language in front is the root (`AUTH.PAGE.HOME` is `""`).
-    [AUTH.PAGE.SIGN_IN, METADATA.PATH.ROOT],
-    ...locales.map((locale): [string, string] => [
-      `/${locale}${AUTH.PAGE.SIGN_IN}`,
-      `/${locale}${AUTH.PAGE.HOME}`,
-    ]),
-  ]);
+  // Sign in and Forgot password, in each language form, and the Home they
+  // send away to. Never Reset password: its link may be for another account.
+  const homeFor = new Map<string, string>(
+    SIGNED_OUT_PAGES.flatMap((page): [string, string][] => [
+      // Home with no language in front is the root (`AUTH.PAGE.HOME` is `""`).
+      [page, METADATA.PATH.ROOT],
+      ...locales.map((locale): [string, string] => [
+        `/${locale}${page}`,
+        `/${locale}${AUTH.PAGE.HOME}`,
+      ]),
+    ])
+  );
   const signInOf = (pathname: string) =>
     signInFor.get(pathname) ??
     signInUnder.find(([page]) => pathname.startsWith(`${page}/`))?.[1];

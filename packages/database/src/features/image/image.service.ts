@@ -4,7 +4,7 @@ import { type App, ImageAccess } from "../../../generated/prisma/enums";
 import type { ImageVisibility } from "../auth/access/access";
 import { prisma } from "../prisma/client";
 import { type ImageAlt, readAlt } from "./utils/alt";
-import { checkImageVersions, rowVersion } from "./utils/image-version";
+import { checkImageVersions, imageVersion } from "./utils/image-version";
 
 /** Where the last page ended: its last Image's sort key, not a row reference. */
 export type ImageCursor = { createdAt: Date; id: string };
@@ -61,12 +61,14 @@ const withPlacements = {
 type ImageRow = Prisma.ImageGetPayload<{ include: typeof withPlacements }>;
 
 // `alt` is a Json column; parsing narrows it instead of casting.
-const toRecord = (row: ImageRow): ImageRecord => ({
-  ...row,
-  alt: readAlt(row.alt),
-  apps: row.apps.map(({ app }) => app),
-  version: rowVersion(row),
-});
+const toRecord = (row: ImageRow): ImageRecord => {
+  const record = {
+    ...row,
+    alt: readAlt(row.alt),
+    apps: row.apps.map(({ app }) => app),
+  };
+  return { ...record, version: imageVersion(record) };
+};
 
 /** Throws unless every id exists; duplicates in `ids` count once. */
 async function assertAllExist(

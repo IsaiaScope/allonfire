@@ -3,6 +3,7 @@ import { stubAuth } from "@allonfire/auth/shared/tests/stub-auth";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { stubImageDeps } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { AppDeps } from "../../app";
+import { stubServicesDeps } from "../../features/services/tests/stub-services-deps";
 import { API } from "../constants/api";
 import { memoryStore } from "./memory-store";
 
@@ -24,6 +25,7 @@ export function appDeps(overrides: Partial<AppDeps> = {}): AppDeps {
     checkDatabase: async () => true,
     checkRedis: async () => true,
     images: stubImageDeps(),
+    services: stubServicesDeps(),
     store: memoryStore(),
     users: stubUserDeps(),
     ...overrides,

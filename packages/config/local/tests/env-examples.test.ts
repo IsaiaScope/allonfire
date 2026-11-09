@@ -23,18 +23,32 @@ const fromSchemas = (...paths: string[]) =>
     (key) => !TOOL_SET.has(key)
   );
 
+/**
+ * The API reads a mail provider's endpoint by slot (`providerEndpoint`), so no
+ * schema lists the keys: the example names them for the slots the changeset
+ * seeds.
+ */
+const MAIL_KEYS = [0, 1].flatMap((slot) =>
+  ["_DRIVER", "_KEY", "_URL"].map(
+    (suffix) => `API_MAIL_PROVIDER_${slot}${suffix}`
+  )
+);
+
 // Laura keeps its old names until it is rebuilt (package-layout.md).
 const OWNERS = [
   [
     "apps/api/.env.example",
     () =>
-      fromSchemas(
-        "apps/api/src/environment/environment.ts",
-        "packages/auth/src/environment/environment.ts",
-        "packages/core/src/environment/telemetry-environment.ts",
-        "packages/database/src/environment/environment.ts",
-        "packages/storage/src/environment/environment.ts"
-      ),
+      sorted([
+        ...fromSchemas(
+          "apps/api/src/environment/environment.ts",
+          "packages/auth/src/environment/environment.ts",
+          "packages/core/src/environment/telemetry-environment.ts",
+          "packages/database/src/environment/environment.ts",
+          "packages/storage/src/environment/environment.ts"
+        ),
+        ...MAIL_KEYS,
+      ]),
   ],
   [
     "apps/back-office/.env.example",

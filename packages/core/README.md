@@ -13,6 +13,20 @@ Every constant follows one pattern: an `as const` object is the source,
 `z.infer` of that schema — never a hand-written union, never `ValueOf`.
 Number values work too (`z.enum(HTTP.STATUS)`).
 
+### `./features/mail/*` and `./environment/mail-environment`
+
+Transactional mail through a Service's providers, any host. Core reaches no
+database: the host hands `sendMail` a `MailStore` (the API's is
+`features/mail/database-store`).
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `MAIL` (`constants/mail`) | Constant | The drivers (`DRIVER`, named for the API's shape), what a driver's send made of a handoff (`ATTEMPT`), the outcomes (`accepted`, `rejected`, `uncertain`, `unavailable`), the purposes (`PURPOSE`, a log field), the environment's names (`ENV`), the driver paths and timeouts |
+| `sendMail(message, { purpose, only }, deps)` (`utils/send-mail`) | Function | Enabled providers in slot order, each handed the message by its driver; one with no room or that refuses is skipped for the next; an uncertain outcome stops the send; `only` sends through one provider, never failing over |
+| `MAIL_DRIVERS` (`utils/drivers`) | `Record<MailDriver, MailDriverImpl>` | Each driver's `send` (an attempt: accepted, quota, rejected, uncertain) and `usage` (what the provider's API says it sent today and in 31 days, and the limits it reports) over `fetch`, https only |
+| `MailStore`, `MailDeps`, `MailUsage`, `SendResult` (`types/mail`) | Types | What a host provides: the providers and a last-acceptance stamp, the endpoint of a slot, `fetch` |
+| `providerEndpoint(slot)` (`environment/mail-environment`) | Function | `API_MAIL_PROVIDER_<slot>_URL`, `_KEY` and `_DRIVER`, read when sending; anything missing or invalid (a URL that is not https, an unknown driver) reads as no endpoint |
+
 ### `./features/errors/coded-error`
 
 | Export | Type | Description |

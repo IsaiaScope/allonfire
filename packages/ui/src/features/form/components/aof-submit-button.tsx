@@ -6,7 +6,7 @@ import {
 
 export type AOFSubmitButtonProps = Omit<
   AOFButtonProps,
-  "type" | "disabled" | "aria-busy"
+  "type" | "aria-busy"
 > & {
   /** True while the server action runs: `useActionState`'s flag. */
   pending: boolean;
@@ -18,9 +18,11 @@ export type AOFSubmitButtonProps = Omit<
  * An AOF form's submit button. `pending` comes from the caller because the
  * action's transition, not TanStack's `isSubmitting`, knows when the request
  * ends; while pending the button is disabled, so a second click does nothing.
+ * A form may also switch it off for good (`disabled`) once its job is done.
  */
 export const AOFSubmitButton = ({
   children,
+  disabled,
   pending,
   pendingChildren,
   ...props
@@ -30,7 +32,7 @@ export const AOFSubmitButton = ({
     <AOFButton
       {...props}
       aria-busy={pending || undefined}
-      disabled={pending}
+      disabled={pending || disabled}
       type="submit"
     >
       {label}

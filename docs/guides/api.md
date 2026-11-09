@@ -34,11 +34,21 @@ apps/api/
     │   │                 translate, translation-values, translations/*.json
     │   ├── image/        image-deps (the Image module's Host deps),
     │   │                 tests/image-test-app
+    │   ├── mail/         mail-deps (core's mail on the real stack, the auth
+    │   │                 emails), database-store, constants/email (EMAIL:
+    │   │                 the per-address limit, each App's look),
+    │   │                 utils/address-limit (5 per address per rolling hour,
+    │   │                 Redis), utils/auth-mail
     │   ├── logger/       logger (core's createLogger with the API's env),
     │   │                 constants/request-log (REQUEST_LOG),
     │   │                 middleware/request-logger
     │   ├── rate-limit/   constants/limits, middleware/rate-limiter
     │   ├── redis/        redis, constants/redis (REDIS)
+    │   ├── services/     routes/ (`/v1/services`: an Admin's list and edits,
+    │   │                 a provider's test send; the workflow service's
+    │   │                 token-guarded keep-alive), services-deps,
+    │   │                 utils/keep-alive (one per Service type, MAIL's first: its check emails),
+    │   │                 utils/usage-reader (what each provider's API reports, cached in Redis)
     │   ├── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
     │   │                 + corrections), telemetry — OTel SDK
     │   └── users/        user-deps (the User module's Host deps)
@@ -168,13 +178,15 @@ many, and `middlewares/` reads wrong.
   hand — nothing checks it. It is not optional: omit a value and
   `IntlMessageFormat` throws into `translate`'s catch, serving the user the raw
   ICU source in the wrong language. Add a generator if the list outgrows eyes.
-- **`pnpm i18n:check` runs in CI** — `@lingual/i18n-check` compares every locale
+- **`pnpm static:i18n` runs in CI** — `@lingual/i18n-check` compares every locale
   against `en`: missing keys, and ICU arguments a translation dropped, which
   render without throwing so nothing else catches them. Known gap: a leftover
   key present in a target locale but not in `en` is not reported. That is dead
   weight, not wrong output.
 
 - **`/ready` answers 503 only when Postgres is down**; Redis down answers 200 `degraded`, since the rate limiter fails open and a degraded feature is no outage (`features/health/routes/handlers.ts`). (`docs/superpowers/specs/2026-08-27-hono-api-scaffold-design.md`)
+- **Mail** (`features/mail`, core's `features/mail`): Better Auth's verification and reset emails go through `createAuth`'s `mail`, sent after the response (`advanced.backgroundTasks`), each counted first against the reader's address (five in any rolling hour, `EMAIL.ADDRESS_LIMIT`; an Admin's provider test counts apart under its own prefix, so anonymous reset requests for an Admin's address never use up the budget their test needs; failing closed: while Redis cannot count, `/request-password-reset` and `/send-verification-email` answer 503 `MAIL_UNAVAILABLE` for any address). Providers are tried in slot order, each reached over its HTTP API (a driver named for the API's shape); one that answers for want of room (its quota or rate) or refuses is skipped for the next, and an uncertain outcome is never retried elsewhere. Each message carries its own `X-Entity-Ref-ID` (one `crypto.randomUUID()`, the same through a failover), in the `headers` both providers' APIs take: Resend documents it as the way to keep Gmail from threading mail that looks alike, which trims a repeat behind "..." (`MAIL.HEADER.ENTITY_REF_ID`). Where each is reached: `API_MAIL_PROVIDER_<slot>_URL`, `_KEY`, `_DRIVER`, read when sending. A reset link lands on the App's page (`<redirectTo>?token=`), never the API's `GET /reset-password/:token`, whose path the request log records.
+- **Services** (`features/services`): every route but the keep-alive needs a Back Office Admin read now (`canManageUsers`); `POST /v1/services/keep-alive` needs `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>` (compared in constant time; unset, every call is 401) and sends its check emails to `API_KEEP_ALIVE_RECIPIENT` (no usage rows to prune: a provider reports its own). A Service is addressed by its `type` (`PATCH /v1/services/:type`); a test send to a provider that is gone is a 404, and a disabled provider can be tested while its Service is on.
 - **Managing Users is gated on Admin in the Back Office** (`isBackOfficeAdmin`, `features/users/user-deps.ts`), never on its floor (`canEnterApp`), so lowering `minRole` never opens Users. (`docs/superpowers/specs/2026-10-21-back-office-users-list-design.md`)
 
 ## Pointers

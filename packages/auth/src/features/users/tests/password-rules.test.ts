@@ -10,10 +10,20 @@ describe("passwordRules", () => {
     expect(passwordRules("")).toEqual({
       length: false,
       lowercase: false,
+      noSpaces: false,
       number: false,
       symbol: false,
       uppercase: false,
     });
+  });
+
+  it("refuses any whitespace: a space, a tab, a line break", () => {
+    expect(passwordRules(STRONG).noSpaces).toBe(true);
+    for (const white of [" ", "\t", "\n", "\u00a0"]) {
+      expect(passwordRules(`${STRONG}${white}`).noSpaces).toBe(false);
+      expect(meetsPasswordRules(`${STRONG}${white}`)).toBe(false);
+      expect(meetsPasswordRules(`${white}${STRONG}`)).toBe(false);
+    }
   });
 
   it("counts any script's letters and digits, and anything else as a symbol", () => {

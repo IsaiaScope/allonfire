@@ -6,14 +6,15 @@ import { AOFCheckbox } from "@allonfire/ui/shared/components/aof-checkbox";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
-import type { passwordChecks } from "../utils/user-form-schema";
+import type { passwordChecks } from "../utils/password-checks";
 
 /** Where each rule sits in the list; every rule needs one, so a rule the
  *  User module adds fails to compile until it is placed. */
 const PLACE = {
   length: 0,
   lowercase: 1,
-  match: 5,
+  match: 6,
+  noSpaces: 5,
   number: 3,
   symbol: 4,
   uppercase: 2,
@@ -34,7 +35,7 @@ export const PasswordRules = ({
 }: {
   checks: ReturnType<typeof passwordChecks>;
 }) => {
-  const t = useTranslations("Users.form");
+  const t = useTranslations("Password");
   const id = useId();
   return (
     <div className="flex flex-col gap-2">

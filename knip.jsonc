@@ -5,15 +5,24 @@
   // above it) and none covers a whole folder:
   // packages/config/local/tests/knip-config.test.ts.
   //
-  // `!` marks production. `pnpm knip:production` starts only from `!` entries
+  // `!` marks production. `pnpm static:knip-production` starts only from `!` entries
   // and what knip finds itself (Next pages, package exports, `start`
   // scripts), over each `project` minus its `!…!` negations: tests, test
-  // helpers, Vitest setup and e2e. `pnpm knip` reads everything.
+  // helpers, Vitest setup and e2e. `pnpm static:knip` reads everything.
   "includeEntryExports": true,
   "ignoreBinaries": [
     // `pnpm dev:tailscale` runs the Tailscale CLI installed on the machine,
     // not an npm package.
     "tailscale",
+    // The e2e fake mail provider makes its throwaway certificate with the
+    // system `openssl` (macOS, Linux and CI have it).
+    "openssl",
+    // The same fake provider runs under `tsx`, which the e2e config starts
+    // from the repository's root (`pnpm -C <root> exec tsx`).
+    "tsx",
+    // `pnpm static:shell` runs ShellCheck, a system tool (GitHub's runners
+    // ship it; a Mac without it skips the check).
+    "shellcheck",
     // Package scripts run in their package (`pnpm -C packages/storage
     // test-bucket`, `pnpm -C packages/database test-database`), which knip
     // reads as binaries.
@@ -100,6 +109,12 @@
     // Held only by Laura (`playwrightConfig`); `aofPlaywrightConfig` is read
     // by the Apps' playwright.config.ts, which production mode leaves out.
     "packages/config/tests/e2e/playwright.config.ts": ["exports"],
+    // The helpers the Apps' e2e specs share (safe area); production mode
+    // leaves e2e out.
+    "packages/config/tests/e2e/safe-area.ts": ["exports", "types"],
+    // Thrown by the service; the API's route tests and the service's own
+    // tests import it, production mode leaves tests out.
+    "packages/database/src/features/service/provider.service.ts": ["exports"],
     // Kept for the Images page.
     "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
     // Read by the Apps' next.config.ts, which production mode leaves out.
@@ -189,6 +204,8 @@
       ]
     },
     "packages/config": {
+      // The Stage runner's CLI: the root scripts run it (`pnpm static`, `pnpm check`).
+      "entry": ["stages/scripts/stage.ts!"],
       "ignoreUnresolved": [
         // typescript/nextjs.json names Next's TypeScript plugin, which each
         // Next App installs; config itself has no `next`.
@@ -207,7 +224,8 @@
         "src/features/ci/print-affected.ts!",
         "src/features/next/pwa/utils/cli.ts!",
         "src/features/tailwind/canonicalize.ts!",
-        "src/features/typescript/vendor-types.ts!"
+        "src/features/typescript/vendor-types.ts!",
+        "src/features/vendor/vendor-patch.ts!"
       ],
       "ignoreDependencies": [
         // core's createLogger names pino's OpenTelemetry transport as a

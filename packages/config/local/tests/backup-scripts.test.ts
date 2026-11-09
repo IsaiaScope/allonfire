@@ -121,3 +121,36 @@ it("names the pictures mirror storage in the manifest", () => {
   expect(text).not.toContain('"minio": {');
   expect(text).not.toContain('"minio-data"');
 });
+
+it("counts a component missing from the restored backup as a failure", () => {
+  const text = read(VPS.restoreTest);
+  expect(text).not.toContain('"status\\":\\"skipped\\"');
+  expect(text).not.toContain('log "SKIP: ');
+  expect(text).toContain('file not in backup"');
+  expect(text).toContain('\\"status\\":\\"missing\\"');
+});
+
+it("fails the drill on a backup its own manifest calls failed", () => {
+  expect(read(VPS.restoreTest)).toContain(
+    'if [[ "$MANIFEST_STATUS" != "success" ]]; then'
+  );
+});
+
+it("uploads no storage mirror on a dry run", () => {
+  expect(read(VPS.backup)).toContain(
+    'log "[dry-run] Skipping storage S3 sync"'
+  );
+});
+
+it("prunes only the snapshots this server made", () => {
+  expect(read(VPS.snapshot)).toContain(
+    "select(.created_from.id == ($server | tonumber))"
+  );
+});
+
+it.each(SCRIPTS)("points shellcheck at the .env %s sources", (file) => {
+  // The directive binds to the next line only: any gap leaves SC1090.
+  expect(read(file)).toContain(
+    '# shellcheck source=/dev/null\nsource "$ENV_FILE"'
+  );
+});

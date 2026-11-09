@@ -32,7 +32,7 @@ describe("Section helpers", () => {
   });
 
   it("numbers each Section like a station on the line, in menu order", () => {
-    expect(SECTIONS.map(stationNumber)).toEqual(["01", "02", "03"]);
+    expect(SECTIONS.map(stationNumber)).toEqual(["01", "02", "03", "04"]);
   });
 
   it("finds the Section you are on, Home for any other path", () => {

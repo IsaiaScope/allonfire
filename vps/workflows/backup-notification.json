@@ -186,11 +186,5 @@
     "timezone": "Europe/Rome",
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "KX1CQrEVzEvV747w"
-  },
-  "nodeGroups": [],
-  "sourceWorkflowId": null,
-  "versionMetadata": {
-    "name": "Version f18bbd5a",
-    "description": ""
   }
 }

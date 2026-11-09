@@ -15,10 +15,13 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
+import {
+  pictogramTile,
+  tiledControl,
+} from "@/shared/components/toolbar-action";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
 import { FilterKanji } from "./filter-kanji";
-import { pictogramTile, tiledControl } from "./toolbar-action";
 
 /** The App list's options, in the order the enum declares them. */
 const APPS = objectValues(App).map((app) => ({

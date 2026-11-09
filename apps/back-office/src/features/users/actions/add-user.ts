@@ -4,6 +4,7 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { languageOf } from "@allonfire/auth/features/next/utils/redirect-to";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { updateTag } from "next/cache";
+import { refusalOf, textOf } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { redirect } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -16,11 +17,10 @@ import {
 } from "../utils/add-user-schema";
 import {
   pictureOf,
-  refusalOf,
   rolesOf,
   sendAvatarChange,
-  textOf,
   userAvatarChangeOf,
+  verificationOf,
 } from "../utils/user-form-data";
 import { membershipsOf } from "../utils/user-form-schema";
 
@@ -41,6 +41,7 @@ const valuesOf = (form: FormData): AddUserFields => ({
   name: textOf(form, "name"),
   password: textOf(form, "password"),
   roles: rolesOf(form),
+  verification: verificationOf(form),
 });
 
 /**
@@ -64,10 +65,16 @@ export const addUser = async (
   if (!parsed.success) {
     return { error: USERS.ADD_ERROR.INVALID, values };
   }
-  const { email, name, password, roles } = parsed.data;
+  const { email, name, password, roles, verification } = parsed.data;
   const client = await serverApi();
   const res = await client[API.VERSION.CURRENT].users.$post({
-    json: { email, memberships: membershipsOf(roles), name, password },
+    json: {
+      email,
+      memberships: membershipsOf(roles),
+      name,
+      password,
+      requireVerification: verification === USERS.VERIFICATION.REQUIRED,
+    },
   });
   if (res.status !== HTTP.STATUS.CREATED) {
     const error = await refusalOf(

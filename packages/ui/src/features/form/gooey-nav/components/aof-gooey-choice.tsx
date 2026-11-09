@@ -5,6 +5,7 @@ import { type ReactNode, useCallback } from "react";
 import { useAOFColorScheme } from "../../../../shared/hooks/use-aof-theme-switch";
 import type { ComponentPropsWithoutChildren } from "../../../../shared/types/types";
 import { cn } from "../../../../shared/utils/utils";
+import type { GooeySize } from "../utils/looks";
 import { AOFGooeyNav } from "./aof-gooey-nav";
 
 type AOFGooeyOption<V extends string> = {
@@ -28,6 +29,8 @@ export type AOFGooeyChoiceProps<V extends string> = Omit<
   options: readonly AOFGooeyOption<V>[];
   /** The chosen pill's colour, as hex: WebGL paints it, so no CSS variable. */
   pill: string;
+  /** Its type size; a form field's (14px) by default, `sm` beside a title. */
+  size?: GooeySize | undefined;
   value: V;
 };
 
@@ -66,6 +69,7 @@ export const AOFGooeyChoice = <V extends string>({
   onValueChange,
   options,
   pill,
+  size = "md",
   value,
   ...props
 }: AOFGooeyChoiceProps<V>) => {
@@ -106,8 +110,7 @@ export const AOFGooeyChoice = <V extends string>({
         items={options.map(({ icon, label: text }) => ({ icon, label: text }))}
         onChange={choose}
         particleCount={PARTICLES}
-        // The size of a field label (14px), like the rest of a form.
-        size="md"
+        size={size}
         style={FRAME}
         // Only Gooey Nav's WebGL hover and shadow read it: the markup is the
         // same whichever scheme, so hydration finds nothing to disagree on.

@@ -6,13 +6,13 @@ import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { updateTag } from "next/cache";
+import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { redirect } from "@/features/i18n/navigation";
 import { USERS } from "../../constants/users";
 import { addUser } from "../add-user";
-import { FAKE_API, resetFakeApi } from "./fake-api";
 
 vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("./fake-api")).fakeServerApi,
+  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
 }));
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock("@/features/i18n/navigation", () => ({ redirect: vi.fn() }));
@@ -62,6 +62,21 @@ describe("addUser", () => {
     const state = await addUser("en", {}, formOf());
     expect(state.error).toBe(error);
     expect(state.values?.email).toBe("new@add-user.test");
+  });
+
+  it("asks the new User to verify their email only when the Admin chose so", async () => {
+    FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
+    const { verification } = USERS.FORM_FIELDS.VERIFICATION;
+    await addUser("en", {}, formOf());
+    await addUser(
+      "en",
+      {},
+      formOf({ [verification]: USERS.VERIFICATION.REQUIRED })
+    );
+    expect(FAKE_API.sent.map(({ body }) => body)).toMatchObject([
+      { requireVerification: false },
+      { requireVerification: true },
+    ]);
   });
 
   it("refuses invalid fields without asking the API", async () => {

@@ -72,8 +72,8 @@ describe("change-password", () => {
     );
     const res = await changePassword(
       cookie,
-      "wrong-password-1",
-      "never-1-applied"
+      "Wrong-password-1!",
+      "Never-1-applied!"
     );
     expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
     expect((await signIn(app, user, { password: CHANGED })).status).toBe(
@@ -85,7 +85,7 @@ describe("change-password", () => {
     const first = cookieOf(await signIn(app, user, { password: CHANGED }));
     const second = cookieOf(await signIn(app, user, { password: CHANGED }));
     expect(
-      (await changePassword(first, CHANGED, "changed-password-2")).status
+      (await changePassword(first, CHANGED, "Changed-password-2!")).status
     ).toBe(HTTP.STATUS.OK);
     expect(await getSession(app, tokenOnly(second))).not.toBeNull();
   });

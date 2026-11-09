@@ -52,7 +52,7 @@ const fetchMock = vi.fn(
   async (_url: string | URL | Request, _init?: RequestInit) =>
     new Response("{}", {
       headers: [
-        ["content-type", HTTP.CONTENT_TYPE.JSON],
+        [HTTP.HEADER.CONTENT_TYPE, HTTP.CONTENT_TYPE.JSON],
         ...EXPIRED_BY_API.map((cookie): [string, string] => [
           "set-cookie",
           cookie,

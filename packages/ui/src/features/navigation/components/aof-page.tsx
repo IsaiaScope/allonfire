@@ -2,26 +2,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentProps } from "react";
 import { cn } from "../../../shared/utils/utils";
 
+/**
+ * Every page keeps to the safe edges (base.css): clear of a phone's corners,
+ * notch and home indicator. Its ground still runs to the screen's edges,
+ * under them. A page overrides one side (`pb-24`) and keeps the rest; never
+ * a whole `p-*`, which drops them all.
+ */
 const page = cva(
-  "relative isolate flex flex-col bg-background text-foreground",
+  "relative isolate flex flex-col bg-background pt-(--gutter-top) pr-(--gutter-right) pb-(--gutter-bottom) pl-(--gutter-left) text-foreground",
   {
-    defaultVariants: { as: "main", edges: "safe", layout: "stack" },
+    defaultVariants: { as: "main", layout: "stack" },
     variants: {
       /**
        * Only the page that is the screen fills its height; one nested in a
        * frame (`section`, `article`) is as tall as the frame lets it be.
        */
       as: { article: "", main: "min-h-dvh", section: "" },
-      edges: {
-        /** Draws to the screen's edges, keeping clear of nothing. */
-        none: "",
-        /**
-         * Keeps to the safe edges (base.css): clear of a phone's corners,
-         * notch and home indicator. A page overrides one side (`pb-24`) and
-         * keeps the rest; never a whole `p-*`, which drops them all.
-         */
-        safe: "pt-(--gutter-top) pr-(--gutter-right) pb-(--gutter-bottom) pl-(--gutter-left)",
-      },
       layout: {
         /** One short message and an action, centred (home, error, 404). */
         centered: "items-center justify-center gap-4",
@@ -53,12 +49,11 @@ export type AOFPageProps = ComponentProps<"main"> &
 export const AOFPage = ({
   as: Tag = "main",
   className,
-  edges,
   layout,
   ...props
 }: AOFPageProps) => (
   <Tag
-    className={cn(page({ as: Tag, edges, layout }), className)}
+    className={cn(page({ as: Tag, layout }), className)}
     data-layout={layout ?? "stack"}
     data-slot="page"
     {...props}

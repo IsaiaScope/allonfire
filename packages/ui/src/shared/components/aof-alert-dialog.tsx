@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@allonfire/shadcn/components/alert-dialog";
 import { type ReactNode, useCallback } from "react";
+import { SAFE_AREA } from "../constants/safe-area";
 import type { ComponentPropsWithoutChildren } from "../types/types";
 import { cn } from "../utils/utils";
 
@@ -73,7 +74,10 @@ export const AOFAlertDialog = ({
   const inText = head ? null : named;
   return (
     <AlertDialog {...props}>
-      <AlertDialogContent {...contentProps}>
+      <AlertDialogContent
+        {...contentProps}
+        className={cn(SAFE_AREA.CENTRED, contentProps?.className)}
+      >
         {top}
         {/* Under a head of its own the text reads from the left on every
             screen, like the head above it. */}

@@ -1,25 +1,28 @@
 import { API } from "@allonfire/api/shared/constants/api";
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   type AOFAvatarChange,
   avatarChangeOf,
 } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
-import { z } from "zod";
 import type { ApiClient } from "@/features/api/utils/api";
+import { textOf } from "@/features/api/utils/api-refusal";
 import { USERS } from "../constants/users";
-import { perApp, roleChoiceSchema } from "./user-form-schema";
-
-/** A posted field's text; none when missing or a file. */
-export const textOf = (form: FormData, key: string) => {
-  const value = form.get(key);
-  return typeof value === "string" ? value : "";
-};
+import {
+  perApp,
+  roleChoiceSchema,
+  verificationChoiceSchema,
+} from "./user-form-schema";
 
 /** The Role rows as posted (`roles.<app>`); an unknown choice reads as "Not a member", never an error. */
 export const rolesOf = (form: FormData) =>
   perApp((app) =>
     roleChoiceSchema.catch(USERS.NO_ROLE).parse(textOf(form, `roles.${app}`))
   );
+
+/** The verification row as posted; an unknown choice reads as verified. */
+export const verificationOf = (form: FormData) =>
+  verificationChoiceSchema
+    .catch(USERS.VERIFICATION.VERIFIED)
+    .parse(textOf(form, USERS.FORM_FIELDS.VERIFICATION.verification));
 
 /** The picture's change as both User forms post it (`USERS.AVATAR_FIELD`). */
 export const userAvatarChangeOf = (form: FormData) =>
@@ -55,31 +58,4 @@ export const sendAvatarChange = async (
       .catch(() => Response.error());
   }
   return null;
-};
-
-const problemSchema = z.object({ code: z.string() }).catch({ code: "" });
-
-/**
- * Why the API refused a User form's write, as the form says it: the answer
- * `known` gives for the problem's code, else for the status. Past those, a
- * 401 or a 403 means the Session is gone or no longer lets the visitor
- * change Users (a new password ended it, a Role was taken away): trying
- * again never works, signing in again might (`REFUSED`); anything else is
- * `FAILED`. A Map, so a code that names something every object has
- * (`constructor`) finds nothing.
- */
-export const refusalOf = async <E extends string>(
-  res: Response,
-  { FAILED, REFUSED }: { FAILED: E; REFUSED: E },
-  known: ReadonlyMap<number | string, E>
-): Promise<E> => {
-  const { code } = problemSchema.parse(await res.json().catch(() => null));
-  const answer = known.get(code) ?? known.get(res.status);
-  if (answer) {
-    return answer;
-  }
-  return res.status === HTTP.STATUS.UNAUTHORIZED ||
-    res.status === HTTP.STATUS.FORBIDDEN
-    ? REFUSED
-    : FAILED;
 };

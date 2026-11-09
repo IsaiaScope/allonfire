@@ -162,7 +162,7 @@ describe("AppFrame", () => {
 });
 
 /** A phone's notch and home indicator, larger than the gutters they meet. */
-const NOTCH = { bottom: 34, left: 47, right: 47 } as const;
+const NOTCH = { bottom: 34, left: 47, right: 47, top: 47 } as const;
 
 /** Draws the screen with `insets` (`env(safe-area-inset-*)`), as a notched
  *  phone does; `{}` takes them away. Only Chromium can. */
@@ -171,7 +171,7 @@ const notch = (insets: Partial<typeof NOTCH>) =>
 
 const px = (
   element: Element | null | undefined,
-  side: "Bottom" | "Left" | "Right"
+  side: "Bottom" | "Left" | "Right" | "Top"
 ) => {
   if (!element) {
     throw new Error("the frame's part is missing");
@@ -219,6 +219,50 @@ describe.runIf(server.browser === "chromium")(
       const clear = px(header, "Right");
       await notch(NOTCH);
       expect(px(header, "Right")).toBe(clear + NOTCH.right);
+    });
+
+    /** The page's header, the frame's top bar. */
+    const header = () =>
+      page
+        .getByRole("button", { name: t.toggleMenu })
+        .element()
+        .closest("header");
+    /** The sidebar's header: the App switcher's band. */
+    const sidebarHeader = () =>
+      page
+        .getByText("Apps", { exact: true })
+        .element()
+        .closest('[data-slot="sidebar-header"]');
+    const height = (element: Element | null) =>
+      element?.getBoundingClientRect().height;
+
+    it("keeps the header's menu button clear of a notch on the left with no sidebar beside it", async () => {
+      await page.viewport(
+        SCREEN.VIEWPORT.PHONE.WIDTH,
+        SCREEN.VIEWPORT.PHONE.HEIGHT
+      );
+      await render(frame());
+      const clear = px(header(), "Left");
+      await notch(NOTCH);
+      expect(px(header(), "Left")).toBe(clear + NOTCH.left);
+    });
+
+    it("leaves the left notch to the sidebar beside the header", async () => {
+      await render(frame());
+      const clear = px(header(), "Left");
+      await notch(NOTCH);
+      expect(px(header(), "Left")).toBe(clear);
+    });
+
+    it("keeps both top bars below a notch above, their lines level", async () => {
+      await render(frame());
+      const clear = height(header());
+      await notch(NOTCH);
+      expect(px(header(), "Top")).toBe(NOTCH.top);
+      expect(px(sidebarHeader(), "Top")).toBe(NOTCH.top);
+      // The bar grows by the notch: its row keeps its own height.
+      expect(height(header())).toBe((clear ?? 0) + NOTCH.top);
+      expect(height(sidebarHeader())).toBe(height(header()));
     });
 
     it("drops the left notch from the page's gutter beside the sidebar, which clears it", async () => {

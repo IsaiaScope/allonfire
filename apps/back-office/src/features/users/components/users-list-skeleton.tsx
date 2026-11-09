@@ -8,8 +8,11 @@ import {
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
+import {
+  tiledControl,
+  toolbarLayout,
+} from "@/shared/components/toolbar-action";
 import { userRow } from "../utils/user-row";
-import { tiledControl, toolbarLayout } from "./toolbar-action";
 
 /** The table's columns as the list lays them out: the selection box, the
  *  email (the widest, filling the rest), a Role per App, the date (the

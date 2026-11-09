@@ -25,4 +25,15 @@ describe("AOFSubmitButton", () => {
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain("Signing in…");
   });
+
+  it("can be switched off by its form, keeping its label and not claiming to be busy", () => {
+    const html = renderToStaticMarkup(
+      <AOFSubmitButton disabled pending={false} pendingChildren="Sending…">
+        Send link
+      </AOFSubmitButton>
+    );
+    expect(html).toContain(' disabled=""');
+    expect(html).toContain("Send link");
+    expect(html).not.toContain("aria-busy");
+  });
 });

@@ -85,6 +85,7 @@ export const USERS = {
     NAME: { name: "name" },
     PASSWORD: { confirmPassword: "confirmPassword", password: "password" },
     ROLES: { roles: "roles" },
+    VERIFICATION: { verification: "verification" },
   },
   /**
    * How the address changes: a search replaces the history entry (Back should
@@ -120,6 +121,11 @@ export const USERS = {
   } satisfies Record<string, StationSignage>,
   /** How long typing rests before the address changes. */
   TYPING_REST_MS: 300,
+  /**
+   * The verification row's choices: the email counts as verified (an Admin
+   * vouches), or the User verifies it at their next sign-in.
+   */
+  VERIFICATION: { REQUIRED: "required", VERIFIED: "verified" },
   /** Brushed in the crop dialog's Zoom in: 拡, to enlarge (the brush face
    *  carries it). */
   ZOOM_IN_KANJI: "拡",

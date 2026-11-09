@@ -98,6 +98,17 @@ services:
       - STORAGE_IMAGE_SERVER_URL=https://${CDN_HOST:?CDN_HOST is required}/image
       - STORAGE_IMAGE_SERVER_KEY=${STORAGE_IMAGE_SERVER_KEY:?STORAGE_IMAGE_SERVER_KEY is required}
       - STORAGE_IMAGE_SERVER_SALT=${STORAGE_IMAGE_SERVER_SALT:?STORAGE_IMAGE_SERVER_SALT is required}
+      # Mail: each provider slot's secret, and the keep-alive's token and
+      # recipient. Optional: unset, mail is unavailable and the keep-alive
+      # refuses every call.
+      - API_MAIL_PROVIDER_0_DRIVER=${API_MAIL_PROVIDER_0_DRIVER:-}
+      - API_MAIL_PROVIDER_0_KEY=${API_MAIL_PROVIDER_0_KEY:-}
+      - API_MAIL_PROVIDER_0_URL=${API_MAIL_PROVIDER_0_URL:-}
+      - API_MAIL_PROVIDER_1_DRIVER=${API_MAIL_PROVIDER_1_DRIVER:-}
+      - API_MAIL_PROVIDER_1_KEY=${API_MAIL_PROVIDER_1_KEY:-}
+      - API_MAIL_PROVIDER_1_URL=${API_MAIL_PROVIDER_1_URL:-}
+      - API_KEEP_ALIVE_TOKEN=${API_KEEP_ALIVE_TOKEN:-}
+      - API_KEEP_ALIVE_RECIPIENT=${API_KEEP_ALIVE_RECIPIENT:-}
       # Telemetry (ADR 0006) is required in production: a deploy without the
       # ingestion token's headers fails here, never starts an App that ships
       # nothing. One TELEMETRY_HEADERS for both Apps.

@@ -9,10 +9,18 @@ const MS_PER_DAY = 24 * 60 * 60 * MS_PER_SECOND;
  * underscore): `allonfire<sep>test<sep><label><sep><epoch><sep><pid><sep><suffix>`,
  * `<pid>` the process that holds it. A template's name has no `<pid>`.
  */
-const TEST_RUN_NAME =
-  /^allonfire[_-]test[_-]([a-z0-9_-]+)[_-](\d{10})(?:[_-](\d+))?[_-][a-z0-9]{6}$/;
+export const TEST_RUN = {
+  /** Every Test run's name starts with it, spelled with its separator. */
+  PREFIX: "allonfire_test_",
+  /** A stamp's random suffix; a template's fingerprint is cut to it, so it parses too. */
+  SUFFIX_LENGTH: 6,
+} as const;
+const TEST_RUN_NAME = new RegExp(
+  `^allonfire[_-]test[_-]([a-z0-9_-]+)[_-](\\d{10})(?:[_-](\\d+))?[_-][a-z0-9]{${TEST_RUN.SUFFIX_LENGTH}}$`
+);
+/** What a name may hold: Postgres takes it unquoted, and DDL takes no bind parameter. */
+const SAFE_NAME = /^[a-z0-9_]+$/;
 const SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
-const SUFFIX_LENGTH = 6;
 /**
  * The age after which a name is stale whatever its `<pid>` says: the number
  * could belong to another process by then, and a template has none.
@@ -27,7 +35,7 @@ const STALE_AFTER_MS = MS_PER_DAY;
 const END_SIGNALS = ["SIGHUP"] as const;
 
 const suffix = () =>
-  Array.from(randomBytes(SUFFIX_LENGTH), (byte) =>
+  Array.from(randomBytes(TEST_RUN.SUFFIX_LENGTH), (byte) =>
     SUFFIX_ALPHABET.charAt(byte % SUFFIX_ALPHABET.length)
   ).join("");
 
@@ -81,6 +89,23 @@ export function isStaleTestRun(
 
 /** A database's name spells the label with `_`, a bucket's with `-`. */
 const spelled = (label: string) => label.toLowerCase().replaceAll("-", "_");
+
+/**
+ * What a run labelled `label` owns, from its stamp (`testRunStamp`): a Test
+ * database with `_`, a bucket with `-` (S3 allows no underscore). Anything
+ * but lowercase, digits and separators throws before any SQL or S3 call.
+ */
+export function testRunName(
+  label: string,
+  stamp: string,
+  separator: "_" | "-" = "_"
+): string {
+  const name = `${TEST_RUN.PREFIX}${spelled(label)}_${stamp}`;
+  if (!SAFE_NAME.test(name)) {
+    throw new Error(`Not a safe Test run name: ${name}`);
+  }
+  return name.replaceAll("_", separator);
+}
 
 /** Whether `name` is the Test database or bucket of a run labelled `label`. */
 export const isTestRunOf = (name: string, label: string) =>

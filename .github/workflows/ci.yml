@@ -16,13 +16,21 @@ env:
   # local branch, which checkout never creates, and fall back to everything.
   TURBO_SCM_BASE: origin/${{ github.base_ref }}
 
+# One job per Stage (CONTEXT.md), each running the Stage's own command, as a
+# Mac and the pre-commit hook do: what a Stage runs, and why, is
+# packages/config/stages/stages.ts. `--affected` narrows Turbo's tools to what
+# the PR changed; `--keep-going` reports every tool, not only the first red
+# one. Each Stage writes its table (result, time, tests, Turbo's cache) to the
+# job's summary page. The jobs run in parallel; build alone waits for static.
 jobs:
   # Turbo diffs against the PR's base branch and adds every dependent, so a
   # shared package lists each App that reads it; the changed files add what
   # its graph does not see (root files, Markdown-only changes). `browser` says
   # whether an affected package has browser tests of its own (ui's), so they
-  # run whenever it changes, whatever App reads it.
-  changes:
+  # run whenever it changes, whatever App reads it. The summary says what each
+  # Stage covers on this run, and why e2e would not run.
+  affected:
+    name: affected
     runs-on: ubuntu-24.04
     outputs:
       apps: ${{ steps.affected.outputs.apps }}
@@ -40,58 +48,46 @@ jobs:
       - name: Affected browser tests
         id: browser
         run: echo "browser=$(pnpm -s turbo run test:browser --affected --dry=json | jq '[.tasks[] | select(.task == "test:browser" and .command != "<NONEXISTENT>")] | length > 0')" >> "$GITHUB_OUTPUT"
+      - name: What this run checks
+        env:
+          APPS: ${{ steps.affected.outputs.apps }}
+          BROWSER: ${{ steps.browser.outputs.browser }}
+        run: |
+          {
+            echo "### What this run checks"
+            echo ""
+            echo "| Stage | runs | why |"
+            echo "|---|---|---|"
+            echo "| static | yes | every PR; lint, knip and jscpd over the whole repo, Turbo's checks on what changed |"
+            echo "| test | yes | the affected packages' unit and integration tests, then the changelog against Prisma |"
+            if [ "$APPS" != "[]" ] || [ "$BROWSER" = "true" ]; then
+              echo "| e2e | yes | affected Apps: \`$APPS\`; a changed package with browser tests: $BROWSER |"
+            else
+              echo "| e2e | skipped | no App affected and no package with browser tests changed |"
+            fi
+            echo "| build | after static | the affected Apps' production builds |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  lint-types:
+  static:
+    name: static
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Generate Prisma client
-        run: pnpm db:generate
-      - name: Type check
-        run: pnpm turbo run check-types --affected
-      - name: Lint
-        run: pnpm lint
-      - name: Design copies in sync
-        run: pnpm design:sync --check
-      - name: i18n placeholders, generated types and Tailwind classes
-        run: pnpm turbo run i18n:check tailwind:check
-      # ShellCheck ships on GitHub's Ubuntu runners.
-      - name: Shell scripts
-        run: shellcheck -x packages/database/liquibase/*.sh packages/database/scripts/*.sh
-      # The Dockerfile's `check=error=true` turns every build-check warning into
-      # a failure.
-      - name: Migrate image build checks
-        run: docker build --check -f packages/database/liquibase/Dockerfile .
-      - name: Workflows
-        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7 -color
+      - name: Prepare
+        uses: ./.github/actions/prepare
+      # ShellCheck ships on GitHub's runners; actionlint and the migrate
+      # image's build checks run in Docker, so CI skips none of them.
+      - name: Static checks
+        run: pnpm static --affected --keep-going
 
-  # Dead code and copied code, over the whole workspace on every PR: an unused
-  # export or a clone fails wherever it sits, so no affected-filter. The Prisma
-  # client is generated first, since the database package exports it.
-  quality:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Generate Prisma client
-        run: pnpm db:generate
-      - name: Unused code (knip)
-        run: pnpm knip
-      - name: Code only tests use (knip, production)
-        run: pnpm knip:production
-      - name: Copied code (jscpd)
-        run: pnpm dupes
-
+  # Each package's integration tests make their own Test database and bucket
+  # on the Test services, which the Stage starts from the dev compose file, as
+  # a Mac does.
   test:
+    name: test
     runs-on: ubuntu-24.04
     environment: dev
     env:
@@ -111,29 +107,19 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Generate Prisma client
-        run: pnpm db:generate
-      # Each package's integration tests make their own Test database and
-      # bucket; the stack comes from the dev compose file, as Local runs it.
-      - name: Start the database, Redis and Storage
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn
-      - name: Run tests
-        run: pnpm turbo run test --affected
-      # The Test database template is the changelog plus the Fixtures: the
-      # command builds it when no affected package did and prints its URL.
-      - name: Changelog matches the Prisma schema
-        run: DATABASE_URL="$(pnpm -s -C packages/database test-database template)" pnpm db:drift
+      - name: Prepare
+        uses: ./.github/actions/prepare
+      - name: Tests
+        run: pnpm test --affected --keep-going
 
   # Browser tests for every affected package that has them (the Apps' and
-  # ui's), and end-to-end tests for the affected Apps, on the stack Local
-  # runs: the database, Redis and Storage from the dev compose file, the API and the
-  # App as production builds.
+  # ui's), and end-to-end tests for the affected Apps, on the Test services:
+  # the API and the App as production builds.
   e2e:
+    name: e2e
     runs-on: ubuntu-24.04
-    needs: changes
-    if: needs.changes.outputs.apps != '[]' || needs.changes.outputs.browser == 'true'
+    needs: affected
+    if: needs.affected.outputs.apps != '[]' || needs.affected.outputs.browser == 'true'
     # Every value here exists only for this run's throwaway stack.
     env:
       DATABASE_URL: postgresql://allonfire:allonfire@localhost:5432/allonfire
@@ -154,12 +140,8 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Start the database, Redis and Storage
-        run: docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn
-      - name: Generate Prisma client
-        run: pnpm db:generate
+      - name: Prepare
+        uses: ./.github/actions/prepare
       - name: Playwright version
         id: playwright
         run: echo "version=$(pnpm -s --filter @allonfire/back-office exec playwright --version)" >> "$GITHUB_OUTPUT"
@@ -171,18 +153,24 @@ jobs:
       - name: Install Chromium and WebKit
         run: pnpm --filter @allonfire/back-office exec playwright install chromium webkit --with-deps
       - name: Browser and end-to-end tests
-        run: pnpm turbo run test:browser test:e2e --affected
+        run: pnpm e2e --affected --keep-going
       - name: Playwright report
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: apps/*/playwright-report
-          retention-days: 7
+      - name: Where the report is
+        if: failure()
+        run: |
+          echo "Playwright's report, traces and screenshots are the **playwright-report** artifact of this run." >> "$GITHUB_STEP_SUMMARY"
 
+  # Only after static: the one job given the real dev secrets, so they reach
+  # only code that passed lint and types, and a red PR spends no build.
   build:
+    name: build
     runs-on: ubuntu-24.04
-    needs: lint-types
+    needs: static
     environment: dev
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -199,9 +187,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Setup
-        uses: ./.github/actions/setup
-      - name: Generate Prisma client
-        run: pnpm db:generate
+      - name: Prepare
+        uses: ./.github/actions/prepare
       - name: Build
-        run: pnpm turbo run build --affected
+        run: pnpm build --affected --keep-going

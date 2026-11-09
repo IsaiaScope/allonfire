@@ -9,12 +9,14 @@ export const PATTERN = {
   },
   /** One character of each kind, in any script with case: a letter without
    *  case (CJK, Arabic) is neither lowercase nor uppercase, and anything
-   *  that is not a letter or a digit (a space too) is a symbol. */
+   *  that is not a letter or a digit is a symbol; whitespace is none of
+   *  these, a password has none (`WHITESPACE`). */
   CHARACTER: {
     DIGIT: /\p{Nd}/u,
     LOWERCASE: /\p{Ll}/u,
     SYMBOL: /[^\p{L}\p{Nd}]/u,
     UPPERCASE: /\p{Lu}/u,
+    WHITESPACE: /\s/u,
   },
   /** The telemetry env's keys (`TELEMETRY_*`). */
   TELEMETRY: {

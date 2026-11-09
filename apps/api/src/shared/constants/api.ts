@@ -3,6 +3,7 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { z } from "zod";
+import { SERVICES } from "../../features/services/constants/services";
 import { API_ERROR } from "./error";
 
 /** The version the API serves today, written once: a new one changes this line only. */
@@ -82,6 +83,8 @@ export const API = {
     REFERENCE: "/reference",
     /** Where sub-routers mount onto the base app. */
     ROOT: "/",
+    /** Where the Services routes mount. */
+    SERVICES: `${VERSION_PATH}${SERVICES.PATH.BASE}`,
     /** Where the User module mounts. */
     USERS: `${VERSION_PATH}${USER.PATH.BASE}`,
     /** The version prefix every domain route mounts under. */

@@ -30,6 +30,8 @@ import {
   type RateLimitStore,
   rateLimit,
 } from "./features/rate-limit/middleware/rate-limiter";
+import { servicesRoutes } from "./features/services/routes";
+import type { ServicesDeps } from "./features/services/utils/deps";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
 import { API } from "./shared/constants/api";
 import { corsPolicy } from "./shared/middleware/cors";
@@ -44,6 +46,8 @@ export type AppDeps = HealthDeps & {
   images: ImageDeps;
   /** The User module's list and who may read it; tests stub them. */
   users: UserDeps;
+  /** The Services routes' stack: providers, quota, mail; tests stub it. */
+  services: ServicesDeps;
   /** Optional so tests can capture log output. Defaults to the shared logger. */
   logger?: Logger;
 };
@@ -89,7 +93,8 @@ export const createApp = (deps: AppDeps) => {
     // After the limiters, so a flood of requests never reaches the Session read.
     .use(sessionLoader(deps.auth))
     .route(API.PATH.IMAGES, imageRoutes(deps.images))
-    .route(API.PATH.USERS, userRoutes(deps.users));
+    .route(API.PATH.USERS, userRoutes(deps.users))
+    .route(API.PATH.SERVICES, servicesRoutes(deps.services));
 
   return app
     .route(API.PATH.ROOT, docsRoutes(app, deps.auth))

@@ -46,7 +46,7 @@ export const isBackOfficeAdmin = (user: AccessUser): boolean =>
  * cookie copy can outlive (a new password deleted it). The User's own read
  * repeats what `customSession` already read for this request.
  */
-const canManageUsers = async ({
+export const canManageUsers = async ({
   sessionId,
   userId,
 }: {

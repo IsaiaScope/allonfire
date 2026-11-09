@@ -128,6 +128,16 @@ describe("User module: POST", () => {
     });
   });
 
+  it("passes on whether the new User must verify their email", async () => {
+    const { created, deps } = depsWith();
+    const res = await post(userHost(ADMIN, deps), {
+      ...VALID,
+      requireVerification: true,
+    });
+    expect(res.status).toBe(HTTP.STATUS.CREATED);
+    expect(created[0]?.user).toMatchObject({ requireVerification: true });
+  });
+
   it("answers 409 EMAIL_TAKEN when the email is taken", async () => {
     const { deps } = depsWith({ taken: true });
     const res = await post(userHost(ADMIN, deps), VALID);

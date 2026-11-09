@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./environment/environment": "./src/environment/environment.ts",
+    "./environment/mail-environment": "./src/environment/mail-environment.ts",
     "./environment/telemetry-environment": "./src/environment/telemetry-environment.ts",
     "./features/ci/affected": "./src/features/ci/affected.ts",
     "./features/version/constants/version": "./src/features/version/constants/version.ts",
@@ -23,6 +24,10 @@
     "./features/i18n/utils/language-name": "./src/features/i18n/utils/language-name.ts",
     "./features/logger/constants/logger": "./src/features/logger/constants/logger.ts",
     "./features/logger/create-logger": "./src/features/logger/create-logger.ts",
+    "./features/mail/constants/mail": "./src/features/mail/constants/mail.ts",
+    "./features/mail/types/mail": "./src/features/mail/types/mail.ts",
+    "./features/mail/utils/send-mail": "./src/features/mail/utils/send-mail.ts",
+    "./features/mail/utils/drivers": "./src/features/mail/utils/drivers.ts",
     "./features/metadata/constants/metadata": "./src/features/metadata/constants/metadata.ts",
     "./features/metadata/utils/page-title": "./src/features/metadata/utils/page-title.ts",
     "./features/next/api/visitor-headers": "./src/features/next/api/visitor-headers.ts",
@@ -79,6 +84,7 @@
     "pwa:build": "tsx src/features/next/pwa/utils/cli.ts",
     "tailwind:canonicalize": "tsx src/features/tailwind/canonicalize.ts",
     "test": "vitest run",
+    "vendor:patch": "tsx src/features/vendor/vendor-patch.ts",
     "vendor:types": "tsx src/features/typescript/vendor-types.ts"
   },
   "dependencies": {

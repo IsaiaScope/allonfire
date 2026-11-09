@@ -44,6 +44,7 @@ const FORM = EN.Users.form;
 const USER: UserBody = {
   createdAt: "2026-10-02T10:00:00.000Z",
   email: "shared@user-form-parts.test",
+  emailVerified: true,
   id: "user-2",
   image: null,
   imageBlurDataUrl: null,
@@ -90,7 +91,7 @@ const sharedParts = (password: string, confirmPassword: string) => {
     reveals: page.getByRole("button", { name: FORM.showPassword }).elements()
       .length,
     roles: shows(FORM.roles),
-    rules: shows(FORM.rules),
+    rules: shows(EN.Password.rules),
   };
 };
 

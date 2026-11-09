@@ -5,9 +5,12 @@ import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
 import { IconTrashX } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { StationAlert } from "@/shared/components/station-alert";
+import {
+  ToolbarActionBody,
+  toolbarActionClass,
+} from "@/shared/components/toolbar-action";
 import { USERS } from "../constants/users";
 import { useDeleteUsersFlow } from "../hooks/use-delete-users-flow";
-import { ToolbarActionBody, toolbarActionClass } from "./toolbar-action";
 
 /**
  * The toolbar's Delete button, enabled while Users are selected, and the

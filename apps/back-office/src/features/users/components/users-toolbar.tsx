@@ -20,16 +20,16 @@ import {
   useState,
 } from "react";
 import { Link } from "@/features/i18n/navigation";
-import { USERS } from "../constants/users";
-import { usersParams } from "../constants/users-params";
-import { newUserHref } from "../utils/user-href";
 import {
   pictogramTile,
   ToolbarActionBody,
   tiledControl,
   toolbarActionClass,
   toolbarLayout,
-} from "./toolbar-action";
+} from "@/shared/components/toolbar-action";
+import { USERS } from "../constants/users";
+import { usersParams } from "../constants/users-params";
+import { newUserHref } from "../utils/user-href";
 import { type UserSearch, UsersFilters } from "./users-filters";
 
 /** Typed text as the address will hold it. */

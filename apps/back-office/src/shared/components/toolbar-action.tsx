@@ -1,6 +1,6 @@
 import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
 import { cn } from "@allonfire/ui/shared/utils/utils";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import type { ReactNode } from "react";
 import {
   ActionKanji,
@@ -13,13 +13,16 @@ import {
  * quarters of its kanji showing at the right edge (Delete); `responsive`,
  * that icon button while the toolbar is narrow and, once it is wide, the
  * App's kanji button, the label beside the icon and the kanji brushed at its
- * right end (Add).
+ * right end (Add); `card`, from `@lg` the small kanji button of the Users
+ * filters' Reset, for a card narrower than a toolbar (a Services provider's
+ * Test).
  */
-export type ToolbarActionShape = "icon" | "responsive";
+export type ToolbarActionShape = "card" | "icon" | "responsive";
 
 const button = cva("w-(--field-height) min-w-0 px-0", {
   variants: {
     shape: {
+      card: "@lg:h-8 @lg:w-auto @lg:gap-1.5 @lg:pr-8 @lg:pl-3 @lg:text-sm",
       icon: "",
       responsive: "@4xl:w-auto @4xl:min-w-40 @4xl:pr-12 @4xl:pl-5",
     },
@@ -33,6 +36,7 @@ export const toolbarActionKanji = cva(
   {
     variants: {
       shape: {
+        card: "@lg:right-0.5 @lg:translate-x-0",
         icon: "",
         responsive: "@4xl:right-1 @4xl:translate-x-0 @4xl:text-5xl",
       },
@@ -41,7 +45,9 @@ export const toolbarActionKanji = cva(
 );
 
 const label = cva("hidden", {
-  variants: { shape: { icon: "", responsive: "@4xl:inline" } },
+  variants: {
+    shape: { card: "@lg:inline", icon: "", responsive: "@4xl:inline" },
+  },
 });
 
 /** A toolbar's pictogram tile (`--field-tile`, a 20px icon): the fields' night tile in
@@ -74,14 +80,16 @@ export const toolbarLayout = cva("", {
   },
 });
 
-/** The classes of a toolbar action drawn as `variant`, in `shape`. */
+/** The classes of a toolbar action drawn as `variant`, in `shape`, in the
+ *  kanji action's `tone` if it has one. */
 export const toolbarActionClass = (
   shape: ToolbarActionShape,
-  variant: "default" | "destructive" | "outline" = "default"
+  variant: "default" | "destructive" | "outline" = "default",
+  tone?: VariantProps<typeof kanjiAction>["tone"]
 ) =>
   cn(
     aofButtonVariants({ size: "field", variant }),
-    kanjiAction(),
+    kanjiAction({ tone }),
     button({ shape })
   );
 

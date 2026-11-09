@@ -1,12 +1,9 @@
 "use client";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
-import {
-  formDataTo,
-  submitAOFForm,
-} from "@allonfire/ui/features/form/utils/form-submit";
+import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import { IconMail, IconUserPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
-import { type SubmitEvent, useActionState, useCallback } from "react";
+import { useActionState } from "react";
 import { FormAlert } from "@/shared/components/form-alert";
 import { addUser } from "../actions/add-user";
 import { USERS } from "../constants/users";
@@ -22,6 +19,7 @@ import {
   UserFormActions,
   useToastThenList,
   useUserFieldMessages,
+  VerificationRow,
 } from "./user-form-parts";
 
 /** Where the form starts: nothing typed, every App at "Not a member". */
@@ -31,6 +29,7 @@ const EMPTY: AddUserFields = {
   name: "",
   password: "",
   roles: NO_ROLES,
+  verification: USERS.VERIFICATION.VERIFIED,
 };
 
 /**
@@ -68,11 +67,7 @@ export const AddUser = () => {
       }),
     },
   });
-  const submit = useCallback(
-    (event: SubmitEvent<HTMLFormElement>) =>
-      submitAOFForm(form, event, formDataTo(action)),
-    [form, action]
-  );
+  const formProps = useAOFFormAction(form, action);
   return (
     // Fills the Section, so a short form puts its buttons at the bottom.
     <div className="flex flex-1 flex-col gap-6">
@@ -81,11 +76,9 @@ export const AddUser = () => {
         {t("Users.add.title")}
       </h1>
       <form
-        action={action}
         aria-label={t("Users.add.title")}
         className="flex flex-1 flex-col"
-        noValidate
-        onSubmit={submit}
+        {...formProps}
       >
         {/* One rhythm: 8px from a label to its control, 32px between blocks.
             A field leaves its 32px itself (its error line), so only the
@@ -118,6 +111,10 @@ export const AddUser = () => {
             />
           </div>
           <RoleRows fields={USERS.FORM_FIELDS.ROLES} form={form} />
+          <VerificationRow
+            fields={USERS.FORM_FIELDS.VERIFICATION}
+            form={form}
+          />
           {/* The end of the form: why the last submit failed, in its kept place. */}
           <FormAlert className="@2xl:col-span-2 mt-4">
             {error ? t(`Users.add.error.${error}`) : null}

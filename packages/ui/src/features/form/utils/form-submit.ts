@@ -1,5 +1,5 @@
 import { objectEntries } from "@allonfire/core/shared/utils/object";
-import { startTransition } from "react";
+import { type SubmitEvent, startTransition, useCallback } from "react";
 
 /** A form whose controls can be found by name, as `HTMLFormElement` is. */
 export type NamedControls = {
@@ -7,7 +7,7 @@ export type NamedControls = {
 };
 
 /** Each field's meta, as TanStack keeps it, in the order the fields mounted. */
-export type FieldErrorsByName = Readonly<
+type FieldErrorsByName = Readonly<
   Record<string, { errors: readonly unknown[] } | undefined>
 >;
 
@@ -50,7 +50,7 @@ const focusFirstInvalid = (
  * Sends a form's own controls to a `useActionState` action, in a transition:
  * the same data a post before hydration sends.
  */
-export const formDataTo =
+const formDataTo =
   (action: (formData: FormData) => void) => (element: HTMLFormElement) => {
     const formData = new FormData(element);
     startTransition(() => action(formData));
@@ -62,7 +62,8 @@ export const formDataTo =
  * (`formDataTo(action)`); when they block, the first invalid field takes
  * focus. A validator that throws is reported like any uncaught error instead
  * of disappearing. Before hydration none of this runs and the browser posts to
- * the form's action.
+ * the form's action. A form reaches it through `useAOFFormAction`.
+ * @internal
  */
 export const submitAOFForm = <Element extends NamedControls>(
   form: SubmittableForm,
@@ -83,4 +84,23 @@ export const submitAOFForm = <Element extends NamedControls>(
     // Looked up on failure: `reportError` is a browser global.
     (error: unknown) => reportError(error)
   );
+};
+
+/**
+ * What an AOF form spreads on its `<form>` to post to a `useActionState`
+ * action (ADR 0017): the action, so it posts before hydration; `noValidate`,
+ * since the browser's own bubbles speak its UI language, not the page's; and
+ * `onSubmit`, which checks the fields first (`submitAOFForm`) and sends the
+ * form's own controls in a transition (`formDataTo`).
+ */
+export const useAOFFormAction = (
+  form: SubmittableForm,
+  action: (formData: FormData) => void
+) => {
+  const onSubmit = useCallback(
+    (event: SubmitEvent<HTMLFormElement>) =>
+      submitAOFForm(form, event, formDataTo(action)),
+    [form, action]
+  );
+  return { action, noValidate: true, onSubmit };
 };

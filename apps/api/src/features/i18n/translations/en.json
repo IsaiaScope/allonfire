@@ -13,6 +13,20 @@
   "PAYLOAD_TOO_LARGE": "Payload too large. Maximum {limit, number} bytes",
   "UNSUPPORTED_IMAGE": "Unsupported image. Send JPEG, PNG, WebP, AVIF or HEIC",
   "IMAGE_CHANGED": "The image changed meanwhile. Try again",
+  "PROVIDER_INCOMPLETE": "An enabled provider needs a sender",
   "IMAGE_TOO_LARGE": "Image too large. Send at most {limit, number} megapixels",
-  "INTERNAL_ERROR": "Internal server error"
+  "INTERNAL_ERROR": "Internal server error",
+  "EMAIL_LINK_EXPIRY": "This link works for {minutes} minutes.",
+  "EMAIL_FOOTNOTE": "If you did not ask for this, you can ignore this email.",
+  "VERIFY_EMAIL_SUBJECT": "Verify your email for {app}",
+  "VERIFY_EMAIL_HEADING": "Verify your email",
+  "VERIFY_EMAIL_BODY": "Confirm this address to finish signing in to {app}.",
+  "VERIFY_EMAIL_ACTION": "Verify email",
+  "RESET_PASSWORD_SUBJECT": "Reset your password for {app}",
+  "RESET_PASSWORD_HEADING": "Reset your password",
+  "RESET_PASSWORD_BODY": "Someone asked to reset the password of this address for {app}. Choose a new one with the button below.",
+  "RESET_PASSWORD_ACTION": "Choose a new password",
+  "PROVIDER_CHECK_SUBJECT": "Mail check through {provider}",
+  "PROVIDER_CHECK_HEADING": "Mail check",
+  "PROVIDER_CHECK_BODY": "This email went out through {provider}, so it keeps sending. Nothing to do."
 }

@@ -9,9 +9,9 @@ import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { avatarRemoval } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
 import { updateTag } from "next/cache";
+import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { USERS } from "../../constants/users";
 import { editUser } from "../edit-user";
-import { FAKE_API, resetFakeApi } from "./fake-api";
 
 const ID = "user-2";
 /** The Version the form was opened with. */
@@ -21,7 +21,7 @@ const SAVED_VERSION = "version-2";
 const STRONG = FIXTURE.PASSWORD;
 
 vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("./fake-api")).fakeServerApi,
+  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
 }));
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 
@@ -62,7 +62,11 @@ beforeEach(() => {
 
 describe("editUser", () => {
   it("sends no password when both fields are empty", async () => {
-    await editUser(ID, VERSION, {}, formOf({}));
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({})
+    );
     expect(patchBody()).toEqual({
       memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
       name: "Edited",
@@ -70,10 +74,34 @@ describe("editUser", () => {
     });
   });
 
+  it("sends the email's verification only when the Admin changed it", async () => {
+    const lastPatch = () =>
+      FAKE_API.sent.filter(({ method }) => method === HTTP.METHOD.PATCH).at(-1)
+        ?.body;
+    const { verification } = USERS.FORM_FIELDS.VERIFICATION;
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({ [verification]: USERS.VERIFICATION.VERIFIED })
+    );
+    expect(lastPatch()).not.toHaveProperty("emailVerified");
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({ [verification]: USERS.VERIFICATION.REQUIRED })
+    );
+    expect(lastPatch()).toMatchObject({ emailVerified: false });
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: false },
+      {},
+      formOf({ [verification]: USERS.VERIFICATION.VERIFIED })
+    );
+    expect(lastPatch()).toMatchObject({ emailVerified: true });
+  });
+
   it("sends a typed password", async () => {
     await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({ confirmPassword: STRONG, password: STRONG })
     );
@@ -81,14 +109,22 @@ describe("editUser", () => {
   });
 
   it("sends the locked row's posted Role", async () => {
-    await editUser(ID, VERSION, {}, formOf({}));
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({})
+    );
     expect(patchBody()).toMatchObject({
       memberships: [{ app: App.BACK_OFFICE, role: Role.ADMIN }],
     });
   });
 
   it("refuses invalid fields without asking the API, keeping no password", async () => {
-    const state = await editUser(ID, VERSION, {}, formOf({ name: " " }));
+    const state = await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({ name: " " })
+    );
     expect(state.error).toBe(USERS.EDIT_ERROR.INVALID);
     expect(state.values?.name).toBe(" ");
     expect(FAKE_API.sent).toEqual([]);
@@ -122,7 +158,11 @@ describe("editUser", () => {
     ],
   ])("maps %i %s to %s, keeping the values", async (status, code, error) => {
     FAKE_API.answers.set(HTTP.METHOD.PATCH, { code, status });
-    const state = await editUser(ID, VERSION, {}, formOf({}));
+    const state = await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({})
+    );
     expect(state.error).toBe(error);
     expect(state.values?.name).toBe("Edited");
     expect(updateTag).not.toHaveBeenCalled();
@@ -141,32 +181,36 @@ describe("editUser, once saved", () => {
     "the Avatar change (%s) is sent with the Version the PATCH answered",
     async (_, method, fields) => {
       savedOn(SAVED_VERSION);
-      await editUser(ID, VERSION, {}, formOf(fields()));
+      await editUser(
+        { id: ID, version: VERSION, wasVerified: true },
+        {},
+        formOf(fields())
+      );
       expect(sentBody(method)).toEqual({ version: SAVED_VERSION });
     }
   );
 
-  it("a 409 on the Avatar change answers CHANGED, keeping the values, the list dropped", async () => {
+  it("a 409 on the Avatar change answers saved without the picture, never typed values on the newer Version", async () => {
     savedOn(SAVED_VERSION);
     FAKE_API.answers.set(HTTP.METHOD.PUT, {
       code: API.ERROR.CODE.RESOURCE_CHANGED,
       status: HTTP.STATUS.CONFLICT,
     });
     const state = await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({ [USERS.AVATAR_FIELD]: PICTURE() })
     );
-    expect(state.error).toBe(USERS.EDIT_ERROR.CHANGED);
-    expect(state.values?.name).toBe("Edited");
+    // The save landed and the page re-reads the User: a form kept on screen
+    // would bind the newer Version under what was typed, so a second Save
+    // could overwrite the change that refused the picture.
+    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.AVATAR_FAILED });
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
   });
 
   it("on 200 removes the Avatar when posted removed, and answers SAVED after updateTag", async () => {
     const state = await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({ [REMOVAL.name]: REMOVAL.value })
     );
@@ -183,8 +227,7 @@ describe("editUser, once saved", () => {
   it("says so when the picture's call never reaches the API, the list still dropped", async () => {
     FAKE_API.unreachable.add(HTTP.METHOD.PUT);
     const state = await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({
         [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
@@ -199,8 +242,7 @@ describe("editUser, once saved", () => {
       status: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
     });
     const state = await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({
         [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
@@ -220,8 +262,7 @@ describe("editUser, once saved", () => {
       status: HTTP.STATUS.NOT_FOUND,
     });
     const state = await editUser(
-      ID,
-      VERSION,
+      { id: ID, version: VERSION, wasVerified: true },
       {},
       formOf({ [REMOVAL.name]: REMOVAL.value })
     );

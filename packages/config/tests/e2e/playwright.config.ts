@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import { LOCAL } from "../../local/addresses";
+import { REPO } from "../../local/repo";
 import { testRunStamp } from "../run/test-run";
 import { E2E, e2eCliArgs } from "./run";
 
@@ -58,17 +59,21 @@ export const playwrightConfig = defineConfig({
  * beside `pnpm dev`. The stack's addresses are set here, so neither CI nor
  * a local `.env` decides them; `env` adds the App's own runtime values.
  * `apiPath` is the API's own `API.PATH`, which config, a leaf package,
- * cannot import.
+ * cannot import. `localStorage` is what every browser context starts with
+ * (the App's own keys, which config cannot know): a hint that shows from a
+ * visitor's second page on would otherwise sit over a button a slow run taps.
  */
 export const aofPlaywrightConfig = ({
   apiPath,
   app,
   env,
+  localStorage = [],
   port,
 }: {
   apiPath: { AUTH: string; HEALTH: string };
   app: string;
   env: Record<string, string>;
+  localStorage?: { name: string; value: string }[];
   port: number;
 }) => {
   const baseURL = `http://localhost:${port}`;
@@ -95,8 +100,21 @@ export const aofPlaywrightConfig = ({
         use: { ...devices["iPhone 15"] },
       },
     ],
-    use: { baseURL },
+    use: {
+      baseURL,
+      storageState: {
+        cookies: [],
+        origins: [{ localStorage, origin: baseURL }],
+      },
+    },
     webServer: [
+      {
+        // The fake mail provider, first: it makes the certificate the API
+        // trusts. Playwright starts the servers one after the other.
+        command: `pnpm -s -C ${REPO.ROOT} exec tsx ${resolve(import.meta.dirname, "mail-sink-server.ts")}`,
+        ignoreHTTPSErrors: true,
+        url: `${LOCAL.URL.MAIL_SINK_E2E}${E2E.MAIL_SINK.PATH.SENT}`,
+      },
       {
         // Playwright starts web servers before global setup, so the API's
         // command makes the run's Test database and bucket.
@@ -105,6 +123,16 @@ export const aofPlaywrightConfig = ({
         command: `DB="$(${testDatabase("create")})" && BUCKET="$(${testBucket("create")})" && DATABASE_URL="$DB" STORAGE_BUCKET="$BUCKET" pnpm --filter @allonfire/api start`,
         env: {
           API_CORS_ORIGINS: baseURL,
+          // The owner's address and the workflow's token, for the keep-alive.
+          API_KEEP_ALIVE_RECIPIENT: E2E.KEEP_ALIVE.RECIPIENT,
+          API_KEEP_ALIVE_TOKEN: E2E.KEEP_ALIVE.TOKEN,
+          // The MAIL providers: slot 0 is the fake one every email goes to;
+          // slot 1 has no key, so a run never reaches a real provider
+          // whatever the Local `.env` holds.
+          API_MAIL_PROVIDER_0_DRIVER: "bearer-flat",
+          API_MAIL_PROVIDER_0_KEY: E2E.MAIL_SINK.KEY,
+          API_MAIL_PROVIDER_0_URL: LOCAL.URL.MAIL_SINK_E2E,
+          API_MAIL_PROVIDER_1_KEY: "",
           // Every project's requests come from one address: the global limit
           // would refuse a run of four browsers. The limiter has its own test.
           API_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),
@@ -118,6 +146,8 @@ export const aofPlaywrightConfig = ({
           // the limit itself is covered by the API's integration test.
           AUTH_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),
           AUTH_URL: apiUrl,
+          // The fake provider's throwaway certificate.
+          NODE_EXTRA_CA_CERTS: E2E.MAIL_SINK.CERT,
           PORT: String(LOCAL.PORT.API_E2E),
           STORAGE_ENDPOINT: LOCAL.URL.STORAGE,
           // The Local image server signs nothing itself: the API signs the

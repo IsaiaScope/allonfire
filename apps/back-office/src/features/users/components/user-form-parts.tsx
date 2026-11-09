@@ -17,6 +17,9 @@ import {
   IconEye,
   IconLoader2,
   IconLock,
+  IconMailCheck,
+  IconMailExclamation,
+  IconServerCog,
   IconShieldCheck,
   IconUser,
   IconUserOff,
@@ -34,6 +37,7 @@ import {
   NO_ROLES,
   type RoleChoice,
   type UserFieldMessages,
+  type VerificationChoice,
 } from "../utils/user-form-schema";
 
 /** Each Role's pictogram in a Role row. */
@@ -128,6 +132,67 @@ export const RoleRows = withAOFFieldGroup({
     </RoleRowList>
   ),
 });
+
+/** The verification row's start: verified, as an Admin's new User is. */
+const VERIFIED_START: { verification: VerificationChoice } = {
+  verification: USERS.VERIFICATION.VERIFIED,
+};
+
+/**
+ * The Services group under the Roles, laid out like them: one sub-section
+ * per Service, Mail the first, its choice a Gooey Nav and a field group both
+ * User forms bind (`USERS.FORM_FIELDS.VERIFICATION`): the email counts as
+ * verified, or the User verifies it at their next sign-in. Saving it ends
+ * no Session and sends nothing.
+ */
+export const VerificationRow = withAOFFieldGroup({
+  defaultValues: VERIFIED_START,
+  render: ({ group }) => (
+    <VerificationRowWords>
+      {(t) => (
+        <fieldset className="@2xl:col-span-2 mt-8 flex flex-col gap-8">
+          <legend className="mb-2 flex items-center gap-2 font-bold text-base">
+            <IconServerCog aria-hidden className="size-5" />
+            {t("Navigation.services")}
+          </legend>
+          <div className="flex flex-col gap-2">
+            <span aria-hidden className="font-bold text-sm">
+              {t("Navigation.mail")}
+            </span>
+            <group.AppField name="verification">
+              {() => (
+                <AOFChoiceField
+                  ink={BACK_OFFICE.CHOSEN.INK}
+                  label={t("Users.form.verification")}
+                  options={[
+                    {
+                      icon: <IconMailCheck />,
+                      label: t("Users.form.verified"),
+                      value: USERS.VERIFICATION.VERIFIED,
+                    },
+                    {
+                      icon: <IconMailExclamation />,
+                      label: t("Users.form.mustVerify"),
+                      value: USERS.VERIFICATION.REQUIRED,
+                    },
+                  ]}
+                  pill={BACK_OFFICE.CHOSEN.PILL}
+                />
+              )}
+            </group.AppField>
+          </div>
+        </fieldset>
+      )}
+    </VerificationRowWords>
+  ),
+});
+
+/** Hands the verification row's `render` its words: a `render` calls no hooks. */
+const VerificationRowWords = ({
+  children,
+}: {
+  children: (t: ReturnType<typeof useTranslations>) => ReactNode;
+}) => children(useTranslations());
 
 /** A form's submit button: its words, pictogram and kanji. */
 export type UserFormSubmit = {

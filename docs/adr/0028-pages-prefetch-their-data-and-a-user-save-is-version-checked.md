@@ -52,6 +52,10 @@ GitHub's `sha` do).
 
 ## Consequences
 
+- The Services page is read the same way (`servicesHydration`, tags `services` and `services:<type>`, then `useQuery` in the browser).
+  A provider save is version-checked; the Service's on/off, a delete and a
+  test send are not (they write one value, remove a row, or set nothing),
+  and a 404 on any of them clears the copy and says the provider is gone.
 - Another Admin's change can show up to the read's `stale` (5 minutes) late;
   one's own save clears the browser's copies at once (`updateTag`).
 - Any change to a User since the form was read refuses the save, a rename

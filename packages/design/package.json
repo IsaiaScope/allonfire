@@ -7,6 +7,7 @@
     "./apps/back-office/styles.css": "./src/apps/back-office/styles.css",
     "./brand/aof-logo": "./src/brand/aof-logo.ts",
     "./brand/aof-monogram": "./src/brand/aof-monogram.ts",
+    "./designs/japan/email-look": "./src/designs/japan/email-look.ts",
     "./designs/japan/image-colors": "./src/designs/japan/image-colors.ts",
     "./designs/japan/image-font": "./src/designs/japan/image-font.ts",
     "./designs/japan/image-fonts": "./src/designs/japan/image-fonts.ts",

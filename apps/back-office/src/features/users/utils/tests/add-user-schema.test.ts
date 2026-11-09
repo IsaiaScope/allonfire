@@ -23,6 +23,7 @@ const VALID = {
   name: "New",
   password: STRONG,
   roles: ROLES,
+  verification: USERS.VERIFICATION.VERIFIED,
 };
 const schema = addUserSchema(MESSAGES);
 

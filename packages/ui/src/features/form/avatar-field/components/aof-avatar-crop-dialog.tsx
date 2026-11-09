@@ -15,7 +15,6 @@ import {
   IconZoomOut,
 } from "@tabler/icons-react";
 import {
-  type ComponentProps,
   type CSSProperties,
   type ReactNode,
   useCallback,
@@ -33,6 +32,7 @@ import {
   AOFDialogFooter,
   AOFDialogTitle,
 } from "../../../../shared/components/aof-dialog";
+import type { ComponentPropsWithoutChildren } from "../../../../shared/types/types";
 import { cn } from "../../../../shared/utils/utils";
 import { cropToSquare } from "../utils/crop-image";
 
@@ -55,7 +55,7 @@ export type AOFAvatarCropDialogProps = {
   onUse: (file: File) => void;
   /** The title, dressed by the App: a `decoration` after its words. */
   titleProps?:
-    | (Omit<ComponentProps<typeof AOFDialogTitle>, "children"> & {
+    | (ComponentPropsWithoutChildren<typeof AOFDialogTitle> & {
         decoration?: ReactNode;
       })
     | undefined;

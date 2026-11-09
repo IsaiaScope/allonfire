@@ -17,8 +17,8 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-# shellcheck source=/dev/null
 set -a
+# shellcheck source=/dev/null
 source "$ENV_FILE"
 set +a
 
@@ -61,9 +61,12 @@ log "Snapshot created: id=${IMAGE_ID}"
 
 log "Pruning snapshots (keeping ${BACKUP_KEEP_SNAPSHOTS} most recent)..."
 
-# List all snapshots and filter by our description prefix
+# This server's own snapshots: by our description prefix, and made from this
+# server, so another server's auto-backups in the project are never pruned.
 SNAPSHOTS=$(hcloud image list --type snapshot --output json 2>/dev/null | \
-  jq "[.[] | select(.description | startswith(\"auto-backup-\"))]" 2>/dev/null || echo "[]")
+  jq --arg server "$BACKUP_HETZNER_SERVER_ID" \
+    '[.[] | select(.description | startswith("auto-backup-")) | select(.created_from.id == ($server | tonumber))]' \
+    2>/dev/null || echo "[]")
 
 SNAPSHOT_COUNT=$(echo "$SNAPSHOTS" | jq 'length')
 

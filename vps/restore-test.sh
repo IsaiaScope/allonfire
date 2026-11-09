@@ -17,8 +17,8 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 2
 fi
 
-# shellcheck source=/dev/null
 set -a
+# shellcheck source=/dev/null
 source "$ENV_FILE"
 set +a
 
@@ -72,7 +72,14 @@ if [[ -f "$MANIFEST" ]]; then
   MANIFEST_DATE=$(jq -r '.date' "$MANIFEST")
   MANIFEST_STATUS=$(jq -r '.status' "$MANIFEST")
   log "Manifest: date=${MANIFEST_DATE} status=${MANIFEST_STATUS}"
-  RESULTS+=("{\"name\":\"manifest\",\"status\":\"ok\",\"date\":\"${MANIFEST_DATE}\"}")
+  if [[ "$MANIFEST_STATUS" != "success" ]]; then
+    # The run that wrote it already knew a component failed.
+    log "FAIL: manifest — the backup reported ${MANIFEST_STATUS}"
+    RESULTS+=("{\"name\":\"manifest\",\"status\":\"${MANIFEST_STATUS}\",\"date\":\"${MANIFEST_DATE}\"}")
+    ((FAILURES++)) || true
+  else
+    RESULTS+=("{\"name\":\"manifest\",\"status\":\"ok\",\"date\":\"${MANIFEST_DATE}\"}")
+  fi
 else
   log "WARNING: No manifest.json found"
   RESULTS+=("{\"name\":\"manifest\",\"status\":\"missing\"}")
@@ -84,9 +91,12 @@ fi
 verify_component() {
   local name="$1" encrypted="$2" verify_cmd="$3"
 
+  # Every run records every component; one absent from the upload is a
+  # backup that cannot be restored, not a skip.
   if [[ ! -f "$encrypted" ]]; then
-    log "SKIP: ${name} — file not in backup"
-    RESULTS+=("{\"name\":\"${name}\",\"status\":\"skipped\"}")
+    log "FAIL: ${name} — file not in backup"
+    RESULTS+=("{\"name\":\"${name}\",\"status\":\"missing\"}")
+    ((FAILURES++)) || true
     return
   fi
 

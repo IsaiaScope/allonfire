@@ -13,6 +13,20 @@
   "PAYLOAD_TOO_LARGE": "Contenuto troppo grande. Massimo {limit, number} byte",
   "UNSUPPORTED_IMAGE": "Immagine non supportata. Invia JPEG, PNG, WebP, AVIF o HEIC",
   "IMAGE_CHANGED": "L'immagine è cambiata nel frattempo. Riprova",
+  "PROVIDER_INCOMPLETE": "Un provider attivo richiede un mittente",
   "IMAGE_TOO_LARGE": "Immagine troppo grande. Invia al massimo {limit, number} megapixel",
-  "INTERNAL_ERROR": "Errore interno del server"
+  "INTERNAL_ERROR": "Errore interno del server",
+  "EMAIL_LINK_EXPIRY": "Questo link vale {minutes} minuti.",
+  "EMAIL_FOOTNOTE": "Se non l'hai chiesto tu, puoi ignorare questa email.",
+  "VERIFY_EMAIL_SUBJECT": "Verifica la tua email per {app}",
+  "VERIFY_EMAIL_HEADING": "Verifica la tua email",
+  "VERIFY_EMAIL_BODY": "Conferma questo indirizzo per completare l'accesso a {app}.",
+  "VERIFY_EMAIL_ACTION": "Verifica email",
+  "RESET_PASSWORD_SUBJECT": "Reimposta la password per {app}",
+  "RESET_PASSWORD_HEADING": "Reimposta la password",
+  "RESET_PASSWORD_BODY": "Qualcuno ha chiesto di reimpostare la password di questo indirizzo per {app}. Scegline una nuova con il pulsante qui sotto.",
+  "RESET_PASSWORD_ACTION": "Scegli una nuova password",
+  "PROVIDER_CHECK_SUBJECT": "Controllo email tramite {provider}",
+  "PROVIDER_CHECK_HEADING": "Controllo email",
+  "PROVIDER_CHECK_BODY": "Questa email è partita tramite {provider}, così continua a inviare. Non serve fare nulla."
 }

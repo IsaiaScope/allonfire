@@ -78,15 +78,6 @@ describe("AOFPage", () => {
     );
     expect(padding(main, "Bottom")).not.toBe(gutter("Bottom"));
   });
-
-  // A page that draws to the screen's edges on purpose (a full-bleed view)
-  // keeps clear of nothing.
-  it("drops the safe edges when told to", async () => {
-    const main = await renderPage({ edges: "none" });
-    for (const side of SIDES) {
-      expect(padding(main, side)).toBe("0px");
-    }
-  });
 });
 
 // WebKit has no way to draw a notch.

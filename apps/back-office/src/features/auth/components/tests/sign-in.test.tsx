@@ -132,12 +132,18 @@ describe("SignInForm", () => {
     expect(render(<SignInForm />)).toContain("noValidate");
   });
 
-  it.each(objectValues(AUTH.SIGN_IN_ERROR))(
-    "has a translation for %s",
-    (error) => {
-      expect(en.SignIn.error).toHaveProperty(error);
-    }
-  );
+  it.each(
+    objectValues(AUTH.SIGN_IN_ERROR).filter(
+      (error) => error !== AUTH.SIGN_IN_ERROR.UNVERIFIED
+    )
+  )("has an error translation for %s", (error) => {
+    expect(en.SignIn.error).toHaveProperty(error);
+  });
+
+  it("says unverified as a note: a link went out, nothing failed", () => {
+    expect(en.SignIn.note).toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
+    expect(en.SignIn.error).not.toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
+  });
 
   it.each(["emailInvalid", "emailRequired", "passwordRequired"])(
     "has a field translation for %s in English and Italian",

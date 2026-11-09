@@ -635,7 +635,7 @@ const del = t.delete;
 /** The copy the plural ICU strings give for one User. */
 const DELETE_ONE = "Delete 1 User?";
 const ONE_DELETED = "1 User deleted";
-const ALREADY_GONE_ONE = "This User had already been deleted";
+const ALREADY_GONE_ONE = "User already deleted";
 const selectLabel = (email: string) => enT("Users.delete.select", { email });
 
 /** Every deletion the table sent, as the ids it named. */

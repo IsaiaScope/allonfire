@@ -18,9 +18,20 @@ const APP_HEADER = "x-aof-app";
 const ERROR_CODE = {
   /** Sign-in named an App that does not let this User in. */
   APP_FORBIDDEN: "APP_FORBIDDEN",
+  /**
+   * A request that would send an email, refused before any lookup: the
+   * per-address limit cannot count right now.
+   */
+  MAIL_UNAVAILABLE: "MAIL_UNAVAILABLE",
+  /** A new password that misses one of the password rules (`passwordRules`). */
+  PASSWORD_WEAK: "PASSWORD_WEAK",
   /** Registration or joining for an App that does not allow it, or no App named. */
   REGISTRATION_CLOSED: "REGISTRATION_CLOSED",
 } as const;
+/** Asks for a password reset email; answers the same for any address. */
+const REQUEST_PASSWORD_RESET = "/request-password-reset";
+/** Asks for a verification email again. */
+const SEND_VERIFICATION_EMAIL = "/send-verification-email";
 
 /** Everything the Auth module fixes for every host: its paths, cookies, header and limits. */
 export const AUTH = {
@@ -58,6 +69,14 @@ export const AUTH = {
     },
   },
   ERROR_CODE,
+  /** Why asking for a reset link failed; a known or unknown address alike never fails. */
+  FORGOT_ERROR: {
+    /** The email was left empty or is not one. */
+    INVALID: "invalid",
+    RATE_LIMITED: "rateLimited",
+    /** The API or its mail cannot answer now. */
+    UNAVAILABLE: "unavailable",
+  },
   HEADER: { APP: APP_HEADER },
   /**
    * Every route where Better Auth checks or hashes a password. Hosts
@@ -70,11 +89,28 @@ export const AUTH = {
    * falls back (signed out, no renewal, cookies cleared here).
    */
   LOG_MESSAGE: {
+    PASSWORD_RESET_FAILED:
+      "password reset on the API failed, answered unavailable",
+    RESET_LINK_FAILED:
+      "reset link request on the API failed, answered unavailable",
     SESSION_READ_FAILED: "session read failed, treated as signed out",
     SESSION_REFRESH_FAILED: "session refresh failed, cookies left as they are",
     SIGN_OUT_FAILED: "sign out on the API failed, cookies cleared here",
   },
   /** Methods Better Auth's handler answers. */
+  /** The emails the module asks its host to send. */
+  MAIL: {
+    /** The query parameter Better Auth adds to a verification link's callback on failure. */
+    ERROR_PARAM: "error",
+    /** How long a verification or reset link works; the copy never says so. */
+    LINK_EXPIRES_IN_S: UNIT.SECONDS_PER_HOUR,
+    /** The routes that send an email on their own, refused while the limit cannot count. */
+    SENDING_PATHS: [REQUEST_PASSWORD_RESET, SEND_VERIFICATION_EMAIL],
+    /** The query parameter a reset link carries its token in, to the App's page. */
+    TOKEN_PARAM: "token",
+    /** The query parameter the App puts on a verification link's callback, so only a link that worked lands as verified. */
+    VERIFIED_PARAM: "verified",
+  },
   METHODS: [HTTP.METHOD.GET, HTTP.METHOD.POST],
   /** Tag every Better Auth operation carries in a host's OpenAPI document. */
   OPENAPI_TAG: "Auth",
@@ -83,7 +119,13 @@ export const AUTH = {
    * (`/it` + path): home is the locale's root, so it adds nothing.
    */
   PAGE: {
+    /** Where a verification link lands, signed in or not: it worked (`VERIFIED_PARAM`), or `ERROR_PARAM` says it did not; with neither it was opened by hand. */
+    EMAIL_VERIFIED: "/email-verified",
+    /** Asks for a reset link; answers the same for any address. */
+    FORGOT_PASSWORD: "/forgot-password",
     HOME: "",
+    /** Where a reset link lands, its token in the query (`AUTH.MAIL.TOKEN_PARAM`). */
+    RESET_PASSWORD: "/reset-password",
     SIGN_IN: "/sign-in",
   },
   /** The module's routes, each after `BASE` under the host's own prefix. */
@@ -99,6 +141,10 @@ export const AUTH = {
     OPENAPI_REFERENCE: "/reference",
     /** The `openAPI` plugin's HTTP route; disabled, the schema is read in-process. */
     OPENAPI_SCHEMA: "/open-api/generate-schema",
+    REQUEST_PASSWORD_RESET,
+    /** Sets a new password with a reset token; every Session of the User ends. */
+    RESET_PASSWORD: "/reset-password",
+    SEND_VERIFICATION_EMAIL,
     SIGN_IN_EMAIL,
     /** Better Auth's sign-out: ends the Session and clears its cookies. */
     SIGN_OUT: "/sign-out",
@@ -109,6 +155,8 @@ export const AUTH = {
      * module), and a User writing their own could name someone else's file.
      */
     UPDATE_USER: "/update-user",
+    /** Where a verification link lands; marks the email verified. */
+    VERIFY_EMAIL: "/verify-email",
     /**
      * Better Auth's check of the signed-in User's password. Disabled: nothing
      * calls it, and each request would be a guess outside the auth limit.
@@ -135,6 +183,15 @@ export const AUTH = {
       MAX: 10,
       WINDOW_MS: 15 * UNIT.MS_PER_MINUTE,
     },
+  },
+  /** Why setting a new password through a reset link failed. */
+  RESET_ERROR: {
+    /** A field was left empty or the password breaks the rules. */
+    INVALID: "invalid",
+    /** The link expired, was used already, or never was one. */
+    INVALID_TOKEN: "invalidToken",
+    RATE_LIMITED: "rateLimited",
+    UNAVAILABLE: "unavailable",
   },
   /** Better Auth signs cookies with this secret; 32 chars is its own minimum advice. */
   SECRET_MIN_LENGTH: 32,
@@ -166,6 +223,8 @@ export const AUTH = {
     MISSING: "missing",
     RATE_LIMITED: "rateLimited",
     UNAVAILABLE: "unavailable",
+    /** The password was right but the email is not verified: a link was sent. */
+    UNVERIFIED: "unverified",
   },
   /** Context keys the Hono adapter sets; a host's bindings include `AuthVariables`. */
   VAR: {

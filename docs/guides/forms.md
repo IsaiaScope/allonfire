@@ -13,13 +13,13 @@ page stays on the server. The server action keeps the last word:
   pending flag; the action returns its own state, never TanStack form state.
 - `useAOFForm({ defaultValues, validators: { onChange: schema } })`; a
   submit runs the `onChange` validators too.
-- `<form action={action} noValidate onSubmit={submit}>`, where `submit` is
-  `(event) => submitAOFForm(form, event, formDataTo(action))` from
-  `@allonfire/ui/features/form/utils/form-submit`: it stops the browser's post; when the
-  checks pass it sends the form's own controls to the action in a transition,
-  the same data a post before hydration sends; when they block it focuses the
-  first invalid field; a validator that throws is reported. Before hydration
-  the browser posts to the action. See
+- `<form {...useAOFFormAction(form, action)}>`, from
+  `@allonfire/ui/features/form/utils/form-submit`, never `action`,
+  `noValidate` and `onSubmit` set by hand. Its `onSubmit` stops the browser's
+  post; when the checks pass it sends the form's own controls to the action
+  in a transition, the same data a post before hydration sends; when they
+  block it focuses the first invalid field; a validator that throws is
+  reported. Before hydration the browser posts to the action. See
   `apps/back-office/src/features/auth/components/sign-in-form.tsx`.
 - Fields render through `form.AppField` and `field.TextField` (one look in
   every form: tall, a bold label, its `icon` on a dark tile), which sets `name`, adopts a value typed or
@@ -38,6 +38,23 @@ page stays on the server. The server action keeps the last word:
   has no row of its own (Sign in), in a place kept whether or not it
   says anything (always the box's height on two lines; a longer message stops at two with an ellipsis), so its message
   moves nothing.
+- A message is written to fit that place, in every language: an error at most
+  70 characters (`MESSAGE_LENGTH.ERROR`, two lines on a 360px phone),
+  never shortened by the ellipsis. A note, where nothing failed but the visitor
+  must look elsewhere (a link sent), goes through `FormAlert`'s `notice` into
+  the same place, three lines, at most 105 characters
+  (`MESSAGE_LENGTH.NOTE`), its strings under a `note` key, never
+  `error`; a form that shows one keeps `min-h-20` (Forgot password).
+  `features/i18n/tests/translations.test.ts` fails on a longer one: say it
+  shorter. A toast has no place to fill but is read in a glance: at most 60
+  characters as rendered (`MESSAGE_LENGTH.TOAST`), every toast key listed in
+  that test (`TOAST_KEYS`). `apps/back-office/src/shared/constants/message-length.ts`
+- A form never swaps itself for its answer: once a job is done (a link sent),
+  it keeps its shape, the field read-only, the submit `disabled` (`AOFSubmitButton`
+  takes `disabled` beside `pending`), the note in the alert's place, so nothing
+  moves. A form can start on a known state (`initialState`, as Sign in, Forgot
+  password and Reset password do), which is how a page shows an error it
+  already knows. See `apps/back-office/src/features/auth/components/forgot-password-form.tsx`.
 - The zod schema with translated messages is built in the form; it repeats
   the action's rules, and the action's copy is the one that counts.
 - Fields two forms share are one field group, `withAOFFieldGroup` from

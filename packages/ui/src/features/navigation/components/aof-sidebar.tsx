@@ -17,6 +17,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarProvider,
   SidebarRail,
   useSidebar,
@@ -111,8 +114,13 @@ const AOFSidebarSheet = ({
   return (
     <Sheet onOpenChange={setOpenMobile} open={openMobile}>
       <SheetContent
-        // shadcn's phone width, 18rem.
-        className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [--sidebar-width:18rem] [&>button]:hidden"
+        // shadcn's phone width, 18rem, plus the left inset: a drawer standing
+        // in on a phone turned sideways runs behind the notch, its rows clear.
+        className={cn(
+          "w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [--sidebar-width:18rem] [&>button]:hidden",
+          side === "left" &&
+            "pl-[env(safe-area-inset-left,0px)] [--sidebar-width:calc(18rem+env(safe-area-inset-left,0px))]"
+        )}
         data-mobile="true"
         data-sidebar="sidebar"
         data-slot="sidebar"
@@ -265,15 +273,33 @@ export const AOFSidebarTrigger = ({
  * by the same inset, so its colour fills behind the notch.
  */
 const RAIL = {
+  /** The frame's top bars, the sidebar's header and the page's, level. */
+  "--frame-bar-height": "4rem",
   "--sidebar-width": "calc(16rem + env(safe-area-inset-left, 0px))",
   "--sidebar-width-icon": "calc(3.375rem + env(safe-area-inset-left, 0px))",
 };
 
+/**
+ * `--frame-inset-left`: the screen's left inset (a notch there), which the
+ * page area clears itself, or none once the docked sidebar is drawn beside
+ * it and clears it instead. Read from what is drawn, not from shadcn's phone
+ * test: iOS can fire the breakpoint's change before the screen's new width,
+ * leaving the drawer on a phone turned sideways, and the page still clears
+ * the notch. Anything the App lays on the page's left edge pads by it.
+ */
 export const AOFSidebarProvider = ({
+  className,
   style,
   ...props
 }: ComponentProps<typeof SidebarProvider>) => (
-  <SidebarProvider style={{ ...RAIL, ...style }} {...props} />
+  <SidebarProvider
+    className={cn(
+      "[--frame-inset-left:env(safe-area-inset-left,0px)] md:has-data-[slot=sidebar-gap]:[--frame-inset-left:0px]",
+      className
+    )}
+    style={{ ...RAIL, ...style }}
+    {...props}
+  />
 );
 
 /**
@@ -300,9 +326,69 @@ export const AOFSidebarDropdownContent = ({
 export const AOFSidebarContent = SidebarContent;
 export const AOFSidebarFooter = SidebarFooter;
 export const AOFSidebarGroup = SidebarGroup;
-export const AOFSidebarHeader = SidebarHeader;
-export const AOFSidebarInset = SidebarInset;
+/**
+ * The sidebar's top bar, below a notch above: in the phone's drawer, 12px
+ * or the notch's height above its content; docked, as tall as the page's
+ * `AOFFrameHeader`, the notch's height on top, so their lines are level.
+ */
+export const AOFSidebarHeader = ({
+  className,
+  ...props
+}: ComponentProps<typeof SidebarHeader>) => (
+  <SidebarHeader
+    className={cn(
+      "max-md:pt-[max(--spacing(3),env(safe-area-inset-top,0px))] max-md:pb-3 md:h-[calc(var(--frame-bar-height)+env(safe-area-inset-top,0px))] md:pt-[env(safe-area-inset-top,0px)] md:pb-0",
+      className
+    )}
+    {...props}
+  />
+);
+
+/** The page area: its pages' left gutter clears only the inset the sidebar
+ *  leaves (`--frame-inset-left`), never the notch twice. */
+export const AOFSidebarInset = ({
+  className,
+  ...props
+}: ComponentProps<typeof SidebarInset>) => (
+  <SidebarInset
+    className={cn(
+      "[--gutter-left:max(var(--page-gutter),var(--frame-inset-left))]",
+      className
+    )}
+    {...props}
+  />
+);
 export const AOFSidebarMenu = SidebarMenu;
+
+/** A row's sub-menu: its own pages, on a rule under the row's icon. */
+/** A sub-menu, indented under its row with no rule beside it, its links starting 12px in from the row. */
+export const AOFSidebarMenuSub = ({
+  className,
+  ...props
+}: ComponentProps<typeof SidebarMenuSub>) => (
+  <SidebarMenuSub
+    className={cn("ml-1.5 border-l-0 pl-1.5", className)}
+    {...props}
+  />
+);
+export const AOFSidebarMenuSubItem = SidebarMenuSubItem;
+
+/**
+ * A sub-menu's link, sized as a Section's row: 40px with a 16px label and an
+ * 18px icon for a mouse, the tap target on a touch screen (shadcn's is 28px).
+ */
+export const AOFSidebarMenuSubButton = ({
+  className,
+  ...props
+}: ComponentProps<typeof SidebarMenuSubButton>) => (
+  <SidebarMenuSubButton
+    className={cn(
+      "h-10 pointer-coarse:h-(--tap-target) data-[size=md]:text-base [&>svg]:size-4.5 pointer-coarse:[&>svg]:size-(--tap-icon)",
+      className
+    )}
+    {...props}
+  />
+);
 export const AOFSidebarMenuItem = SidebarMenuItem;
 export const AOFSidebarRail = SidebarRail;
 export const useAOFSidebar = useSidebar;

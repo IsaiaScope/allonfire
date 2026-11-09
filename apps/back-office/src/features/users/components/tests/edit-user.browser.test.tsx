@@ -48,6 +48,7 @@ const NAME = "Edited";
 const USER: UserBody = {
   createdAt: "2026-10-02T10:00:00.000Z",
   email: "edited@edit-user.test",
+  emailVerified: true,
   id: "user-2",
   image: null,
   imageBlurDataUrl: null,
@@ -79,7 +80,7 @@ const renderForm = (user = USER) =>
   );
 const save = () => page.getByRole("button", { name: t.submit }).click();
 // The bound id and Version come first, then the action's state and the form.
-const posted = () => vi.mocked(editUser).mock.calls[0]?.[3];
+const posted = () => vi.mocked(editUser).mock.calls[0]?.[2];
 
 beforeEach(() => {
   vi.mocked(editUser).mockReset();
@@ -146,10 +147,10 @@ describe("EditUser", () => {
       .toHaveAttribute("aria-disabled", "true");
     await save();
     await expect.poll(() => vi.mocked(editUser).mock.calls.length).toBe(1);
-    expect(vi.mocked(editUser).mock.calls[0]?.slice(0, 2)).toEqual([
-      SELF_ID,
-      USER.version,
-    ]);
+    expect(vi.mocked(editUser).mock.calls[0]?.[0]).toMatchObject({
+      id: SELF_ID,
+      version: USER.version,
+    });
     expect(posted()?.get(`roles.${App.BACK_OFFICE}`)).toBe(Role.ADMIN);
   });
 

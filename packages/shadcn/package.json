@@ -13,7 +13,7 @@
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
-    "canonicalize": "pnpm --filter @allonfire/core tailwind:canonicalize --css packages/shadcn/src/styles/globals.css --dir packages/shadcn/src/components --dir packages/shadcn/src/hooks --dir packages/shadcn/src/lib",
+    "canonicalize": "pnpm --filter @allonfire/core tailwind:canonicalize --css packages/shadcn/src/styles/globals.css --dir packages/shadcn/src/components --dir packages/shadcn/src/hooks --dir packages/shadcn/src/lib && pnpm --filter @allonfire/core vendor:patch",
     "check-types": "tsc --noEmit && tsc --noEmit -p src/components/tsconfig.json && tsc --noEmit -p src/components/tsconfig.relaxed.json",
     "vendor:types": "pnpm --filter @allonfire/core vendor:types --project packages/shadcn/src/components/tsconfig.json --project packages/shadcn/src/components/tsconfig.relaxed.json"
   },

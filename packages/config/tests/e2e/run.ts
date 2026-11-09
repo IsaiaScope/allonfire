@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { REPO } from "../../local/repo";
 
@@ -14,8 +15,25 @@ export const E2E = {
       script: "test-database",
     },
   },
+  /** What the keep-alive call takes: the workflow service's token (32 characters or more) and the owner's address. */
+  KEEP_ALIVE: {
+    RECIPIENT: "keep-alive@allonfire.test",
+    TOKEN: "e2e-keep-alive-token-not-a-secret",
+  },
   /** The label of an e2e run's Test database and bucket, beside its stamp. */
   LABEL: "e2e",
+  /**
+   * The fake mail provider an e2e run's API sends through (slot
+   * `FIXTURE.MAIL_PROVIDER.slot`): the key it takes, the paths it answers
+   * and the throwaway certificate it serves with, which the API trusts
+   * through `NODE_EXTRA_CA_CERTS` (a provider's URL must be https).
+   */
+  MAIL_SINK: {
+    CERT: resolve(tmpdir(), "allonfire-e2e-mail-sink", "cert.pem"),
+    CERT_KEY: resolve(tmpdir(), "allonfire-e2e-mail-sink", "key.pem"),
+    KEY: "e2e-mail-sink-key-not-a-secret",
+    PATH: { METRICS: "/emails/metrics", SEND: "/emails", SENT: "/sent" },
+  },
   /**
    * Tags an e2e test takes (`test(name, { tag }, ...)`). `CHROMIUM_ONLY`: the
    * WebKit projects leave it out, for what Playwright drives in Chromium only

@@ -20,6 +20,7 @@ export const BACK_OFFICE_ADMIN = sessionFor({
 export const userRow = (overrides: Partial<UserRecord> = {}): UserRecord => ({
   createdAt: new Date("2026-10-01T10:00:00.000Z"),
   email: "user-2@allonfire.test",
+  emailVerified: true,
   id: "user-2",
   image: null,
   imageBlurDataUrl: null,

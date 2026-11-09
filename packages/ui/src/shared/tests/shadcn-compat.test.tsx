@@ -1,7 +1,7 @@
 // @module-tag unit
 import { resolve } from "node:path";
 import { REPO } from "@allonfire/config/local/repo";
-// Type-checked by `pnpm check-types` under this package's strict tsconfig:
+// Type-checked by `pnpm static:types` under this package's strict tsconfig:
 // these are the generated components that break the repo's strict flags, so
 // one whose generated .d.ts goes missing or stale fails here, not on the
 // first AOF date picker.

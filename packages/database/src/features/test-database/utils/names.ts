@@ -1,20 +1,14 @@
-import { isStaleTestRun } from "@allonfire/config/tests/run/test-run";
-import { TEST_DATABASE } from "../constants/test-database";
-
-/** What a name may hold: Postgres takes it unquoted, and DDL takes no bind parameter. */
-const SAFE_NAME = /^[a-z0-9_]+$/;
+import {
+  isStaleTestRun,
+  testRunName,
+} from "@allonfire/config/tests/run/test-run";
 
 /**
  * A run's clone, from its stamp (`testRunStamp`): lowercase, digits and
  * underscores; anything else throws before any SQL runs.
  */
-export function testDatabaseName(label: string, stamp: string): string {
-  const name = `${TEST_DATABASE.PREFIX}${label.toLowerCase().replaceAll("-", "_")}_${stamp}`;
-  if (!SAFE_NAME.test(name)) {
-    throw new Error(`Not a safe Test database name: ${name}`);
-  }
-  return name;
-}
+export const testDatabaseName = (label: string, stamp: string) =>
+  testRunName(label, stamp);
 
 /**
  * A template, named by when it was built and the start of its fingerprint, so
@@ -22,7 +16,7 @@ export function testDatabaseName(label: string, stamp: string): string {
  * clone (`isStaleTestRun`); the sweep keeps the current one.
  */
 export const templateName = (fingerprint: string, epochSeconds: number) =>
-  `${TEST_DATABASE.TEMPLATE.PREFIX}${epochSeconds}_${fingerprint}`;
+  testRunName("template", `${epochSeconds}_${fingerprint}`);
 
 /**
  * What a sweep drops out of `names`: crashed runs' clones and old templates,

@@ -19,7 +19,6 @@ import {
 } from "../../telemetry/otlp";
 
 /** File descriptor 1: the process's stdout. */
-const STDOUT_FD = 1;
 
 /** What a Next server's logger is built from: its telemetry env and `NODE_ENV`. */
 type ServerLoggerEnv = TelemetryEnv & { NODE_ENV: NodeEnv };
@@ -147,7 +146,7 @@ export const serverLoggerOptions = (
 export const buildServerLogger = ({
   level,
   otlp,
-  destination = pino.destination(STDOUT_FD),
+  destination = pino.destination(LOG.STDOUT_FD),
 }: ServerLoggerOptions): Logger =>
   createLogger({
     destination: otlp

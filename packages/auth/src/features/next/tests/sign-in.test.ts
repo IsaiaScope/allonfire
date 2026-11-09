@@ -8,6 +8,7 @@ import { BASE_ERROR_CODES } from "better-auth";
 import { NextResponse } from "next/server";
 import { AUTH } from "../../../shared/constants/auth";
 import { signInWithEmail } from "../utils/sign-in";
+import { call, fetchMock, refusedWith, stubFetch } from "./api-fetch-mocks";
 
 const TOKEN = AUTH.COOKIE.SESSION_TOKEN;
 const NEW_SESSION = `${TOKEN}=fresh; Path=/; HttpOnly; SameSite=Lax`;
@@ -36,36 +37,11 @@ const signedIn = () =>
     }),
     {
       headers: [
-        ["content-type", HTTP.CONTENT_TYPE.JSON],
+        [HTTP.HEADER.CONTENT_TYPE, HTTP.CONTENT_TYPE.JSON],
         ["set-cookie", NEW_SESSION],
       ],
     }
   );
-
-/** Made up, no real code: the answer to a refusal whose code the App ignores. */
-const OTHER_CODE = "NOT_A_REAL_CODE";
-
-const refusedWith = (status: number, code = OTHER_CODE) =>
-  new Response(stringifyJson({ code, message: "no" }), {
-    headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
-    status,
-  });
-
-const fetchMock = vi.fn(
-  async (_url: string | URL | Request, _init?: RequestInit) =>
-    new Response("{}", {
-      headers: { [HTTP.HEADER.CONTENT_TYPE]: HTTP.CONTENT_TYPE.JSON },
-    })
-);
-
-/** The request fetch made, as a `Request`. */
-const call = (index: number) => {
-  const [url, init] = fetchMock.mock.calls[index] ?? [];
-  if (url === undefined) {
-    throw new Error(`no fetch call ${index}`);
-  }
-  return new Request(url, init);
-};
 
 const form = (email = "a@b.test", password = "secret") => {
   const data = new FormData();
@@ -78,8 +54,7 @@ const sentCookies = () => response.headers.getSetCookie();
 
 beforeEach(() => {
   response = new NextResponse();
-  fetchMock.mockReset();
-  vi.stubGlobal("fetch", fetchMock);
+  stubFetch();
 });
 
 describe("signInWithEmail", () => {
@@ -103,6 +78,25 @@ describe("signInWithEmail", () => {
     );
     expect(sentCookies()).toEqual([]);
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("answers unverified when the API sent a verification link instead", async () => {
+    fetchMock.mockResolvedValueOnce(
+      refusedWith(403, BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code)
+    );
+    await expect(signInWithEmail(form())).resolves.toBe(
+      AUTH.SIGN_IN_ERROR.UNVERIFIED
+    );
+  });
+
+  it("passes the page a verification link lands on", async () => {
+    fetchMock.mockResolvedValueOnce(signedIn());
+    const data = form();
+    data.set("callbackURL", `${LOCAL.URL.BACK_OFFICE}/en/email-verified`);
+    await signInWithEmail(data);
+    expect(await call(0).json()).toMatchObject({
+      callbackURL: `${LOCAL.URL.BACK_OFFICE}/en/email-verified`,
+    });
   });
 
   it("answers unavailable to any other 403, such as an untrusted origin", async () => {

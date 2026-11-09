@@ -37,6 +37,10 @@ export function parseEnv(raw: Record<string, string | undefined>) {
       API_ENABLE_DOCS: booleanEnvSchema
         .default(ENV.BOOLEAN.FALSE)
         .transform((value) => value === ENV.BOOLEAN.TRUE),
+      /** Where the keep-alive sends its check emails: the owner's address. */
+      API_KEEP_ALIVE_RECIPIENT: z.email().optional(),
+      /** The workflow service's token for the keep-alive; unset, it refuses everyone. */
+      API_KEEP_ALIVE_TOKEN: z.string().min(32).optional(),
       API_LOG_LEVEL: logLevelSchema.default(LOG.LEVEL.INFO),
       API_RATE_LIMIT_MAX: z.coerce
         .number()

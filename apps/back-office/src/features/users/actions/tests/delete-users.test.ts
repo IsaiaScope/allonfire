@@ -1,14 +1,14 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { updateTag } from "next/cache";
+import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { USERS } from "../../constants/users";
 import { deleteUsers } from "../delete-users";
-import { FAKE_API, resetFakeApi } from "./fake-api";
 
 const IDS = ["user-2", "user-3"];
 
 vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("./fake-api")).fakeServerApi,
+  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
 }));
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 

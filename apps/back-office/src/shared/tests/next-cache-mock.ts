@@ -5,3 +5,4 @@
 export const cacheLife = vi.fn();
 export const cacheTag = vi.fn();
 export const updateTag = vi.fn();
+export const refresh = vi.fn();

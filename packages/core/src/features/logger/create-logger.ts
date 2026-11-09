@@ -13,7 +13,6 @@ import {
 import { LOG, type LogLevel } from "./constants/logger";
 
 /** File descriptor 1: the process's stdout. */
-const STDOUT_FD = 1;
 
 export type LoggerOptions = {
   level: LogLevel;
@@ -34,7 +33,7 @@ const prettyTarget = {
 
 /** Plain JSON to stdout, as `pino()` writes without a transport. */
 const stdoutTarget = {
-  options: { destination: STDOUT_FD },
+  options: { destination: LOG.STDOUT_FD },
   target: LOG.TRANSPORT.STDOUT,
 } as const;
 

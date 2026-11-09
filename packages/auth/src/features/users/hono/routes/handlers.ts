@@ -241,7 +241,8 @@ export const updateHandlers = (deps: UserDeps) =>
     validator("json", userUpdateRequestSchema, invalidHook),
     async (c) => {
       const { id } = c.req.valid("param");
-      const { memberships, name, password, version } = c.req.valid("json");
+      const { emailVerified, memberships, name, password, version } =
+        c.req.valid("json");
       const session = c.get(AUTH.VAR.SESSION);
       const self = id === session.user.id;
       if (self && memberships) {
@@ -262,6 +263,7 @@ export const updateHandlers = (deps: UserDeps) =>
         id,
         {
           ...(name !== undefined && { name }),
+          ...(emailVerified !== undefined && { emailVerified }),
           ...(memberships && { memberships }),
           ...(password !== undefined && {
             hashedPassword: await hashPassword(password),

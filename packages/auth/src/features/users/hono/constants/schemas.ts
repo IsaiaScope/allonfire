@@ -41,6 +41,8 @@ export const userBodySchema = z
   .object({
     createdAt: z.iso.datetime(),
     email: z.string(),
+    /** Whether they verified their email; false while an Admin requires it. */
+    emailVerified: z.boolean(),
     id: z.string(),
     /** Their picture's address, when they have one. */
     image: z.string().nullable(),
@@ -86,14 +88,19 @@ export const userCreateRequestSchema = z.object({
   memberships: membershipsSchema,
   name: nameSchema,
   password: passwordSchema,
+  /** True: they verify their email at their first sign-in; else an Admin vouches for it. */
+  requireVerification: z.boolean().optional(),
 });
 
 /**
- * An edit: any of the name, the whole set of Memberships and a new
- * password, at least one; the email is not among them.
+ * An edit: any of the name, the whole set of Memberships, a new password and
+ * whether the email counts as verified, at least one; the email itself is not
+ * among them.
  */
 export const userUpdateRequestSchema = z
   .object({
+    /** False requires them to verify their email again; true vouches for it. */
+    emailVerified: z.boolean().optional(),
     memberships: membershipsSchema.optional(),
     name: nameSchema.optional(),
     password: passwordSchema.optional(),
@@ -101,8 +108,11 @@ export const userUpdateRequestSchema = z
     version: versionSchema,
   })
   .refine(
-    ({ memberships, name, password }) =>
-      memberships !== undefined || name !== undefined || password !== undefined,
+    ({ emailVerified, memberships, name, password }) =>
+      emailVerified !== undefined ||
+      memberships !== undefined ||
+      name !== undefined ||
+      password !== undefined,
     { message: "Nothing to change" }
   );
 

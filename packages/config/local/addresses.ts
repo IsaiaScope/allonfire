@@ -11,6 +11,7 @@ const PORT = {
   CDN: 9010,
   DATABASE: 5432,
   LAURA: 3200,
+  MAIL_SINK_E2E: 3320,
   REDIS: 6379,
   STORAGE: 9000,
   STORAGE_CONSOLE: 9001,
@@ -49,6 +50,7 @@ const IMAGE_SERVER = {
 } as const;
 
 const http = (port: number) => `http://localhost:${port}` as const;
+const https = (port: number) => `https://localhost:${port}` as const;
 
 const ADDRESS = {
   API: http(PORT.API),
@@ -61,6 +63,8 @@ const ADDRESS = {
   /** Signed links to stored pictures (imgproxy), through the cdn. */
   IMAGE_SERVER: `${http(PORT.CDN)}${CDN.PATH.IMAGE}`,
   LAURA: http(PORT.LAURA),
+  /** The fake mail provider an e2e run sends through; https, as a provider's URL must be. */
+  MAIL_SINK_E2E: https(PORT.MAIL_SINK_E2E),
   /** db 0: rate limits (ADR 0002). */
   REDIS: `redis://localhost:${PORT.REDIS}/0`,
   /** db 15: an e2e run's counters, apart from the ones `pnpm dev` reads. */

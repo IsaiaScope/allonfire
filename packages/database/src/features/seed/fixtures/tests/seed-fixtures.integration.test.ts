@@ -31,4 +31,19 @@ describe("seedFixtures", () => {
       })
     ).toEqual({ alt, width });
   });
+
+  it("keeps the Fixture's MAIL provider on, with a sender, whatever was changed", async () => {
+    const { fromAddress, slot } = FIXTURE.MAIL_PROVIDER;
+    await prisma.mailProvider.updateMany({
+      data: { enabled: false, fromAddress: "" },
+      where: { slot },
+    });
+    await seedFixtures(prisma);
+    expect(
+      await prisma.mailProvider.findFirstOrThrow({
+        select: { enabled: true, fromAddress: true },
+        where: { slot },
+      })
+    ).toEqual({ enabled: true, fromAddress });
+  });
 });

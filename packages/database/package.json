@@ -15,11 +15,12 @@
     "./features/image/utils/alt": "./src/features/image/utils/alt.ts",
     "./features/image/image.service": "./src/features/image/image.service.ts",
     "./features/prisma/client": "./src/features/prisma/client.ts",
+    "./features/service/constants/service": "./src/features/service/constants/service.ts",
+    "./features/service/provider.service": "./src/features/service/provider.service.ts",
     "./features/seed/fixtures/fixtures": "./src/features/seed/fixtures/fixtures.ts",
     "./features/seed/utils/upsert-user": "./src/features/seed/utils/upsert-user.ts",
     "./features/test-database/utils/global-setup": "./src/features/test-database/utils/global-setup.ts",
-    "./features/test-database/utils/local-env": "./src/features/test-database/utils/local-env.ts",
-    "./features/test-database/utils/names": "./src/features/test-database/utils/names.ts"
+    "./features/test-database/utils/local-env": "./src/features/test-database/utils/local-env.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

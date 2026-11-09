@@ -63,32 +63,43 @@ and a request no handler answers fails the test; ui fakes no API. Vitest serves 
 tests are Playwright's, under the App's `e2e/`, against the API plus the App
 (`aofPlaywrightConfig`), each spec once per project: `chromium`, `webkit`,
 `mobile-chrome` (Pixel 7) and `mobile-safari` (iPhone 15). Both layers are
-headless; `pnpm test:e2e:headed`, `pnpm test:e2e:ui` and
-`pnpm test:browser:headed` show the browser. A server action is mocked in a browser test and
+headless; `pnpm e2e:headed`, `pnpm e2e:ui` and
+`pnpm e2e:browser:headed` show the browser. A server action is mocked in a browser test and
 covered for real by e2e. CI runs the browser tests of every affected package
-that has them (an App, ui: the `changes` job's `browser` output) and e2e
-tests for the affected Apps.
+that has them (an App, ui: the `affected` job's `browser` output) and e2e
+tests for the affected Apps. Every App has an `e2e/safe-area.spec.ts` that
+checks each of its pages against the notch (`design-system.md`), and a new
+App adds one.
 
-The pre-commit hook (`.husky/pre-commit`) runs Biome on the staged files
-(errors and warnings fail), `oxlint --type-aware` over the repo, starts the
-Local stack (`pnpm docker:up`, then waits for the database, Redis, storage, the image server and its cache; Docker must be running) for the
-integration tests, then `turbo run check-types test test:browser`, then
-`turbo run test:e2e`: the App's production build, served like the Docker
-image (standalone server), plus the API, on their own ports (3310 and the
-App's e2e port) beside `pnpm dev`, the same locally and in CI. Turbo's cache
-replays every task whose package and dependencies did not change, e2e
-included, and the remote cache lets CI replay an e2e run that passed
+Every check sits in one **Stage** (`CONTEXT.md`): `static`, `test`, `e2e`
+or `build`, each one root command (`pnpm static`, …) that runs the same on a
+Mac, in the pre-commit hook and in CI; `pnpm check` runs `static`, `test` and
+`e2e` in order. What each Stage runs, in order, and why, is one list:
+`packages/config/stages/stages.ts`; every tool in it is a root script runnable
+alone (`pnpm static:knip`, `pnpm e2e:run`, …). A Stage stops at its first
+failing tool; CI adds `--keep-going` (every tool reported) and `--affected`
+(Turbo's tools only), and each tool prints its result and time. `test` and
+`e2e` start the Test services first (`pnpm test:services`: the database,
+Redis, storage, the image server and the cdn, waited for; Docker must be
+running), never the rest of Local. The pre-commit hook
+(`.husky/pre-commit`) runs lint-staged on the staged files (Tailwind classes,
+then Biome's fixes; errors and warnings fail), then `pnpm check`. e2e runs the
+App's production build, served like the Docker image (standalone server),
+plus the API, on their own ports (3310 and the App's e2e port) beside
+`pnpm dev`, the same locally and in CI. Turbo's cache replays every task
+whose package and dependencies did not change, e2e included, and the remote
+cache lets CI replay an e2e run that passed
 locally. A package test that reads a repo file outside its package lists that
 file in the package's turbo `test` inputs. oxlint runs one rule, `typescript/no-deprecated`
-(`.oxlintrc.json`): a deprecated API, members included, fails `pnpm lint`;
+(`.oxlintrc.json`): a deprecated API, members included, fails `pnpm static:lint`;
 Biome's `noDeprecatedImports` sees only imports. Fix the use, never silence
 it; a deprecated name a library's own type still requires goes in the rule's
 `allow` list with the reason.
 
 ## Pointers
 
-- Apply Biome fixes only to touched files, then run `pnpm check-types`, `pnpm lint` and `pnpm test`; fix lint rather than adding a Biome suppression without the owner's approval. Configuration: `biome.jsonc`, `.oxlintrc.json`, `packages/config/typescript/base.json`.
+- Apply Biome fixes only to touched files, then run `pnpm static:types`, `pnpm static:lint` and `pnpm test`; fix lint rather than adding a Biome suppression without the owner's approval. Configuration: `biome.jsonc`, `.oxlintrc.json`, `packages/config/typescript/base.json`.
 - Only the e2e build sets `CONFIG_E2E_TESTING_API`, which turns on Next's `exposeTestingApiInProductionBuild` for `instant()` tests; an image that serves traffic never has it: `packages/config/tests/e2e/playwright.config.ts`. (`docs/superpowers/specs/2026-11-02-instant-users-navigation-design.md`)
 - The Vitest preset's options, the root test scripts (`test:unit` needs no Docker, `test:integration`, `test:coverage`, `test:ui`), the e2e projects and the headed scripts: `packages/config/README.md`.
-- CI's `lint-types` job also runs ShellCheck on the Liquibase scripts, `docker build --check` on the `db-migrate` image and actionlint on the workflows; its `test` job checks the changelog against the Prisma schema on the Test template: `.github/workflows/ci.yml`.
-- CI's `quality` job runs `pnpm knip`, `pnpm knip:production` and `pnpm dupes` on every PR, over the whole workspace (no affected-filter): an unused export or file, code only tests use, or a clone fails it wherever it sits. Fix the hit, or accept it with a reason (`tooling.md`, knip and jscpd): `.github/workflows/ci.yml`.
+- The `static` Stage also runs ShellCheck on the Liquibase scripts, `docker build --check` on the `db-migrate` image and actionlint on the workflows (a Mac without the binary skips the tool; CI has them all); the `test` Stage checks the changelog against the Prisma schema on the Test template (`pnpm test:drift`): `packages/config/stages/stages.ts`.
+- The `static` Stage runs `pnpm static:knip`, `pnpm static:knip-production` and `pnpm static:dupes` in the hook and on every PR, over the whole workspace (no affected-filter): an unused export or file, code only tests use, or a clone fails it wherever it sits. Fix the hit, or accept it with a reason (`tooling.md`, knip and jscpd): `.github/workflows/ci.yml`.

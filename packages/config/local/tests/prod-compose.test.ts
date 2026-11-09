@@ -156,6 +156,20 @@ it("reads the API's proxy hops from Dokploy, one (Traefik) by default", () => {
   );
 });
 
+it.each([
+  "API_KEEP_ALIVE_RECIPIENT",
+  "API_KEEP_ALIVE_TOKEN",
+  // The URL, key and driver of each provider slot a row names (`providerEndpoint`).
+  "API_MAIL_PROVIDER_0_DRIVER",
+  "API_MAIL_PROVIDER_0_KEY",
+  "API_MAIL_PROVIDER_0_URL",
+  "API_MAIL_PROVIDER_1_DRIVER",
+  "API_MAIL_PROVIDER_1_KEY",
+  "API_MAIL_PROVIDER_1_URL",
+])("hands the API %s from Dokploy, empty when unset", (key) => {
+  expect(service("api")).toContain(`- ${key}=${interpolate(`${key}:-`)}`);
+});
+
 it("serves the storage console at storage.isaiariva.com", () => {
   expect(service("storage")).toContain(
     "traefik.http.routers.allonfire-storage.rule=Host(`storage.isaiariva.com`)"

@@ -8,6 +8,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import { SECTION } from "../src/features/navigation/constants/sections";
 import { sectionHref } from "../src/features/navigation/utils/sections";
 import { newUserHref } from "../src/features/users/utils/user-href";
+import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT } from "../src/shared/tests/translators";
 import {
   onPhone,
@@ -25,6 +26,7 @@ import {
 
 const t = EN.Users;
 const HOME = sectionHref(SECTION.HOME.path);
+const MAIL = sectionHref(BACK_OFFICE.PAGE.SERVICES_MAIL);
 const SHOWN = FIXTURE.USER.NO_MEMBERSHIP;
 
 /** Any User's email in the list: the rows came with the page. */
@@ -127,5 +129,24 @@ test("a User row reached for opens the form already filled", {
     await expect(
       page.getByRole("heading", { name: SHOWN.email })
     ).toBeVisible();
+  });
+});
+
+test("the sidebar's Email link opens the providers already there", async ({
+  page,
+}) => {
+  await signInAsAdmin(page);
+  await page.goto(HOME);
+  await openSidebar(page);
+  const menu = page
+    .getByRole("navigation", { name: EN.Navigation.menu })
+    .filter({ visible: true });
+  // The Services group opens first, so its link is on screen to prefetch.
+  await menu.getByRole("button", { name: EN.Navigation.services }).click();
+  await page.waitForLoadState("networkidle");
+  await instant(page, async () => {
+    await menu.getByRole("link", { name: EN.Navigation.mail }).click();
+    await page.waitForURL((url) => url.pathname === MAIL);
+    await expect(page.getByRole("form", { name: "Provider 1" })).toBeVisible();
   });
 });

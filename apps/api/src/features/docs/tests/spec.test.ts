@@ -23,6 +23,7 @@ import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import type { AppBindings } from "../../../shared/types/bindings";
 import { healthRoutes } from "../../health/routes/index";
+import { SERVICES } from "../../services/constants/services";
 import { docsRoutes } from "../routes";
 
 /** One Image's route, as OpenAPI spells it. */
@@ -267,7 +268,11 @@ describe("GET /openapi.json error responses", () => {
     expect(
       components.schemas[problemResponseName(HTTP.STATUS.BAD_REQUEST)]
         ?.properties.code.enum
-    ).toEqual([ERROR.CODE.BAD_REQUEST, ERROR.CODE.VALIDATION_FAILED]);
+    ).toEqual([
+      ERROR.CODE.BAD_REQUEST,
+      SERVICES.ERROR_CODE.PROVIDER_INCOMPLETE,
+      ERROR.CODE.VALIDATION_FAILED,
+    ]);
     expect(
       components.schemas[problemResponseName(HTTP.STATUS.PAYLOAD_TOO_LARGE)]
         ?.properties

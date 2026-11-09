@@ -70,7 +70,7 @@ it in their tab; a declined look is reverted.
    impeccable the repo rules and the owner's taste below before the command.
 6. **Wire.**
    - New strings go into the App's `src/features/i18n/translations/en.json`
-     and `it.json` (run `pnpm i18n:check`); components read them with
+     and `it.json` (run `pnpm static:i18n`); components read them with
      `useTranslations` (Server Components too) or `getTranslations` in an
      async page. A name (the App's, the brand's) is never a translation: it
      comes from its constant (`BACK_OFFICE.NAME`, `BRAND.NAME`).

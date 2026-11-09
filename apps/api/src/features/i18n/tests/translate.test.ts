@@ -9,7 +9,14 @@ import { TRANSLATION } from "../constants/locales";
 import { translate, translateCode } from "../translate";
 
 /** A value for every ICU argument the catalogue holds; a message ignores the rest. */
-const SAMPLE_VALUES = { count: 2, limit: 1024, seconds: 5 };
+const SAMPLE_VALUES = {
+  app: "Back Office",
+  count: 2,
+  limit: 1024,
+  minutes: 60,
+  provider: "Provider 1",
+  seconds: 5,
+};
 
 /** Any surviving brace means a placeholder was not substituted. */
 const UNRESOLVED_PLACEHOLDER = /[{}]/;

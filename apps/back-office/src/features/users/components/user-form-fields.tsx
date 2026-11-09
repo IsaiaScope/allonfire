@@ -16,11 +16,17 @@ import {
   BrushKanji,
   kanjiAction,
 } from "@/shared/components/brush-kanji";
+import { PasswordRules } from "@/shared/components/password-rules";
+import {
+  toolbarActionClass,
+  toolbarActionKanji,
+} from "@/shared/components/toolbar-action";
 import { ACTION_KANJI } from "@/shared/constants/action-kanji";
+import {
+  type PasswordPair,
+  passwordChecks,
+} from "@/shared/utils/password-checks";
 import { USERS } from "../constants/users";
-import { passwordChecks } from "../utils/user-form-schema";
-import { PasswordRules } from "./password-rules";
-import { toolbarActionClass, toolbarActionKanji } from "./toolbar-action";
 
 /*
  * The fields both User forms hold, each a field group (`withAOFFieldGroup`):
@@ -166,7 +172,6 @@ export const AvatarField = withAOFFieldGroup({
 });
 
 /** One string per password field: what each holds, or its label. */
-type PasswordPair = { confirmPassword: string; password: string };
 const NO_PASSWORDS: PasswordPair = { confirmPassword: "", password: "" };
 /**
  * What the password fields are told: whether a password is `required`, and

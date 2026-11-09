@@ -252,3 +252,20 @@ describe("User module: PATCH", () => {
     expect(res.status).toBe(HTTP.STATUS.OK);
   });
 });
+
+describe("User module: PATCH the email's verification", () => {
+  it("requires verification again, or vouches for the email, alone as a change", async () => {
+    const { deps, updates } = depsWith();
+    const host = userHost(ADMIN, deps);
+    expect((await patch(host, { emailVerified: false })).status).toBe(
+      HTTP.STATUS.OK
+    );
+    expect((await patch(host, { emailVerified: true })).status).toBe(
+      HTTP.STATUS.OK
+    );
+    expect(updates.map(({ change }) => change)).toEqual([
+      { emailVerified: false },
+      { emailVerified: true },
+    ]);
+  });
+});

@@ -18,6 +18,7 @@ const VALID = {
   name: "Edited",
   password: "",
   roles: { [App.BACK_OFFICE]: USERS.NO_ROLE, [App.LAURA]: Role.USER },
+  verification: USERS.VERIFICATION.VERIFIED,
 };
 const schema = editUserSchema(MESSAGES);
 const issuesOf = (values: Partial<typeof VALID>) =>
