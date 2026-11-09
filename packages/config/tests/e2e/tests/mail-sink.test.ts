@@ -80,4 +80,80 @@ describe("createMailSink", () => {
       totals: { sent: 0 },
     });
   });
+
+  describe("with two providers behind it", () => {
+    const { ATTEMPTS, SEND } = E2E.MAIL_SINK.PATH;
+    const { FIRST, SECOND } = E2E.MAIL_SINK.VIA;
+    const second = `${E2E.MAIL_SINK.SECOND_PREFIX}${SEND}`;
+    const attemptsTo = async (
+      sink: ReturnType<typeof createMailSink>,
+      to: string
+    ) =>
+      (
+        await call(sink, `${ATTEMPTS}?to=${encodeURIComponent(to)}`, {
+          key: null,
+        })
+      ).json();
+
+    it("tells which provider took a message", async () => {
+      const sink = createMailSink(KEY);
+      await call(sink, SEND, { body: MESSAGE });
+      await call(sink, second, { body: MESSAGE });
+      expect(await attemptsTo(sink, MESSAGE.to)).toEqual([
+        { outcome: "accepted", via: FIRST },
+        { outcome: "accepted", via: SECOND },
+      ]);
+    });
+
+    it("counts the usage of each provider apart", async () => {
+      const sink = createMailSink(KEY);
+      await call(sink, second, { body: MESSAGE });
+      const since = new Date(0).toISOString();
+      const usage = (path: string) =>
+        call(sink, `${path}?start_date=${since}`).then((answer) =>
+          answer.json()
+        );
+      expect(await usage(E2E.MAIL_SINK.PATH.METRICS)).toEqual({
+        totals: { sent: 0 },
+      });
+      expect(
+        await usage(
+          `${E2E.MAIL_SINK.SECOND_PREFIX}${E2E.MAIL_SINK.PATH.METRICS}`
+        )
+      ).toEqual({ totals: { sent: 1 } });
+    });
+
+    it("answers out of quota to a quota recipient on the first provider only", async () => {
+      const sink = createMailSink(KEY);
+      const to = `${E2E.MAIL_SINK.RECIPIENT.QUOTA}-someone@sink.test`;
+      const first = await call(sink, SEND, { body: { ...MESSAGE, to } });
+      const other = await call(sink, second, { body: { ...MESSAGE, to } });
+      expect(first.status).toBe(429);
+      expect(other.ok).toBe(true);
+      expect(await attemptsTo(sink, to)).toEqual([
+        { outcome: "quota", via: FIRST },
+        { outcome: "accepted", via: SECOND },
+      ]);
+    });
+
+    it("refuses a refused recipient on both providers and keeps nothing", async () => {
+      const sink = createMailSink(KEY);
+      const to = `${E2E.MAIL_SINK.RECIPIENT.REFUSED}-someone@sink.test`;
+      const answers = [
+        await call(sink, SEND, { body: { ...MESSAGE, to } }),
+        await call(sink, second, { body: { ...MESSAGE, to } }),
+      ];
+      expect(answers.map((answer) => answer.status)).toEqual([500, 500]);
+      expect(await attemptsTo(sink, to)).toEqual([
+        { outcome: "refused", via: FIRST },
+        { outcome: "refused", via: SECOND },
+      ]);
+      const listed = await call(
+        sink,
+        `${E2E.MAIL_SINK.PATH.SENT}?to=${encodeURIComponent(to)}`,
+        { key: null }
+      );
+      expect(await listed.json()).toEqual([]);
+    });
+  });
 });

@@ -132,7 +132,9 @@ export const aofPlaywrightConfig = ({
           API_MAIL_PROVIDER_0_DRIVER: "bearer-flat",
           API_MAIL_PROVIDER_0_KEY: E2E.MAIL_SINK.KEY,
           API_MAIL_PROVIDER_0_URL: LOCAL.URL.MAIL_SINK_E2E,
-          API_MAIL_PROVIDER_1_KEY: "",
+          API_MAIL_PROVIDER_1_DRIVER: "bearer-flat",
+          API_MAIL_PROVIDER_1_KEY: E2E.MAIL_SINK.KEY,
+          API_MAIL_PROVIDER_1_URL: `${LOCAL.URL.MAIL_SINK_E2E}${E2E.MAIL_SINK.SECOND_PREFIX}`,
           // Every project's requests come from one address: the global limit
           // would refuse a run of four browsers. The limiter has its own test.
           API_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),

@@ -32,7 +32,22 @@ export const E2E = {
     CERT: resolve(tmpdir(), "allonfire-e2e-mail-sink", "cert.pem"),
     CERT_KEY: resolve(tmpdir(), "allonfire-e2e-mail-sink", "key.pem"),
     KEY: "e2e-mail-sink-key-not-a-secret",
-    PATH: { METRICS: "/emails/metrics", SEND: "/emails", SENT: "/sent" },
+    PATH: {
+      ATTEMPTS: "/attempts",
+      METRICS: "/emails/metrics",
+      SEND: "/emails",
+      SENT: "/sent",
+    },
+    /**
+     * A recipient whose local part starts with `<label>-` makes the sink
+     * misbehave: `QUOTA` is out of quota on the first provider (the second
+     * takes it), `REFUSED` is refused by both.
+     */
+    RECIPIENT: { QUOTA: "quota", REFUSED: "refused" },
+    /** The second provider is the same sink, one path down. */
+    SECOND_PREFIX: "/second",
+    /** Which provider a request came through. */
+    VIA: { FIRST: "first", SECOND: "second" },
   },
   /**
    * Tags an e2e test takes (`test(name, { tag }, ...)`). `CHROMIUM_ONLY`: the

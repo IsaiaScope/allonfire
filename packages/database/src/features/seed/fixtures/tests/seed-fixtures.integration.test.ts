@@ -32,18 +32,20 @@ describe("seedFixtures", () => {
     ).toEqual({ alt, width });
   });
 
-  it("keeps the Fixture's MAIL provider on, with a sender, whatever was changed", async () => {
-    const { fromAddress, slot } = FIXTURE.MAIL_PROVIDER;
+  it("keeps the Fixture's MAIL providers on, with a sender, whatever was changed", async () => {
+    const { fromAddress, slots } = FIXTURE.MAIL_PROVIDER;
     await prisma.mailProvider.updateMany({
       data: { enabled: false, fromAddress: "" },
-      where: { slot },
+      where: { slot: { in: [...slots] } },
     });
     await seedFixtures(prisma);
-    expect(
-      await prisma.mailProvider.findFirstOrThrow({
-        select: { enabled: true, fromAddress: true },
-        where: { slot },
-      })
-    ).toEqual({ enabled: true, fromAddress });
+    const rows = await prisma.mailProvider.findMany({
+      orderBy: { slot: "asc" },
+      select: { enabled: true, fromAddress: true, slot: true },
+      where: { slot: { in: [...slots] } },
+    });
+    expect(rows).toEqual(
+      slots.map((slot) => ({ enabled: true, fromAddress, slot }))
+    );
   });
 });

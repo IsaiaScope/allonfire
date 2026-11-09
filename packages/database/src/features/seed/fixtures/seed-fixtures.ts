@@ -23,11 +23,11 @@ async function upsertImage(
   ]);
 }
 
-/** The MAIL provider every Test database has on; its row exists from the changelog. */
+/** The MAIL providers every Test database has on; their rows exist from the changelog. */
 const enableMailProvider = (client: PrismaClient) =>
   client.mailProvider.updateMany({
     data: { enabled: true, fromAddress: FIXTURE.MAIL_PROVIDER.fromAddress },
-    where: { slot: FIXTURE.MAIL_PROVIDER.slot },
+    where: { slot: { in: [...FIXTURE.MAIL_PROVIDER.slots] } },
   });
 
 /** Every Fixture into `client`'s database; safe to run again. */

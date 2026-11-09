@@ -14,7 +14,7 @@ import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
 import { addedUser } from "./add-user";
-import { linkIn, mailArrives, mailTo } from "./mail-box";
+import { attemptsTo, linkIn, mailArrives, mailTo } from "./mail-box";
 import { SERVICES, SIGN_IN_URL, signIn, signInAsAdmin } from "./pages";
 
 // Every email these flows send goes through the API to the run's fake
@@ -114,6 +114,57 @@ test("a reset email carries a link that sets a new password: the old one stops w
   await expect(
     visitor.getByRole("button", { name: EN.Navigation.toggleMenu })
   ).toBeVisible();
+  expect(errors).toEqual([]);
+  await visitor.context().close();
+});
+
+test("a send no provider takes does not fail the flow: the reader gets the same answer, only the sink saw it", async ({
+  browser,
+  page,
+}, info) => {
+  await signInAsAdmin(page);
+  const user = await addedUser(page, info.project.name, {
+    label: E2E.MAIL_SINK.RECIPIENT.REFUSED,
+  });
+  const { errors, page: visitor } = await visitorOf(browser);
+
+  await askForLink(visitor, user.email);
+
+  // Both providers were tried, in slot order, and both refused.
+  await expect
+    .poll(() => attemptsTo(user.email))
+    .toEqual([
+      { outcome: "refused", via: E2E.MAIL_SINK.VIA.FIRST },
+      { outcome: "refused", via: E2E.MAIL_SINK.VIA.SECOND },
+    ]);
+  expect(await mailTo(user.email)).toEqual([]);
+  expect(errors).toEqual([]);
+  await visitor.context().close();
+});
+
+test("a first provider out of quota hands the email to the second, and its link works", async ({
+  browser,
+  page,
+}, info) => {
+  await signInAsAdmin(page);
+  const user = await addedUser(page, info.project.name, {
+    label: E2E.MAIL_SINK.RECIPIENT.QUOTA,
+  });
+  const { errors, page: visitor } = await visitorOf(browser);
+
+  await askForLink(visitor, user.email);
+  const [mail] = await mailArrives(user.email);
+
+  expect(await attemptsTo(user.email)).toEqual([
+    { outcome: "quota", via: E2E.MAIL_SINK.VIA.FIRST },
+    { outcome: "accepted", via: E2E.MAIL_SINK.VIA.SECOND },
+  ]);
+  await chooseNewPassword(
+    visitor,
+    linkIn(mail as NonNullable<typeof mail>),
+    FIXTURE.NEW_PASSWORD
+  );
+  await expect(visitor).toHaveURL(SIGN_IN_URL);
   expect(errors).toEqual([]);
   await visitor.context().close();
 });
@@ -276,13 +327,18 @@ test.describe("keep-alive", () => {
     expect(answer.status()).toBe(HTTP.STATUS.OK);
     const report = await answer.json();
     const [service] = report.services;
-    expect(service.providers).toHaveLength(1);
-    // Other specs send through the same provider, so it is rarely idle.
-    expect([
-      SERVICES_API.KEEP_ALIVE_RESULT.SENT,
-      SERVICES_API.KEEP_ALIVE_RESULT.SKIPPED,
-    ]).toContain(service.providers[0].result);
-    if (service.providers[0].result === SERVICES_API.KEEP_ALIVE_RESULT.SENT) {
+    expect(service.providers).toHaveLength(FIXTURE.MAIL_PROVIDER.slots.length);
+    // Other specs send through the same providers, so they are rarely idle.
+    const results = service.providers.map(
+      (provider: { result: string }) => provider.result
+    );
+    for (const result of results) {
+      expect([
+        SERVICES_API.KEEP_ALIVE_RESULT.SENT,
+        SERVICES_API.KEEP_ALIVE_RESULT.SKIPPED,
+      ]).toContain(result);
+    }
+    if (results.includes(SERVICES_API.KEEP_ALIVE_RESULT.SENT)) {
       await expect
         .poll(async () => (await mailTo(E2E.KEEP_ALIVE.RECIPIENT)).length)
         .toBeGreaterThan(0);

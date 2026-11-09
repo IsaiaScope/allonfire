@@ -11,20 +11,29 @@ export type SentMail = {
   to: string;
 };
 
-/** Every email the run's fake provider took for `email`, oldest first. */
-export const mailTo = async (email: string): Promise<SentMail[]> => {
+/** What the run's fake provider answers on `path` for `email`. */
+const askSink = async (path: string, email: string) => {
   // The provider's certificate is throwaway: the API trusts it, a spec does not need to.
   const client = await request.newContext({ ignoreHTTPSErrors: true });
   try {
-    const answer = await client.get(
-      `${LOCAL.URL.MAIL_SINK_E2E}${E2E.MAIL_SINK.PATH.SENT}`,
-      { params: { to: email } }
-    );
+    const answer = await client.get(`${LOCAL.URL.MAIL_SINK_E2E}${path}`, {
+      params: { to: email },
+    });
     return await answer.json();
   } finally {
     await client.dispose();
   }
 };
+
+/** Every email the run's fake provider took for `email`, oldest first. */
+export const mailTo = (email: string): Promise<SentMail[]> =>
+  askSink(E2E.MAIL_SINK.PATH.SENT, email);
+
+/** Every try to send to `email`, with the provider it went through and how that ended. */
+export const attemptsTo = (
+  email: string
+): Promise<{ outcome: string; via: string }[]> =>
+  askSink(E2E.MAIL_SINK.PATH.ATTEMPTS, email);
 
 /**
  * Waits for `count` emails to `email` (they leave after the response, so a
