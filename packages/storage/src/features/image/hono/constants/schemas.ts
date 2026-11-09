@@ -9,27 +9,37 @@ import {
   imageAltBodySchema,
   imageBodySchema,
 } from "../../constants/schemas";
-import { cursorSchema } from "../utils/cursor";
 
-export const imageListBodySchema = z
+/** One numbered page, with the totals of every Image the caller sees. */
+export const imagePageBodySchema = z
   .object({
     images: z.array(imageBodySchema),
-    /** Pass as `cursor` for the next page; null on the last page. */
-    nextCursor: z.string().nullable(),
+    page: z.number().int(),
+    pageCount: z.number().int(),
+    total: z.number().int(),
+    /** Every visible Image's bytes together, not the page's. */
+    totalBytes: z.number().int(),
   })
-  .meta({ ref: "ImageList" });
-export type ImageListBody = z.infer<typeof imageListBodySchema>;
+  .meta({ ref: "ImagePage" });
+export type ImagePageBody = z.infer<typeof imagePageBodySchema>;
 
 /** The Images visible in `app`, or in any App when it is left out. */
 export const listQuerySchema = z.object({
+  /** One App's page: the Images placed in it (the search's `app:` field is any of several). */
   app: appBodySchema.optional(),
-  cursor: cursorSchema.optional(),
-  limit: z.coerce
+  page: z.coerce.number().int().min(1).max(IMAGE.LIMIT.MAX_PAGE).default(1),
+  perPage: z.coerce
     .number()
     .int()
     .min(1)
     .max(IMAGE.LIMIT.LIST.MAX)
     .default(IMAGE.LIMIT.LIST.DEFAULT),
+  /**
+   * The filters and the text in one string (ADR 0026): `access:public
+   * app:laura input:sea`. Blank, too long or not a string reads as none,
+   * never a 400.
+   */
+  search: z.string().trim().max(IMAGE.LIMIT.SEARCH_MAX).catch(""),
 });
 
 export const idParamSchema = z.object({ id: z.string().min(1) });
@@ -118,3 +128,8 @@ export const deleteBodySchema = z
     ids: z.array(z.string().min(1)).min(1).max(IMAGE.LIMIT.BATCH),
   })
   .meta({ ref: "ImageDelete" });
+
+/** How many Images a DELETE took out of the App or deleted: fewer than named when some were already gone. */
+export const deleteResultBodySchema = z
+  .object({ deleted: z.number().int().min(0) })
+  .meta({ ref: "ImageDeleteResult" });

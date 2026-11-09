@@ -3,6 +3,8 @@ export const SEPARATOR = {
   FIELD: ":",
   /** Comma-delimited header values and comma-delimited env lists. */
   LIST: ",",
+  /** Between names shown in a line: `Laura, Back Office`. */
+  NAMES: ", ",
   /** Splits `key=value` in a key/value env list such as OTLP headers. */
   PAIR: "=",
   /** Joins a zod issue path into `a.b.c`. */

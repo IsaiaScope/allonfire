@@ -15,6 +15,7 @@ import {
   openSidebar,
   rowOf,
   signInAsAdmin,
+  tapSidebarLink,
   USERS,
   usersSearchHref,
 } from "./pages";
@@ -97,16 +98,7 @@ test("the sidebar's Users link opens the list with its rows already there", asyn
   await signInAsAdmin(page);
   await page.goto(HOME);
   await instant(page, async () => {
-    // A phone's drawer brings its links into view only on opening. Its
-    // prefetch runs inside the lock: taking the lock makes the router fetch
-    // an earlier prefetch again at the tap, and the tap could beat it.
-    await openSidebar(page);
-    await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("navigation", { name: EN.Navigation.menu })
-      .filter({ visible: true })
-      .getByRole("link", { name: EN.Navigation.users })
-      .click();
+    await tapSidebarLink(page, EN.Navigation.users);
     await page.waitForURL(toUsers);
     await expect(anyEmail(page)).toBeVisible();
   });

@@ -4,6 +4,8 @@ import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { stubImageDeps } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { AppDeps } from "../../app";
 import { stubServicesDeps } from "../../features/services/tests/stub-services-deps";
+import { stubStorageUsageDeps } from "../../features/storage-usage/tests/stub-storage-usage-deps";
+import { stubUserUsageDeps } from "../../features/user-usage/tests/stub-user-usage-deps";
 import { API } from "../constants/api";
 import { memoryStore } from "./memory-store";
 
@@ -26,8 +28,10 @@ export function appDeps(overrides: Partial<AppDeps> = {}): AppDeps {
     checkRedis: async () => true,
     images: stubImageDeps(),
     services: stubServicesDeps(),
+    storageUsage: stubStorageUsageDeps(),
     store: memoryStore(),
     users: stubUserDeps(),
+    userUsage: stubUserUsageDeps(),
     ...overrides,
   };
 }

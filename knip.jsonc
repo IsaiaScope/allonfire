@@ -117,6 +117,10 @@
     "packages/database/src/features/service/provider.service.ts": ["exports"],
     // Kept for the Images page.
     "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
+    // Kept for the Image's own page (`/storage/images/[id]`), not built yet:
+    // the read it will make through the private cache.
+    "apps/back-office/src/features/images/utils/read-image.ts": ["files"],
+    "apps/back-office/src/features/images/utils/images-queries.ts": ["exports"],
     // Read by the Apps' next.config.ts, which production mode leaves out.
     "packages/auth/src/features/next/utils/with-provider-pictures.ts": [
       "exports"

@@ -14,11 +14,15 @@ import { App, ImageAccess, Role } from "@allonfire/database/enums";
 import { STORAGE } from "../../../../shared/constants/paths";
 import { IMAGE_SERVER } from "../../../image-server/constants/image-server";
 import { pictureSrcSet, privateLinkExpiry } from "../../../image-server/sign";
+import { IMAGE } from "../../constants/image";
 import { imageBodySchema } from "../../constants/schemas";
-import { imageListBodySchema } from "../constants/schemas";
-import { encodeCursor } from "../utils/cursor";
+import { imagePageBodySchema } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
-import { imageHost as app, imageRecord } from "./stub-image-deps";
+import {
+  imageHost as app,
+  imageRecord,
+  publicListQuery,
+} from "./stub-image-deps";
 
 /** One Image's path, as the module mounts it. */
 const onePath = (id: string) =>
@@ -39,21 +43,26 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-const noImages = () => vi.fn<ImageDeps["listImages"]>(async () => []);
+/** What the service answers when nobody sees an Image. */
+const NOTHING = { images: [], total: 0, totalBytes: 0 };
+const noImages = () => vi.fn<ImageDeps["listImagesPage"]>(async () => NOTHING);
 
 describe("GET /images", () => {
-  it("lists the Images visible in the App with the next cursor", async () => {
-    const listImages = vi.fn<ImageDeps["listImages"]>(async () => [
-      imageRecord(),
-    ]);
-    const res = await app(lauraUser, { listImages }).request(
-      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&limit=1`
+  it("answers a numbered page with its totals", async () => {
+    const listImagesPage = vi.fn<ImageDeps["listImagesPage"]>(async () => ({
+      images: [imageRecord()],
+      total: 61,
+      totalBytes: 61_000,
+    }));
+    const res = await app(lauraUser, { listImagesPage }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&page=2&perPage=30`
     );
     expect(res.status).toBe(HTTP.STATUS.OK);
-    expect(listImages).toHaveBeenCalledWith({
+    expect(listImagesPage).toHaveBeenCalledWith({
       app: App.LAURA,
       enterable: [App.LAURA],
-      limit: 1,
+      page: 2,
+      perPage: 30,
     });
     expect(await res.json()).toEqual({
       images: [
@@ -62,6 +71,7 @@ describe("GET /images", () => {
           alt: RECORD.alt,
           apps: RECORD.apps,
           blurDataUrl: RECORD.blurDataUrl,
+          bytes: RECORD.bytes,
           createdAt: RECORD.createdAt.toISOString(),
           height: RECORD.height,
           id: RECORD.id,
@@ -70,55 +80,114 @@ describe("GET /images", () => {
           width: RECORD.width,
         },
       ],
-      nextCursor: encodeCursor({
-        createdAt: RECORD.createdAt,
-        id: RECORD.id,
-      }),
+      page: 2,
+      pageCount: 3,
+      total: 61,
+      totalBytes: 61_000,
     });
   });
 
-  it("has no next cursor on a short page", async () => {
-    const res = await app(lauraUser, {
-      listImages: async () => [imageRecord()],
-    }).request(`${STORAGE.PATH.IMAGES}?app=${App.LAURA}`);
-    expect(imageListBodySchema.parse(await res.json()).nextCursor).toBeNull();
-  });
-
-  it("asks for the Images visible in any App when none is named", async () => {
-    const listImages = noImages();
-    const res = await app(lauraUser, { listImages }).request(
+  it("asks for the first page of the default size, in any App, when none is named", async () => {
+    const listImagesPage = noImages();
+    const res = await app(lauraUser, { listImagesPage }).request(
       STORAGE.PATH.IMAGES
     );
     expect(res.status).toBe(HTTP.STATUS.OK);
-    expect(listImages).toHaveBeenCalledWith({
+    expect(listImagesPage).toHaveBeenCalledWith({
       enterable: [App.LAURA],
-      limit: 30,
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+    });
+  });
+});
+
+describe("GET /images filters and Apps", () => {
+  it("reads the access and App fields of the search, and its text, for the service", async () => {
+    const listImagesPage = noImages();
+    await app(lauraUser, { listImagesPage }).request(
+      `${STORAGE.PATH.IMAGES}?search=${encodeURIComponent("access:public app:laura,back_office input:sea")}`
+    );
+    expect(listImagesPage).toHaveBeenCalledWith({
+      accesses: [ImageAccess.PUBLIC],
+      apps: [App.LAURA, App.BACK_OFFICE],
+      enterable: [App.LAURA],
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+      text: "sea",
+    });
+  });
+
+  it("reads a plain word as the text, and drops a field or value it does not know", async () => {
+    const listImagesPage = noImages();
+    await app(lauraUser, { listImagesPage }).request(
+      `${STORAGE.PATH.IMAGES}?search=${encodeURIComponent("access:secret color:red sea")}`
+    );
+    expect(listImagesPage).toHaveBeenCalledWith({
+      enterable: [App.LAURA],
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+      text: "sea",
+    });
+  });
+
+  it("keeps the App query an App's own page asks with, beside the search", async () => {
+    const listImagesPage = noImages();
+    await app(lauraUser, { listImagesPage }).request(
+      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&search=access:private`
+    );
+    expect(listImagesPage).toHaveBeenCalledWith({
+      accesses: [ImageAccess.PRIVATE],
+      app: App.LAURA,
+      enterable: [App.LAURA],
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+    });
+  });
+
+  it("answers no images, the real totals and a page count past the end", async () => {
+    const res = await app(lauraUser, {
+      listImagesPage: async () => ({ images: [], total: 61, totalBytes: 7 }),
+    }).request(`${STORAGE.PATH.IMAGES}?page=99&perPage=30`);
+    expect(imagePageBodySchema.parse(await res.json())).toMatchObject({
+      images: [],
+      pageCount: 3,
+      total: 61,
+      totalBytes: 7,
+    });
+  });
+
+  it("answers pageCount 0 and totalBytes 0 when nothing is visible", async () => {
+    const res = await app(lauraUser, {
+      listImagesPage: async () => NOTHING,
+    }).request(STORAGE.PATH.IMAGES);
+    expect(imagePageBodySchema.parse(await res.json())).toMatchObject({
+      pageCount: 0,
+      totalBytes: 0,
     });
   });
 
   it("passes every App an Admin of every App enters", async () => {
-    const listImages = noImages();
+    const listImagesPage = noImages();
     await app(sessionFor({ memberships: membershipsIn(Role.ADMIN) }), {
-      listImages,
+      listImagesPage,
     }).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
-    expect(listImages).toHaveBeenCalledWith({
+    expect(listImagesPage).toHaveBeenCalledWith({
       app: App.BACK_OFFICE,
       enterable: [App.LAURA, App.BACK_OFFICE],
-      limit: 30,
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
     });
   });
 
   it("leaves out an App whose floor the User's Role is under", async () => {
-    const listImages = noImages();
+    const listImagesPage = noImages();
     await app(
       sessionFor({ memberships: [{ app: App.BACK_OFFICE, role: Role.USER }] }),
-      { listImages }
+      { listImagesPage }
     ).request(`${STORAGE.PATH.IMAGES}?app=${App.BACK_OFFICE}`);
-    expect(listImages).toHaveBeenCalledWith({
-      app: App.BACK_OFFICE,
-      enterable: [],
-      limit: 30,
-    });
+    expect(listImagesPage).toHaveBeenCalledWith(
+      publicListQuery(App.BACK_OFFICE)
+    );
   });
 
   // Never 403: whoever cannot enter the App gets its public Images.
@@ -126,44 +195,26 @@ describe("GET /images", () => {
     { session: visitor, who: "a visitor without a Session" },
     { session: otherAppUser, who: "a User who cannot enter the App" },
   ])("lists for $who, who enters no App", async ({ session }) => {
-    const listImages = noImages();
-    const res = await app(session, { listImages }).request(
+    const listImagesPage = noImages();
+    const res = await app(session, { listImagesPage }).request(
       `${STORAGE.PATH.IMAGES}?app=${App.LAURA}`
     );
     expect(res.status).toBe(HTTP.STATUS.OK);
-    expect(listImages).toHaveBeenCalledWith({
-      app: App.LAURA,
-      enterable: [],
-      limit: 30,
-    });
-  });
-
-  it("passes the decoded cursor to the service", async () => {
-    const listImages = noImages();
-    const cursor = { createdAt: RECORD.createdAt, id: RECORD.id };
-    await app(lauraUser, { listImages }).request(
-      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${encodeCursor(cursor)}`
-    );
-    expect(listImages).toHaveBeenCalledWith({
-      app: App.LAURA,
-      cursor,
-      enterable: [App.LAURA],
-      limit: 30,
-    });
+    expect(listImagesPage).toHaveBeenCalledWith(publicListQuery(App.LAURA));
   });
 });
 
 describe("GET /images refusals", () => {
-  it.each([
-    ["not base64url JSON", "%%%"],
-    ["JSON of the wrong shape", Buffer.from("{}").toString("base64url")],
-  ])("refuses a cursor that is %s", async (_, cursor) => {
-    const res = await app(lauraUser, {}).request(
-      `${STORAGE.PATH.IMAGES}?app=${App.LAURA}&cursor=${cursor}`
-    );
-    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
-    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
-  });
+  it.each(["0", "-1", "abc", String(IMAGE.LIMIT.MAX_PAGE + 1)])(
+    "refuses page=%s",
+    async (page) => {
+      const res = await app(lauraUser, {}).request(
+        `${STORAGE.PATH.IMAGES}?page=${page}`
+      );
+      expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
+      expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
+    }
+  );
 
   it("refuses app=ALL with a validation problem", async () => {
     const res = await app(lauraUser, {}).request(
@@ -175,14 +226,14 @@ describe("GET /images refusals", () => {
 
   it("reports each invalid field", async () => {
     const res = await app(lauraUser, {}).request(
-      `${STORAGE.PATH.IMAGES}?app=ALL&limit=0`
+      `${STORAGE.PATH.IMAGES}?app=ALL&perPage=0`
     );
     expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
     const body = await errorOf(res);
     expect(body.code).toBe(ERROR.CODE.VALIDATION_FAILED);
     expect(body.errors?.map(({ path }) => path).sort()).toEqual([
       "app",
-      "limit",
+      "perPage",
     ]);
     expect(body.values).toEqual({ count: 2 });
   });

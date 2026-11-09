@@ -83,7 +83,7 @@ const Identity = ({ email, image, name }: IdentityProps) => (
       side={32}
       tone="primary"
     />
-    <span className="grid flex-1 text-left text-base leading-tight">
+    <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] text-left text-base leading-tight">
       <span className="truncate font-medium text-foreground">{name}</span>
       <span className="truncate text-xs">{email}</span>
     </span>
@@ -129,13 +129,13 @@ export const AccountMenu = ({
             <Identity email={email} image={image} name={name} />
             <IconCaretUpDown aria-hidden className="ml-auto size-4" />
           </AOFDropdownMenuTrigger>
-          <AOFSidebarDropdownContent align="end">
+          <AOFSidebarDropdownContent align="end" className="max-w-80">
             <AOFDropdownMenuGroup>
               <AOFDropdownMenuLabel className="p-0 font-normal">
                 {/* The trigger already shows the avatar: here the name, the
                     email and the Role, on a chip and as its seal. */}
-                <span className="flex items-center gap-3 px-1.5 py-1.5">
-                  <span className="grid flex-1 gap-0.5 text-left text-base leading-tight">
+                <span className="flex min-w-0 items-center gap-3 px-1.5 py-1.5">
+                  <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] gap-0.5 text-left text-base leading-tight">
                     <span className="truncate font-medium text-foreground">
                       {name}
                     </span>

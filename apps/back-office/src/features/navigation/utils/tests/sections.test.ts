@@ -1,9 +1,12 @@
 // @module-tag unit
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
+import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { SECTION, SECTIONS } from "../../constants/sections";
 import {
   currentSection,
+  currentSubPage,
   isCurrentSection,
+  sectionEntry,
   sectionHref,
   stationNumber,
 } from "../sections";
@@ -39,5 +42,22 @@ describe("Section helpers", () => {
     expect(currentSection(sectionHref(SECTION.USERS.path))).toBe(SECTION.USERS);
     expect(currentSection(METADATA.PATH.ROOT)).toBe(SECTION.HOME);
     expect(currentSection("/no-such-section")).toBe(SECTION.HOME);
+  });
+
+  it("opens Storage on its first page, Images", () => {
+    expect(sectionEntry(SECTION.STORAGE)).toBe(BACK_OFFICE.PAGE.STORAGE_IMAGES);
+  });
+
+  it("finds the Images page under Storage, also on its own pages", () => {
+    const [images] = SECTION.STORAGE.pages;
+    expect(
+      currentSubPage(SECTION.STORAGE, BACK_OFFICE.PAGE.STORAGE_IMAGES)
+    ).toBe(images);
+    expect(
+      currentSubPage(SECTION.STORAGE, `${BACK_OFFICE.PAGE.STORAGE_IMAGES}/abc`)
+    ).toBe(images);
+    expect(currentSection(`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/new`)).toBe(
+      SECTION.STORAGE
+    );
   });
 });

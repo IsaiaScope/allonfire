@@ -14,6 +14,7 @@ import { validator } from "hono-openapi";
 import { AUTH } from "../../../../shared/constants/auth";
 import { linkedPicture } from "../../../../shared/utils/linked-picture";
 import { guard } from "../../../hono/guards/utils/guard";
+import { manageGuard } from "../../../hono/guards/utils/manage-guard";
 import type { AuthEnv } from "../../../hono/types/variables";
 import { USER } from "../../constants/users";
 import {
@@ -47,18 +48,6 @@ const factory = createFactory<AuthEnv>();
 const allowed = (deps: UserDeps) =>
   guard((session) => deps.canListUsers(session.user));
 
-/**
- * 401 without a Session, 403 unless the Host, reading the caller and their
- * Session fresh, lets them change Users.
- */
-const canManage = (deps: UserDeps) =>
-  guard((session) =>
-    deps.canManageUsers({
-      sessionId: session.session.id,
-      userId: session.user.id,
-    })
-  );
-
 /** One page of Users, newest first, with how many match in all. */
 export const listHandlers = (deps: UserDeps) =>
   factory.createHandlers(
@@ -89,7 +78,7 @@ export const listHandlers = (deps: UserDeps) =>
 export const deleteHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     deleteRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     validator("json", userDeleteRequestSchema, invalidHook),
     async (c) => {
       const { ids } = c.req.valid("json");
@@ -105,6 +94,9 @@ export const deleteHandlers = (deps: UserDeps) =>
         deleted: await deps.deleteUsers(ids),
       } satisfies UserDeleteBody;
       await deps.deleteAvatars(images);
+      if (body.deleted > 0) {
+        await deps.changed();
+      }
       return c.json(body, HTTP.STATUS.OK);
     }
   );
@@ -117,7 +109,7 @@ export const deleteHandlers = (deps: UserDeps) =>
 export const createHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     createRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     validator("json", userCreateRequestSchema, invalidHook),
     async (c) => {
       const { password, ...user } = c.req.valid("json");
@@ -155,7 +147,7 @@ export const createHandlers = (deps: UserDeps) =>
 export const avatarPutHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     avatarPutRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     bodyLimit({
       maxSize: deps.avatarMaxBytes,
       onError: () => {
@@ -183,6 +175,7 @@ export const avatarPutHandlers = (deps: UserDeps) =>
         throw notFound();
       }
       await deps.deleteAvatars([changed.previous]);
+      await deps.changed();
       return c.json(
         linkedPicture(picture, deps.avatarLink) satisfies UserAvatarBody,
         HTTP.STATUS.OK
@@ -197,7 +190,7 @@ export const avatarPutHandlers = (deps: UserDeps) =>
 export const avatarDeleteHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     avatarDeleteRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     validator("param", userIdParamSchema, invalidHook),
     validator("json", avatarDeleteRequestSchema, invalidHook),
     async (c) => {
@@ -208,6 +201,7 @@ export const avatarDeleteHandlers = (deps: UserDeps) =>
         throw notFound();
       }
       await deps.deleteAvatars([changed.previous]);
+      await deps.changed();
       return c.body(null, HTTP.STATUS.NO_CONTENT);
     }
   );
@@ -216,7 +210,7 @@ export const avatarDeleteHandlers = (deps: UserDeps) =>
 export const readHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     readRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     validator("param", userIdParamSchema, invalidHook),
     async (c) => {
       const user = await deps.readUser(c.req.valid("param").id);
@@ -236,7 +230,7 @@ export const readHandlers = (deps: UserDeps) =>
 export const updateHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     updateRoute,
-    canManage(deps),
+    manageGuard(deps.canManageUsers),
     validator("param", userIdParamSchema, invalidHook),
     validator("json", userUpdateRequestSchema, invalidHook),
     async (c) => {

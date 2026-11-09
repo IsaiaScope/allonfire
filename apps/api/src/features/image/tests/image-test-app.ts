@@ -6,7 +6,7 @@ import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
 import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import { readFixtureImage } from "@allonfire/storage/features/image/fixtures/utils/read-fixture-image";
-import { imageListBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
+import { imagePageBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
 import { putImageObject } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { pictureLink } from "@allonfire/storage/features/image-server/sign";
@@ -99,28 +99,28 @@ export async function uploaded(res: Response) {
 }
 
 /**
- * Every key `GET /v1/images` shows, page by page, in order: with `limit: 1`
+ * Every key `GET /v1/images` shows, page by page, in order: with `perPage: 1`
  * one request per Image, so a skipped or repeated key shows.
  */
 export async function listKeys(
   app: TestApp,
   cookie = "",
-  options: { app?: App; limit?: number } = {},
-  cursor?: string
+  options: { app?: App; perPage?: number } = {},
+  page = 1
 ): Promise<string[]> {
   const query = new URLSearchParams({
     ...(options.app && { app: options.app }),
-    ...(options.limit && { limit: String(options.limit) }),
-    ...(cursor && { cursor }),
+    ...(options.perPage && { perPage: String(options.perPage) }),
+    page: String(page),
   });
   const res = await app.request(`${API.PATH.IMAGES}?${query}`, {
     headers: { cookie, origin: ORIGIN },
   });
-  const { images, nextCursor } = imageListBodySchema.parse(await res.json());
+  const body = imagePageBodySchema.parse(await res.json());
   // The body names no file: each Image's key is read by its id, in order.
-  const keys = await Promise.all(images.map(({ id }) => keyOf(id)));
-  return nextCursor
-    ? [...keys, ...(await listKeys(app, cookie, options, nextCursor))]
+  const keys = await Promise.all(body.images.map(({ id }) => keyOf(id)));
+  return page < body.pageCount
+    ? [...keys, ...(await listKeys(app, cookie, options, page + 1))]
     : keys;
 }
 

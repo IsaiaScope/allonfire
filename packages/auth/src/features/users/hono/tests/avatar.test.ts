@@ -69,6 +69,10 @@ const depsWith = ({
     avatarMaxBytes: maxBytes,
     canListUsers: () => true,
     canManageUsers: () => Promise.resolve(allows),
+    changed: () => {
+      calls.push("changed");
+      return Promise.resolve();
+    },
     deleteAvatars: (images) => {
       calls.push("deleteAvatars");
       deleted.push([...images]);
@@ -127,6 +131,26 @@ describe("User module: PUT avatar", () => {
       imageBlurDataUrl: BLUR,
     });
     expect(set).toEqual([[OTHER, SAVED_PICTURE]]);
+  });
+
+  it("tells the Host the bucket changed once the picture is stored and the old one deleted", async () => {
+    const { calls, deps } = depsWith({ previous: PREVIOUS });
+    await upload(userHost(ADMIN, deps));
+    expect(calls).toEqual([
+      "saveAvatar",
+      "setUserImage",
+      "deleteAvatars",
+      "changed",
+    ]);
+  });
+
+  it("tells the Host nothing when nothing was stored for good (404, 409)", async () => {
+    const missing = depsWith({ exists: false });
+    await upload(userHost(ADMIN, missing.deps));
+    const stale = depsWith({ changed: true });
+    await upload(userHost(ADMIN, stale.deps));
+    expect(missing.calls).not.toContain("changed");
+    expect(stale.calls).not.toContain("changed");
   });
 
   it("deletes the picture it replaced", async () => {
@@ -220,6 +244,12 @@ describe("User module: DELETE avatar", () => {
     expect(deleted).toEqual([[PREVIOUS]]);
   });
 
+  it("tells the Host the bucket changed once the file is deleted", async () => {
+    const { calls, deps } = depsWith({ previous: PREVIOUS });
+    await removeAvatar(userHost(ADMIN, deps));
+    expect(calls).toEqual(["setUserImage", "deleteAvatars", "changed"]);
+  });
+
   it("answers 404 for an unknown User", async () => {
     const { deps } = depsWith({ exists: false });
     expect((await removeAvatar(userHost(ADMIN, deps))).status).toBe(
@@ -278,7 +308,21 @@ describe("User module: a list and a deletion", () => {
       USER.PATH.BASE,
       json(HTTP.METHOD.DELETE, { ids: [OTHER] })
     );
-    expect(calls).toEqual(["userImages", "deleteUsers", "deleteAvatars"]);
+    expect(calls).toEqual([
+      "userImages",
+      "deleteUsers",
+      "deleteAvatars",
+      "changed",
+    ]);
     expect(deleted).toEqual([[PREVIOUS]]);
+  });
+
+  it("tells the Host nothing when no User was deleted", async () => {
+    const { calls, deps } = depsWith();
+    await userHost(ADMIN, {
+      ...deps,
+      deleteUsers: () => Promise.resolve(0),
+    }).request(USER.PATH.BASE, json(HTTP.METHOD.DELETE, { ids: [OTHER] }));
+    expect(calls).not.toContain("changed");
   });
 });

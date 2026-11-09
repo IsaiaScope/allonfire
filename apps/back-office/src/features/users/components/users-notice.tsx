@@ -1,20 +1,13 @@
 "use client";
 
-import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import {
-  IconArrowBackUp,
-  IconRefresh,
-  type TablerIcon,
-} from "@tabler/icons-react";
+import { IconArrowBackUp, IconRefresh } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
-import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 import {
-  StationNotice,
-  type StationNoticeProps,
-  type StationSignage,
-} from "@/shared/components/station-notice";
+  ListNotice,
+  type ListNoticeProps,
+  type ListNoticeSpec,
+} from "@/shared/components/list-notice";
 import { ACTION_KANJI } from "@/shared/constants/action-kanji";
 import { USERS } from "../constants/users";
 
@@ -39,19 +32,10 @@ const NOTICE = {
     kanji: ACTION_KANJI.BACK,
     signage: USERS.SIGNAGE.PAST_END,
   },
-} as const satisfies Record<
-  string,
-  { action: string; icon: TablerIcon; kanji: string; signage: StationSignage }
->;
+} as const satisfies Record<string, ListNoticeSpec>;
 
-export type UsersNoticeProps = Omit<
-  StationNoticeProps,
-  "action" | "description" | "heading" | "scope" | "signage"
-> & {
+export type UsersNoticeProps = ListNoticeProps & {
   kind: keyof typeof NOTICE;
-  /** What its one button does: clear the search, go to the last page, or
-   *  ask again. */
-  onAction: () => void;
 };
 
 /**
@@ -61,34 +45,7 @@ export type UsersNoticeProps = Omit<
  * one (`?page=9` with 2 pages: go to the last), or the rows could not be
  * loaded (ask again). The pager stays below.
  */
-export const UsersNotice = ({ kind, onAction, ...props }: UsersNoticeProps) => {
+export const UsersNotice = ({ kind, ...props }: UsersNoticeProps) => {
   const t = useTranslations("Users");
-  const { action, icon: Icon, kanji, signage } = NOTICE[kind];
-  // A bare `onAction` would receive the click event as its first argument.
-  const act = useCallback(() => onAction(), [onAction]);
-  return (
-    <StationNotice
-      action={
-        <AOFButton
-          className={kanjiAction()}
-          onClick={act}
-          size="field"
-          type="button"
-        >
-          <ActionKanji kanji={kanji} />
-          <Icon aria-hidden />
-          {t(action)}
-        </AOFButton>
-      }
-      description={t(`${kind}.description`)}
-      // No entrance: the notice stands where rows were, often for a moment
-      // (a search typed on), so the stamp and words are there at once. Any
-      // other notice prop (children, `entrance`) passes on.
-      entrance={false}
-      heading={t(`${kind}.title`)}
-      scope="part"
-      signage={signage}
-      {...props}
-    />
-  );
+  return <ListNotice kind={kind} spec={NOTICE[kind]} t={t} {...props} />;
 };

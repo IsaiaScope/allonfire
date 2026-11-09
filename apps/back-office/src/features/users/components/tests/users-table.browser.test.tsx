@@ -3,27 +3,21 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { worker } from "@allonfire/config/tests/browser/msw";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import {
   I18N,
   languageSchema,
 } from "@allonfire/core/features/i18n/constants/locales";
-import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
-import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
-import { aofErrorCaches } from "@allonfire/core/features/next/query/utils/aof-query-errors";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
-import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
-import { aofNotifyError } from "@allonfire/ui/features/query/components/aof-query-provider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { delay, HttpResponse, http } from "msw";
 import { NextIntlClientProvider } from "next-intl";
-import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
+import type { UrlUpdateEvent } from "nuqs/adapters/testing";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS_PAGE, USERS_URL } from "@/shared/tests/msw/handlers";
+import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import IT from "../../../i18n/translations/it.json" with { type: "json" };
@@ -64,9 +58,10 @@ const SLOW_MS = 400;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
-}));
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("@/shared/tests/navigation-mock")
+);
 
 /** Every query the list sent, as its search params. */
 const sent: URLSearchParams[] = [];
@@ -86,9 +81,10 @@ const language = (messages: typeof EN) =>
   messages === EN ? I18N.DEFAULT_LANGUAGE : languageSchema.enum.it;
 
 // An App's mark (a User's card) only needs an element there.
-vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
-}));
+vi.mock(
+  "@allonfire/ui/shared/components/aof-image",
+  () => import("@/shared/tests/aof-image-mock")
+);
 
 /** The table at an address (`search`), in a language, signed in as `selfId`. */
 const renderAt = ({
@@ -102,37 +98,13 @@ const renderAt = ({
   search?: string;
   selfId?: string;
 } = {}) =>
-  render(
-    <QueryClientProvider
-      client={
-        new QueryClient({
-          ...aofErrorCaches({
-            fallback: SHARED_TRANSLATIONS.en.Common.Request.failed,
-            notify: aofNotifyError,
-          }),
-          defaultOptions: { queries: { retry: false } },
-        })
-      }
-    >
-      <NuqsTestingAdapter
-        hasMemory
-        onUrlUpdate={onUrlUpdate}
-        searchParams={search}
-      >
-        <NextIntlClientProvider
-          formats={DATE.FORMATS}
-          locale={language(messages)}
-          // The App's words over core's shared ones (the toaster's), as the
-          // App's request config merges them.
-          messages={aofMessages(language(messages), messages)}
-          timeZone={DATE.TIME_ZONE}
-        >
-          <UsersTable selfId={selfId} />
-          <AOFToaster />
-        </NextIntlClientProvider>
-      </NuqsTestingAdapter>
-    </QueryClientProvider>
-  );
+  renderInApp({
+    children: <UsersTable selfId={selfId} />,
+    language: language(messages),
+    messages,
+    onUrlUpdate,
+    search,
+  });
 
 type Screen = Awaited<ReturnType<typeof renderAt>>;
 

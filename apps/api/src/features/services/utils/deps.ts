@@ -1,3 +1,4 @@
+import type { CanManage } from "@allonfire/auth/features/hono/guards/utils/manage-guard";
 import type { Locale } from "@allonfire/core/features/i18n/constants/locales";
 import type {
   MailUsage,
@@ -12,8 +13,7 @@ import type { KeepAliveReport } from "./keep-alive";
 
 /** What the Services routes need of the stack; tests stub it. */
 export type ServicesDeps = {
-  /** A Back Office Admin, read now, on a Session still there. */
-  canManage: (ids: { sessionId: string; userId: string }) => Promise<boolean>;
+  canManage: CanManage;
   listServices: typeof listServices;
   updateService: typeof updateService;
   updateProvider: typeof updateProvider;

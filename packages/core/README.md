@@ -180,6 +180,7 @@ imports these.
 | `./features/next/providers/components/aof-theme-provider` | next-themes `ThemeProvider` | `class`, `system`; every prop overrides |
 | `./features/next/providers/components/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
 | `./features/next/query/utils/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
+| `./features/next/query/components/aof-hydrated-boundary` | `HydrationBoundary` | a Server Component: `hydration` is a private-cache read (ADR 0028) and a read that throws is left to the view, never thrown past it |
 | `./features/next/i18n/utils/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
 | `./features/next/i18n/utils/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
 | `./features/next/api/visitor-headers` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API; `readVisitorHeaders()`, the same read from the request being answered |

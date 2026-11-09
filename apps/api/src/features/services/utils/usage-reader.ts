@@ -7,9 +7,11 @@ import type {
   MailUsage,
 } from "@allonfire/core/features/mail/types/mail";
 import {
-  parseJsonWith,
-  stringifyJson,
-} from "@allonfire/core/shared/utils/json";
+  type CacheRedis,
+  cacheAside,
+  type ForgetRedis,
+  forgetCached,
+} from "../../redis/utils/cache-aside";
 import { usageBodySchema } from "../constants/schemas";
 import { SERVICES } from "../constants/services";
 
@@ -18,30 +20,8 @@ type UsageReaderDeps = {
   endpoint: (slot: number) => MailEndpoint | undefined;
   fetch: MailFetch;
   logger: Pick<MailLogger, "warn">;
-  /** The cache; read when used, so building the reader opens nothing. */
-  redis: () => {
-    get: (key: string) => Promise<string | null>;
-    set: (
-      key: string,
-      value: string,
-      mode: "PX",
-      ms: number
-    ) => Promise<unknown>;
-  };
+  redis: CacheRedis;
   now?: () => Date;
-};
-
-/** Reads the cache; anything missing, down or not a usage reads as a miss. */
-const cachedUsage = async (
-  deps: UsageReaderDeps,
-  key: string
-): Promise<MailUsage | null> => {
-  try {
-    const text = await deps.redis().get(key);
-    return text === null ? null : parseJsonWith(text, usageBodySchema);
-  } catch {
-    return null;
-  }
 };
 
 const usageKey = (providerId: string) =>
@@ -51,16 +31,10 @@ const usageKey = (providerId: string) =>
  * Drops a provider's kept usage, so the next read asks the vendor: a send we
  * made moved the count. A cache that is down has nothing to drop.
  */
-export const forgetUsage = async (
-  redis: () => { del: (key: string) => Promise<unknown> },
+export const forgetUsage = (
+  redis: ForgetRedis,
   providerId: string
-): Promise<void> => {
-  try {
-    await redis().del(usageKey(providerId));
-  } catch {
-    // Down, the next read asks the vendor anyway.
-  }
-};
+): Promise<void> => forgetCached(redis, usageKey(providerId));
 
 /**
  * What each provider's own API says it sent, for the Services page's rings:
@@ -71,46 +45,42 @@ export const forgetUsage = async (
  */
 export const createUsageReader =
   (deps: UsageReaderDeps) =>
-  async (provider: {
+  (provider: {
     dailyLimit: number;
     id: string;
     slot: number;
-  }): Promise<MailUsage | null> => {
-    const key = usageKey(provider.id);
-    const kept = await cachedUsage(deps, key);
-    if (kept) {
-      return kept;
-    }
-    const endpoint = deps.endpoint(provider.slot);
-    if (!endpoint) {
-      deps.logger.warn({ provider }, SERVICES.LOG_MESSAGE.USAGE_UNREADABLE);
-      return null;
-    }
-    let usage: MailUsage | null;
-    try {
-      usage = await deps.drivers[endpoint.driver].usage(
-        endpoint,
-        (deps.now ?? (() => new Date()))(),
-        deps.fetch,
-        { dailyLimit: provider.dailyLimit }
-      );
-    } catch (error) {
-      deps.logger.warn(
-        { err: error, provider },
-        SERVICES.LOG_MESSAGE.USAGE_UNREADABLE
-      );
-      return null;
-    }
-    if (!usage) {
-      deps.logger.warn({ provider }, SERVICES.LOG_MESSAGE.USAGE_UNREADABLE);
-      return null;
-    }
-    try {
-      await deps
-        .redis()
-        .set(key, stringifyJson(usage), "PX", SERVICES.USAGE_CACHE.TTL_MS);
-    } catch {
-      // The cache is only a saving: a read it could not keep still answers.
-    }
-    return usage;
-  };
+  }): Promise<MailUsage | null> =>
+    cacheAside({
+      key: usageKey(provider.id),
+      load: async () => {
+        const endpoint = deps.endpoint(provider.slot);
+        if (!endpoint) {
+          deps.logger.warn({ provider }, SERVICES.LOG_MESSAGE.USAGE_UNREADABLE);
+          return null;
+        }
+        try {
+          const usage = await deps.drivers[endpoint.driver].usage(
+            endpoint,
+            (deps.now ?? (() => new Date()))(),
+            deps.fetch,
+            { dailyLimit: provider.dailyLimit }
+          );
+          if (!usage) {
+            deps.logger.warn(
+              { provider },
+              SERVICES.LOG_MESSAGE.USAGE_UNREADABLE
+            );
+          }
+          return usage;
+        } catch (error) {
+          deps.logger.warn(
+            { err: error, provider },
+            SERVICES.LOG_MESSAGE.USAGE_UNREADABLE
+          );
+          return null;
+        }
+      },
+      redis: deps.redis,
+      schema: usageBodySchema,
+      ttlMs: SERVICES.USAGE_CACHE.TTL_MS,
+    });

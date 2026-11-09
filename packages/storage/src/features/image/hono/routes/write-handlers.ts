@@ -49,6 +49,7 @@ const factory = createFactory<AuthEnv>();
 /** Deletes files no row points at, if any; a failure is logged, never answered. */
 const cleanUp = (deps: ImageDeps, keys: readonly string[]) =>
   deleteLeftovers({
+    event: IMAGE.LOG_EVENT.CLEANUP_FAILED,
     keys,
     log: deps.log,
     reason: IMAGE.LOG_MESSAGE.CLEANUP_FAILED,
@@ -85,37 +86,41 @@ export const uploadHandlers = (deps: ImageDeps) =>
 
       const budget = c.get(IMAGE.VAR.UPLOAD_BUDGET);
       budget.throwIfAborted();
-      try {
-        await storeAll(deps, prepared);
-        // Past the budget, the objects just stored are cleaned up below.
-        budget.throwIfAborted();
-        const images = await deps.createImages(
-          prepared.map(({ access, alt, apps, image, key }) => ({
-            access,
-            alt,
-            apps,
-            blurDataUrl: image.blurDataUrl,
-            bytes: image.bytes,
-            height: image.height,
-            key,
-            uploadedBy: user.id,
-            width: image.width,
-          }))
-        );
-        const now = new Date();
-        return c.json(
-          images.map((image) => toImageBody(image, now)),
-          HTTP.STATUS.CREATED
-        );
-      } catch (error) {
-        // ponytail: best effort. An object left behind is invisible (no row
-        // points at it); a failed cleanup must not hide the original error.
-        await cleanUp(
-          deps,
-          prepared.map(({ key }) => key)
-        );
-        throw error;
-      }
+      const images = await (async () => {
+        try {
+          await storeAll(deps, prepared);
+          // Past the budget, the objects just stored are cleaned up below.
+          budget.throwIfAborted();
+          return await deps.createImages(
+            prepared.map(({ access, alt, apps, image, key }) => ({
+              access,
+              alt,
+              apps,
+              blurDataUrl: image.blurDataUrl,
+              bytes: image.bytes,
+              height: image.height,
+              key,
+              uploadedBy: user.id,
+              width: image.width,
+            }))
+          );
+        } catch (error) {
+          // ponytail: best effort. An object left behind is invisible (no row
+          // points at it); a failed cleanup must not hide the original error.
+          await cleanUp(
+            deps,
+            prepared.map(({ key }) => key)
+          );
+          throw error;
+        }
+      })();
+      // Outside the try: the rows exist now, so nothing here may delete their files.
+      await deps.changed();
+      const now = new Date();
+      return c.json(
+        images.map((image) => toImageBody(image, now)),
+        HTTP.STATUS.CREATED
+      );
     }
   );
 
@@ -205,12 +210,14 @@ export const patchHandlers = (deps: ImageDeps) =>
         [...renamed.values()].filter((to) => !used.has(to))
       );
       await deleteLeftovers({
+        event: IMAGE.LOG_EVENT.PUBLIC_FILE_LEFT,
         keys: replaced,
         log: deps.log,
         reason: IMAGE.LOG_MESSAGE.PUBLIC_FILE_LEFT,
         remove: deps.deleteObjects,
         retry: true,
       });
+      await deps.changed();
       const now = new Date();
       return c.json(
         images.map((image) => toImageBody(image, now)),
@@ -230,18 +237,22 @@ export const deleteHandlers = (deps: ImageDeps) =>
       // Checked inside the write, like a PATCH.
       const authorise = (current: ImagePlacementsById) =>
         authoriseDelete(user, current, app);
-      const keys = await (app
+      const { deleted, keys } = await (app
         ? deps.removeImagesFromApp(ids, app, authorise)
-        : deps.deleteImages(ids, authorise)
-      ).catch(notFoundOnUnknownIds);
+        : deps.deleteImages(ids, authorise));
       // Rows first: a leftover object is harmless, a row without its file is
       // a broken Image. So a storage failure here is logged, not answered.
       await deleteLeftovers({
+        event: IMAGE.LOG_EVENT.OBJECT_DELETE_FAILED,
         keys,
         log: deps.log,
         reason: IMAGE.LOG_MESSAGE.OBJECT_DELETE_FAILED,
         remove: deps.deleteObjects,
       });
-      return c.body(null, HTTP.STATUS.NO_CONTENT);
+      // A batch of ids already gone moved nothing.
+      if (deleted > 0) {
+        await deps.changed();
+      }
+      return c.json({ deleted }, HTTP.STATUS.OK);
     }
   );

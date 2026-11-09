@@ -47,6 +47,12 @@ export type UserDeps = {
   avatarLink: AvatarLink;
   /** Deletes the stored Avatars among `images`, ignoring a provider's picture and none. */
   deleteAvatars: (images: readonly (string | null)[]) => Promise<void>;
+  /**
+   * Told after a write moved what the bucket holds (an Avatar stored or
+   * removed, Users deleted with theirs), so the Host drops any total it kept
+   * of the bucket before the answer goes out. Never throws.
+   */
+  changed: () => Promise<void>;
   /** The most bytes an Avatar's request may carry. */
   avatarMaxBytes: number;
 };

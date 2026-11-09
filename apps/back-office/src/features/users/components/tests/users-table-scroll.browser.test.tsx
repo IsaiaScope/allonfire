@@ -32,12 +32,14 @@ const LOAD_TIMEOUT_MS = 4000;
 
 // A server action: covered for real by e2e.
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
-vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
-}));
-vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
-}));
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("@/shared/tests/navigation-mock")
+);
+vi.mock(
+  "@allonfire/ui/shared/components/aof-image",
+  () => import("@/shared/tests/aof-image-mock")
+);
 
 /** A page in a box `height` tall and narrower than the list's columns, as
  *  a phone turned sideways leaves it beside the sidebar: scrolling itself,

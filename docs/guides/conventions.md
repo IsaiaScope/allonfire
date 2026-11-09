@@ -66,6 +66,22 @@ survive. A schema crosses no package: a package's `storageItem` takes its own zo
   owner's own constants object. An object literal cannot read its own
   keys: shared pieces are file-local consts above it. A path is never a string literal,
   tests included: compose it (`${API.PATH.AUTH}${AUTH.PATH.GET_SESSION}`).
+  **A constant has one home, the owner's object, and one definition.** A loose
+  `const X_Y = ...` at the top of a file is a smell: a chart's series keys
+  (`USERS.OVERVIEW.USERS_KEY`), its room (`STORAGE.OVERVIEW.CHART_HEIGHT_PX`), a
+  card's kanji (`STORAGE.KANJI.IMAGE`), a log event (`AVATAR.LOG_EVENT`), a header's
+  scheme (`HTTP.AUTH_SCHEME.BEARER`), the chart's measures (`CHART`,
+  `packages/ui/src/features/chart/constants/chart`) all sit in their owner's
+  nested object, in its `constants/` folder, never in a component file (a
+  component file exports components). Before adding one, search for its value:
+  an option list built twice (`APP_OPTIONS`, `shared/constants/apps`) or a
+  glyph copied between features is one constant read by both. The same glyph
+  or number for two different meanings stays two constants (`IMAGES.ADD_KANJI`
+  and `USERS.PICTURE_KANJI` are both 写, for different actions). What may stay
+  file-local: a lookup keyed by one component's own props that holds components
+  or icons (`DETAILS`, `NOTICE`), a value derived from a `cva`, and a number
+  used once inside one pure helper (`DECIMALS` in `formatSize`). A class list is
+  never a constant: `code-style.md`, CSS.
   A module names every route in its owner's `PATH` object (`USER.PATH.ONE`,
   `STORAGE.PATH.ONE`), and a route param is filled with core's
   `fillPath(path, params)` (`openApiPath` for the spec's `{id}`), never by a

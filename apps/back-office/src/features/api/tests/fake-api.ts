@@ -75,6 +75,9 @@ const fakeFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   return Response.json(code ? { code } : (body ?? {}), { status });
 };
 
-/** `serverApi`'s stand-in: the typed client over the fake. */
-export const fakeServerApi = () =>
+/**
+ * `serverApi`'s stand-in: the typed client over the fake.
+ * `vi.mock("@/features/api/utils/server-api", () => import("@/features/api/tests/fake-api"))`.
+ */
+export const serverApi = () =>
   Promise.resolve(hc<ApiType>(LOCAL.URL.TEST_API, { fetch: fakeFetch }));

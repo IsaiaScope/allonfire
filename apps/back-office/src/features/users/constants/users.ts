@@ -1,5 +1,8 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App } from "@allonfire/database/enums";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
+import { barChartHeight } from "@allonfire/ui/features/chart/utils/bar-chart-height";
 import type { StationSignage } from "@/shared/components/station-notice";
 
 /** How long the Avatar links a list holds stay valid, at least. */
@@ -97,6 +100,18 @@ export const USERS = {
   },
   /** A Role row's choice for an App the new User is not in. */
   NO_ROLE: "none",
+  /**
+   * The overview on Home: the chart's series keys, and their colours
+   * (Users, Admins) from the Design's chart tokens.
+   */
+  OVERVIEW: {
+    ADMINS_COLOR: "var(--chart-3)",
+    ADMINS_KEY: "admins",
+    CHART_COLOR: "var(--chart-1)",
+    /** A row for each App, two bars a row (Users, Admins): the room the failed and refused cards keep too. */
+    CHART_HEIGHT_PX: barChartHeight(objectValues(App).length, 2),
+    USERS_KEY: "users",
+  },
   /** The Users Section's own pages, under its path. */
   PATH: { NEW: "/new" },
   /** Brushed in the picture field's choose button: 写, a photograph

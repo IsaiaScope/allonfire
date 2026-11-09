@@ -36,7 +36,7 @@ export const USER = {
     DELETE_200:
       "How many of the Users named were deleted; an unknown id is skipped",
     DELETE_DESCRIPTION:
-      "Deletes the Users named, each from every App at once: their Memberships, Sessions, Accounts and Laura scores go with them, and their Images stay without an uploader. Nobody can delete themselves: a list holding the caller's own id answers 403 `CANNOT_DELETE_SELF` and deletes nobody. Only a User the Host lets delete Users, read from the database at the time of the request, never from a cached Session.",
+      "Deletes the Users named, each from every App at once: their Memberships, Sessions, Accounts and Laura scores go with them, and their Images stay without an uploader. Nobody can delete themselves: a list holding the caller's own id answers 403 `CANNOT_DELETE_SELF` and deletes nobody. An id that is not there is skipped as already gone (`deleted` counts the Users that went), so a retry is safe. Only a User the Host lets delete Users, read from the database at the time of the request, never from a cached Session.",
     DELETE_SUMMARY: "Delete Users",
     LIST_200: "One page of Users, newest first, with the total that match",
     LIST_DESCRIPTION:

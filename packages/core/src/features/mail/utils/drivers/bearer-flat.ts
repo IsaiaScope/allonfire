@@ -14,7 +14,7 @@ const startOfUtcDay = (now: Date) =>
   new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
 const authorized = (endpoint: MailEndpoint) => ({
-  [HTTP.HEADER.AUTHORIZATION]: `Bearer ${endpoint.key}`,
+  [HTTP.HEADER.AUTHORIZATION]: `${HTTP.AUTH_SCHEME.BEARER} ${endpoint.key}`,
 });
 
 /** What the provider says it sent since `start`: null when it cannot say. */

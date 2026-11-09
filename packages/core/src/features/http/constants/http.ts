@@ -161,8 +161,12 @@ const CACHE_CONTROL = {
   NO_CACHE: "no-cache, no-store, must-revalidate",
 } as const;
 
+/** How an `Authorization` header names its scheme; a token follows after a space. */
+const AUTH_SCHEME = { BEARER: "Bearer" } as const;
+
 /** Everything HTTP names: `HTTP.CACHE_CONTROL.*`, `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, and the `SECURITY_HEADERS` every app sends. */
 export const HTTP = {
+  AUTH_SCHEME,
   CACHE_CONTROL,
   CONTENT_TYPE: CONTENT_TYPES,
   HEADER,

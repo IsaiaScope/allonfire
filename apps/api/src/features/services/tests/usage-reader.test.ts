@@ -139,6 +139,10 @@ describe("forgetUsage", () => {
     await forgetUsage(
       () => ({
         del: (name: string) => Promise.resolve(Number(stored.delete(name))),
+        set: (name: string, value: string) => {
+          stored.set(name, value);
+          return Promise.resolve("OK");
+        },
       }),
       PROVIDER.id
     );
@@ -148,7 +152,10 @@ describe("forgetUsage", () => {
   it("never throws when the cache is down", async () => {
     await expect(
       forgetUsage(
-        () => ({ del: () => Promise.reject(new Error("down")) }),
+        () => ({
+          del: () => Promise.reject(new Error("down")),
+          set: () => Promise.reject(new Error("down")),
+        }),
         PROVIDER.id
       )
     ).resolves.toBeUndefined();
