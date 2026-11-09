@@ -81,7 +81,7 @@ jobs:
       # ShellCheck ships on GitHub's runners; actionlint and the migrate
       # image's build checks run in Docker, so CI skips none of them.
       - name: Static checks
-        run: pnpm static --affected --keep-going
+        run: pnpm run static --affected --keep-going
 
   # Each package's integration tests make their own Test database and bucket
   # on the Test services, which the Stage starts from the dev compose file, as
@@ -110,7 +110,7 @@ jobs:
       - name: Prepare
         uses: ./.github/actions/prepare
       - name: Tests
-        run: pnpm test --affected --keep-going
+        run: pnpm run test --affected --keep-going
 
   # Browser tests for every affected package that has them (the Apps' and
   # ui's), and end-to-end tests for the affected Apps, on the Test services:
@@ -153,7 +153,7 @@ jobs:
       - name: Install Chromium and WebKit
         run: pnpm --filter @allonfire/back-office exec playwright install chromium webkit --with-deps
       - name: Browser and end-to-end tests
-        run: pnpm e2e --affected --keep-going
+        run: pnpm run e2e --affected --keep-going
       - name: Playwright report
         if: failure()
         uses: actions/upload-artifact@v7
@@ -190,4 +190,4 @@ jobs:
       - name: Prepare
         uses: ./.github/actions/prepare
       - name: Build
-        run: pnpm build --affected --keep-going
+        run: pnpm run build --affected --keep-going

@@ -33,7 +33,8 @@ describe("CI", () => {
     (stage) => {
       const block = job(stage);
       expect(block).toContain(`    name: ${stage}\n`);
-      expect(block).toContain(`run: pnpm ${stage} --affected --keep-going`);
+      // `pnpm test` is pnpm's own command and refuses `--affected`; `pnpm run` hands the flags on.
+      expect(block).toContain(`run: pnpm run ${stage} --affected --keep-going`);
       expect(block).toContain("uses: ./.github/actions/prepare");
       expect(block).not.toMatch(BY_HAND);
     }
