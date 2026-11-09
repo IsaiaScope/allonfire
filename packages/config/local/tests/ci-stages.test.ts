@@ -18,6 +18,10 @@ const job = (name: string) => {
 };
 
 describe("CI", () => {
+  it("runs on a PR to dev only: test and prod take a commit dev already passed", () => {
+    expect(CI).toContain("pull_request:\n    branches: [dev]\n");
+  });
+
   it("runs one job per Stage, plus what is affected", () => {
     expect(
       [...`\n${jobsBlock}`.matchAll(JOB_KEY)].map(([, name]) => name)
