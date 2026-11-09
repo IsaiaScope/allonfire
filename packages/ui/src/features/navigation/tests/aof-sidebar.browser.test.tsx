@@ -143,6 +143,8 @@ describe("AOFSidebar", () => {
   it("keeps a row lit while the menu it opens is open", async () => {
     const screen = await render(<MenuRow />);
     const button = screen.getByRole("button", { name: ROW });
+    // An earlier test leaves the pointer where it clicked, maybe over this row.
+    await userEvent.unhover(button.element());
     // The keyboard, not a pointer: a hovered row is lit anyway.
     button.element().focus();
     await userEvent.keyboard("{Enter}");
