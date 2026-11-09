@@ -26,6 +26,13 @@ export default async function teardown(): Promise<void> {
     result.status === "rejected" ? [result.reason] : []
   );
   if (failures.length > 0) {
-    throw new AggregateError(failures, "e2e teardown left something behind");
+    // The causes in the message: a CI log prints only that, not `errors`.
+    const causes = failures.map((failure) =>
+      failure instanceof Error ? failure.message : String(failure)
+    );
+    throw new AggregateError(
+      failures,
+      `e2e teardown left something behind:\n${causes.join("\n")}`
+    );
   }
 }
