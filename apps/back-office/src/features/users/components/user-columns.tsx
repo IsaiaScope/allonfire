@@ -1,7 +1,6 @@
 "use client";
 
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
-import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
@@ -14,7 +13,7 @@ import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/t
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconBarrierBlockOff, IconChevronRight } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import {
   type ComponentProps,
   useCallback,
@@ -25,20 +24,11 @@ import {
 import { Link } from "@/features/i18n/navigation";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { APP_ENTRY } from "@/shared/constants/apps";
+import { useCreated } from "@/shared/utils/use-created";
 import { USERS } from "../constants/users";
 import { userHref } from "../utils/user-href";
 
 const helper = aofColumnHelper<UserBody>();
-
-/** When a User joined, as a day in the page's language. */
-export const useCreated = () => {
-  const format = useFormatter();
-  return useCallback(
-    (createdAt: string) =>
-      format.dateTime(new Date(createdAt), DATE.FORMAT.DAY),
-    [format]
-  );
-};
 
 /**
  * The email, copied on a click; above the row's link, which covers the rest

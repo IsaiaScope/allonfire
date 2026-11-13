@@ -32,7 +32,11 @@ import {
 } from "./features/rate-limit/middleware/rate-limiter";
 import { servicesRoutes } from "./features/services/routes";
 import type { ServicesDeps } from "./features/services/utils/deps";
+import { storageUsageRoutes } from "./features/storage-usage/routes";
+import type { StorageUsageDeps } from "./features/storage-usage/utils/deps";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
+import { userUsageRoutes } from "./features/user-usage/routes";
+import type { UserUsageDeps } from "./features/user-usage/utils/deps";
 import { API } from "./shared/constants/api";
 import { corsPolicy } from "./shared/middleware/cors";
 import { securityHeaders } from "./shared/middleware/security-headers";
@@ -48,6 +52,10 @@ export type AppDeps = HealthDeps & {
   users: UserDeps;
   /** The Services routes' stack: providers, quota, mail; tests stub it. */
   services: ServicesDeps;
+  /** The Storage overview's stack: the bucket, the Images' stats and who may read them; tests stub it. */
+  storageUsage: StorageUsageDeps;
+  /** The Users overview's stack: the Users' stats and who may read them; tests stub it. */
+  userUsage: UserUsageDeps;
   /** Optional so tests can capture log output. Defaults to the shared logger. */
   logger?: Logger;
 };
@@ -94,7 +102,9 @@ export const createApp = (deps: AppDeps) => {
     .use(sessionLoader(deps.auth))
     .route(API.PATH.IMAGES, imageRoutes(deps.images))
     .route(API.PATH.USERS, userRoutes(deps.users))
-    .route(API.PATH.SERVICES, servicesRoutes(deps.services));
+    .route(API.PATH.SERVICES, servicesRoutes(deps.services))
+    .route(API.PATH.STORAGE_USAGE, storageUsageRoutes(deps.storageUsage))
+    .route(API.PATH.USER_USAGE, userUsageRoutes(deps.userUsage));
 
   return app
     .route(API.PATH.ROOT, docsRoutes(app, deps.auth))

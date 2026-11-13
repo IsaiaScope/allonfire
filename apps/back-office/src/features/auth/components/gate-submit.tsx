@@ -9,9 +9,6 @@ import { LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 
-/** Every row but a lone button's: it takes what the way back leaves. */
-const ROW_FILL = "min-w-0 flex-1 shrink";
-
 type GateSubmitProps = Omit<
   AOFSubmitButtonProps,
   "pendingChildren" | "size"
@@ -41,7 +38,10 @@ export const GateSubmit = ({
 }: GateSubmitProps) => (
   <AOFSubmitButton
     {...props}
-    className={cn(kanjiAction(), className ?? ROW_FILL)}
+    className={cn(
+      kanjiAction(), // Every row but a lone button's takes what the way back leaves.
+      className ?? "min-w-0 flex-1 shrink"
+    )}
     pendingChildren={
       <>
         <LoaderCircle aria-hidden className="animate-spin" />

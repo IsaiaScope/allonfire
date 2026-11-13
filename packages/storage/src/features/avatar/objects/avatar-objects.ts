@@ -8,6 +8,7 @@ import {
   putImageObject,
 } from "../../image/objects/utils/image-objects";
 import { asImageError } from "../../image/utils/image-error";
+import { AVATAR } from "../constants/avatar";
 import { prepareAvatar } from "../prepare-avatar";
 import { avatarKey, avatarKeyOf } from "../utils/avatar-key";
 
@@ -27,10 +28,6 @@ export const saveAvatar = async (
   return { image, imageBlurDataUrl: blurDataUrl };
 };
 
-const LOG_MESSAGE = {
-  DELETE_FAILED: "avatar file delete failed",
-} as const;
-
 /**
  * Deletes our own Avatars' files among `images`; a provider's picture and
  * none are left alone. It runs after the change it follows is written, so it
@@ -41,11 +38,12 @@ export const deleteAvatarsWith =
   (log: LeftoverLog) =>
   (images: readonly (string | null)[]): Promise<void> =>
     deleteLeftovers({
+      event: AVATAR.LOG_EVENT.DELETE_FAILED,
       keys: images.flatMap((image) => {
         const key = avatarKeyOf(image);
         return key ? [key] : [];
       }),
       log,
-      reason: LOG_MESSAGE.DELETE_FAILED,
+      reason: AVATAR.LOG_MESSAGE.DELETE_FAILED,
       remove: deleteImageObjects,
     });

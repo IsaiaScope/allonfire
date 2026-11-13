@@ -51,16 +51,25 @@ export const imageRecord = ({
   ...overrides,
 });
 
+/** What `listImagesPage` is asked for a request that enters no App: the first default page of `app`. */
+export const publicListQuery = (app: App) => ({
+  app,
+  enterable: [],
+  page: 1,
+  perPage: IMAGE.LIMIT.LIST.DEFAULT,
+});
+
 /** Every dependency fails loudly unless the test supplies it. */
 export const stubImageDeps = (
   overrides: Partial<ImageDeps> = {}
 ): ImageDeps => ({
+  changed: () => Promise.resolve(),
   copyObject: unexpected("copyObject"),
   createImages: unexpected("createImages"),
   deleteImages: unexpected("deleteImages"),
   deleteObjects: unexpected("deleteObjects"),
   getImage: unexpected("getImage"),
-  listImages: unexpected("listImages"),
+  listImagesPage: unexpected("listImagesPage"),
   log: { warn: () => undefined },
   prepare: unexpected("prepare"),
   putObject: unexpected("putObject"),

@@ -44,6 +44,7 @@ export const stubUserDeps = (overrides: Partial<UserDeps> = {}): UserDeps => ({
   avatarMaxBytes: UNIT.BYTES_PER_MIB,
   canListUsers: () => false,
   canManageUsers: () => Promise.resolve(false),
+  changed: () => Promise.resolve(),
   createUser: unexpected("createUser"),
   deleteAvatars: () => Promise.resolve(),
   deleteUsers: unexpected("deleteUsers"),

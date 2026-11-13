@@ -203,6 +203,9 @@ only a server this run started, by its own task or PID, never with
 `pkill -f`.
 
 **Restraint.**
+- Values are never joined by a middle dot or any separator character: each
+  sits under its own small label in a `dl` grid, in a heavier weight (numbers
+  `font-mono tabular-nums`). Sizes go through core's `formatSize`.
 - A page does one job; on a Sign in or form page the form is the focal point,
   centred on a phone. Strip everything that does not serve it.
 - No heavy decoration: no large SVG illustrations (a drawn train was

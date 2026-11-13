@@ -23,6 +23,7 @@
     "./features/image/objects/utils/delete-leftovers": "./src/features/image/objects/utils/delete-leftovers.ts",
     "./features/image/objects/utils/image-objects": "./src/features/image/objects/utils/image-objects.ts",
     "./features/image/prepare/prepare-image": "./src/features/image/prepare/prepare-image.ts",
+    "./features/s3/utils/objects": "./src/features/s3/utils/objects.ts",
     "./features/test-bucket/utils/global-setup": "./src/features/test-bucket/utils/global-setup.ts",
     "./features/test-bucket/utils/local-env": "./src/features/test-bucket/utils/local-env.ts",
     "./shared/constants/paths": "./src/shared/constants/paths.ts"

@@ -4,6 +4,11 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { ServiceType } from "@allonfire/database/enums";
 import { cacheLife, cacheTag } from "next/cache";
+import {
+  dehydratedData,
+  sentCookie,
+  stubFetchJson,
+} from "@/shared/tests/fetch-stub";
 import { SESSION_COOKIE } from "@/shared/tests/session-cookie-mock";
 import { SERVICES, serviceTag } from "../../constants/services";
 import { servicesHydration } from "../services-hydration";
@@ -21,14 +26,9 @@ vi.mock(
 
 describe("servicesHydration", () => {
   it("reads the Services as the Session's cookie and dehydrates them under the list's key, tagged and kept as the Services cache says", async () => {
-    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) =>
-      Response.json({ services: [] })
-    );
-    vi.stubGlobal("fetch", fetch);
+    const fetch = stubFetchJson({ services: [] });
     const state = await servicesHydration(ServiceType.MAIL);
-    expect(
-      state.queries.map(({ queryKey, state: { data } }) => ({ data, queryKey }))
-    ).toEqual([
+    expect(dehydratedData(state)).toEqual([
       { data: { services: [] }, queryKey: servicesListKey(ServiceType.MAIL) },
     ]);
     // Under every Services copy's tag and its own type's, with its type's life.
@@ -39,19 +39,15 @@ describe("servicesHydration", () => {
     expect(cacheLife).toHaveBeenCalledWith(
       SERVICES.CACHE.LIFE[ServiceType.MAIL]
     );
-    const [url, init] = fetch.mock.calls[0] ?? [];
     // Only that type: another type's providers are never asked for.
-    expect(String(url)).toContain(`type=${ServiceType.MAIL}`);
-    expect(new Headers(init?.headers).get(HTTP.HEADER.COOKIE)).toBe(
-      SESSION_COOKIE
+    expect(String(fetch.mock.calls[0]?.[0])).toContain(
+      `type=${ServiceType.MAIL}`
     );
+    expect(sentCookie(fetch)).toBe(SESSION_COOKIE);
   });
 
   it("throws a refusal, so nothing is kept", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({}, { status: HTTP.STATUS.FORBIDDEN }))
-    );
+    stubFetchJson({}, HTTP.STATUS.FORBIDDEN);
     await expect(servicesHydration(ServiceType.MAIL)).rejects.toThrow();
   });
 

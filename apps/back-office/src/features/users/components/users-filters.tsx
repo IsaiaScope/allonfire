@@ -2,7 +2,7 @@
 
 import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, Role } from "@allonfire/database/enums";
+import { type App, Role } from "@allonfire/database/enums";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
 import { AOFFilterPanel } from "@allonfire/ui/features/data-table/components/aof-filter-panel";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
@@ -19,15 +19,9 @@ import {
   pictogramTile,
   tiledControl,
 } from "@/shared/components/toolbar-action";
-import { APP_ENTRY } from "@/shared/constants/apps";
+import { APP_OPTIONS } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
 import { FilterKanji } from "./filter-kanji";
-
-/** The App list's options, in the order the enum declares them. */
-const APPS = objectValues(App).map((app) => ({
-  label: APP_ENTRY[app].name,
-  value: app,
-}));
 
 export type UserSearch = ReturnType<typeof USER.SEARCH.parse>;
 
@@ -117,7 +111,7 @@ export const UsersFilters = ({
       }}
     >
       <AOFFaceted
-        items={APPS}
+        items={APP_OPTIONS}
         labels={{ ...list, trigger: t("Users.filter.app") }}
         onValueChange={pickApps}
         searchIcon={tile}

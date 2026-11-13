@@ -4,34 +4,20 @@ import type { UserBody } from "@allonfire/auth/features/users/hono/constants/sch
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import {
-  AOFCard,
+  type AOFCard,
   AOFCardContent,
   AOFCardHeader,
   AOFCardTitle,
 } from "@allonfire/ui/shared/components/aof-card";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
-import { cn } from "@allonfire/ui/shared/utils/utils";
-import { IconCalendar } from "@tabler/icons-react";
-import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { AppTile } from "@/shared/components/app-tile";
-import { BrushKanji } from "@/shared/components/brush-kanji";
+import { SignCard, SignCardFoot } from "@/shared/components/sign-card";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
-import { CopyEmail, OpenUser, RoleIn, useCreated } from "./user-columns";
-
-/**
- * The card's selection checkbox, a small tile (24px; its hit area still a
- * finger's): empty while not chosen, filled in the destructive red with a
- * bold check once chosen, since choosing a User is choosing whom to delete
- * (the check AA on it in both themes).
- * Still Base UI's checkbox underneath, so the keyboard and its name hold.
- */
-export const cardCheckbox = cva(
-  "size-6 rounded-sm bg-muted data-checked:border-destructive data-checked:bg-destructive data-checked:text-white dark:bg-background dark:data-checked:bg-destructive dark:data-checked:text-background **:data-[slot=checkbox-indicator]:[&>svg]:size-3.5 **:data-[slot=checkbox-indicator]:[&>svg]:stroke-3"
-);
+import { CopyEmail, OpenUser, RoleIn } from "./user-columns";
 
 /**
  * A User on a phone, as a platform sign: the line's colour along its foot and
@@ -55,21 +41,8 @@ export const UserCard = ({
   ...props
 }: UserCardProps) => {
   const t = useTranslations("Users.column");
-  const created = useCreated();
   return (
-    <AOFCard
-      className={cn(
-        "relative isolate gap-3 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-line/50",
-        className
-      )}
-      size="sm"
-      {...props}
-    >
-      <BrushKanji
-        className="-right-10 -bottom-24 -z-10 text-[16rem]"
-        kanji={USERS.CARD_KANJI}
-        placement="header"
-      />
+    <SignCard className={className} kanji={USERS.CARD_KANJI} {...props}>
       <AOFCardHeader className="flex min-h-(--field-tile) items-center gap-3">
         {/* As tall as the two lines beside it (20px each and 2px between),
             so its edges meet the email's top and the name's foot. */}
@@ -110,14 +83,12 @@ export const UserCard = ({
             </div>
           ))}
         </dl>
-        <div className="flex min-h-6 items-center gap-3">
-          {select}
-          <p className="ml-auto flex items-center gap-1.5 text-muted-foreground text-sm">
-            <IconCalendar aria-hidden className="size-4" />
-            {t("created")} {created(user.createdAt)}
-          </p>
-        </div>
+        <SignCardFoot
+          createdAt={user.createdAt}
+          label={t("created")}
+          select={select}
+        />
       </AOFCardContent>
-    </AOFCard>
+    </SignCard>
   );
 };

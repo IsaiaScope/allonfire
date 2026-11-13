@@ -1,9 +1,10 @@
 // @module-tag unit
 
-import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { cacheLife, cacheTag } from "next/cache";
+import { sentCookie, stubFetchJson } from "@/shared/tests/fetch-stub";
 import { USERS_PAGE } from "@/shared/tests/msw/handlers";
+import { SESSION_COOKIE } from "@/shared/tests/session-cookie-mock";
 import { USERS } from "../../constants/users";
 import { readUser } from "../read-user";
 
@@ -12,40 +13,30 @@ vi.mock(
   "@/environment/environment",
   () => import("@/shared/tests/environment-mock")
 );
-vi.mock("@allonfire/auth/features/next/utils/session-cookie", () => ({
-  readSessionCookie: vi.fn(async () => COOKIE),
-}));
+vi.mock(
+  "@allonfire/auth/features/next/utils/session-cookie",
+  () => import("@/shared/tests/session-cookie-mock")
+);
 
-const COOKIE = `${AUTH.COOKIE.SESSION_TOKEN}=token`;
 const [USER] = USERS_PAGE.users;
 const ID = USER?.id ?? "";
 
 describe("readUser", () => {
   it("reads the User as the Session's cookie, tagged under the list's tag, kept 5 minutes", async () => {
-    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) =>
-      Response.json(USER)
-    );
-    vi.stubGlobal("fetch", fetch);
+    const fetch = stubFetchJson(USER);
     expect(await readUser(ID)).toEqual(USER);
     expect(cacheTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);
-    const [, init] = fetch.mock.calls[0] ?? [];
-    expect(new Headers(init?.headers).get(HTTP.HEADER.COOKIE)).toBe(COOKIE);
+    expect(sentCookie(fetch)).toBe(SESSION_COOKIE);
   });
 
   it("answers null for a 404", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({}, { status: HTTP.STATUS.NOT_FOUND }))
-    );
+    stubFetchJson({}, HTTP.STATUS.NOT_FOUND);
     expect(await readUser("missing")).toBeNull();
   });
 
   it("throws any other refusal, so nothing is kept", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({}, { status: HTTP.STATUS.FORBIDDEN }))
-    );
+    stubFetchJson({}, HTTP.STATUS.FORBIDDEN);
     await expect(readUser(ID)).rejects.toThrow();
   });
 });

@@ -2,6 +2,15 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 
 /** What the API knows of ioredis: its events, its replies and how it retries. */
 export const REDIS = {
+  /**
+   * `cacheAside` and `forgetCached`: a forget leaves a mark under the key plus
+   * `FORGOTTEN_SUFFIX` for `FORGOTTEN_MS`, longer than any load takes, so a
+   * load that began before it never keeps what it read.
+   */
+  CACHE_ASIDE: {
+    FORGOTTEN_MS: UNIT.MS_PER_MINUTE,
+    FORGOTTEN_SUFFIX: ":forgotten",
+  },
   EVENT: {
     ERROR: "error",
     READY: "ready",

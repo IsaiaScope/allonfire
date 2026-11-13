@@ -84,6 +84,18 @@ const remove = (
   body: z.input<typeof deleteBodySchema>
 ) => send(user, { body, method: HTTP.METHOD.DELETE });
 
+/** The Back Office Admin takes the Image out of the Back Office; the status and body answered. */
+const removeFromBackOffice = async (id: string) => {
+  const res = await remove(BACK_OFFICE_ADMIN, {
+    app: App.BACK_OFFICE,
+    ids: [id],
+  });
+  return { body: await res.json(), status: res.status };
+};
+
+/** What taking one Image out of an App answers. */
+const ONE_DELETED = { body: { deleted: 1 }, status: HTTP.STATUS.OK };
+
 describe("changing Images on the real stack", () => {
   it("changes alt only for an Admin of every App the Image is in", async () => {
     const { id, version } = await fresh(BOTH);
@@ -158,14 +170,12 @@ describe("changing Images on the real stack", () => {
       (await prisma.image.findUniqueOrThrow({ where: { id } })).alt
     ).toEqual(theirs);
   });
+});
 
+describe("deleting Images on the real stack", () => {
   it("takes an Image out of one App and keeps it in the other", async () => {
     const { id, key } = await fresh(BOTH);
-    const res = await remove(BACK_OFFICE_ADMIN, {
-      app: App.BACK_OFFICE,
-      ids: [id],
-    });
-    expect(res.status).toBe(HTTP.STATUS.NO_CONTENT);
+    expect(await removeFromBackOffice(id)).toEqual(ONE_DELETED);
     expect(
       await prisma.imageApp.findMany({
         select: { app: true },
@@ -177,13 +187,20 @@ describe("changing Images on the real stack", () => {
 
   it("deletes the row and the file with the last placement", async () => {
     const { id, key } = await fresh(BACK_OFFICE_ONLY);
-    const res = await remove(BACK_OFFICE_ADMIN, {
-      app: App.BACK_OFFICE,
-      ids: [id],
-    });
-    expect(res.status).toBe(HTTP.STATUS.NO_CONTENT);
+    expect(await removeFromBackOffice(id)).toEqual(ONE_DELETED);
     expect(await prisma.image.findUnique({ where: { id } })).toBeNull();
     expect(await served(key)).toBe(HTTP.STATUS.NOT_FOUND);
+  });
+
+  it("deletes the Images that are there and counts them, whatever else the batch names", async () => {
+    const { id } = await fresh(BACK_OFFICE_ONLY);
+    const res = await remove(ADMIN_EVERYWHERE, { ids: [id, "unknown-id"] });
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(await res.json()).toEqual({ deleted: 1 });
+    expect(await prisma.image.findUnique({ where: { id } })).toBeNull();
+    const again = await remove(ADMIN_EVERYWHERE, { ids: [id] });
+    expect(again.status).toBe(HTTP.STATUS.OK);
+    expect(await again.json()).toEqual({ deleted: 0 });
   });
 
   it("deletes everywhere only for an Admin of every App", async () => {
@@ -192,7 +209,7 @@ describe("changing Images on the real stack", () => {
       HTTP.STATUS.FORBIDDEN
     );
     expect((await remove(ADMIN_EVERYWHERE, { ids: [id] })).status).toBe(
-      HTTP.STATUS.NO_CONTENT
+      HTTP.STATUS.OK
     );
     expect(await prisma.image.findUnique({ where: { id } })).toBeNull();
     expect(await served(key)).toBe(HTTP.STATUS.NOT_FOUND);

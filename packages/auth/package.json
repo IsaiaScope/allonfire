@@ -11,7 +11,7 @@
     "./features/hono/rate-limit/middleware/auth-limit": "./src/features/hono/rate-limit/middleware/auth-limit.ts",
     "./features/hono/routes": "./src/features/hono/routes/index.ts",
     "./features/hono/session/middleware/session-loader": "./src/features/hono/session/middleware/session-loader.ts",
-    "./features/hono/guards/utils/guard": "./src/features/hono/guards/utils/guard.ts",
+    "./features/hono/guards/utils/manage-guard": "./src/features/hono/guards/utils/manage-guard.ts",
     "./features/hono/types/variables": "./src/features/hono/types/variables.ts",
     "./features/next/actions/password-reset": "./src/features/next/actions/password-reset.ts",
     "./features/next/actions/sign-in": "./src/features/next/actions/sign-in.ts",

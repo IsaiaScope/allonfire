@@ -128,9 +128,11 @@ describe("GET /openapi.json", () => {
         "ImageAlt",
         "ImageChange",
         "ImageDelete",
-        "ImageList",
+        "ImagePage",
         "ImageUpload",
         "SignedLink",
+        "StorageOverview",
+        "UserOverview",
         "UserAvatar",
         "Ready",
         "ListedUser",
@@ -179,8 +181,9 @@ describe("GET /openapi.json", () => {
 
     expect(images?.get?.parameters?.map(({ name }) => name)).toEqual([
       "app",
-      "cursor",
-      "limit",
+      "page",
+      "perPage",
+      "search",
     ]);
     expect(images?.post?.requestBody?.content).toHaveProperty(
       [

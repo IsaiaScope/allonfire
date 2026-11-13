@@ -1,13 +1,17 @@
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import type { Image, Prisma } from "../../../generated/prisma/client";
-import { type App, ImageAccess } from "../../../generated/prisma/enums";
-import type { ImageVisibility } from "../auth/access/access";
+import type { App, ImageAccess } from "../../../generated/prisma/enums";
 import { prisma } from "../prisma/client";
 import { type ImageAlt, readAlt } from "./utils/alt";
+import { visibleImages } from "./utils/image-filter";
+import {
+  type ImagePlacementsById,
+  lockImages,
+  placementsById,
+} from "./utils/image-locks";
 import { checkImageVersions, imageVersion } from "./utils/image-version";
 
-/** Where the last page ended: its last Image's sort key, not a row reference. */
-export type ImageCursor = { createdAt: Date; id: string };
+export type { ImagePlacementsById } from "./utils/image-locks";
 
 /**
  * An Image, its access and every App it is placed in, ordered by App
@@ -70,8 +74,8 @@ const toRecord = (row: ImageRow): ImageRecord => {
   return { ...record, version: imageVersion(record) };
 };
 
-/** Throws unless every id exists; duplicates in `ids` count once. */
-async function assertAllExist(
+/** The Images among `ids` that exist, and the ids that do not; duplicates count once. */
+async function findImages(
   tx: Prisma.TransactionClient,
   ids: readonly string[]
 ) {
@@ -88,40 +92,21 @@ async function assertAllExist(
     where: { id: { in: unique } },
   });
   const foundIds = new Set(found.map(({ id }) => id));
-  const missing = unique.filter((id) => !foundIds.has(id));
-  if (missing.length > 0) {
-    throw new ImageNotFoundError(missing);
-  }
-  return found;
+  return { found, missing: unique.filter((id) => !foundIds.has(id)) };
 }
 
 /**
- * Locks the Images' rows until the transaction ends, in id order so two
- * writers never deadlock: two changes taking an Image out of different Apps
- * run one after the other, so the second sees what the first left.
- */
-const lockImages = async (
-  tx: Prisma.TransactionClient,
-  ids: readonly string[]
-) => {
-  await tx.$queryRaw`SELECT "id" FROM image."Image" WHERE "id" = ANY(${[...ids]}) ORDER BY "id" FOR UPDATE`;
-};
-
-/**
- * A locked Image's access and Apps, and the file its row names now.
- * @internal
- */
-export type ImagePlacement = ImageVisibility & { key: string };
-
-/** Each locked Image's access, Apps and file name, by id. */
-export type ImagePlacementsById = ReadonlyMap<string, ImagePlacement>;
-
-/**
  * The caller's check on a delete, run inside its transaction against the
- * placements just locked: it throws to refuse, and nothing is written. A
- * placement added after the caller's own read is seen, so it is checked too.
+ * placements just locked (only the Images that exist): it throws to refuse,
+ * and nothing is written; otherwise it answers the ids it lets through. An id
+ * it leaves out is one the caller cannot act on as if it were not there
+ * (unknown, or not theirs to see), so it is skipped, never told apart from
+ * one that does not exist. A placement added after the caller's own read is
+ * seen, so it is checked too.
  */
-export type AuthorisePlacements = (placements: ImagePlacementsById) => void;
+export type AuthorisePlacements = (
+  placements: ImagePlacementsById
+) => Iterable<string>;
 
 /**
  * The caller's changes, worked out inside the transaction against the
@@ -131,7 +116,7 @@ export type AuthorisePlacements = (placements: ImagePlacementsById) => void;
 export type ResolveChanges = (placements: ImagePlacementsById) => ImageChange[];
 
 /**
- * Locks the Images, throws unless every one exists, then runs `check` on
+ * Locks the Images, throws unless every one exists (duplicates count once), then runs `check` on
  * their placements; returns the rows and what `check` returned.
  */
 const lockedAndChecked = async <T>(
@@ -140,18 +125,26 @@ const lockedAndChecked = async <T>(
   check: (placements: ImagePlacementsById) => T
 ) => {
   await lockImages(tx, ids);
-  const found = await assertAllExist(tx, ids);
-  return {
-    checked: check(
-      new Map(
-        found.map(({ access, apps, id, key }) => [
-          id,
-          { access, apps: apps.map(({ app }) => app), key },
-        ])
-      )
-    ),
-    found,
-  };
+  const { found, missing } = await findImages(tx, ids);
+  if (missing.length > 0) {
+    throw new ImageNotFoundError(missing);
+  }
+  return { checked: check(placementsById(found)), found };
+};
+
+/**
+ * Locks the Images that exist (an unknown id is skipped, not an error), runs
+ * `authorise` on their placements and returns the rows it lets through.
+ */
+const lockedAndAllowed = async (
+  tx: Prisma.TransactionClient,
+  ids: readonly string[],
+  authorise: AuthorisePlacements
+) => {
+  await lockImages(tx, ids);
+  const { found } = await findImages(tx, ids);
+  const allowed = new Set(authorise(placementsById(found)));
+  return found.filter(({ id }) => allowed.has(id));
 };
 
 /** Each Image with its placements, all in one transaction. */
@@ -172,46 +165,47 @@ export async function createImages(images: NewImage[]): Promise<ImageRecord[]> {
 }
 
 /**
- * The Images visible in `app` (in any App when it is left out) to someone
- * who enters `enterable`: placed there, and public or in an App they enter
- * (ADR 0027). Newest upload first, not the date it entered the App, so
- * the cursor keeps one shape; the cursor holds values, not a row, so
- * deleting the Image it came from does not end the paging.
+ * A numbered page of the Images visible to someone who enters `enterable`:
+ * public, or in an App they enter (ADR 0027). Narrowed to those placed in
+ * `app`, in any of `apps`, with any of the `accesses` given, and, when `text`
+ * is given, whose alt text (in any Language) or file name holds it, ignoring
+ * case; each narrowing given applies on top of the others. Newest upload first, with how many there are and
+ * their bytes together, whatever the page. Three reads, not a transaction:
+ * under READ COMMITTED each takes its own snapshot either way.
  */
-export async function listImages({
+export async function listImagesPage({
+  accesses,
   app,
-  cursor,
+  apps,
   enterable,
-  limit,
+  page,
+  perPage,
+  text,
 }: {
+  accesses?: readonly ImageAccess[] | undefined;
   app?: App | undefined;
-  cursor?: ImageCursor | undefined;
+  apps?: readonly App[] | undefined;
   enterable: readonly App[];
-  limit: number;
-}): Promise<ImageRecord[]> {
-  const rows = await prisma.image.findMany({
-    include: withPlacements,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit,
-    where: {
-      AND: [
-        ...(app ? [{ apps: { some: { app } } }] : []),
-        {
-          OR: [
-            { access: ImageAccess.PUBLIC },
-            { apps: { some: { app: { in: [...enterable] } } } },
-          ],
-        },
-      ],
-      ...(cursor && {
-        OR: [
-          { createdAt: { lt: cursor.createdAt } },
-          { createdAt: cursor.createdAt, id: { lt: cursor.id } },
-        ],
-      }),
-    },
-  });
-  return rows.map(toRecord);
+  page: number;
+  perPage: number;
+  text?: string | undefined;
+}): Promise<{ images: ImageRecord[]; total: number; totalBytes: number }> {
+  const where = visibleImages({ accesses, app, apps, enterable, text });
+  const [totals, rows] = await Promise.all([
+    prisma.image.aggregate({ _count: true, _sum: { bytes: true }, where }),
+    prisma.image.findMany({
+      include: withPlacements,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      skip: (page - 1) * perPage,
+      take: perPage,
+      where,
+    }),
+  ]);
+  return {
+    images: rows.map(toRecord),
+    total: totals._count,
+    totalBytes: totals._sum.bytes ?? 0,
+  };
 }
 
 export async function getImage(id: string): Promise<ImageRecord | null> {
@@ -302,37 +296,46 @@ export function updateImages(
 }
 
 /**
- * Takes the Images out of `app`, all or nothing, and deletes those left in no
- * App; returns their keys so the caller removes the files. An Image still
- * placed elsewhere keeps its row and its file.
+ * Takes the Images out of `app` and deletes those left in no App; answers how
+ * many it acted on and the keys of those deleted, so the caller removes the
+ * files. An Image still placed elsewhere keeps its row and its file. An id
+ * `authorise` leaves out (unknown, or not placed in `app`) is skipped; a
+ * refusal writes nothing.
  */
 export function removeImagesFromApp(
   ids: readonly string[],
   app: App,
   authorise: AuthorisePlacements
-): Promise<string[]> {
+): Promise<{ deleted: number; keys: string[] }> {
   return prisma.$transaction(async (tx) => {
-    await lockedAndChecked(tx, ids, authorise);
-    await tx.imageApp.deleteMany({ where: { app, imageId: { in: [...ids] } } });
+    const rows = await lockedAndAllowed(tx, ids, authorise);
+    const acted = rows.map(({ id }) => id);
+    await tx.imageApp.deleteMany({ where: { app, imageId: { in: acted } } });
     const orphans = await tx.image.findMany({
       select: { id: true, key: true },
-      where: { apps: { none: {} }, id: { in: [...ids] } },
+      where: { apps: { none: {} }, id: { in: acted } },
     });
     await tx.image.deleteMany({
       where: { id: { in: orphans.map(({ id }) => id) } },
     });
-    return orphans.map(({ key }) => key);
+    return { deleted: acted.length, keys: orphans.map(({ key }) => key) };
   });
 }
 
-/** All or nothing, everywhere; returns the deleted keys so the caller removes the files. */
+/**
+ * Deletes the Images everywhere; answers how many and their keys, so the
+ * caller removes the files. An id `authorise` leaves out (unknown, or not the
+ * caller's to see) is skipped as already gone; a refusal writes nothing.
+ */
 export function deleteImages(
   ids: string[],
   authorise: AuthorisePlacements
-): Promise<string[]> {
+): Promise<{ deleted: number; keys: string[] }> {
   return prisma.$transaction(async (tx) => {
-    const { found } = await lockedAndChecked(tx, ids, authorise);
-    await tx.image.deleteMany({ where: { id: { in: ids } } });
-    return found.map(({ key }) => key);
+    const rows = await lockedAndAllowed(tx, ids, authorise);
+    await tx.image.deleteMany({
+      where: { id: { in: rows.map(({ id }) => id) } },
+    });
+    return { deleted: rows.length, keys: rows.map(({ key }) => key) };
   });
 }

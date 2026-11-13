@@ -172,6 +172,21 @@ describe("deleting Users", () => {
     expect(await exists(id)).toBe(false);
   });
 
+  it("skips an id that is already gone and counts only the Users it deleted", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const { id } = await throwaway("half-gone");
+    const res = await remove([id, "already-gone-id"], cookie);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(userDeleteBodySchema.parse(await res.json())).toEqual({
+      deleted: 1,
+    });
+    const again = await remove([id], cookie);
+    expect(again.status).toBe(HTTP.STATUS.OK);
+    expect(userDeleteBodySchema.parse(await again.json())).toEqual({
+      deleted: 0,
+    });
+  });
+
   it("refuses an Admin demoted since their cookie was cached", async () => {
     const cookie = await demotedAdminCookie(app, `demoted@${DELETABLE}`);
     const { id } = await throwaway("kept");

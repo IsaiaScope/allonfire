@@ -2,6 +2,7 @@
 import { deleteLeftovers } from "../utils/delete-leftovers";
 
 const REASON = "files left behind";
+const EVENT = "image.files_left_behind";
 const KEYS = ["a.avif", "b.avif"];
 
 const logger = () => ({ warn: vi.fn() });
@@ -10,27 +11,43 @@ describe("deleteLeftovers", () => {
   it("deletes the files it is handed", async () => {
     const remove = vi.fn(async () => undefined);
     const log = logger();
-    await deleteLeftovers({ keys: KEYS, log, reason: REASON, remove });
+    await deleteLeftovers({
+      event: EVENT,
+      keys: KEYS,
+      log,
+      reason: REASON,
+      remove,
+    });
     expect(remove).toHaveBeenCalledWith(KEYS);
     expect(log.warn).not.toHaveBeenCalled();
   });
 
   it("asks nothing when there is nothing to delete", async () => {
     const remove = vi.fn(async () => undefined);
-    await deleteLeftovers({ keys: [], log: logger(), reason: REASON, remove });
+    await deleteLeftovers({
+      event: EVENT,
+      keys: [],
+      log: logger(),
+      reason: REASON,
+      remove,
+    });
     expect(remove).not.toHaveBeenCalled();
   });
 
-  it("never throws: a failure is logged with the keys and the reason", async () => {
+  it("never throws: a failure is logged with the event, the keys and the reason", async () => {
     const failure = new Error("storage down");
     const log = logger();
     await deleteLeftovers({
+      event: EVENT,
       keys: KEYS,
       log,
       reason: REASON,
       remove: () => Promise.reject(failure),
     });
-    expect(log.warn).toHaveBeenCalledWith({ err: failure, keys: KEYS }, REASON);
+    expect(log.warn).toHaveBeenCalledWith(
+      { err: failure, event: EVENT, keys: KEYS },
+      REASON
+    );
   });
 
   it("asks once more when told to retry, and logs nothing if that works", async () => {
@@ -40,6 +57,7 @@ describe("deleteLeftovers", () => {
       .mockResolvedValueOnce(undefined);
     const log = logger();
     await deleteLeftovers({
+      event: EVENT,
       keys: KEYS,
       log,
       reason: REASON,

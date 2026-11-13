@@ -1,6 +1,15 @@
 // @module-tag unit
-import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { deleteObjects, putObject } from "../utils/objects";
+import {
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
+import {
+  deleteObjects,
+  listBucketTotals,
+  listObjectSizes,
+  putObject,
+} from "../utils/objects";
 import { send } from "./s3-client-mock";
 
 vi.mock("../utils/client", () => import("./s3-client-mock"));
@@ -57,5 +66,89 @@ describe("deleteObjects", () => {
   it("sends nothing for no keys", async () => {
     await deleteObjects("files", []);
     expect(send).not.toHaveBeenCalled();
+  });
+});
+
+describe("listBucketTotals", () => {
+  it("sums Size and counts Contents over one page", async () => {
+    send.mockResolvedValueOnce({ Contents: [{ Size: 10 }, { Size: 5 }] });
+    await expect(listBucketTotals("files")).resolves.toEqual({
+      bytes: 15,
+      objects: 2,
+    });
+    const command = sent();
+    if (!(command instanceof ListObjectsV2Command)) {
+      throw new Error("expected a ListObjectsV2Command");
+    }
+    expect(command.input).toEqual({
+      Bucket: "files",
+      ContinuationToken: undefined,
+    });
+  });
+
+  it("follows NextContinuationToken until the listing is complete", async () => {
+    send
+      .mockResolvedValueOnce({
+        Contents: [{ Size: 1 }],
+        IsTruncated: true,
+        NextContinuationToken: "t1",
+      })
+      .mockResolvedValueOnce({ Contents: [{ Size: 2 }, { Size: 3 }] });
+    await expect(listBucketTotals("files")).resolves.toEqual({
+      bytes: 6,
+      objects: 3,
+    });
+    const second = sent(1);
+    if (!(second instanceof ListObjectsV2Command)) {
+      throw new Error("expected a ListObjectsV2Command");
+    }
+    expect(second.input.ContinuationToken).toBe("t1");
+  });
+
+  it("answers zeros for an empty bucket", async () => {
+    send.mockResolvedValueOnce({});
+    await expect(listBucketTotals("files")).resolves.toEqual({
+      bytes: 0,
+      objects: 0,
+    });
+  });
+
+  it("lets a refused listing throw", async () => {
+    send.mockRejectedValueOnce(new Error("AccessDenied"));
+    await expect(listBucketTotals("files")).rejects.toThrow("AccessDenied");
+  });
+});
+
+describe("listObjectSizes", () => {
+  it("lists each key under the prefix with its size, following the continuation token", async () => {
+    send
+      .mockResolvedValueOnce({
+        Contents: [{ Key: "avatar-a", Size: 4 }],
+        IsTruncated: true,
+        NextContinuationToken: "t1",
+      })
+      .mockResolvedValueOnce({ Contents: [{ Key: "avatar-b", Size: 6 }] });
+    await expect(listObjectSizes("files", "avatar-")).resolves.toEqual([
+      { bytes: 4, key: "avatar-a" },
+      { bytes: 6, key: "avatar-b" },
+    ]);
+    const first = sent();
+    if (!(first instanceof ListObjectsV2Command)) {
+      throw new Error("expected a ListObjectsV2Command");
+    }
+    expect(first.input).toEqual({
+      Bucket: "files",
+      ContinuationToken: undefined,
+      Prefix: "avatar-",
+    });
+  });
+
+  it("answers an empty list for no object, and lets a refused listing throw", async () => {
+    send.mockResolvedValueOnce({});
+    await expect(listObjectSizes("files", "avatar-")).resolves.toEqual([]);
+    send.mockRejectedValueOnce(new Error("AccessDenied"));
+    await expect(listObjectSizes("files", "avatar-")).rejects.toThrow(
+      "AccessDenied"
+    );
   });
 });
