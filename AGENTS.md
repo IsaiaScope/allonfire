@@ -45,6 +45,7 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
   checklist in `docs/guides/next-apps.md` (TanStack Query over the private
   cache, both copies refreshed, resource protection, resource changed); every
   plan for one names each point.
+- A page that waits (Session, data) has a skeleton at the loaded page's sizes, with a browser test that compares their heights at a wide and a phone width: change the page, change its skeleton in the same edit, and a new page ships both (`next-apps.md`, checklist 6).
 - Database changes are Liquibase changesets (`pnpm db:changeset`), never
   `prisma db push` or `prisma migrate`.
 - exFAT drive: macOS writes `._*` sidecars; a new tool that scans folders

@@ -23,7 +23,7 @@
     "pauseNotice": "Pause notice",
     "showPassword": "Show password",
     "submit": "Sign in",
-    "submitting": "Signing in…",
+    "submitting": "Signing in",
     "theme": "Switch theme",
     "note": {
       "unverified": "Check your inbox: we sent you a link to verify your email. Open it, then sign in."
@@ -49,7 +49,7 @@
     },
     "intro": "Enter your email and we will send you a link to choose a new password.",
     "submit": "Send link",
-    "submitting": "Sending…",
+    "submitting": "Sending",
     "title": "Reset your password",
     "note": {
       "sent": "If an account uses this address, a link to reset its password is on its way. Check your inbox."
@@ -71,7 +71,7 @@
     "password": "New password",
     "showPassword": "Show password",
     "submit": "Save password",
-    "submitting": "Saving…",
+    "submitting": "Saving",
     "title": "Choose a new password"
   },
   "Images": {
@@ -80,15 +80,50 @@
       "PUBLIC": "Public"
     },
     "add": {
-      "button": "Add"
+      "added": "{count, plural, one {# Image added} other {# Images added}}",
+      "button": "Add",
+      "error": {
+        "failed": "The Images could not be added. Try again.",
+        "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Images. Sign in again.",
+        "tooLarge": "A picture or the whole upload is too large.",
+        "unsupported": "A file is not a supported picture."
+      },
+      "page": "Add Images",
+      "pick": {
+        "button": "Pick pictures",
+        "hint": "Up to {files} pictures, {size} MiB each.",
+        "input": "Pictures to add",
+        "none": "No pictures picked yet."
+      },
+      "row": {
+        "remove": "Remove {name}",
+        "title": "Picture {number}"
+      },
+      "shared": {
+        "apply": "Apply to all pictures",
+        "title": "For the pictures you pick next"
+      },
+      "submit": "Add Images",
+      "submitting": "Adding",
+      "title": "Add Images"
     },
     "column": {
       "access": "Access",
+      "alt": "Alt text",
       "apps": "Apps",
       "created": "Created",
       "image": "Image",
+      "name": "Name",
+      "noAlt": "No alt text",
       "dimensions": "Dimensions",
       "size": "Size"
+    },
+    "copy": {
+      "done": "Name copied",
+      "failed": "The name could not be copied",
+      "label": "Copy {name}",
+      "tip": "Copy name"
     },
     "delete": {
       "action": "Delete",
@@ -138,6 +173,41 @@
     "search": {
       "clear": "Clear the text",
       "label": "Search by description or file name"
+    },
+    "edit": {
+      "error": {
+        "failed": "Could not save. Try again.",
+        "gone": "This Image no longer exists.",
+        "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Images. Sign in again."
+      },
+      "page": "Image",
+      "saved": "Saved",
+      "submit": "Save",
+      "submitting": "Saving",
+      "summary": "The picture",
+      "title": "Edit Image"
+    },
+    "form": {
+      "access": "Access",
+      "accessWho": "Who can see it",
+      "addLanguage": "Add a language",
+      "altGroup": "Alt text",
+      "appIn": "In",
+      "appOut": "Not in",
+      "apps": "Apps",
+      "cancel": "Cancel",
+      "clearAlt": "Clear the {language} alt text",
+      "field": {
+        "altTooLong": "Keep the alt text shorter",
+        "appsRequired": "Choose at least one App",
+        "fileTooLarge": "This picture is too large",
+        "tooManyFiles": "Too many pictures for one upload",
+        "totalTooLarge": "The pictures together are too large"
+      },
+      "languageSearch": "Search a language",
+      "noLanguage": "No language matches",
+      "removeLanguage": "Remove {language}"
     }
   },
   "Navigation": {
@@ -201,7 +271,7 @@
     "loading": "Loading the providers",
     "save": "Save",
     "saved": "Provider saved",
-    "saving": "Saving…",
+    "saving": "Saving",
     "service": {
       "MAIL": "Mail"
     },
@@ -221,7 +291,7 @@
       "rateLimited": "Too many emails to this address. Try again later.",
       "removed": "This provider was removed. Reload the page.",
       "failed": "The test could not be sent. Try again.",
-      "sending": "Sending…"
+      "sending": "Sending"
     },
     "usage": {
       "day": "Today: {used} of {limit}",
@@ -328,7 +398,7 @@
       "password": "New password",
       "saved": "Saved",
       "submit": "Save",
-      "submitting": "Saving…"
+      "submitting": "Saving"
     },
     "pastEnd": {
       "description": "There are fewer pages than this one; the last page has the Users.",
@@ -363,7 +433,7 @@
         "emailRequired": "Enter an email"
       },
       "submit": "Add User",
-      "submitting": "Adding…",
+      "submitting": "Adding",
       "title": "Add a User"
     },
     "form": {
@@ -377,7 +447,7 @@
         "drop": "Drop your picture here",
         "formats": "JPEG, PNG, WebP, AVIF or HEIC, up to {size} MB",
         "label": "Picture",
-        "preparing": "Preparing the picture…",
+        "preparing": "Preparing the picture",
         "remove": "Remove the picture",
         "tooLarge": "That picture is too large",
         "unreadable": "That picture could not be read. Try another one.",

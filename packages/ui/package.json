@@ -55,6 +55,7 @@
     "./shared/tests/computed-style": "./src/shared/tests/computed-style.ts",
     "./shared/tests/emulated-media": "./src/shared/tests/emulated-media.ts",
     "./shared/types/types": "./src/shared/types/types.ts",
+    "./shared/utils/image-server-loader": "./src/shared/utils/image-server-loader.ts",
     "./shared/utils/utils": "./src/shared/utils/utils.ts",
     "./styles/*": "./src/styles/*"
   },

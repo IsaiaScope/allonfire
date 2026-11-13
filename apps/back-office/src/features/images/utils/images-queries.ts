@@ -54,3 +54,30 @@ export const imagesQuery = (client: ApiClient, params: ImagesParams) =>
     retry: retryImages,
     staleTime: IMAGES.CACHE.LIFE.stale * UNIT.MS_PER_SECOND,
   });
+
+/**
+ * One Image's key, tagged with the body it holds: the page hydrates under it,
+ * so a wrong body or wrong id fail to compile, never a skipped hydration.
+ */
+export const imageKey = (id: string) =>
+  queryOptions<Awaited<ReturnType<typeof fetchImage>>>({
+    queryKey: QUERY.IMAGES.ONE(id),
+  }).queryKey;
+
+/**
+ * One Image, for their edit form. The page reads it on the server
+ * (`imageHydration`) and the form reads it back under the same key. Never
+ * stale (`staleTime: "static"`, as the overviews'), so it is asked again only
+ * by an action (`invalidateQueries`), never on a clock, a focus or a
+ * reconnect: the form saves on the Version it opened with, and a newer one
+ * read meanwhile would let a save overwrite a change the form never showed;
+ * and a clock TanStack reads while the page prerenders blocks a soft
+ * navigation to it.
+ */
+export const imageQuery = (client: ApiClient, id: string) =>
+  queryOptions({
+    queryFn: () => fetchImage(client, id),
+    queryKey: imageKey(id),
+    retry: retryImages,
+    staleTime: "static",
+  });

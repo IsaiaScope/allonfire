@@ -51,6 +51,8 @@ export type AOFAvatarFieldProps = {
    * removes it.
    */
   current?: string | null | undefined;
+  /** The blur (a data URL) of `current`, shown while it loads. */
+  currentBlur?: string | null | undefined;
   labels: AOFAvatarFieldLabels;
   /** The choose button, dressed by the App. */
   triggerProps?: AOFFileUploadProps["triggerProps"];
@@ -91,15 +93,26 @@ const heldItems = ({
 }: {
   cropAgain: (() => void) | null;
   cropAgainLabel: string;
-  /** The picture the User holds, while kept, and its row's name. */
-  current: { label: string; src: string } | null;
+  /** The picture the User holds, while kept, its blur and its row's name. */
+  current: {
+    blur?: string | null | undefined;
+    label: string;
+    src: string;
+  } | null;
   pickedName: string;
   preview: string | null;
   value: File | null;
 }): AOFFileUploadItem[] => {
   if (!value) {
     return current
-      ? [{ id: CURRENT_ID, name: current.label, preview: current.src }]
+      ? [
+          {
+            id: CURRENT_ID,
+            name: current.label,
+            preview: current.src,
+            previewBlur: current.blur,
+          },
+        ]
       : [];
   }
   return [
@@ -134,6 +147,7 @@ const heldItems = ({
 export const AOFAvatarField = ({
   cropProps,
   current,
+  currentBlur,
   label,
   labels,
   triggerProps,
@@ -188,7 +202,9 @@ export const AOFAvatarField = ({
     cropAgain: crop.cropAgain,
     cropAgainLabel: labels.cropAgain,
     current:
-      current && !removed ? { label: labels.current, src: current } : null,
+      current && !removed
+        ? { blur: currentBlur, label: labels.current, src: current }
+        : null,
     pickedName: crop.pickedName,
     preview,
     value: field.state.value,

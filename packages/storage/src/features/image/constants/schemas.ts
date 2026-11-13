@@ -20,7 +20,7 @@ export type SignedLink = z.infer<typeof signedLinkSchema>;
 
 /**
  * One Image as it travels: the stored record, minus what only the server
- * reads (`bytes`, `uploadedBy`, the file's name), with `createdAt` as ISO
+ * reads (`uploadedBy`), with `createdAt` as ISO
  * text, and the picture as signed links, one per width (`srcSet`): a public
  * Image's never expire, a private one's within the hour. `apps` lists every
  * App it is in, the ones the caller cannot see too: a PATCH sends the full
@@ -38,6 +38,8 @@ export const imageBodySchema = z
     createdAt: z.iso.datetime(),
     height: z.number().int(),
     id: z.string(),
+    /** The stored file's name in the image bucket (`<uuid>.avif`): what the storage console lists. */
+    key: z.string(),
     srcSet: z.array(signedLinkSchema),
     /** Its Version: a PATCH sends it back, and is refused (409) once the Image changed. */
     version: z.string(),

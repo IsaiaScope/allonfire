@@ -34,7 +34,7 @@ export const USERS = {
    */
   AVATAR_FIELD,
   /**
-   * The list's rows (`usersHydration`) and one User (`readUser`), kept in
+   * The list's rows (`usersHydration`) and one User (`userHydration`), kept in
    * the visitor's browser per address (ADR 0028) until a change to Users
    * calls `updateTag(TAG)`, which drops this browser's copies. The rows hold Avatar links
    * signed for an hour, and a cache never outlives them: gone after an hour
@@ -53,8 +53,6 @@ export const USERS = {
   /** Brushed faint behind a User's card: 乗, a passenger (the brush face
    *  carries it). */
   CARD_KANJI: "乗",
-  /** How long an email's tip says it was copied (or could not be). */
-  COPIED_MS: 2 * UNIT.MS_PER_SECOND,
   /** Brushed after the crop dialog's title: 切, to cut (the brush face
    *  carries it). */
   CROP_KANJI: "切",

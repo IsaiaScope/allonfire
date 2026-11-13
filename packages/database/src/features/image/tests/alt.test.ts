@@ -10,10 +10,26 @@ describe("imageAltSchema", () => {
     });
   });
 
-  it("drops a language no Host speaks", () => {
+  it("accepts fr beside en and it", () => {
     expect(
       imageAltSchema.parse({ en: "The sea", fr: "La mer", it: "Il mare" })
+    ).toEqual({ en: "The sea", fr: "La mer", it: "Il mare" });
+  });
+
+  it("drops a language outside the catalogue", () => {
+    expect(
+      imageAltSchema.parse({ en: "The sea", it: "Il mare", xx: "?" })
     ).toEqual({ en: "The sea", it: "Il mare" });
+  });
+
+  it("refuses a text over the alt limit in an optional language", () => {
+    expect(
+      imageAltSchema.safeParse({
+        en: "The sea",
+        fr: "x".repeat(301),
+        it: "Il mare",
+      }).success
+    ).toBe(false);
   });
 });
 
@@ -39,9 +55,10 @@ describe("readAlt", () => {
     });
   });
 
-  it("reads a row saved in a language no Host speaks any more", () => {
+  it("keeps a stored fr text", () => {
     expect(readAlt({ en: "The sea", fr: "La mer", it: "Il mare" })).toEqual({
       en: "The sea",
+      fr: "La mer",
       it: "Il mare",
     });
   });

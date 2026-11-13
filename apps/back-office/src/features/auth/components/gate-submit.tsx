@@ -44,6 +44,7 @@ export const GateSubmit = ({
     )}
     pendingChildren={
       <>
+        <ActionKanji kanji={kanji} />
         <LoaderCircle aria-hidden className="animate-spin" />
         {pendingLabel}
       </>

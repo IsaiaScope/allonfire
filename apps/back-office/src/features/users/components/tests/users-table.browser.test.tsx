@@ -16,6 +16,7 @@ import type { UrlUpdateEvent } from "nuqs/adapters/testing";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
+import { COPY } from "@/shared/constants/copy";
 import { USERS_PAGE, USERS_URL } from "@/shared/tests/msw/handlers";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
@@ -214,11 +215,11 @@ describe("UsersTable", () => {
     const { button } = copyButtonOfFirst(await renderAt());
     await button.click();
     await expect.poll(tipText).toBe(t.copy.done);
-    await new Promise((resolve) => setTimeout(resolve, USERS.COPIED_MS / 2));
+    await new Promise((resolve) => setTimeout(resolve, COPY.COPIED_MS / 2));
     await button.click();
     // Past the first copy's end, inside the second's.
     await new Promise((resolve) =>
-      setTimeout(resolve, (USERS.COPIED_MS * 3) / 4)
+      setTimeout(resolve, (COPY.COPIED_MS * 3) / 4)
     );
     expect(tipText()).toBe(t.copy.done);
   });

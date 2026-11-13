@@ -6,18 +6,22 @@ import { useCallback } from "react";
  * a CommonJS object, not a component. A `<span>` shows what it was handed:
  * its `alt`, its `src` (through its `loader` when given) and whether the
  * App's optimizer would serve it. A `/broken` picture fails to load, as an
- * expired link would.
+ * expired link would; a `/sized` one loads, 640 by 480.
  */
 export const ImageMock = ({
   alt,
   loader,
   onError,
+  onLoad,
   src,
   unoptimized,
 }: {
   alt?: string;
   loader?: (args: { src: string; width: number }) => string;
   onError?: (event: { currentTarget: HTMLElement }) => void;
+  onLoad?: (event: {
+    currentTarget: { naturalHeight: number; naturalWidth: number };
+  }) => void;
   src: string;
   unoptimized?: boolean;
 }) => {
@@ -26,8 +30,11 @@ export const ImageMock = ({
       if (element && src.startsWith("/broken")) {
         onError?.({ currentTarget: element });
       }
+      if (element && src.startsWith("/sized")) {
+        onLoad?.({ currentTarget: { naturalHeight: 480, naturalWidth: 640 } });
+      }
     },
-    [onError, src]
+    [onError, onLoad, src]
   );
   return (
     <span

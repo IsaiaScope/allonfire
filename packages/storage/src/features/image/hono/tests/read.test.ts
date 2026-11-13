@@ -75,6 +75,7 @@ describe("GET /images", () => {
           createdAt: RECORD.createdAt.toISOString(),
           height: RECORD.height,
           id: RECORD.id,
+          key: RECORD.key,
           srcSet: pictureSrcSet(RECORD.key, privateLinkExpiry(NOW)),
           version: RECORD.version,
           width: RECORD.width,

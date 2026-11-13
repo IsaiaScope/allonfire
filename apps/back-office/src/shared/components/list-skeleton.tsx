@@ -10,6 +10,7 @@ import {
   tiledControl,
   toolbarLayout,
 } from "@/shared/components/toolbar-action";
+import { ink } from "@/shared/utils/skeleton-ink";
 
 /** Cards a phone gets while it waits: enough to fill its screen. */
 const CARDS = 4;
@@ -19,20 +20,6 @@ const control = cva([
   tiledControl(),
   "relative flex items-center gap-2 rounded-lg border pl-1",
 ]);
-
-/** What stands in for something, pulsing only where motion is welcome. */
-const ink = cva("animate-pulse motion-reduce:animate-none", {
-  variants: {
-    tone: {
-      /** Delete, disabled until a row is chosen. */
-      destructive: "rounded-lg bg-destructive/10",
-      /** A tile or a line of text, as the table's own placeholders. */
-      faint: "rounded-sm bg-foreground/10",
-      /** Add, the page's primary action. */
-      primary: "rounded-lg bg-primary/30",
-    },
-  },
-});
 
 /**
  * A list's rows while they load: the table (at the `columns` the list lays

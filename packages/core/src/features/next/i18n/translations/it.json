@@ -36,7 +36,7 @@
       "dismiss": "Non ora",
       "cta": "Installa {app}",
       "install": "Installa",
-      "installing": "Installazione…",
+      "installing": "Installazione",
       "error": "Non installata. Riprova.",
       "step": {
         "ios-share": "Tocca Condividi (o ···, poi Condividi)",

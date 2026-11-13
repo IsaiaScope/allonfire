@@ -1,7 +1,7 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { emitDrops, pillAt, planFlight } from "./drops";
-import { disposeScene } from "./pipeline";
 import {
+  followContext,
   type GooeyElements,
   measureStage,
   renderFrame,
@@ -96,28 +96,6 @@ const snapToRest = (sim: Sim, hoverGoal: number) => {
 };
 
 /**
- * Follows the canvas's WebGL context: a GPU reset or a tab iOS put away
- * drops it (`lost`, the CSS pill stands in), and the browser may hand it
- * back (`restored`). Returns what stops following.
- */
-const followContext = (
-  canvas: HTMLCanvasElement,
-  { lost, restored }: { lost: () => void; restored: () => void }
-) => {
-  const onLost = (event: Event) => {
-    // Asks the browser to restore it.
-    event.preventDefault();
-    lost();
-  };
-  canvas.addEventListener("webglcontextlost", onLost);
-  canvas.addEventListener("webglcontextrestored", restored);
-  return () => {
-    canvas.removeEventListener("webglcontextlost", onLost);
-    canvas.removeEventListener("webglcontextrestored", restored);
-  };
-};
-
-/**
  * Runs the goo on the component's nodes: measures them, animates only while
  * something moves, and follows resizes, late fonts and the pointer.
  */
@@ -125,7 +103,7 @@ export const createGooeyEngine = (
   elements: GooeyElements,
   { index, settings }: EngineInput
 ): GooeyEngine => {
-  const { canvas, list, stage } = elements;
+  const { list, stage } = elements;
   let scene = startScene(elements);
   const sim = createSim(settings);
   let raf = 0;
@@ -207,7 +185,7 @@ export const createGooeyEngine = (
     }
   };
 
-  const unfollowContext = followContext(canvas, {
+  const unfollowContext = followContext({
     lost: () => {
       scene = null;
       showCanvas(elements, false);
@@ -247,9 +225,6 @@ export const createGooeyEngine = (
       list.removeEventListener("pointerover", onOver);
       list.removeEventListener("pointerleave", onLeave);
       unfollowContext();
-      if (scene) {
-        disposeScene(scene);
-      }
     },
     go,
     refresh: (look) => {

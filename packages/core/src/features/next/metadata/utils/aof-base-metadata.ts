@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { HTTP } from "../../../http/constants/http";
-import type { ContentLanguage } from "../../../i18n/constants/locales";
+import type { HostLanguage } from "../../../i18n/constants/locales";
 import { type Indexing, METADATA } from "../../../metadata/constants/metadata";
 
 type Options = {
   /** The App's name: tab, iOS home-screen title, link-preview site name. */
   appName: string;
   indexing: Indexing;
-  locale: ContentLanguage;
-  locales: readonly ContentLanguage[];
+  locale: HostLanguage;
+  locales: readonly HostLanguage[];
   /** iOS launch screens, from `AOFLaunchScreenLinks`. */
   startupImage?: { url: string; media: string }[] | undefined;
   /**
@@ -21,7 +21,7 @@ type Options = {
 /** The share image at the path Next serves that file from, under the locale; none without one. */
 const imagesAt = (
   path: string,
-  locale: ContentLanguage,
+  locale: HostLanguage,
   image: Options["shareImage"]
 ) =>
   image
