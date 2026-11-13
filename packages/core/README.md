@@ -163,9 +163,10 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 | `Language` | Type | `"en" \| "it"`, from `I18N.BASE_LANGUAGES` |
 | `I18N.DEFAULT_LANGUAGE` | `"en"` | `I18N.BASE_LANGUAGES[0]`: where an unknown language lands and what content falls back to; never write `"en"` |
 | `languageSchema` | Zod enum | Narrows a string to a base `Language` |
-| `I18N.EXTRA_LANGUAGES` | `readonly []` | Languages a Host can add; a language goes here before any Host routes it |
-| `I18N.CONTENT_LANGUAGES`, `ContentLanguage`, `contentLanguageSchema` | | The Content languages: base plus extras |
-| `HostLanguages`, `defineLanguages` | | A Host's own list, `defineLanguages([...BASE_LANGUAGES, "fr"])`: dropping a base language, or adding one not in `I18N.CONTENT_LANGUAGES`, fails to compile |
+| `I18N.EXTRA_LANGUAGES` | `readonly []` | Languages a Host can add beyond the base ones; a language goes here before any Host routes it |
+| `I18N.HOST_LANGUAGES`, `HostLanguage`, `hostLanguageSchema` | | The languages a Host can route: base plus extras |
+| `I18N.CONTENT_LANGUAGES`, `I18N.OPTIONAL_LANGUAGES`, `ContentLanguage`, `contentLanguageSchema` | | The Content languages: the ISO 639-1 catalogue (`iso-639-1`), base first; the optional ones are all but the base languages |
+| `HostLanguages`, `defineLanguages` | | A Host's own list, `defineLanguages([...BASE_LANGUAGES, "fr"])`: dropping a base language, or adding one not in `I18N.EXTRA_LANGUAGES`, fails to compile |
 
 ### App scaffolding (`./features/next/*`)
 
@@ -181,6 +182,7 @@ imports these.
 | `./features/next/providers/components/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
 | `./features/next/query/utils/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
 | `./features/next/query/components/aof-hydrated-boundary` | `HydrationBoundary` | a Server Component: `hydration` is a private-cache read (ADR 0028) and a read that throws is left to the view, never thrown past it |
+| `./features/next/query/components/aof-resource-view` | `AOFResourceView` | a page of one resource (an edit form) from its `useQuery`: the form once read, `notFound()` for a 404, the host's `failed` (with a retry) for any other failure, the host's `loading` while it waits; a read that fails after the form was drawn leaves it |
 | `./features/next/i18n/utils/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
 | `./features/next/i18n/utils/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
 | `./features/next/api/visitor-headers` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API; `readVisitorHeaders()`, the same read from the request being answered |

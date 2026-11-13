@@ -2,10 +2,7 @@ import { notFound } from "next/navigation";
 import { type AbstractIntlMessages, hasLocale } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
 import { DATE } from "../../../i18n/constants/dates";
-import type {
-  ContentLanguage,
-  Language,
-} from "../../../i18n/constants/locales";
+import type { HostLanguage, Language } from "../../../i18n/constants/locales";
 import {
   SHARED_TRANSLATIONS,
   type SharedTranslations,
@@ -22,7 +19,7 @@ export type SharedTranslationsFor<L extends string> = [
   ? { shared?: undefined }
   : { shared: Record<Exclude<L, Language>, SharedTranslations> };
 
-type Options<L extends ContentLanguage> = {
+type Options<L extends HostLanguage> = {
   routing: { locales: readonly L[] };
   /** `locale` from `next/root-params`, whose exports each App generates. */
   locale: () => Promise<string | undefined>;
@@ -37,7 +34,7 @@ type Options<L extends ContentLanguage> = {
  * them `messages`; that key is its API, every other name here says
  * translations.
  */
-export const AOFGetRequestConfig = <L extends ContentLanguage>({
+export const AOFGetRequestConfig = <L extends HostLanguage>({
   routing,
   locale,
   translations,

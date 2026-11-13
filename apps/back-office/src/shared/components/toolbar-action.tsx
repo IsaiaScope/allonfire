@@ -15,15 +15,18 @@ import {
  * App's kanji button, the label beside the icon and the kanji brushed at its
  * right end (Add); `card`, from `@lg` the small kanji button of the Users
  * filters' Reset, for a card narrower than a toolbar (a Services provider's
- * Test).
+ * Test); `labeled`, the `responsive` look from the viewport's `md`, for an
+ * action in a page's own header, where no toolbar's width says it fits
+ * (Delete on an edit page).
  */
-export type ToolbarActionShape = "card" | "icon" | "responsive";
+export type ToolbarActionShape = "card" | "icon" | "labeled" | "responsive";
 
 const button = cva("w-(--field-height) min-w-0 px-0", {
   variants: {
     shape: {
       card: "@lg:h-8 @lg:w-auto @lg:gap-1.5 @lg:pr-8 @lg:pl-3 @lg:text-sm",
       icon: "",
+      labeled: "md:w-auto md:min-w-40 md:pr-12 md:pl-5",
       responsive: "@4xl:w-auto @4xl:min-w-40 @4xl:pr-12 @4xl:pl-5",
     },
   },
@@ -38,6 +41,7 @@ export const toolbarActionKanji = cva(
       shape: {
         card: "@lg:right-0.5 @lg:translate-x-0",
         icon: "",
+        labeled: "md:right-1 md:translate-x-0 md:text-5xl",
         responsive: "@4xl:right-1 @4xl:translate-x-0 @4xl:text-5xl",
       },
     },
@@ -46,7 +50,12 @@ export const toolbarActionKanji = cva(
 
 const label = cva("hidden", {
   variants: {
-    shape: { card: "@lg:inline", icon: "", responsive: "@4xl:inline" },
+    shape: {
+      card: "@lg:inline",
+      icon: "",
+      labeled: "md:inline",
+      responsive: "@4xl:inline",
+    },
   },
 });
 

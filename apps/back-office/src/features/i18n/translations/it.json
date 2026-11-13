@@ -23,7 +23,7 @@
     "pauseNotice": "Metti in pausa l'avviso",
     "showPassword": "Mostra password",
     "submit": "Accedi",
-    "submitting": "Accesso in corso…",
+    "submitting": "Accesso in corso",
     "theme": "Cambia tema",
     "note": {
       "unverified": "Controlla la posta: ti abbiamo inviato un link per verificare l'email. Aprilo, poi accedi."
@@ -49,7 +49,7 @@
     },
     "intro": "Inserisci la tua email e ti invieremo un link per scegliere una nuova password.",
     "submit": "Invia link",
-    "submitting": "Invio…",
+    "submitting": "Invio",
     "title": "Reimposta la password",
     "note": {
       "sent": "Se un account usa questo indirizzo, ti arriva un link per reimpostare la password. Controlla la posta."
@@ -71,7 +71,7 @@
     "password": "Nuova password",
     "showPassword": "Mostra password",
     "submit": "Salva password",
-    "submitting": "Salvataggio…",
+    "submitting": "Salvataggio",
     "title": "Scegli una nuova password"
   },
   "Images": {
@@ -80,15 +80,50 @@
       "PUBLIC": "Pubblica"
     },
     "add": {
-      "button": "Aggiungi"
+      "added": "{count, plural, one {# immagine aggiunta} other {# immagini aggiunte}}",
+      "button": "Aggiungi",
+      "error": {
+        "failed": "Impossibile aggiungere le immagini. Riprova.",
+        "invalid": "Controlla i campi e riprova.",
+        "refused": "Non puoi più modificare le immagini. Accedi di nuovo.",
+        "tooLarge": "Un'immagine o l'intero invio è troppo grande.",
+        "unsupported": "Un file non è un'immagine supportata."
+      },
+      "page": "Aggiungi immagini",
+      "pick": {
+        "button": "Scegli le immagini",
+        "hint": "Fino a {files} immagini, {size} MiB ciascuna.",
+        "input": "Immagini da aggiungere",
+        "none": "Nessuna immagine scelta."
+      },
+      "row": {
+        "remove": "Rimuovi {name}",
+        "title": "Immagine {number}"
+      },
+      "shared": {
+        "apply": "Applica a tutte le immagini",
+        "title": "Per le prossime immagini scelte"
+      },
+      "submit": "Aggiungi immagini",
+      "submitting": "Aggiunta",
+      "title": "Aggiungi immagini"
     },
     "column": {
       "access": "Accesso",
+      "alt": "Testo alternativo",
       "apps": "App",
       "created": "Creata",
       "image": "Immagine",
+      "name": "Nome",
+      "noAlt": "Senza testo alternativo",
       "dimensions": "Dimensioni",
       "size": "Peso"
+    },
+    "copy": {
+      "done": "Nome copiato",
+      "failed": "Non è stato possibile copiare il nome",
+      "label": "Copia {name}",
+      "tip": "Copia nome"
     },
     "delete": {
       "action": "Elimina",
@@ -138,6 +173,41 @@
     "search": {
       "clear": "Cancella il testo",
       "label": "Cerca per descrizione o nome del file"
+    },
+    "edit": {
+      "error": {
+        "failed": "Impossibile salvare. Riprova.",
+        "gone": "Questa immagine non esiste più.",
+        "invalid": "Controlla i campi e riprova.",
+        "refused": "Non puoi più modificare le immagini. Accedi di nuovo."
+      },
+      "page": "Immagine",
+      "saved": "Salvato",
+      "submit": "Salva",
+      "submitting": "Salvataggio",
+      "summary": "L'immagine",
+      "title": "Modifica immagine"
+    },
+    "form": {
+      "access": "Accesso",
+      "accessWho": "Chi può vederla",
+      "addLanguage": "Aggiungi una lingua",
+      "altGroup": "Testo alternativo",
+      "appIn": "Inclusa",
+      "appOut": "Non inclusa",
+      "apps": "App",
+      "cancel": "Annulla",
+      "clearAlt": "Cancella il testo alternativo: {language}",
+      "field": {
+        "altTooLong": "Accorcia il testo alternativo",
+        "appsRequired": "Scegli almeno un'App",
+        "fileTooLarge": "Questa immagine è troppo grande",
+        "tooManyFiles": "Troppe immagini per un solo invio",
+        "totalTooLarge": "Le immagini insieme sono troppo grandi"
+      },
+      "languageSearch": "Cerca una lingua",
+      "noLanguage": "Nessuna lingua trovata",
+      "removeLanguage": "Rimuovi {language}"
     }
   },
   "Navigation": {
@@ -201,7 +271,7 @@
     "loading": "Caricamento dei provider",
     "save": "Salva",
     "saved": "Provider salvato",
-    "saving": "Salvataggio…",
+    "saving": "Salvataggio",
     "service": {
       "MAIL": "Email"
     },
@@ -221,7 +291,7 @@
       "rateLimited": "Troppe email a questo indirizzo. Riprova più tardi.",
       "removed": "Questo provider è stato rimosso. Ricarica la pagina.",
       "failed": "La prova non è stata inviata. Riprova.",
-      "sending": "Invio…"
+      "sending": "Invio"
     },
     "usage": {
       "day": "Oggi: {used} su {limit}",
@@ -328,7 +398,7 @@
       "password": "Nuova password",
       "saved": "Salvato",
       "submit": "Salva",
-      "submitting": "Salvo…"
+      "submitting": "Salvo"
     },
     "pastEnd": {
       "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
@@ -363,7 +433,7 @@
         "emailRequired": "Inserisci un'email"
       },
       "submit": "Aggiungi Utente",
-      "submitting": "Aggiunta…",
+      "submitting": "Aggiunta",
       "title": "Aggiungi un Utente"
     },
     "form": {
@@ -377,7 +447,7 @@
         "drop": "Trascina qui la tua foto",
         "formats": "JPEG, PNG, WebP, AVIF o HEIC, fino a {size} MB",
         "label": "Foto",
-        "preparing": "Preparo la foto…",
+        "preparing": "Preparo la foto",
         "remove": "Rimuovi la foto",
         "tooLarge": "La foto è troppo grande",
         "unreadable": "Non riesco a leggere la foto. Provane un'altra.",

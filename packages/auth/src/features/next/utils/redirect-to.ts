@@ -1,5 +1,5 @@
 import {
-  contentLanguageSchema,
+  hostLanguageSchema,
   I18N,
 } from "@allonfire/core/features/i18n/constants/locales";
 import { redirect } from "next/navigation";
@@ -13,7 +13,7 @@ import type { AppPath } from "../constants/paths";
  * (any Host's) falls back to `I18N.DEFAULT_LANGUAGE`.
  */
 export const languageOf = (locale: unknown) => {
-  const language = contentLanguageSchema.safeParse(locale);
+  const language = hostLanguageSchema.safeParse(locale);
   return language.success ? language.data : I18N.DEFAULT_LANGUAGE;
 };
 

@@ -16,8 +16,8 @@ import {
   SESSION_COOKIE,
 } from "@/shared/tests/session-cookie-mock";
 import { USERS } from "../../constants/users";
-import { usersHydration } from "../users-hydration";
-import { usersListKey } from "../users-queries";
+import { userHydration, usersHydration } from "../users-hydration";
+import { userKey, usersListKey } from "../users-queries";
 
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock(
@@ -58,5 +58,26 @@ describe("usersHydration", () => {
     vi.mocked(readSessionCookie).mockResolvedValueOnce("");
     stubFetchJson({}, HTTP.STATUS.UNAUTHORIZED);
     await expect(usersHydration(PARAMS)).rejects.toThrow();
+  });
+});
+
+const [USER_ROW] = USERS_PAGE.users;
+const ID = USER_ROW?.id ?? "";
+
+describe("userHydration", () => {
+  it("reads the User as the Session's cookie and dehydrates them under their key, tagged under the list's tag and kept 5 minutes", async () => {
+    const fetch = stubFetchJson(USER_ROW);
+    const state = await userHydration(ID);
+    expect(dehydratedData(state)).toEqual([
+      { data: USER_ROW, queryKey: userKey(ID) },
+    ]);
+    expect(cacheTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+    expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);
+    expect(sentCookie(fetch)).toBe(SESSION_COOKIE);
+  });
+
+  it("throws for an unknown id, so nothing is kept and the view tells it is gone", async () => {
+    stubFetchJson({}, HTTP.STATUS.NOT_FOUND);
+    await expect(userHydration("missing")).rejects.toThrow();
   });
 });

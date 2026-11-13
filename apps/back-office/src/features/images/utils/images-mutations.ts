@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { MUTATION } from "@/shared/constants/mutation";
 import { QUERY } from "@/shared/constants/query";
 import {
@@ -20,3 +21,15 @@ export const deleteImagesMutation = bulkDeleteMutation({
 /** The Images a deletion is on its way for: their rows fade at once. */
 export const useImagesBeingDeleted = () =>
   useBeingDeleted(MUTATION.IMAGES.DELETE);
+
+/**
+ * Reads the Images and the Storage overview again in this browser, after an
+ * add or an edit (the action cleared the server's copies): their rows and
+ * numbers moved.
+ */
+export const invalidateImages = async (client: QueryClient) => {
+  await Promise.all([
+    client.invalidateQueries({ queryKey: QUERY.IMAGES.ALL }),
+    client.invalidateQueries({ queryKey: QUERY.STORAGE.ALL }),
+  ]);
+};

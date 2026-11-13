@@ -5,6 +5,7 @@ import {
   drawScene,
   MARGIN,
   type Scene,
+  type SharedGl,
 } from "./pipeline";
 import { collectShapes, pillShape, traceGoo } from "./shapes";
 import type { Box, Sim } from "./types";
@@ -28,23 +29,84 @@ const EMPTY_PATH = "M0,0Z";
 
 /** Shows the WebGL canvas, or the CSS pill in its place. */
 export const showCanvas = (
-  { canvas, fallback }: GooeyElements,
+  { canvas, fallback }: Pick<GooeyElements, "canvas" | "fallback">,
   shown: boolean
 ) => {
   fallback.style.display = shown ? "none" : "block";
   canvas.style.display = shown ? "block" : "none";
 };
 
-/** A WebGL scene on the canvas, or `null` for the CSS pill; shows whichever runs. */
-export const startScene = (elements: GooeyElements) => {
-  const gl = elements.canvas.getContext("webgl2", {
+/** What listens to the shared context being lost and coming back. */
+type ContextWatcher = { lost: () => void; restored: () => void };
+const watchers = new Set<ContextWatcher>();
+
+/** The shared context: made on first use, `null` while lost or when WebGL is missing. */
+let shared: SharedGl | null = null;
+let tried = false;
+
+const makeShared = (): SharedGl | null => {
+  const canvas = document.createElement("canvas");
+  const gl = canvas.getContext("webgl2", {
     alpha: true,
     antialias: false,
     premultipliedAlpha: true,
   });
   const pipeline = gl ? buildPipeline(gl) : null;
-  showCanvas(elements, pipeline !== null);
-  return gl && pipeline ? createScene(gl, elements.canvas, pipeline) : null;
+  if (!(gl && pipeline)) {
+    return null;
+  }
+  canvas.addEventListener("webglcontextlost", (event) => {
+    // Asks the browser to restore it; every toggle draws its CSS pill meanwhile.
+    event.preventDefault();
+    shared = null;
+    for (const { lost } of watchers) {
+      lost();
+    }
+  });
+  canvas.addEventListener("webglcontextrestored", () => {
+    // The same canvas and context are back, empty: the program is linked again.
+    const again = buildPipeline(gl);
+    shared = again ? { canvas, gl, pipeline: again } : null;
+    for (const { restored } of watchers) {
+      restored();
+    }
+  });
+  return { canvas, gl, pipeline };
+};
+
+const sharedGl = () => {
+  if (!(shared || tried)) {
+    tried = true;
+    shared = makeShared();
+  }
+  return shared;
+};
+
+/**
+ * Follows the shared context: a GPU reset or a tab iOS put away drops it
+ * (`lost`, the CSS pill stands in) and the browser may hand it back
+ * (`restored`). Returns what stops following.
+ */
+export const followContext = (watcher: ContextWatcher) => {
+  watchers.add(watcher);
+  return () => {
+    watchers.delete(watcher);
+  };
+};
+
+/**
+ * A scene for the toggle: its canvas receives the goo the shared WebGL context
+ * draws, or `null` for the CSS pill when there is no WebGL (or it is lost);
+ * shows whichever runs. Every toggle draws, however many a form holds.
+ */
+export const startScene = (
+  elements: Pick<GooeyElements, "canvas" | "fallback">
+) => {
+  const { canvas } = elements;
+  const gl = sharedGl();
+  const context = gl && !gl.gl.isContextLost() ? canvas.getContext("2d") : null;
+  showCanvas(elements, context !== null);
+  return gl && context ? createScene(gl, canvas, context) : null;
 };
 
 /** Sizes the canvas to the stage plus its margin and measures every option. */

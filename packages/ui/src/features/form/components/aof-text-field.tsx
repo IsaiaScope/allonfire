@@ -12,7 +12,11 @@ import {
   useState,
 } from "react";
 import { AOFButton } from "../../../shared/components/aof-button";
-import { aofInputEndButton } from "../../../shared/components/aof-input-clear";
+import {
+  AOFInputClear,
+  aofInputEndButton,
+  aofInputWithEnd,
+} from "../../../shared/components/aof-input-clear";
 import { cn } from "../../../shared/utils/utils";
 import { useShownErrors } from "../hooks/use-shown-errors";
 import { useFieldContext } from "../utils/form-context";
@@ -53,15 +57,21 @@ export const AOFFieldTile = ({ children }: { children: ReactNode }) => (
  */
 export const AOFFieldTitle = ({
   children,
+  hidden,
   htmlFor,
   required,
 }: {
   children: ReactNode;
+  /** Out of sight and out of the layout, still the input's name: the host draws the title. */
+  hidden?: boolean | undefined;
   htmlFor?: string | undefined;
   required?: boolean | undefined;
 }) => {
   const label = (
-    <AOFFieldLabel className="font-bold" htmlFor={htmlFor}>
+    <AOFFieldLabel
+      className={cn("font-bold", hidden && "sr-only")}
+      htmlFor={htmlFor}
+    >
       {children}
     </AOFFieldLabel>
   );
@@ -105,6 +115,18 @@ export type AOFTextFieldProps = Omit<
   | "ref"
 > & {
   label: ReactNode;
+  /**
+   * The name, in the page's language, of a button at the input's end that
+   * empties it (and puts the caret back in it), shown while it holds text:
+   * "Clear the alt text". A password's `reveal` takes that place instead.
+   */
+  clear?: string | undefined;
+  /**
+   * Keeps the label for screen readers only, so it takes no room above the
+   * input: for a field whose host draws the title and sets something beside
+   * the input (a remove button) that must line up with it.
+   */
+  hideLabel?: boolean | undefined;
   /** Drawn at the input's start; decoration, hidden from screen readers. */
   icon?: ReactNode;
   /** An error the server reported for this field: marks it, no message. */
@@ -125,6 +147,8 @@ export type AOFTextFieldProps = Omit<
  */
 export const AOFTextField = ({
   className,
+  clear,
+  hideLabel,
   icon,
   id,
   invalid,
@@ -152,6 +176,10 @@ export const AOFTextField = ({
       field.handleChange(domValue);
     }
   }, [field]);
+  const clearValue = useCallback(() => {
+    field.handleChange("");
+    inputRef.current?.focus();
+  }, [field]);
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) =>
       field.handleChange(event.target.value),
@@ -161,7 +189,11 @@ export const AOFTextField = ({
   return (
     // One input needs no group: `role="none"` drops shadcn's unnamed one.
     <AOFField data-invalid={marked || undefined} role="none">
-      <AOFFieldTitle htmlFor={inputId} required={input.required}>
+      <AOFFieldTitle
+        hidden={hideLabel}
+        htmlFor={inputId}
+        required={input.required}
+      >
         {label}
       </AOFFieldTitle>
       <div className="relative">
@@ -172,7 +204,7 @@ export const AOFTextField = ({
           aria-invalid={marked || undefined}
           className={cn(
             aofFieldInput({ icon: Boolean(icon) }),
-            reveal && "pr-12",
+            (reveal || clear) && aofInputWithEnd(),
             className
           )}
           id={inputId}
@@ -181,7 +213,9 @@ export const AOFTextField = ({
           onChange={handleChange}
           ref={inputRef}
           type={reveal && revealed ? "text" : type}
-          value={field.state.value}
+          // A field whose array row was just removed reads `undefined` for one
+          // render, before its parent drops it: never let the input go uncontrolled.
+          value={field.state.value ?? ""}
         />
         {reveal ? (
           <AOFButton
@@ -196,6 +230,9 @@ export const AOFTextField = ({
           >
             {revealed ? <IconEyeOff aria-hidden /> : <IconEye aria-hidden />}
           </AOFButton>
+        ) : null}
+        {!reveal && clear && field.state.value ? (
+          <AOFInputClear label={clear} onClick={clearValue} />
         ) : null}
       </div>
       <AOFFieldErrorLine errors={errors} id={errorId} />

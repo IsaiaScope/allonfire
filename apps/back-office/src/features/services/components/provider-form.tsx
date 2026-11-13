@@ -85,6 +85,7 @@ export const ProviderForm = ({ provider }: { provider: ListedProvider }) => {
           pending={pending}
           pendingChildren={
             <>
+              <ActionKanji kanji={SERVICES.SAVE_KANJI} />
               <IconLoader2 aria-hidden className="animate-spin" />
               {t("saving")}
             </>

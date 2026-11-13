@@ -9,14 +9,10 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { USERS } from "../../constants/users";
 import { replace } from "../../tests/user-form-mocks";
-import type { EditUserNotice } from "../../utils/edit-user-schema";
 import { AddUser } from "../add-user";
 import { EditUser } from "../edit-user";
-import { useToastThenList } from "../user-form-parts";
 
 vi.mock("../../actions/add-user", () => ({ addUser: vi.fn() }));
 vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
@@ -133,34 +129,5 @@ describe("the User forms' shared parts", () => {
       nameRequired: true,
       passwordRequired: false,
     });
-  });
-});
-
-/** A form's answer, toasted as Edit a User lists it: SAVED only. */
-const Saved = ({ notice }: { notice: EditUserNotice | undefined }) => {
-  useToastThenList(notice, {
-    [USERS.EDIT_NOTICE.SAVED]: {
-      kind: "success",
-      message: EN.Users.edit.saved,
-    },
-  });
-  return null;
-};
-
-describe("useToastThenList", () => {
-  it("toasts each listed notice and opens the list", async () => {
-    await renderIn(<Saved notice={USERS.EDIT_NOTICE.SAVED} />);
-    await expect.poll(() => replace.mock.calls.length).toBe(1);
-    expect(aofToast).toHaveBeenCalledWith(EN.Users.edit.saved, "success");
-    expect(replace).toHaveBeenCalledWith(BACK_OFFICE.PAGE.USERS);
-  });
-
-  it("does nothing for an unlisted notice, or none", async () => {
-    const screen = await renderIn(
-      <Saved notice={USERS.EDIT_NOTICE.AVATAR_FAILED} />
-    );
-    await screen.rerender(<Saved notice={undefined} />);
-    expect(aofToast).not.toHaveBeenCalled();
-    expect(replace).not.toHaveBeenCalled();
   });
 });

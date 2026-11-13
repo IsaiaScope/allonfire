@@ -29,6 +29,24 @@ The menu at the top of an App's main menu that names the App you are in and
 lists the other Apps you are allowed into, each a link to that App.
 _Avoid_: team switcher, workspace switcher
 
+**Filter panel**:
+The one popup on a list's toolbar that holds everything that shapes which rows
+a visitor sees and how: its Filter, Sort and View tabs, one count on its button.
+_Avoid_: filter menu, settings, options
+
+**Sort**:
+The columns a list is read in, up to three, each ascending or descending, the
+first deciding and the next breaking its ties. With none, a list reads newest
+first. Only columns that hold a plain value sort: not those that show a Role or
+a set of Apps.
+_Avoid_: order, ordering, sorting state
+
+**View**:
+Which of a table's columns are shown. A phone's cards have no View, and the
+columns that name a row or open it (a list's first column, and the one whose
+cell links to the row) are always shown.
+_Avoid_: columns menu, visibility
+
 **Design system**:
 Everything an App draws its interface from: shadcn components, AOF components,
 and the Designs. Apps reach shadcn only through AOF components, never
@@ -161,8 +179,10 @@ them, shared texts included.
 _Avoid_: default languages, core languages
 
 **Content languages**:
-The Base languages plus every extra language any Host speaks. Stored texts such
-as an Image's alt can hold any of them; only the Base languages are required.
+Every language AllOnFire knows, a standard list (ISO 639-1) that holds the Base
+languages and many more than any Host speaks. Stored texts such as an Image's
+alt can hold any of them; only the Base languages are required. A Host
+speaking a language is a separate matter: it still has to route and translate it.
 _Avoid_: locales (a locale is a regional variant of a language)
 
 **Session**:
