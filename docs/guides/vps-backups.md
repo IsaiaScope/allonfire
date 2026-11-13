@@ -64,8 +64,8 @@ Each becomes `<name>.<ext>.age` except `storage-data`. Weekly run 2026-11-02: 19
 
 ## Env keys
 
-- Every key starts with `BACKUP_`; the list and comments: `vps/.env.example`.
-- `vps/.env.production`: git-ignored mirror of the server's `/opt/backups/.env`, same key order. Read it only through `pnpm env:prod` (`keys`, `check`, `copy`; `packages/config/local/env-production.sh`). Refresh it after any change on the server, without printing a value.
+- Every key starts with `BACKUP_`; the list and comments: `vps/.env.example`, written like the other `.env.example` files: blocks by owner (Agent, Age encryption, Containers, Hetzner Cloud, Keep-alive, Notification, PostgreSQL, Retention, S3, SSL certificates, Telegram), each headed by `# Name`, keys in alphabetical order inside a block.
+- `vps/.env.production`: git-ignored mirror of the server's `/opt/backups/.env`, in the example's shape (the server's own file may keep its older order: only the key names must match). Read it only through `pnpm env:prod` (`keys`, `check`, `copy`; `packages/config/local/env-production.sh`). Refresh it after any change on the server, without printing a value.
 
 ## Installing a script change
 

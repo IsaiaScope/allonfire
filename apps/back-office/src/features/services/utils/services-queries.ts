@@ -9,7 +9,7 @@ import { QUERY } from "@/shared/constants/query";
 export const fetchServices = (client: ApiClient, type: ServiceType) =>
   parseResponse(client[API.VERSION.CURRENT].services.$get({ query: { type } }));
 
-type ServiceList = Awaited<ReturnType<typeof fetchServices>>;
+export type ServiceList = Awaited<ReturnType<typeof fetchServices>>;
 type ListedService = ServiceList["services"][number];
 export type ListedProvider = ListedService["providers"][number];
 

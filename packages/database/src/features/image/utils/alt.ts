@@ -1,6 +1,7 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { z } from "zod";
+import type { Prisma } from "../../../../generated/prisma/client";
 
 /** Screen readers read alt aloud; past a sentence or two it belongs in a caption. */
 const MAX_ALT_LENGTH = 300;
@@ -50,3 +51,30 @@ export const readAlt = (stored: unknown): ImageAlt => {
     ),
   };
 };
+
+/**
+ * The filter for Images whose alt holds `text` in any Language, ignoring
+ * case. A Base language is always stored; another is searched where it was.
+ */
+const altContains = (text: string) =>
+  ({
+    OR: I18N.BASE_LANGUAGES.map((language) => ({
+      alt: {
+        mode: "insensitive" as const,
+        path: [language],
+        string_contains: text,
+      },
+    })),
+  }) satisfies Prisma.ImageWhereInput;
+
+/**
+ * The filter for Images whose alt (in any Language) or file name holds `text`,
+ * ignoring case: what a person types to find one.
+ */
+export const nameContains = (text: string) =>
+  ({
+    OR: [
+      ...altContains(text).OR,
+      { key: { contains: text, mode: "insensitive" as const } },
+    ],
+  }) satisfies Prisma.ImageWhereInput;

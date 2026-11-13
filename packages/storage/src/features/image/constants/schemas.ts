@@ -33,6 +33,8 @@ export const imageBodySchema = z
     alt: imageAltBodySchema,
     apps: z.array(appBodySchema),
     blurDataUrl: z.string(),
+    /** The stored file's size. */
+    bytes: z.number().int(),
     createdAt: z.iso.datetime(),
     height: z.number().int(),
     id: z.string(),

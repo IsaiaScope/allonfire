@@ -2,9 +2,6 @@
   "Metadata": {
     "description": "Dove si gestiscono i contenuti, gli utenti e i dati della famiglia AllOnFire."
   },
-  "Home": {
-    "description": "Ancora niente qui."
-  },
   "SignIn": {
     "email": "Email",
     "error": {
@@ -77,11 +74,78 @@
     "submitting": "Salvataggio…",
     "title": "Scegli una nuova password"
   },
+  "Images": {
+    "access": {
+      "PRIVATE": "Privata",
+      "PUBLIC": "Pubblica"
+    },
+    "add": {
+      "button": "Aggiungi"
+    },
+    "column": {
+      "access": "Accesso",
+      "apps": "App",
+      "created": "Creata",
+      "image": "Immagine",
+      "dimensions": "Dimensioni",
+      "size": "Peso"
+    },
+    "delete": {
+      "action": "Elimina",
+      "cancel": "Annulla",
+      "confirm": "Elimina",
+      "description": "Ogni immagine esce da ogni App in cui si trova e il suo file viene cancellato. Non si può annullare.",
+      "done": "{count, plural, one {# immagine eliminata} other {# immagini eliminate}}",
+      "failed": "Non è stato possibile eliminare le immagini.",
+      "gone": "{count, plural, one {Immagine già eliminata} other {Immagini già eliminate}}",
+      "partly": "{deleted, plural, one {# immagine eliminata} other {# immagini eliminate}}, {gone} già eliminate",
+      "select": "Seleziona {alt}",
+      "selectAll": "Seleziona ogni immagine di questa pagina",
+      "title": "{count, plural, one {Eliminare # immagine?} other {Eliminare # immagini?}}"
+    },
+    "empty": {
+      "clear": "Azzera la ricerca",
+      "description": "Prova un'altra parola, App o accesso.",
+      "title": "Nessuna immagine corrisponde"
+    },
+    "error": {
+      "description": "Controlla la connessione, poi riprova.",
+      "retry": "Riprova",
+      "title": "Non è stato possibile caricare le immagini"
+    },
+    "filter": {
+      "add": "Aggiungi",
+      "app": "App",
+      "button": "Filtri",
+      "empty": "Nessun risultato",
+      "reset": "Reimposta",
+      "resetAll": "Azzera",
+      "search": "Cerca",
+      "selected": "{count} selezionati",
+      "clear": "Cancella il testo",
+      "access": "Accesso"
+    },
+    "list": "Immagini",
+    "loading": "Caricamento delle immagini",
+    "pagination": {
+      "first": "Vai alla prima pagina",
+      "last": "Vai all'ultima pagina",
+      "next": "Vai alla pagina successiva",
+      "page": "Pagina <n>{page}</n> di <n>{pageCount}</n>",
+      "previous": "Vai alla pagina precedente",
+      "rowsPerPage": "Righe per pagina"
+    },
+    "search": {
+      "clear": "Cancella il testo",
+      "label": "Cerca per descrizione o nome del file"
+    }
+  },
   "Navigation": {
     "account": "Account",
     "apps": "App",
     "breadcrumb": "Percorso",
     "home": "Home",
+    "images": "Immagini",
     "language": "Lingua",
     "mail": "Email",
     "menu": "Menu principale",
@@ -134,6 +198,7 @@
     "key": {
       "missing": "Nessuna chiave nell'ambiente"
     },
+    "loading": "Caricamento dei provider",
     "save": "Salva",
     "saved": "Provider salvato",
     "saving": "Salvataggio…",
@@ -170,10 +235,24 @@
     }
   },
   "Storage": {
-    "empty": {
-      "description": "Immagini e altri file arriveranno qui con l'API di Archivio.",
-      "title": "Ancora nessun file"
-    }
+    "badge": {
+      "objects": "{count, plural, one {# file} other {# file}}",
+      "size": "{size}"
+    },
+    "chart": {
+      "avatars": "Avatar",
+      "empty": "Nessuna Immagine archiviata.",
+      "label": "Byte archiviati per App: Immagini pubbliche, Immagini private e Avatar",
+      "private": "Private",
+      "public": "Pubbliche"
+    },
+    "error": {
+      "bucket": "Non è stato possibile contare i file in questo momento.",
+      "forbidden": "Non hai accesso a questo.",
+      "retry": "Riprova",
+      "view": "Non è stato possibile leggere il riepilogo dell'archivio."
+    },
+    "title": "Archivio"
   },
   "Users": {
     "column": {
@@ -204,6 +283,21 @@
     "list": "Utenti",
     "loading": "Caricamento degli Utenti",
     "noMembership": "Non iscritto",
+    "overview": {
+      "chart": {
+        "admins": "Amministratori",
+        "empty": "Nessun Utente è ancora membro di un'App.",
+        "label": "Utenti e Amministratori per App",
+        "users": "Utenti"
+      },
+      "error": {
+        "forbidden": "Non hai accesso a questo.",
+        "retry": "Riprova",
+        "view": "Non è stato possibile leggere il riepilogo degli Utenti."
+      },
+      "title": "Utenti",
+      "total": "{count, plural, one {# Utente} other {# Utenti}}"
+    },
     "pagination": {
       "first": "Vai alla prima pagina",
       "last": "Vai all'ultima pagina",

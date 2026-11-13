@@ -4,7 +4,6 @@ import { ServiceType } from "@allonfire/database/enums";
 import { AOFEmpty } from "@allonfire/ui/features/feedback/components/aof-empty";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import {
-  AOFCard,
   AOFCardContent,
   AOFCardHeader,
   AOFCardTitle,
@@ -15,7 +14,8 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { api } from "@/features/api/utils/api";
 import { SectionLoading } from "@/features/navigation/components/section-loading";
-import { BrushKanji } from "@/shared/components/brush-kanji";
+import { CardFrame } from "@/shared/components/card-frame";
+import { cardBadge } from "@/shared/utils/card-badge";
 import { SERVICES } from "../constants/services";
 import { type ListedProvider, servicesQuery } from "../utils/services-queries";
 import { ProviderForm } from "./provider-form";
@@ -23,34 +23,23 @@ import { ProviderUsage } from "./provider-usage";
 import { ServiceSwitch } from "./service-switch";
 import { TestSend } from "./test-send";
 
-/** A card's badges: shadcn's on a phone, a size up from `sm` (28px, 14px type,
- *  16px icon). */
-const BADGE = "sm:h-7 sm:px-2.5 sm:text-sm sm:[&>svg]:size-4!";
-
 /** A mail provider's card: who it is, a test, how much it used, its settings. */
 const MailProviderCard = ({ provider }: { provider: ListedProvider }) => {
   const t = useTranslations("Services");
   return (
-    <AOFCard className="@container relative isolate after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-line/50">
-      {/* The Users cards' platform sign: the line's colour along its foot,
-          郵 brushed large and faint behind, cut by its corner. */}
-      <BrushKanji
-        className="-right-24 -bottom-64 -z-10 text-[40rem] text-foreground/3"
-        kanji={SERVICES.CARD_KANJI}
-        placement="header"
-      />
+    <CardFrame kanji={SERVICES.CARD_KANJI}>
       {/* The name and its slot, under them whether its key is set; the test
           send on the right. */}
       <AOFCardHeader className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col items-start gap-2">
           <div className="flex items-center gap-2">
             <AOFCardTitle className="text-lg">{provider.name}</AOFCardTitle>
-            <AOFBadge className={BADGE} variant="outline">
+            <AOFBadge className={cardBadge()} variant="outline">
               {t("slot", { slot: provider.slot })}
             </AOFBadge>
           </div>
           {provider.configured ? null : (
-            <AOFBadge className={BADGE} variant="destructive">
+            <AOFBadge className={cardBadge()} variant="destructive">
               <IconKeyOff aria-hidden />
               {t("key.missing")}
             </AOFBadge>
@@ -62,7 +51,7 @@ const MailProviderCard = ({ provider }: { provider: ListedProvider }) => {
         <ProviderUsage provider={provider} />
         <ProviderForm key={provider.version} provider={provider} />
       </AOFCardContent>
-    </AOFCard>
+    </CardFrame>
   );
 };
 
@@ -83,13 +72,13 @@ const PROVIDER_CARD = {
  * again (`useRefreshServices`). A read the API refused is asked again here,
  * and shows its error.
  */
-export type ServicesViewProps = {
+export type ServiceProvidersProps = {
   type: ServiceType;
   /** The page's heading, the switch at the row's far right. */
   title: ReactNode;
 };
 
-export const ServicesView = ({ title, type }: ServicesViewProps) => {
+export const ServiceProviders = ({ title, type }: ServiceProvidersProps) => {
   const t = useTranslations("Services");
   const failed = useTranslations("Common.Request")("failed");
   const { data, isPending } = useQuery(servicesQuery(api, type));

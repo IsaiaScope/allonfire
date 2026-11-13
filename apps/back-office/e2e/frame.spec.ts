@@ -2,7 +2,7 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
@@ -38,12 +38,10 @@ const TRANSPARENT = "rgba(0, 0, 0, 0)";
 const menuOf = (page: Page) =>
   page.getByRole("navigation", { name: t.menu }).filter({ visible: true });
 
-/** Clicks a Section in the menu on screen and checks it is the one marked. */
-const visit = async (page: Page, section: (typeof SECTIONS)[number]) => {
-  await openSidebar(page);
-  const link = menuOf(page).getByRole("link", { name: t[section.label] });
+/** Clicks `link` in the menu on screen and checks the page `path` opened is the one marked. */
+const clickAndCheck = async (page: Page, link: Locator, path: string) => {
   await link.click();
-  await expect(page).toHaveURL(new RegExp(`${sectionHref(section.path)}$`));
+  await expect(page).toHaveURL(new RegExp(`${sectionHref(path)}$`));
   await openSidebar(page);
   await expect(link).toHaveAttribute("aria-current", "page");
   await expect(menuOf(page).locator('[aria-current="page"]')).toHaveCount(1);
@@ -52,12 +50,36 @@ const visit = async (page: Page, section: (typeof SECTIONS)[number]) => {
   }
 };
 
+/** Clicks a Section in the menu on screen and checks it is the one marked. */
+const visit = async (page: Page, section: (typeof SECTIONS)[number]) => {
+  await openSidebar(page);
+  await clickAndCheck(
+    page,
+    menuOf(page).getByRole("link", { name: t[section.label] }),
+    section.path
+  );
+};
+
+/**
+ * Opens the Storage group and clicks its Images page: a Section with pages is
+ * a row that opens its sub-menu, so the page is the link and the one marked.
+ */
+const visitImages = async (page: Page) => {
+  await openSidebar(page);
+  await menuOf(page).getByRole("button", { name: t.storage }).click();
+  await clickAndCheck(
+    page,
+    menuOf(page).getByRole("link", { name: t.images }),
+    BACK_OFFICE.PAGE.STORAGE_IMAGES
+  );
+};
+
 test("moves between the Sections and marks the one you are on", async ({
   page,
 }) => {
   await signInAsAdmin(page);
   await visit(page, SECTION.USERS);
-  await visit(page, SECTION.STORAGE);
+  await visitImages(page);
   await visit(page, SECTION.HOME);
 });
 

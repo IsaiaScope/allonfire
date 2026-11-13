@@ -91,6 +91,21 @@ export const signInAsAdmin = async (page: Page) => {
   ).toBeVisible();
 };
 
+/**
+ * Taps a sidebar link by its name. A phone's drawer brings its links into view
+ * only on opening, and the link's prefetch runs inside an `instant` lock:
+ * waiting for the network to settle lets the prefetch land before the tap.
+ */
+export const tapSidebarLink = async (page: Page, name: string) => {
+  await openSidebar(page);
+  await page.waitForLoadState("networkidle");
+  await page
+    .getByRole("navigation", { name: EN.Navigation.menu })
+    .filter({ visible: true })
+    .getByRole("link", { name })
+    .click();
+};
+
 /** Opens the account menu, in the sidebar: a drawer on a phone. */
 export const openAccountMenu = async (page: Page) => {
   await openSidebar(page);

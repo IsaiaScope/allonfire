@@ -1,4 +1,7 @@
+import { searchQuery } from "@allonfire/core/features/search/search-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { objectValues } from "@allonfire/core/shared/utils/object";
+import { App, ImageAccess } from "@allonfire/database/enums";
 
 /**
  * An Image's key never changes content (a new upload gets a new key), so its
@@ -12,6 +15,12 @@ const CACHE_TTL_SECONDS = UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY;
 const INPUT_MEGAPIXELS = 100;
 const PIXELS_PER_MEGAPIXEL = 1_000_000;
 
+/** How an Images list's `search` reads: `app:laura access:public input:sea` (ADR 0026). */
+const SEARCH = searchQuery({
+  access: objectValues(ImageAccess),
+  app: objectValues(App),
+});
+
 /** Every limit an Image meets, from the upload to the stored file. */
 const LIMIT = {
   /** Items in one PATCH or DELETE. */
@@ -24,7 +33,11 @@ const LIMIT = {
   INPUT_MEGAPIXELS,
   INPUT_PIXELS: INPUT_MEGAPIXELS * PIXELS_PER_MEGAPIXEL,
   /** Images on one page of a listing. */
-  LIST: { DEFAULT: 30, MAX: 100 },
+  LIST: { DEFAULT: 25, MAX: 100 },
+  /** The last numbered page a listing answers for. */
+  MAX_PAGE: 1000,
+  /** The longest search a listing takes (its fields and text together). */
+  SEARCH_MAX: 200,
   /** One upload request, every file and the meta part together. */
   UPLOAD_BYTES: 100 * UNIT.BYTES_PER_MIB,
   /**
@@ -65,15 +78,17 @@ export const IMAGE = {
    * enforces it, so the text cannot promise a limit the route does not keep.
    */
   DOC: {
-    DELETE_204: "Taken out of `app`, or deleted",
-    DELETE_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} ids. With \`app\`: takes the Images out of that App (Admin there; each must be in it) and deletes the ones left in no App. Without: deletes them everywhere (Admin in every App each is in). An Image the User cannot see answers 404, checked across the whole batch before any 403. All or nothing; the stored files go after the rows.`,
+    DELETE_200:
+      "How many were taken out of `app`, or deleted: fewer than named when some were already gone",
+    DELETE_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} ids. With \`app\`: takes the Images out of that App (Admin there; each must be in it) and deletes the ones left in no App. Without: deletes them everywhere (Admin in every App each is in). An id that is not there, or that the User cannot see, is skipped as already gone (the answer's \`deleted\` counts the rest, so a retry is safe). An Image the User can see but may not delete answers 403 for the whole batch. All or nothing; the stored files go after the rows.`,
     DELETE_SUMMARY: "Take Images out of an App, or delete them",
     GET_200: "The Image",
     GET_DESCRIPTION:
       "No sign-in needed. A public Image, or a private one in an App the User enters; any other answers 404, not 403, so its id stays hidden. Its picture comes as signed links, one per width (`srcSet`): a public Image's never expire, a private one's within the hour.",
     GET_SUMMARY: "Get an Image",
-    LIST_200: "One page of Images; `nextCursor` is null on the last page",
-    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, ${LIMIT.LIST.DEFAULT} per page (\`limit\` up to ${LIMIT.LIST.MAX}). Send \`nextCursor\` back as \`cursor\` for the next page.`,
+    LIST_200:
+      "One page of Images, with the `page`, `pageCount`, `total` and `totalBytes` (of every visible Image, not just the page)",
+    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, a numbered page of \`perPage\` Images (default ${LIMIT.LIST.DEFAULT}, up to ${LIMIT.LIST.MAX}), \`page\` from 1 to ${LIMIT.MAX_PAGE}. \`search\` is the filters and the text in one string (ADR 0026), as in \`access:public app:laura sea\`: \`access\` keeps only the public, or only the private, Images, and the text keeps the Images whose alt text or file name holds it, in any language, ignoring case.`,
     LIST_SUMMARY: "List Images",
     PATCH_200: "The updated Images",
     PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. Each change carries the \`version\` it was made on (\`Image.version\`): an Image changed since, or one the batch would leave in no App, answers 409 \`RESOURCE_CHANGED\`. All or nothing.`,
@@ -115,7 +130,15 @@ export const IMAGE = {
   INPUT_ACCEPT:
     "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif",
   LIMIT,
-  /** What a file the Image module leaves behind is logged as. */
+  /**
+   * The stable `event` field of an Image's failure log lines, what a log
+   * viewer filters on.
+   */
+  LOG_EVENT: {
+    CLEANUP_FAILED: "image.cleanup_failed",
+    OBJECT_DELETE_FAILED: "image.object_delete_failed",
+    PUBLIC_FILE_LEFT: "image.public_file_left",
+  },
   LOG_MESSAGE: {
     CLEANUP_FAILED: "image cleanup failed",
     OBJECT_DELETE_FAILED: "image object delete failed",
@@ -125,6 +148,8 @@ export const IMAGE = {
   },
   /** The tag the Image module's routes appear under. */
   OPENAPI_TAG: "Image",
+  /** How an Images list's `search` reads (ADR 0026). */
+  SEARCH,
   /** Context keys the Image module sets. */
   VAR: {
     /** The upload's time budget, as an `AbortSignal`. */

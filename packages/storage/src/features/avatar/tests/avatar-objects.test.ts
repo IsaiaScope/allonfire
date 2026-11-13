@@ -62,7 +62,7 @@ describe("deleteAvatarsWith", () => {
     const ours = avatarKey("u1");
     await expect(deleteAvatarsWith({ warn })([ours])).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ keys: [ours] }),
+      expect.objectContaining({ event: expect.any(String), keys: [ours] }),
       expect.any(String)
     );
   });

@@ -1,3 +1,4 @@
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import type { AppLogo } from "@allonfire/design/brand/aof-logo";
 import { IconLibraryPhoto, type TablerIcon } from "@tabler/icons-react";
@@ -19,3 +20,9 @@ export const APP_ENTRY = {
   },
   [App.LAURA]: { mark: { icon: IconLibraryPhoto }, name: "Laura" },
 } as const satisfies Record<App, { mark: AppMark; name: string }>;
+
+/** The App list's options for a filter, in the order the enum declares them. */
+export const APP_OPTIONS = objectValues(App).map((app) => ({
+  label: APP_ENTRY[app].name,
+  value: app,
+}));

@@ -3,6 +3,15 @@ import { readFileSync } from "node:fs";
 
 // WCAG 2.2 AA for normal text; PRODUCT.md makes it a hard requirement.
 const AA = 4.5;
+// WCAG 1.4.11: a bar or a ring against the surface it is drawn on.
+const GRAPHIC = 3;
+const CHART_TOKENS = [
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
+] as const;
 const HEX = /^#[0-9a-f]{6}$/i;
 const DECLARATION = /--([\w-]+):\s*(#[0-9a-f]{6});/gi;
 const LINEAR_THRESHOLD = 0.039_28;
@@ -85,5 +94,16 @@ describe.each([":root", ".dark"])("Japan theme %s", (selector) => {
     expect(value(text)).toMatch(HEX);
     expect(value(surface)).toMatch(HEX);
     expect(contrast(value(text), value(surface))).toBeGreaterThanOrEqual(AA);
+  });
+
+  it.each(CHART_TOKENS)("%s reads on a card as a graphic", (chart) => {
+    expect(value(chart)).toMatch(HEX);
+    expect(contrast(value(chart), value("card"))).toBeGreaterThanOrEqual(
+      GRAPHIC
+    );
+  });
+
+  it("draws the first series in the theme's primary", () => {
+    expect(value("chart-1")).toBe(value("primary"));
   });
 });

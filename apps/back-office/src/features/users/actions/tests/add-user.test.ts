@@ -8,12 +8,14 @@ import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { updateTag } from "next/cache";
 import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { redirect } from "@/features/i18n/navigation";
+import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../../constants/users";
 import { addUser } from "../add-user";
 
-vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
-}));
+vi.mock(
+  "@/features/api/utils/server-api",
+  () => import("@/features/api/tests/fake-api")
+);
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock("@/features/i18n/navigation", () => ({ redirect: vi.fn() }));
 
@@ -38,6 +40,7 @@ const formOf = (fields: Record<string, string | File> = {}) => {
 beforeEach(() => {
   resetFakeApi();
   vi.mocked(redirect).mockClear();
+  vi.mocked(updateTag).mockClear();
 });
 
 describe("addUser", () => {
@@ -92,6 +95,24 @@ describe("addUser", () => {
       HTTP.METHOD.POST,
     ]);
     expect(redirect).toHaveBeenCalledOnce();
+  });
+
+  it("a picture also drops the Storage numbers: the bucket moved", async () => {
+    FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
+    await addUser(
+      "en",
+      {},
+      formOf({
+        [USERS.AVATAR_FIELD]: new File(["x"], "a.webp", { type: "image/webp" }),
+      })
+    );
+    expect(updateTag).toHaveBeenCalledWith(STORAGE.CACHE.TAG);
+  });
+
+  it("no picture leaves the Storage numbers alone", async () => {
+    FAKE_API.answers.set(HTTP.METHOD.POST, { status: HTTP.STATUS.CREATED });
+    await addUser("en", {}, formOf());
+    expect(updateTag).not.toHaveBeenCalledWith(STORAGE.CACHE.TAG);
   });
 
   it("sends the picture with the new User's Version", async () => {

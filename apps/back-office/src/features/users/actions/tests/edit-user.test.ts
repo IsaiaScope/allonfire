@@ -10,6 +10,7 @@ import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { avatarRemoval } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
 import { updateTag } from "next/cache";
 import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
+import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../../constants/users";
 import { editUser } from "../edit-user";
 
@@ -20,9 +21,10 @@ const VERSION = "version-1";
 const SAVED_VERSION = "version-2";
 const STRONG = FIXTURE.PASSWORD;
 
-vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
-}));
+vi.mock(
+  "@/features/api/utils/server-api",
+  () => import("@/features/api/tests/fake-api")
+);
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 
 /** The removal the picture field posts. */
@@ -189,6 +191,31 @@ describe("editUser, once saved", () => {
       expect(sentBody(method)).toEqual({ version: SAVED_VERSION });
     }
   );
+
+  it.each([
+    ["new picture", () => ({ [USERS.AVATAR_FIELD]: PICTURE() })],
+    ["removal", () => ({ [REMOVAL.name]: REMOVAL.value })],
+  ])(
+    "the Avatar change (%s) also drops the Storage numbers: the bucket moved",
+    async (_, fields) => {
+      await editUser(
+        { id: ID, version: VERSION, wasVerified: true },
+        {},
+        formOf(fields())
+      );
+      expect(updateTag).toHaveBeenCalledWith(STORAGE.CACHE.TAG);
+    }
+  );
+
+  it("a save with no Avatar change leaves the Storage numbers alone", async () => {
+    await editUser(
+      { id: ID, version: VERSION, wasVerified: true },
+      {},
+      formOf({})
+    );
+    expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
+    expect(updateTag).not.toHaveBeenCalledWith(STORAGE.CACHE.TAG);
+  });
 
   it("a 409 on the Avatar change answers saved without the picture, never typed values on the newer Version", async () => {
     savedOn(SAVED_VERSION);

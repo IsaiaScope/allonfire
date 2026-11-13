@@ -25,3 +25,10 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 
 - A page that must fit the viewport passes height down a `flex-1 flex-col` chain from `body`, never a `100dvh` or `100svh` calc. Example: `apps/laura/src/app/[locale]/(dashboard)/games/memory/page.tsx`.
 - iOS Safari: set `WebkitBackdropFilter` beside `backdropFilter` (Tailwind's `backdrop-blur` adds no prefix), mix colours `in srgb`, not `oklch`, and do not trust viewport units. Example: `apps/back-office/src/shared/components/torii.tsx`.
+
+- **A class is never a constant.** Tailwind classes are written inline in `cn(...)`, or, when they have states or a second reader, in a `cva` (a skeleton and its live twin, three cards' badge: `cardBadge`, `shared/utils/card-badge`). Never `const BADGE = "sm:h-7 ..."`, never a `className` key in a constants object (`CHART.TICK`), never a class list copied from one component to another. A prop that must be an object holding a class (a chart's `tick`) is built from a `cva`: `const TICK = { className: tickText() }`. Example: `packages/ui/src/features/chart/components/aof-bar-chart.tsx`.
+
+## Values on screen
+
+- Never join values with a middle dot (`·`) or any separator character (`0.01 MB · 800 × 1200`). Each value sits under its own small label in a `dl` grid (label muted, `text-xs uppercase`; value `font-semibold`, `font-mono tabular-nums` for numbers), and a list of names is joined with `SEPARATOR.NAMES` (a comma). Example: `apps/back-office/src/features/images/components/image-card.tsx`.
+- A size is always `formatSize` from core (`@allonfire/core/shared/utils/format-size`): MB, then GB and TB, two decimals; never a hand-written unit.

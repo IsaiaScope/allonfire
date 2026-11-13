@@ -11,7 +11,8 @@ import {
 } from "@allonfire/database/features/service/provider.service";
 import { env } from "../../environment/environment";
 import { logger } from "../logger/logger";
-import { limitTestAddress, mailDeps, mailRedis } from "../mail/mail-deps";
+import { limitTestAddress, mailDeps } from "../mail/mail-deps";
+import { sharedRedis } from "../redis/shared-redis";
 import { canManageUsers } from "../users/user-deps";
 import type { ServicesDeps } from "./utils/deps";
 import { mailKeepAlive, runKeepAlives } from "./utils/keep-alive";
@@ -23,11 +24,11 @@ const usageOf = createUsageReader({
   endpoint: mailDeps.endpoint,
   fetch: mailDeps.fetch,
   logger,
-  redis: mailRedis,
+  redis: () => sharedRedis,
 });
 
 const forgetProviderUsage = (providerId: string) =>
-  forgetUsage(mailRedis, providerId);
+  forgetUsage(() => sharedRedis, providerId);
 
 const providerCheck = createProviderCheck({
   findProvider,

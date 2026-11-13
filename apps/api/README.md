@@ -68,11 +68,13 @@ image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
 
 | Endpoint | Guard | Does |
 |---|---|---|
-| `GET /v1/images?app=&cursor=&limit=` | none | the Images visible in `app` (any App when left out): placed there, and public or in an App the User enters; newest upload first; `nextCursor` (opaque) pages; never 403 |
+| `GET /v1/images?app=&page=&perPage=&search=` | none | a numbered page of the Images visible in `app` (any App when left out): placed there, and public or in an App the User enters; newest upload first (`search` is one string of `access:public,private`, `app:laura,back_office` and `input:<text>` pairs, ADR 0026, the text matching the alt in any language or the file name, ignoring case; an unknown field or value is dropped); never 403. Answers `images`, `page`, `pageCount`, `total` and `totalBytes` of every visible Image |
 | `GET /v1/images/:id` | none; 404 unless visible in some App | one Image |
 | `POST /v1/images` | Session; `ADMIN` in every App named (a User who is `ADMIN` in no App is refused before the body is read) | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [{ app, public? }], alt: { en, it } }]` in file order |
 | `PATCH /v1/images` | Session; `ADMIN` in each App whose placement is added, removed or switched public; for `alt`, in every App the Image is in | `[{ id, apps?, alt? }]`, each Image once: `apps` is the full new list; a `public` left out keeps the placement's own |
 | `DELETE /v1/images` | Session; with `app`, `ADMIN` there; without, in every App the Image is in | `{ ids, app? }`: with `app`, takes the Images out of it and deletes those left in none; without, deletes them everywhere; rows first, then files |
+| `GET /v1/user-usage/overview` | Session; a Back Office `ADMIN`, read now | `total`: every User once, and `byApp`: for each App that has a member, its `count` of members and its `admins` (a User in two Apps counts in both) |
+| `GET /v1/storage/overview` | Session; a Back Office `ADMIN`, read now | `buckets`: each bucket the API reads, `{ id, reading }` (`reading`: `objects`, `bytes`, `asOf`; Avatars included in the Images' bucket; listed at most every 5 minutes, kept in Redis per bucket; `null` when it cannot be listed), and `images`: the Images by App (`byApp`: public and private bytes and counts) with `total`, `totalBytes`, and `avatars`: the Avatars by App (`byApp`: bytes and count; a User's file counts in every App they are in), listed fresh |
 
 - **All or nothing.** One bad file rejects the whole upload (415), an unknown
   id rejects a whole PATCH or DELETE (404). A failed insert deletes the files

@@ -11,12 +11,12 @@ import {
 } from "@allonfire/database/features/auth/access/access";
 import { createFactory } from "hono/factory";
 import { validator } from "hono-openapi";
+import { IMAGE } from "../../constants/image";
 import {
-  type ImageListBody,
+  type ImagePageBody,
   idParamSchema,
   listQuerySchema,
 } from "../constants/schemas";
-import { encodeCursor } from "../utils/cursor";
 import type { ImageDeps } from "../utils/deps";
 import { toImageBody } from "../utils/image-body";
 import { getRoute, listRoute } from "./routes";
@@ -24,7 +24,7 @@ import { getRoute, listRoute } from "./routes";
 const factory = createFactory<AuthEnv>();
 
 /**
- * The Images visible in `app`, or in any App when it is left out (ADR 0020).
+ * A numbered page of the Images visible in `app`, or in any App when it is left out (ADR 0020).
  * No Session needed and nobody is refused: a visitor, or a User who cannot
  * enter `app`, gets its public Images, so an App can have public pages.
  */
@@ -33,17 +33,25 @@ export const listHandlers = (deps: ImageDeps) =>
     listRoute,
     validator("query", listQuerySchema, invalidHook),
     async (c) => {
-      const query = c.req.valid("query");
-      const images = await deps.listImages({
-        ...query,
+      const { app, page, perPage, search } = c.req.valid("query");
+      const { access, app: apps, text } = IMAGE.SEARCH.parse(search);
+      const { images, total, totalBytes } = await deps.listImagesPage({
+        ...(access && { accesses: access }),
+        ...(app && { app }),
+        ...(apps && { apps }),
         enterable: enterableApps(c.get(AUTH.VAR.SESSION)?.user ?? null),
+        page,
+        perPage,
+        ...(text && { text }),
       });
-      const last = images.at(-1);
+      const now = new Date();
       const body = {
-        images: images.map((image) => toImageBody(image, new Date())),
-        nextCursor:
-          images.length === query.limit && last ? encodeCursor(last) : null,
-      } satisfies ImageListBody;
+        images: images.map((image) => toImageBody(image, now)),
+        page,
+        pageCount: Math.ceil(total / perPage),
+        total,
+        totalBytes,
+      } satisfies ImagePageBody;
       return c.json(body, HTTP.STATUS.OK);
     }
   );

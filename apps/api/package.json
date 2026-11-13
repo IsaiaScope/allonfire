@@ -6,6 +6,7 @@
   "exports": {
     "./client": "./src/client.ts",
     "./features/services/constants/services": "./src/features/services/constants/services.ts",
+    "./features/storage-usage/constants/storage-usage": "./src/features/storage-usage/constants/storage-usage.ts",
     "./shared/constants/api": "./src/shared/constants/api.ts"
   },
   "scripts": {

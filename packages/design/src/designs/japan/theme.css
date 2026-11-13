@@ -99,9 +99,12 @@
   --toast-info: #005a94;
   --toast-error: #a50d26;
 
+  /* The series, each from the theme's own colours (the primary blue, the
+     line green deepened, the warning orange) and each 3:1 on a card, so a bar
+     reads without its legend. */
   --chart-1: #006fb3;
-  --chart-2: #00a650;
-  --chart-3: #f39700;
+  --chart-2: #2e7a4f;
+  --chart-3: #a35c00;
   --chart-4: #5c6570;
   --chart-5: #1a1a1a;
 
@@ -143,6 +146,14 @@
   --success: #3cc27a;
   --warning: #f39700;
   --info: #3a9ee0;
+
+  /* The same series at night: the night primary, success and warning, and the
+     muted and plain text greys. */
+  --chart-1: #3a9ee0;
+  --chart-2: #3cc27a;
+  --chart-3: #f39700;
+  --chart-4: #a3acb6;
+  --chart-5: #eef0f2;
 
   --sidebar: #20252b;
   --sidebar-foreground: #eef0f2;

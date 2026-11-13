@@ -24,6 +24,10 @@ type Placements = ReadonlyMap<string, ImageVisibility>;
  * batch first, then 403, so a refused batch never tells which ids exist.
  */
 
+/** Whether `user` may see `image`, and, given an `app`, it is placed in it. */
+const isVisible = (user: AccessUser, image: ImageVisibility, app?: App) =>
+  (app === undefined || image.apps.includes(app)) && canSeeImage(user, image);
+
 /** 404 unless the User sees every Image somewhere, and each is placed in `app` when one is named. */
 const assertVisible = (
   user: AccessUser,
@@ -31,8 +35,7 @@ const assertVisible = (
   app?: App
 ) => {
   for (const image of images) {
-    const inApp = app === undefined || image.apps.includes(app);
-    if (!(inApp && canSeeImage(user, image))) {
+    if (!isVisible(user, image, app)) {
       throw notFound();
     }
   }
@@ -82,22 +85,30 @@ export const authoriseUpload = (
 };
 
 /**
- * A DELETE batch checked against each Image's current placements: 404 unless
- * every Image is visible (and placed in `app`, when named); then 403. Out of
- * one App, Admin there is enough, since the other Apps keep the Image; gone
- * everywhere, Admin in every App each Image is in.
+ * A DELETE batch checked against each Image's current placements. An id the
+ * User cannot see (or that is not placed in `app`, when named) reads as one
+ * that is not there: skipped, so a refusal never tells which ids exist. Of the
+ * rest, 403 unless the User may delete them all: out of one App, Admin there is
+ * enough, since the other Apps keep the Image; gone everywhere, Admin in every
+ * App each Image is in. Returns the ids to delete.
  */
 export const authoriseDelete = (
   user: AccessUser,
   current: Placements,
   app?: App
-) => {
-  assertVisible(user, current.values(), app);
+): string[] => {
+  const visible = [...current].filter(([, image]) =>
+    isVisible(user, image, app)
+  );
   if (app) {
     assertManages(user, [app]);
   } else {
-    assertManagesEverywhere(user, current.values());
+    assertManagesEverywhere(
+      user,
+      visible.map(([, image]) => image)
+    );
   }
+  return visible.map(([id]) => id);
 };
 
 /**

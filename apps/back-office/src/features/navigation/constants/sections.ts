@@ -2,6 +2,7 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
   IconHome,
   IconMail,
+  IconPhoto,
   IconServer2,
   IconServerCog,
   IconUsers,
@@ -16,7 +17,7 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 type SectionLabel = "home" | "services" | "storage" | "users";
 
 /** A Section's own page's key in `Navigation`, as the sub-menu names it. */
-type SectionPageLabel = "mail";
+type SectionPageLabel = "images" | "mail";
 
 /** One of a Section's own pages, listed under it in the sidebar. */
 type SectionSubPage = {
@@ -55,6 +56,13 @@ export const SECTION = {
   STORAGE: {
     icon: IconServer2,
     label: "storage",
+    pages: [
+      {
+        icon: IconPhoto,
+        label: "images",
+        path: BACK_OFFICE.PAGE.STORAGE_IMAGES,
+      },
+    ],
     path: BACK_OFFICE.PAGE.STORAGE,
   },
   USERS: { icon: IconUsers, label: "users", path: BACK_OFFICE.PAGE.USERS },

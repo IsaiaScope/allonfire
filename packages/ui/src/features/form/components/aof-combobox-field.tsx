@@ -39,10 +39,6 @@ const aofComboboxInput = cva(
   { variants: { icon: { false: "", true: "[&_input]:pl-12" } } }
 );
 
-/** A choice row as tall and as large as the field, as the Users filters'
- *  lists draw theirs. */
-const OPTION = "min-h-(--field-height) px-3 text-base";
-
 const optionLabel = (option: AOFComboboxOption) => option.label;
 const optionValue = (option: AOFComboboxOption) => option.value;
 const sameOption = (a: AOFComboboxOption, b: AOFComboboxOption) =>
@@ -112,7 +108,8 @@ export const AOFComboboxField = ({
           <ComboboxList>
             {(option: AOFComboboxOption) => (
               <ComboboxItem
-                className={OPTION}
+                // A choice row as tall and as large as the field, as the Users filters' lists draw theirs.
+                className="min-h-(--field-height) px-3 text-base"
                 key={option.value}
                 value={option}
               >
