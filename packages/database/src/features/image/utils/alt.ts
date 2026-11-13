@@ -4,20 +4,21 @@ import { z } from "zod";
 import type { Prisma } from "../../../../generated/prisma/client";
 
 /** Screen readers read alt aloud; past a sentence or two it belongs in a caption. */
-const MAX_ALT_LENGTH = 300;
+export const MAX_ALT_LENGTH = 300;
 const altTextSchema = z.string().max(MAX_ALT_LENGTH);
 
 /**
- * Every base language is required, any other content language optional, so
- * adding a language needs no data migration. An empty string marks a
- * decorative Image. A language no Host speaks is dropped.
+ * Every base language is required, any other content language (the whole
+ * ISO 639-1 catalogue) optional, so writing alt in one needs no code change or
+ * data migration. An empty string marks a decorative Image. A language outside
+ * the catalogue is dropped.
  */
 export const imageAltSchema = z.object({
   ...objectFromEntries(
     I18N.BASE_LANGUAGES.map((language) => [language, altTextSchema] as const)
   ),
   ...objectFromEntries(
-    I18N.EXTRA_LANGUAGES.map(
+    I18N.OPTIONAL_LANGUAGES.map(
       (language) => [language, altTextSchema.optional()] as const
     )
   ),

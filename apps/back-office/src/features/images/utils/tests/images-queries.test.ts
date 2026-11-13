@@ -8,7 +8,13 @@ import { hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { IMAGES_PAGE } from "@/shared/tests/msw/handlers";
 import { IMAGES } from "../../constants/images";
-import { fetchImages, imagesListKey, imagesQuery } from "../images-queries";
+import {
+  fetchImages,
+  imageKey,
+  imageQuery,
+  imagesListKey,
+  imagesQuery,
+} from "../images-queries";
 
 const api = hc<ApiType>(LOCAL.URL.TEST_API);
 const PARAMS = {
@@ -26,6 +32,18 @@ describe("imagesQuery", () => {
 
   it("keys a page by the address that asked for it", () => {
     expect(imagesListKey(PARAMS)).toEqual(QUERY.IMAGES.LIST(PARAMS));
+  });
+});
+
+describe("imageQuery", () => {
+  it("keys one Image by its id", () => {
+    expect(imageKey("image-1")).toEqual(QUERY.IMAGES.ONE("image-1"));
+  });
+
+  // Asked again only by an action: never on a clock, a focus or a reconnect
+  // (the form's Version must stay the one it opened with).
+  it("is never stale, so only an action asks for it again", () => {
+    expect(imageQuery(api, "image-1").staleTime).toBe("static");
   });
 });
 

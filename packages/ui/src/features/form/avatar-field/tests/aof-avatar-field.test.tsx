@@ -34,6 +34,7 @@ describe("AOFAvatarField", () => {
 });
 
 const CURRENT = "https://images.test/avatar-u-1.avif";
+const BLUR = "data:image/avif;base64,AAAA";
 const REMOVED_INPUT = new RegExp(`name="${avatarRemoval("avatar").name}"`);
 
 describe("AOFAvatarField with a current picture", () => {
@@ -42,6 +43,18 @@ describe("AOFAvatarField with a current picture", () => {
     expect(html).toContain(CURRENT);
     expect(html).toContain(AVATAR_FIELD.LABELS.current);
     expect(html).toContain(AVATAR_FIELD.LABELS.change);
+  });
+
+  it("shows the current picture's blur while it loads", () => {
+    const html = renderToStaticMarkup(
+      <AvatarForm current={CURRENT} currentBlur={BLUR} />
+    );
+    expect(html).toContain(BLUR);
+  });
+
+  it("shows no blur when the picture has none", () => {
+    const html = renderToStaticMarkup(<AvatarForm current={CURRENT} />);
+    expect(html).not.toContain("data:image");
   });
 
   it("posts no removal while the current picture stays, nor without one", () => {

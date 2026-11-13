@@ -142,15 +142,14 @@ describe("GET /openapi.json", () => {
     );
   });
 
-  it("shows an Image's access and signed links, and no per-App public or file name", async () => {
+  it("shows an Image's access, signed links and stored file name, and no per-App public", async () => {
     const schemas = specSchema.parse(await fullSpec()).components?.schemas;
     const image = z
       .object({ properties: z.record(z.string(), z.unknown()) })
       .parse(schemas?.Image);
     expect(objectKeys(image.properties)).toEqual(
-      expect.arrayContaining(["access", "srcSet", "apps"])
+      expect.arrayContaining(["access", "srcSet", "apps", "key"])
     );
-    expect(objectKeys(image.properties)).not.toContain("key");
     expect(objectKeys(schemas ?? {})).not.toContain("ImagePlacement");
   });
 

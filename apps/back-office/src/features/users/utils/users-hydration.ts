@@ -5,7 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
 import type { UsersParams } from "../constants/users-params";
-import { fetchUsers, usersListKey } from "./users-queries";
+import { fetchUser, fetchUsers, userKey, usersListKey } from "./users-queries";
 
 /**
  * One page of Users as the visitor's Session reads it (the API checks them),
@@ -25,6 +25,27 @@ export const usersHydration = async (params: UsersParams) => {
   queryClient.setQueryData(
     usersListKey(params),
     await fetchUsers(sessionApi(await readSessionCookie()), params)
+  );
+  return dehydrate(queryClient);
+};
+
+/**
+ * One User as the visitor's Session reads them, ready for their edit form
+ * under the key it reads back. Kept in the visitor's browser only (`"use
+ * cache: private"`) under the list's tag, so a link prefetches the page; the
+ * form sends the User's `version` and the API refuses a save on an older
+ * one (ADR 0028). Dehydrated inside that cache, like the list. A refusal,
+ * an unknown id included, is thrown, never kept: the view asks again and
+ * tells it is gone.
+ */
+export const userHydration = async (id: string) => {
+  "use cache: private";
+  cacheTag(USERS.CACHE.TAG);
+  cacheLife(USERS.CACHE.LIFE);
+  const queryClient = AOFGetQueryClient();
+  queryClient.setQueryData(
+    userKey(id),
+    await fetchUser(sessionApi(await readSessionCookie()), id)
   );
   return dehydrate(queryClient);
 };

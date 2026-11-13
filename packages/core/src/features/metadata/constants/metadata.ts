@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ContentLanguage } from "../../i18n/constants/locales";
+import type { HostLanguage } from "../../i18n/constants/locales";
 
 /**
  * Whether search engines may list an App's pages (CONTEXT.md, Indexing).
@@ -65,7 +65,7 @@ const LAUNCH_DEVICES = [
 const OG_LOCALE = {
   en: "en_US",
   it: "it_IT",
-} as const satisfies Record<ContentLanguage, string>;
+} as const satisfies Record<HostLanguage, string>;
 
 /**
  * Where Next serves each metadata file, the same in every App. The proxy

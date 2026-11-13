@@ -6,6 +6,7 @@ import { IconTrashX } from "@tabler/icons-react";
 import { StationAlert } from "@/shared/components/station-alert";
 import {
   ToolbarActionBody,
+  type ToolbarActionShape,
   toolbarActionClass,
 } from "@/shared/components/toolbar-action";
 import type { useBulkDeleteFlow } from "@/shared/hooks/use-bulk-delete-flow";
@@ -26,6 +27,7 @@ export const BulkDeleteControl = ({
   count,
   flow: { ask, asking, confirm, isPending, setAsking },
   kanji,
+  shape = "icon",
   t,
 }: {
   /** How many rows are selected. */
@@ -33,13 +35,15 @@ export const BulkDeleteControl = ({
   flow: ReturnType<typeof useBulkDeleteFlow>;
   /** The feature's delete kanji. */
   kanji: string;
+  /** `icon` in a toolbar; `labeled` in a page's own header, where there is room. */
+  shape?: Extract<ToolbarActionShape, "icon" | "labeled"> | undefined;
   t: BulkDeleteControlWords;
 }) => (
   <>
     <AOFTooltip label={t("action")}>
       <AOFButton
         aria-label={t("action")}
-        className={toolbarActionClass("icon", "destructive")}
+        className={toolbarActionClass(shape, "destructive")}
         disabled={count === 0 || isPending}
         onClick={ask}
       >
@@ -47,7 +51,7 @@ export const BulkDeleteControl = ({
           icon={<IconTrashX aria-hidden />}
           kanjiProps={{ kanji }}
           label={t("action")}
-          shape="icon"
+          shape={shape}
         />
       </AOFButton>
     </AOFTooltip>

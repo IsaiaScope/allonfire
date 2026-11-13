@@ -14,6 +14,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { SECTIONS } from "../src/features/navigation/constants/sections";
 import { sectionHref } from "../src/features/navigation/utils/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { imageLink } from "./images-flow";
 import {
   onPhone,
   openSidebar,
@@ -42,12 +43,23 @@ const userPath = async (page: Page) => {
   );
 };
 
+/** An Image's page: its address is the list's link to a Fixture Image. */
+const imagePath = async (page: Page) => {
+  await page.goto(BACK_OFFICE.PAGE.STORAGE_IMAGES);
+  return (
+    (await imageLink(page, FIXTURE.IMAGE.HEIC_IN_BACK_OFFICE.alt.en)
+      .first()
+      .getAttribute("href")) ?? ""
+  );
+};
+
 /** An address for each page whose path has a param; a new one fails until
  *  it has its own here. */
 const ADDRESS: Record<string, (page: Page) => Promise<string> | string> = {
   // Nothing serves it: the not-found page.
   "/[...rest]": () => "/no-such-page",
   [`${BACK_OFFICE.PAGE.USERS}/[id]`]: userPath,
+  [`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/[id]`]: imagePath,
 };
 
 const PAGES = appRoutes(

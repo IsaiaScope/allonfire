@@ -14,17 +14,18 @@ import { SignCard, SignCardFoot } from "@/shared/components/sign-card";
 import { IMAGES } from "../constants/images";
 import {
   AccessChip,
+  AltText,
   AppsOf,
+  CopyName,
   ImageThumb,
   OpenImage,
-  useAltLanguage,
 } from "./image-columns";
 
 /**
  * An Image on a phone, as a platform sign: the line's colour along its foot
  * and 写 brushed large and faint behind, cut by its corner; its picture large
- * at the left and, to its right, its alt (cut after two lines) and whether it
- * is public or private; under both, its size, dimensions and the Apps it is
+ * at the left and, to its right, its stored file name (a click copies it), its
+ * alt (cut after two lines) and whether it is public or private; under both, its size, dimensions and the Apps it is
  * in, each under a small label (never joined by a middle dot); last, its
  * selection checkbox (`select`) at the left and when it was added at the right.
  */
@@ -59,16 +60,20 @@ export const ImageCard = ({
   ...props
 }: ImageCardProps) => {
   const t = useTranslations("Images.column");
-  const language = useAltLanguage();
   return (
     <SignCard className={className} kanji={IMAGES.ADD_KANJI} {...props}>
       <AOFCardContent className="flex flex-col gap-3">
         <div className="flex gap-4">
           <ImageThumb image={image} size="card" />
           <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+            <CopyName
+              className="font-mono font-semibold text-sm"
+              name={image.key}
+              wrap
+            />
             <OpenImage image={image}>
               <span className="wrap-break-word line-clamp-2 text-base leading-snug">
-                {image.alt[language] || image.alt.en}
+                <AltText image={image} />
               </span>
             </OpenImage>
             <AccessChip access={image.access} />

@@ -5,12 +5,13 @@ import { AOFAvatarField } from "../avatar-field/components/aof-avatar-field";
 import { AOFChoiceField } from "../components/aof-choice-field";
 import { AOFComboboxField } from "../components/aof-combobox-field";
 import { AOFTextField } from "../components/aof-text-field";
+import { AOFToggleGroupField } from "../components/aof-toggle-group-field";
 import { fieldContext, formContext } from "./form-context";
 
 /**
  * The hook every AOF form is built with (ADR 0017): TanStack Form with the
  * AOF field components bound, so `form.AppField` hands its children
- * `field.TextField`, `field.ChoiceField`, `field.ComboboxField` and
+ * `field.TextField`, `field.ChoiceField`, `field.ToggleGroupField`, `field.ComboboxField` and
  * `field.AvatarField`. `AOFSubmitButton` reads nothing from the form, so a form
  * imports it directly. Fields two forms share are one field group,
  * `withAOFFieldGroup` (TanStack's `withFieldGroup`): each form hands it
@@ -23,6 +24,7 @@ export const { useAppForm: useAOFForm, withFieldGroup: withAOFFieldGroup } =
       ChoiceField: AOFChoiceField,
       ComboboxField: AOFComboboxField,
       TextField: AOFTextField,
+      ToggleGroupField: AOFToggleGroupField,
     },
     fieldContext,
     formComponents: {},

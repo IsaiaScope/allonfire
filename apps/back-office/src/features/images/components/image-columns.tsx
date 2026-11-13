@@ -1,6 +1,9 @@
 "use client";
 
-import { contentLanguageSchema } from "@allonfire/core/features/i18n/constants/locales";
+import {
+  hostLanguageSchema,
+  I18N,
+} from "@allonfire/core/features/i18n/constants/locales";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { objectValues } from "@allonfire/core/shared/utils/object";
@@ -13,26 +16,32 @@ import { AOFStorageImage } from "@allonfire/ui/shared/components/aof-image";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { type ComponentProps, useMemo } from "react";
 import { Link } from "@/features/i18n/navigation";
+import { CopyText } from "@/shared/components/copy-text";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { useCreated } from "@/shared/utils/use-created";
+import { IMAGES } from "../constants/images";
+import { altFor } from "../utils/image-alt";
 import { imageHref } from "../utils/image-href";
 
 const helper = aofColumnHelper<ImageBody>();
 
 /** A thumbnail's tile: 48px beside the table's alt, 96px on a phone's card. */
-const thumb = cva("shrink-0 overflow-hidden rounded-md bg-muted", {
-  defaultVariants: { size: "row" },
-  variants: { size: { card: "size-24", row: "size-12" } },
-});
-const THUMB_PX = { card: 96, row: 48 } as const;
+// A block, so its size holds in a table cell as it did in a flex row.
+const thumb = cva(
+  "block shrink-0 overflow-hidden rounded-md bg-cover bg-muted",
+  {
+    defaultVariants: { size: "row" },
+    variants: { size: { card: "size-24", page: "size-40", row: "size-12" } },
+  }
+);
 
 /** The content language the page speaks: the alt shows in it. */
 export const useAltLanguage = () => {
   const locale = useLocale();
-  const parsed = contentLanguageSchema.safeParse(locale);
-  return parsed.success ? parsed.data : "en";
+  const parsed = hostLanguageSchema.safeParse(locale);
+  return parsed.success ? parsed.data : I18N.DEFAULT_LANGUAGE;
 };
 
 /**
@@ -70,33 +79,62 @@ export const ImageThumb = ({
   size = "row",
 }: {
   image: ImageBody;
-  size?: "card" | "row";
+  size?: "card" | "page" | "row";
 }) => {
   const language = useAltLanguage();
   return (
-    <span className={thumb({ size })}>
+    // The blur behind the picture: where it does not fill its square (it keeps
+    // its shape) the square shows the picture's own colours, and the picture
+    // itself loads over it.
+    <span
+      className={thumb({ size })}
+      style={{ backgroundImage: `url("${image.blurDataUrl}")` }}
+    >
       <AOFStorageImage
-        className="size-full object-cover"
+        className="size-full object-contain"
         image={image}
         language={language}
-        sizes={`${THUMB_PX[size]}px`}
+        // The Edit page's picture is its largest content, above the fold.
+        lcp={size === "page"}
+        // The tile paints the blur: the same before and after the picture loads.
+        placeholder="empty"
+        sizes={`${IMAGES.THUMB_PX[size]}px`}
       />
     </span>
   );
 };
 
-/** The picture on its tile, with its alt in the page's language beside it. */
-const ImageIdentity = ({ image }: { image: ImageBody }) => {
-  const language = useAltLanguage();
+/** The picture's stored file name, copied on a click: what the storage console lists it as. */
+export const CopyName = ({
+  name,
+  ...props
+}: Omit<ComponentProps<typeof CopyText>, "labels" | "value"> & {
+  name: string;
+}) => {
+  const t = useTranslations("Images.copy");
   return (
-    <span className="flex min-w-0 items-center gap-3">
-      <ImageThumb image={image} />
-      <span className="min-w-0 truncate text-base">
-        <OpenImage image={image}>
-          {image.alt[language] || image.alt.en}
-        </OpenImage>
-      </span>
-    </span>
+    <CopyText
+      {...props}
+      labels={{
+        done: t("done"),
+        failed: t("failed"),
+        label: t("label", { name }),
+        tip: t("tip"),
+      }}
+      value={name}
+    />
+  );
+};
+
+/** An Image's alt in the page's language, or a muted note that it has none. */
+export const AltText = ({ image }: { image: ImageBody }) => {
+  const t = useTranslations("Images.column");
+  const language = useAltLanguage();
+  const alt = altFor(image.alt, language);
+  return alt ? (
+    alt
+  ) : (
+    <span className="text-muted-foreground">{t("noAlt")}</span>
   );
 };
 
@@ -130,7 +168,7 @@ export const AppsOf = ({
 );
 
 /**
- * The picture and its alt, its dimensions in pixels, its file size in
+ * The picture, its stored file name (a click copies it), its alt, its dimensions in pixels, its file size in
  * megabytes, public or private, the Apps it is in, and when it was added.
  */
 export const useImageColumns = () => {
@@ -140,11 +178,36 @@ export const useImageColumns = () => {
     () =>
       helper.columns([
         helper.display({
-          cell: ({ row }) => <ImageIdentity image={row.original} />,
+          cell: ({ row }) => <ImageThumb image={row.original} />,
           header: t("image"),
           id: "image",
-          maxSize: 480,
-          minSize: 240,
+          maxSize: 96,
+          minSize: 84,
+        }),
+        helper.display({
+          cell: ({ row }) => (
+            <CopyName
+              className="min-w-0 shrink font-mono text-sm"
+              name={row.original.key}
+            />
+          ),
+          header: t("name"),
+          id: "name",
+          maxSize: 380,
+          minSize: 220,
+        }),
+        helper.display({
+          cell: ({ row }) => (
+            <span className="block min-w-0 truncate text-base">
+              <OpenImage image={row.original}>
+                <AltText image={row.original} />
+              </OpenImage>
+            </span>
+          ),
+          header: t("alt"),
+          id: "alt",
+          maxSize: 320,
+          minSize: 160,
         }),
         helper.display({
           cell: ({ row }) => `${row.original.width} × ${row.original.height}`,

@@ -1,3 +1,4 @@
+import ISO6391, { type LanguageCode } from "iso-639-1";
 import { z } from "zod";
 import type { ElementOf } from "../../../shared/utils/object";
 
@@ -47,29 +48,47 @@ export const languageSchema = z.enum(BASE_LANGUAGES);
 
 /**
  * Languages a Host speaks beyond the base ones. Add one here before any Host
- * routes it: stored content (an Image's alt) then accepts it without a
- * migration, and every Host that reads it falls back to `DEFAULT_LANGUAGE`.
+ * routes it; it must be one of the `CONTENT_LANGUAGES`. A Host that reads
+ * content in a language it does not speak falls back to `DEFAULT_LANGUAGE`.
  */
 const EXTRA_LANGUAGES = [] as const;
 
-/** Every language any Host speaks. */
-const CONTENT_LANGUAGES = [...BASE_LANGUAGES, ...EXTRA_LANGUAGES] as const;
-export type ContentLanguage = ElementOf<typeof CONTENT_LANGUAGES>;
-export const contentLanguageSchema = z.enum(CONTENT_LANGUAGES);
+/** The languages a Host can route: the base ones and the extras. */
+const HOST_LANGUAGES = [...BASE_LANGUAGES, ...EXTRA_LANGUAGES] as const;
+export type HostLanguage = ElementOf<typeof HOST_LANGUAGES>;
+export const hostLanguageSchema = z.enum(HOST_LANGUAGES);
 
-/** A Host's languages: every base language first, then content languages. */
+/**
+ * Every language AllOnFire knows, the ISO 639-1 list: stored content (an
+ * Image's alt) accepts any of them with no migration, and only the base
+ * languages are required. Whether a Host speaks one is `HOST_LANGUAGES`.
+ * @internal
+ */
+export type ContentLanguage = LanguageCode;
+export const contentLanguageSchema = z.string().refine(ISO6391.validate);
+
+/** Every content language except the base ones: the optional ones. */
+const OPTIONAL_LANGUAGES = ISO6391.getAllCodes().filter(
+  (code): code is Exclude<ContentLanguage, Language> =>
+    !languageSchema.safeParse(code).success
+);
+
+/** The base languages first, then the optional ones. */
+const CONTENT_LANGUAGES = [...BASE_LANGUAGES, ...OPTIONAL_LANGUAGES] as const;
+
+/** A Host's languages: every base language first, then host languages. */
 export type HostLanguages = readonly [
   ...typeof BASE_LANGUAGES,
-  ...ContentLanguage[],
+  ...HostLanguage[],
 ];
 
 /**
- * A Host's languages: every base language, then any content languages it
+ * A Host's languages: every base language, then any extra languages it
  * adds, `defineLanguages([...BASE_LANGUAGES, "fr"])`. Dropping a base
- * language, or adding one not in `CONTENT_LANGUAGES`, fails to compile.
+ * language, or adding one not in `EXTRA_LANGUAGES`, fails to compile.
  * @internal
  */
-export const defineLanguages = <const L extends readonly ContentLanguage[]>(
+export const defineLanguages = <const L extends readonly HostLanguage[]>(
   languages: readonly [...typeof BASE_LANGUAGES, ...L]
 ) => languages;
 
@@ -79,6 +98,8 @@ export const I18N = {
   CONTENT_LANGUAGES,
   DEFAULT_LANGUAGE,
   EXTRA_LANGUAGES,
+  HOST_LANGUAGES,
   LOCALE,
+  OPTIONAL_LANGUAGES,
   SUPPORTED_LOCALES,
 } as const;

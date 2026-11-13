@@ -7,90 +7,39 @@ import { roleIn } from "@allonfire/database/features/auth/access/access";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { useAOFIntentPrefetch } from "@allonfire/ui/features/query/hooks/use-aof-intent-prefetch";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
-import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconBarrierBlockOff, IconChevronRight } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
-import {
-  type ComponentProps,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type ComponentProps, useMemo } from "react";
 import { Link } from "@/features/i18n/navigation";
+import { CopyText } from "@/shared/components/copy-text";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { useCreated } from "@/shared/utils/use-created";
-import { USERS } from "../constants/users";
 import { userHref } from "../utils/user-href";
 
 const helper = aofColumnHelper<UserBody>();
 
-/**
- * The email, copied on a click; above the row's link, which covers the rest
- * of the row. Its tip says it copies; after a click, a tap or a key, it opens
- * on its own to say it copied (aloud too) for `USERS.COPIED_MS`, since a touch
- * never hovers.
- */
+/** The email, copied on a click (`CopyText`, in Users' words). */
 export const CopyEmail = ({
-  className,
   email,
   ...props
-}: Omit<ComponentPropsWithoutChildren<typeof AOFButton>, "onClick"> & {
+}: Omit<ComponentProps<typeof CopyText>, "labels" | "value"> & {
   email: string;
 }) => {
   const t = useTranslations("Users.copy");
-  // A new object each copy, so a second copy restarts the tip's time.
-  const [copy, setCopy] = useState<{ result: "done" | "failed" } | null>(null);
-  const copied = copy?.result ?? null;
-  const [hovered, setHovered] = useState(false);
-  const copyEmail = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopy({ result: "done" });
-    } catch {
-      setCopy({ result: "failed" });
-    }
-  }, [email]);
-  useEffect(() => {
-    if (!copy) {
-      return;
-    }
-    const timer = setTimeout(() => setCopy(null), USERS.COPIED_MS);
-    return () => clearTimeout(timer);
-  }, [copy]);
-  const open = hovered || copied !== null;
-  // The words stay as they were while the tip closes, or its fading frame
-  // would say "Copy email" again after "Email copied".
-  const label = t(copied ?? "tip");
-  const [shown, setShown] = useState(label);
-  if (open && shown !== label) {
-    setShown(label);
-  }
   return (
-    <>
-      <AOFTooltip label={shown} onOpenChange={setHovered} open={open}>
-        <AOFButton
-          aria-label={t("label", { email })}
-          variant="link"
-          {...props}
-          className={cn(
-            "relative z-1 h-auto max-w-full justify-start p-0 text-base text-foreground",
-            className
-          )}
-          onClick={copyEmail}
-        >
-          <span className="min-w-0 truncate">{email}</span>
-        </AOFButton>
-      </AOFTooltip>
-      <span aria-live="polite" className="sr-only">
-        {copied ? t(copied) : null}
-      </span>
-    </>
+    <CopyText
+      {...props}
+      labels={{
+        done: t("done"),
+        failed: t("failed"),
+        label: t("label", { email }),
+        tip: t("tip"),
+      }}
+      value={email}
+    />
   );
 };
 

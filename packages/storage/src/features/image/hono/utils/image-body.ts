@@ -13,6 +13,7 @@ export const toImageBody = (image: ImageRecord, now: Date): ImageBody => ({
   createdAt: image.createdAt.toISOString(),
   height: image.height,
   id: image.id,
+  key: image.key,
   srcSet: pictureSrcSet(
     image.key,
     image.access === ImageAccess.PRIVATE ? privateLinkExpiry(now) : undefined

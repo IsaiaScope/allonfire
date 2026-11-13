@@ -5,6 +5,7 @@ import { type ReactNode, useCallback } from "react";
 import { useSelectableRows } from "@/shared/hooks/use-selectable-rows";
 import { ImageCard } from "../components/image-card";
 import { useAltLanguage, useImageColumns } from "../components/image-columns";
+import { altFor } from "../utils/image-alt";
 
 /** A row's card on a phone, around its selection box. */
 const imageCard = (row: AOFRow<ImageBody>, select: ReactNode) => (
@@ -20,7 +21,7 @@ export const useSelectableImages = () => {
   const label = useCallback(
     (row: AOFRow<ImageBody>) =>
       t("delete.select", {
-        alt: row.original.alt[language] || row.original.alt.en,
+        alt: altFor(row.original.alt, language),
       }),
     [language, t]
   );
