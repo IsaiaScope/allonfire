@@ -23,11 +23,11 @@ expectTypeOf(I18N.DEFAULT_LANGUAGE).toEqualTypeOf<"en">();
 // Every base language is a content language.
 expectTypeOf<Exclude<Language, ContentLanguage>>().toBeNever();
 
-// A Host's languages: the base ones first, then content languages.
+// A Host's languages: the base ones first, then its extra ones.
 expectTypeOf(defineLanguages([...I18N.BASE_LANGUAGES])).toEqualTypeOf<
   readonly ["en", "it"]
 >();
 // @ts-expect-error a Host cannot drop a base language
 defineLanguages(["en"]);
-// @ts-expect-error a language must be in I18N.CONTENT_LANGUAGES before a Host adds it
+// @ts-expect-error a language must be in EXTRA_LANGUAGES before a Host adds it
 defineLanguages([...I18N.BASE_LANGUAGES, "fr"]);

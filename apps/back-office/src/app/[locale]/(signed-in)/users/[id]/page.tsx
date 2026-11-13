@@ -1,15 +1,15 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
+import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
 import { App } from "@allonfire/database/enums";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionLoading } from "@/features/navigation/components/section-loading";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-import { EditUser } from "@/features/users/components/edit-user";
-import { readUser } from "@/features/users/utils/read-user";
+import { UserEditor } from "@/features/users/components/user-editor";
 import { userHref } from "@/features/users/utils/user-href";
+import { userHydration } from "@/features/users/utils/users-hydration";
 
 type UserPageProps = { params: Promise<{ id: string }> };
 
@@ -22,33 +22,29 @@ export const generateMetadata = async ({ params }: UserPageProps) =>
   pageMetadata(userHref((await params).id), "Users.detail.page");
 
 /**
- * The User, read through `readUser` (kept in the visitor's browser, so a
- * link prefetches it; the save is version-checked), and the form on them;
- * an unknown id is the 404. The Session is the page check's own read: whose
- * page it is, so their own Back Office Role stays locked.
+ * The User, read through `userHydration` (kept in the visitor's browser, so a
+ * link prefetches it; the save is version-checked) and handed to the form
+ * already filled: it reads the query back under the same key. An unknown id
+ * is the 404, drawn by the view. The Session is the page check's own read:
+ * whose page it is, so their own Back Office Role stays locked.
  */
 const UserForm = async ({ params }: UserPageProps) => {
   const { id } = await params;
-  // The User needs only the id, so both run at once (the API checks the
-  // Session on the read itself).
-  const [session, user] = await Promise.all([
-    requireAppSession(),
-    readUser(id),
-  ]);
-  if (!user) {
-    notFound();
-  }
+  const session = await requireAppSession();
+  const hydrate = () => userHydration(id);
   return (
     <SectionPage width="form">
-      {/* Opens fresh on every visit: no typed password kept in the page
-          Next hides on leaving. */}
-      <AOFFreshOnReturn>
-        <EditUser
-          manageApp={App.BACK_OFFICE}
-          selfId={session.user.id}
-          user={user}
-        />
-      </AOFFreshOnReturn>
+      <AOFHydratedBoundary hydration={hydrate}>
+        {/* Opens fresh on every visit: no typed password kept in the page
+            Next hides on leaving. */}
+        <AOFFreshOnReturn>
+          <UserEditor
+            id={id}
+            manageApp={App.BACK_OFFICE}
+            selfId={session.user.id}
+          />
+        </AOFFreshOnReturn>
+      </AOFHydratedBoundary>
     </SectionPage>
   );
 };

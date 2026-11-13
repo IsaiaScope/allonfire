@@ -140,7 +140,11 @@ describe("image.service reads", () => {
       data: { alt: { en: "The sea", fr: "La mer" } },
       where: { id },
     });
-    expect((await getImage(id))?.alt).toEqual({ en: "The sea", it: "The sea" });
+    expect((await getImage(id))?.alt).toEqual({
+      en: "The sea",
+      fr: "La mer",
+      it: "The sea",
+    });
   });
 
   it("keeps a stored empty alt empty, since it marks a decorative Image", async () => {

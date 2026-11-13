@@ -55,3 +55,30 @@ export const usersQuery = (client: ApiClient, params: UsersParams) =>
     retry: retryUsers,
     staleTime: USERS.CACHE.LIFE.stale * UNIT.MS_PER_SECOND,
   });
+
+/**
+ * One User's key, tagged with the body it holds: the page hydrates under it,
+ * so a wrong body or wrong id fail to compile, never a skipped hydration.
+ */
+export const userKey = (id: string) =>
+  queryOptions<Awaited<ReturnType<typeof fetchUser>>>({
+    queryKey: QUERY.USERS.ONE(id),
+  }).queryKey;
+
+/**
+ * One User, for their edit form. The page reads it on the server
+ * (`userHydration`) and the form reads it back under the same key. Never
+ * stale (`staleTime: "static"`, as the overviews'), so it is asked again only
+ * by an action (`invalidateQueries`), never on a clock, a focus or a
+ * reconnect: the form saves on the Version it opened with, and a newer one
+ * read meanwhile would let a save overwrite a change the form never showed;
+ * and a clock TanStack reads while the page prerenders blocks a soft
+ * navigation to it.
+ */
+export const userQuery = (client: ApiClient, id: string) =>
+  queryOptions({
+    queryFn: () => fetchUser(client, id),
+    queryKey: userKey(id),
+    retry: retryUsers,
+    staleTime: "static",
+  });

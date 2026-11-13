@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  type ContentLanguage,
+  type HostLanguage,
   I18N,
 } from "@allonfire/core/features/i18n/constants/locales";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import Image, { type ImageProps } from "next/image";
 import { srcSetLoader } from "../utils/image-server-loader";
+import { AOFPictureGuard } from "./aof-picture-guard";
 
 /** next/image's loading knobs; `lcp` sets them, so callers cannot disagree. */
 type LoadingProps = "fetchPriority" | "loading" | "preload" | "priority";
@@ -43,6 +44,9 @@ export const AOFImage = ({ lcp = false, ...props }: AOFImageProps) => {
   );
 };
 
+/** What `src` ends with so it never equals a link the loader answers. */
+const SRC_MARK = "#stored";
+
 /** What AOFStorageImage reads from an API Image: enough to size, blur and describe it. */
 export type AOFStorageImageSource = Pick<
   ImageBody,
@@ -56,14 +60,13 @@ type StoredProps =
   | "fill"
   | "height"
   | "loader"
-  | "placeholder"
   | "src"
   | "width";
 
 export type AOFStorageImageProps = Omit<AOFImageProps, StoredProps> & {
   image: AOFStorageImageSource;
   /** The page's language; picks the alt, English when the Image has none in it. */
-  language: ContentLanguage;
+  language: HostLanguage;
 };
 
 /**
@@ -72,22 +75,43 @@ export type AOFStorageImageProps = Omit<AOFImageProps, StoredProps> & {
  * App's optimizer; its real size (no layout shift), the blur until it loads
  * and the alt in the page's language. Everything else is AOFImage's. A client
  * component: the loader is a function.
+ *
+ * `placeholder="empty"` is for a caller that paints the blur itself on a tile
+ * behind the Image: Next's own blur is a filtered copy of it, so the two
+ * differ and the blur would change when the picture loads.
  */
 export const AOFStorageImage = ({
   image,
   language,
+  placeholder = "blur",
   ...props
-}: AOFStorageImageProps) => (
-  <AOFImage
-    {...props}
-    // Base languages are always stored; another content language can be missing.
-    alt={image.alt[language] ?? image.alt[I18N.DEFAULT_LANGUAGE]}
-    blurDataURL={image.blurDataUrl}
-    height={image.height}
-    loader={srcSetLoader(image.srcSet)}
-    placeholder="blur"
-    // The loader picks by width; next/image needs a src all the same.
-    src={image.srcSet.at(-1)?.url ?? ""}
-    width={image.width}
-  />
-);
+}: AOFStorageImageProps) => {
+  // Base languages are always stored; another content language can be missing.
+  const alt = image.alt[language] ?? image.alt[I18N.DEFAULT_LANGUAGE];
+  return (
+    <AOFPictureGuard
+      alt={alt}
+      blurDataUrl={image.blurDataUrl}
+      className={props.className}
+      resetKey={image.srcSet.map(({ url }) => url).join(" ")}
+    >
+      {(fail) => (
+        <AOFImage
+          {...props}
+          alt={alt}
+          blurDataURL={image.blurDataUrl}
+          height={image.height}
+          loader={srcSetLoader(image.srcSet)}
+          onError={fail}
+          placeholder={placeholder}
+          // The loader picks by width; next/image needs a src all the same, and
+          // warns in development when the loader answers with that very string
+          // (an Image stored at one width only does), so it gets a fragment the
+          // loader's links lack: a fragment is never sent to the server.
+          src={`${image.srcSet.at(-1)?.url ?? ""}${SRC_MARK}`}
+          width={image.width}
+        />
+      )}
+    </AOFPictureGuard>
+  );
+};

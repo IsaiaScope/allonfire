@@ -143,7 +143,10 @@ export const NameField = withAOFFieldGroup({
 
 /** The picture field's start, and what it can be told: the picture the User holds. */
 const NO_AVATAR: { avatar: File | null } = { avatar: null };
-const AVATAR_FIELD_PROPS: { current?: string | null | undefined } = {};
+const AVATAR_FIELD_PROPS: {
+  current?: string | null | undefined;
+  currentBlur?: string | null | undefined;
+} = {};
 
 /**
  * The picture field in the Japan Design, a field group both User forms bind
@@ -153,7 +156,7 @@ const AVATAR_FIELD_PROPS: { current?: string | null | undefined } = {};
 export const AvatarField = withAOFFieldGroup({
   defaultValues: NO_AVATAR,
   props: AVATAR_FIELD_PROPS,
-  render: ({ current, group }) => (
+  render: ({ current, currentBlur, group }) => (
     <WithFormWords>
       {(t) => (
         <group.AppField name={USERS.AVATAR_FIELD}>
@@ -161,6 +164,7 @@ export const AvatarField = withAOFFieldGroup({
             <field.AvatarField
               {...AVATAR_DRESS}
               current={current}
+              currentBlur={currentBlur}
               label={t("avatar.label")}
               labels={avatarLabelsOf(t)}
             />

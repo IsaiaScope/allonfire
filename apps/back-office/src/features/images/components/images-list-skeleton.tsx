@@ -7,11 +7,13 @@ import {
 import { imageRow } from "../utils/image-row";
 
 /** The table's columns as the list lays them out: the selection box, the
- *  picture and alt (the widest, filling the rest), its dimensions, file size,
- *  access, Apps and date, at the sizes `useImageColumns` gives them. The table's browser
- *  test checks the count against the real table. */
+ *  picture, its stored file name, its alt (the widest, filling the rest), its
+ *  dimensions, file size, access, Apps and date, at the sizes `useImageColumns`
+ *  gives them. The table's browser test checks the count against the real table. */
 const COLUMNS: readonly AOFDataTableSkeletonColumn[] = [
   { check: true, track: "48px" },
+  { track: "84px" },
+  { track: "minmax(0,300px)" },
   { track: "minmax(0,1fr)" },
   { track: "130px" },
   { track: "100px" },

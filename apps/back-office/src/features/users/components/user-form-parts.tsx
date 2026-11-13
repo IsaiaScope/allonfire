@@ -4,18 +4,10 @@ import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { entryRoles } from "@allonfire/database/features/auth/access/access";
 import { AOFChoiceField } from "@allonfire/ui/features/form/components/aof-choice-field";
-import { AOFSubmitButton } from "@allonfire/ui/features/form/components/aof-submit-button";
 import { withAOFFieldGroup } from "@allonfire/ui/features/form/utils/form";
-import { aofButtonVariants } from "@allonfire/ui/shared/components/aof-button";
-import {
-  type AOFToastKind,
-  aofToast,
-} from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
-  IconArrowBackUp,
   IconEye,
-  IconLoader2,
   IconLock,
   IconMailCheck,
   IconMailExclamation,
@@ -26,10 +18,8 @@ import {
   IconUserShield,
 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect } from "react";
-import { Link, useRouter } from "@/features/i18n/navigation";
-import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
-import { ACTION_KANJI } from "@/shared/constants/action-kanji";
+import type { ReactNode } from "react";
+import { FormActions, type FormSubmit } from "@/shared/components/form-actions";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { USERS } from "../constants/users";
@@ -194,56 +184,22 @@ const VerificationRowWords = ({
   children: (t: ReturnType<typeof useTranslations>) => ReactNode;
 }) => children(useTranslations());
 
-/** A form's submit button: its words, pictogram and kanji. */
-export type UserFormSubmit = {
-  icon: ReactNode;
-  kanji: string;
-  label: string;
-  pendingLabel: string;
-};
-
 /** A User form's last row: Cancel back to the list, and its submit, both kanji buttons. */
 export const UserFormActions = ({
   pending,
   submit,
 }: {
   pending: boolean;
-  submit: UserFormSubmit;
+  submit: FormSubmit;
 }) => {
   const t = useTranslations();
   return (
-    // At the bottom of the Section when the form is shorter; 8px under the
-    // form alert's kept place at least, as in Sign in.
-    <div className="mt-auto flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-      <Link
-        className={cn(
-          aofButtonVariants({ size: "field", variant: "destructive" }),
-          kanjiAction()
-        )}
-        href={BACK_OFFICE.PAGE.USERS}
-        // Back to the list with its rows already there (ADR 0028).
-        prefetch
-      >
-        <ActionKanji kanji={ACTION_KANJI.CANCEL} />
-        <IconArrowBackUp aria-hidden />
-        {t("Users.form.cancel")}
-      </Link>
-      <AOFSubmitButton
-        className={kanjiAction()}
-        pending={pending}
-        pendingChildren={
-          <>
-            <IconLoader2 aria-hidden className="animate-spin" />
-            {submit.pendingLabel}
-          </>
-        }
-        size="field"
-      >
-        <ActionKanji kanji={submit.kanji} />
-        {submit.icon}
-        {submit.label}
-      </AOFSubmitButton>
-    </div>
+    <FormActions
+      cancelHref={BACK_OFFICE.PAGE.USERS}
+      cancelLabel={t("Users.form.cancel")}
+      pending={pending}
+      submit={submit}
+    />
   );
 };
 
@@ -255,29 +211,4 @@ export const useUserFieldMessages = (): UserFieldMessages => {
     passwordMismatch: t("passwordMismatch"),
     passwordWeak: t("passwordWeak"),
   };
-};
-
-/** A notice's toast before the list opens: its words and kind. */
-type ListToast = { kind: AOFToastKind; message: string };
-
-/**
- * A User form's answer that sends it back to the list: the notice's toast,
- * when `toasts` lists it, then the list, where the change shows. A notice
- * it does not list, or none, leaves the form where it is.
- */
-export const useToastThenList = <TNotice extends string>(
-  notice: TNotice | undefined,
-  toasts: Partial<Record<TNotice, ListToast>>
-) => {
-  const router = useRouter();
-  const toast = notice === undefined ? undefined : toasts[notice];
-  const kind = toast?.kind;
-  const message = toast?.message;
-  useEffect(() => {
-    if (!(kind && message)) {
-      return;
-    }
-    aofToast(message, kind);
-    router.replace(BACK_OFFICE.PAGE.USERS);
-  }, [kind, message, router]);
 };

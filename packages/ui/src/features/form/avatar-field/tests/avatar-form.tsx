@@ -26,13 +26,20 @@ export const AVATAR_FIELD = {
 const NO_AVATAR: { avatar: File | null } = { avatar: null };
 
 /** The field in a form, holding `current` when given. */
-export const AvatarForm = ({ current }: { current?: string | null }) => {
+export const AvatarForm = ({
+  current,
+  currentBlur,
+}: {
+  current?: string | null;
+  currentBlur?: string | null;
+}) => {
   const form = useAOFForm({ defaultValues: NO_AVATAR });
   return (
     <form.AppField name="avatar">
       {(field) => (
         <field.AvatarField
           current={current}
+          currentBlur={currentBlur}
           label={AVATAR_FIELD.LABEL}
           labels={AVATAR_FIELD.LABELS}
         />

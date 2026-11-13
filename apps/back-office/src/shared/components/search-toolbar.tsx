@@ -3,7 +3,10 @@
 import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { AOFInput } from "@allonfire/ui/features/form/components/aof-input";
-import { AOFInputClear } from "@allonfire/ui/shared/components/aof-input-clear";
+import {
+  AOFInputClear,
+  aofInputWithEnd,
+} from "@allonfire/ui/shared/components/aof-input-clear";
 import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconSearch } from "@tabler/icons-react";
@@ -159,7 +162,8 @@ export const SearchToolbar = <Search extends { text: string }>({
             aria-label={searchLabel}
             className={cn(
               tiledControl(),
-              "pr-12 pl-13 [&::-webkit-search-cancel-button]:appearance-none"
+              aofInputWithEnd(),
+              "pl-13 [&::-webkit-search-cancel-button]:appearance-none"
             )}
             onChange={type}
             placeholder={searchLabel}

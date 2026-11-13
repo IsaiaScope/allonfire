@@ -4,24 +4,34 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { useAOFForm } from "../utils/form";
 
 const EmailForm = ({
+  clear,
+  empty,
+  hideLabel,
   icon,
   invalid,
   required,
   reveal,
   type = "email",
 }: {
+  clear?: string;
+  empty?: boolean;
+  hideLabel?: boolean;
   icon?: ReactNode;
   invalid?: boolean;
   required?: boolean;
   reveal?: string;
   type?: string;
 }) => {
-  const form = useAOFForm({ defaultValues: { email: "ada@example.com" } });
+  const form = useAOFForm({
+    defaultValues: { email: empty ? "" : "ada@example.com" },
+  });
   return (
     <form.AppField name="email">
       {(field) => (
         <field.TextField
           autoComplete="username"
+          clear={clear}
+          hideLabel={hideLabel}
           icon={icon}
           id="email"
           invalid={invalid}
@@ -38,6 +48,7 @@ const EmailForm = ({
 const ERROR_LINE = /<div class="min-h-6"><\/div>/;
 const BUTTON = /<button[^>]*>/;
 const BOLD_LABEL = /<label[^>]*class="[^"]*font-bold/;
+const HIDDEN_LABEL = /<label[^>]*class="[^"]*sr-only[^"]*"[^>]*>Email<\/label>/;
 const TALL_INPUT_WITH_ICON =
   /<input[^>]*class="[^"]*h-\(--field-height\)[^"]*pl-13/;
 const TILE =
@@ -83,6 +94,27 @@ describe("AOFTextField", () => {
 
   it("wraps its one input in no unnamed group", () => {
     expect(renderToStaticMarkup(<EmailForm />)).not.toContain('role="group"');
+  });
+
+  it("offers a named clear button at its end while it holds text", () => {
+    const html = renderToStaticMarkup(<EmailForm clear="Clear the email" />);
+    expect(html.match(BUTTON)?.[0]).toContain('aria-label="Clear the email"');
+    expect(html).toContain("pr-10");
+  });
+
+  it("draws no clear button when the field is empty, or without `clear`", () => {
+    expect(
+      renderToStaticMarkup(<EmailForm clear="Clear the email" empty />)
+    ).not.toContain("<button");
+    expect(renderToStaticMarkup(<EmailForm />)).not.toContain("<button");
+  });
+
+  // A field whose title is drawn by its host (a row with a button beside it)
+  // still names its input, but takes no room above it.
+  it("can hide its label from sight, which still names the input and takes no room", () => {
+    const html = renderToStaticMarkup(<EmailForm hideLabel />);
+    expect(html).toMatch(HIDDEN_LABEL);
+    expect(html).toContain('for="email"');
   });
 
   it("draws every field tall, with a bold label and its icon on a dark tile", () => {

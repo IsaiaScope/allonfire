@@ -16,6 +16,7 @@ import {
 import { AOFImage } from "../../../../shared/components/aof-image";
 import type { ComponentPropsWithoutChildren } from "../../../../shared/types/types";
 import { cn } from "../../../../shared/utils/utils";
+import { tileBlur } from "../../../image/utils/tile-blur";
 
 /** The words around the drop area and its rows, in the page's language. */
 export type AOFFileUploadLabels = {
@@ -46,6 +47,8 @@ export type AOFFileUploadItem = {
   /** A picture's `blob:` URL for its thumbnail; none, and a file's icon
    *  stands in. */
   preview?: string | null | undefined;
+  /** The stored picture's blur (a data URL), shown while `preview` loads. */
+  previewBlur?: string | null | undefined;
   /** More buttons before the remove one (Crop again). */
   actions?: ReactNode;
 };
@@ -81,6 +84,9 @@ const sizeOf = (bytes: number) => {
   }).format(bytes / (megabytes ? UNIT.BYTES_PER_MIB : UNIT.BYTES_PER_KIB));
 };
 
+/** The thumbnail's side in px, as `size-10` draws it. */
+const THUMB_SIDE = 40;
+
 /** One held file: its thumbnail or icon, its name and size, then its buttons. */
 const FileRow = ({
   item,
@@ -100,11 +106,12 @@ const FileRow = ({
           <AOFImage
             alt=""
             className="size-full object-cover"
-            height={40}
-            sizes="40px"
+            {...tileBlur(item.previewBlur, THUMB_SIDE)}
+            height={THUMB_SIDE}
+            sizes={`${THUMB_SIDE}px`}
             src={item.preview}
             unoptimized
-            width={40}
+            width={THUMB_SIDE}
           />
         ) : (
           <IconFile aria-hidden className="size-5 text-muted-foreground" />

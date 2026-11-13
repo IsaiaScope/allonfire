@@ -5,6 +5,8 @@ import { IconMail, IconUserPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { FormAlert } from "@/shared/components/form-alert";
+import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { addUser } from "../actions/add-user";
 import { USERS } from "../constants/users";
 import {
@@ -17,7 +19,6 @@ import { AvatarField, NameField, PasswordFields } from "./user-form-fields";
 import {
   RoleRows,
   UserFormActions,
-  useToastThenList,
   useUserFieldMessages,
   VerificationRow,
 } from "./user-form-parts";
@@ -47,7 +48,7 @@ export const AddUser = () => {
   );
   // The User was added but their picture was not saved: the list, where
   // they show with their initial.
-  useToastThenList(notice, {
+  useToastThenList(BACK_OFFICE.PAGE.USERS, notice, {
     [USERS.ADD_NOTICE.AVATAR_FAILED]: {
       kind: "warning",
       message: t("Users.add.avatarFailed"),

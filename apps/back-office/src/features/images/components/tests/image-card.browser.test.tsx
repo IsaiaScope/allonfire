@@ -10,6 +10,7 @@ import type { ImageBody } from "@allonfire/storage/features/image/constants/sche
 import { NextIntlClientProvider } from "next-intl";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { ImageCard } from "../image-card";
 
@@ -19,8 +20,18 @@ vi.mock("@/features/i18n/navigation", async () => ({
 // A stored Image is drawn through the image server: here, a tile the picture's size.
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
-  AOFStorageImage: ({ className }: { className?: string }) => (
-    <span className={className} data-testid="picture" />
+  AOFStorageImage: ({
+    className,
+    placeholder,
+  }: {
+    className?: string;
+    placeholder?: string;
+  }) => (
+    <span
+      className={className}
+      data-placeholder={placeholder}
+      data-testid="picture"
+    />
   ),
 }));
 
@@ -34,6 +45,7 @@ const IMAGE: ImageBody = {
   createdAt: "2026-10-02T10:00:00.000Z",
   height: 600,
   id: "image-long",
+  key: "0b9a0c3e-0000-4000-8000-0000000000aa.avif",
   srcSet: [{ url: "https://cdn.test/long-400.avif", width: 400 }],
   version: "version-long",
   width: 800,
@@ -58,6 +70,70 @@ beforeEach(() =>
 );
 
 describe("ImageCard", () => {
+  it("names the picture by its stored file's name, a click copying it, beside the picture", async () => {
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue();
+    const screen = await renderCard();
+    const copy = screen.getByRole("button", {
+      name: enT("Images.copy.label", { name: IMAGE.key }),
+    });
+    await expect.element(copy).toBeVisible();
+    const picture = screen
+      .getByTestId("picture")
+      .element()
+      .getBoundingClientRect();
+    expect(copy.element().getBoundingClientRect().left).toBeGreaterThan(
+      picture.right
+    );
+    await copy.click();
+    expect(writeText).toHaveBeenCalledWith(IMAGE.key);
+  });
+
+  it("says the picture has no alt text when it has none", async () => {
+    const screen = await render(
+      <NextIntlClientProvider
+        formats={DATE.FORMATS}
+        locale={I18N.DEFAULT_LANGUAGE}
+        messages={aofMessages(I18N.DEFAULT_LANGUAGE, EN)}
+        timeZone={DATE.TIME_ZONE}
+      >
+        <div className="w-97.5">
+          <ImageCard image={{ ...IMAGE, alt: { en: "", it: "" } }} />
+        </div>
+      </NextIntlClientProvider>
+    );
+    await expect
+      .element(screen.getByText(EN.Images.column.noAlt, { exact: true }))
+      .toBeVisible();
+  });
+
+  it("lets the name run over two lines at most", async () => {
+    const screen = await renderCard();
+    const name = screen.getByText(IMAGE.key, { exact: true }).element();
+    expect(getComputedStyle(name).webkitLineClamp).toBe("2");
+  });
+
+  it("keeps the picture's blur behind it, so a picture that does not fill its square sits on its own colours", async () => {
+    const screen = await renderCard();
+    const tile =
+      screen.getByTestId("picture").element().parentElement ?? document.body;
+    expect(getComputedStyle(tile).backgroundImage).toContain(IMAGE.blurDataUrl);
+  });
+
+  it("leaves the blur to its tile: the picture asks for none of its own, so the blur does not change when it loads", async () => {
+    const screen = await renderCard();
+    await expect
+      .element(screen.getByTestId("picture"))
+      .toHaveAttribute("data-placeholder", "empty");
+  });
+
+  it("fits the whole picture in its square, never cropping its shape", async () => {
+    const screen = await renderCard();
+    const picture = screen.getByTestId("picture").element();
+    expect(getComputedStyle(picture).objectFit).toBe("contain");
+  });
+
   it("draws the picture large, a side of 96px", async () => {
     const screen = await renderCard();
     const picture = screen.getByTestId("picture").element().parentElement;

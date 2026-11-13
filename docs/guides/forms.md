@@ -26,7 +26,8 @@ page stays on the server. The server action keeps the last word:
   autofilled before hydration, and shows errors (not a live region) once the
   field is left or a submit was tried, in a line kept free so nothing moves.
   `invalid` marks a field the server refused. `AOFSubmitButton` takes
-  `pending`.
+  `pending`. A pending label ("Saving", "Adding") and every other label ends
+  without an ellipsis (`…`, `...`): the disabled button and its spinner say it is working.
 - One rhythm in every form: 8px from a label to its control, 32px between
   blocks. A field leaves its 32px itself (the gap and its error line), so the
   form adds no gap after a field; any other block (a list, a fieldset)

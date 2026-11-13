@@ -74,7 +74,16 @@ describe("privateLinkExpiry", () => {
   });
 });
 
+/** A list's thumbnail: 48px, so 96 device pixels on a 2x screen. */
+const LIST_THUMB_DEVICE_PX = 96;
+
 describe("pictureSrcSet", () => {
+  it("has a link small enough for a list's thumbnail, never the full picture", () => {
+    const smallest = Math.min(...pictureSrcSet(KEY).map(({ width }) => width));
+    expect(smallest).toBeGreaterThanOrEqual(LIST_THUMB_DEVICE_PX);
+    expect(smallest).toBeLessThanOrEqual(LIST_THUMB_DEVICE_PX * 1.5);
+  });
+
   it("gives one link per width", () => {
     expect(pictureSrcSet(KEY).map(({ width }) => width)).toEqual([
       ...IMAGE_SERVER.WIDTHS,

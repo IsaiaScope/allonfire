@@ -14,6 +14,8 @@ export const QUERY = {
     ALL: [IMAGES],
     /** One page of the list, keyed by the address that asked for it. */
     LIST: <P>(params: P) => [IMAGES, "list", params] as const,
+    /** One Image, by its id: what its edit page reads. */
+    ONE: (id: string) => [IMAGES, "one", id] as const,
   },
   SERVICES: {
     /** The prefix every Services key starts with: what any Services change refreshes. */
@@ -32,6 +34,8 @@ export const QUERY = {
     ALL: [USERS],
     /** One page of the list, keyed by the address that asked for it. */
     LIST: <P>(params: P) => [USERS, "list", params] as const,
+    /** One User, by their id: what their edit page reads. */
+    ONE: (id: string) => [USERS, "one", id] as const,
     /** The Users overview on Home; under `ALL`, so a User change refreshes it too. */
     OVERVIEW: [USERS, "overview"] as const,
   },

@@ -90,13 +90,15 @@ describe("ImagesTable", () => {
     expect(screen.container.textContent).not.toContain("Select The sea");
   });
 
-  it("shows each Image's alt, dimensions, size in megabytes, access, Apps and date", async () => {
+  it("shows each Image's stored file name, alt, dimensions, size in megabytes, access, Apps and date", async () => {
     const screen = await renderAt();
     const table = screen.getByRole("table", { name: t.list });
     await expect.element(table).toBeVisible();
     await Promise.all(
       [
         t.column.image,
+        t.column.name,
+        t.column.alt,
         t.column.dimensions,
         t.column.size,
         t.column.access,
@@ -108,6 +110,9 @@ describe("ImagesTable", () => {
     const [sea] = IMAGES_PAGE.images;
     await expect
       .element(table.getByText(sea?.alt.en ?? "", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(table.getByText(sea?.key ?? "", { exact: true }))
       .toBeVisible();
     await expect
       .element(table.getByText(`${sea?.width} × ${sea?.height}`))
@@ -139,13 +144,41 @@ describe("ImagesTable", () => {
     );
     const screen = await renderAt();
     const altBox = () =>
-      screen.container.querySelector("tbody tr:first-child td:nth-child(2) a");
+      screen.container.querySelector("tbody tr:first-child td:nth-child(4) a");
     await expect.poll(altBox).not.toBeNull();
     const alt = altBox()?.parentElement;
-    // The value is cut at the column's maxSize (480), however long it is; the
+    // The value is cut at the column's maxSize (320), however long it is; the
     // cell around it may take the room the table has left over.
-    expect(alt?.getBoundingClientRect().width).toBeLessThanOrEqual(480);
+    expect(alt?.getBoundingClientRect().width).toBeLessThanOrEqual(320);
     expect(alt?.scrollWidth).toBeGreaterThan(alt?.clientWidth ?? 0);
+  });
+
+  it("holds each picture to its square, 48px, whatever the picture's own shape", async () => {
+    const screen = await renderAt();
+    const picture = screen.getByTestId("picture").first();
+    await expect.element(picture).toBeInTheDocument();
+    const tile = picture.element().parentElement;
+    const { height, width } = tile?.getBoundingClientRect() ?? {
+      height: 0,
+      width: 0,
+    };
+    expect([width, height]).toEqual([48, 48]);
+  });
+
+  it("copies an Image's stored file name on a click, and says so in the tip", async () => {
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue();
+    const screen = await renderAt();
+    const [sea] = IMAGES_PAGE.images;
+    const copy = screen
+      .getByRole("table", { name: t.list })
+      .getByRole("button", {
+        name: enT("Images.copy.label", { name: sea?.key ?? "" }),
+      });
+    await copy.click();
+    expect(writeText).toHaveBeenCalledWith(sea?.key);
+    await expect.element(page.getByText(t.copy.done)).toBeVisible();
   });
 
   it("opens an Image from its alt, as a link", async () => {

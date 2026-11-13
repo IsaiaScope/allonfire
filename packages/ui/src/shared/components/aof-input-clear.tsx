@@ -13,6 +13,13 @@ export const aofInputEndButton = cva(
   "absolute top-1 right-1 size-(--field-tile) text-muted-foreground *:size-5"
 );
 
+/**
+ * An input with a button at its end: room for that button (`--field-tile`
+ * wide, at `right-1`, so 40px) and nothing more, and the text that does not
+ * fit ends in an ellipsis beside it, the same in every field and the search.
+ */
+export const aofInputWithEnd = cva("text-ellipsis pr-10");
+
 export type AOFInputClearProps = Omit<
   ComponentPropsWithoutChildren<typeof AOFButton>,
   "aria-label"
@@ -25,7 +32,7 @@ export type AOFInputClearProps = Omit<
  * Empties a search box, standing in for the browser's own cross (which takes
  * no pointer cursor, no hover and no name in the page's language): the box
  * hides that one (`[&::-webkit-search-cancel-button]:appearance-none`),
- * leaves room for this (`pr-12`), and shows it only while it holds text.
+ * leaves room for this (`aofInputWithEnd`), and shows it only while it holds text.
  */
 export const AOFInputClear = ({
   className,

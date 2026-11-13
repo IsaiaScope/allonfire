@@ -53,6 +53,16 @@ describe("AOFImage", () => {
 });
 
 describe("AOFStorageImage", () => {
+  // next/image warns when the loader answers with the very src it was given,
+  // as it does for an Image the image server stored at one width only.
+  it("warns nothing for an Image with a single signed link", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const [only] = STORED.srcSet;
+    stored({ image: { ...STORED, srcSet: only ? [only] : [] } });
+    expect(warn.mock.calls.flat().join(" ")).not.toContain("loader");
+    warn.mockRestore();
+  });
+
   it("loads the Image from its signed links, never the App's optimizer", () => {
     const html = stored();
     for (const width of [640, 1080, 1920, 2560]) {
@@ -77,6 +87,10 @@ describe("AOFStorageImage", () => {
 
   it("shows the blur until the Image loads", () => {
     expect(stored()).toContain("background-image");
+  });
+
+  it("leaves the blur to the caller's tile when asked, so the Image paints nothing of its own", () => {
+    expect(stored({ placeholder: "empty" })).not.toContain("background-image");
   });
 
   it("loads lazily unless it is the LCP Image", () => {

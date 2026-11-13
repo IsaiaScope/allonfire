@@ -25,13 +25,25 @@ export type Pipeline = {
   uniforms: Record<Uniform, WebGLUniformLocation | null>;
 };
 
-/** The canvas, its program and the arrays reused for every frame's uniforms. */
+/**
+ * The one WebGL context every toggle draws through: a canvas of its own,
+ * resized to whichever toggle draws, and the program linked on it. A page
+ * keeps a handful of contexts at most (Chrome drops the oldest past 16), and
+ * a form can hold a toggle for each App of each of twenty pictures.
+ */
+export type SharedGl = {
+  canvas: HTMLCanvasElement;
+  gl: WebGL2RenderingContext;
+  pipeline: Pipeline;
+};
+
+/** A toggle's visible canvas (2D: it only receives the goo) and the arrays reused for every frame's uniforms. */
 export type Scene = {
   canvas: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
   drops: Float32Array;
-  gl: WebGL2RenderingContext;
   pills: Float32Array;
-  pipeline: Pipeline;
+  shared: SharedGl;
   tails: Float32Array;
   tints: Float32Array;
 };
@@ -93,15 +105,15 @@ export const buildPipeline = (gl: WebGL2RenderingContext): Pipeline | null => {
 };
 
 export const createScene = (
-  gl: WebGL2RenderingContext,
+  shared: SharedGl,
   canvas: HTMLCanvasElement,
-  pipeline: Pipeline
+  context: CanvasRenderingContext2D
 ): Scene => ({
   canvas,
+  context,
   drops: new Float32Array(MAX_DROPS * 4),
-  gl,
   pills: new Float32Array(MAX_PILLS * 4),
-  pipeline,
+  shared,
   tails: new Float32Array(MAX_DROPS * 2),
   tints: new Float32Array(MAX_DROPS * 3),
 });
@@ -128,9 +140,16 @@ const pack = (scene: Scene, { blobs, boxes, settings }: Frame) => {
   return count;
 };
 
-/** Draws one frame of goo onto the canvas. */
+/** Draws one frame of goo on the shared context, then copies it onto the toggle's own canvas. */
 export const drawScene = (scene: Scene, frame: Frame) => {
-  const { canvas, gl, pipeline } = scene;
+  const { canvas, context, shared } = scene;
+  const { gl, pipeline } = shared;
+  if (shared.canvas.width !== canvas.width) {
+    shared.canvas.width = canvas.width;
+  }
+  if (shared.canvas.height !== canvas.height) {
+    shared.canvas.height = canvas.height;
+  }
   const { hover, settings: s, smooth, view } = frame;
   const count = pack(scene, frame);
   const { buffer, position, program, uniforms: u } = pipeline;
@@ -164,9 +183,7 @@ export const drawScene = (scene: Scene, frame: Frame) => {
   // Already CSS px like the pill boxes: the shader divides out the pixel ratio.
   gl.uniform1f(u.uRadius, Math.max(0, Math.min(s.radius, FULLY_ROUND)));
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-};
-
-export const disposeScene = ({ gl, pipeline }: Scene) => {
-  gl.deleteBuffer(pipeline.buffer);
-  gl.deleteProgram(pipeline.program);
+  // In the same task as the draw, while the drawing buffer still holds it.
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(shared.canvas, 0, 0);
 };
