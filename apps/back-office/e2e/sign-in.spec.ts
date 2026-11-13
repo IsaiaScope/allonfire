@@ -8,6 +8,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
+import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { openAccountMenu, SIGN_IN_URL, signIn } from "./pages";
 
 // Home is `/`; the locale middleware can answer it as `/en`.
@@ -28,7 +29,9 @@ test("an Admin signs in, lands home, and stays signed in after a reload", async 
 }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(page).toHaveURL(HOME_URL);
-  await expect(page.getByText(EN.Home.description)).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: BACK_OFFICE.NAME })
+  ).toBeVisible();
   await page.reload();
   await expect(page).toHaveURL(HOME_URL);
 });
@@ -40,7 +43,9 @@ test("a signed-in Admin who opens Sign in is sent home", async ({ page }) => {
   await expect(page).toHaveURL(HOME_URL);
   // The redirect lands client-side: Next may keep a hidden copy of Home.
   await expect(
-    page.getByText(EN.Home.description).filter({ visible: true })
+    page
+      .getByRole("heading", { name: BACK_OFFICE.NAME })
+      .filter({ visible: true })
   ).toBeVisible();
 });
 

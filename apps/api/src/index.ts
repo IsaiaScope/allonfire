@@ -5,15 +5,16 @@ import { env } from "./environment/environment";
 import { auth } from "./features/auth/auth";
 import { imageDeps } from "./features/image/image-deps";
 import { logger } from "./features/logger/logger";
-import { closeMailRedis } from "./features/mail/mail-deps";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { REDIS } from "./features/redis/constants/redis";
-import { createRedis } from "./features/redis/redis";
+import { sharedRedis as redis } from "./features/redis/shared-redis";
 import { servicesDeps } from "./features/services/services-deps";
+import { storageUsageDeps } from "./features/storage-usage/storage-usage-deps";
 import {
   shutdownTelemetry,
   startTelemetry,
 } from "./features/telemetry/telemetry";
+import { userUsageDeps } from "./features/user-usage/user-usage-deps";
 import { userDeps } from "./features/users/user-deps";
 import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
@@ -21,8 +22,6 @@ import { createCrashHandler, createShutdown } from "./shutdown";
 // Before createApp: @hono/otel binds its meter when the app is built, and the
 // global MeterProvider, unlike the tracer, has no proxy that attaches later.
 startTelemetry();
-
-const redis = createRedis(env.API_REDIS_URL);
 
 const app = createApp({
   auth,
@@ -33,8 +32,10 @@ const app = createApp({
   checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
   images: imageDeps(logger),
   services: servicesDeps,
+  storageUsage: storageUsageDeps,
   store: createRedisStore(redis),
   users: userDeps(logger),
+  userUsage: userUsageDeps,
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
@@ -44,7 +45,7 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>
 const shutdown = createShutdown({
   closeDatabase: () => prisma.$disconnect(),
   closeRedis: async () => {
-    await Promise.all([redis.quit(), closeMailRedis()]);
+    await redis.quit();
   },
   closeServer: () =>
     new Promise<void>((resolve, reject) =>

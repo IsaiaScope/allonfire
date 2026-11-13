@@ -11,6 +11,7 @@ import {
   entryRoles,
   hasRole,
   hasRoleIn,
+  isBackOfficeAdmin,
   roleIn,
 } from "../access";
 import { appSchema } from "../constants/schemas";
@@ -101,6 +102,19 @@ describe("canEnterApp", () => {
       canEnterApp(member(App.BACK_OFFICE, Role.ADMIN), App.BACK_OFFICE)
     ).toBe(true);
   });
+});
+
+describe("who enters the Back Office", () => {
+  // The Back Office draws Home's Users and Storage cards for everyone its
+  // page check lets in (`withAppSession`, by `canEnterApp`), with no Admin
+  // check of its own: this holds until its floor is lowered below Admin.
+  it.each(objectValues(Role))(
+    "a %s of it enters exactly when they are its Admin",
+    (role) => {
+      const user = member(App.BACK_OFFICE, role);
+      expect(canEnterApp(user, App.BACK_OFFICE)).toBe(isBackOfficeAdmin(user));
+    }
+  );
 });
 
 describe("entryRoles", () => {
@@ -215,5 +229,14 @@ describe("enterableApps", () => {
       App.LAURA,
       App.BACK_OFFICE,
     ]);
+  });
+});
+
+describe("isBackOfficeAdmin", () => {
+  it("lets in only an Admin of the Back Office", () => {
+    expect(isBackOfficeAdmin(member(App.BACK_OFFICE, Role.ADMIN))).toBe(true);
+    expect(isBackOfficeAdmin(member(App.BACK_OFFICE, Role.USER))).toBe(false);
+    expect(isBackOfficeAdmin(member(App.LAURA, Role.ADMIN))).toBe(false);
+    expect(isBackOfficeAdmin({ memberships: [] })).toBe(false);
   });
 });

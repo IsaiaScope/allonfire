@@ -6,7 +6,7 @@ import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { App } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { imageListBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
+import { imagePageBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
 import { expect, type Page, test } from "@playwright/test";
 // Playwright loads specs as ES modules; Next ships no export map for it.
 import IT from "../src/features/i18n/translations/it.json" with {
@@ -70,7 +70,7 @@ test("serves a stored Image through the image server, never from the bucket", as
   const list = await request.get(
     `${LOCAL.URL.API_E2E}${API.PATH.IMAGES}?app=${App.BACK_OFFICE}`
   );
-  const { images } = imageListBodySchema.parse(await list.json());
+  const { images } = imagePageBodySchema.parse(await list.json());
   const image = images.find((one) => one.alt.en === alt.en);
   const link = image?.srcSet.find(({ width }) => width === 1080)?.url ?? "";
   const served = await request.get(link, {

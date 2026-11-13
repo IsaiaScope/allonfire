@@ -16,7 +16,7 @@ import {
   type ImagePlacementsById,
 } from "@allonfire/database/features/image/image.service";
 import { STORAGE } from "../../../../shared/constants/paths";
-import { imageListBodySchema } from "../constants/schemas";
+import { imagePageBodySchema } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
 import {
   ALT,
@@ -27,8 +27,7 @@ import {
   VERSION,
 } from "./stub-image-deps";
 
-const { CREATED, FORBIDDEN, NOT_FOUND, NO_CONTENT, OK, UNAUTHORIZED } =
-  HTTP.STATUS;
+const { CREATED, FORBIDDEN, NOT_FOUND, OK, UNAUTHORIZED } = HTTP.STATUS;
 
 /** One Image's path, as the module mounts it. */
 const onePath = (id: string) =>
@@ -84,12 +83,30 @@ const row = (
  * The service's query over P, Q and R: placed in `app` (any App when it is
  * left out), and public or in an App the caller enters.
  */
-const listImages: ImageDeps["listImages"] = async ({ app, enterable }) =>
-  IMAGES.filter(
+const listImagesPage: ImageDeps["listImagesPage"] = ({ app, enterable }) => {
+  const images = IMAGES.filter(
     ({ access, apps }) =>
       (app === undefined || apps.includes(app)) &&
       (access === ImageAccess.PUBLIC ||
         apps.some((placed) => enterable.includes(placed)))
+  );
+  return Promise.resolve({
+    images,
+    total: images.length,
+    totalBytes: images.reduce((sum, { bytes }) => sum + bytes, 0),
+  });
+};
+
+/** The placements a delete locks: only the Images that exist, an unknown id is skipped. */
+const existingPlacementsOf = (
+  ids: readonly string[]
+): Promise<ImagePlacementsById> =>
+  Promise.resolve(
+    new Map(
+      IMAGES.filter(({ id }) => ids.includes(id)).map(
+        ({ access, apps, id, key }) => [id, { access, apps, key }]
+      )
+    )
   );
 
 /** The placements a write locks, as the database finds them in P, Q and R. */
@@ -118,16 +135,20 @@ const host = (session: AuthSession | null) => {
       rows.map((one) => imageRecord(one))
     ),
     // The rows a delete takes, recorded only once the route's check passed.
-    deleteImages: vi.fn((ids: readonly string[]) => keysOf(ids)),
+    deleteImages: vi.fn((ids: readonly string[]) => ({
+      deleted: ids.length,
+      keys: keysOf(ids),
+    })),
     deleteObjects: vi.fn<ImageDeps["deleteObjects"]>(async () => undefined),
     putObject: vi.fn<ImageDeps["putObject"]>(async () => undefined),
     // An Image goes when the App it leaves was its only one.
-    removeImagesFromApp: vi.fn((ids: readonly string[], fromApp: App) =>
-      IMAGES.filter(
+    removeImagesFromApp: vi.fn((ids: readonly string[], fromApp: App) => ({
+      deleted: ids.length,
+      keys: IMAGES.filter(
         ({ apps, id }) =>
           ids.includes(id) && apps.every((placed) => placed === fromApp)
-      ).map(({ key }) => key)
-    ),
+      ).map(({ key }) => key),
+    })),
     // The changes an update writes, worked out by the route's check.
     updateImages: vi.fn((changes: ImageChange[]) =>
       changes.map(({ id }) => imageRecord({ id }))
@@ -136,17 +157,16 @@ const host = (session: AuthSession | null) => {
   const app = imageHost(session, {
     ...writes,
     // As the database runs a delete: the check on the placements, then the rows.
-    deleteImages: async (ids, authorise) => {
-      authorise(await placementsOf(ids));
-      return writes.deleteImages(ids);
-    },
+    deleteImages: async (ids, authorise) =>
+      writes.deleteImages([...authorise(await existingPlacementsOf(ids))]),
     getImage: async (id) => IMAGES.find((image) => image.id === id) ?? null,
-    listImages,
+    listImagesPage,
     prepare: async () => PREPARED,
-    removeImagesFromApp: async (ids, fromApp, authorise) => {
-      authorise(await placementsOf(ids));
-      return writes.removeImagesFromApp(ids, fromApp);
-    },
+    removeImagesFromApp: async (ids, fromApp, authorise) =>
+      writes.removeImagesFromApp(
+        [...authorise(await existingPlacementsOf(ids))],
+        fromApp
+      ),
     // As the database runs an update: the changes worked out on the placements.
     updateImages: async (opened, resolve) =>
       writes.updateImages(
@@ -160,7 +180,7 @@ const host = (session: AuthSession | null) => {
 
 const listed = async (session: AuthSession | null, query: string) => {
   const res = await host(session).app.request(`${STORAGE.PATH.IMAGES}${query}`);
-  return imageListBodySchema.parse(await res.json()).images.map(({ id }) => id);
+  return imagePageBodySchema.parse(await res.json()).images.map(({ id }) => id);
 };
 
 describe("recap: reads", () => {
@@ -251,22 +271,22 @@ describe("recap: writes", () => {
     [
       "DELETE { [P], LAURA }",
       () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["P"] }),
-      [UNAUTHORIZED, FORBIDDEN, NO_CONTENT, NO_CONTENT],
+      [UNAUTHORIZED, FORBIDDEN, OK, OK],
     ],
     [
       "DELETE { [Q], LAURA }",
       () => json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["Q"] }),
-      [UNAUTHORIZED, FORBIDDEN, NO_CONTENT, NO_CONTENT],
+      [UNAUTHORIZED, FORBIDDEN, OK, OK],
     ],
     [
       "DELETE { [P] }",
       () => json(HTTP.METHOD.DELETE, { ids: ["P"] }),
-      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, NO_CONTENT],
+      [UNAUTHORIZED, FORBIDDEN, FORBIDDEN, OK],
     ],
     [
       "DELETE { [Q, R] }",
       () => json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] }),
-      [UNAUTHORIZED, NOT_FOUND, NOT_FOUND, NO_CONTENT],
+      [UNAUTHORIZED, FORBIDDEN, OK, OK],
     ],
   ];
 
@@ -315,13 +335,15 @@ describe("recap: writes", () => {
     expect(done.deleteObjects).toHaveBeenCalledWith(["q.avif"]);
   });
 
-  it("DELETE { [Q, R] } by Mario deletes nothing, not even Q", async () => {
-    const { app, wrote } = host(mario);
+  it("DELETE { [Q, R] } by Mario deletes Q and skips R, which he cannot see: it reads as an id that is not there", async () => {
+    const { app, writes: done } = host(mario);
     const res = await app.request(
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { ids: ["Q", "R"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
-    expect(wrote()).toBe(false);
+    expect(res.status).toBe(OK);
+    expect(await res.json()).toEqual({ deleted: 1 });
+    expect(done.deleteImages).toHaveBeenCalledWith(["Q"]);
+    expect(done.deleteObjects).toHaveBeenCalledWith(["q.avif"]);
   });
 });

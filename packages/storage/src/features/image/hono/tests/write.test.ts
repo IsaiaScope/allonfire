@@ -5,6 +5,7 @@ import {
   sessionFor,
 } from "@allonfire/auth/shared/tests/stub-auth";
 import { errorOf, json } from "@allonfire/auth/shared/tests/test-host";
+import { forbidden } from "@allonfire/core/features/errors/coded-error";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
@@ -14,7 +15,6 @@ import {
   type AuthorisePlacements,
   type ImageChange,
   ImageNotFoundError,
-  type ImagePlacement,
   type ImagePlacementsById,
   type OpenedImage,
 } from "@allonfire/database/features/image/image.service";
@@ -54,6 +54,12 @@ const officeAdmin = sessionFor({
 /** The file name a locked Image row holds, in these tests. */
 const lockedKey = (id: string) => `${id}.avif`;
 
+/** One entry of `ImagePlacementsById`. */
+type ImagePlacement =
+  ImagePlacementsById extends ReadonlyMap<string, infer Placement>
+    ? Placement
+    : never;
+
 /** The placements a write locks, as the database would find them. */
 type Placements = (ids: readonly string[]) => Promise<ImagePlacementsById>;
 
@@ -83,9 +89,9 @@ const deletes = (placements: Placements, keys: string[] = []) => {
     authorise: AuthorisePlacements,
     fromApp?: App
   ) => {
-    authorise(await placements(ids));
-    written(ids, fromApp);
-    return keys;
+    const allowed = [...authorise(await placements(ids))];
+    written(allowed, fromApp);
+    return { deleted: allowed.length, keys };
   };
   const services: Pick<ImageDeps, "deleteImages" | "removeImagesFromApp"> = {
     deleteImages: (ids, authorise) => run(ids, authorise),
@@ -114,6 +120,20 @@ const updates = (
     return changes.map(({ id }) => answer(id));
   };
   return { opened, updateImages, written };
+};
+
+/** An Admin PATCHes image-1 from Laura to the Back Office; `deps` is stubbed beside the update. */
+const moveToBackOffice = async (deps: Partial<ImageDeps> = {}) => {
+  const { updateImages, written } = updates(inLaura, (id) =>
+    imageRecord({ apps: [App.BACK_OFFICE], id })
+  );
+  const res = await app(admin, { ...deps, updateImages }).request(
+    STORAGE.PATH.IMAGES,
+    json(HTTP.METHOD.PATCH, [
+      { apps: [App.BACK_OFFICE], id: "image-1", version: VERSION },
+    ])
+  );
+  return { res, written };
 };
 
 /**
@@ -422,15 +442,7 @@ describe("POST /images failures", () => {
 
 describe("PATCH /images", () => {
   it("replaces the Apps of a batch", async () => {
-    const { updateImages, written } = updates(inLaura, (id) =>
-      imageRecord({ apps: [App.BACK_OFFICE], id })
-    );
-    const res = await app(admin, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json(HTTP.METHOD.PATCH, [
-        { apps: [App.BACK_OFFICE], id: "image-1", version: VERSION },
-      ])
-    );
+    const { res, written } = await moveToBackOffice();
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(written).toHaveBeenCalledWith([
       { id: "image-1", place: [App.BACK_OFFICE], remove: [App.LAURA] },
@@ -595,7 +607,11 @@ describe("PATCH /images making an Image private, with storage failing", () => {
     const res = await pending;
     expect(res.status).toBe(HTTP.STATUS.INTERNAL_SERVER_ERROR);
     expect(warn).toHaveBeenCalledWith(
-      { err: cleanupFailure, keys: [firstCopy()] },
+      {
+        err: cleanupFailure,
+        event: IMAGE.LOG_EVENT.CLEANUP_FAILED,
+        keys: [firstCopy()],
+      },
       IMAGE.LOG_MESSAGE.CLEANUP_FAILED
     );
   });
@@ -696,67 +712,30 @@ describe("PATCH /images refusals", () => {
     expect(res.status).toBe(status);
     expect(written).not.toHaveBeenCalled();
   });
-
-  it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
-    // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
-    const { updateImages, written } = updates(oneInEach);
-    const res = await app(lauraUser, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json(HTTP.METHOD.PATCH, [
-        { alt: ALT, id: "image-1", version: VERSION },
-        { alt: ALT, id: "image-2", version: VERSION },
-      ])
-    );
-    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
-    expect(written).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["no App", NO_APPS],
-    ["one App twice", LAURA_TWICE],
-  ])("refuses apps naming %s", async (_, apps) => {
-    const res = await app(admin, {}).request(
-      STORAGE.PATH.IMAGES,
-      json(HTTP.METHOD.PATCH, [{ apps, id: "image-1", version: VERSION }])
-    );
-    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
-    expect((await errorOf(res)).code).toBe(ERROR.CODE.VALIDATION_FAILED);
-  });
-
-  it("refuses a PATCH naming one Image twice before reading anything", async () => {
-    const updateImages = vi.fn();
-    const res = await app(admin, { updateImages }).request(
-      STORAGE.PATH.IMAGES,
-      json(HTTP.METHOD.PATCH, [
-        { alt: ALT, id: "image-1", version: VERSION },
-        { alt: ALT, id: "image-1", version: VERSION },
-      ])
-    );
-    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
-    expect(updateImages).not.toHaveBeenCalled();
-  });
-
-  it("refuses alt missing a language", async () => {
-    const res = await app(admin, {}).request(
-      STORAGE.PATH.IMAGES,
-      json(HTTP.METHOD.PATCH, [
-        { alt: { en: "only English" }, id: "image-1", version: VERSION },
-      ])
-    );
-    expect(res.status).toBe(HTTP.STATUS.BAD_REQUEST);
-  });
 });
 
 describe("DELETE /images", () => {
-  it("answers 404 before 403 across the batch, so a refusal never tells which ids exist", async () => {
-    // image-1 the User sees but cannot manage (403); image-2 they cannot see (404).
+  it("answers 403 for a visible Image the User cannot manage, whatever else the batch names", async () => {
+    // image-1 the User sees but cannot manage (403); image-2 they cannot see (skipped).
     const { services, written } = deletes(oneInEach);
     const res = await app(lauraUser, services).request(
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { ids: ["image-1", "image-2"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(written).not.toHaveBeenCalled();
+  });
+
+  it("skips an Image the User cannot see as it would an unknown one, and deletes the rest", async () => {
+    // image-1 is the Admin's to delete; image-2 is not theirs to see.
+    const { services, written } = deletes(oneInEach, ["image-1.avif"]);
+    const res = await app(lauraAdmin, services).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["image-1", "image-2"] })
+    );
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(await res.json()).toEqual({ deleted: 1 });
+    expect(written).toHaveBeenCalledWith(["image-1"], undefined);
   });
 
   it("deletes the rows, then the objects", async () => {
@@ -764,7 +743,7 @@ describe("DELETE /images", () => {
     const res = await app(admin, {
       deleteImages: () => {
         order.push("rows");
-        return Promise.resolve(["a.avif"]);
+        return Promise.resolve({ deleted: 1, keys: ["a.avif"] });
       },
       deleteObjects: (keys) => {
         order.push(`objects:${keys.join()}`);
@@ -774,29 +753,31 @@ describe("DELETE /images", () => {
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NO_CONTENT);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(await res.json()).toEqual({ deleted: 1 });
     expect(order).toEqual(["rows", "objects:a.avif"]);
   });
 
-  it("still answers 204 when storage fails after the rows are gone", async () => {
+  it("still answers 200 when storage fails after the rows are gone", async () => {
     const res = await app(admin, {
-      deleteImages: async () => ["a.avif"],
+      deleteImages: async () => ({ deleted: 1, keys: ["a.avif"] }),
       deleteObjects: () => Promise.reject(new Error("storage down")),
     }).request(
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NO_CONTENT);
+    expect(res.status).toBe(HTTP.STATUS.OK);
   });
 
-  it("answers 404 when an id is unknown", async () => {
+  it("answers 200 with none deleted when no id is an Image the User can see", async () => {
     const res = await app(admin, {
-      deleteImages: () => Promise.reject(new ImageNotFoundError(["missing"])),
+      deleteImages: () => Promise.resolve({ deleted: 0, keys: [] }),
     }).request(
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { ids: ["missing"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(await res.json()).toEqual({ deleted: 0 });
   });
 
   it("takes the Images out of one App and removes the files of those left in none", async () => {
@@ -808,12 +789,12 @@ describe("DELETE /images", () => {
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["image-1"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NO_CONTENT);
+    expect(res.status).toBe(HTTP.STATUS.OK);
     expect(written).toHaveBeenCalledWith(["image-1"], App.LAURA);
     expect(deleteObjects).toHaveBeenCalledWith(["a.avif"]);
   });
 
-  it("answers 404 for an Image not placed in the App named", async () => {
+  it("skips an Image not placed in the App named, as one that is not there", async () => {
     const { services, written } = deletes(
       placementsIn(ImageAccess.PRIVATE, App.BACK_OFFICE)
     );
@@ -821,7 +802,83 @@ describe("DELETE /images", () => {
       STORAGE.PATH.IMAGES,
       json(HTTP.METHOD.DELETE, { app: App.LAURA, ids: ["image-1"] })
     );
-    expect(res.status).toBe(HTTP.STATUS.NOT_FOUND);
-    expect(written).not.toHaveBeenCalled();
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(await res.json()).toEqual({ deleted: 0 });
+    expect(written).toHaveBeenCalledWith([], App.LAURA);
+  });
+});
+
+describe("telling the host the bucket changed", () => {
+  it("tells it once an upload has recorded its Images", async () => {
+    const order: string[] = [];
+    const res = await app(admin, {
+      changed: () => {
+        order.push("changed");
+        return Promise.resolve();
+      },
+      createImages: (rows) => {
+        order.push("rows");
+        return Promise.resolve(rows.map((row) => imageRecord(row)));
+      },
+      prepare: async () => PREPARED,
+      putObject: async () => undefined,
+    }).request(STORAGE.PATH.IMAGES, upload(1));
+    expect(res.status).toBe(HTTP.STATUS.CREATED);
+    expect(order).toEqual(["rows", "changed"]);
+  });
+
+  it("tells it after a delete has removed the rows and the objects", async () => {
+    const order: string[] = [];
+    const res = await app(admin, {
+      changed: () => {
+        order.push("changed");
+        return Promise.resolve();
+      },
+      deleteImages: () => {
+        order.push("rows");
+        return Promise.resolve({ deleted: 1, keys: ["a.avif"] });
+      },
+      deleteObjects: () => {
+        order.push("objects");
+        return Promise.resolve();
+      },
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
+    );
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(order).toEqual(["rows", "objects", "changed"]);
+  });
+
+  it("tells it after a change of Apps", async () => {
+    const changed = vi.fn<ImageDeps["changed"]>(async () => undefined);
+    const { res } = await moveToBackOffice({ changed });
+    expect(res.status).toBe(HTTP.STATUS.OK);
+    expect(changed).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not tell it of a delete that was refused", async () => {
+    const changed = vi.fn<ImageDeps["changed"]>(async () => undefined);
+    const res = await app(admin, {
+      changed,
+      deleteImages: () => Promise.reject(forbidden()),
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["image-1"] })
+    );
+    expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it("does not tell it of a delete that deleted nothing", async () => {
+    const changed = vi.fn<ImageDeps["changed"]>(async () => undefined);
+    await app(admin, {
+      changed,
+      deleteImages: () => Promise.resolve({ deleted: 0, keys: [] }),
+    }).request(
+      STORAGE.PATH.IMAGES,
+      json(HTTP.METHOD.DELETE, { ids: ["missing"] })
+    );
+    expect(changed).not.toHaveBeenCalled();
   });
 });

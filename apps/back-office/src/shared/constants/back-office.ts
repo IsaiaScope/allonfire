@@ -36,6 +36,8 @@ export const BACK_OFFICE = {
     /** The MAIL Service's page, under Services. */
     SERVICES_MAIL: "/services/mail",
     STORAGE: "/storage",
+    /** The Images page, under Storage. */
+    STORAGE_IMAGES: "/storage/images",
     /** The Users list, at the path the User module serves them under. */
     USERS: USER.PATH.BASE,
   },

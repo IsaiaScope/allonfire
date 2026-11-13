@@ -9,6 +9,7 @@ export const toImageBody = (image: ImageRecord, now: Date): ImageBody => ({
   alt: image.alt,
   apps: image.apps,
   blurDataUrl: image.blurDataUrl,
+  bytes: image.bytes,
   createdAt: image.createdAt.toISOString(),
   height: image.height,
   id: image.id,

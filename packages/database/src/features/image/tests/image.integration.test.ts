@@ -1,5 +1,7 @@
 // @module-tag integration
+
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
+import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
@@ -8,14 +10,14 @@ import {
   deleteImages,
   getImage,
   type ImageChange,
-  type ImageCursor,
   ImageNotFoundError,
   type ImagePlacementsById,
-  listImages,
+  listImagesPage,
   type NewImage,
   removeImagesFromApp,
   updateImages,
 } from "../image.service";
+import { imageStats } from "../image-stats";
 
 // Runs against DATABASE_URL. Rows are keyed by KEY_PREFIX and removed after.
 const USER_ID = "image-test-user";
@@ -23,7 +25,8 @@ const KEY_PREFIX = "image-test-";
 const { BACK_OFFICE: OFFICE, LAURA } = App;
 const IN_LAURA: App[] = [LAURA];
 /** The check a caller runs inside the write; these tests let everything through. */
-const ALLOW = () => undefined;
+/** A delete check that lets every Image it is shown through. */
+const LET_THROUGH = (placements: ImagePlacementsById) => [...placements.keys()];
 /** Each Image named, with the Version a form opened now would carry. */
 const openedNow = (ids: readonly string[]) =>
   Promise.all(
@@ -55,6 +58,10 @@ const image = (
 /** This file's Images among what a listing returned, in its order. */
 const oursIn = (listed: readonly { id: string; key: string }[]) =>
   listed.filter(({ key }) => key.startsWith(KEY_PREFIX)).map(({ id }) => id);
+
+/** Every Image `enterable` sees (in `app`, or in any), newest first. */
+const visibleTo = async (enterable: App[], app?: App) =>
+  (await listImagesPage({ app, enterable, page: 1, perPage: 100 })).images;
 
 const cleanUp = () =>
   prisma.image.deleteMany({ where: { key: { startsWith: KEY_PREFIX } } });
@@ -89,7 +96,7 @@ describe("image.service reads", () => {
     ]);
     const [r] = await createImages([image("r", [OFFICE])]);
     const seen = async (app: App | undefined, enterable: App[]) =>
-      oursIn(await listImages({ app, enterable, limit: 100 }));
+      oursIn(await visibleTo(enterable, app));
 
     expect(await seen(LAURA, [])).toEqual([p?.id]);
     expect(await seen(LAURA, IN_LAURA)).toEqual([p?.id, q?.id]);
@@ -108,8 +115,7 @@ describe("image.service reads", () => {
 
   it("shows a private Image in two Apps to a member of either", async () => {
     const [both] = await createImages([image("both-private", [LAURA, OFFICE])]);
-    const seen = async (enterable: App[]) =>
-      oursIn(await listImages({ enterable, limit: 100 }));
+    const seen = async (enterable: App[]) => oursIn(await visibleTo(enterable));
     expect(await seen([LAURA])).toEqual([both?.id]);
     expect(await seen([OFFICE])).toEqual([both?.id]);
     expect(await seen([])).toEqual([]);
@@ -125,47 +131,6 @@ describe("image.service reads", () => {
       where: { key: FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE.key },
     });
     expect(access).toBe(FIXTURE.IMAGE.PUBLIC_IN_BACK_OFFICE.access);
-  });
-
-  it("pages with the last Image as the cursor", async () => {
-    const created = await createImages([image("a"), image("b")]);
-    const [last] = await listImages({
-      app: LAURA,
-      enterable: IN_LAURA,
-      limit: 1,
-    });
-    if (!last) {
-      throw new Error("nothing listed");
-    }
-    const [next] = await listImages({
-      app: LAURA,
-      cursor: { createdAt: last.createdAt, id: last.id },
-      enterable: IN_LAURA,
-      limit: 1,
-    });
-    expect(next?.id).not.toBe(last.id);
-    expect(created.map(({ id }) => id)).toContain(next?.id);
-  });
-
-  it("keeps paging after the cursor's Image is deleted", async () => {
-    // One batch: the rows may share createdAt, so the id breaks the tie.
-    await createImages([image("p1"), image("p2"), image("p3")]);
-    const ours = async (cursor?: ImageCursor) =>
-      (
-        await listImages({
-          app: LAURA,
-          cursor,
-          enterable: IN_LAURA,
-          limit: 100,
-        })
-      ).filter(({ key }) => key.startsWith(KEY_PREFIX));
-    const [first, ...rest] = await ours();
-    if (!first) {
-      throw new Error("nothing listed");
-    }
-    await deleteImages([first.id], ALLOW);
-    const after = await ours({ createdAt: first.createdAt, id: first.id });
-    expect(after.map(({ id }) => id)).toEqual(rest.map(({ id }) => id));
   });
 
   it("fills a Language missing from a stored alt with another's text", async () => {
@@ -186,6 +151,229 @@ describe("image.service reads", () => {
       where: { id },
     });
     expect((await getImage(id))?.alt).toEqual({ en: "The sea", it: "" });
+  });
+});
+
+describe("image.service numbered list", () => {
+  const pageOf = async (page: number, perPage: number, enterable: App[]) =>
+    listImagesPage({ app: undefined, enterable, page, perPage });
+
+  it("lists the second page with the real total", async () => {
+    const made = [
+      ...(await createImages([image("n1", [LAURA])])),
+      ...(await createImages([image("n2", [LAURA])])),
+      ...(await createImages([image("n3", [LAURA])])),
+    ];
+    const everyone = await pageOf(1, 100, IN_LAURA);
+    const ours = oursIn(everyone.images);
+    expect(ours).toEqual(made.map(({ id }) => id).reverse());
+    const second = await pageOf(2, 1, IN_LAURA);
+    expect(second.images).toHaveLength(1);
+    expect(second.total).toBe(everyone.total);
+  });
+
+  it("sums bytes over every visible Image, not just the page", async () => {
+    await createImages([image("b1", [LAURA]), image("b2", [LAURA])]);
+    const all = await pageOf(1, 100, IN_LAURA);
+    const onePage = await pageOf(1, 1, IN_LAURA);
+    expect(onePage.totalBytes).toBe(all.totalBytes);
+    expect(all.totalBytes).toBeGreaterThanOrEqual(2000);
+  });
+
+  it("counts only Images the caller may see", async () => {
+    const laura = await pageOf(1, 100, IN_LAURA);
+    const both = await pageOf(1, 100, [LAURA, OFFICE]);
+    await createImages([image("v1", [OFFICE])]);
+    const lauraAfter = await pageOf(1, 100, IN_LAURA);
+    const bothAfter = await pageOf(1, 100, [LAURA, OFFICE]);
+    expect(lauraAfter.total).toBe(laura.total);
+    expect(lauraAfter.totalBytes).toBe(laura.totalBytes);
+    expect(bothAfter.total).toBe(both.total + 1);
+    expect(bothAfter.totalBytes).toBe(both.totalBytes + 1000);
+  });
+
+  it("answers no images and real totals past the last page", async () => {
+    await createImages([image("p1", [LAURA])]);
+    const { total, totalBytes } = await pageOf(1, 100, IN_LAURA);
+    const past = await pageOf(1000, 100, IN_LAURA);
+    expect(past.images).toEqual([]);
+    expect(past.total).toBe(total);
+    expect(past.totalBytes).toBe(totalBytes);
+  });
+
+  it("finds Images by their alt text in either language, ignoring case", async () => {
+    await createImages([
+      { ...image("sea", [LAURA]), alt: { en: "The Sea", it: "Il mare" } },
+      { ...image("hills", [LAURA]), alt: { en: "Green hills", it: "Colline" } },
+    ]);
+    const find = async (text: string) =>
+      (
+        await listImagesPage({
+          enterable: IN_LAURA,
+          page: 1,
+          perPage: 100,
+          text,
+        })
+      ).images.map(({ alt }) => alt.en);
+    expect(await find("sea")).toEqual(["The Sea"]);
+    expect(await find("MARE")).toEqual(["The Sea"]);
+    expect(await find("colline")).toEqual(["Green hills"]);
+    expect(await find("no-such-picture")).toEqual([]);
+  });
+
+  it("keeps only the public, or only the private, Images when asked", async () => {
+    await createImages([
+      image("pub", [LAURA], ImageAccess.PUBLIC),
+      image("priv", [LAURA], ImageAccess.PRIVATE),
+    ]);
+    const accessOf = async (access: ImageAccess) =>
+      (
+        await listImagesPage({
+          accesses: [access],
+          enterable: IN_LAURA,
+          page: 1,
+          perPage: 100,
+        })
+      ).images.map((one) => one.access);
+    expect(new Set(await accessOf(ImageAccess.PUBLIC))).toEqual(
+      new Set([ImageAccess.PUBLIC])
+    );
+    expect(new Set(await accessOf(ImageAccess.PRIVATE))).toEqual(
+      new Set([ImageAccess.PRIVATE])
+    );
+  });
+
+  it("counts and sums only what the search finds", async () => {
+    await createImages([
+      { ...image("one", [LAURA]), alt: { en: "findable one", it: "x" } },
+      { ...image("two", [LAURA]), alt: { en: "findable two", it: "y" } },
+    ]);
+    const found = await listImagesPage({
+      enterable: IN_LAURA,
+      page: 1,
+      perPage: 1,
+      text: "findable",
+    });
+    expect(found.total).toBe(2);
+    expect(found.totalBytes).toBe(2000);
+    expect(found.images).toHaveLength(1);
+  });
+
+  it("sums the bytes of the Images it counts", async () => {
+    await createImages([image("s1", [LAURA])]);
+    const page = await pageOf(1, 100, IN_LAURA);
+    expect(page.images.length).toBe(page.total);
+    expect(page.totalBytes).toBe(
+      page.images.reduce((n, { bytes }) => n + bytes, 0)
+    );
+  });
+});
+
+describe("image.service list filters", () => {
+  it("keeps Images with any of several accesses, so both together keep every one", async () => {
+    await createImages([
+      image("both-pub", [LAURA], ImageAccess.PUBLIC),
+      image("both-priv", [LAURA], ImageAccess.PRIVATE),
+    ]);
+    const found = await listImagesPage({
+      accesses: [ImageAccess.PUBLIC, ImageAccess.PRIVATE],
+      enterable: IN_LAURA,
+      page: 1,
+      perPage: 100,
+    });
+    expect(oursIn(found.images)).toHaveLength(2);
+  });
+
+  it("keeps the Images placed in any of the Apps asked for", async () => {
+    await createImages([
+      image("in-laura", [LAURA]),
+      image("in-office", [OFFICE]),
+    ]);
+    const idsIn = async (apps: App[]) =>
+      oursIn(
+        (
+          await listImagesPage({
+            apps,
+            enterable: [LAURA, OFFICE],
+            page: 1,
+            perPage: 100,
+          })
+        ).images
+      ).length;
+    expect(await idsIn([LAURA])).toBe(1);
+    expect(await idsIn([OFFICE])).toBe(1);
+    expect(await idsIn([LAURA, OFFICE])).toBe(2);
+  });
+
+  it("finds Images by their file name too", async () => {
+    await createImages([
+      {
+        ...image("needle-file", [LAURA]),
+        alt: { en: "plain", it: "semplice" },
+      },
+    ]);
+    const found = await listImagesPage({
+      enterable: IN_LAURA,
+      page: 1,
+      perPage: 100,
+      text: "NEEDLE-file",
+    });
+    expect(found.images.map(({ key }) => key)).toEqual([
+      `${KEY_PREFIX}needle-file.avif`,
+    ]);
+  });
+});
+
+/** An App's stats, or zeros for an App with no Image. */
+const statOf = (stats: Awaited<ReturnType<typeof imageStats>>, app: App) =>
+  stats.byApp.find((row) => row.app === app) ?? {
+    app,
+    privateBytes: 0,
+    privateCount: 0,
+    publicBytes: 0,
+    publicCount: 0,
+  };
+
+describe("image.service stats", () => {
+  // The Fixtures live in the same database: each test reads the stats before
+  // and after, and checks what its own Images added.
+  it("counts an Image placed in two Apps once in the totals and in each App", async () => {
+    const before = await imageStats();
+    await createImages([{ ...image("st1", [LAURA, OFFICE]), bytes: 300 }]);
+    const after = await imageStats();
+    expect(after.total - before.total).toBe(1);
+    expect(after.totalBytes - before.totalBytes).toBe(300);
+    for (const app of [LAURA, OFFICE]) {
+      expect(
+        statOf(after, app).privateBytes - statOf(before, app).privateBytes
+      ).toBe(300);
+      expect(
+        statOf(after, app).privateCount - statOf(before, app).privateCount
+      ).toBe(1);
+    }
+  });
+
+  it("splits an App's bytes by access", async () => {
+    const before = await imageStats();
+    await createImages([
+      { ...image("st2", [LAURA], ImageAccess.PUBLIC), bytes: 50 },
+      { ...image("st3", [LAURA]), bytes: 7 },
+    ]);
+    const after = await imageStats();
+    const [was, now] = [statOf(before, LAURA), statOf(after, LAURA)];
+    expect(now.publicBytes - was.publicBytes).toBe(50);
+    expect(now.publicCount - was.publicCount).toBe(1);
+    expect(now.privateBytes - was.privateBytes).toBe(7);
+    expect(now.privateCount - was.privateCount).toBe(1);
+  });
+
+  it("lists only Apps that have an Image, in the enum's order", async () => {
+    await createImages([image("st4", [OFFICE]), image("st5", [LAURA])]);
+    const listed = (await imageStats()).byApp.map(({ app }) => app);
+    expect(listed).toEqual(
+      objectValues(App).filter((app) => listed.includes(app))
+    );
+    expect(listed).toEqual([LAURA, OFFICE]);
   });
 });
 
@@ -241,7 +429,7 @@ describe("image.service writes", () => {
     const [one] = await createImages([image("resolved", [OFFICE, LAURA])]);
     const id = one?.id ?? "";
     // Another Admin takes it out of Laura before this write locks it.
-    await removeImagesFromApp([id], LAURA, ALLOW);
+    await removeImagesFromApp([id], LAURA, LET_THROUGH);
     const seen = vi.fn((): ImageChange[] => [{ id, place: [LAURA] }]);
     const [changed] = await updateImages(await openedNow([id, id]), seen);
     expect(seen).toHaveBeenCalledWith(
@@ -285,7 +473,10 @@ describe("image.service writes, worked out in the transaction", () => {
       )
     ).resolves.toHaveLength(2);
     expect((await getImage(id))?.apps).toEqual([OFFICE]);
-    expect(await deleteImages([id, id], ALLOW)).toEqual([one?.key]);
+    expect(await deleteImages([id, id], LET_THROUGH)).toEqual({
+      deleted: 1,
+      keys: [one?.key],
+    });
   });
 
   it("takes Images out of an App, deleting only those left in none", async () => {
@@ -296,31 +487,55 @@ describe("image.service writes, worked out in the transaction", () => {
     const sharedId = shared?.id ?? "";
     const aloneId = alone?.id ?? "";
     expect(
-      await removeImagesFromApp([sharedId, aloneId], LAURA, ALLOW)
-    ).toEqual([alone?.key]);
+      await removeImagesFromApp([sharedId, aloneId], LAURA, LET_THROUGH)
+    ).toEqual({ deleted: 2, keys: [alone?.key] });
     expect((await getImage(sharedId))?.apps).toEqual([OFFICE]);
     expect(await getImage(aloneId)).toBeNull();
   });
 
-  it("takes nothing out when one id is unknown", async () => {
-    const [one] = await createImages([image("stays", [LAURA, OFFICE])]);
+  it("skips an unknown id and takes the others out", async () => {
+    const [one] = await createImages([image("leaves", [LAURA, OFFICE])]);
     const id = one?.id ?? "";
-    await expect(
-      removeImagesFromApp([id, "missing"], LAURA, ALLOW)
-    ).rejects.toBeInstanceOf(ImageNotFoundError);
-    expect((await getImage(id))?.apps).toEqual([LAURA, OFFICE]);
+    expect(
+      await removeImagesFromApp([id, "missing"], LAURA, LET_THROUGH)
+    ).toEqual({
+      deleted: 1,
+      keys: [],
+    });
+    expect((await getImage(id))?.apps).toEqual([OFFICE]);
   });
 
-  it("deletes every id or none, placements included, returning the keys", async () => {
+  it("deletes the Images that exist, skipping an unknown id, placements included", async () => {
     const [one] = await createImages([image("gone", [LAURA, OFFICE])]);
     const id = one?.id ?? "";
-    await expect(deleteImages([id, "missing"], ALLOW)).rejects.toBeInstanceOf(
-      ImageNotFoundError
-    );
-    expect(await getImage(id)).not.toBeNull();
-    expect(await deleteImages([id], ALLOW)).toEqual([one?.key]);
+    expect(await deleteImages([id, "missing"], LET_THROUGH)).toEqual({
+      deleted: 1,
+      keys: [one?.key],
+    });
     expect(await getImage(id)).toBeNull();
     expect(await prisma.imageApp.count({ where: { imageId: id } })).toBe(0);
+  });
+
+  it("deletes only the Images its check lets through, and counts those", async () => {
+    const [kept, dropped] = await createImages([
+      image("kept", [LAURA]),
+      image("dropped", [LAURA]),
+    ]);
+    const keptId = kept?.id ?? "";
+    const droppedId = dropped?.id ?? "";
+    expect(await deleteImages([keptId, droppedId], () => [droppedId])).toEqual({
+      deleted: 1,
+      keys: [dropped?.key],
+    });
+    expect(await getImage(keptId)).not.toBeNull();
+    expect(await getImage(droppedId)).toBeNull();
+  });
+
+  it("deletes nothing, and says 0, when every id is unknown", async () => {
+    expect(await deleteImages(["missing"], LET_THROUGH)).toEqual({
+      deleted: 0,
+      keys: [],
+    });
   });
 
   it("keeps an Image when its uploader is deleted", async () => {
@@ -335,7 +550,7 @@ describe("image.service never leaves an Image in no App", () => {
     const [one] = await createImages([image("emptied", [LAURA, OFFICE])]);
     const id = one?.id ?? "";
     // Another Admin takes it out of Laura after this caller read both placements.
-    await removeImagesFromApp([id], LAURA, ALLOW);
+    await removeImagesFromApp([id], LAURA, LET_THROUGH);
     const refused = update({ id, remove: [OFFICE] });
     await expect(refused).rejects.toBeInstanceOf(ResourceChangedError);
     await expect(refused).rejects.toMatchObject({ ids: [id] });
@@ -351,7 +566,7 @@ describe("image.service never leaves an Image in no App", () => {
         ]);
         const id = one?.id ?? "";
         await Promise.allSettled([
-          removeImagesFromApp([id], LAURA, ALLOW),
+          removeImagesFromApp([id], LAURA, LET_THROUGH),
           update({ id, remove: [OFFICE] }),
         ]);
         return getImage(id);

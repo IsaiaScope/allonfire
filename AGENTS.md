@@ -33,13 +33,18 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 - Never `Object.keys/values/entries/fromEntries`, `JSON.parse/stringify`,
   `localStorage`/`sessionStorage`: use core's helpers.
 - Constants are one nested object per owner (`API`, `AUTH`, `IMAGE`, …). A
-  path or an error code is never a string literal, tests included.
+  path or an error code is never a string literal, tests included. A Tailwind class list is never a constant: `cva`, or inline in `cn`.
 - An env var starts with its owner: `STORAGE_`, `DATABASE_`, `AUTH_`, `API_`.
 - A package never imports an App. Files go in `src/{environment,shared,features}`.
+- A stored picture (Image, Avatar) in a Next App shows its blur while it loads, as `/storage/images` does, except under 40 px (`images.md`).
 - Every form with fields is an AOF form (`useAOFForm`), never bare `useForm`.
 - Components shared by Apps live in `packages/ui`, named `AOF…`.
   `packages/shadcn` is written only by the shadcn CLI. Pages are built through
   `/aof-design`, never plain `/impeccable`.
+- A page of any Next App that reads or writes the API follows the data
+  checklist in `docs/guides/next-apps.md` (TanStack Query over the private
+  cache, both copies refreshed, resource protection, resource changed); every
+  plan for one names each point.
 - Database changes are Liquibase changesets (`pnpm db:changeset`), never
   `prisma db push` or `prisma migrate`.
 - exFAT drive: macOS writes `._*` sidecars; a new tool that scans folders
@@ -53,8 +58,8 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 | TypeScript, React and CSS style; what lint enforces | `code-style.md` |
 | docs, READMEs, pull requests, diagrams | `writing.md` |
 | where a file or package goes, exports, env names | `package-layout.md` |
-| any Next App: SSR, server actions, TanStack, errors, providers | `next-apps.md` |
-| Back Office pages: metadata, signed-in pages, caching, frame, PWA | `back-office.md` |
+| any Next App: SSR, server actions, TanStack, the private cache and its data checklist, signed-in pages, page information, brand and PWA, errors, providers | `next-apps.md` |
+| Back Office only: the frame, Sections, signed-out pages, Home cards, Services | `back-office.md` |
 | a form | `forms.md` |
 | schemas, services, Roles and access, Liquibase | `database.md` |
 | the API: structure, routes, problem documents, guards, i18n | `api.md` |

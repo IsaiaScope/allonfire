@@ -1,27 +1,19 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { queryOptions } from "@tanstack/react-query";
-import { DetailedError, parseResponse } from "hono/client";
+import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
+import { retryUnlessRefused } from "@/shared/utils/retry";
 import { USERS } from "../constants/users";
 import type { UsersParams } from "../constants/users-params";
 
 /**
  * Asks once more after a server or network failure; never after the API
  * refused (a 401, 403 or 400), so the error shows at once.
- * @internal
  */
-export const retryUsers = (failureCount: number, error: unknown) =>
-  failureCount < USERS.RETRIES &&
-  !(
-    error instanceof DetailedError &&
-    typeof error.statusCode === "number" &&
-    // Below a server error, the request was at fault: asking again changes nothing.
-    error.statusCode < HTTP.STATUS.INTERNAL_SERVER_ERROR
-  );
+export const retryUsers = retryUnlessRefused(USERS.RETRIES);
 
 /** One page of Users from the API; an error throws `DetailedError`. */
 export const fetchUsers = (client: ApiClient, params: UsersParams) =>

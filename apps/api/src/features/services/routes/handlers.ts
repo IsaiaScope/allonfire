@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { guard } from "@allonfire/auth/features/hono/guards/utils/guard";
+import { manageGuard } from "@allonfire/auth/features/hono/guards/utils/manage-guard";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
@@ -40,14 +40,8 @@ import {
 
 const factory = createFactory<AuthEnv>();
 
-/** A Back Office Admin, read now, on a Session still there. */
-const canManage = (deps: ServicesDeps) =>
-  guard((session) =>
-    deps.canManage({ sessionId: session.session.id, userId: session.user.id })
-  );
-
 const digest = (value: string) => createHash("sha256").update(value).digest();
-const BEARER = "Bearer ";
+const BEARER_PREFIX = `${HTTP.AUTH_SCHEME.BEARER} `;
 
 /**
  * The workflow service's token, compared in constant time; any other caller,
@@ -57,7 +51,9 @@ const keepAliveToken =
   (deps: ServicesDeps): MiddlewareHandler =>
   async (c, next) => {
     const sent = c.req.header(HTTP.HEADER.AUTHORIZATION) ?? "";
-    const token = sent.startsWith(BEARER) ? sent.slice(BEARER.length) : "";
+    const token = sent.startsWith(BEARER_PREFIX)
+      ? sent.slice(BEARER_PREFIX.length)
+      : "";
     const expected = deps.keepAliveToken;
     if (
       !(expected && token && timingSafeEqual(digest(token), digest(expected)))
@@ -100,7 +96,7 @@ const bodyOf = async (deps: ServicesDeps, services: ListedServices) => {
 export const listHandlers = (deps: ServicesDeps) =>
   factory.createHandlers(
     listRoute,
-    canManage(deps),
+    manageGuard(deps.canManage),
     validator("query", serviceListQuerySchema, invalidHook),
     async (c) => {
       const { type } = c.req.valid("query");
@@ -117,7 +113,7 @@ export const listHandlers = (deps: ServicesDeps) =>
 export const serviceHandlers = (deps: ServicesDeps) =>
   factory.createHandlers(
     serviceRoute,
-    canManage(deps),
+    manageGuard(deps.canManage),
     validator("param", serviceTypeParamSchema, invalidHook),
     validator("json", serviceUpdateRequestSchema, invalidHook),
     async (c) => {
@@ -140,7 +136,7 @@ export const serviceHandlers = (deps: ServicesDeps) =>
 export const providerHandlers = (deps: ServicesDeps) =>
   factory.createHandlers(
     providerRoute,
-    canManage(deps),
+    manageGuard(deps.canManage),
     validator("param", providerIdParamSchema, invalidHook),
     validator("json", providerUpdateRequestSchema, invalidHook),
     async (c) => {
@@ -166,7 +162,7 @@ export const providerHandlers = (deps: ServicesDeps) =>
 export const testHandlers = (deps: ServicesDeps) =>
   factory.createHandlers(
     testRoute,
-    canManage(deps),
+    manageGuard(deps.canManage),
     validator("param", providerIdParamSchema, invalidHook),
     async (c) => {
       const { id } = c.req.valid("param");

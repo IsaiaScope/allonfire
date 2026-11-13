@@ -11,9 +11,10 @@ import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { SERVICES, serviceTag } from "../../constants/services";
 import { saveProvider, sendTestEmail, setServiceEnabled } from "../services";
 
-vi.mock("@/features/api/utils/server-api", async () => ({
-  serverApi: (await import("@/features/api/tests/fake-api")).fakeServerApi,
-}));
+vi.mock(
+  "@/features/api/utils/server-api",
+  () => import("@/features/api/tests/fake-api")
+);
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 
 const ID = "provider-1";

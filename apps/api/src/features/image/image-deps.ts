@@ -2,7 +2,7 @@ import {
   createImages,
   deleteImages,
   getImage,
-  listImages,
+  listImagesPage,
   removeImagesFromApp,
   updateImages,
 } from "@allonfire/database/features/image/image.service";
@@ -13,15 +13,17 @@ import {
   putImageObject,
 } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
+import { forgetBuckets } from "../storage-usage/buckets";
 
 /** The Image module on the real stack: Prisma, sharp and MinIO. */
 export const imageDeps = (log: ImageDeps["log"]): ImageDeps => ({
+  changed: forgetBuckets,
   copyObject: copyImageObject,
   createImages,
   deleteImages,
   deleteObjects: deleteImageObjects,
   getImage,
-  listImages,
+  listImagesPage,
   log,
   prepare: prepareImage,
   putObject: putImageObject,

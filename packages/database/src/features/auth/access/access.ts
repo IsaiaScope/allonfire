@@ -29,11 +29,22 @@ export const roleIn = (user: AccessUser, app: App): Role | undefined =>
 /**
  * Whether a User holds at least `min` in `app`: a Membership there whose Role
  * reaches it. `hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN)`.
+ * @internal
  */
 export const hasRoleIn = (user: AccessUser, app: App, min: Role): boolean => {
   const role = roleIn(user, app);
   return role !== undefined && hasRole(role, min);
 };
+
+/**
+ * The rule for managing Users, the Services and the Storage overview: an
+ * Admin in the Back Office. Written as that Role, not as the App's floor
+ * (`canEnterApp`), so lowering the Back Office's `minRole` one day never
+ * opens them to anyone else. The API refuses by it and the Back Office
+ * draws by it, so a member it refuses never sees a block it would answer 403.
+ */
+export const isBackOfficeAdmin = (user: AccessUser): boolean =>
+  hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN);
 
 /**
  * Whether a User is allowed into an App: they belong to it and their Role

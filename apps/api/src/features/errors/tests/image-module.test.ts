@@ -13,6 +13,7 @@ import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import {
   imageRecord,
   PREPARED,
+  publicListQuery,
   stubImageDeps,
 } from "@allonfire/storage/features/image/hono/tests/stub-image-deps";
 import type { ImageDeps } from "@allonfire/storage/features/image/hono/utils/deps";
@@ -94,16 +95,16 @@ describe("the Image module inside the API", () => {
 
 describe("the Image module's reads and writes inside the API", () => {
   it("lists for a visitor: no Session, no App entered", async () => {
-    const listImages = vi.fn<ImageDeps["listImages"]>(async () => []);
+    const listImagesPage = vi.fn<ImageDeps["listImagesPage"]>(async () => ({
+      images: [],
+      total: 0,
+      totalBytes: 0,
+    }));
     const res = await createApp(
-      appDeps({ images: stubImageDeps({ listImages }) })
+      appDeps({ images: stubImageDeps({ listImagesPage }) })
     ).request(`${API.PATH.IMAGES}?app=${App.LAURA}`);
     expect(res.status).toBe(HTTP.STATUS.OK);
-    expect(listImages).toHaveBeenCalledWith({
-      app: App.LAURA,
-      enterable: [],
-      limit: 30,
-    });
+    expect(listImagesPage).toHaveBeenCalledWith(publicListQuery(App.LAURA));
   });
 
   it("asks a visitor to sign in before a write, as a problem document", async () => {

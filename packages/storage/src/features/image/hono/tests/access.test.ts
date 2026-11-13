@@ -70,11 +70,14 @@ describe("authoriseDelete from one App", () => {
     ).toBe("passed");
   });
 
-  it("answers 404 for an Image not placed in that App", () => {
-    const current = new Map([["a", privately(App.BACK_OFFICE)]]);
-    expect(
-      statusOf(() => authoriseDelete(everywhereAdmin, current, App.LAURA))
-    ).toBe(HTTP.STATUS.NOT_FOUND);
+  it("skips an Image not placed in that App, as one that is not there", () => {
+    const current = new Map([
+      ["in", privately(App.LAURA)],
+      ["out", privately(App.BACK_OFFICE)],
+    ]);
+    expect(authoriseDelete(everywhereAdmin, current, App.LAURA)).toEqual([
+      "in",
+    ]);
   });
 
   it("answers 403 to a User who sees the Image but does not manage it", () => {
@@ -84,14 +87,20 @@ describe("authoriseDelete from one App", () => {
     ).toBe(HTTP.STATUS.FORBIDDEN);
   });
 
-  it("answers 404 across the batch before any 403", () => {
+  it("skips an Image the User cannot see, and refuses one they see but do not manage", () => {
     const current = new Map([
       ["seen", privately(App.LAURA)],
       ["hidden", privately(App.BACK_OFFICE)],
     ]);
     expect(statusOf(() => authoriseDelete(lauraViewer, current))).toBe(
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.FORBIDDEN
     );
+    expect(
+      authoriseDelete(
+        lauraAdmin,
+        new Map([["hidden", privately(App.BACK_OFFICE)]])
+      )
+    ).toEqual([]);
   });
 });
 
@@ -101,9 +110,7 @@ describe("authoriseDelete everywhere", () => {
     expect(statusOf(() => authoriseDelete(lauraAdmin, current))).toBe(
       HTTP.STATUS.FORBIDDEN
     );
-    expect(statusOf(() => authoriseDelete(everywhereAdmin, current))).toBe(
-      "passed"
-    );
+    expect(authoriseDelete(everywhereAdmin, current)).toEqual(["a"]);
   });
 });
 

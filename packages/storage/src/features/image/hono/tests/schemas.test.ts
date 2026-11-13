@@ -1,6 +1,7 @@
 // @module-tag unit
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, ImageAccess } from "@allonfire/database/enums";
+import { IMAGE } from "../../constants/image";
 import {
   deleteBodySchema,
   listQuerySchema,
@@ -104,7 +105,49 @@ describe("deleteBodySchema", () => {
 });
 
 describe("listQuerySchema", () => {
-  it("lists every App's visible Images when no App is named", () => {
-    expect(listQuerySchema.parse({})).toEqual({ limit: 30 });
+  it("lists every App's visible Images, the first page, when nothing is named", () => {
+    expect(listQuerySchema.parse({})).toEqual({
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+      search: "",
+    });
+  });
+
+  it("takes a numbered page and its size", () => {
+    expect(listQuerySchema.parse({ page: "2", perPage: "10" })).toEqual({
+      page: 2,
+      perPage: 10,
+      search: "",
+    });
+  });
+
+  it("refuses page 0 and a page above the last one allowed", () => {
+    expect(listQuerySchema.safeParse({ page: "0" }).success).toBe(false);
+    expect(
+      listQuerySchema.safeParse({ page: String(IMAGE.LIMIT.MAX_PAGE + 1) })
+        .success
+    ).toBe(false);
+  });
+
+  it("refuses a page size above the most a page holds", () => {
+    expect(
+      listQuerySchema.safeParse({ perPage: String(IMAGE.LIMIT.LIST.MAX + 1) })
+        .success
+    ).toBe(false);
+  });
+
+  it("takes the filters and the text in one search, trimmed, and treats a blank or bad one as none", () => {
+    expect(listQuerySchema.parse({ search: "  sea " }).search).toBe("sea");
+    expect(listQuerySchema.parse({ search: "   " }).search).toBe("");
+    expect(
+      listQuerySchema.parse({ search: "x".repeat(IMAGE.LIMIT.SEARCH_MAX + 1) })
+        .search
+    ).toBe("");
+  });
+
+  it("no longer takes an access of its own: it is a field of search", () => {
+    expect(listQuerySchema.parse({ access: "PUBLIC" })).not.toHaveProperty(
+      "access"
+    );
   });
 });

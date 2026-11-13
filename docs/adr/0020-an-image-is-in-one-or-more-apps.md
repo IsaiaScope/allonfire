@@ -30,7 +30,7 @@ need no Session and an App can have public pages.
 - Image files were already served by key without a Session; public placements
   rely on that, and private Images stay protected only by their random key.
 - An App's list orders by upload date, not by the date the Image entered that
-  App, so the cursor stays one shape.
+  App, so a page keeps one order whichever App it lists.
 - An Image comes back with every placement, including ones the caller cannot
   see: a PATCH sends the full new list, so its sender must see what it keeps.
   Anyone who sees the Image learns which other Apps hold it and whether it is

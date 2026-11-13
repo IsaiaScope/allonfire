@@ -4,15 +4,21 @@ import { describeRoute, resolver } from "hono-openapi";
 import { z } from "zod";
 import { IMAGE } from "../../constants/image";
 import { imageBodySchema } from "../../constants/schemas";
-import { imageListBodySchema } from "../constants/schemas";
+import {
+  deleteResultBodySchema,
+  imagePageBodySchema,
+} from "../constants/schemas";
 
 // The same schemas the handlers return through, so the documented body cannot
 // drift from the served one.
 const imageBody = {
   [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(imageBodySchema) },
 };
-const imageListBody = {
-  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(imageListBodySchema) },
+const imagePageBody = {
+  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(imagePageBodySchema) },
+};
+const deleteResultBody = {
+  [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(deleteResultBodySchema) },
 };
 const imagesBody = {
   [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(z.array(imageBodySchema)) },
@@ -22,7 +28,7 @@ export const listRoute = describeRoute({
   description: IMAGE.DOC.LIST_DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
-      content: imageListBody,
+      content: imagePageBody,
       description: IMAGE.DOC.LIST_200,
     },
     ...problemResponses(HTTP.STATUS.BAD_REQUEST),
@@ -86,12 +92,14 @@ export const patchRoute = describeRoute({
 export const deleteRoute = describeRoute({
   description: IMAGE.DOC.DELETE_DESCRIPTION,
   responses: {
-    [HTTP.STATUS.NO_CONTENT]: { description: IMAGE.DOC.DELETE_204 },
+    [HTTP.STATUS.OK]: {
+      content: deleteResultBody,
+      description: IMAGE.DOC.DELETE_200,
+    },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
-      HTTP.STATUS.FORBIDDEN,
-      HTTP.STATUS.NOT_FOUND
+      HTTP.STATUS.FORBIDDEN
     ),
   },
   summary: IMAGE.DOC.DELETE_SUMMARY,
