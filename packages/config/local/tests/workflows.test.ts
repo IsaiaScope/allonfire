@@ -128,9 +128,9 @@ it("names the Telegram chat ID in the backups .env template", () => {
   expect(read(ENV_EXAMPLE)).toMatch(CHAT_ID_KEY);
 });
 
-it("calls the keep-alive daily at 03:00 Rome time, reporting through the error workflow", () => {
+it("calls the keep-alive daily at 04:00 Rome time, after the 03:00 reboot, reporting through the error workflow", () => {
   const workflow = read(KEEP_ALIVE);
-  expect(workflow).toContain('"expression": "0 3 * * *"');
+  expect(workflow).toContain('"expression": "0 4 * * *"');
   expect(workflow).toContain('"timezone": "Europe/Rome"');
   expect(workflow).toContain(`"errorWorkflow": "${ERROR_WORKFLOW_ID}"`);
   expect(workflow).toContain("p.result === 'rejected'");
@@ -216,7 +216,7 @@ it("takes the Local keep-alive token from the API's own .env, not a copy", () =>
 });
 
 it("refuses an import whose placeholder has no value to fill", () => {
-  // An empty keep-alive URL imported silently fails at 03:00, not at import.
+  // An empty keep-alive URL imported silently fails at 04:00, not at import.
   const script = read(WORKFLOWS_SCRIPT);
   for (const key of [
     "BACKUP_KEEP_ALIVE_URL",

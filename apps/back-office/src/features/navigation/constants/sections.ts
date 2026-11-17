@@ -20,7 +20,7 @@ type SectionLabel = "home" | "services" | "storage" | "users";
 type SectionPageLabel = "images" | "mail";
 
 /** One of a Section's own pages, listed under it in the sidebar. */
-type SectionSubPage = {
+export type SectionSubPage = {
   icon: TablerIcon;
   label: SectionPageLabel;
   path: string;

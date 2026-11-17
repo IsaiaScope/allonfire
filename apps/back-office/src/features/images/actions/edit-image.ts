@@ -46,12 +46,12 @@ export const editImage = async (
   }
   const { access, alt, apps } = parsed.data;
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].images.$patch({
+  const response = await client[API.VERSION.CURRENT].images.$patch({
     json: [{ access, alt, apps, id, version }],
   });
-  if (res.status !== HTTP.STATUS.OK) {
+  if (response.status !== HTTP.STATUS.OK) {
     const error = await refusalOf(
-      res,
+      response,
       IMAGES.EDIT_ERROR,
       new Map<ApiRefusalKey, EditImageError>([
         [HTTP.STATUS.NOT_FOUND, IMAGES.EDIT_ERROR.GONE],

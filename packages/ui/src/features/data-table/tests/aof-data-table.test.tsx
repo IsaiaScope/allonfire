@@ -299,3 +299,37 @@ describe("AOFDataTable busy rows", () => {
     expect(html).toContain("data-busy:opacity-50");
   });
 });
+
+const WithoutRole = ({ status }: { status?: AOFDataTableStatus }) => {
+  const table = useAOFTable({
+    columns: PEOPLE_COLUMNS,
+    data: PEOPLE,
+    getRowId: ({ id }) => id,
+    state: { columnVisibility: { role: false } },
+  });
+  return <AOFDataTable label="People" status={status} table={table} />;
+};
+
+describe("AOFDataTable hidden columns", () => {
+  it("draws neither the header nor the cells of a hidden column", () => {
+    const html = renderToStaticMarkup(<WithoutRole />);
+    expect(html).toContain("Name");
+    expect(html).toContain("Ada");
+    expect(html).not.toContain("Role");
+    expect(html).not.toContain("Admin");
+  });
+
+  it("sizes the loading skeleton by the columns that show", () => {
+    const html = renderToStaticMarkup(<WithoutRole status="pending" />);
+    // Two columns, one hidden: one column's cells in ten rows.
+    expect(html.match(/data-skeleton="cell"/g)?.length).toBe(10);
+  });
+});
+
+describe("aofSelectColumn", () => {
+  it("never sorts and never hides", () => {
+    const column = aofSelectColumn<Person>({ all: "All", row: () => "Row" });
+    expect(column.enableSorting).toBe(false);
+    expect(column.enableHiding).toBe(false);
+  });
+});

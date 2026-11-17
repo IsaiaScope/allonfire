@@ -125,6 +125,9 @@
         // workers through the env.
         "**/global-setup.ts",
         "**/global-teardown.ts",
+        // The Liquibase tests' child `prisma` gets the whole env with its own
+        // DATABASE_URL (Prisma 7 reads the URL from prisma.config.ts).
+        "**/throwaway-db.ts",
         "**/*.test.ts",
         "**/*.test.tsx",
         // The e2e preset hands the run's stamp to Playwright through the env.

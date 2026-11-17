@@ -765,7 +765,7 @@ describe("UsersTable deletion", () => {
     expect(deletions).toEqual([]);
   });
 
-  it("confirming closes the question at once and fades the rows on their way out", async () => {
+  it("confirming closes the question at once and the rows leave the list before the API answers", async () => {
     deleteAnswering(() => new Promise<null>(() => undefined));
     const screen = await renderAsSelf();
     const box = screen
@@ -775,10 +775,24 @@ describe("UsersTable deletion", () => {
     await confirmDelete();
     await expect.poll(() => deletions.length).toBe(1);
     await expect.element(dialog()).not.toBeInTheDocument();
-    const row = box.element().closest("tr");
-    expect(row?.getAttribute("aria-busy")).toBe("true");
-    expect(row?.inert).toBe(true);
+    await expect.element(box).not.toBeInTheDocument();
     await expect.element(deleteButton()).toBeDisabled();
+  });
+
+  it("holds the table's height while the delete is pending", async () => {
+    const frame = () =>
+      document.querySelector('[data-slot="aof-data-table"]')?.clientHeight;
+    deleteAnswering(() => new Promise<null>(() => undefined));
+    const screen = await renderAsSelf();
+    const box = screen
+      .getByRole("table")
+      .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) });
+    await box.click();
+    const before = frame();
+    await confirmDelete();
+    await expect.element(box).not.toBeInTheDocument();
+    expect(before).toBeGreaterThan(0);
+    expect(frame()).toBe(before);
   });
 
   it("confirming deletes, says how many, clears the selection and refetches the list", async () => {
@@ -815,17 +829,14 @@ describe("UsersTable deletion, past the usual path", () => {
     await expect.element(page.getByText(del.failed)).toBeVisible();
     await expect.element(dialog()).not.toBeInTheDocument();
     await expect.element(deleteButton()).toBeEnabled();
-    // The rows come back as they were: nothing was taken from the list.
+    // The rows come back as they were: the refusal undid the removal.
     await expect
-      .poll(() =>
+      .element(
         screen
           .getByRole("table")
           .getByRole("checkbox", { name: selectLabel(OTHER_EMAIL) })
-          .element()
-          .closest("tr")
-          ?.hasAttribute("aria-busy")
       )
-      .toBe(false);
+      .toBeInTheDocument();
   });
 
   it("after deleting the last page's rows, offers the way back", async () => {

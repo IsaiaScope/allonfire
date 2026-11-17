@@ -11,21 +11,21 @@ import { useDeleteImagesFlow } from "../hooks/use-delete-images-flow";
  * they are deleted (`useDeleteImagesFlow`, shown by `BulkDeleteControl`).
  */
 export const DeleteImages = ({
-  ids,
+  selectedIds,
   onClear,
   shape,
 }: {
   /** The Images selected. */
-  ids: string[];
+  selectedIds: string[];
   onClear: () => void;
   /** `labeled` where the page has room for the word beside the icon (the edit page). */
   shape?: ComponentProps<typeof BulkDeleteControl>["shape"];
 }) => {
   const t = useTranslations("Images.delete");
-  const flow = useDeleteImagesFlow(ids, onClear);
+  const flow = useDeleteImagesFlow(selectedIds, onClear);
   return (
     <BulkDeleteControl
-      count={ids.length}
+      count={selectedIds.length}
       flow={flow}
       kanji={IMAGES.DELETE_KANJI}
       shape={shape}

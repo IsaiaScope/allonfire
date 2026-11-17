@@ -4,6 +4,7 @@ import type { UserBody } from "@allonfire/auth/features/users/hono/constants/sch
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
+import { AOFColumnHeader } from "@allonfire/ui/features/data-table/components/aof-column-header";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { useAOFIntentPrefetch } from "@allonfire/ui/features/query/hooks/use-aof-intent-prefetch";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
@@ -43,9 +44,9 @@ export const CopyEmail = ({
   );
 };
 
-/** The link's look: a chevron at the card's end, or the row's own date. */
+/** The link's look: a chevron at the card's end, or the text of the Email cell's link. */
 const openLink = cva(
-  "rounded-sm outline-none after:absolute after:inset-0 focus-visible:ring-3 focus-visible:ring-ring/50",
+  "rounded-sm outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:after:ring-3 focus-visible:after:ring-ring/50",
   {
     variants: {
       shape: {
@@ -60,9 +61,9 @@ const openLink = cva(
  * A User's page, as a real link (a new tab included) whose click area
  * stretches over the whole row or card (`after:inset-0`, against the nearest
  * positioned ancestor), so a click anywhere off a control opens it. On a
- * card it is a chevron; in the table it is the row's last text (`children`,
- * the day they joined), so no column is spent on it, and it says aloud whom
- * it opens before that text. It prefetches the User's page, their data
+ * card it is a chevron; in the table it sits in the Email cell, the one
+ * column that never hides, with the User's name for its (spoken) text
+ * (`children`), so no column is spent on it, and it says aloud whom it opens. It prefetches the User's page, their data
  * included, only once reached for: hover, focus, or a finger landing.
  */
 export const OpenUser = ({
@@ -124,6 +125,9 @@ const UserIdentity = ({ user }: { user: UserBody }) => (
         </span>
       ) : null}
     </span>
+    <OpenUser className="absolute inset-0" user={user}>
+      <span className="sr-only">{user.name || user.email}</span>
+    </OpenUser>
   </span>
 );
 
@@ -164,48 +168,70 @@ export const RoleIn = ({ app, user }: { app: App; user: UserBody }) => {
 };
 
 /**
- * The email (a click copies it), one column per App, and when they joined,
- * which is the link to the User and covers the row.
+ * The email (a click copies it; the link to the User sits there and covers
+ * the row), one column per App, and when they joined. Email and Created sort
+ * (the database orders by them, ADR 0031); each App's column and the date
+ * hide, the email never does. The ids are the address's:
+ * `sort=email.asc`, `hide=LAURA`.
  */
 export const useUserColumns = () => {
   const t = useTranslations();
   const created = useCreated();
-  return useMemo(
-    () =>
-      helper.columns([
-        helper.accessor("email", {
-          // The User as on a phone's card: the picture as tall as the email
-          // over the name: whole up to 480px when there is room, else cut
-          // to an ellipsis down to 240px; the copy and the name aloud stay
-          // whole.
-          cell: ({ row }) => <UserIdentity user={row.original} />,
-          header: t("Users.column.email"),
-          maxSize: 480,
-          minSize: 240,
-        }),
-        ...objectValues(App).map((app) =>
-          helper.display({
-            // Chip, barrier and heading centred in the column.
-            cell: ({ row }) => (
-              <div className="text-center">
-                <RoleIn app={app} user={row.original} />
-              </div>
-            ),
-            header: () => (
-              <div className="text-center">{APP_ENTRY[app].name}</div>
-            ),
-            id: app,
-          })
+  return useMemo(() => {
+    const labels = {
+      asc: t("List.column.asc"),
+      desc: t("List.column.desc"),
+      hide: t("List.column.hide"),
+    };
+    return helper.columns([
+      helper.accessor("email", {
+        // The User as on a phone's card: the picture as tall as the email
+        // over the name: whole up to 480px when there is room, else cut
+        // to an ellipsis down to 240px; the copy and the name aloud stay
+        // whole.
+        cell: ({ row }) => <UserIdentity user={row.original} />,
+        enableHiding: false,
+        header: ({ column }) => (
+          <AOFColumnHeader
+            column={column}
+            label={t("Users.column.email")}
+            labels={labels}
+          />
         ),
-        helper.accessor("createdAt", {
+        maxSize: 480,
+        minSize: 240,
+      }),
+      ...objectValues(App).map((app) =>
+        helper.display({
+          // Chip and barrier centred in the column, and its heading too.
           cell: ({ row }) => (
-            <OpenUser user={row.original}>
-              {created(row.original.createdAt)}
-            </OpenUser>
+            <div className="text-center">
+              <RoleIn app={app} user={row.original} />
+            </div>
           ),
-          header: t("Users.column.created"),
-        }),
-      ]),
-    [created, t]
-  );
+          enableSorting: false,
+          header: ({ column }) => (
+            <AOFColumnHeader
+              centred
+              column={column}
+              label={APP_ENTRY[app].name}
+              labels={labels}
+            />
+          ),
+          id: app,
+        })
+      ),
+      helper.accessor("createdAt", {
+        cell: ({ row }) => created(row.original.createdAt),
+        header: ({ column }) => (
+          <AOFColumnHeader
+            column={column}
+            label={t("Users.column.created")}
+            labels={labels}
+          />
+        ),
+        id: "created",
+      }),
+    ]);
+  }, [created, t]);
 };

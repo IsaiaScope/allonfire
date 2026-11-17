@@ -183,6 +183,7 @@ describe("GET /openapi.json", () => {
       "page",
       "perPage",
       "search",
+      "sort",
     ]);
     expect(images?.post?.requestBody?.content).toHaveProperty(
       [

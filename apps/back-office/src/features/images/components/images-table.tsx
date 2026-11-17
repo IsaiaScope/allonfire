@@ -2,19 +2,19 @@
 
 import { objectKeys } from "@allonfire/core/shared/utils/object";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
-import { useAOFTable } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
+import { useListTable } from "@/shared/hooks/use-list-table";
 import { IMAGES } from "../constants/images";
+import { queryOf } from "../constants/images-params";
 import {
   useImagesTableState,
   useStepBackPastEnd,
 } from "../hooks/use-images-table-state";
 import { useSelectableImages } from "../hooks/use-selectable-images";
 import { imageRow } from "../utils/image-row";
-import { useImagesBeingDeleted } from "../utils/images-mutations";
 import { imagesQuery } from "../utils/images-queries";
 import { DeleteImages } from "./delete-images";
 import { ImagesRowsSkeleton } from "./images-list-skeleton";
@@ -24,67 +24,62 @@ import { ImagesToolbar } from "./images-toolbar";
 const NO_IMAGES: ImageBody[] = [];
 
 /** The picture column shares the room a wide screen leaves over. */
-const FILL = ["image", "apps"];
+const FILL_COLUMNS = ["image", "apps"];
 
 /**
  * The Images list: the toolbar, then one numbered page of Images from the address, read under the
  * key the page prefetched it with, so it opens filled. A new page keeps the
  * previous rows on screen until it arrives. Rows can be selected for
- * deletion and fade while it is on its way; the selection holds only for the
+ * deletion and leave the list the moment it is confirmed (`bulkDeleteMutation`); the selection holds only for the
  * page in view (`useImagesTableState`).
  */
 export const ImagesTable = () => {
   const t = useTranslations("Images");
-  const words = useTranslations("Images.pagination");
-  const {
-    clearSearch,
-    clearSelection,
-    onPaginationChange,
-    pagination,
-    params,
-    selection,
-    setSelection,
-  } = useImagesTableState();
-  const list = useQuery({
-    ...imagesQuery(api, params),
+  const paginationWords = useTranslations("Images.pagination");
+  const tableState = useImagesTableState();
+  const { clearSearch, clearSelection, params, selection } = tableState;
+  // The API is asked, and the cache keyed, by the query alone: hiding a
+  // column asks nothing again.
+  const pageQuery = useQuery({
+    ...imagesQuery(api, queryOf(params)),
     placeholderData: keepPreviousData,
   });
   // A previous page's rows kept on screen while the next loads judge nothing.
-  useStepBackPastEnd(list.isPlaceholderData ? undefined : list.data?.pageCount);
-  const deleting = useImagesBeingDeleted();
+  useStepBackPastEnd(
+    pageQuery.isPlaceholderData ? undefined : pageQuery.data?.pageCount
+  );
   const { card, columns } = useSelectableImages();
 
-  const table = useAOFTable({
+  const table = useListTable({
     columns,
-    data: list.data?.images ?? NO_IMAGES,
+    data: pageQuery.data?.images ?? NO_IMAGES,
     enableRowSelection: true,
     getRowId: ({ id }) => id,
-    manualPagination: true,
-    onPaginationChange,
-    onRowSelectionChange: setSelection,
-    pageCount: list.data?.pageCount ?? -1,
-    state: { pagination, rowSelection: selection },
+    pageCount: pageQuery.data?.pageCount ?? -1,
+    state: tableState,
   });
 
   return (
     <ListTable
       card={card}
       className={imageRow()}
-      deleting={deleting}
-      fill={FILL}
+      fill={FILL_COLUMNS}
       label={t("list")}
       pageSizes={IMAGES.PAGE_SIZES}
       states={{
         empty: <ImagesNotice kind="empty" onAction={clearSearch} />,
-        error: <ImagesNotice kind="error" onAction={list.refetch} />,
+        error: <ImagesNotice kind="error" onAction={pageQuery.refetch} />,
         loading: <ImagesRowsSkeleton />,
       }}
-      status={list.status}
+      status={pageQuery.status}
       table={table}
-      words={words}
+      words={paginationWords}
     >
       <ImagesToolbar>
-        <DeleteImages ids={objectKeys(selection)} onClear={clearSelection} />
+        <DeleteImages
+          onClear={clearSelection}
+          selectedIds={objectKeys(selection)}
+        />
       </ImagesToolbar>
     </ListTable>
   );

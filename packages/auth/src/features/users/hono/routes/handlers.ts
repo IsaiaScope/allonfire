@@ -48,7 +48,7 @@ const factory = createFactory<AuthEnv>();
 const allowed = (deps: UserDeps) =>
   guard((session) => deps.canListUsers(session.user));
 
-/** One page of Users, newest first, with how many match in all. */
+/** One page of Users, in the `sort` order (newest first without one), with how many match in all. */
 export const listHandlers = (deps: UserDeps) =>
   factory.createHandlers(
     listRoute,
@@ -57,10 +57,12 @@ export const listHandlers = (deps: UserDeps) =>
     async (c) => {
       const query = c.req.valid("query");
       const perPage = query[USER.PARAM.PER_PAGE];
+      const sort = USER.SORT.parse(query[USER.PARAM.SORT]);
       const { total, users } = await deps.listUsers({
         ...USER.SEARCH.parse(query[USER.PARAM.SEARCH]),
         page: query[USER.PARAM.PAGE],
         perPage,
+        ...(sort.length > 0 && { sort }),
       });
       const body = {
         pageCount: Math.ceil(total / perPage),

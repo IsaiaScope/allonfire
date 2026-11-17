@@ -64,7 +64,7 @@ const BADGES_MAX = 2;
  * edge and ground, so the tile stands out on it as in the page's search.
  */
 const popup = cva(
-  "w-(--anchor-width) min-w-56 ring-border **:[[cmdk-input]]:placeholder:text-muted-foreground",
+  "w-(--anchor-width) min-w-56 ring-input **:[[cmdk-input]]:placeholder:text-muted-foreground",
   {
     variants: {
       size: {

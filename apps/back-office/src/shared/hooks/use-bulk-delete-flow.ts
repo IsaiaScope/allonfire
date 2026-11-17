@@ -12,7 +12,7 @@ export type BulkDeleteWords = (
 ) => string;
 
 /**
- * Deleting the `selected` rows of a feature: the question first (`ask`), then,
+ * Deleting the `selectedIds` rows of a feature: the question first (`ask`), then,
  * once confirmed, the question closed at once and its `mutation` sent (which
  * reads the list again). A deletion toasts how it went and clears the
  * selection (`onClear`); a failure is told by the App's error handler, in the
@@ -22,12 +22,12 @@ export type BulkDeleteWords = (
 export const useBulkDeleteFlow = ({
   mutation,
   onClear,
-  selected,
+  selectedIds,
   t,
 }: {
   mutation: ReturnType<typeof bulkDeleteMutation>;
   onClear: () => void;
-  selected: string[];
+  selectedIds: string[];
   t: BulkDeleteWords;
 }) => {
   const [asking, setAsking] = useState(false);
@@ -39,11 +39,11 @@ export const useBulkDeleteFlow = ({
   const ask = useCallback(() => setAsking(true), []);
   const confirm = useCallback(() => {
     setAsking(false);
-    mutate(selected, {
-      onSuccess: ({ deleted }, sent) => {
+    mutate(selectedIds, {
+      onSuccess: ({ deleted }, named) => {
         onClear();
         aofToast(
-          deletionMessage(sent.length, deleted, {
+          deletionMessage(named.length, deleted, {
             done: (count) => t("done", { count }),
             gone: (count) => t("gone", { count }),
             partly: (done, gone) => t("partly", { deleted: done, gone }),
@@ -52,7 +52,7 @@ export const useBulkDeleteFlow = ({
         );
       },
     });
-  }, [mutate, onClear, selected, t]);
+  }, [mutate, onClear, selectedIds, t]);
 
   return { ask, asking, confirm, isPending, setAsking };
 };

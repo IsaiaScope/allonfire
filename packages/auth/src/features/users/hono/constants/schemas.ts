@@ -28,6 +28,8 @@ export const listQuerySchema = z.object({
     .pipe(z.literal(USER.PAGE_SIZES))
     .catch(USER.DEFAULT_PAGE_SIZE),
   [USER.PARAM.SEARCH]: z.string().catch(""),
+  /** `email.asc,created.desc` (ADR 0031). Blank, too long or not a string reads as none. */
+  [USER.PARAM.SORT]: z.string().trim().max(USER.LIMIT.SORT_MAX).catch(""),
 });
 
 /** One App a User belongs to, and their Role there. */

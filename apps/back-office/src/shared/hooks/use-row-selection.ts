@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 
 /**
  * The rows selected in a table, which belong to the rows in view: when the
- * `view` (the address a list reads: its page, size and search) changes, the
+ * `view` (the address a list reads: its page, size, search and sort) changes, the
  * selection starts again.
  */
 export const useRowSelection = <View>(view: View & Json<View>) => {

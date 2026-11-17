@@ -40,6 +40,8 @@ export const listQuerySchema = z.object({
    * never a 400.
    */
   search: z.string().trim().max(IMAGE.LIMIT.SEARCH_MAX).catch(""),
+  /** `size.desc,access.asc` (ADR 0031). Blank, too long or not a string reads as none. */
+  sort: z.string().trim().max(IMAGE.LIMIT.SORT_MAX).catch(""),
 });
 
 export const idParamSchema = z.object({ id: z.string().min(1) });

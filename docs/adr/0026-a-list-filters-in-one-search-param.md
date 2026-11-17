@@ -1,5 +1,7 @@
 # A list's filters live in one `search` param
 
+_Superseded in part by [ADR 0031](0031-a-lists-sort-and-view-are-params-of-their-own.md): a date range is one more field here, but Sort and View are params of their own._
+
 A list page (the Back Office's Users first, Storage's Images next) keeps every
 filter and its free text in one URL param, `search`, as `field:value` pairs,
 the free words a field like any other (`input:`): `?search=app:laura

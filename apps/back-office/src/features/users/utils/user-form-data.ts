@@ -58,7 +58,7 @@ export const sendAvatarChange = async (
     change.kind === "picture"
       ? avatar.$put({ form: { file: change.file, version }, param: { id } })
       : avatar.$delete({ json: { version }, param: { id } });
-  const res = await sent.catch(() => Response.error());
+  const response = await sent.catch(() => Response.error());
   updateTag(STORAGE.CACHE.TAG);
-  return res;
+  return response;
 };

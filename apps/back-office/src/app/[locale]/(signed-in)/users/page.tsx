@@ -9,7 +9,10 @@ import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
 import { UsersTable } from "@/features/users/components/users-table";
-import { loadUsersParams } from "@/features/users/constants/users-params";
+import {
+  loadUsersParams,
+  queryOf,
+} from "@/features/users/constants/users-params";
 import { usersHydration } from "@/features/users/utils/users-hydration";
 
 export const generateMetadata = () =>
@@ -33,7 +36,7 @@ const UsersList = async ({ searchParams }: UsersPageProps) => {
   const params = await loadUsersParams(searchParams);
   const [session, state] = await Promise.all([
     requireAppSession(),
-    usersHydration(params).catch(leaveToTable),
+    usersHydration(queryOf(params)).catch(leaveToTable),
   ]);
   return (
     <HydrationBoundary state={state}>

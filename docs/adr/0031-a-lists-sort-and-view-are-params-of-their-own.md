@@ -24,8 +24,13 @@ neither, since the rows are the same.
 
 ## Consequences
 
-- Sort is done by the database for plain columns only (Created, Size,
-  Access, Email); a column that shows a Role or a set of Apps has no Sort, as
-  Prisma orders by neither (Prisma 7 changes nothing here).
+- Sort is done by the database for plain columns only (Images: Name, Created,
+  Size, Access; Users: Email, Created); a column that shows a Role, a set of
+  Apps, a JSON alt or a width and a height has no Sort, as Prisma orders by
+  none of them (Prisma 7 changes nothing here). Every column hides but the
+  first (the Image's picture, the User's Email).
 - A renamed column id breaks links that name it quietly (it is dropped), so a
-  rename keeps the old spelling as an alias, as ADR 0026 says of fields.
+  rename keeps the old spelling as an alias: `sortQuery(columns, aliases)` and
+  `columnsQuery(columns, { aliases })` take `{ from, to }` pairs and read the
+  old spelling as the new column, whatever its case. A list with no renamed
+  column passes none.

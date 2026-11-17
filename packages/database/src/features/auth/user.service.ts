@@ -1,3 +1,6 @@
+import type { SortItem } from "@allonfire/core/features/search/sort-query";
+import type { DayRange } from "@allonfire/core/features/search/utc-day-range";
+import { utcDayRange } from "@allonfire/core/features/search/utc-day-range";
 import { checkVersion } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { Prisma } from "../../../generated/prisma/client";
 import type { App, Role } from "../../../generated/prisma/enums";
@@ -8,6 +11,7 @@ import {
   accessUserFrom,
 } from "./access/access";
 import { lockUser, userVersion } from "./user-version";
+import { type UserSortColumn, userOrderBy } from "./utils/user-order";
 import { replaceMemberships, setPasswordLogin } from "./utils/user-writes";
 
 /** A User's stored picture: its file's name, and the blur shown while it loads. */
@@ -35,11 +39,14 @@ export type UserRecord = {
  * One page of Users. `app` and `role` together match one Membership, in any
  * of the Apps with any of the Roles; `role` alone matches it in any App, and
  * an empty list asks nothing. `text` is part of the email or of the name,
- * any case.
+ * any case. `created` keeps the Users created in those whole UTC days (both
+ * ends included); `sort` orders them (newest first without one).
  */
 export type UserListQuery = {
   app?: readonly App[] | undefined;
+  created?: DayRange | undefined;
   role?: readonly Role[] | undefined;
+  sort?: readonly SortItem<UserSortColumn>[] | undefined;
   text: string;
   page: number;
   perPage: number;
@@ -67,18 +74,21 @@ const toRecord = ({
 });
 
 /**
- * The Users matching `query`, newest first, and how many match in all. The id
- * breaks a tie in `createdAt`, so a page never repeats or skips a User. A
+ * The Users matching `query`, in its `sort` order, and how many match in all.
+ * The id breaks every tie, so a page never repeats or skips a User. A
  * User with no Membership matches only while no App or Role is asked for.
  */
 export const listUsers = async ({
   app,
+  created,
   page,
   perPage,
   role,
+  sort,
   text,
 }: UserListQuery): Promise<{ users: UserRecord[]; total: number }> => {
   const where = {
+    ...(created && { createdAt: utcDayRange(created) }),
     ...(text && {
       OR: [
         { email: { contains: text, mode: "insensitive" } },
@@ -99,7 +109,7 @@ export const listUsers = async ({
   const [total, users] = await Promise.all([
     prisma.user.count({ where }),
     prisma.user.findMany({
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: userOrderBy(sort),
       select: userRecord,
       skip: (page - 1) * perPage,
       take: perPage,

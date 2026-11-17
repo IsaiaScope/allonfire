@@ -2,12 +2,14 @@
 
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IMAGES } from "../constants/images";
-import { loadImagesParams } from "../constants/images-params";
+import { loadImagesParams, queryOf } from "../constants/images-params";
 
 const DEFAULTS = {
   [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
   [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
+  [IMAGES.PARAM.SORT]: "",
+  [IMAGES.PARAM.HIDE]: "",
 };
 /** Any page past the first. */
 const SOME_PAGE = 3;
@@ -35,6 +37,8 @@ describe("loadImagesParams", () => {
       [IMAGES.PARAM.PAGE]: SOME_PAGE,
       [IMAGES.PARAM.PER_PAGE]: perPage,
       [IMAGES.PARAM.SEARCH]: "",
+      [IMAGES.PARAM.SORT]: "",
+      [IMAGES.PARAM.HIDE]: "",
     });
   });
 
@@ -68,5 +72,47 @@ describe("loadImagesParams", () => {
     expect(loadImagesParams({ [IMAGES.PARAM.PER_PAGE]: "7" })).toEqual(
       DEFAULTS
     );
+  });
+});
+
+describe("loadImagesParams sort and hide", () => {
+  it("reads the sort and the hidden columns", () => {
+    const params = loadImagesParams({
+      [IMAGES.PARAM.HIDE]: "apps",
+      [IMAGES.PARAM.SORT]: "size.desc,created.asc",
+    });
+    expect(params[IMAGES.PARAM.SORT]).toBe("size.desc,created.asc");
+    expect(params[IMAGES.PARAM.HIDE]).toBe("apps");
+  });
+
+  it("opens a hand-edited address: the unknown dropped, a duplicate kept once, the fourth cut, the picture never hidden", () => {
+    const params = loadImagesParams({
+      [IMAGES.PARAM.HIDE]: "image,alt,nope",
+      [IMAGES.PARAM.SORT]: "bogus.asc,size.up,size.asc,created.desc,email.asc",
+    });
+    expect(params[IMAGES.PARAM.SORT]).toBe("size.asc,created.desc");
+    expect(params[IMAGES.PARAM.HIDE]).toBe("alt");
+  });
+
+  it("keeps the hidden columns in the table's order", () => {
+    expect(
+      loadImagesParams({ [IMAGES.PARAM.HIDE]: "apps,size" })[IMAGES.PARAM.HIDE]
+    ).toBe("size,apps");
+  });
+});
+
+describe("queryOf", () => {
+  it("drops the hidden columns and keeps the rest: a View change asks nothing", () => {
+    const params = loadImagesParams({
+      [IMAGES.PARAM.HIDE]: "apps",
+      [IMAGES.PARAM.SEARCH]: "sea",
+      [IMAGES.PARAM.SORT]: "size.desc",
+    });
+    expect(queryOf(params)).toEqual({
+      [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
+      [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
+      [IMAGES.PARAM.SEARCH]: "input:sea",
+      [IMAGES.PARAM.SORT]: "size.desc",
+    });
   });
 });
