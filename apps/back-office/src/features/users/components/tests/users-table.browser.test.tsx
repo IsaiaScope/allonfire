@@ -20,6 +20,7 @@ import { COPY } from "@/shared/constants/copy";
 import { USERS_PAGE, USERS_URL } from "@/shared/tests/msw/handlers";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
+import { watchWarnings } from "@/shared/tests/watch-warnings";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import IT from "../../../i18n/translations/it.json" with { type: "json" };
 import { deleteUsers } from "../../actions/delete-users";
@@ -516,18 +517,21 @@ describe("UsersTable notices", () => {
     await expect.poll(() => lastQuery(onUrlUpdate).toString()).toBe("");
   });
 
-  it("past the last page, goes to the last page", async () => {
-    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    answerPastTheEnd();
-    const screen = await renderAt({
-      onUrlUpdate,
-      search: PAST_THE_END,
-    });
-    await screen.getByRole("button", { name: t.pastEnd.last }).click();
-    await expect
-      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.PAGE))
-      .toBe(String(TWO_PAGES.pageCount));
-  });
+  it.each([
+    ["", SCREEN.VIEWPORT.DESKTOP],
+    [" on a phone", SCREEN.VIEWPORT.PHONE],
+  ])(
+    "past the last page%s, steps back to the last page by itself",
+    async (_, { HEIGHT, WIDTH }) => {
+      await page.viewport(WIDTH, HEIGHT);
+      const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+      answerPastTheEnd();
+      await renderAt({ onUrlUpdate, search: PAST_THE_END });
+      await expect
+        .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.PAGE))
+        .toBe(String(TWO_PAGES.pageCount));
+    }
+  );
 });
 
 describe("UsersTable states", () => {
@@ -537,41 +541,12 @@ describe("UsersTable states", () => {
     await expect.element(screen.getByText(t.empty.title)).toBeVisible();
   });
 
-  it("past the last page, shows the empty state and the way back", async () => {
-    answerPastTheEnd();
-    const screen = await renderAt({
-      search: PAST_THE_END,
-    });
-    await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
-    await expect
-      .element(screen.getByRole("button", { name: t.pagination.first }))
-      .toBeEnabled();
-  });
-
   it("past the end of a search nobody matches, says nobody matches", async () => {
     listAnswering(() => HttpResponse.json(NOBODY));
     const screen = await renderAt({
       search: PAST_THE_END,
     });
     await expect.element(screen.getByText(t.empty.title)).toBeVisible();
-  });
-
-  it("past the last page on a phone, says so and steps back to the last page", async () => {
-    await page.viewport(
-      SCREEN.VIEWPORT.PHONE.WIDTH,
-      SCREEN.VIEWPORT.PHONE.HEIGHT
-    );
-    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
-    answerPastTheEnd();
-    const screen = await renderAt({
-      onUrlUpdate,
-      search: PAST_THE_END,
-    });
-    await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
-    await screen.getByRole("button", { name: t.pagination.previous }).click();
-    await expect
-      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.PAGE))
-      .toBe(String(TWO_PAGES.pageCount));
   });
 
   it("says when the Users cannot be loaded, and tries again", async () => {
@@ -839,25 +814,42 @@ describe("UsersTable deletion, past the usual path", () => {
       .toBeInTheDocument();
   });
 
-  it("after deleting the last page's rows, offers the way back", async () => {
+  it("after deleting the last page's rows, goes back to the previous page, with no notice on the way", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
     let gone = false;
-    listAnswering(() =>
-      HttpResponse.json(
-        gone
-          ? { pageCount: 1, total: 1, users: [] }
-          : { ...TWO_PAGES, users: [NO_APP] }
-      )
-    );
+    listAnswering(() => {
+      const wanted = sent.at(-1)?.get(USER.PARAM.PAGE);
+      if (!gone) {
+        return HttpResponse.json({ ...TWO_PAGES, users: [NO_APP] });
+      }
+      return HttpResponse.json({
+        pageCount: 1,
+        total: 1,
+        users: wanted === "2" ? [] : [LAURA_ADMIN],
+      });
+    });
     deleteAnswering((ids) => {
       gone = true;
       return ids.length;
     });
+    const warnings = watchWarnings([t.empty.title, t.error.title]);
     const screen = await renderAt({
+      onUrlUpdate,
       search: `?${USER.PARAM.PAGE}=${TWO_PAGES.pageCount}`,
       selfId: SELF,
     });
     await tickOther(screen);
     await confirmDelete();
-    await expect.element(screen.getByText(t.pastEnd.title)).toBeVisible();
+    await expect
+      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.PAGE))
+      .toBeNull();
+    await expect
+      .element(
+        screen.getByRole("table").getByRole("button", {
+          name: enT("Users.copy.label", { email: LAURA_ADMIN?.email ?? "" }),
+        })
+      )
+      .toBeVisible();
+    expect(warnings.seen()).toEqual([]);
   });
 });

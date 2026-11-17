@@ -13,7 +13,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { api } from "@/features/api/utils/api";
-import { SectionLoading } from "@/features/navigation/components/section-loading";
 import { CardFrame } from "@/shared/components/card-frame";
 import { cardBadge } from "@/shared/utils/card-badge";
 import { SERVICES } from "../constants/services";
@@ -21,6 +20,7 @@ import { type ListedProvider, servicesQuery } from "../utils/services-queries";
 import { ProviderForm } from "./provider-form";
 import { ProviderUsage } from "./provider-usage";
 import { ServiceSwitch } from "./service-switch";
+import { ServicesSkeleton } from "./services-skeleton";
 import { TestSend } from "./test-send";
 
 /** A mail provider's card: who it is, a test, how much it used, its settings. */
@@ -83,7 +83,7 @@ export const ServiceProviders = ({ title, type }: ServiceProvidersProps) => {
   const failed = useTranslations("Common.Request")("failed");
   const { data, isPending } = useQuery(servicesQuery(api, type));
   if (isPending) {
-    return <SectionLoading />;
+    return <ServicesSkeleton title={title} />;
   }
   const service = data?.services.find((one) => one.type === type);
   if (!service) {

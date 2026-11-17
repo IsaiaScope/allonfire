@@ -26,6 +26,76 @@ describe("authRoutes", () => {
     expect(seen).toEqual([`GET ${GET_SESSION}`, `POST ${SIGN_IN}`]);
   });
 
+  describe("the Session cookies' Domain", () => {
+    const DOMAIN = ".example.test";
+    const COOKIE = `a=b; Max-Age=60; Domain=${DOMAIN}; Path=/; HttpOnly`;
+    const appWith = (cookieDomain: string | undefined) =>
+      new Hono().route(
+        "/",
+        authRoutes(
+          stubAuth({
+            basePath: HOST_AUTH_PATH,
+            cookieDomain,
+            handler: () =>
+              Promise.resolve(
+                new Response("handled", {
+                  headers: [
+                    [HTTP.HEADER.SET_COOKIE, COOKIE],
+                    [HTTP.HEADER.SET_COOKIE, "c=d; Path=/"],
+                  ],
+                })
+              ),
+          })
+        )
+      );
+    const cookiesFor = async (
+      cookieDomain: string | undefined,
+      origin: string | undefined
+    ) =>
+      (
+        await appWith(cookieDomain).request(SIGN_IN, {
+          headers: origin ? { [HTTP.HEADER.ORIGIN]: origin } : {},
+          method: HTTP.METHOD.POST,
+        })
+      ).headers.getSetCookie();
+
+    it("is kept for an App under the domain", async () => {
+      expect(
+        await cookiesFor(DOMAIN, "https://back-office.example.test")
+      ).toEqual([COOKIE, "c=d; Path=/"]);
+    });
+
+    it("is dropped for an Origin outside it, so the browser keeps the cookie", async () => {
+      expect(await cookiesFor(DOMAIN, "http://localhost:3400")).toEqual([
+        "a=b; Max-Age=60; Path=/; HttpOnly",
+        "c=d; Path=/",
+      ]);
+    });
+
+    it("is kept when the request names no Origin", async () => {
+      expect(await cookiesFor(DOMAIN, undefined)).toEqual([
+        COOKIE,
+        "c=d; Path=/",
+      ]);
+    });
+
+    it("is left alone when the host sets no domain", async () => {
+      expect(await cookiesFor(undefined, "http://localhost:3400")).toEqual([
+        COOKIE,
+        "c=d; Path=/",
+      ]);
+    });
+
+    it("keeps the answer's body and status", async () => {
+      const res = await appWith(DOMAIN).request(SIGN_IN, {
+        headers: { [HTTP.HEADER.ORIGIN]: "http://localhost:3400" },
+        method: HTTP.METHOD.POST,
+      });
+      expect(await res.text()).toBe("handled");
+      expect(res.status).toBe(HTTP.STATUS.OK);
+    });
+  });
+
   it("does not answer other methods", async () => {
     const app = new Hono().route(
       "/",

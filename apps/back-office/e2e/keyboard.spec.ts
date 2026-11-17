@@ -39,13 +39,23 @@ test.describe("Users list: the Filter panel without a mouse", () => {
     await expect(page.getByRole("button", { name: FILTERS })).toBeFocused();
   });
 
-  test("walks the three tabs with the arrow keys, one stop on the tab list", async ({
+  test("walks the tabs with the arrow keys (three, two on a phone), one stop on the tab list", async ({
     page,
   }) => {
     await openWithKeyboard(page);
     await page.getByRole("tab", { name: FILTER_TAB }).focus();
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("tab", { name: SORT_TAB })).toBeFocused();
+    if (onPhone(page)) {
+      // A phone has no View tab: the columns are a desktop's.
+      await expect(page.getByRole("tab", { name: VIEW_TAB })).toHaveCount(0);
+      await page.keyboard.press("ArrowLeft");
+      await expect(page.getByRole("tab", { name: FILTER_TAB })).toHaveAttribute(
+        "aria-selected",
+        "true"
+      );
+      return;
+    }
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("tab", { name: VIEW_TAB })).toBeFocused();
     await page.keyboard.press("ArrowLeft");

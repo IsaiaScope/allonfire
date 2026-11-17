@@ -61,6 +61,8 @@ stops them otherwise.
   `apps/api/.env`), or a phone gets `localhost` links that reach nothing.
 - Every App shares the API's `localhost` address only on the Mac. Once a page
   calls the API from the browser, the API needs its own Service (`svc:api`),
-  its address in `API_CORS_ORIGINS` and in `NEXT_PUBLIC_API_URL`.
+  its address in `API_CORS_ORIGINS` and in `NEXT_PUBLIC_API_REMOTE_URL`
+  (the address a page opened off the Mac calls; `NEXT_PUBLIC_API_URL` stays
+  the Mac's).
 - Renaming the tailnet or the machine changes every address. Restart
   `pnpm dev` and run `pnpm dev:tailscale` again.

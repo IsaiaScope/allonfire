@@ -246,7 +246,10 @@ export const AOFFaceted = <V extends string>({
                 onSelect={choose}
                 value={item.value}
               >
-                {item.label}
+                {/* A long name wraps at spaces and stops at two lines; a word wider than the row ends in an ellipsis, never split. */}
+                <span className="line-clamp-2 min-w-0 max-w-full overflow-hidden text-ellipsis">
+                  {item.label}
+                </span>
                 <FacetedItemIndicator />
               </FacetedItem>
             ))}

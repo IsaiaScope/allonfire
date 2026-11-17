@@ -38,6 +38,13 @@ const INSTALL_STATUS = {
 
 /** What every App's PWA shares: its paths, the worker's file, the Install hint. */
 export const PWA = {
+  /**
+   * Under `next dev`, a browser or installed App can freeze the page's HMR
+   * socket in the background (a phone always does) and Next never sees it
+   * close, so it skips its reconnect and the edits made meanwhile never
+   * arrive: a page hidden longer than this reloads on its return.
+   */
+  DEV_RESUME: { HIDDEN_MS: 3 * UNIT.MS_PER_SECOND },
   INSTALL_HINT: {
     INSTALL_STATUS,
     /**

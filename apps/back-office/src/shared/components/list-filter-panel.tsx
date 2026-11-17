@@ -212,6 +212,8 @@ export const ListFilterPanel = ({
           searchIcon={<SearchTile />}
         />
       }
+      // A phone draws the rows as cards: no columns to hide there.
+      viewFromMd
     >
       {children}
       <AOFDateRangeFilter

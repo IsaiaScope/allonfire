@@ -7,12 +7,10 @@ import { useTranslations } from "next-intl";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
 import { useListTable } from "@/shared/hooks/use-list-table";
+import { useStepBackPastEnd } from "@/shared/hooks/use-step-back-past-end";
 import { IMAGES } from "../constants/images";
 import { queryOf } from "../constants/images-params";
-import {
-  useImagesTableState,
-  useStepBackPastEnd,
-} from "../hooks/use-images-table-state";
+import { useImagesTableState } from "../hooks/use-images-table-state";
 import { useSelectableImages } from "../hooks/use-selectable-images";
 import { imageRow } from "../utils/image-row";
 import { imagesQuery } from "../utils/images-queries";
@@ -37,17 +35,23 @@ export const ImagesTable = () => {
   const t = useTranslations("Images");
   const paginationWords = useTranslations("Images.pagination");
   const tableState = useImagesTableState();
-  const { clearSearch, clearSelection, params, selection } = tableState;
+  const { clearSearch, clearSelection, params, selection, stepBackTo } =
+    tableState;
   // The API is asked, and the cache keyed, by the query alone: hiding a
   // column asks nothing again.
   const pageQuery = useQuery({
     ...imagesQuery(api, queryOf(params)),
     placeholderData: keepPreviousData,
   });
-  // A previous page's rows kept on screen while the next loads judge nothing.
-  useStepBackPastEnd(
-    pageQuery.isPlaceholderData ? undefined : pageQuery.data?.pageCount
-  );
+  // A page past the last one (its Images all deleted, or an edited address)
+  // steps back; until it has, the skeleton stands in, not "no Image matches".
+  const status = useStepBackPastEnd({
+    firstPage: IMAGES.DEFAULT_PAGE,
+    page: params[IMAGES.PARAM.PAGE],
+    query: pageQuery,
+    rows: pageQuery.data?.images.length,
+    stepTo: stepBackTo,
+  });
   const { card, columns } = useSelectableImages();
 
   const table = useListTable({
@@ -71,7 +75,7 @@ export const ImagesTable = () => {
         error: <ImagesNotice kind="error" onAction={pageQuery.refetch} />,
         loading: <ImagesRowsSkeleton />,
       }}
-      status={pageQuery.status}
+      status={status}
       table={table}
       words={paginationWords}
     >

@@ -41,11 +41,14 @@ export const useUsersTableState = () => {
     () => setParams({ [USER.PARAM.PAGE]: null, [USER.PARAM.SEARCH]: null }),
     [setParams]
   );
-  const toPage = useCallback(
-    (page: number) => setParams({ [USER.PARAM.PAGE]: page }),
+  // jscpd:ignore-start
+  // The Images and Users state hooks hand a list the same shape: one return.
+  /** The page past the last one steps back to `last`, replacing its history entry. */
+  const stepBackTo = useCallback(
+    (last: number) =>
+      setParams({ [USER.PARAM.PAGE]: last }, { history: "replace" }),
     [setParams]
   );
-
   return {
     clearSearch,
     clearSelection,
@@ -58,6 +61,7 @@ export const useUsersTableState = () => {
     selection,
     setSelection,
     sorting: view.sorting,
-    toPage,
+    stepBackTo,
   };
+  // jscpd:ignore-end
 };
