@@ -6,6 +6,7 @@ import { api } from "@/features/api/utils/api";
 import { ResourceView } from "@/shared/components/resource-view";
 import { userQuery } from "../utils/users-queries";
 import { EditUser } from "./edit-user";
+import { EditUserSkeleton } from "./edit-user-skeleton";
 
 /**
  * One User's edit page, read under the key the page hydrated it with (so it
@@ -24,7 +25,7 @@ export const UserEditor = ({
 }) => {
   const query = useQuery(userQuery(api, id));
   return (
-    <ResourceView query={query}>
+    <ResourceView loading={<EditUserSkeleton />} query={query}>
       {(user) => <EditUser manageApp={manageApp} selfId={selfId} user={user} />}
     </ResourceView>
   );

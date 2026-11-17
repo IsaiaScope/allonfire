@@ -76,8 +76,12 @@ const CLASS_NAMES = {
     "transform-none! top-1.5! right-1.5! left-auto! size-7! rounded-md! border-0! bg-transparent! text-current! shadow-none! outline-none hover:bg-current/20! focus-visible:ring-3! focus-visible:ring-current/50! [&_svg]:stroke-[2.5]"
   ),
   // Under the message, which then reads as its title (bold); both stop at
-  // five lines with an ellipsis.
-  content: cn("has-data-description:*:data-title:font-bold!"),
+  // five lines with an ellipsis. Sonner wraps a custom toast's card in the
+  // same title element: a clamp there cuts the card short in WebKit (iOS
+  // Safari), so only Sonner's own toasts (`data-styled`) clamp it.
+  content: cn(
+    "in-data-[styled=true]:*:data-title:line-clamp-5 has-data-description:*:data-title:font-bold!"
+  ),
   description: cn(
     "wrap-break-word line-clamp-5 text-current! text-sm! opacity-90"
   ),
@@ -89,8 +93,7 @@ const CLASS_NAMES = {
   ),
   info: notice({ kind: "info" }),
   success: notice({ kind: "success" }),
-  // A long message stops at five lines with an ellipsis.
-  title: cn("wrap-break-word line-clamp-5"),
+  title: cn("wrap-break-word"),
   toast: cn(
     "data-[styled=true]:items-start! font-sans! data-[dismissible=true]:cursor-grab data-[styled=true]:gap-3.5! data-[styled=true]:py-3.5! data-[styled=true]:pr-10! data-[styled=true]:pl-4! data-[styled=true]:text-base! data-[styled=true]:has-data-icon:pl-0! data-[dismissible=true]:active:cursor-grabbing"
   ),

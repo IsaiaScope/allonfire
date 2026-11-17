@@ -61,6 +61,27 @@ describe("refreshSession", () => {
   });
 });
 
+describe("refreshSession and the cookie Domain", () => {
+  it("tells the API which origin the page is on when the browser sent none, so cookies for another domain are narrowed", async () => {
+    await refreshSession(request(TOKEN));
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(new Headers(init?.headers).get(HTTP.HEADER.ORIGIN)).toBe(
+      "http://back-office.test"
+    );
+  });
+
+  it("keeps the Origin the browser did send", async () => {
+    const own = "http://other.test";
+    await refreshSession(
+      new NextRequest("http://back-office.test/en", {
+        headers: { cookie: TOKEN, [HTTP.HEADER.ORIGIN]: own },
+      })
+    );
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(new Headers(init?.headers).get(HTTP.HEADER.ORIGIN)).toBe(own);
+  });
+});
+
 describe("refreshSession when the API fails", () => {
   it("renews nothing and logs the error", async () => {
     const failure = new Error("API down");

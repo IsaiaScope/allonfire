@@ -2,8 +2,8 @@
 
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App } from "@allonfire/database/enums";
-import type { ReactNode } from "react";
 import { page } from "vitest/browser";
+import { FORM_WIDTHS, heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { imageBody } from "../../tests/image-body";
@@ -32,31 +32,8 @@ vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
 }));
 // jscpd:ignore-end
 
-/** As wide as the form's page beside the sidebar, where the fields pair up. */
-const WIDE_PX = 900;
-/** As narrow as a phone's page, where they stack. */
-const NARROW_PX = 360;
-/** Between the two: one column, but more room than a phone (a tablet; a narrow window). */
-const MID_PX = 520;
-const WIDTHS = [
-  ["a wide page", WIDE_PX],
-  ["a tablet", MID_PX],
-  ["a phone", NARROW_PX],
-] as const;
 const BOTH = [App.BACK_OFFICE, App.LAURA];
 const IMAGE = imageBody();
-
-/** The page's body, `width` wide inside the container the Section gives it, as `view` draws it. */
-const heightAt = async (width: number, view: ReactNode) => {
-  const screen = await renderInApp({
-    children: (
-      <div className="@container" style={{ width }}>
-        {view}
-      </div>
-    ),
-  });
-  return screen.container.firstElementChild?.getBoundingClientRect().height;
-};
 
 beforeEach(() => {
   replace.mockClear();
@@ -67,7 +44,7 @@ beforeEach(() => {
 });
 
 describe("AddImageSkeleton", () => {
-  it.each(WIDTHS)(
+  it.each(FORM_WIDTHS)(
     "is as tall as the empty Add form on %s, so nothing moves when it arrives",
     async (_, width) => {
       const real = await heightAt(width, <AddImage apps={BOTH} />);
@@ -92,7 +69,7 @@ describe("AddImageSkeleton", () => {
 });
 
 describe("EditImageSkeleton", () => {
-  it.each(WIDTHS)(
+  it.each(FORM_WIDTHS)(
     "is as tall as the Edit form on %s, so nothing moves when the Image arrives",
     async (_, width) => {
       const real = await heightAt(

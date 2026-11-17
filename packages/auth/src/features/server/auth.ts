@@ -224,6 +224,7 @@ export type Auth = ReturnType<typeof createAuth>;
 
 export const toAuthLike = (auth: Auth): AuthLike => ({
   basePath: auth.options.basePath,
+  cookieDomain: auth.options.advanced?.crossSubDomainCookies?.domain,
   getSession: async (headers, setCookie) => {
     const { headers: set, response: found } = await auth.api.getSession({
       headers,

@@ -1,4 +1,6 @@
 // @module-tag integration
+
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import type { SortingState } from "@tanstack/react-table";
 import { useState } from "react";
 import { page, userEvent } from "vitest/browser";
@@ -34,6 +36,8 @@ const PANEL_MAX_REM = 26;
 /** A field's height under a mouse, when the page sets no `--field-height`. */
 const FIELD_HEIGHT_PX = 40;
 const PX_PER_REM = 16;
+/** The gap between a sort row's controls on a phone: 6px, a little under a desktop's 8. */
+const SORT_GAP_PX = 6;
 
 /** What the harness reports out, for a test to read. */
 const reported: { hidden: string[]; sorting: SortingState } = {
@@ -41,9 +45,15 @@ const reported: { hidden: string[]; sorting: SortingState } = {
   sorting: [],
 };
 
-const Panel = () => {
+const Panel = ({
+  hiddenAtStart = [],
+  viewFromMd,
+}: {
+  hiddenAtStart?: string[];
+  viewFromMd?: boolean;
+}) => {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [hidden, setHidden] = useState<string[]>([]);
+  const [hidden, setHidden] = useState<string[]>(hiddenAtStart);
   reported.sorting = sorting;
   reported.hidden = hidden;
   return (
@@ -75,6 +85,7 @@ const Panel = () => {
           onHiddenChange={setHidden}
         />
       }
+      viewFromMd={viewFromMd}
     >
       <p>the filters</p>
     </AOFFilterPanel>
@@ -89,6 +100,9 @@ const addTwoSorts = async () => {
 };
 
 const FILTERS_BUTTON = /^Filters/;
+/** The harness holds one filter value and one hidden column. */
+const FILTERS_ON_PHONE = /^Filters\s*1$/;
+const FILTERS_FROM_MD = /^Filters\s*2$/;
 const openPanel = () =>
   userEvent.click(page.getByRole("button", { name: FILTERS_BUTTON }));
 
@@ -238,5 +252,66 @@ describe("AOFFilterPanel sort and view", () => {
     await expect
       .element(page.getByRole("option", { name: "Size" }))
       .not.toBeInTheDocument();
+  });
+});
+
+describe("AOFFilterPanel on a phone", () => {
+  beforeEach(() => page.viewport(NARROW.WIDTH, NARROW.HEIGHT));
+
+  it("keeps a sort row on one line: column, direction, remove and the handle side by side", async () => {
+    await render(<Panel />);
+    await openPanel();
+    await addTwoSorts();
+    const tops = [
+      page.getByRole("combobox", { name: "Column" }).first(),
+      page.getByRole("combobox", { name: "Direction" }).first(),
+      page.getByRole("button", { name: "Remove sort" }).first(),
+      page.getByRole("button", { name: "Drag to reorder" }).first(),
+    ].map((control) =>
+      Math.round(control.element().getBoundingClientRect().top)
+    );
+    expect(new Set(tops).size).toBe(1);
+  });
+
+  it("draws the column and direction selects as wide as each other, with a tight gap on a phone", async () => {
+    await render(<Panel />);
+    await openPanel();
+    await addTwoSorts();
+    const column = page
+      .getByRole("combobox", { name: "Column" })
+      .first()
+      .element()
+      .getBoundingClientRect();
+    const direction = page
+      .getByRole("combobox", { name: "Direction" })
+      .first()
+      .element()
+      .getBoundingClientRect();
+    expect(Math.abs(column.width - direction.width)).toBeLessThan(1);
+    expect(direction.left - column.right).toBeLessThanOrEqual(SORT_GAP_PX);
+  });
+
+  it("leaves the View tab out when the table is cards (viewFromMd), and out of the count", async () => {
+    await render(<Panel hiddenAtStart={["size"]} viewFromMd />);
+    await expect
+      .element(page.getByRole("button", { name: FILTERS_ON_PHONE }))
+      .toBeVisible();
+    await openPanel();
+    await expect.element(page.getByRole("tablist")).toBeVisible();
+    await expect
+      .element(page.getByRole("tab", { name: TAB_LABELS.view }))
+      .not.toBeInTheDocument();
+  });
+
+  it("keeps the View tab from md, counted", async () => {
+    await page.viewport(SCREEN.BREAKPOINT.MD, NARROW.HEIGHT);
+    await render(<Panel hiddenAtStart={["size"]} viewFromMd />);
+    await expect
+      .element(page.getByRole("button", { name: FILTERS_FROM_MD }))
+      .toBeVisible();
+    await openPanel();
+    await expect
+      .element(page.getByRole("tab", { name: TAB_LABELS.view }))
+      .toBeVisible();
   });
 });

@@ -22,6 +22,7 @@ const turboSchema = z.object({
 const BUILD_VARIABLES = [
   "API_URL",
   "BACK_OFFICE_URL",
+  "NEXT_PUBLIC_API_REMOTE_URL",
   "NEXT_PUBLIC_API_URL",
 ] as const;
 
@@ -58,6 +59,18 @@ describe("environment", () => {
     ["with an API address that is not a URL", "not-a-url"],
   ])("refuses to start %s", async (_, value) => {
     vi.stubEnv("API_URL", value);
+    await expect(import("../environment")).rejects.toThrow(
+      "Invalid environment variables"
+    );
+  });
+
+  it("starts without a remote API address, which only Local sets", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_REMOTE_URL", undefined);
+    await expect(import("../environment")).resolves.toHaveProperty("env");
+  });
+
+  it("refuses a remote API address that is not a URL", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_REMOTE_URL", "not-a-url");
     await expect(import("../environment")).rejects.toThrow(
       "Invalid environment variables"
     );

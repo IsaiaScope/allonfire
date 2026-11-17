@@ -7,6 +7,13 @@ import { z } from "zod";
 export const env = createEnv({
   client: {
     /**
+     * Local only: the API's address for a page opened off this machine (the
+     * tailnet address, from a phone), where `NEXT_PUBLIC_API_URL` is not
+     * reachable. Unset, the browser always calls `NEXT_PUBLIC_API_URL`.
+     * Baked in at build.
+     */
+    NEXT_PUBLIC_API_REMOTE_URL: z.url().optional(),
+    /**
      * The API's public address, for the browser: it calls the API directly,
      * with the Session cookies set for the parent domain. Baked in at build.
      */
@@ -15,6 +22,7 @@ export const env = createEnv({
   // An empty value reads as unset, so `LAURA_URL=` hides Laura.
   emptyStringAsUndefined: true,
   experimental__runtimeEnv: {
+    NEXT_PUBLIC_API_REMOTE_URL: process.env.NEXT_PUBLIC_API_REMOTE_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NODE_ENV: process.env.NODE_ENV,
   },

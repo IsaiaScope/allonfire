@@ -119,25 +119,32 @@ export const setupOverview = ({
   });
 
   describe(`${name} skeleton`, () => {
-    it("is as tall as the card it stands for, so nothing moves when the data arrives", async () => {
-      worker.use(
-        http.get(url, async () => {
-          await delay(150);
-          return HttpResponse.json(loaded);
-        })
-      );
-      const screen = await renderView();
-      const skeleton = screen.container.querySelector("[data-skeleton]");
-      const waiting = skeleton?.getBoundingClientRect().height ?? 0;
-      await expect
-        .element(screen.getByRole("img", { name: t.chart.label }))
-        .toBeVisible();
-      const card = screen.container.querySelector('[data-slot="card"]');
-      expect(waiting).toBeGreaterThan(0);
-      expect(
-        Math.abs((card?.getBoundingClientRect().height ?? 0) - waiting)
-      ).toBeLessThan(2);
-    });
+    it.each([
+      ["a desktop", SCREEN.VIEWPORT.DESKTOP],
+      ["a phone", SCREEN.VIEWPORT.PHONE],
+    ])(
+      "is as tall as the card it stands for on %s, so nothing moves when the data arrives",
+      async (_where, { HEIGHT, WIDTH }) => {
+        await page.viewport(WIDTH, HEIGHT);
+        worker.use(
+          http.get(url, async () => {
+            await delay(150);
+            return HttpResponse.json(loaded);
+          })
+        );
+        const screen = await renderView();
+        const skeleton = screen.container.querySelector("[data-skeleton]");
+        const waiting = skeleton?.getBoundingClientRect().height ?? 0;
+        await expect
+          .element(screen.getByRole("img", { name: t.chart.label }))
+          .toBeVisible();
+        const card = screen.container.querySelector('[data-slot="card"]');
+        expect(waiting).toBeGreaterThan(0);
+        expect(
+          Math.abs((card?.getBoundingClientRect().height ?? 0) - waiting)
+        ).toBeLessThan(2);
+      }
+    );
   });
 
   /** Renders the view: the screen and the locator of its chart. */

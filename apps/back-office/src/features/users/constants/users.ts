@@ -136,12 +136,10 @@ export const USERS = {
   /**
    * The list's notices where its rows stand, decoration only (the brush face
    * carries each wall kanji): nobody matches, the stamp reads 0 and 該当なし
-   * (no match) over 空席 (vacant seats); the page is past the last, 終
-   * (end) and 終点 (the terminus) over 終点.
+   * (no match) over 空席 (vacant seats).
    */
   SIGNAGE: {
     EMPTY: { CODE: "0", KANA: "該当なし", WALL_KANJI: "空席" },
-    PAST_END: { CODE: "終", KANA: "終点", WALL_KANJI: "終点" },
   } satisfies Record<string, StationSignage>,
   /** The columns the Sort tab lists: the plain ones the database orders by. */
   SORTABLE: ["email", "created"] as const,

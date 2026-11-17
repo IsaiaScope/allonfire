@@ -46,7 +46,9 @@ export const ImageFact = ({
   </div>
 );
 
-/** A picture's name in a fact: cut after two lines, whatever its length. */
+/** A picture's name in a fact: wraps at spaces, cut after two lines; a word wider than the fact ends in an ellipsis, never split. */
 export const ImageName = ({ children }: { children: ReactNode }) => (
-  <span className="wrap-break-word line-clamp-2 leading-snug">{children}</span>
+  <span className="line-clamp-2 max-w-full overflow-hidden text-ellipsis leading-snug">
+    {children}
+  </span>
 );

@@ -1,5 +1,5 @@
 import { useQueryStates } from "nuqs";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useRowSelection } from "@/shared/hooks/use-row-selection";
 import {
   resolveUpdater,
@@ -41,6 +41,14 @@ export const useImagesTableState = () => {
     () => setParams({ [IMAGES.PARAM.PAGE]: null, [IMAGES.PARAM.SEARCH]: null }),
     [setParams]
   );
+  // jscpd:ignore-start
+  // The Images and Users state hooks hand a list the same shape: one return.
+  /** The page past the last one steps back to `last`, replacing its history entry. */
+  const stepBackTo = useCallback(
+    (last: number) =>
+      setParams({ [IMAGES.PARAM.PAGE]: last }, { history: "replace" }),
+    [setParams]
+  );
   return {
     clearSearch,
     clearSelection,
@@ -53,25 +61,7 @@ export const useImagesTableState = () => {
     selection,
     setSelection,
     sorting: view.sorting,
+    stepBackTo,
   };
-};
-
-/**
- * A page past the last one that exists (the last page's Images were deleted,
- * or the address was edited) steps back, in place, to that last page, or to
- * the first when no Image is left. `pageCount` is the list's, once it has
- * answered for the address in view; `undefined` before, when nothing is judged.
- */
-export const useStepBackPastEnd = (pageCount: number | undefined) => {
-  const [params, setParams] = useQueryStates(imagesParams);
-  const page = params[IMAGES.PARAM.PAGE];
-  useEffect(() => {
-    if (pageCount === undefined) {
-      return;
-    }
-    const last = Math.max(pageCount, IMAGES.DEFAULT_PAGE);
-    if (page > last) {
-      setParams({ [IMAGES.PARAM.PAGE]: last }, { history: "replace" });
-    }
-  }, [page, pageCount, setParams]);
+  // jscpd:ignore-end
 };

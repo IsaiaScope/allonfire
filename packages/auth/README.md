@@ -22,7 +22,7 @@ renews the Session, all by calling the
 API from the App's server and setting the cookies it answers with on the
 App's own response. An App sets `AUTH_APP` and `API_AUTH_URL`
 (`environment/next-environment`, extended into its env; neither has a default),
-plus `AUTH_COOKIE_DOMAIN` where the API sets one
+plus `AUTH_COOKIE_DOMAIN` where the API sets one (`authRoutes` drops its `Domain` from a cookie answered to an Origin outside it, as a Local `localhost` page, and sign out clears with the same rule)
 and draws its own components; who it lets in is `canEnterApp` with the App's
 row in `ACCESS.APP_SETTINGS` (its floor and Registration, ADR 0019), the same rule
 the API's `requireApp` applies.

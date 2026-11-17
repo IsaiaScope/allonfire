@@ -23,6 +23,7 @@
       "env": [
         "ANALYZE",
         "NEXT_DIST_DIR",
+        "NEXT_PUBLIC_API_REMOTE_URL",
         "NEXT_PUBLIC_API_URL",
         "BACK_OFFICE_URL",
         "API_URL"
