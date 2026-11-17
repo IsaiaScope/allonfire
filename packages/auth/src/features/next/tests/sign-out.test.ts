@@ -22,7 +22,12 @@ vi.hoisted(() => vi.stubEnv("AUTH_COOKIE_DOMAIN", ".example.test"));
 type VisitorCookie = { name: string; value: string };
 
 /** The visitor's cookies on the request the action answers. */
-const visit = vi.hoisted((): { cookies: VisitorCookie[] } => ({ cookies: [] }));
+const visit = vi.hoisted(
+  (): { cookies: VisitorCookie[]; origin: string | undefined } => ({
+    cookies: [],
+    origin: undefined,
+  })
+);
 
 let response = new NextResponse();
 
@@ -45,6 +50,7 @@ vi.mock("@allonfire/core/features/next/api/visitor-headers", () => ({
     cookie: visit.cookies
       .map(({ name, value }) => `${name}=${value}`)
       .join("; "),
+    ...(visit.origin && { [HTTP.HEADER.ORIGIN]: visit.origin }),
   }),
 }));
 
@@ -69,6 +75,7 @@ const sentFor = (name: string) =>
 
 beforeEach(() => {
   response = new NextResponse();
+  visit.origin = undefined;
   visit.cookies = [
     { name: TOKEN, value: "t" },
     { name: DATA, value: "d" },
@@ -106,5 +113,16 @@ describe("signOutOfApi", () => {
       expect(sentFor(name)).toContain(`Domain=${DOMAIN}`);
     }
     expect(sentFor("NEXT_LOCALE")).toBeUndefined();
+  });
+
+  it("clears with no Domain when the visitor's Origin is outside the cookie domain", async () => {
+    visit.origin = "http://localhost:3400";
+    fetchMock.mockRejectedValueOnce(new Error("unreachable"));
+    vi.spyOn(serverLogger(), "error").mockImplementation(() => undefined);
+    await signOutOfApi();
+    for (const name of [TOKEN, DATA]) {
+      expect(sentFor(name)).toContain("Expires=Thu, 01 Jan 1970");
+      expect(sentFor(name)).not.toContain("Domain=");
+    }
   });
 });

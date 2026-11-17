@@ -74,9 +74,11 @@ _Avoid_: form kit, form library
 
 **App scaffolding**:
 The shared wiring every App composes piece by piece: providers, request config,
-proxy and Next config. Not part of the Design system; an App keeps only the
-pieces it needs.
-_Avoid_: boilerplate, starter, kit
+proxy and Next config, and the parts every signed-in App has (the frame, the
+sign-in pages, the PWA, page information, special pages). It lives in packages,
+never copied into an App; an App adds only its Sections, its features, its
+words and its Design. Not part of the Design system.
+_Avoid_: boilerplate, starter, kit, template
 
 **Design**:
 A named visual world, its rules and its tokens, that one or more Apps wear.
@@ -124,6 +126,22 @@ Admin Role in every App it is in. It carries its alt text in the Base languages 
 languages. App content that shows a picture points to an Image rather than
 holding the picture itself.
 _Avoid_: media, asset, file, picture, photo
+
+**Gallery**:
+Laura's feed of the Images placed in the Laura App, newest first. Every
+Member of Laura sees it; only a Laura Admin adds to it.
+_Avoid_: album, photo stream, library
+
+**Favorite**:
+An Image of the Laura App that a Laura Admin marked, shown to every Member
+of Laura as one shared selection, never one per User. It exists only while
+the Image is placed in the Laura App: removing the placement removes it.
+_Avoid_: like, heart, bookmark, starred
+
+**Memory game**:
+Laura's card-matching game, the only game it keeps. Each finished game is a
+score of the User who played it, ranked on one leaderboard for all of Laura.
+_Avoid_: quiz, mini-game
 
 **Avatar**:
 A User's own picture, shown beside their name in every App. It belongs to

@@ -28,13 +28,18 @@ export const SERVICES: ServiceList = {
   services: [{ enabled: true, providers: [PROVIDER], type: ServiceType.MAIL }],
 };
 
-/** `children` with the Mail list already in the query cache, so the API is never asked. */
+/**
+ * `children` with the Mail list already in the query cache, so the API is
+ * never asked; with `undefined` the cache is empty and the list is still read.
+ */
 export const renderWithServices = (
-  services: ServiceList,
+  services: ServiceList | undefined,
   children: ReactNode
 ) => {
   const client = new QueryClient();
-  client.setQueryData(servicesListKey(ServiceType.MAIL), services);
+  if (services) {
+    client.setQueryData(servicesListKey(ServiceType.MAIL), services);
+  }
   return render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider

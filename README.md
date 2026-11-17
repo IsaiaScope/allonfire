@@ -155,11 +155,12 @@ One-time setup, in the admin console:
      "services": {
        "svc:back-office": ["tag:dev"],
        "svc:laura": ["tag:dev"],
-       "svc:cdn": ["tag:dev"]
+       "svc:cdn": ["tag:dev"],
+       "svc:api": ["tag:dev"]
      }
    },
    "grants": [
-     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:cdn"], "ip": ["443"] }
+     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:cdn", "svc:api"], "ip": ["443"] }
    ]
    ```
 
@@ -168,7 +169,7 @@ One-time setup, in the admin console:
 2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
    `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
    so the Mac then belongs to the tag, not to a user.
-3. Services: define `back-office`, `laura` and `cdn`, each on `tcp:443`.
+3. Services: define `back-office`, `laura`, `cdn` and `api`, each on `tcp:443`.
 4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
    defined stays pending: `tailscale serve clear svc:<name>`, then run it
    again, and the auto-approval applies.
@@ -184,6 +185,20 @@ One-time setup, in the admin console:
 7. Set `BACK_OFFICE_URL` to `https://back-office.<tailnet>.ts.net` in
    `apps/back-office/.env.development.local`, so link previews on the phone
    load their images; delete the file to go back to localhost.
+8. Set `NEXT_PUBLIC_API_REMOTE_URL` to `https://api.<tailnet>.ts.net` in the
+   same file: a page opened on the tailnet address (the phone) calls the API
+   there, since `localhost:3300` reaches nothing on a phone (a saved edit
+   refreshes the list). A page on `localhost` keeps `NEXT_PUBLIC_API_URL`.
+   Restart the Back Office: the value is baked in at build.
+9. Share the Session cookie with that API: set
+   `AUTH_COOKIE_DOMAIN=".<tailnet>.ts.net"` in `apps/api/.env` and in
+   `apps/back-office/.env.development.local`, restart both, and sign in again
+   at each address you use. Without it the browser's call to the API from the
+   tailnet address carries no Session and gets the signed-out answer (only
+   public Images, one page), so the pager's arrows step back and a delete
+   jumps to the last page. A sign-in from `localhost` gets a cookie with no
+   Domain (the API drops it for an Origin outside the domain), so `localhost`
+   and the tailnet address each keep their own Session.
 
 Why Services, and what a new App needs: ADR 0021.
 

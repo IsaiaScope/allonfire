@@ -12,6 +12,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@allonfire/shadcn/components/tabs";
+import { useIsMobile } from "@allonfire/shadcn/hooks/use-mobile";
 import {
   IconAdjustmentsHorizontal,
   IconFilter,
@@ -55,6 +56,11 @@ export type AOFFilterPanelProps = ComponentPropsWithoutChildren<
   tabLabels?: { filter: string; sort: string; view: string } | undefined;
   /** The View tab's content (`AOFViewPanel`). */
   view?: ReactNode;
+  /**
+   * The table's columns exist only from `md` up (a phone gets cards): the View
+   * tab, and the hidden columns in the button's count, are left out below it.
+   */
+  viewFromMd?: boolean | undefined;
   /** What acts on the open tab alone, drawn at the panel's bottom right while
    *  that tab is open (Clear filters, Reset sorting, Show all). */
   tabActions?: { filter?: ReactNode; sort?: ReactNode; view?: ReactNode };
@@ -208,12 +214,15 @@ export const AOFFilterPanel = ({
   tabActions,
   tabLabels,
   triggerProps,
-  view,
+  view: viewTab,
+  viewFromMd,
   ...props
 }: AOFFilterPanelProps) => {
+  const phone = useIsMobile();
+  const view = viewFromMd && phone ? undefined : viewTab;
   const tabbed = tabLabels !== undefined && (sort || view);
   const total = tabbed
-    ? count + (counts?.sort ?? 0) + (counts?.view ?? 0)
+    ? count + (counts?.sort ?? 0) + (view ? (counts?.view ?? 0) : 0)
     : count;
   return (
     <Popover {...props}>

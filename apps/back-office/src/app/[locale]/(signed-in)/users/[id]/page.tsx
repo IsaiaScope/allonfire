@@ -4,9 +4,9 @@ import { App } from "@allonfire/database/enums";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { Suspense } from "react";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionLoading } from "@/features/navigation/components/section-loading";
 import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
+import { EditUserSkeleton } from "@/features/users/components/edit-user-skeleton";
 import { UserEditor } from "@/features/users/components/user-editor";
 import { userHref } from "@/features/users/utils/user-href";
 import { userHydration } from "@/features/users/utils/users-hydration";
@@ -54,7 +54,13 @@ const UserForm = async ({ params }: UserPageProps) => {
  * wait for the request, behind the page's own boundary.
  */
 const UserPage = ({ params }: UserPageProps) => (
-  <Suspense fallback={<SectionLoading />}>
+  <Suspense
+    fallback={
+      <SectionPage width="form">
+        <EditUserSkeleton />
+      </SectionPage>
+    }
+  >
     <UserForm params={params} />
   </Suspense>
 );

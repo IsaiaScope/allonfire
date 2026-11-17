@@ -3,8 +3,10 @@ import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { firstLoad } from "@allonfire/core/features/next/pwa/utils/install-hint-state";
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
 import { NextIntlClientProvider } from "next-intl";
+import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { nextFrames, toastWouldHaveArrived } from "@/shared/tests/toast-timing";
 import { InstallHint } from "../install-hint";
@@ -66,6 +68,25 @@ describe("Install hint", () => {
     await expect
       .element(steps.last())
       .toHaveTextContent(TEXT.step[PWA.INSTALL_HINT.STEP.IOS_ADD]);
+    screen.unmount();
+  });
+
+  // Sonner wraps a custom toast's card in its title element: a line clamp on
+  // that element cut the card short in WebKit (iOS Safari), its steps lost.
+  it("shows the whole card, its steps included", async () => {
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
+    visitWith(UA.IPHONE_SAFARI);
+    const screen = await hint();
+    await expect.element(screen.getByRole("complementary")).toBeVisible();
+    await nextFrames();
+    const card = document.querySelector("aside");
+    const toast = document.querySelector("[data-sonner-toast]");
+    expect(toast?.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+      card?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY
+    );
     screen.unmount();
   });
 

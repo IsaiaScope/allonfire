@@ -2,6 +2,7 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { MiddlewareHandler } from "hono";
 import { AUTH } from "../../../../shared/constants/auth";
 import type { AuthLike } from "../../../../shared/types/auth";
+import { setCookieFor } from "../../../server/utils/cookie-domain";
 import type { AuthEnv } from "../../types/variables";
 
 /**
@@ -10,7 +11,8 @@ import type { AuthEnv } from "../../types/variables";
  *
  * Cookies Better Auth sets while reading go on the response, whatever it turns
  * out to be; dropped, the browser's cookie would never be renewed and the
- * cookie cache would never refill.
+ * cookie cache would never refill. Each goes as `authRoutes` sends its own:
+ * without its Domain for an Origin outside the host's cookie domain.
  */
 export const sessionLoader =
   (auth: AuthLike): MiddlewareHandler<AuthEnv> =>
@@ -23,7 +25,12 @@ export const sessionLoader =
       )
     );
     await next();
+    const origin = context.req.header(HTTP.HEADER.ORIGIN);
     for (const cookie of cookies) {
-      context.header(HTTP.HEADER.SET_COOKIE, cookie, { append: true });
+      context.header(
+        HTTP.HEADER.SET_COOKIE,
+        setCookieFor(cookie, origin, auth.cookieDomain),
+        { append: true }
+      );
     }
   };

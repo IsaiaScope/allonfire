@@ -426,16 +426,12 @@
         "ownRole": "Non puoi cambiare il tuo Ruolo nel Back Office.",
         "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo."
       },
+      "loading": "Caricamento dell'Utente",
       "ownRoleLocked": "Nessuno cambia il proprio Ruolo in {app}.",
       "password": "Nuova password",
       "saved": "Salvato",
       "submit": "Salva",
       "submitting": "Salvo"
-    },
-    "pastEnd": {
-      "description": "Le pagine sono meno di questa; l'ultima pagina ha gli Utenti.",
-      "title": "Questa pagina è oltre la fine",
-      "last": "Vai all'ultima pagina"
     },
     "delete": {
       "action": "Elimina",

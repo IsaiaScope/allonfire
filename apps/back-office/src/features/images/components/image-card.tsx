@@ -71,8 +71,8 @@ export const ImageCard = ({
               name={image.key}
               wrap
             />
-            <OpenImage image={image}>
-              <span className="wrap-break-word line-clamp-2 text-base leading-snug">
+            <OpenImage className="max-w-full" image={image}>
+              <span className="line-clamp-2 max-w-full overflow-hidden text-ellipsis text-base leading-snug">
                 <AltText image={image} />
               </span>
             </OpenImage>

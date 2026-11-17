@@ -5,6 +5,7 @@ import { AOFThemeProvider } from "@allonfire/core/features/next/providers/compon
 import { AOFPwa } from "@allonfire/core/features/next/pwa/components/aof-pwa";
 import { ENV } from "@allonfire/core/shared/constants/env";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
+import { AOFEdgeTint } from "@allonfire/ui/features/feedback/components/aof-edge-tint";
 import { AOFQueryProvider } from "@allonfire/ui/features/query/components/aof-query-provider";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -60,6 +61,9 @@ const LocaleLayout = async ({ children }: { children: ReactNode }) => {
                     offline notice included; above an iPhone's home
                     indicator. */}
                 <StationToaster />
+                {/* Keeps iOS Safari's toolbar the page's colour, never a
+                    toast's or a card's green. */}
+                <AOFEdgeTint />
                 {/* The PWA (ADR 0023): the Install hint and the offline
                     notice, both sent as toasts in the Japan Design, and in
                     production the service worker. */}

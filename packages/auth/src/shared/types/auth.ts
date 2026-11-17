@@ -42,6 +42,12 @@ export type OpenApiFragment = {
 export type AuthLike = {
   /** The `basePath` given to `createAuth`; the adapters mount and match under it. */
   basePath: string;
+  /**
+   * The parent domain the Session cookies are set for (`createAuth`'s
+   * `cookieDomain`), when the host sets one: `authRoutes` takes it off a
+   * cookie answered to an Origin outside it.
+   */
+  cookieDomain?: string | undefined;
   handler: (request: Request) => Promise<Response>;
   /**
    * Reading a Session can refresh it: Better Auth then sets cookies (a renewed
