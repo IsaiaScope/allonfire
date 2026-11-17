@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AOFDevResume } from "./aof-dev-resume";
 import { AOFServiceWorker } from "./aof-service-worker";
 
 export type AOFPwaProps = {
@@ -23,5 +24,6 @@ export const AOFPwa = ({ banner, children, enabled, hint }: AOFPwaProps) => (
     {hint}
     {banner}
     <AOFServiceWorker enabled={enabled} />
+    {enabled ? null : <AOFDevResume />}
   </>
 );

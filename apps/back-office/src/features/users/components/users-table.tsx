@@ -6,10 +6,10 @@ import { objectKeys, objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
 import { useListTable } from "@/shared/hooks/use-list-table";
+import { useStepBackPastEnd } from "@/shared/hooks/use-step-back-past-end";
 import { queryOf } from "../constants/users-params";
 import { useSelectableUsers } from "../hooks/use-selectable-users";
 import { useUsersTableState } from "../hooks/use-users-table-state";
@@ -40,17 +40,24 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
   const t = useTranslations("Users");
   const paginationWords = useTranslations("Users.pagination");
   const tableState = useUsersTableState();
-  const { clearSearch, clearSelection, params, selection, toPage } = tableState;
+  const { clearSearch, clearSelection, params, selection, stepBackTo } =
+    tableState;
   // The API is asked, and the cache keyed, by the query alone: hiding a
   // column asks nothing again.
   const pageQuery = useQuery({
     ...usersQuery(api, queryOf(params)),
     placeholderData: keepPreviousData,
   });
+  // A page past the last one (its Users all deleted, or an edited address)
+  // steps back; until it has, the skeleton stands in, not "nobody matches".
+  const status = useStepBackPastEnd({
+    firstPage: USER.DEFAULT_PAGE,
+    page: params[USER.PARAM.PAGE],
+    query: pageQuery,
+    rows: pageQuery.data?.users.length,
+    stepTo: stepBackTo,
+  });
   const { card, columns } = useSelectableUsers();
-
-  const lastPage = pageQuery.data?.pageCount ?? USER.DEFAULT_PAGE;
-  const toLastPage = useCallback(() => toPage(lastPage), [lastPage, toPage]);
 
   const table = useListTable({
     columns,
@@ -61,10 +68,6 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
     state: tableState,
   });
 
-  // Past the last page (a hand-edited address): Users match, just not here.
-  // When nobody matches at all, that is the plain empty state.
-  const pastEnd =
-    (pageQuery.data?.total ?? 0) > 0 && params[USER.PARAM.PAGE] > lastPage;
   return (
     <ListTable
       card={card}
@@ -73,15 +76,11 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
       label={t("list")}
       pageSizes={USER.PAGE_SIZES}
       states={{
-        empty: pastEnd ? (
-          <UsersNotice kind="pastEnd" onAction={toLastPage} />
-        ) : (
-          <UsersNotice kind="empty" onAction={clearSearch} />
-        ),
+        empty: <UsersNotice kind="empty" onAction={clearSearch} />,
         error: <UsersNotice kind="error" onAction={pageQuery.refetch} />,
         loading: <UsersRowsSkeleton />,
       }}
-      status={pageQuery.status}
+      status={status}
       table={table}
       words={paginationWords}
     >

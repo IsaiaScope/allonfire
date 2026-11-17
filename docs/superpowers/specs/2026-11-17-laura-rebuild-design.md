@@ -54,7 +54,7 @@ The owner wants Laura rebuilt on that standard, with every piece both Apps need 
 
 ### Laura's frame (picked: floating sidebar, shadcn `sidebar-04`)
 
-One `AppFrame` in `packages/ui` serves both Apps; the Design picks `variant` (`sidebar` | `floating` | `inset`) and `collapsible`. Back Office: `sidebar` + `icon` (sidebar-07). Laura: `floating` + `icon`. Phone is a drawer in both. Alternatives surveyed (inset 08, sticky header 16, React Bits Dock, Aceternity Floating Dock/Sidebar, Shadcn Studio shell): not picked. No free library ships a finished sidebar-on-desktop/tab-bar-on-phone shell; a phone tab bar was rejected for the Back Office already, and the owner picked the sidebar family. `AppFrame` must keep a seam (`variant`, `collapsible`) so that choice stays one prop.
+One `AppFrame` in `packages/ui` (`AOFAppFrame`) serves both Apps; the App's descriptor sets `variant` (`sidebar` | `floating` | `inset`) and `collapsible` (ADR 0033), and the Design supplies the frame tokens (`--frame-gap`, `--frame-radius`, `--frame-shadow`). Back Office: `sidebar` + `icon` (sidebar-07). Laura: `floating` + `icon`. Phone is a drawer in both. Alternatives surveyed (inset 08, sticky header 16, React Bits Dock, Aceternity Floating Dock/Sidebar, Shadcn Studio shell): not picked. No free library ships a finished sidebar-on-desktop/tab-bar-on-phone shell; a phone tab bar was rejected for the Back Office already, and the owner picked the sidebar family. `AppFrame` must keep a seam (`variant`, `collapsible`) so that choice stays one prop.
 
 ### Photos in Laura (picked: Admin-only Upload section inside Laura)
 
@@ -70,7 +70,7 @@ This document is the roadmap. Each phase has its own plan file under `docs/super
 2. Laura registers nobody (Back Office rule). Users are added by an Admin in the Back Office. Laura's own Better Auth in `lib/auth.ts` is deleted; the Auth module in the API is the only auth.
 3. Existing Viewer Memberships become User (changeset), then the enum value is dropped. `Viewer` leaves `CONTEXT.md`, ADR 0019 gets an amendment (new ADR, not an edit of the old one).
 4. Gallery = list of Images that are in the Laura App. Favorites need a new `laura.Favorite` table (userId + imageId, unique), Liquibase changeset; the old Photo/Favorite models are already gone.
-5. `GameType` drops `QUIZ`; existing QUIZ `GameScore` rows are deleted in the changeset. Only `MEMORY` stays (the enum may stay as a one-value enum for later games, or become implicit: decided in Phase 6).
+5. `GameType` drops `QUIZ`; existing QUIZ `GameScore` rows are deleted in the changeset. Only `MEMORY` stays (the enum might stay as a one-value enum for later games, or become implicit: decided in Phase 6).
 6. Settings page is dropped: language and theme live in the account menu / frame like the Back Office. User info is the account menu.
 7. "Sharing" means link previews and the share card (Open Graph, Twitter image, WhatsApp/iMessage-safe images, JSON-LD if kept) as in `next-apps.md`. A native Web Share button on a photo is optional and decided in Phase 4.
 8. Framer Motion, lucide, react-hook-form, `heic2any`, sonner and next-intl wiring are re-evaluated against the standard: Tabler icons, `useAOFForm`, ui's toaster, core's i18n. Motion stays only where the Design needs it and a library the repo already uses covers it.
@@ -90,7 +90,7 @@ Order is a dependency chain; each plan file is `docs/superpowers/plans/2026-11-1
 | 4 | Gallery and Favorites | API: list Laura Images (cursor/infinite), favorite toggle, favorites list; `laura.Favorite` changeset; pages with hydration, masonry grid, photo preview, optimistic favorite, share, skeletons + height tests | 3 |
 | 5 | Admin Upload | Upload section (Admin only): shared HEIC convert util, dropzone, preview grid, all-or-nothing `POST /images` into the Laura App, cache clears; Back Office's Add Images page reuses the same ui pieces | 3 (4 for the grid) |
 | 6 | Memory game | API scores (submit, leaderboard), `QUIZ` removal changeset, game board, hub, leaderboard, cache tags, skeletons | 3 |
-| 7 | Cutover | Delete `auth-old`, `ui-old`, old Laura leftovers and scripts, docs (`laura.md`, `next-apps.md`, `package-layout.md` Laura notes, ADRs), knip/dupes, Docker/CI/Dokploy deploy, `design:sync` and `lint-staged` lines, version/release | all |
+| 7 | Cutover | Delete `auth-old`, `ui-old`, old Laura leftovers and scripts, docs (`laura.md`, `next-apps.md`, `package-layout.md` Laura notes, ADRs), knip/dupes and guard tests, Docker/CI/Dokploy deploy (Laura service, `LAURA_HOST`/`LAURA_URL`, CORS origin), VPS check against `2026-11-17-laura-vps-cleanup-inventory.md` (the audit found no old Laura on the server, so nothing to delete there; photos are re-uploaded before the Mac copies go), version/release | all |
 
 ### Phase 1: what is generic (moves) vs App-specific (stays)
 
@@ -108,6 +108,21 @@ Stays in the Back Office: Japan-dressed pieces (torii, hanko, kanji, departure b
 
 Rule for every move: the package logic never names an App; per-App values come from one descriptor object (`BACK_OFFICE`, `LAURA`), per-Design look from slots/cva/theme tokens.
 
+## Plans (written 2026-11-17)
+
+| # | Plan file | Tasks |
+|---|---|---|
+| 0 | `docs/superpowers/plans/2026-11-17-laura-p0-drop-viewer.md` | 9 |
+| 1 | `docs/superpowers/plans/2026-11-17-laura-p1-extract-scaffold.md` | 20 |
+| 2 | `docs/superpowers/plans/2026-11-17-laura-p2-octopus-design.md` | 13 |
+| 3 | `docs/superpowers/plans/2026-11-17-laura-p3-laura-shell.md` | 16 |
+| 4 | `docs/superpowers/plans/2026-11-17-laura-p4-gallery-favorites.md` | 19 |
+| 5 | `docs/superpowers/plans/2026-11-17-laura-p5-admin-upload.md` | 21 |
+| 6 | `docs/superpowers/plans/2026-11-17-laura-p6-memory-game.md` | 22 |
+| 7 | `docs/superpowers/plans/2026-11-17-laura-p7-cutover.md` | 15 |
+
+Found while planning (binds the plans): the VPS holds no old Laura (live read-only audit, `docs/superpowers/specs/2026-11-17-laura-vps-cleanup-inventory.md`); the rebuilt Laura's gallery starts empty. TanStack 5.103 never refetches an active `staleTime: "static"` query on `invalidateQueries`; Phase 4 adds core's `invalidateStatic` and `AOFHydratedBoundary onlyMissing`, and Phases 5 and 6 call it. Owner decision: both Apps share one refresh logic, with the fix (core's `invalidateStatic`, used by the Back Office and Laura alike, Back Office migrated in Phase 4 Task 1). Laura keeps `@allonfire/database` for enums and `ACCESS`, never the Prisma client. Remove-from-Laura uses `DELETE /v1/images` with `{ app }`. Deck for the Memory game is a no-cache API route outside the private cache.
+
 ## Cross-cutting rules every phase plan must carry
 
 - Tests first; test file first line `// @module-tag unit|integration`; Vitest globals.
@@ -116,12 +131,37 @@ Rule for every move: the package logic never names an App; per-App values come f
 - i18n: `en.json` and `it.json` for Laura; `pnpm static:i18n`.
 - `pnpm static:fix`, `static:dupes`, `static:knip`, `check-types`, app tests green at the end of each phase.
 
+## Grill outcomes
+
+- **Favorite** (decided): shared across Laura, never per User; only a Laura Admin sets or clears one. Table `laura.Favorite` keyed on the Image, referencing `image."ImageApp" (imageId, app)` with `ON DELETE CASCADE` and `CHECK (app = 'LAURA')`, so removing the Image from Laura, or deleting it, removes the Favorite in the database with no cleanup code. Optional `markedBy` (User, `SET NULL`) and `createdAt`. The API sets and clears with idempotent `PUT`/`DELETE` on the Image (never a toggle: two Admins cannot flip each other), through the optimistic-mutation pattern (click-driven, rarely refused; `next-apps.md` point 2). There is no Version (no form).
+- **Who sees the heart** (agent's call, from "not heart" for Users): a User sees a small static mark on a Favorite photo and the read-only Favorites Section; only an Admin gets the control. A User never gets a heart button.
+- **Gallery scope** (decided): plain masonry feed, newest first, infinite scroll, fullscreen preview, share. No sort, filter, search or date range in v1; the `sort` param of ADR 0031 can be added later. Caption is the Image's alt in the page's language.
+- **Roles in Laura** (decided): User = browse Gallery and Favorites, play Memory, see leaderboard. Admin = also set Favorites and add/edit/delete Images (Upload section, Image placed in Laura only; whoever is Admin in every App an Image is in keeps the make-public rule of ADR 0027 / `CONTEXT.md`).
+
+- **Admin section** (decided): Upload Section (Admin only) plus an Admin-only "Remove from Laura" on a photo in the preview (it removes the Laura placement; the Image is deleted by the API only when no App is left, per `CONTEXT.md` Image). Edit of alt/access and make-public stay in the Back Office.
+- **Memory game** (decided): 6 random Laura Images per game as card faces (private ones as signed links, blur placeholders), card back from the new Design, rules unchanged (moves then time), one leaderboard for Laura. Fewer than 6 Images: the hub says the game needs more photos.
+- **Section role** (agent's call): a Section can ask for a higher Role than its App's floor (`minRole` in the Sections tuple, read by the proxy gate, the frame and the guard test); the API enforces it again. Upload is the first.
+- **Branches** (agent's call): one branch and PR to `dev` per phase, merged in order; Phase 0 and 1 ship before Laura's `src/` is emptied.
+- **Registration** (checked): `APP_SETTINGS` already has `registration: null` for Laura; no change.
+- **ADRs written**: `0032-roles-are-admin-and-user.md` (amends 0019), `0033-the-app-scaffold-lives-in-packages.md`. `CONTEXT.md`: Gallery, Favorite, Memory game added; App scaffolding sharpened. `Viewer` is removed from `CONTEXT.md` by Phase 0, when the code stops having it.
+
+## Parity rule (owner, added after the grill)
+
+Laura is built to the Back Office's level on every axis, not to its old self. Old Laura already used TanStack (`useInfiniteQuery`, an optimistic favorite `useMutation`) and `next/image` with a blur, but over server actions that hit the database, with no private-cache hydration, no signed image links, no expiry guard and no skeletons. Every Laura page therefore:
+
+- **TanStack done right**: the full data checklist of `next-apps.md` (private-cache hydration then `useQuery`/`useInfiniteQuery` under a `QUERY.X` key, `staleTime: "static"`, `stale` never under 5 minutes, action then `updateTag`, mutation then `invalidateQueries`, click-driven writes through `optimisticMutation`, errors told once by `AOFQueryProvider`/`aofErrorMeta`). The Gallery's infinite feed needs its own plan: how the first page is hydrated inside one `"use cache: private"` read, how later pages are fetched and kept, and what refreshes them after an Admin's change (Phase 4).
+- **Images done right** (`images.md`, ADR 0027): every stored picture through `AOFStorageImage` with `srcSetLoader` and the API's signed links, `placeholder="blur"` from `blurDataUrl`, `AOFPictureGuard` for an expired link (a long-open feed holds links that expire at the end of the hour after the next), explicit dimensions (masonry uses the stored `width`/`height`), Avatars through `UserAvatar`, the preview and the Upload page's local previews as object URLs revoked with their row, HEIC converted in the browser (`heic-to`, the Back Office's way, replacing `heic2any`), and an Image's Version on every Admin write.
+- **Everything else the Back Office does better** is adopted, not re-written: the generic scaffold pieces of Phase 1, AOF forms, skeleton + height tests, safe-area e2e, keyboard e2e where a control is new, special pages, PWA, page information, instrumentation, `AOFQueryProvider`, `useToastThenList`-style flows, `ResourceView` for a one-resource page.
+- **A parity audit is a task of Phase 3**: a table of every old Laura feature, library and file (framer-motion, lucide, react-hook-form, sonner, `heic2any`, `lib/seo.ts`, `json-ld.tsx`, `apple-splash-links.tsx`, `user-role-provider`, `check-access`, `file-validation`, `blur-placeholder`, `animation-variants`) with its fate: replaced by (named package piece) / kept (why) / deleted (why). Phase 7 verifies the table is empty of "pending".
+
 ## Left to the builder
 
 File-by-file moves in Phase 1 (survey first), exact API route shapes and cache lives, the Design's name and palette (decided with previews in Phase 2), game board visuals, whether `GameType` stays an enum.
 
-## Open points sent to the grill
+## Open points
 
-- Whether Phase 0 and Phase 1 can ship as separate PRs to `dev` (assumed yes, one branch per phase).
-- Whether Laura's Memory game keeps its card-back images and sounds (assets in `apps/laura/public`) or the new Design supplies them.
-- Whether Gallery needs search/sort/filter (ADR 0026/0031 list kit) or only a masonry feed.
+None left: Gallery scope, Memory faces and card back, and the branch per phase are decided above.
+
+## Reconciled with the tree (2026-11-17, evening)
+
+The working tree gained the tailnet and list work after the plans were written: the browser's API address chosen by host (`apiUrlFor`, `NEXT_PUBLIC_API_REMOTE_URL`), the Session cookie's Domain narrowed for an outside Origin, `AOFDevResume` in `AOFPwa`, `AOFEdgeTint`, the toaster's WebKit clamp fix, the generic `useStepBackPastEnd` and `heightAt` helper, `EditUserSkeleton`. Phase 1 now moves `apiUrlFor` into `aofCreateApi`, `NEXT_PUBLIC_API_REMOTE_URL` into `nextApiEnv`, the step-back hook into the ui list kit, `heightAt` into ui as `heightAtIn`, and mounts `AOFEdgeTint` in `AOFLocaleDocument`. Phase 0 re-derives `EditUserSkeleton`'s Role-row height once Laura has two entry Roles. Phase 3 carries the remote address and the toaster and Install card WebKit cases for Laura. Phase 7's README step names Laura's `.env.development.local`. Phases 4, 5 and 6 only cite `heightAtIn`; Phase 2 is unaffected.

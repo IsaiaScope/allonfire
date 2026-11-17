@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowBackUp, IconRefresh } from "@tabler/icons-react";
+import { IconRefresh } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { ERROR_SIGNAGE } from "@/features/errors/constants/error-signage";
 import {
@@ -26,12 +26,6 @@ const NOTICE = {
     kanji: ACTION_KANJI.RETRY,
     signage: ERROR_SIGNAGE.ERROR,
   },
-  pastEnd: {
-    action: "pastEnd.last",
-    icon: IconArrowBackUp,
-    kanji: ACTION_KANJI.BACK,
-    signage: USERS.SIGNAGE.PAST_END,
-  },
 } as const satisfies Record<string, ListNoticeSpec>;
 
 export type UsersNoticeProps = ListNoticeProps & {
@@ -41,9 +35,9 @@ export type UsersNoticeProps = ListNoticeProps & {
 /**
  * What the Users list shows where its rows stand when it has none to show,
  * as the 404 does on a page, boxed as the rows: nobody
- * matches the search (clear it), the address asks for a page past the last
- * one (`?page=9` with 2 pages: go to the last), or the rows could not be
- * loaded (ask again). The pager stays below.
+ * matches the search (clear it), or the rows could not be loaded (ask
+ * again). A page past the last one never shows: it steps back. The pager
+ * stays below.
  */
 export const UsersNotice = ({ kind, ...props }: UsersNoticeProps) => {
   const t = useTranslations("Users");

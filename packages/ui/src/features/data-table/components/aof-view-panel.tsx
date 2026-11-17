@@ -99,7 +99,10 @@ export const AOFViewPanel = ({
               onSelect={toggle}
               value={id}
             >
-              {label}
+              {/* A long name wraps at spaces and stops at two lines; a word wider than the row ends in an ellipsis, never split. */}
+              <span className="line-clamp-2 min-w-0 max-w-full overflow-hidden text-ellipsis">
+                {label}
+              </span>
             </CommandItem>
           ))}
         </CommandGroup>

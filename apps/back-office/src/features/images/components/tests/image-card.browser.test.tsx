@@ -51,7 +51,12 @@ const IMAGE: ImageBody = {
   width: 800,
 };
 
-const renderCard = () =>
+/** A description with no space to break at. */
+/** One line of the description: `text-base` (16px) at `leading-snug`. */
+const ALT_LINE_PX = 22;
+const UNBROKEN = "Superlongunbrokenstring".repeat(8);
+
+const renderCard = (image: ImageBody = IMAGE) =>
   render(
     <NextIntlClientProvider
       formats={DATE.FORMATS}
@@ -60,7 +65,7 @@ const renderCard = () =>
       timeZone={DATE.TIME_ZONE}
     >
       <div className="w-97.5">
-        <ImageCard image={IMAGE} />
+        <ImageCard image={image} />
       </div>
     </NextIntlClientProvider>
   );
@@ -116,6 +121,20 @@ describe("ImageCard", () => {
     const screen = await renderCard();
     const name = screen.getByText(IMAGE.key, { exact: true }).element();
     expect(getComputedStyle(name).webkitLineClamp).toBe("2");
+  });
+
+  it("keeps a description of one long word on one line inside the card, ending in an ellipsis, never split", async () => {
+    const screen = await renderCard({
+      ...IMAGE,
+      alt: { en: UNBROKEN, it: UNBROKEN },
+    });
+    const alt = screen.getByText(UNBROKEN, { exact: true }).element();
+    const card = alt.closest('[data-slot="card"]') ?? document.body;
+    expect(alt.getBoundingClientRect().right).toBeLessThanOrEqual(
+      card.getBoundingClientRect().right
+    );
+    expect(alt.getBoundingClientRect().height).toBeLessThanOrEqual(ALT_LINE_PX);
+    expect(getComputedStyle(alt).textOverflow).toBe("ellipsis");
   });
 
   it("keeps the picture's blur behind it, so a picture that does not fill its square sits on its own colours", async () => {

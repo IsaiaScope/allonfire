@@ -27,6 +27,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import type { SortingState } from "@tanstack/react-table";
+import { cva } from "class-variance-authority";
 import { type ReactNode, useCallback, useMemo } from "react";
 import {
   AOFButton,
@@ -95,12 +96,14 @@ type RowProps = Pick<
  * A select's trigger as the other fields draw theirs (`AOFComboboxField`,
  * the Faceted lists): a field tall, text 16px, a 20px chevron, 12px sides.
  */
-const TRIGGER =
-  "px-3 text-base data-[size=default]:h-(--field-height) [&>svg]:size-5 md:text-base";
+const trigger = cva(
+  "px-3 text-base data-[size=default]:h-(--field-height) **:data-[slot=select-value]:min-w-0 **:data-[slot=select-value]:truncate md:text-base [&>svg]:size-5"
+);
 
-/** The options as big as a Faceted list's rows: a field tall, text 16px, icons 20px. */
-const OPTIONS =
-  "ring-input **:data-[slot=select-item]:min-h-(--field-height) **:data-[slot=select-item]:px-3 **:data-[slot=select-item]:text-base [&_[data-slot=select-item]_svg:not([class*='size-'])]:size-5";
+/** The options as big as a Faceted list's rows: a field tall, text 16px, icons 20px; the right side keeps room for the chosen one's check (8px in, 20px wide). */
+const options = cva(
+  "ring-input **:data-[slot=select-item]:min-h-(--field-height) **:data-[slot=select-item]:pr-9 **:data-[slot=select-item]:pl-3 **:data-[slot=select-item]:text-base [&_[data-slot=select-item]>div]:line-clamp-2 [&_[data-slot=select-item]>div]:min-w-0 [&_[data-slot=select-item]>div]:max-w-full [&_[data-slot=select-item]>div]:overflow-hidden [&_[data-slot=select-item]>div]:text-ellipsis [&_[data-slot=select-item]>div]:whitespace-normal [&_[data-slot=select-item]_svg:not([class*='size-'])]:size-5"
+);
 const MODIFIERS = [restrictToVerticalAxis, restrictToParentElement];
 const ASC = "asc";
 const DESC = "desc";
@@ -169,8 +172,8 @@ const SortRow = ({
     <li
       className={
         isDragging
-          ? "relative z-10 flex flex-wrap items-center gap-2"
-          : "flex flex-wrap items-center gap-2"
+          ? "relative z-10 flex items-center gap-1.5 sm:gap-2"
+          : "flex items-center gap-1.5 sm:gap-2"
       }
       ref={setNodeRef}
       style={style}
@@ -182,11 +185,11 @@ const SortRow = ({
       >
         <AOFSelectTrigger
           aria-label={labels.column}
-          className={cn(TRIGGER, "min-w-32 flex-1")}
+          className={cn(trigger(), "min-w-0 flex-1")}
         >
           <AOFSelectValue />
         </AOFSelectTrigger>
-        <AOFSelectContent className={OPTIONS}>
+        <AOFSelectContent className={options()}>
           {usable.map(({ id, label }) => (
             <AOFSelectItem key={id} value={id}>
               {label}
@@ -204,11 +207,11 @@ const SortRow = ({
       >
         <AOFSelectTrigger
           aria-label={labels.direction}
-          className={cn(TRIGGER, "w-36")}
+          className={cn(trigger(), "min-w-0 flex-1")}
         >
           <AOFSelectValue />
         </AOFSelectTrigger>
-        <AOFSelectContent className={OPTIONS}>
+        <AOFSelectContent className={options()}>
           <AOFSelectItem value={ASC}>{labels.asc}</AOFSelectItem>
           <AOFSelectItem value={DESC}>{labels.desc}</AOFSelectItem>
         </AOFSelectContent>

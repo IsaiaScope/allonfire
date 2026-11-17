@@ -18,6 +18,7 @@
     "./features/data-table/components/aof-view-panel": "./src/features/data-table/components/aof-view-panel.tsx",
     "./features/email/components/aof-email": "./src/features/email/components/aof-email.tsx",
     "./features/email/utils/render-aof-email": "./src/features/email/utils/render-aof-email.ts",
+    "./features/feedback/components/aof-edge-tint": "./src/features/feedback/components/aof-edge-tint.tsx",
     "./features/feedback/components/aof-empty": "./src/features/feedback/components/aof-empty.tsx",
     "./features/feedback/components/aof-toaster": "./src/features/feedback/components/aof-toaster.tsx",
     "./features/chart/components/aof-bar-chart": "./src/features/chart/components/aof-bar-chart.tsx",
