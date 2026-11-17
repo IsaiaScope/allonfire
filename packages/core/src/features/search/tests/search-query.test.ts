@@ -89,3 +89,62 @@ describe("searchQuery", () => {
     }
   });
 });
+
+describe("searchQuery with a range", () => {
+  const ranged = searchQuery(FIELDS, { ranges: ["created"] });
+
+  it("reads a range and one day", () => {
+    expect(ranged.parse("created:2026-11-26..2026-11-28")).toEqual({
+      created: { from: "2026-11-26", to: "2026-11-28" },
+      text: "",
+    });
+    expect(ranged.parse("created:2026-11-26")).toEqual({
+      created: { from: "2026-11-26", to: "2026-11-26" },
+      text: "",
+    });
+  });
+
+  it("reads a backwards range as the two days in order", () => {
+    expect(ranged.parse("created:2026-11-28..2026-11-26")).toEqual({
+      created: { from: "2026-11-26", to: "2026-11-28" },
+      text: "",
+    });
+  });
+
+  it("drops a range that is no day", () => {
+    for (const raw of [
+      "created:2026-02-30",
+      "created:yesterday",
+      "created:2026-11-26..x",
+      "created:",
+    ]) {
+      expect(ranged.parse(raw)).toEqual({ text: "" });
+    }
+  });
+
+  it("writes one day short and a range with both ends", () => {
+    expect(
+      ranged.serialize({
+        created: { from: "2026-11-26", to: "2026-11-26" },
+        text: "",
+      })
+    ).toBe("created:2026-11-26");
+    expect(
+      ranged.serialize({
+        created: { from: "2026-11-26", to: "2026-11-28" },
+        text: "",
+      })
+    ).toBe("created:2026-11-26..2026-11-28");
+  });
+
+  it("writes the range after the fields and before the text", () => {
+    const raw = "input:sea created:2026-11-26..2026-11-28 app:laura";
+    expect(ranged.serialize(ranged.parse(raw))).toBe(
+      "app:laura created:2026-11-26..2026-11-28 input:sea"
+    );
+  });
+
+  it("knows no range without the option", () => {
+    expect(search.parse("created:2026-11-26")).toEqual({ text: "" });
+  });
+});

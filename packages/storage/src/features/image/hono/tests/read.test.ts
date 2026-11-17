@@ -301,3 +301,49 @@ describe("GET /images/:id", () => {
     expect((await errorOf(res)).code).toBe(ERROR.CODE.NOT_FOUND);
   });
 });
+
+describe("GET /images sort and range", () => {
+  const listed = async (query: string) => {
+    const listImagesPage = noImages();
+    const res = await app(lauraUser, { listImagesPage }).request(
+      `${STORAGE.PATH.IMAGES}?${query}`
+    );
+    return { call: listImagesPage.mock.calls[0]?.[0], status: res.status };
+  };
+
+  it("passes the sort, in order, to the service", async () => {
+    const { call } = await listed("sort=size.desc,access.asc");
+    expect(call?.sort).toEqual([
+      { column: "size", direction: "desc" },
+      { column: "access", direction: "asc" },
+    ]);
+  });
+
+  it("passes the created range of the search, and keeps the other fields", async () => {
+    const { call } = await listed(
+      `search=${encodeURIComponent("created:2026-11-26..2026-11-28 access:public input:sea")}`
+    );
+    expect(call).toEqual({
+      accesses: [ImageAccess.PUBLIC],
+      created: { from: "2026-11-26", to: "2026-11-28" },
+      enterable: [App.LAURA],
+      page: 1,
+      perPage: IMAGE.LIMIT.LIST.DEFAULT,
+      text: "sea",
+    });
+  });
+
+  it("reads a sort it does not know as none, and still answers", async () => {
+    const { call, status } = await listed("sort=bogus.up");
+    expect(status).toBe(HTTP.STATUS.OK);
+    expect(call?.sort).toBeUndefined();
+  });
+
+  it("reads a sort that is too long as none, never a 400", async () => {
+    const { call, status } = await listed(
+      `sort=${"size.asc,".repeat(IMAGE.LIMIT.SEARCH_MAX)}`
+    );
+    expect(status).toBe(HTTP.STATUS.OK);
+    expect(call?.sort).toBeUndefined();
+  });
+});

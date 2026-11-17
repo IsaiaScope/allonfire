@@ -18,6 +18,8 @@ export const PATTERN = {
     UPPERCASE: /\p{Lu}/u,
     WHITESPACE: /\s/u,
   },
+  /** A day as the lists write it: `2026-11-26` (a real day is checked beside it). */
+  ISO_DAY: /^\d{4}-\d{2}-\d{2}$/,
   /** The telemetry env's keys (`TELEMETRY_*`). */
   TELEMETRY: {
     /** `key=value,key=value`, each value percent-encoded, per the OTel spec. */

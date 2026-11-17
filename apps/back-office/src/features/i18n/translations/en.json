@@ -154,7 +154,7 @@
       "button": "Filters",
       "empty": "No match",
       "reset": "Reset",
-      "resetAll": "Clear",
+      "resetAll": "Clear all",
       "search": "Search",
       "selected": "{count} selected",
       "clear": "Clear the text",
@@ -208,6 +208,38 @@
       "languageSearch": "Search a language",
       "noLanguage": "No language matches",
       "removeLanguage": "Remove {language}"
+    }
+  },
+  "List": {
+    "clear": {
+      "filters": "Clear"
+    },
+    "column": {
+      "asc": "Asc",
+      "desc": "Desc",
+      "hide": "Hide"
+    },
+    "range": {
+      "clear": "Clear"
+    },
+    "sort": {
+      "add": "Add",
+      "column": "Sort by",
+      "direction": "Direction",
+      "drag": "Drag to reorder",
+      "remove": "Remove this sort",
+      "reset": "Reset"
+    },
+    "tab": {
+      "filter": "Filter",
+      "sort": "Sort",
+      "view": "View"
+    },
+    "view": {
+      "clear": "Clear the search",
+      "empty": "No column",
+      "search": "Columns",
+      "showAll": "Show all"
     }
   },
   "Navigation": {
@@ -345,7 +377,7 @@
       "button": "Filters",
       "empty": "No match",
       "reset": "Reset",
-      "resetAll": "Clear",
+      "resetAll": "Clear all",
       "role": "Role",
       "search": "Search",
       "selected": "{count} selected"

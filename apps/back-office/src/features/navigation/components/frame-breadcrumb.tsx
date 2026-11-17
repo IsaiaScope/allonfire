@@ -14,10 +14,12 @@ import { Link, usePathname } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { SECTION } from "../constants/sections";
 import {
+  APP_NUMBER,
   currentSection,
   currentSubPage,
   sectionHref,
   stationNumber,
+  subPageNumber,
 } from "../utils/sections";
 import { StationNumber } from "./station-number";
 
@@ -30,9 +32,9 @@ const SectionCrumb = ({
   named: boolean;
 }) =>
   named ? (
-    <span className="flex items-center gap-1.5">{children}</span>
+    <span className="flex min-w-0 items-center gap-1.5">{children}</span>
   ) : (
-    <AOFBreadcrumbPage className="flex items-center gap-1.5">
+    <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
       {children}
     </AOFBreadcrumbPage>
   );
@@ -55,9 +57,15 @@ const CurrentBreadcrumb = () => {
   const crumb = (
     <>
       <StationNumber number={stationNumber(section)} />
-      {t(section.label)}
+      <span className="truncate">{t(section.label)}</span>
     </>
   );
+  const subCrumb = sub ? (
+    <>
+      <StationNumber number={subPageNumber(section, sub)} />
+      <span className="truncate">{t(sub.label)}</span>
+    </>
+  ) : null;
   return (
     <AOFBreadcrumb aria-label={t("breadcrumb")}>
       <AOFBreadcrumbList>
@@ -65,9 +73,11 @@ const CurrentBreadcrumb = () => {
           <>
             <AOFBreadcrumbItem className="hidden md:block">
               <AOFBreadcrumbLink
+                className="flex min-w-0 items-center gap-1.5"
                 render={<Link href={sectionHref(SECTION.HOME.path)} />}
               >
-                {BACK_OFFICE.NAME}
+                <StationNumber number={APP_NUMBER} />
+                <span className="truncate">{BACK_OFFICE.NAME}</span>
               </AOFBreadcrumbLink>
             </AOFBreadcrumbItem>
             <AOFBreadcrumbSeparator className="hidden md:block" />
@@ -76,7 +86,7 @@ const CurrentBreadcrumb = () => {
         <AOFBreadcrumbItem>
           {below ? (
             <AOFBreadcrumbLink
-              className="flex items-center gap-1.5"
+              className="flex min-w-0 items-center gap-1.5"
               render={<Link href={sectionHref(section.path)} prefetch />}
             >
               {crumb}
@@ -90,12 +100,15 @@ const CurrentBreadcrumb = () => {
             <AOFBreadcrumbSeparator />
             <AOFBreadcrumbItem>
               {pathname === sectionHref(sub.path) ? (
-                <AOFBreadcrumbPage>{t(sub.label)}</AOFBreadcrumbPage>
+                <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+                  {subCrumb}
+                </AOFBreadcrumbPage>
               ) : (
                 <AOFBreadcrumbLink
+                  className="flex min-w-0 items-center gap-1.5"
                   render={<Link href={sectionHref(sub.path)} prefetch />}
                 >
-                  {t(sub.label)}
+                  {subCrumb}
                 </AOFBreadcrumbLink>
               )}
             </AOFBreadcrumbItem>
@@ -113,7 +126,10 @@ const AppBreadcrumb = () => {
     <AOFBreadcrumb aria-label={t("breadcrumb")}>
       <AOFBreadcrumbList>
         <AOFBreadcrumbItem>
-          <AOFBreadcrumbPage>{BACK_OFFICE.NAME}</AOFBreadcrumbPage>
+          <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+            <StationNumber number={APP_NUMBER} />
+            <span className="truncate">{BACK_OFFICE.NAME}</span>
+          </AOFBreadcrumbPage>
         </AOFBreadcrumbItem>
       </AOFBreadcrumbList>
     </AOFBreadcrumb>

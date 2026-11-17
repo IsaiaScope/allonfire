@@ -12,7 +12,9 @@ import {
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
 import {
   type Column,
+  type ColumnVisibilityState,
   columnSizingFeature,
+  columnVisibilityFeature,
   createColumnHelper,
   type ReactTable,
   type Row,
@@ -20,6 +22,8 @@ import {
   type RowSelectionState,
   rowPaginationFeature,
   rowSelectionFeature,
+  rowSortingFeature,
+  type SortingState,
   type TableOptions,
   tableFeatures,
   useTable,
@@ -35,15 +39,17 @@ import {
 } from "./aof-data-table-skeleton";
 
 /**
- * An AOF table's features: pages, row selection, and its columns' widths
- * (TanStack's column sizing: a column's `maxSize`). Sorting, filtering and
- * the rest join when a list needs them; module scope, so TanStack never sees
- * a new set.
+ * An AOF table's features: pages, row selection, its columns' widths
+ * (TanStack's column sizing: a column's `maxSize`), sorting and which columns
+ * show. Filtering and the rest join when a list needs them; module scope, so
+ * TanStack never sees a new set.
  */
 const AOF_TABLE_FEATURES = tableFeatures({
   columnSizingFeature,
+  columnVisibilityFeature,
   rowPaginationFeature,
   rowSelectionFeature,
+  rowSortingFeature,
 });
 
 /**
@@ -64,16 +70,26 @@ export type AOFTable<TData extends RowData> = ReactTable<
 export type AOFRow<TData extends RowData> = Row<AOFTableFeatures, TData>;
 /** Which rows are selected, keyed by row id. */
 export type AOFRowSelection = RowSelectionState;
+/** The columns sorted, first sort first: `{ id, desc }` each. */
+export type AOFSorting = SortingState;
+/** Which columns are hidden, keyed by column id: `{ size: false }`. */
+export type AOFColumnVisibility = ColumnVisibilityState;
 
 /** Columns for an AOF table of `TData`. */
 export const aofColumnHelper = <TData extends RowData>() =>
   createColumnHelper<AOFTableFeatures, TData>();
 
-/** TanStack Table v9's `useTable` with the AOF features. */
+/**
+ * TanStack Table v9's `useTable` with the AOF features. The database sorts
+ * (`manualSorting`), by more than one column (`enableMultiSort`); a list caps
+ * how many with `maxMultiSortColCount`.
+ */
 export const useAOFTable = <TData extends RowData>(
   options: Omit<TableOptions<AOFTableFeatures, TData>, "features">
 ): AOFTable<TData> =>
   useTable({
+    enableMultiSort: true,
+    manualSorting: true,
     ...options,
     defaultColumn: { ...DEFAULT_COLUMN, ...options.defaultColumn },
     features: AOF_TABLE_FEATURES,
@@ -149,7 +165,7 @@ export const AOFDataTable = <TData extends RowData>({
   if (status === "pending") {
     body = loading ?? (
       <AOFDataTableSkeleton
-        columns={table.getAllLeafColumns().length}
+        columns={table.getVisibleLeafColumns().length}
         label={label}
       />
     );
@@ -311,7 +327,7 @@ const AOFDataTableRows = <TData extends RowData>({
                         key={row.id}
                         {...busyProps(row, busy)}
                       >
-                        {row.getAllCells().map((cell) => (
+                        {row.getVisibleCells().map((cell) => (
                           <TableCell
                             className="h-(--data-table-row) has-[[role=checkbox]]:px-3"
                             key={cell.id}

@@ -42,9 +42,9 @@ a set of Apps.
 _Avoid_: order, ordering, sorting state
 
 **View**:
-Which of a table's columns are shown. A phone's cards have no View, and the
-columns that name a row or open it (a list's first column, and the one whose
-cell links to the row) are always shown.
+Which of a table's columns are shown. A phone's cards have no View, and a
+list's first column (the Image's picture, the User's Email), which names the
+row and holds the link that opens it, is always shown.
 _Avoid_: columns menu, visibility
 
 **Design system**:

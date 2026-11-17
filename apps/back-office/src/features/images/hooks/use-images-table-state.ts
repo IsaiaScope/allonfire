@@ -2,29 +2,34 @@ import { useQueryStates } from "nuqs";
 import { useCallback, useEffect } from "react";
 import { useRowSelection } from "@/shared/hooks/use-row-selection";
 import {
-  resolvePagination,
+  resolveUpdater,
   type TablePagination,
   type TablePaginationUpdater,
 } from "@/shared/utils/table-pagination";
 import { IMAGES } from "../constants/images";
-import { imagesParams } from "../constants/images-params";
+import { imagesParams, queryOf } from "../constants/images-params";
+import { useImagesView } from "./use-images-view";
 
 /**
  * What the Images table holds besides its rows: the address it reads (the
- * page, its size and the search), the pagination drawn from it, and the
- * rows selected. The selection belongs to the rows in view: a new page, page
- * size or search starts it again.
+ * page, its size, the search, the sort and the hidden columns), the
+ * pagination, the sorting and the column visibility drawn from it, and the
+ * rows selected. The selection belongs to the rows in view (`queryOf`): a new
+ * page, page size, search or sort starts it again; a View change keeps it.
  */
 export const useImagesTableState = () => {
   const [params, setParams] = useQueryStates(imagesParams);
-  const { clearSelection, selection, setSelection } = useRowSelection(params);
+  const { clearSelection, selection, setSelection } = useRowSelection(
+    queryOf(params)
+  );
+  const view = useImagesView();
 
   const pagination: TablePagination = {
     pageIndex: params[IMAGES.PARAM.PAGE] - 1,
     pageSize: params[IMAGES.PARAM.PER_PAGE],
   };
   const onPaginationChange = (updater: TablePaginationUpdater) => {
-    const next = resolvePagination(updater, pagination);
+    const next = resolveUpdater(updater, pagination);
     setParams({
       [IMAGES.PARAM.PAGE]: next.pageIndex + 1,
       [IMAGES.PARAM.PER_PAGE]:
@@ -39,11 +44,15 @@ export const useImagesTableState = () => {
   return {
     clearSearch,
     clearSelection,
+    columnVisibility: view.columnVisibility,
+    onColumnVisibilityChange: view.onColumnVisibilityChange,
     onPaginationChange,
+    onSortingChange: view.onSortingChange,
     pagination,
     params,
     selection,
     setSelection,
+    sorting: view.sorting,
   };
 };
 

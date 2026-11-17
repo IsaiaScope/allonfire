@@ -4,7 +4,10 @@ import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import { ImagesListSkeleton } from "@/features/images/components/images-list-skeleton";
 import { ImagesTable } from "@/features/images/components/images-table";
-import { loadImagesParams } from "@/features/images/constants/images-params";
+import {
+  loadImagesParams,
+  queryOf,
+} from "@/features/images/constants/images-params";
 import { imagesHydration } from "@/features/images/utils/images-hydration";
 import { pageMetadata } from "@/features/metadata/utils/page-metadata";
 import { SectionPage } from "@/features/navigation/components/section-page";
@@ -25,7 +28,7 @@ type ImagesPageProps = { searchParams: Promise<SearchParams> };
  */
 const ImagesList = async ({ searchParams }: ImagesPageProps) => {
   const params = await loadImagesParams(searchParams);
-  const hydrate = () => imagesHydration(params);
+  const hydrate = () => imagesHydration(queryOf(params));
   return (
     <AOFHydratedBoundary hydration={hydrate}>
       <ImagesTable />

@@ -67,7 +67,7 @@ export const addUser = async (
   }
   const { email, name, password, roles, verification } = parsed.data;
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].users.$post({
+  const response = await client[API.VERSION.CURRENT].users.$post({
     json: {
       email,
       memberships: membershipsOf(roles),
@@ -76,15 +76,15 @@ export const addUser = async (
       requireVerification: verification === USERS.VERIFICATION.REQUIRED,
     },
   });
-  if (res.status !== HTTP.STATUS.CREATED) {
+  if (response.status !== HTTP.STATUS.CREATED) {
     const error = await refusalOf(
-      res,
+      response,
       USERS.ADD_ERROR,
       new Map([[HTTP.STATUS.CONFLICT, USERS.ADD_ERROR.TAKEN]])
     );
     return { error, values };
   }
-  const { id, version } = await res.json();
+  const { id, version } = await response.json();
   const sent = await sendAvatarChange(client, { change: avatar, id, version });
   // The kept lists lack the new User: dropped, so the list shows them first.
   updateTag(USERS.CACHE.TAG);

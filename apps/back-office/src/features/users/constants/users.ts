@@ -1,3 +1,4 @@
+import { columnsQuery } from "@allonfire/core/features/search/columns-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
@@ -7,6 +8,12 @@ import type { StationSignage } from "@/shared/components/station-notice";
 
 /** How long the Avatar links a list holds stay valid, at least. */
 const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
+
+/**
+ * The columns the View tab can hide (ADR 0031): one per App, by its enum value
+ * (`hide=LAURA`), then the date. Only the email never hides.
+ */
+const HIDEABLE = [...objectValues(App), "created"] as const;
 
 /** The picture field's name in both User forms. */
 const AVATAR_FIELD = "avatar";
@@ -88,6 +95,10 @@ export const USERS = {
     ROLES: { roles: "roles" },
     VERIFICATION: { verification: "verification" },
   },
+  /** How the address names the hidden columns (ADR 0031). */
+  HIDE: columnsQuery(HIDEABLE),
+  /** The columns the View tab lists: one per App, then the date. */
+  HIDEABLE,
   /**
    * How the address changes: a search replaces the history entry (Back should
    * not walk through each keystroke); a page or page size pushes one.
@@ -132,6 +143,8 @@ export const USERS = {
     EMPTY: { CODE: "0", KANA: "該当なし", WALL_KANJI: "空席" },
     PAST_END: { CODE: "終", KANA: "終点", WALL_KANJI: "終点" },
   } satisfies Record<string, StationSignage>,
+  /** The columns the Sort tab lists: the plain ones the database orders by. */
+  SORTABLE: ["email", "created"] as const,
   /** How long typing rests before the address changes. */
   TYPING_REST_MS: 300,
   /**

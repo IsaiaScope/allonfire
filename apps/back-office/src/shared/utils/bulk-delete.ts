@@ -1,62 +1,49 @@
-import {
-  type MutationState,
-  mutationOptions,
-  type QueryKey,
-  useMutationState,
-} from "@tanstack/react-query";
-import { useMemo } from "react";
+import type { QueryKey } from "@tanstack/react-query";
+import { optimisticMutation } from "./optimistic-mutation";
+import { optimisticUpdate } from "./optimistic-update";
+import { perPageIn } from "./page-without";
 
 /**
- * A bulk delete as a TanStack mutation: calls the feature's server `action`
- * with the ids; answers how many went (fewer than named when some were gone
- * already), and throws when the API refused (the action answers null), so the
- * mutation fails. Never retried. It settles only once every key in
- * `invalidates` is read again (`onSettled` returns the refetch), so
- * `useBeingDeleted` keeps a row faded until the fresh list has it gone, never
- * showing it again in between.
+ * A bulk delete as a TanStack mutation (`optimisticMutation`): `without`
+ * takes the rows out of every cached page under `pages` at once (handed the
+ * page, the ids as a set and the page size its key was asked with, found under
+ * `perPageParam`; a page whose key holds no size is left as it is), then the feature's server
+ * `action` runs with the ids. It answers how many went (fewer than named when
+ * some were gone already) and `null` when the API refused, which fails the
+ * mutation and puts the rows back. It settles only once every key in
+ * `invalidates` is read again, so a row never shows in between. Never retried.
  */
-export const bulkDeleteMutation = <const Key extends QueryKey>({
+export const bulkDeleteMutation = <TPage, const TKey extends QueryKey>({
   action,
   invalidates,
   mutationKey,
+  pages,
+  perPageParam,
+  without,
 }: {
   action: (ids: string[]) => Promise<number | null>;
   /** The kept reads this browser holds that the deletion changes: the list and, for a file, the Storage overview. */
   invalidates: readonly QueryKey[];
-  mutationKey: Key;
+  mutationKey: TKey;
+  /** The key prefix of the list's cached pages. */
+  pages: QueryKey;
+  /** The name, in a page's key params, of the page size. */
+  perPageParam: string;
+  /** One cached page with the named rows taken out. */
+  without: (page: TPage, ids: ReadonlySet<string>, perPage: number) => TPage;
 }) =>
-  mutationOptions({
-    mutationFn: async (ids: string[]) => {
+  optimisticMutation({
+    action: async (ids: string[]) => {
       const deleted = await action(ids);
-      if (deleted === null) {
-        throw new Error("The API refused the deletion");
-      }
-      return { deleted };
+      return deleted === null ? null : { deleted };
     },
+    invalidates,
     mutationKey,
-    // TanStack hands the client last, after the answer, error, ids and result.
-    onSettled: async (...settled) => {
-      const { client } = settled[4];
-      await Promise.all(
-        invalidates.map((queryKey) => client.invalidateQueries({ queryKey }))
-      );
+    patchCache: (queryClient, ids) => {
+      const named = new Set(ids);
+      return optimisticUpdate<TPage>(queryClient, pages, (page, key) => {
+        const perPage = perPageIn(key, perPageParam);
+        return perPage === undefined ? page : without(page, named, perPage);
+      });
     },
   });
-
-type DeleteState = MutationState<{ deleted: number }, Error, string[]>;
-
-/**
- * The ids a deletion is on its way for, so the list fades their rows at once
- * instead of waiting for the API: a failure brings them back as they were,
- * with nothing to undo.
- */
-export const useBeingDeleted = (mutationKey: QueryKey) => {
-  // The same array while nothing changes, so the set keeps too.
-  const pending = useMutationState<DeleteState>({
-    filters: { mutationKey, status: "pending" },
-  });
-  return useMemo(
-    () => new Set(pending.flatMap(({ variables }) => variables ?? [])),
-    [pending]
-  );
-};

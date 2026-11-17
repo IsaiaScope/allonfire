@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { PrismaClient } from "../../../../generated/prisma/client";
+import type { PrismaClient } from "../../../../generated/prisma/client";
+import { createPrismaClient } from "../../prisma/create-client";
 import { TEST_DATABASE } from "../constants/test-database";
 import { databaseUrl } from "./names";
 
@@ -8,7 +9,7 @@ export async function withClient<T>(
   url: string,
   run: (client: PrismaClient) => Promise<T>
 ): Promise<T> {
-  const client = new PrismaClient({ datasourceUrl: url });
+  const client = createPrismaClient(url);
   try {
     return await run(client);
   } finally {

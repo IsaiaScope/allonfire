@@ -33,15 +33,18 @@ export const listHandlers = (deps: ImageDeps) =>
     listRoute,
     validator("query", listQuerySchema, invalidHook),
     async (c) => {
-      const { app, page, perPage, search } = c.req.valid("query");
-      const { access, app: apps, text } = IMAGE.SEARCH.parse(search);
+      const { app, page, perPage, search, sort } = c.req.valid("query");
+      const { access, app: apps, created, text } = IMAGE.SEARCH.parse(search);
+      const sorts = IMAGE.SORT.parse(sort);
       const { images, total, totalBytes } = await deps.listImagesPage({
         ...(access && { accesses: access }),
         ...(app && { app }),
         ...(apps && { apps }),
+        ...(created && { created }),
         enterable: enterableApps(c.get(AUTH.VAR.SESSION)?.user ?? null),
         page,
         perPage,
+        ...(sorts.length > 0 && { sort: sorts }),
         ...(text && { text }),
       });
       const now = new Date();

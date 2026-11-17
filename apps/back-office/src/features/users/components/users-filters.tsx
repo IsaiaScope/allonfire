@@ -4,35 +4,26 @@ import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { type App, Role } from "@allonfire/database/enums";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
-import { AOFFilterPanel } from "@allonfire/ui/features/data-table/components/aof-filter-panel";
-import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import { cn } from "@allonfire/ui/shared/utils/utils";
-import {
-  IconFilter2Search,
-  IconRefresh,
-  IconSearch,
-} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
-import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 import {
-  pictogramTile,
-  tiledControl,
-} from "@/shared/components/toolbar-action";
-import { APP_OPTIONS } from "@/shared/constants/apps";
+  ListFilterPanel,
+  SearchTile,
+} from "@/shared/components/list-filter-panel";
+import { APP_ENTRY, APP_OPTIONS } from "@/shared/constants/apps";
+import { useRangePicker } from "@/shared/hooks/use-range-picker";
 import { USERS } from "../constants/users";
-import { FilterKanji } from "./filter-kanji";
+import { useUsersView } from "../hooks/use-users-view";
 
 export type UserSearch = ReturnType<typeof USER.SEARCH.parse>;
 
 /**
- * The Users list's Filter button, opening on the toolbar's pictogram tile,
- * its name and count muted like the search box's placeholder:
- * its panel holds an App and a Role list (any number of each, their
- * triggers trimmed to leave the chosen badges room), and at its bottom right
- * Clear, a small kanji button in the line's deep green, which clears both
- * and keeps the words. An empty list is left out of the address by the search's
- * serializer.
+ * The Users list's Filter button, as the Images list's (`ListFilterPanel`):
+ * its Filter tab holds an App and a Role list (any number of each, their
+ * triggers trimmed to leave the chosen badges room) and a Created date range;
+ * Sort and View read the address through `useUsersView`. Clear clears all
+ * three and keeps the words. An empty list is left out of the address by the
+ * search's serializer.
  */
 export const UsersFilters = ({
   search,
@@ -42,6 +33,8 @@ export const UsersFilters = ({
   write: (next: UserSearch) => void;
 }) => {
   const t = useTranslations();
+  const tColumn = useTranslations("Users.column");
+  const view = useUsersView();
   const pickApps = useCallback(
     (app: App[]) => write({ ...search, app }),
     [search, write]
@@ -50,6 +43,7 @@ export const UsersFilters = ({
     (role: Role[]) => write({ ...search, role }),
     [search, write]
   );
+  const pickRange = useRangePicker(search, write);
   const reset = useCallback(
     () => write({ text: search.text }),
     [search, write]
@@ -66,55 +60,33 @@ export const UsersFilters = ({
     search: t("Users.filter.search"),
     selected: (chosen: number) => t("Users.filter.selected", { count: chosen }),
   };
-  // Each list's search box opens on the same tile as the page's search.
-  const tile = (
-    <span aria-hidden="true" className={pictogramTile()}>
-      <IconSearch />
-    </span>
-  );
   const apps = search.app ?? [];
   const chosenRoles = search.role ?? [];
-  const count = apps.length + chosenRoles.length;
   return (
-    <AOFFilterPanel
-      action={
-        <AOFButton
-          className={cn(
-            kanjiAction({ tone: "green" }),
-            "h-8 min-w-0 gap-1.5 pr-8 pl-3 text-sm"
-          )}
-          disabled={count === 0}
-          onClick={reset}
-        >
-          <ActionKanji
-            className="right-0.5 text-3xl"
-            kanji={USERS.RESET_KANJI}
-          />
-          <IconRefresh aria-hidden />
-          {t("Users.filter.resetAll")}
-        </AOFButton>
-      }
-      count={count}
-      decoration={<FilterKanji />}
-      icon={
-        <span aria-hidden="true" className={pictogramTile()}>
-          <IconFilter2Search />
-        </span>
-      }
-      label={t("Users.filter.button")}
-      triggerProps={{
-        className: cn(
-          tiledControl(),
-          "pr-4 pl-1 **:data-[slot=badge]:text-muted-foreground"
-        ),
-        size: "field",
-      }}
+    <ListFilterPanel
+      button={t("Users.filter.button")}
+      count={apps.length + chosenRoles.length + (search.created ? 1 : 0)}
+      hideColumns={USERS.HIDEABLE.map((id) => ({
+        id,
+        label: id === "created" ? tColumn("created") : APP_ENTRY[id].name,
+      }))}
+      onRangeChange={pickRange}
+      range={search.created ?? null}
+      rangeLabel={tColumn("created")}
+      resetFilters={reset}
+      resetKanji={USERS.RESET_KANJI}
+      resetLabel={t("Users.filter.resetAll")}
+      sortColumns={USERS.SORTABLE.map((id) => ({
+        id,
+        label: tColumn(id),
+      }))}
+      view={view}
     >
       <AOFFaceted
         items={APP_OPTIONS}
         labels={{ ...list, trigger: t("Users.filter.app") }}
         onValueChange={pickApps}
-        searchIcon={tile}
+        searchIcon={<SearchTile />}
         triggerProps={{ className: "px-3", size: "field" }}
         value={apps}
       />
@@ -122,10 +94,10 @@ export const UsersFilters = ({
         items={roles}
         labels={{ ...list, trigger: t("Users.filter.role") }}
         onValueChange={pickRoles}
-        searchIcon={tile}
+        searchIcon={<SearchTile />}
         triggerProps={{ className: "px-3", size: "field" }}
         value={chosenRoles}
       />
-    </AOFFilterPanel>
+    </ListFilterPanel>
   );
 };

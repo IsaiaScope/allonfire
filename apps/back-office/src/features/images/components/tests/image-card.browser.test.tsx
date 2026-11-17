@@ -65,6 +65,21 @@ const renderCard = () =>
     </NextIntlClientProvider>
   );
 
+/** A card whose picture has no alt text. */
+const renderNoAlt = () =>
+  render(
+    <NextIntlClientProvider
+      formats={DATE.FORMATS}
+      locale={I18N.DEFAULT_LANGUAGE}
+      messages={aofMessages(I18N.DEFAULT_LANGUAGE, EN)}
+      timeZone={DATE.TIME_ZONE}
+    >
+      <div className="w-97.5">
+        <ImageCard image={{ ...IMAGE, alt: { en: "", it: "" } }} />
+      </div>
+    </NextIntlClientProvider>
+  );
+
 beforeEach(() =>
   page.viewport(SCREEN.VIEWPORT.PHONE.WIDTH, SCREEN.VIEWPORT.PHONE.HEIGHT)
 );
@@ -91,18 +106,7 @@ describe("ImageCard", () => {
   });
 
   it("says the picture has no alt text when it has none", async () => {
-    const screen = await render(
-      <NextIntlClientProvider
-        formats={DATE.FORMATS}
-        locale={I18N.DEFAULT_LANGUAGE}
-        messages={aofMessages(I18N.DEFAULT_LANGUAGE, EN)}
-        timeZone={DATE.TIME_ZONE}
-      >
-        <div className="w-97.5">
-          <ImageCard image={{ ...IMAGE, alt: { en: "", it: "" } }} />
-        </div>
-      </NextIntlClientProvider>
-    );
+    const screen = await renderNoAlt();
     await expect
       .element(screen.getByText(EN.Images.column.noAlt, { exact: true }))
       .toBeVisible();
@@ -134,10 +138,10 @@ describe("ImageCard", () => {
     expect(getComputedStyle(picture).objectFit).toBe("contain");
   });
 
-  it("draws the picture large, a side of 96px", async () => {
+  it("draws the picture large, a side of 120px", async () => {
     const screen = await renderCard();
     const picture = screen.getByTestId("picture").element().parentElement;
-    expect(picture?.getBoundingClientRect().width).toBeGreaterThanOrEqual(96);
+    expect(picture?.getBoundingClientRect().width).toBeGreaterThanOrEqual(120);
   });
 
   it("puts the alt and access beside the picture, and the size, dimensions and Apps under both", async () => {
@@ -181,5 +185,65 @@ describe("ImageCard", () => {
     const alt = screen.getByRole("link", { name: LONG.trim() }).element();
     const style = getComputedStyle(alt.firstElementChild ?? alt);
     expect(style.webkitLineClamp).toBe("2");
+  });
+});
+
+describe("ImageCard, laid out", () => {
+  it("never lets a long name and a long alt push the text past the picture, so no card shifts the list", async () => {
+    const screen = await renderCard();
+    const tile =
+      screen.getByTestId("picture").element().parentElement ?? document.body;
+    const text = tile.nextElementSibling?.getBoundingClientRect();
+    const picture = tile.getBoundingClientRect();
+    expect(text?.height ?? 0).toBeLessThanOrEqual(picture.height + 1);
+    expect(Math.abs((text?.bottom ?? 0) - picture.bottom)).toBeLessThanOrEqual(
+      2
+    );
+  });
+
+  it("lines the name, alt and access up with the picture: the same top and bottom for a short alt", async () => {
+    const screen = await renderNoAlt();
+    const tile =
+      screen.getByTestId("picture").element().parentElement ?? document.body;
+    const column = tile.nextElementSibling;
+    const picture = tile.getBoundingClientRect();
+    const text = column?.getBoundingClientRect();
+    expect(Math.abs((text?.top ?? 0) - picture.top)).toBeLessThanOrEqual(2);
+    expect(Math.abs((text?.bottom ?? 0) - picture.bottom)).toBeLessThanOrEqual(
+      2
+    );
+  });
+
+  it("spreads the name, alt and access over the picture's height: the name at its top, the access at its foot", async () => {
+    const screen = await renderNoAlt();
+    const tile =
+      screen.getByTestId("picture").element().parentElement ?? document.body;
+    const column = tile.nextElementSibling;
+    expect(getComputedStyle(column ?? tile).justifyContent).toBe(
+      "space-between"
+    );
+    const picture = tile.getBoundingClientRect();
+    const last = column?.lastElementChild?.getBoundingClientRect();
+    expect(Math.abs((last?.bottom ?? 0) - picture.bottom)).toBeLessThanOrEqual(
+      2
+    );
+  });
+
+  it("holds the same room above the divider as under it, and the rows of facts close together", async () => {
+    const screen = await renderNoAlt();
+    const details = screen.getByRole("term").first().element().closest("dl");
+    const block = details?.previousElementSibling?.getBoundingClientRect();
+    const rule = details?.getBoundingClientRect();
+    const firstLabel = details?.querySelector("dt")?.getBoundingClientRect();
+    const above = (rule?.top ?? 0) - (block?.bottom ?? 0);
+    const below = (firstLabel?.top ?? 0) - (rule?.top ?? 0);
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(4);
+    const rows = [...(details?.querySelectorAll("dt") ?? [])].map((label) =>
+      Math.round(label.getBoundingClientRect().top)
+    );
+    const second = rows.find((top) => top > (rows[0] ?? 0));
+    // About 8px between one row's value and the next row's label (a browser rounds the lines a little differently).
+    const firstValue = details?.querySelector("dd")?.getBoundingClientRect();
+    expect((second ?? 0) - (firstValue?.bottom ?? 0)).toBeLessThanOrEqual(9);
   });
 });

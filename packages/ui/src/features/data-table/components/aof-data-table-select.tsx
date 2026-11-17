@@ -104,6 +104,9 @@ export const aofSelectColumn = <TData extends RowData>(
       row.getCanSelect() ? (
         <AOFRowCheckbox label={labels.row(row)} row={row} />
       ) : null,
+    // Never sorted, never hidden: it is how rows are chosen.
+    enableHiding: false,
+    enableSorting: false,
     header: ({ table }) => <SelectAll label={labels.all} table={table} />,
     id: "select",
   });

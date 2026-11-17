@@ -25,7 +25,7 @@ import {
  * An Image on a phone, as a platform sign: the line's colour along its foot
  * and 写 brushed large and faint behind, cut by its corner; its picture large
  * at the left and, to its right, its stored file name (a click copies it), its
- * alt (cut after two lines) and whether it is public or private; under both, its size, dimensions and the Apps it is
+ * alt (each cut after two lines, so the text never outgrows the picture and no card is taller than another) and whether it is public or private; under both, its size, dimensions and the Apps it is
  * in, each under a small label (never joined by a middle dot); last, its
  * selection checkbox (`select`) at the left and when it was added at the right.
  */
@@ -62,10 +62,10 @@ export const ImageCard = ({
   const t = useTranslations("Images.column");
   return (
     <SignCard className={className} kanji={IMAGES.ADD_KANJI} {...props}>
-      <AOFCardContent className="flex flex-col gap-3">
+      <AOFCardContent className="flex flex-col gap-2.5">
         <div className="flex gap-4">
           <ImageThumb image={image} size="card" />
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-1">
             <CopyName
               className="font-mono font-semibold text-sm"
               name={image.key}
@@ -79,7 +79,7 @@ export const ImageCard = ({
             <AccessChip access={image.access} />
           </div>
         </div>
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t pt-3">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-t pt-2.5">
           <Detail label={t("size")}>
             <span className="font-mono tabular-nums">
               {formatSize(image.bytes)}

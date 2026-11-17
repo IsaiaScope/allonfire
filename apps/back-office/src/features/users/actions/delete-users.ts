@@ -16,15 +16,15 @@ import { USERS } from "../constants/users";
  */
 export const deleteUsers = async (ids: string[]): Promise<number | null> => {
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].users.$delete({
+  const response = await client[API.VERSION.CURRENT].users.$delete({
     json: { ids },
   });
-  if (res.status !== HTTP.STATUS.OK) {
+  if (response.status !== HTTP.STATUS.OK) {
     return null;
   }
   updateTag(USERS.CACHE.TAG);
   // Their Avatars went with them: the Storage numbers moved too.
   updateTag(STORAGE.CACHE.TAG);
-  const { deleted } = await res.json();
+  const { deleted } = await response.json();
   return deleted;
 };

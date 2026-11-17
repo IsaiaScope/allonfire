@@ -3,12 +3,14 @@ import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { SECTION, SECTIONS } from "../../constants/sections";
 import {
+  APP_NUMBER,
   currentSection,
   currentSubPage,
   isCurrentSection,
   sectionEntry,
   sectionHref,
   stationNumber,
+  subPageNumber,
 } from "../sections";
 
 describe("Section helpers", () => {
@@ -36,6 +38,12 @@ describe("Section helpers", () => {
 
   it("numbers each Section like a station on the line, in menu order", () => {
     expect(SECTIONS.map(stationNumber)).toEqual(["01", "02", "03", "04"]);
+  });
+
+  it("numbers a Section's own pages from 01, and the Back Office itself 00", () => {
+    const [images] = SECTION.STORAGE.pages;
+    expect(subPageNumber(SECTION.STORAGE, images)).toBe("01");
+    expect(APP_NUMBER).toBe("00");
   });
 
   it("finds the Section you are on, Home for any other path", () => {

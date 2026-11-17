@@ -9,6 +9,12 @@ export const ACTION_KANJI = {
   BACK: "戻",
   /** 戻, to go back: brushed in Cancel, which leaves without doing it. */
   CANCEL: "戻",
+  /** 消, to erase: brushed in the red button that clears everything a list holds. */
+  CLEAR: "消",
+  /** 運, to carry: the handle that drags a sort to another place. */
+  DRAG: "運",
   /** 再, again: brushed in a button that retries or reloads. */
   RETRY: "再",
+  /** 線, line: brushed in the button that adds a sort. */
+  SORT: "線",
 } as const;

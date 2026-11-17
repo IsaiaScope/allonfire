@@ -39,15 +39,15 @@ execFileSync("bash", ["scripts/liquibase.sh", "update"], {
 });
 
 const forward = prismaDiff(
-  ["--from-schema-datasource", SCHEMA],
-  ["--to-schema-datamodel", SCHEMA]
+  ["--from-config-datasource"],
+  ["--to-schema", SCHEMA]
 );
 if (isEmptySql(forward)) {
   fail("No schema change: the database already matches prisma/schema.");
 }
 const rollback = prismaDiff(
-  ["--from-schema-datamodel", SCHEMA],
-  ["--to-schema-datasource", SCHEMA]
+  ["--from-schema", SCHEMA],
+  ["--to-config-datasource"]
 );
 
 const id = `${nextChangesetNumber(readdirSync(CHANGESET.DIR))}-${name}`;

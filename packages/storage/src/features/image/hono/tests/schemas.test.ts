@@ -110,6 +110,7 @@ describe("listQuerySchema", () => {
       page: 1,
       perPage: IMAGE.LIMIT.LIST.DEFAULT,
       search: "",
+      sort: "",
     });
   });
 
@@ -118,6 +119,7 @@ describe("listQuerySchema", () => {
       page: 2,
       perPage: 10,
       search: "",
+      sort: "",
     });
   });
 
@@ -142,6 +144,17 @@ describe("listQuerySchema", () => {
     expect(
       listQuerySchema.parse({ search: "x".repeat(IMAGE.LIMIT.SEARCH_MAX + 1) })
         .search
+    ).toBe("");
+  });
+
+  it("takes a sort, trimmed, and treats a blank or too long one as none", () => {
+    expect(listQuerySchema.parse({ sort: " size.desc " }).sort).toBe(
+      "size.desc"
+    );
+    expect(listQuerySchema.parse({ sort: "  " }).sort).toBe("");
+    expect(
+      listQuerySchema.parse({ sort: "x".repeat(IMAGE.LIMIT.SEARCH_MAX + 1) })
+        .sort
     ).toBe("");
   });
 

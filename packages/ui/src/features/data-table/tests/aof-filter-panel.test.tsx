@@ -24,4 +24,29 @@ describe("AOFFilterPanel", () => {
     expect(html).toContain('data-testid="tile"');
     expect(html).not.toContain('data-slot="badge"');
   });
+
+  it("counts the sorts and the hidden columns on the button, beside the filters", () => {
+    const html = renderToStaticMarkup(
+      <AOFFilterPanel
+        count={1}
+        counts={{ sort: 2, view: 1 }}
+        label="Filters"
+        sort={<span>sorts</span>}
+        tabLabels={{ filter: "Filter", sort: "Sort", view: "View" }}
+        view={<span>columns</span>}
+      >
+        <span>lists</span>
+      </AOFFilterPanel>
+    );
+    expect(html).toContain(">4<");
+  });
+
+  it("counts the filters alone when it has no tabs", () => {
+    const html = renderToStaticMarkup(
+      <AOFFilterPanel count={2} counts={{ sort: 2, view: 1 }} label="Filters">
+        <span>lists</span>
+      </AOFFilterPanel>
+    );
+    expect(html).toContain(">2<");
+  });
 });

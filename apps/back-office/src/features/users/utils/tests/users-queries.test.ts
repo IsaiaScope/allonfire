@@ -7,12 +7,13 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 import { hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { USERS } from "../../constants/users";
-import { userKey, userQuery, usersQuery } from "../users-queries";
+import { fetchUsers, userKey, userQuery, usersQuery } from "../users-queries";
 
 const PARAMS = {
   [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
   [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
   [USER.PARAM.SEARCH]: "",
+  [USER.PARAM.SORT]: "",
 };
 
 describe("usersQuery", () => {
@@ -36,5 +37,28 @@ describe("userQuery", () => {
   // (the form's Version must stay the one it opened with).
   it("is never stale, so only an action asks for it again", () => {
     expect(userQuery(api, "user-1").staleTime).toBe("static");
+  });
+});
+
+describe("fetchUsers", () => {
+  it("asks for the page with the search and the sort as the address holds them", async () => {
+    const seen: URL[] = [];
+    const client = hc<ApiType>(LOCAL.URL.TEST_API, {
+      fetch: (input: RequestInfo | URL) => {
+        seen.push(new URL(new Request(input).url));
+        return Promise.resolve(
+          Response.json({ pageCount: 0, total: 0, users: [] })
+        );
+      },
+    });
+    await fetchUsers(client, {
+      ...PARAMS,
+      [USER.PARAM.SEARCH]: "created:2026-11-26",
+      [USER.PARAM.SORT]: "email.desc",
+    });
+    expect(seen[0]?.searchParams.get(USER.PARAM.SEARCH)).toBe(
+      "created:2026-11-26"
+    );
+    expect(seen[0]?.searchParams.get(USER.PARAM.SORT)).toBe("email.desc");
   });
 });

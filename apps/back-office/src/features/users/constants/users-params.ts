@@ -3,52 +3,47 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import {
   createLoader,
-  createParser,
   type inferParserType,
   parseAsNumberLiteral,
 } from "nuqs/server";
+import { codecParser, pageParser } from "@/shared/utils/list-params";
 import { USERS } from "./users";
-
-/** A page the API reads: a whole number from the first to `USER.MAX_PAGE`. */
-const pageParser = createParser({
-  parse: (value) => {
-    const page = Number(value);
-    return Number.isInteger(page) &&
-      page >= USER.DEFAULT_PAGE &&
-      page <= USER.MAX_PAGE
-      ? page
-      : null;
-  },
-  serialize: String,
-});
-
-/**
- * The search, cleaned: an unknown field or value dropped, the rest in its
- * canonical spelling (ADR 0026). Typing replaces the history entry; paging
- * pushes one, so Back goes to the previous page.
- */
-const searchParser = createParser({
-  parse: (value) => USER.SEARCH.serialize(USER.SEARCH.parse(value)) || null,
-  serialize: String,
-})
-  .withDefault("")
-  .withOptions(USERS.HISTORY.SEARCH);
 
 /**
  * The Users list's address. A value the list does not allow reads as its
  * default, never an error: the address is the visitor's to edit.
  */
 export const usersParams = {
-  [USER.PARAM.PAGE]: pageParser
+  [USER.PARAM.PAGE]: pageParser(USER.DEFAULT_PAGE, USER.MAX_PAGE)
     .withDefault(USER.DEFAULT_PAGE)
     .withOptions(USERS.HISTORY.PAGE),
   [USER.PARAM.PER_PAGE]: parseAsNumberLiteral(USER.PAGE_SIZES)
     .withDefault(USER.DEFAULT_PAGE_SIZE)
     .withOptions(USERS.HISTORY.PAGE),
-  [USER.PARAM.SEARCH]: searchParser,
+  // Typing replaces the history entry; paging pushes one, so Back goes to the
+  // previous page. The sort and the hidden columns replace it too.
+  [USER.PARAM.SEARCH]: codecParser(USER.SEARCH, USERS.HISTORY.SEARCH),
+  [USER.PARAM.SORT]: codecParser(USER.SORT, USERS.HISTORY.SEARCH),
+  [USER.PARAM.HIDE]: codecParser(USERS.HIDE, USERS.HISTORY.SEARCH),
 };
 
 /** Reads the list's params from a page's `searchParams`. */
 export const loadUsersParams = createLoader(usersParams);
 
 export type UsersParams = inferParserType<typeof usersParams>;
+
+/**
+ * What the API is asked and the cache is keyed by: the page, its size, the
+ * search and the sort. Not `hide`, which only changes what is drawn, so a View
+ * change never asks again, never re-keys the private cache and never clears
+ * the selection.
+ */
+export type UsersQuery = Omit<UsersParams, typeof USER.PARAM.HIDE>;
+
+/** The part of the address the API is asked (an explicit pick, never a spread). */
+export const queryOf = (params: UsersParams): UsersQuery => ({
+  [USER.PARAM.PAGE]: params[USER.PARAM.PAGE],
+  [USER.PARAM.PER_PAGE]: params[USER.PARAM.PER_PAGE],
+  [USER.PARAM.SEARCH]: params[USER.PARAM.SEARCH],
+  [USER.PARAM.SORT]: params[USER.PARAM.SORT],
+});

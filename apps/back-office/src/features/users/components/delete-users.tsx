@@ -12,18 +12,18 @@ import { useDeleteUsersFlow } from "../hooks/use-delete-users-flow";
  * click.
  */
 export const DeleteUsers = ({
-  ids,
+  selectedIds,
   onClear,
 }: {
   /** The Users selected, never the signed-in one. */
-  ids: string[];
+  selectedIds: string[];
   onClear: () => void;
 }) => {
   const t = useTranslations("Users.delete");
-  const flow = useDeleteUsersFlow(ids, onClear);
+  const flow = useDeleteUsersFlow(selectedIds, onClear);
   return (
     <BulkDeleteControl
-      count={ids.length}
+      count={selectedIds.length}
       flow={flow}
       kanji={USERS.DELETE_KANJI}
       t={t}

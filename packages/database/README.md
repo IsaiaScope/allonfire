@@ -1,7 +1,7 @@
 <h1 align="center">@allonfire/database</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma 6" />
+  <img src="https://img.shields.io/badge/Prisma-7-2D3748?style=flat&logo=prisma&logoColor=white" alt="Prisma 7" />
   <img src="https://img.shields.io/badge/Liquibase-5-2962FF?style=flat" alt="Liquibase 5" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL 16" />
   <img src="https://img.shields.io/badge/Zod-4-3068B7?style=flat&logo=zod&logoColor=white" alt="Zod" />
@@ -32,7 +32,7 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 
 | Import | Content |
 |---|---|
-| `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client (no root entry, no barrel) |
+| `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client, on the `pg` driver adapter (no root entry, no barrel) |
 | `@allonfire/database/features/image/image-stats` | `imageStats()`: every Image once (`total`, `totalBytes`) and, per App that has any, its bytes and count by access (`byApp`); an Image in two Apps counts in each; types `ImageStats`, `ImageAppStat` |
 | `@allonfire/database/features/image/image.service` | `createImages`, `listImagesPage` (a numbered page of the Images visible to the Apps the caller enters, narrowed by `app`, any of `apps`, any of `accesses` and `text`, which matches the alt in any language or the file name; with the count and bytes of every Image it matches), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImagePlacementsById`, `AuthorisePlacements`, `ResolveChanges` |
 | `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
@@ -189,7 +189,7 @@ pg_restore --clean --if-exists --no-owner -d <url> /backups/allonfire-<stamp>.du
 ```
 packages/database/
   prisma/schema/
-    schema.prisma           generator + datasource (schemas = auth, image, laura)
+    schema.prisma           generator + datasource (schemas = auth, image, laura, service)
     auth.prisma             auth schema (shared)
     image.prisma            image schema (shared)
     apps/laura.prisma       laura schema, one file per App under apps/
