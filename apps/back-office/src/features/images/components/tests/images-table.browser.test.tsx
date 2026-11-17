@@ -108,8 +108,12 @@ describe("ImagesTable", () => {
       )
     );
     const [sea] = IMAGES_PAGE.images;
+    // The alt shows twice: aloud on the row's link, and drawn in its cell.
     await expect
-      .element(table.getByText(sea?.alt.en ?? "", { exact: true }))
+      .element(table.getByRole("link", { name: sea?.alt.en ?? "" }))
+      .toBeInTheDocument();
+    await expect
+      .element(table.getByText(sea?.alt.en ?? "", { exact: true }).last())
       .toBeVisible();
     await expect
       .element(table.getByText(sea?.key ?? "", { exact: true }))
@@ -144,9 +148,11 @@ describe("ImagesTable", () => {
     );
     const screen = await renderAt();
     const altBox = () =>
-      screen.container.querySelector("tbody tr:first-child td:nth-child(4) a");
+      screen.container.querySelector(
+        "tbody tr:first-child td:nth-child(4) span"
+      );
     await expect.poll(altBox).not.toBeNull();
-    const alt = altBox()?.parentElement;
+    const alt = altBox();
     // The value is cut at the column's maxSize (320), however long it is; the
     // cell around it may take the room the table has left over.
     expect(alt?.getBoundingClientRect().width).toBeLessThanOrEqual(320);
@@ -303,5 +309,57 @@ describe("ImagesTable states and actions", () => {
     expect(head?.children.length).toBe(
       table.element().querySelectorAll("th").length
     );
+  });
+});
+
+describe("ImagesTable deletion", () => {
+  /** Ticks the first Image and confirms the delete. */
+  const confirmDeletingFirst = async (
+    screen: Awaited<ReturnType<typeof renderAt>>
+  ) => {
+    const [sea] = IMAGES_PAGE.images;
+    await screen
+      .getByRole("checkbox", {
+        name: enT("Images.delete.select", { alt: sea?.alt.en ?? "" }),
+      })
+      .click();
+    await screen
+      .getByRole("button", { exact: true, name: t.delete.action })
+      .click();
+    await page.getByRole("button", { name: t.delete.confirm }).click();
+    return sea;
+  };
+
+  it("takes the row out of the list before the API answers, and holds the table's height", async () => {
+    vi.mocked(deleteImages).mockReturnValue(new Promise(() => undefined));
+    const screen = await renderAt();
+    const frame = () =>
+      document.querySelector('[data-slot="aof-data-table"]')?.clientHeight;
+    const before = frame();
+    const sea = await confirmDeletingFirst(screen);
+    await expect
+      .element(
+        screen.getByRole("checkbox", {
+          name: enT("Images.delete.select", { alt: sea?.alt.en ?? "" }),
+        })
+      )
+      .not.toBeInTheDocument();
+    expect(before).toBeGreaterThan(0);
+    expect(frame()).toBe(before);
+  });
+
+  it("puts the row back when the API refuses", async () => {
+    vi.mocked(deleteImages).mockClear();
+    vi.mocked(deleteImages).mockResolvedValue(null);
+    const screen = await renderAt();
+    const sea = await confirmDeletingFirst(screen);
+    await expect.poll(() => vi.mocked(deleteImages).mock.calls.length).toBe(1);
+    await expect
+      .element(
+        screen.getByRole("checkbox", {
+          name: enT("Images.delete.select", { alt: sea?.alt.en ?? "" }),
+        })
+      )
+      .toBeInTheDocument();
   });
 });

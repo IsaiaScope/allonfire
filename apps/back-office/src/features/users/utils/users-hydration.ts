@@ -4,8 +4,8 @@ import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
-import type { UsersParams } from "../constants/users-params";
-import { fetchUser, fetchUsers, userKey, usersListKey } from "./users-queries";
+import type { UsersQuery } from "../constants/users-params";
+import { fetchUser, fetchUsers, userKey, usersPageKey } from "./users-queries";
 
 /**
  * One page of Users as the visitor's Session reads it (the API checks them),
@@ -17,13 +17,13 @@ import { fetchUser, fetchUsers, userKey, usersListKey } from "./users-queries";
  * what it dehydrates, and a time read outside a cache keeps the list out of
  * every prefetch. A refusal is thrown, never kept.
  */
-export const usersHydration = async (params: UsersParams) => {
+export const usersHydration = async (params: UsersQuery) => {
   "use cache: private";
   cacheTag(USERS.CACHE.TAG);
   cacheLife(USERS.CACHE.LIFE);
   const queryClient = AOFGetQueryClient();
   queryClient.setQueryData(
-    usersListKey(params),
+    usersPageKey(params),
     await fetchUsers(sessionApi(await readSessionCookie()), params)
   );
   return dehydrate(queryClient);

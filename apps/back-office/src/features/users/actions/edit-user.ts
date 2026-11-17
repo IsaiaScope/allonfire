@@ -82,7 +82,7 @@ export const editUser = async (
   const { name, password, roles, verification } = parsed.data;
   const verified = verification === USERS.VERIFICATION.VERIFIED;
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].users[":id"].$patch({
+  const response = await client[API.VERSION.CURRENT].users[":id"].$patch({
     json: {
       memberships: membershipsOf(roles),
       name,
@@ -93,9 +93,9 @@ export const editUser = async (
     },
     param: { id },
   });
-  if (res.status !== HTTP.STATUS.OK) {
+  if (response.status !== HTTP.STATUS.OK) {
     const error = await refusalOf(
-      res,
+      response,
       USERS.EDIT_ERROR,
       new Map<ApiRefusalKey, EditUserError>([
         [HTTP.STATUS.NOT_FOUND, USERS.EDIT_ERROR.GONE],
@@ -111,7 +111,7 @@ export const editUser = async (
   const sent = await sendAvatarChange(client, {
     change: avatar,
     id,
-    version: (await res.json()).version,
+    version: (await response.json()).version,
   });
   // The kept list and this User's kept page hold the old values.
   updateTag(USERS.CACHE.TAG);

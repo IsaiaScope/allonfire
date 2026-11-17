@@ -17,14 +17,14 @@ import { IMAGES } from "../constants/images";
  */
 export const deleteImages = async (ids: string[]): Promise<number | null> => {
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].images.$delete({
+  const response = await client[API.VERSION.CURRENT].images.$delete({
     json: { ids },
   });
-  if (res.status !== HTTP.STATUS.OK) {
+  if (response.status !== HTTP.STATUS.OK) {
     return null;
   }
   updateTag(IMAGES.CACHE.TAG);
   updateTag(STORAGE.CACHE.TAG);
-  const { deleted } = await res.json();
+  const { deleted } = await response.json();
   return deleted;
 };

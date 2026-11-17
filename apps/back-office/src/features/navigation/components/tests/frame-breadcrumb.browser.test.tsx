@@ -43,6 +43,10 @@ const frame = (search = "", content: ReactNode = <p>{PAGE}</p>) => (
 const breadcrumb = () =>
   page.getByRole("navigation", { exact: true, name: t.breadcrumb });
 
+/** The words of the crumb marked as the current page. */
+const currentCrumb = () =>
+  breadcrumb().element().querySelector('[aria-current="page"]')?.textContent;
+
 afterEach(() => document.removeEventListener("click", stayPut));
 
 beforeEach(() => {
@@ -60,9 +64,7 @@ describe("FrameBreadcrumb", () => {
     await expect
       .element(breadcrumb().getByRole("link", { name: BACK_OFFICE.NAME }))
       .toBeVisible();
-    await expect
-      .element(breadcrumb().getByText(t.users))
-      .toHaveAttribute("aria-current", "page");
+    await expect.poll(currentCrumb).toContain(t.users);
   });
 
   it("links the Section from a page under it, back to the Section", async () => {
@@ -76,14 +78,42 @@ describe("FrameBreadcrumb", () => {
   it("shows one crumb on Home", async () => {
     at.pathname = sectionHref(SECTION.HOME.path);
     await render(frame());
-    await expect
-      .element(breadcrumb().getByText(t.home))
-      .toHaveAttribute("aria-current", "page");
+    await expect.poll(currentCrumb).toContain(t.home);
     // shadcn draws the current crumb as a disabled link: look for the App.
     await expect
       .element(breadcrumb().getByText(BACK_OFFICE.NAME))
       .not.toBeInTheDocument();
   });
+});
+
+describe("FrameBreadcrumb, in a narrow header", () => {
+  // Little room for the trail (a small phone, or a tablet with the sidebar
+  // open): the crumbs must stay on one line, the text cut short, never wrap
+  // under the header or run out of it.
+  it.each([[260], [300], [768]])(
+    "keeps the trail on one line, inside its header, at %s wide",
+    async (width) => {
+      at.pathname = sectionHref(BACK_OFFICE.PAGE.STORAGE_IMAGES);
+      await page.viewport(width, SCREEN.VIEWPORT.DESKTOP.HEIGHT);
+      await render(frame());
+      const list = breadcrumb().element().querySelector("ol");
+      const crumbs = [...(list?.children ?? [])].filter(
+        (item) => item.getClientRects().length > 0
+      );
+      expect(crumbs.length).toBeGreaterThan(1);
+      const tops = crumbs.map((item) =>
+        Math.round(item.getBoundingClientRect().top)
+      );
+      expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(
+        crumbs[0]?.getBoundingClientRect().height ?? 0
+      );
+      const nav = breadcrumb().element().getBoundingClientRect();
+      const header = breadcrumb().element().closest("header");
+      expect(nav.right).toBeLessThanOrEqual(
+        (header?.getBoundingClientRect().right ?? 0) + 1
+      );
+    }
+  );
 });
 
 describe("AppFrame", () => {

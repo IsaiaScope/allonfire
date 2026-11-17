@@ -7,7 +7,7 @@ import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
 import { retryUnlessRefused } from "@/shared/utils/retry";
 import { USERS } from "../constants/users";
-import type { UsersParams } from "../constants/users-params";
+import type { UsersQuery } from "../constants/users-params";
 
 /**
  * Asks once more after a server or network failure; never after the API
@@ -16,13 +16,14 @@ import type { UsersParams } from "../constants/users-params";
 export const retryUsers = retryUnlessRefused(USERS.RETRIES);
 
 /** One page of Users from the API; an error throws `DetailedError`. */
-export const fetchUsers = (client: ApiClient, params: UsersParams) =>
+export const fetchUsers = (client: ApiClient, params: UsersQuery) =>
   parseResponse(
     client[API.VERSION.CURRENT].users.$get({
       query: {
         [USER.PARAM.PAGE]: String(params[USER.PARAM.PAGE]),
         [USER.PARAM.PER_PAGE]: String(params[USER.PARAM.PER_PAGE]),
         [USER.PARAM.SEARCH]: params[USER.PARAM.SEARCH],
+        [USER.PARAM.SORT]: params[USER.PARAM.SORT],
       },
     })
   );
@@ -37,9 +38,9 @@ export const fetchUser = (client: ApiClient, id: string) =>
  * One page's key, tagged with the body it holds: the page hydrates under it,
  * so a wrong body or wrong params fail to compile, never a skipped hydration.
  */
-export const usersListKey = (params: UsersParams) =>
+export const usersPageKey = (params: UsersQuery) =>
   queryOptions<Awaited<ReturnType<typeof fetchUsers>>>({
-    queryKey: QUERY.USERS.LIST(params),
+    queryKey: QUERY.USERS.PAGE(params),
   }).queryKey;
 
 /**
@@ -48,10 +49,10 @@ export const usersListKey = (params: UsersParams) =>
  * the page's copy (`USERS.CACHE.LIFE.stale`): a shorter clock would read a
  * kept copy again the moment a link brings it back.
  */
-export const usersQuery = (client: ApiClient, params: UsersParams) =>
+export const usersQuery = (client: ApiClient, params: UsersQuery) =>
   queryOptions({
     queryFn: () => fetchUsers(client, params),
-    queryKey: usersListKey(params),
+    queryKey: usersPageKey(params),
     retry: retryUsers,
     staleTime: USERS.CACHE.LIFE.stale * UNIT.MS_PER_SECOND,
   });

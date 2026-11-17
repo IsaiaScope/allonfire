@@ -1,4 +1,5 @@
 import { searchQuery } from "@allonfire/core/features/search/search-query";
+import { sortQuery } from "@allonfire/core/features/search/sort-query";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 
@@ -9,11 +10,20 @@ const PAGE_SIZES = [25, 50, 100] as const;
 /** One User's route, under the module's base. */
 const ONE_USER = "/:id";
 
-/** How a Users list's `search` reads: `app:laura role:admin,user isa` (ADR 0026). */
-const SEARCH = searchQuery({
-  app: objectValues(App),
-  role: objectValues(Role),
-});
+/**
+ * How a Users list's `search` reads: `app:laura role:admin,user
+ * created:2026-11-26..2026-11-28 isa` (ADR 0026, ADR 0031).
+ */
+const SEARCH = searchQuery(
+  {
+    app: objectValues(App),
+    role: objectValues(Role),
+  },
+  { ranges: ["created"] }
+);
+
+/** How a Users list's `sort` reads: `email.asc,created.desc` (ADR 0031); plain columns only. */
+const SORT = sortQuery(["email", "created"] as const);
 
 export const USER = {
   /** The page a list opens on, and the furthest it reads. */
@@ -40,7 +50,7 @@ export const USER = {
     DELETE_SUMMARY: "Delete Users",
     LIST_200: "One page of Users, newest first, with the total that match",
     LIST_DESCRIPTION:
-      "Users with their Memberships, newest first. `search` holds `app:<App>` and `role:<Role>` pairs, each naming one value or several comma-separated (`role:admin,user`, any of them), plus free text matched against the email and the name; an unknown field or value is dropped, and a bad `page` or `perPage` falls back to its default, never a 400. Only a User the Host lets list Users.",
+      "Users with their Memberships, newest first unless `sort` says otherwise (`email.asc,created.desc`: a column and a direction in order, at most three, from `email` and `created`; an unknown one is dropped). `search` holds `app:<App>` and `role:<Role>` pairs, each naming one value or several comma-separated (`role:admin,user`, any of them), plus free text matched against the email and the name, and `created:2026-11-26..2026-11-28` (whole UTC days, both ends included; one day as `created:2026-11-26`) keeps the Users created in that range; an unknown field or value is dropped, and a bad `page` or `perPage` falls back to its default, never a 400. Only a User the Host lets list Users.",
     LIST_SUMMARY: "List Users",
     READ_200: "The User, their Avatar's link signed for the hour",
     READ_DESCRIPTION:
@@ -63,13 +73,27 @@ export const USER = {
   /** What an added User's fields may hold; the password's maximum is Better
    *  Auth's, its minimum longer than Better Auth's 8 for an account an Admin
    *  hands out. */
-  LIMIT: { EMAIL_MAX: 254, NAME_MAX: 100, PASSWORD_MAX: 128, PASSWORD_MIN: 12 },
+  LIMIT: {
+    EMAIL_MAX: 254,
+    NAME_MAX: 100,
+    PASSWORD_MAX: 128,
+    PASSWORD_MIN: 12,
+    /** A longer `sort` reads as none: three sorts are far shorter. */
+    SORT_MAX: 200,
+  },
   /** The most Users one deletion names: the largest page. */
   MAX_DELETE: Math.max(...PAGE_SIZES),
   MAX_PAGE: 100_000,
   OPENAPI_TAG: "Users",
   PAGE_SIZES,
-  PARAM: { PAGE: "page", PER_PAGE: "perPage", SEARCH: "search" },
+  PARAM: {
+    /** The hidden columns, `hide=LAURA` (ADR 0031): display only, never asked of the API. */
+    HIDE: "hide",
+    PAGE: "page",
+    PER_PAGE: "perPage",
+    SEARCH: "search",
+    SORT: "sort",
+  },
   /** The module's routes; a Host mounts it at `BASE` under its own prefix. */
   PATH: {
     /** One User's Avatar: `PUT` sets it, `DELETE` removes it. */
@@ -83,4 +107,6 @@ export const USER = {
   },
   /** How a Users list's `search` reads (ADR 0026). */
   SEARCH,
+  /** How a Users list's `sort` reads (ADR 0031). */
+  SORT,
 } as const;

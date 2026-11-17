@@ -6,8 +6,11 @@ export type TablePaginationUpdater =
   | TablePagination
   | ((old: TablePagination) => TablePagination);
 
-/** The pagination a table's `updater` asks for, given the one in view. */
-export const resolvePagination = (
-  updater: TablePaginationUpdater,
-  current: TablePagination
-) => (typeof updater === "function" ? updater(current) : updater);
+/**
+ * What a table's `updater` asks for (TanStack's `Updater`: the next value, or
+ * a function of the current one), given the one in view.
+ */
+export const resolveUpdater = <Value>(
+  updater: Value | ((old: Value) => Value),
+  current: Value
+): Value => (updater instanceof Function ? updater(current) : updater);

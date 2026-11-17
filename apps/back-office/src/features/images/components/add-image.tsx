@@ -110,7 +110,7 @@ const usePicker = (form: AddImageForm, refuse: (why: FileRefusal) => void) => {
  */
 export const AddImage = ({ apps }: { apps: readonly App[] }) => {
   const t = useTranslations();
-  const client = useQueryClient();
+  const queryClient = useQueryClient();
   const [answer, action, pending] = useActionState(addImage, {});
   const { added, notice } = answer;
   useToastThenList(
@@ -122,7 +122,7 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
         message: t("Images.add.added", { count: added ?? 0 }),
       },
     },
-    () => invalidateImages(client)
+    () => invalidateImages(queryClient)
   );
   const form = useAddImageForm(apps, {
     altTooLong: t("Images.form.field.altTooLong"),

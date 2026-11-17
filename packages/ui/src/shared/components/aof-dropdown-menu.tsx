@@ -2,6 +2,7 @@
 
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -34,6 +35,20 @@ export const AOFDropdownMenuItem = ({
   ...props
 }: ComponentProps<typeof DropdownMenuItem>) => (
   <DropdownMenuItem
+    className={cn(
+      "pointer-coarse:min-h-(--tap-target) text-base pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
+      className
+    )}
+    {...props}
+  />
+);
+
+/** A row that is on or off, announced as such (`menuitemcheckbox`); sized as `AOFDropdownMenuItem`. */
+export const AOFDropdownMenuCheckboxItem = ({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuCheckboxItem>) => (
+  <DropdownMenuCheckboxItem
     className={cn(
       "pointer-coarse:min-h-(--tap-target) text-base pointer-coarse:[&_svg:not([class*='size-'])]:size-(--tap-icon)",
       className

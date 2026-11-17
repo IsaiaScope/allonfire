@@ -1,3 +1,5 @@
+import type { SortItem } from "@allonfire/core/features/search/sort-query";
+import type { DayRange } from "@allonfire/core/features/search/utc-day-range";
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import type { Image, Prisma } from "../../../generated/prisma/client";
 import type { App, ImageAccess } from "../../../generated/prisma/enums";
@@ -9,6 +11,7 @@ import {
   lockImages,
   placementsById,
 } from "./utils/image-locks";
+import { type ImageSortColumn, imageOrderBy } from "./utils/image-order";
 import { checkImageVersions, imageVersion } from "./utils/image-version";
 
 export type { ImagePlacementsById } from "./utils/image-locks";
@@ -169,7 +172,9 @@ export async function createImages(images: NewImage[]): Promise<ImageRecord[]> {
  * public, or in an App they enter (ADR 0027). Narrowed to those placed in
  * `app`, in any of `apps`, with any of the `accesses` given, and, when `text`
  * is given, whose alt text (in any Language) or file name holds it, ignoring
- * case; each narrowing given applies on top of the others. Newest upload first, with how many there are and
+ * case, and, when `created` is given, created in those whole UTC days (both
+ * ends included); each narrowing given applies on top of the others. In the
+ * `sort` order (newest upload first without one), with how many there are and
  * their bytes together, whatever the page. Three reads, not a transaction:
  * under READ COMMITTED each takes its own snapshot either way.
  */
@@ -177,25 +182,36 @@ export async function listImagesPage({
   accesses,
   app,
   apps,
+  created,
   enterable,
   page,
   perPage,
+  sort,
   text,
 }: {
   accesses?: readonly ImageAccess[] | undefined;
   app?: App | undefined;
   apps?: readonly App[] | undefined;
+  created?: DayRange | undefined;
   enterable: readonly App[];
   page: number;
   perPage: number;
+  sort?: readonly SortItem<ImageSortColumn>[] | undefined;
   text?: string | undefined;
 }): Promise<{ images: ImageRecord[]; total: number; totalBytes: number }> {
-  const where = visibleImages({ accesses, app, apps, enterable, text });
+  const where = visibleImages({
+    accesses,
+    app,
+    apps,
+    created,
+    enterable,
+    text,
+  });
   const [totals, rows] = await Promise.all([
     prisma.image.aggregate({ _count: true, _sum: { bytes: true }, where }),
     prisma.image.findMany({
       include: withPlacements,
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      orderBy: imageOrderBy(sort),
       skip: (page - 1) * perPage,
       take: perPage,
       where,

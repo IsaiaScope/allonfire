@@ -8,11 +8,12 @@ import { hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { IMAGES_PAGE } from "@/shared/tests/msw/handlers";
 import { IMAGES } from "../../constants/images";
+import { queryOf } from "../../constants/images-params";
 import {
   fetchImages,
   imageKey,
   imageQuery,
-  imagesListKey,
+  imagesPageKey,
   imagesQuery,
 } from "../images-queries";
 
@@ -21,6 +22,7 @@ const PARAMS = {
   [IMAGES.PARAM.PAGE]: 2,
   [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
+  [IMAGES.PARAM.SORT]: "",
 };
 
 describe("imagesQuery", () => {
@@ -31,7 +33,7 @@ describe("imagesQuery", () => {
   });
 
   it("keys a page by the address that asked for it", () => {
-    expect(imagesListKey(PARAMS)).toEqual(QUERY.IMAGES.LIST(PARAMS));
+    expect(imagesPageKey(PARAMS)).toEqual(QUERY.IMAGES.PAGE(PARAMS));
   });
 });
 
@@ -67,6 +69,7 @@ describe("fetchImages", () => {
       page: "2",
       perPage: String(IMAGES.DEFAULT_PAGE_SIZE),
       search: "",
+      sort: "",
     });
   });
 
@@ -76,6 +79,32 @@ describe("fetchImages", () => {
       ...PARAMS,
       [IMAGES.PARAM.SEARCH]: "access:public input:sea",
     });
-    expect(seen[0]?.searchParams.get("search")).toBe("access:public input:sea");
+    expect(seen[0]?.searchParams.get(IMAGES.PARAM.SEARCH)).toBe(
+      "access:public input:sea"
+    );
+  });
+
+  it("sends the sort as the address holds it", async () => {
+    const { client, seen } = answering(IMAGES_PAGE);
+    await fetchImages(client, { ...PARAMS, [IMAGES.PARAM.SORT]: "size.desc" });
+    expect(seen[0]?.searchParams.get(IMAGES.PARAM.SORT)).toBe("size.desc");
+  });
+});
+
+describe("imagesPageKey and the hidden columns", () => {
+  it("is the same key whatever the View hides: a View change asks nothing", () => {
+    const withHidden = { ...PARAMS, [IMAGES.PARAM.HIDE]: "apps" };
+    expect(imagesPageKey(queryOf(withHidden))).toEqual(
+      imagesPageKey(queryOf({ ...PARAMS, [IMAGES.PARAM.HIDE]: "" }))
+    );
+    expect(imagesPageKey(queryOf(withHidden))).toEqual(
+      QUERY.IMAGES.PAGE(PARAMS)
+    );
+  });
+
+  it("keys a sort apart from none", () => {
+    expect(
+      imagesPageKey({ ...PARAMS, [IMAGES.PARAM.SORT]: "size.desc" })
+    ).not.toEqual(imagesPageKey(PARAMS));
   });
 });

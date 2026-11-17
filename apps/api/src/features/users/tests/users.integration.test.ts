@@ -95,6 +95,46 @@ describe("listing Users on the Fixtures", () => {
     expect(emails).not.toContain(FIXTURE.USER.BACK_OFFICE.ADMIN.email);
   });
 
+  it("sorts by Email and keeps the Created range, through the real app", async () => {
+    const cookie = await cookieFor(app, FIXTURE.USER.BACK_OFFICE.ADMIN);
+    const list = async (search: string, sort: string) => {
+      const res = await get(
+        `${LIST}?${new URLSearchParams({
+          [USER.PARAM.PER_PAGE]: String(LARGEST_PAGE),
+          [USER.PARAM.SEARCH]: search,
+          [USER.PARAM.SORT]: sort,
+        })}`,
+        cookie
+      );
+      expect(res.status).toBe(HTTP.STATUS.OK);
+      return userListBodySchema.parse(await res.json());
+    };
+
+    const asc = await list(FIXTURE.DOMAIN, "email.asc");
+    const emails = asc.users.map(({ email }) => email);
+    expect(emails).toEqual([...emails].sort());
+    expect(
+      (await list(FIXTURE.DOMAIN, "email.desc")).users.map(({ email }) => email)
+    ).toEqual([...emails].reverse());
+
+    // A range from the first Fixture's day to the last holds them all; a day
+    // long past holds none, with the total following.
+    const days = asc.users
+      .map(({ createdAt }) => createdAt.slice(0, 10))
+      .sort();
+    const inRange = await list(
+      `${FIXTURE.DOMAIN} created:${days.at(0)}..${days.at(-1)}`,
+      "email.asc"
+    );
+    expect(inRange.total).toBe(asc.total);
+    const past = await list(
+      `${FIXTURE.DOMAIN} created:2001-01-01`,
+      "email.asc"
+    );
+    expect(past.total).toBe(0);
+    expect(past.users).toEqual([]);
+  });
+
   it.each([
     ["a Laura Admin", FIXTURE.USER.LAURA.ADMIN],
     ["a Back Office User", FIXTURE.USER.BACK_OFFICE.USER],
