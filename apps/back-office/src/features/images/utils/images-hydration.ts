@@ -4,12 +4,12 @@ import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
 import { IMAGES } from "../constants/images";
-import type { ImagesParams } from "../constants/images-params";
+import type { ImagesQuery } from "../constants/images-params";
 import {
   fetchImage,
   fetchImages,
   imageKey,
-  imagesListKey,
+  imagesPageKey,
 } from "./images-queries";
 
 /**
@@ -22,13 +22,13 @@ import {
  * what it dehydrates, and a time read outside a cache keeps the list out of
  * every prefetch. A refusal is thrown, never kept.
  */
-export const imagesHydration = async (params: ImagesParams) => {
+export const imagesHydration = async (params: ImagesQuery) => {
   "use cache: private";
   cacheTag(IMAGES.CACHE.TAG);
   cacheLife(IMAGES.CACHE.LIFE);
   const queryClient = AOFGetQueryClient();
   queryClient.setQueryData(
-    imagesListKey(params),
+    imagesPageKey(params),
     await fetchImages(sessionApi(await readSessionCookie()), params)
   );
   return dehydrate(queryClient);

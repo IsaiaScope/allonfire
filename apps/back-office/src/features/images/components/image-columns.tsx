@@ -9,6 +9,7 @@ import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
+import { AOFColumnHeader } from "@allonfire/ui/features/data-table/components/aof-column-header";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { useAOFIntentPrefetch } from "@allonfire/ui/features/query/hooks/use-aof-intent-prefetch";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
@@ -27,13 +28,13 @@ import { imageHref } from "../utils/image-href";
 
 const helper = aofColumnHelper<ImageBody>();
 
-/** A thumbnail's tile: 48px beside the table's alt, 96px on a phone's card. */
+/** A thumbnail's tile: 48px beside the table's alt, 120px on a phone's card. */
 // A block, so its size holds in a table cell as it did in a flex row.
 const thumb = cva(
   "block shrink-0 overflow-hidden rounded-md bg-cover bg-muted",
   {
     defaultVariants: { size: "row" },
-    variants: { size: { card: "size-24", page: "size-40", row: "size-12" } },
+    variants: { size: { card: "size-30", page: "size-40", row: "size-12" } },
   }
 );
 
@@ -63,7 +64,7 @@ export const OpenImage = ({
     <Link
       {...intent}
       className={cn(
-        "rounded-sm outline-none after:absolute after:inset-0 focus-visible:ring-3 focus-visible:ring-ring/50",
+        "rounded-sm outline-none after:absolute after:inset-0 after:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:after:ring-3 focus-visible:after:ring-ring/50",
         className
       )}
       href={imageHref(image.id)}
@@ -170,82 +171,128 @@ export const AppsOf = ({
 /**
  * The picture, its stored file name (a click copies it), its alt, its dimensions in pixels, its file size in
  * megabytes, public or private, the Apps it is in, and when it was added.
+ * Name, Size, Access and Created sort (the database orders by them, ADR 0031);
+ * every column but the picture can hide. The
+ * ids are the address's: `sort=created.desc`, `hide=size`.
  */
 export const useImageColumns = () => {
   const t = useTranslations("Images.column");
+  const tl = useTranslations("List.column");
   const created = useCreated();
-  return useMemo(
-    () =>
-      helper.columns([
-        helper.display({
-          cell: ({ row }) => <ImageThumb image={row.original} />,
-          header: t("image"),
-          id: "image",
-          maxSize: 96,
-          minSize: 84,
-        }),
-        helper.display({
-          cell: ({ row }) => (
-            <CopyName
-              className="min-w-0 shrink font-mono text-sm"
-              name={row.original.key}
-            />
-          ),
-          header: t("name"),
-          id: "name",
-          maxSize: 380,
-          minSize: 220,
-        }),
-        helper.display({
-          cell: ({ row }) => (
-            <span className="block min-w-0 truncate text-base">
-              <OpenImage image={row.original}>
+  return useMemo(() => {
+    const labels = { asc: tl("asc"), desc: tl("desc"), hide: tl("hide") };
+    return helper.columns([
+      helper.display({
+        // The row's link lives here, in the one column that never hides, and
+        // says the alt aloud: hiding the Alt column leaves the row a link. It
+        // covers the row itself (an empty inline link has no box to click).
+        cell: ({ row }) => (
+          <>
+            <ImageThumb image={row.original} />
+            <OpenImage className="absolute inset-0" image={row.original}>
+              <span className="sr-only">
                 <AltText image={row.original} />
-              </OpenImage>
-            </span>
-          ),
-          header: t("alt"),
-          id: "alt",
-          maxSize: 320,
-          minSize: 160,
-        }),
-        helper.display({
-          cell: ({ row }) => `${row.original.width} × ${row.original.height}`,
-          header: t("dimensions"),
-          id: "dimensions",
-          maxSize: 160,
-          minSize: 130,
-        }),
-        helper.display({
-          cell: ({ row }) => formatSize(row.original.bytes),
-          header: t("size"),
-          id: "size",
-          maxSize: 120,
-          minSize: 100,
-        }),
-        helper.display({
-          cell: ({ row }) => <AccessChip access={row.original.access} />,
-          header: t("access"),
-          id: "access",
-          maxSize: 140,
-          minSize: 110,
-        }),
-        helper.display({
-          cell: ({ row }) => (
-            <AppsOf apps={row.original.apps} className="truncate" />
-          ),
-          header: t("apps"),
-          id: "apps",
-          maxSize: 280,
-          minSize: 140,
-        }),
-        helper.accessor("createdAt", {
-          cell: ({ row }) => created(row.original.createdAt),
-          header: t("created"),
-          maxSize: 200,
-          minSize: 170,
-        }),
-      ]),
-    [created, t]
-  );
+              </span>
+            </OpenImage>
+          </>
+        ),
+        enableHiding: false,
+        enableSorting: false,
+        header: t("image"),
+        id: "image",
+        maxSize: 96,
+        minSize: 84,
+      }),
+      helper.accessor("key", {
+        cell: ({ row }) => (
+          <CopyName
+            className="min-w-0 shrink font-mono text-sm"
+            name={row.original.key}
+          />
+        ),
+        header: ({ column }) => (
+          <AOFColumnHeader column={column} label={t("name")} labels={labels} />
+        ),
+        id: "name",
+        maxSize: 380,
+        minSize: 220,
+      }),
+      helper.display({
+        cell: ({ row }) => (
+          <span className="block min-w-0 truncate text-base">
+            <AltText image={row.original} />
+          </span>
+        ),
+        // The database cannot order by it (a JSON column).
+        enableSorting: false,
+        header: ({ column }) => (
+          <AOFColumnHeader column={column} label={t("alt")} labels={labels} />
+        ),
+        id: "alt",
+        maxSize: 320,
+        minSize: 160,
+      }),
+      helper.display({
+        cell: ({ row }) => `${row.original.width} × ${row.original.height}`,
+        enableSorting: false,
+        header: ({ column }) => (
+          <AOFColumnHeader
+            column={column}
+            label={t("dimensions")}
+            labels={labels}
+          />
+        ),
+        id: "dimensions",
+        maxSize: 160,
+        minSize: 130,
+      }),
+      helper.accessor("bytes", {
+        cell: ({ row }) => formatSize(row.original.bytes),
+        header: ({ column }) => (
+          <AOFColumnHeader column={column} label={t("size")} labels={labels} />
+        ),
+        id: "size",
+        maxSize: 120,
+        minSize: 100,
+      }),
+      helper.accessor("access", {
+        cell: ({ row }) => <AccessChip access={row.original.access} />,
+        header: ({ column }) => (
+          <AOFColumnHeader
+            column={column}
+            label={t("access")}
+            labels={labels}
+          />
+        ),
+        id: "access",
+        maxSize: 140,
+        minSize: 110,
+      }),
+      helper.display({
+        cell: ({ row }) => (
+          <AppsOf apps={row.original.apps} className="truncate" />
+        ),
+        enableSorting: false,
+        header: ({ column }) => (
+          <AOFColumnHeader column={column} label={t("apps")} labels={labels} />
+        ),
+        id: "apps",
+        maxSize: 280,
+        minSize: 140,
+      }),
+      helper.accessor("createdAt", {
+        cell: ({ row }) => created(row.original.createdAt),
+        header: ({ column }) => (
+          <AOFColumnHeader
+            column={column}
+            label={t("created")}
+            labels={labels}
+          />
+        ),
+        id: "created",
+        maxSize: 200,
+        minSize: 170,
+      }),
+    ]);
+  }, [created, t, tl]);
 };

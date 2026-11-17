@@ -31,7 +31,7 @@ export type SaveProviderState = {
   version?: string;
 };
 
-const FIELDS = [
+const PROVIDER_FIELDS = [
   "dailyLimit",
   "enabled",
   "fromAddress",
@@ -56,15 +56,15 @@ export const saveProvider = async (
     return { ...state, error: SERVICES.SAVE_ERROR.INVALID, values };
   }
   const version = state.version ?? state.opened;
-  const res = await (await serverApi())[API.VERSION.CURRENT].services.providers[
-    ":id"
-  ].$patch({
+  const response = await (await serverApi())[
+    API.VERSION.CURRENT
+  ].services.providers[":id"].$patch({
     json: { ...providerChangeOf(parsed.data), version },
     param: { id },
   });
-  if (res.status !== HTTP.STATUS.OK) {
+  if (response.status !== HTTP.STATUS.OK) {
     const error = await refusalOf(
-      res,
+      response,
       SERVICES.SAVE_ERROR,
       new Map<ApiRefusalKey, SaveProviderError>([
         [ERROR.CODE.RESOURCE_CHANGED, SERVICES.SAVE_ERROR.CHANGED],
@@ -84,23 +84,25 @@ export const saveProvider = async (
     return { ...state, error, values };
   }
   updateTag(SERVICES.CACHE.TAG);
-  return { opened: state.opened, version: (await res.json()).version };
+  return { opened: state.opened, version: (await response.json()).version };
 };
 
 /** The posted provider form, every field as text. */
 const providerFormValuesOf = (form: FormData): ProviderFormValues =>
-  objectFromEntries(FIELDS.map((name) => [name, textOf(form, name)] as const));
+  objectFromEntries(
+    PROVIDER_FIELDS.map((name) => [name, textOf(form, name)] as const)
+  );
 
 /** Turns a Service on or off; the next read is fresh. */
 export const setServiceEnabled = async (
   type: ServiceType,
   enabled: boolean
 ): Promise<boolean> => {
-  const res = await (await serverApi())[API.VERSION.CURRENT].services[
+  const response = await (await serverApi())[API.VERSION.CURRENT].services[
     ":type"
   ].$patch({ json: { enabled }, param: { type } });
   updateTag(serviceTag(type));
-  return res.ok;
+  return response.ok;
 };
 
 const testErrorSchema = z.enum(SERVICES.TEST_ERROR);
@@ -117,20 +119,20 @@ export type TestSendState = {
  */
 export const sendTestEmail = async (id: string): Promise<TestSendState> => {
   try {
-    const res = await (await serverApi())[
+    const response = await (await serverApi())[
       API.VERSION.CURRENT
     ].services.providers[":id"].test.$post({ param: { id } });
-    if (res.status === HTTP.STATUS.OK) {
+    if (response.status === HTTP.STATUS.OK) {
       updateTag(SERVICES.CACHE.TAG);
-      return { outcome: (await res.json()).outcome };
+      return { outcome: (await response.json()).outcome };
     }
-    if (res.status === HTTP.STATUS.NOT_FOUND) {
+    if (response.status === HTTP.STATUS.NOT_FOUND) {
       updateTag(SERVICES.CACHE.TAG);
       return { error: SERVICES.TEST_ERROR.REMOVED };
     }
     return {
       error:
-        res.status === HTTP.STATUS.TOO_MANY_REQUESTS
+        response.status === HTTP.STATUS.TOO_MANY_REQUESTS
           ? SERVICES.TEST_ERROR.RATE_LIMITED
           : SERVICES.TEST_ERROR.FAILED,
     };

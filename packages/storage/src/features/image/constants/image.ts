@@ -1,4 +1,5 @@
 import { searchQuery } from "@allonfire/core/features/search/search-query";
+import { sortQuery } from "@allonfire/core/features/search/sort-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
@@ -15,11 +16,20 @@ const CACHE_TTL_SECONDS = UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY;
 const INPUT_MEGAPIXELS = 100;
 const PIXELS_PER_MEGAPIXEL = 1_000_000;
 
-/** How an Images list's `search` reads: `app:laura access:public input:sea` (ADR 0026). */
-const SEARCH = searchQuery({
-  access: objectValues(ImageAccess),
-  app: objectValues(App),
-});
+/**
+ * How an Images list's `search` reads: `app:laura access:public
+ * created:2026-11-26..2026-11-28 input:sea` (ADR 0026, ADR 0031).
+ */
+const SEARCH = searchQuery(
+  {
+    access: objectValues(ImageAccess),
+    app: objectValues(App),
+  },
+  { ranges: ["created"] }
+);
+
+/** How an Images list's `sort` reads: `created.desc,size.asc` (ADR 0031); plain columns only. */
+const SORT = sortQuery(["created", "size", "access", "name"] as const);
 
 /** Every limit an Image meets, from the upload to the stored file. */
 const LIMIT = {
@@ -38,6 +48,8 @@ const LIMIT = {
   MAX_PAGE: 1000,
   /** The longest search a listing takes (its fields and text together). */
   SEARCH_MAX: 200,
+  /** The longest `sort` the API reads, `name.asc,size.desc,created.desc` and room to spare. */
+  SORT_MAX: 200,
   /** One upload request, every file and the meta part together. */
   UPLOAD_BYTES: 100 * UNIT.BYTES_PER_MIB,
   /**
@@ -88,7 +100,7 @@ export const IMAGE = {
     GET_SUMMARY: "Get an Image",
     LIST_200:
       "One page of Images, with the `page`, `pageCount`, `total` and `totalBytes` (of every visible Image, not just the page)",
-    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first, a numbered page of \`perPage\` Images (default ${LIMIT.LIST.DEFAULT}, up to ${LIMIT.LIST.MAX}), \`page\` from 1 to ${LIMIT.MAX_PAGE}. \`search\` is the filters and the text in one string (ADR 0026), as in \`access:public app:laura sea\`: \`access\` keeps only the public, or only the private, Images, and the text keeps the Images whose alt text or file name holds it, in any language, ignoring case.`,
+    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first unless \`sort\` says otherwise (\`created.desc,size.asc\`: a column and a direction in order, at most three, from \`created\`, \`size\`, \`access\` and \`name\`; an unknown one is dropped), a numbered page of \`perPage\` Images (default ${LIMIT.LIST.DEFAULT}, up to ${LIMIT.LIST.MAX}), \`page\` from 1 to ${LIMIT.MAX_PAGE}. \`search\` is the filters and the text in one string (ADR 0026), as in \`access:public app:laura sea\`: \`access\` keeps only the public, or only the private, Images, and the text keeps the Images whose alt text or file name holds it, in any language, ignoring case. \`created\` keeps the Images uploaded in a range of whole UTC days, both ends included (\`created:2026-11-26..2026-11-28\`, or one day as \`created:2026-11-26\`).`,
     LIST_SUMMARY: "List Images",
     PATCH_200: "The updated Images",
     PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. Each change carries the \`version\` it was made on (\`Image.version\`): an Image changed since, or one the batch would leave in no App, answers 409 \`RESOURCE_CHANGED\`. All or nothing.`,
@@ -150,6 +162,8 @@ export const IMAGE = {
   OPENAPI_TAG: "Image",
   /** How an Images list's `search` reads (ADR 0026). */
   SEARCH,
+  /** How an Images list's `sort` reads (ADR 0031). */
+  SORT,
   /** Context keys the Image module sets. */
   VAR: {
     /** The upload's time budget, as an `AbortSignal`. */

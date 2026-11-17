@@ -85,7 +85,7 @@ export const EditImage = ({
 }) => {
   const t = useTranslations();
   const router = useRouter();
-  const client = useQueryClient();
+  const queryClient = useQueryClient();
   const [{ error, notice }, action, pending] = useActionState(
     editImage.bind(null, { id: image.id, version: image.version }),
     {}
@@ -99,7 +99,7 @@ export const EditImage = ({
         message: t("Images.edit.saved"),
       },
     },
-    () => invalidateImages(client)
+    () => invalidateImages(queryClient)
   );
   // An Image changed elsewhere says so in every App's words (`Common`).
   const errorText =
@@ -121,7 +121,7 @@ export const EditImage = ({
     () => router.replace(BACK_OFFICE.PAGE.STORAGE_IMAGES),
     [router]
   );
-  const ids = [image.id];
+  const selectedIds = [image.id];
   return (
     <div className="flex flex-1 flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -129,7 +129,11 @@ export const EditImage = ({
           <IconPhotoEdit aria-hidden className="size-7" />
           {t("Images.edit.title")}
         </h1>
-        <DeleteImages ids={ids} onClear={list} shape="labeled" />
+        <DeleteImages
+          onClear={list}
+          selectedIds={selectedIds}
+          shape="labeled"
+        />
       </div>
       <Summary image={image} />
       <form

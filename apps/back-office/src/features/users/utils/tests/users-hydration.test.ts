@@ -17,7 +17,7 @@ import {
 } from "@/shared/tests/session-cookie-mock";
 import { USERS } from "../../constants/users";
 import { userHydration, usersHydration } from "../users-hydration";
-import { userKey, usersListKey } from "../users-queries";
+import { userKey, usersPageKey } from "../users-queries";
 
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock(
@@ -33,6 +33,7 @@ const PARAMS = {
   [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
   [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
   [USER.PARAM.SEARCH]: "",
+  [USER.PARAM.SORT]: "",
 };
 
 describe("usersHydration", () => {
@@ -43,7 +44,7 @@ describe("usersHydration", () => {
     const fetch = stubFetchJson(USERS_PAGE);
     const state = await usersHydration(PARAMS);
     expect(dehydratedData(state)).toEqual([
-      { data: USERS_PAGE, queryKey: usersListKey(PARAMS) },
+      { data: USERS_PAGE, queryKey: usersPageKey(PARAMS) },
     ]);
     expect(cacheTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);

@@ -6,7 +6,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## 🔄 Services Keep-alive\n\nDaily at 03:00 Europe/Rome: `POST /v1/services/keep-alive` on the API.\nEach MAIL provider idle for 30 days sends the owner one check email, through\nitself only, so no provider deactivates an idle key (90 idle days).\n\n**Auth**: header `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>`, the\ncredential *Keep-alive Token* (Header Auth). Wrong or missing → 401.\n\n**Alerts**: Telegram when any provider answers `rejected` or `uncertain`\n(a dead key, a refused send). A failed call (401, 5xx, timeout) fails the\nHTTP node, and Settings → Error Workflow → *Error Handler (global)* reports it.\n\n**URL**: `<keep-alive-url>` is filled on import from `BACKUP_KEEP_ALIVE_URL`\nin /opt/backups/.env.\n\nRunbook: `docs/guides/vps-workflow.md`",
+        "content": "## 🔄 Services Keep-alive\n\nDaily at 04:00 Europe/Rome: `POST /v1/services/keep-alive` on the API.\nEach MAIL provider idle for 30 days sends the owner one check email, through\nitself only, so no provider deactivates an idle key (90 idle days).\n\n**Auth**: header `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>`, the\ncredential *Keep-alive Token* (Header Auth). Wrong or missing → 401.\n\n**Alerts**: Telegram when any provider answers `rejected` or `uncertain`\n(a dead key, a refused send). A failed call (401, 5xx, timeout) fails the\nHTTP node, and Settings → Error Workflow → *Error Handler (global)* reports it.\n\n**URL**: `<keep-alive-url>` is filled on import from `BACKUP_KEEP_ALIVE_URL`\nin /opt/backups/.env.\n\nRunbook: `docs/guides/vps-workflow.md`",
         "height": 440,
         "width": 620,
         "color": 5
@@ -23,7 +23,7 @@
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "0 3 * * *"
+              "expression": "0 4 * * *"
             }
           ]
         }
@@ -32,7 +32,7 @@
       "typeVersion": 1.2,
       "position": [-96, -32],
       "id": "a184e831-d804-4ec5-b0e6-c10da492d21b",
-      "name": "Daily 03:00"
+      "name": "Daily 04:00"
     },
     {
       "parameters": {
@@ -111,7 +111,7 @@
     }
   ],
   "connections": {
-    "Daily 03:00": {
+    "Daily 04:00": {
       "main": [
         [
           {

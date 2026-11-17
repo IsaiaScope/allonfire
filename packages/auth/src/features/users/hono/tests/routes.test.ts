@@ -131,3 +131,43 @@ describe("User module", () => {
     });
   });
 });
+
+describe("User module sort and range", () => {
+  it("reads the sort into the query, in order", async () => {
+    const { query } = await listWith(
+      queryOf({ [USER.PARAM.SORT]: "email.desc,created.asc" })
+    );
+    expect(query?.sort).toEqual([
+      { column: "email", direction: "desc" },
+      { column: "created", direction: "asc" },
+    ]);
+  });
+
+  it("reads the created range of the search", async () => {
+    const { query } = await listWith(
+      queryOf({ [USER.PARAM.SEARCH]: "created:2026-11-26..2026-11-28 isa" })
+    );
+    expect(query).toEqual({
+      created: { from: "2026-11-26", to: "2026-11-28" },
+      page: USER.DEFAULT_PAGE,
+      perPage: USER.DEFAULT_PAGE_SIZE,
+      text: "isa",
+    });
+  });
+
+  it("reads a sort it does not know as none, and still answers", async () => {
+    const result = await listWith(
+      queryOf({ [USER.PARAM.SORT]: "bogus.up,role.asc" })
+    );
+    expect(result.status).toBe(HTTP.STATUS.OK);
+    expect(result.query?.sort).toBeUndefined();
+  });
+
+  it("reads a sort that is too long as none, never a 400", async () => {
+    const result = await listWith(
+      queryOf({ [USER.PARAM.SORT]: "email.asc,".repeat(USER.LIMIT.SORT_MAX) })
+    );
+    expect(result.status).toBe(HTTP.STATUS.OK);
+    expect(result.query?.sort).toBeUndefined();
+  });
+});

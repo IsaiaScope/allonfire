@@ -1,22 +1,20 @@
+import { USER } from "@allonfire/auth/features/users/constants/users";
 import { MUTATION } from "@/shared/constants/mutation";
 import { QUERY } from "@/shared/constants/query";
-import {
-  bulkDeleteMutation,
-  useBeingDeleted,
-} from "@/shared/utils/bulk-delete";
+import { bulkDeleteMutation } from "@/shared/utils/bulk-delete";
 import { deleteUsers } from "../actions/delete-users";
+import { usersPageWithout } from "./users-page-without";
 
 /**
  * Deletes the Users named through the `deleteUsers` action (a bulk delete:
- * `bulkDeleteMutation`), then reads the Users and the Storage overview again:
+ * `bulkDeleteMutation`) after taking their rows out of the cached pages, then reads the Users and the Storage overview again:
  * their Avatars went with them.
  */
 export const deleteUsersMutation = bulkDeleteMutation({
   action: deleteUsers,
   invalidates: [QUERY.USERS.ALL, QUERY.STORAGE.ALL],
   mutationKey: MUTATION.USERS.DELETE,
+  pages: QUERY.USERS.PAGES,
+  perPageParam: USER.PARAM.PER_PAGE,
+  without: usersPageWithout,
 });
-
-/** The Users a deletion is on its way for, so the list fades their rows at once. */
-export const useUsersBeingDeleted = () =>
-  useBeingDeleted(MUTATION.USERS.DELETE);

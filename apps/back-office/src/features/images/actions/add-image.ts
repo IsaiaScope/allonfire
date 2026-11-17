@@ -48,12 +48,12 @@ export const addImage = async (
     return { error: IMAGES.ADD_ERROR.INVALID };
   }
   const client = await serverApi();
-  const res = await client[API.VERSION.CURRENT].images.$post({
+  const response = await client[API.VERSION.CURRENT].images.$post({
     form: uploadFormOf(parsed.data.rows),
   });
-  if (res.status !== HTTP.STATUS.CREATED) {
+  if (response.status !== HTTP.STATUS.CREATED) {
     const error = await refusalOf(
-      res,
+      response,
       IMAGES.ADD_ERROR,
       new Map<ApiRefusalKey, AddImageError>([
         [IMAGE.ERROR_CODE.IMAGE_TOO_LARGE, IMAGES.ADD_ERROR.TOO_LARGE],
@@ -67,7 +67,7 @@ export const addImage = async (
   updateTag(IMAGES.CACHE.TAG);
   updateTag(STORAGE.CACHE.TAG);
   return {
-    added: (await res.json()).length,
+    added: (await response.json()).length,
     notice: IMAGES.ADD_NOTICE.ADDED,
   };
 };

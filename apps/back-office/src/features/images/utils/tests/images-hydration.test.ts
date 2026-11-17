@@ -16,7 +16,7 @@ import {
 } from "@/shared/tests/session-cookie-mock";
 import { IMAGES } from "../../constants/images";
 import { imageHydration, imagesHydration } from "../images-hydration";
-import { imageKey, imagesListKey } from "../images-queries";
+import { imageKey, imagesPageKey } from "../images-queries";
 
 vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
 vi.mock(
@@ -32,6 +32,7 @@ const PARAMS = {
   [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
   [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
+  [IMAGES.PARAM.SORT]: "",
 };
 
 describe("imagesHydration", () => {
@@ -39,7 +40,7 @@ describe("imagesHydration", () => {
     const fetch = stubFetchJson(IMAGES_PAGE);
     const state = await imagesHydration(PARAMS);
     expect(dehydratedData(state)).toEqual([
-      { data: IMAGES_PAGE, queryKey: imagesListKey(PARAMS) },
+      { data: IMAGES_PAGE, queryKey: imagesPageKey(PARAMS) },
     ]);
     expect(cacheTag).toHaveBeenCalledWith(IMAGES.CACHE.TAG);
     expect(cacheLife).toHaveBeenCalledWith(IMAGES.CACHE.LIFE);
@@ -51,6 +52,15 @@ describe("imagesHydration", () => {
       5 * UNIT.SECONDS_PER_MINUTE
     );
     expect(sentCookie(fetch)).toBe(SESSION_COOKIE);
+  });
+
+  it("hydrates a sorted page under the key the table reads, the sort in it", async () => {
+    stubFetchJson(IMAGES_PAGE);
+    const sorted = { ...PARAMS, [IMAGES.PARAM.SORT]: "size.desc" };
+    const state = await imagesHydration(sorted);
+    expect(dehydratedData(state)).toEqual([
+      { data: IMAGES_PAGE, queryKey: imagesPageKey(sorted) },
+    ]);
   });
 
   it("throws when signed out, so no empty list is kept", async () => {

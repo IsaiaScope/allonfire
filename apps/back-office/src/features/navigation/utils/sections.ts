@@ -1,6 +1,11 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { SECTION, SECTIONS, type Section } from "../constants/sections";
+import {
+  SECTION,
+  SECTIONS,
+  type Section,
+  type SectionSubPage,
+} from "../constants/sections";
 
 /**
  * A Section's number on the Back Office's line, as a station's on a JR
@@ -11,6 +16,13 @@ export const stationNumber = (section: Section) =>
     2,
     "0"
   );
+
+/** The Back Office itself, before its first Section: the line's start. */
+export const APP_NUMBER = "00";
+
+/** A Section's own page's number under its Section's: 01, 02, in order. */
+export const subPageNumber = (section: Section, page: SectionSubPage) =>
+  String((section.pages?.indexOf(page) ?? -1) + 1).padStart(2, "0");
 
 /** What a link to a Section points at: Home's empty path is the root. */
 export const sectionHref = (path: string) => path || METADATA.PATH.ROOT;

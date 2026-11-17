@@ -123,7 +123,7 @@ WEBHOOK_PATH=""
 KEEP_ALIVE_URL="$(value BACKUP_KEEP_ALIVE_URL)"
 
 # A placeholder the file holds and the env leaves empty would be imported as
-# an empty value and fail at its first run (03:00 for the keep-alive): refuse.
+# an empty value and fail at its first run (04:00 for the keep-alive): refuse.
 need() {
   if jq -e --arg p "$1" '[.nodes[] | .. | strings] | any(. == $p)' "$IN" >/dev/null && [[ -z "$2" ]]; then
     echo "workflows.sh: $3 is empty in $ENV" >&2
@@ -207,7 +207,7 @@ docker exec -u root "$C" rm -f "$OUT"
 # notice was dead from 2026-11-02 to 2026-11-09). Restart through Swarm, never
 # on the task container: Swarm would start a replacement beside the old task.
 # Locally a schedule never goes active: it would send real mail and alerts at
-# 03:00 whenever the Mac and the API happen to be up.
+# 04:00 whenever the Mac and the API happen to be up.
 ACTIVE="$(jq -r '.active' "$IN")"
 if [[ "$MODE" == local ]] && jq -e '[.nodes[].type] | any(. == "n8n-nodes-base.scheduleTrigger")' "$IN" >/dev/null; then
   ACTIVE=false

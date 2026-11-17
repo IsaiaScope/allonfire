@@ -154,7 +154,7 @@
       "button": "Filtri",
       "empty": "Nessun risultato",
       "reset": "Reimposta",
-      "resetAll": "Azzera",
+      "resetAll": "Azzera tutto",
       "search": "Cerca",
       "selected": "{count} selezionati",
       "clear": "Cancella il testo",
@@ -208,6 +208,38 @@
       "languageSearch": "Cerca una lingua",
       "noLanguage": "Nessuna lingua trovata",
       "removeLanguage": "Rimuovi {language}"
+    }
+  },
+  "List": {
+    "clear": {
+      "filters": "Azzera"
+    },
+    "column": {
+      "asc": "Cresc.",
+      "desc": "Decresc.",
+      "hide": "Nascondi"
+    },
+    "range": {
+      "clear": "Azzera"
+    },
+    "sort": {
+      "add": "Aggiungi",
+      "column": "Ordina per",
+      "direction": "Direzione",
+      "drag": "Trascina per riordinare",
+      "remove": "Rimuovi questo ordinamento",
+      "reset": "Azzera"
+    },
+    "tab": {
+      "filter": "Filtro",
+      "sort": "Ordina",
+      "view": "Vista"
+    },
+    "view": {
+      "clear": "Cancella la ricerca",
+      "empty": "Nessuna colonna",
+      "search": "Colonne",
+      "showAll": "Mostra tutto"
     }
   },
   "Navigation": {
@@ -345,7 +377,7 @@
       "button": "Filtri",
       "empty": "Nessun risultato",
       "reset": "Reimposta",
-      "resetAll": "Azzera",
+      "resetAll": "Azzera tutto",
       "role": "Ruolo",
       "search": "Cerca",
       "selected": "{count} selezionati"

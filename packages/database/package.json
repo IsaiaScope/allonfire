@@ -28,7 +28,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:changeset": "tsx --env-file=.env scripts/changeset.ts",
-    "db:drift": "prisma migrate diff --from-schema-datasource prisma/schema --to-schema-datamodel prisma/schema --exit-code",
+    "db:drift": "prisma migrate diff --from-config-datasource --to-schema prisma/schema --exit-code",
     "db:generate": "prisma generate",
     "db:rollback": "bash scripts/liquibase.sh rollback",
     "db:seed": "tsx --env-file=.env src/features/seed/utils/cli.ts",
@@ -40,10 +40,11 @@
   },
   "dependencies": {
     "@allonfire/core": "workspace:*",
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@t3-oss/env-core": "^0.13.10",
     "better-auth": "^1.2.0",
-    "prisma": "^6.19.3",
+    "prisma": "^7.10.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

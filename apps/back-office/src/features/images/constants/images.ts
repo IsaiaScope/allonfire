@@ -1,3 +1,4 @@
+import { columnsQuery } from "@allonfire/core/features/search/columns-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
@@ -7,6 +8,20 @@ import type { StationSignage } from "@/shared/components/station-notice";
 const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
 
 const PAGE_SIZES = [25, 50, 100] as const;
+
+/**
+ * The columns the View tab can hide (ADR 0031): every one but the picture.
+ * `hide=name,size` in the address.
+ */
+const HIDEABLE = [
+  "name",
+  "alt",
+  "dimensions",
+  "size",
+  "access",
+  "apps",
+  "created",
+] as const;
 
 /** The Back Office's Images page: its tunables, each written once. */
 export const IMAGES = {
@@ -73,6 +88,10 @@ export const IMAGES = {
       picker: "picker",
     },
   },
+  /** How the address names the hidden columns (ADR 0031). */
+  HIDE: columnsQuery(HIDEABLE),
+  /** The columns the View tab lists, in the table's order. */
+  HIDEABLE,
   /**
    * How the address changes: a filter or a page pushes a history entry, so
    * Back goes to the previous view.
@@ -85,9 +104,12 @@ export const IMAGES = {
   PAGE_SIZES,
   /** The list's address parameters, as the API's query names them. */
   PARAM: {
+    /** The hidden columns, `hide=size,apps` (ADR 0031): display only, never asked of the API. */
+    HIDE: "hide",
     PAGE: "page",
     PER_PAGE: "perPage",
     SEARCH: "search",
+    SORT: "sort",
   },
   /** The Images Section's own pages, under its path. */
   PATH: { NEW: "/new" },
@@ -104,8 +126,10 @@ export const IMAGES = {
   SIGNAGE: {
     EMPTY: { CODE: "0", KANA: "該当なし", WALL_KANJI: "空席" },
   } satisfies Record<string, StationSignage>,
+  /** The columns the Sort tab lists: the plain ones the database orders by. */
+  SORTABLE: ["created", "size", "access", "name"] as const,
   /** The side in px of a stored picture's tile on each surface, as `sizes` tells next/image. */
-  THUMB_PX: { card: 96, page: 160, row: 48 },
+  THUMB_PX: { card: 120, page: 160, row: 48 },
   /** How long typing rests before the address changes. */
   TYPING_REST_MS: 300,
   /**

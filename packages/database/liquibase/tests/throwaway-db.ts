@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { testRunStamp } from "@allonfire/config/tests/run/test-run";
-import { PrismaClient } from "../../generated/prisma/client";
+import type { PrismaClient } from "../../generated/prisma/client";
 import { env } from "../../src/environment/environment";
+import { createPrismaClient } from "../../src/features/prisma/create-client";
 import { TEST_DATABASE } from "../../src/features/test-database/constants/test-database";
 import {
   databaseUrl,
@@ -40,15 +41,17 @@ export async function recreateDatabase(database: string): Promise<void> {
 
 /** Runs a SQL file the way `prisma db push` would have left a database. */
 export function executeFile(url: string, file: string): void {
-  execFileSync(
-    "pnpm",
-    ["exec", "prisma", "db", "execute", "--file", file, "--url", url],
-    { cwd: TEST_DATABASE.PACKAGE_ROOT, encoding: "utf8", stdio: "pipe" }
-  );
+  execFileSync("pnpm", ["exec", "prisma", "db", "execute", "--file", file], {
+    cwd: TEST_DATABASE.PACKAGE_ROOT,
+    encoding: "utf8",
+    // Prisma 7 reads the URL from prisma.config.ts, which reads this.
+    env: { ...process.env, DATABASE_URL: url },
+    stdio: "pipe",
+  });
 }
 
 export function clientFor(url: string): PrismaClient {
-  return new PrismaClient({ datasourceUrl: url });
+  return createPrismaClient(url);
 }
 
 /** Tables in `schema`, sorted, without Liquibase's own two. */
