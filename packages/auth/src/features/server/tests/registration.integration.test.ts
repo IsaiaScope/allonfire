@@ -54,8 +54,8 @@ const open: AppSettingsTable = {
   },
   [App.LAURA]: {
     ...ACCESS.APP_SETTINGS[App.LAURA],
-    minRole: Role.VIEWER,
-    registration: Role.VIEWER,
+    minRole: Role.USER,
+    registration: Role.USER,
   },
 };
 /** The settings the Apps ship with: every App closed. */
@@ -144,7 +144,7 @@ describe("Registration", () => {
     const res = await signUp(open, email, App.LAURA);
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await membershipsOf(email)).toEqual([
-      { app: App.LAURA, role: Role.VIEWER },
+      { app: App.LAURA, role: Role.USER },
     ]);
   });
 
@@ -218,7 +218,7 @@ describe("joining another App", () => {
     );
     expect(res.status).toBe(HTTP.STATUS.OK);
     expect(await membershipsOf(email)).toEqual([
-      { app: App.LAURA, role: Role.VIEWER },
+      { app: App.LAURA, role: Role.USER },
       { app: App.BACK_OFFICE, role: Role.USER },
     ]);
   });
@@ -319,7 +319,7 @@ describe("sign-in naming an App", () => {
       .object({ user: z.object({ memberships: z.array(z.looseObject({})) }) })
       .parse(await res.json());
     expect(body.user.memberships).toEqual([
-      { app: App.LAURA, role: Role.VIEWER },
+      { app: App.LAURA, role: Role.USER },
     ]);
   });
 });

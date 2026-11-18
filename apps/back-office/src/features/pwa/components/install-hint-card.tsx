@@ -2,8 +2,8 @@ import {
   type InstallStep,
   PWA,
 } from "@allonfire/core/features/next/pwa/constants/pwa";
+import type { AOFInstallHintCardProps } from "@allonfire/ui/features/pwa/types/install-hint-card";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
   AppWindow,
@@ -14,7 +14,6 @@ import {
   SquarePlus,
   X,
 } from "lucide-react";
-import type { ComponentProps } from "react";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
 
 const { STEP } = PWA.INSTALL_HINT;
@@ -26,31 +25,13 @@ const STEP_ICON = {
   [STEP.MAC_ADD_TO_DOCK]: AppWindow,
 } as const satisfies Record<InstallStep, LucideIcon>;
 
-/** The card's `<aside>` (named by `aria-label`), plus its words and buttons. */
-export type InstallHintCardProps = ComponentPropsWithoutChildren<"aside"> & {
-  cta: string;
-  /** The ✕ button's own props: its name (`aria-label`), its `onClick`. */
-  dismissProps: ComponentPropsWithoutChildren<typeof AOFButton>;
-  /** Said under the words after a failed install. */
-  error?: string | undefined;
-  /** The Install button's own props, its label as children, where the
-   *  browser offers its own dialog; `pending` disables it and spins. */
-  installProps?:
-    | (Omit<ComponentProps<typeof AOFButton>, "disabled"> & {
-        pending: boolean;
-      })
-    | undefined;
-  /** The browser's steps, where it offers no dialog. */
-  steps?: { step: InstallStep; text: string }[] | undefined;
-};
-
 /** The line-coloured Install button: a spinner while `pending`, disabled. */
 const InstallButton = ({
   children,
   className,
   pending,
   ...props
-}: NonNullable<InstallHintCardProps["installProps"]>) => (
+}: NonNullable<AOFInstallHintCardProps["installProps"]>) => (
   <AOFButton
     size="sm"
     type="button"
@@ -86,7 +67,7 @@ export const InstallHintCard = ({
   installProps,
   steps,
   ...props
-}: InstallHintCardProps) => (
+}: AOFInstallHintCardProps) => (
   <aside
     className={cn(
       "@container dark flex w-md flex-col gap-3 rounded-lg border border-led-dim bg-led-panel p-3 font-sans text-foreground shadow-lg max-[600px]:w-full",

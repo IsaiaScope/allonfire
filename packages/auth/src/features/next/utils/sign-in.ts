@@ -1,5 +1,5 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { forwardedHeaders } from "@allonfire/core/features/next/api/utils/visitor-headers";
 import { BASE_ERROR_CODES } from "better-auth";
 import { cookies, headers } from "next/headers";
 import { z } from "zod";

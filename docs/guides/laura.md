@@ -8,7 +8,7 @@ Laura (`apps/laura`), until it is rebuilt.
 
 ## Laura App Structure (`apps/laura/src/`)
 
-Family photo gallery and games app. Uses next-intl for i18n (Italian + English), Framer Motion for animations, and a viewer role system (`UserRoleProvider` + `checkMutationAccess`).
+Family photo gallery and games app. Uses next-intl for i18n (Italian + English), Framer Motion for animations, and an old viewer role system (`UserRoleProvider` + `checkMutationAccess`), replaced by two Roles (see Roles below).
 
 ### Route Layer (`app/[locale]/`)
 
@@ -46,17 +46,17 @@ Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
 - `lib/` — `auth.ts`, `animation-variants.ts`, `file-validation.ts`, `seo.ts`
 - `i18n/` — next-intl routing and request config
 
-### Viewer Role System
+### Roles
 
-- Server: `checkMutationAccess(auth)` now lives in `packages/auth-old/src/guard.ts` (local only, untracked) until Laura's refactor; the API has only `requireApp(App.LAURA)`, which lets Viewers in (Laura's floor); a guard for "USER or higher in Laura" comes with Laura's API (`roleIn` + `hasRole`)
-- Client: `UserRoleProvider` + `useIsViewer()` hook for UI restrictions
-- Viewers can browse gallery and play games but cannot upload, favorite, delete, or submit scores
+- Laura has two Roles, Admin and User (ADR 0032): its floor in `ACCESS.APP_SETTINGS` is User, so no Viewer enters it and its Role picker offers Admin and User. The Viewer Role itself stays in the system for an App that wants a read-only Role.
+- The API has `requireApp(App.LAURA)` (User or Admin) and `requireApp(App.LAURA, Role.ADMIN)` for an Admin-only Section such as Upload.
+- This page describes the old app, which still branches on a `"VIEWER"` string (`UserRoleProvider`, `useIsViewer()`, `checkMutationAccess`) until Phase 3 empties its `src/` and Phase 7 deletes it.
 
 ### Laura Dashboard Routes
 
 - `/` — Photo gallery grid with infinite scroll
 - `/favorites` — Favorited photos
-- `/upload` — Photo upload (blocked for viewers)
+- `/upload` — Photo upload (Admin only)
 - `/settings` — Language, theme, user info
 - `/games` — Game hub
 - `/games/memory` — Memory card game

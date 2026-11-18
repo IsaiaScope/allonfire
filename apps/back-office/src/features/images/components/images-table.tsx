@@ -2,12 +2,12 @@
 
 import { objectKeys } from "@allonfire/core/shared/utils/object";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
+import { useListTable } from "@allonfire/ui/features/data-table/hooks/use-list-table";
+import { useStepBackPastEnd } from "@allonfire/ui/features/data-table/hooks/use-step-back-past-end";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
-import { useListTable } from "@/shared/hooks/use-list-table";
-import { useStepBackPastEnd } from "@/shared/hooks/use-step-back-past-end";
 import { IMAGES } from "../constants/images";
 import { queryOf } from "../constants/images-params";
 import { useImagesTableState } from "../hooks/use-images-table-state";

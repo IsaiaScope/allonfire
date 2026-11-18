@@ -21,6 +21,8 @@ const WORKFLOW_FILES = WORKFLOWS.map(([file]) => file);
 const BACKUP_NOTIFICATION = "vps/workflows/backup-notification.json";
 const KEEP_ALIVE = "vps/workflows/services-keep-alive.json";
 const WORKFLOWS_SCRIPT = "vps/workflows.sh";
+/** What workflows.sh ships to where the service runs: the server over ssh, or the Mac. */
+const WORKFLOW_LIB = "vps/lib/workflow.sh";
 const BACKUP_SCRIPT = "vps/backup.sh";
 const ENV_EXAMPLE = "vps/.env.example";
 const PLACEHOLDER = {
@@ -62,6 +64,9 @@ const STORAGE_FIELD = /\$json\.body\??\.storage\??\.([a-z_]+)/g;
 const KEEP_ALIVE_URL = /services\/keep-alive/;
 const ENV_IGNORE = /^\.env$/m;
 const CHAT_ID_KEY = /^BACKUP_TELEGRAM_CHAT_ID=/m;
+
+/** The two files that make the tool: the Mac-side command and the target-side lib. */
+const source = () => read(WORKFLOWS_SCRIPT) + read(WORKFLOW_LIB);
 
 const values = (text: string, pattern: RegExp) =>
   [...text.matchAll(pattern)].map(([, value = ""]) => value);
@@ -175,16 +180,16 @@ it("writes the keep-alive message in the VPS alerts' format", () => {
   expect(message).toContain("replace(/&/g,'&amp;')");
 });
 
-it("restarts n8n after importing an active workflow, through Swarm", () => {
-  const script = read(WORKFLOWS_SCRIPT);
+it("restarts the service after importing an active workflow, through Swarm", () => {
+  const script = source();
   // The CLI only writes the database: a running n8n registers an active
   // workflow's webhooks when it starts, so an import alone leaves them dead.
   expect(script).toContain("docker service update --force");
   expect(script).not.toContain("docker restart");
 });
 
-it("runs workflows.sh against the Local n8n with --local, both ways", () => {
-  const script = read(WORKFLOWS_SCRIPT);
+it("runs workflows.sh against the Local workflow service with --local, both ways", () => {
+  const script = source();
   expect(script).toContain("--local");
   // Local's values come from the git-ignored vps/.env, under the same keys as
   // Production's /opt/backups/.env: nothing about Local is written in the script.
@@ -204,12 +209,12 @@ it.each([
   "BACKUP_WEBHOOK_URL",
   "BACKUP_WORKFLOW_CONTAINER_PATTERN",
 ])("reads %s from the env file, and the guide names it", (key) => {
-  expect(read(WORKFLOWS_SCRIPT)).toContain(key);
+  expect(source()).toContain(key);
   expect(read("docs/guides/vps-workflow.md")).toContain(key);
 });
 
 it("takes the Local keep-alive token from the API's own .env, not a copy", () => {
-  const script = read(WORKFLOWS_SCRIPT);
+  const script = source();
   expect(script).toContain("apps/api/.env");
   expect(script).toContain("API_KEEP_ALIVE_TOKEN");
   expect(script).not.toContain("BACKUP_KEEP_ALIVE_TOKEN");
@@ -217,13 +222,15 @@ it("takes the Local keep-alive token from the API's own .env, not a copy", () =>
 
 it("refuses an import whose placeholder has no value to fill", () => {
   // An empty keep-alive URL imported silently fails at 04:00, not at import.
-  const script = read(WORKFLOWS_SCRIPT);
+  const script = source();
   for (const key of [
     "BACKUP_KEEP_ALIVE_URL",
     "BACKUP_TELEGRAM_CHAT_ID",
     "BACKUP_WEBHOOK_URL",
   ]) {
-    expect(script).toMatch(new RegExp(`need "<[a-z-]+>" "[^"]+" ${key}`));
+    expect(script).toMatch(
+      new RegExp(`need "\\$in" "<[a-z-]+>" "[^"]+" ${key}`)
+    );
   }
   expect(script).toContain("is empty in");
 });
@@ -242,8 +249,8 @@ it("keeps the Local vps/.env out of git", () => {
   expect(read(".gitignore")).toMatch(ENV_IGNORE);
 });
 
-it("restarts the Local n8n through compose, never on the task container", () => {
-  const script = read(WORKFLOWS_SCRIPT);
+it("restarts the Local workflow service through compose, never on the task container", () => {
+  const script = source();
   expect(script).toContain("docker compose");
   expect(script).not.toContain("docker restart");
 });
@@ -258,4 +265,35 @@ it("keeps a workflow's committed active flag when exporting from Local", () => {
   // Local never activates a schedule, so its export says false: taking it
   // would switch the workflow off in Production on the next import.
   expect(read(WORKFLOWS_SCRIPT)).toContain("$old[0].active");
+});
+
+it("ships one lib to where the service runs and names a command in it", () => {
+  expect(read(WORKFLOWS_SCRIPT)).toContain(WORKFLOW_LIB);
+  // Shellcheck sees the lib: it is a file, not a heredoc inside workflows.sh.
+  expect(read(WORKFLOWS_SCRIPT)).not.toContain("<<'REMOTE'");
+  expect(read("package.json")).toContain("git ls-files");
+});
+
+it("keeps every temporary file in a private mktemp folder, removed on exit", () => {
+  const code = source();
+  expect(code).toContain("mktemp -d");
+  expect(code).toContain("trap");
+  expect(code).not.toContain("/tmp/wf-");
+  // A secret file is written by the service's own user, readable by it alone.
+  expect(code).not.toContain("chmod");
+  expect(code).not.toContain("docker cp");
+});
+
+it("shows what the service says when a call fails", () => {
+  expect(source()).not.toContain(">/dev/null 2>&1");
+});
+
+it("tells a workflow the service lacks from a failed call", () => {
+  // An ssh or Docker failure must stop the export, not read as "skipped".
+  expect(read(WORKFLOW_LIB)).toContain("No workflows found");
+  expect(read(WORKFLOWS_SCRIPT)).toContain("the service does not have it");
+});
+
+it("waits for the service to answer after the restart, on the server too", () => {
+  expect(read(WORKFLOW_LIB)).toContain("/healthz");
 });

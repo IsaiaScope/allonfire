@@ -125,6 +125,8 @@ Laura is out of Production until its rebuild.
 
 ### 💻 Local
 
+The scripts are bash: macOS and Linux run them as they are; on Windows use WSL.
+
 `pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
 real Admin (`DATABASE_SEED_ADMIN_*` in `packages/database/.env`, Admin in
 every App) and creates the `image` bucket with its policy: Local holds what

@@ -1,8 +1,8 @@
+import { invalidateAll } from "@allonfire/core/features/next/query/utils/optimistic-mutation";
+import { bulkDeleteMutation } from "@allonfire/ui/features/data-table/utils/bulk-delete";
 import type { QueryClient } from "@tanstack/react-query";
 import { MUTATION } from "@/shared/constants/mutation";
 import { QUERY } from "@/shared/constants/query";
-import { bulkDeleteMutation } from "@/shared/utils/bulk-delete";
-import { invalidateAll } from "@/shared/utils/optimistic-mutation";
 import { deleteImages } from "../actions/delete-images";
 import { IMAGES } from "../constants/images";
 import { imagesPageWithout } from "./images-page-without";

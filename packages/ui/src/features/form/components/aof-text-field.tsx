@@ -28,8 +28,7 @@ import {
 } from "./aof-field";
 import { AOFInput, type AOFInputProps } from "./aof-input";
 
-// The tall field of every AOF form, its icon white on a dark tile like station
-// signage. Built on shadcn's tokens only, so any Design wears it. Text longer
+// The tall field of every AOF form, its icon white on a dark tile. Built on shadcn's tokens only, so any Design wears it. Text longer
 // than the box ends in an ellipsis while the field is not focused.
 
 /** The field's tall input, room left at its start for the icon tile. */

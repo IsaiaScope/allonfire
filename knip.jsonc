@@ -20,9 +20,6 @@
     // The same fake provider runs under `tsx`, which the e2e config starts
     // from the repository's root (`pnpm -C <root> exec tsx`).
     "tsx",
-    // `pnpm static:shell` runs ShellCheck, a system tool (GitHub's runners
-    // ship it; a Mac without it skips the check).
-    "shellcheck",
     // Package scripts run in their package (`pnpm -C packages/storage
     // test-bucket`, `pnpm -C packages/database test-database`), which knip
     // reads as binaries.
@@ -137,14 +134,30 @@
     "packages/auth/src/shared/tests/test-host.ts": ["exports"],
     "packages/config/tests/browser/msw.ts": ["exports"],
     "packages/config/tests/browser/vitest.browser.config.ts": ["exports"],
+    "packages/core/src/features/next/api/tests/fake-api.ts": ["exports"],
+    "packages/core/src/features/next/i18n/tests/proxy-matcher-suite.ts": [
+      "exports"
+    ],
     "packages/database/src/features/test-database/utils/local-env.ts": [
       "exports"
     ],
     "packages/storage/src/features/image/hono/tests/stub-image-deps.ts": [
       "exports"
     ],
+    "packages/ui/src/features/navigation/tests/section-guards.ts": ["exports"],
     "packages/ui/src/shared/tests/computed-style.ts": ["exports"],
     "packages/ui/src/shared/tests/emulated-media.ts": ["exports"],
+    "packages/ui/src/shared/tests/render-in-ui.tsx": ["exports"],
+    "packages/ui/src/shared/tests/height-at.tsx": ["exports"],
+    "packages/ui/src/shared/tests/fetch-stub.ts": ["exports"],
+    "packages/ui/src/shared/tests/toast-timing.ts": ["exports"],
+    "packages/ui/src/shared/tests/link-mock.tsx": ["exports"],
+    "packages/ui/src/shared/tests/navigation-mock.tsx": ["exports"],
+    "packages/ui/src/shared/tests/next-cache-mock.ts": ["exports"],
+    "packages/ui/src/shared/tests/session-cookie-mock.ts": ["exports"],
+    "packages/ui/src/shared/tests/image-mock.tsx": ["exports"],
+    "packages/ui/src/shared/tests/aof-image-mock.tsx": ["exports"],
+    "packages/ui/src/shared/tests/message-length.ts": ["exports"],
     // watchRedis is unit-tested; awaitReady is the wait apps/api/README.md
     // asks of any command issued at startup, and only integration tests
     // issue one yet.

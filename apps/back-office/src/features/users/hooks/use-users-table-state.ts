@@ -1,12 +1,12 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
-import { useQueryStates } from "nuqs";
-import { useCallback } from "react";
-import { useRowSelection } from "@/shared/hooks/use-row-selection";
+import { useRowSelection } from "@allonfire/ui/features/data-table/hooks/use-row-selection";
 import {
   resolveUpdater,
   type TablePagination,
   type TablePaginationUpdater,
-} from "@/shared/utils/table-pagination";
+} from "@allonfire/ui/features/data-table/utils/table-pagination";
+import { useQueryStates } from "nuqs";
+import { useCallback } from "react";
 import { queryOf, usersParams } from "../constants/users-params";
 import { useUsersView } from "./use-users-view";
 

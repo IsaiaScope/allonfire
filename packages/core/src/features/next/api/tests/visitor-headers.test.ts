@@ -1,7 +1,7 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "../../../http/constants/http";
-import { forwardedHeaders, readVisitorHeaders } from "../visitor-headers";
+import { forwardedHeaders, readVisitorHeaders } from "../utils/visitor-headers";
 
 const visitor = vi.hoisted(() => ({ cookie: "", incoming: new Headers() }));
 

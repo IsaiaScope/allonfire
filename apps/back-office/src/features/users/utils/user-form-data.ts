@@ -1,11 +1,11 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import {
   type AOFAvatarChange,
   avatarChangeOf,
 } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
 import { updateTag } from "next/cache";
 import type { ApiClient } from "@/features/api/utils/api";
-import { textOf } from "@/features/api/utils/api-refusal";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../constants/users";
 import {

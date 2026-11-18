@@ -1,24 +1,15 @@
 import { nextAuthEnv } from "@allonfire/auth/environment/next-environment";
 import { runtimeEnvSchema } from "@allonfire/core/environment/environment";
+import { nextApiEnvSchema } from "@allonfire/core/environment/next-api-environment";
 import { telemetryEnv } from "@allonfire/core/environment/telemetry-environment";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
-  client: {
-    /**
-     * Local only: the API's address for a page opened off this machine (the
-     * tailnet address, from a phone), where `NEXT_PUBLIC_API_URL` is not
-     * reachable. Unset, the browser always calls `NEXT_PUBLIC_API_URL`.
-     * Baked in at build.
-     */
-    NEXT_PUBLIC_API_REMOTE_URL: z.url().optional(),
-    /**
-     * The API's public address, for the browser: it calls the API directly,
-     * with the Session cookies set for the parent domain. Baked in at build.
-     */
-    NEXT_PUBLIC_API_URL: z.url(),
-  },
+  // The API's public addresses (`NEXT_PUBLIC_API_URL`, and the remote one
+  // Local sets): core's schema; the runtime mappings below stay here, where
+  // Next inlines them.
+  client: { ...nextApiEnvSchema.client },
   // An empty value reads as unset, so `LAURA_URL=` hides Laura.
   emptyStringAsUndefined: true,
   experimental__runtimeEnv: {
@@ -30,13 +21,8 @@ export const env = createEnv({
   // `serverLogger` and `instrumentation.node.ts` read it.
   extends: [nextAuthEnv, telemetryEnv],
   server: {
-    /**
-     * The API as this App's server reaches it, for a page that reads data
-     * before it renders: the internal Docker address in production
-     * (`http://api:3000`), so the call never leaves the host. The browser
-     * keeps NEXT_PUBLIC_API_URL.
-     */
-    API_URL: z.url(),
+    // The API's internal address: core's schema.
+    ...nextApiEnvSchema.server,
     /**
      * The Back Office's own public address: metadataBase for every absolute
      * URL in its head (link-preview images, og:url). Read at build

@@ -23,10 +23,10 @@ const PER_PAGE = IMAGES.DEFAULT_PAGE_SIZE;
 vi.mock("../../actions/delete-images", () => ({ deleteImages: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  ...(await import("@/shared/tests/aof-image-mock")),
+  ...(await import("@allonfire/ui/shared/tests/aof-image-mock")),
   AOFStorageImage: ({ image }: { image: { alt: { en: string } } }) => (
     <span data-alt={image.alt.en} data-testid="picture" />
   ),

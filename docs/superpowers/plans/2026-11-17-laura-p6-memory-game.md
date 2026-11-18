@@ -61,7 +61,7 @@
 
 | Piece | Mechanism it reuses |
 |---|---|
-| Laura's API calls | core `aofCreateApi` (Phase 1, Task 2) in Laura's `features/api/utils/{api,server-api}.ts` bindings (fixed by Phase 3); `aofRefusal` for `refusalOf` |
+| Laura's API calls | core `aofCreateApi` and `aofCreateServerApi` (Phase 1, Task 2) in Laura's `features/api/utils/{api,server-api}.ts` bindings (fixed by Phase 3); `aofRefusal` for `refusalOf` |
 | Leaderboard hydration | the `storageOverviewHydration` pattern: `"use cache: private"`, `cacheTag`/`cacheLife` from `GAMES.CACHE`, `readSessionCookie`, `AOFGetQueryClient`, `dehydrate`; page side `AOFHydratedBoundary` (core) |
 | Leaderboard and deck reads | `queryOptions` with `staleTime: "static"` and `retryUnlessRefused` (core, Phase 1 Task 4); drawn by ui `AOFQueryView`; the leaderboard's boundary is plain `AOFHydratedBoundary` (no `onlyMissing`: Decisions) |
 | Score write | server action then `updateTag`, mutation then core's `invalidateStatic` (`invalidate-static.ts` beside `optimistic-mutation.ts`, fixed by Phase 4, Task 1: `invalidateAll` now calls it; a plain `invalidateQueries` skips an active `static` query). Not `optimisticMutation`: a score is not a click-driven toggle and its rank cannot be predicted |

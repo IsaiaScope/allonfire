@@ -1,9 +1,9 @@
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { useTranslations } from "next-intl";
 import {
   StationNotice,
   type StationSignage,
 } from "@/shared/components/station-notice";
-import { SectionPage } from "./section-page";
 
 /** The waiting room's signage, decoration only: the status says it in words. */
 const LOADING_SIGNAGE = {
@@ -31,7 +31,7 @@ export const SectionLoading = () => {
   return (
     <StationNotice
       entrance={false}
-      page={SectionPage}
+      page={AOFSectionPage}
       signage={LOADING_SIGNAGE}
     >
       <div className="led-board flex items-baseline gap-2 px-4 py-2 text-lg leading-tight">

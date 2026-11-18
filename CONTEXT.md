@@ -80,6 +80,10 @@ never copied into an App; an App adds only its Sections, its features, its
 words and its Design. Not part of the Design system.
 _Avoid_: boilerplate, starter, kit, template
 
+**App descriptor**:
+The one object an App gives the shared scaffold: its `App`, its Sections (each with its icon, its path and, when it sits above the App's floor, a `minRole`), the frame's look (`variant`, `collapsible`) and its address. The shared frame, the switcher, the proxy's gate and the guard tests read it; the App never repeats it.
+_Avoid_: manifest, config
+
 **Design**:
 A named visual world, its rules and its tokens, that one or more Apps wear.
 Japan is the first. Each App wears exactly one; a change to a Design reaches
@@ -235,13 +239,17 @@ Admin chose.
 _Avoid_: sign-up (except in Better Auth's route names), enrolment, invite
 
 **Role**:
-What a User may do inside one App: Admin, User or Viewer. It belongs to a
-Membership, never to the User as a whole. The Role named User is always
+What a User may do inside one App: Admin, User or Viewer. Each App names the
+lowest Role it lets in (its floor, `ACCESS.APP_SETTINGS`), and a Section can
+ask for a higher one (Laura's Upload Section is Admin only), which the API
+enforces again. It belongs to a Membership, never to the User as a whole. The Role named User is always
 written as a Role ("the User Role"), never as the person.
 _Avoid_: permission level, rank
 
 **Viewer**:
-A Role in an App that allows browsing and playing but no mutations.
+A Role below User, for browsing and playing without changes. No App's floor
+admits it today: Laura's was Viewer until ADR 0032, and its Viewers became
+Users. Kept for an App that wants a read-only Role.
 _Avoid_: guest, demo user, read-only user
 
 **Version**:

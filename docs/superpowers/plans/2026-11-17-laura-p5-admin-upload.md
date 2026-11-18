@@ -68,7 +68,7 @@
 | Rows, previews | `AOFPictureRow`: object URL revoked with its row, `AOFImage unoptimized`, tile for an undrawable file, HEIC preview via `heicToJpeg` | Task 8 |
 | Alt per language, access | `AOFImageAltFields`, `AOFImageAccessRow` (`withAOFFieldGroup`) | Task 7 |
 | Form | `useAOFForm` + `useAOFFormAction` + `useActionState` | Task 9, 10 |
-| Server action | `addImages` shared logic, App `serverApi` (Phase 1 `aofCreateApi`), `refusalOf`, `updateTag` | Tasks 5, 14 |
+| Server action | `addImages` shared logic, App `serverApi` (Phase 1 `aofCreateServerApi`), `refusalOf`, `updateTag` | Tasks 5, 14 |
 | Toast then list, refresh | `useToastThenList` (ui `features/data-table/hooks`, Phase 1 Task 5), `invalidateAll` (core, Phase 1 Task 4, made static-aware by Phase 4 Task 1) through Phase 4's `invalidateGallery` | Tasks 10, 14 |
 | Skeleton | `AOFFormSkeleton`, `Bar`, `ink` (Phase 1 Task 4, 15), height test | Tasks 11, 16 |
 | Errors told once | `AOFQueryProvider`, `aofErrorMeta` (no query or mutation here: the action's answer is a value) | n/a, said |

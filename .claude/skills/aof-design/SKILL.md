@@ -73,7 +73,7 @@ it in their tab; a declined look is reverted.
      and `it.json` (run `pnpm static:i18n`); components read them with
      `useTranslations` (Server Components too) or `getTranslations` in an
      async page. A name (the App's, the brand's) is never a translation: it
-     comes from its constant (`BACK_OFFICE.NAME`, `BRAND.NAME`).
+     comes from its constant (`BACK_OFFICE.name`, `BRAND.NAME`).
    - A piece the App's other features would reuse goes to
      `apps/<app>/src/shared/components/`; one every App would reuse becomes
      an AOF component in `packages/ui`, a generated-image one included.

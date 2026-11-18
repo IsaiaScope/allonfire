@@ -58,7 +58,7 @@ const RoleChoiceRow = ({ app, locked }: { app: App; locked: boolean }) => {
         },
         ...entryRoles(app).map((role) => ({
           icon: ROLE_ICON[role],
-          label: t(`Navigation.role.${role}`),
+          label: t(`Common.Navigation.role.${role}`),
           value: role,
         })),
       ]}

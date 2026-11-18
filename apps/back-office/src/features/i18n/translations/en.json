@@ -3,76 +3,10 @@
     "description": "Where the AllOnFire family's content, users and data are managed."
   },
   "SignIn": {
-    "email": "Email",
-    "error": {
-      "forbidden": "This account cannot enter the Back Office.",
-      "invalid": "Email or password is wrong.",
-      "missing": "Enter your email and password.",
-      "rateLimited": "Too many attempts. Try again in a few minutes.",
-      "unavailable": "Signing in is not available right now. Try again shortly."
-    },
-    "field": {
-      "emailInvalid": "Enter a valid email address.",
-      "emailRequired": "Enter your email.",
-      "passwordRequired": "Enter your password."
-    },
-    "forgot": "Forgot password?",
     "language": "Language",
     "notice": "Authorized users only. Sign-up is closed.",
-    "password": "Password",
     "pauseNotice": "Pause notice",
-    "showPassword": "Show password",
-    "submit": "Sign in",
-    "submitting": "Signing in",
-    "theme": "Switch theme",
-    "note": {
-      "unverified": "Check your inbox: we sent you a link to verify your email. Open it, then sign in."
-    }
-  },
-  "EmailVerified": {
-    "failed": "That link no longer works. Sign in to get a new one.",
-    "signIn": "Go to Sign in",
-    "title": "Email verification",
-    "verified": "Your email is verified. You can sign in now."
-  },
-  "ForgotPassword": {
-    "back": "Back to Sign in",
-    "email": "Email",
-    "error": {
-      "invalid": "Enter a valid email address.",
-      "rateLimited": "Too many requests. Try again later.",
-      "unavailable": "Sending links is not available right now. Try again later."
-    },
-    "field": {
-      "emailInvalid": "Enter a valid email address.",
-      "emailRequired": "Enter your email."
-    },
-    "intro": "Enter your email and we will send you a link to choose a new password.",
-    "submit": "Send link",
-    "submitting": "Sending",
-    "title": "Reset your password",
-    "note": {
-      "sent": "If an account uses this address, a link to reset its password is on its way. Check your inbox."
-    }
-  },
-  "ResetPassword": {
-    "askAgain": "Ask for a new link",
-    "confirmPassword": "Confirm new password",
-    "error": {
-      "invalid": "The passwords must match and meet every rule.",
-      "invalidToken": "This link no longer works. Ask for a new one.",
-      "rateLimited": "Too many attempts. Try again later.",
-      "unavailable": "Saving the password is not available now. Try again later."
-    },
-    "field": {
-      "passwordMismatch": "The passwords differ",
-      "passwordWeak": "Not every rule below is met yet"
-    },
-    "password": "New password",
-    "showPassword": "Show password",
-    "submit": "Save password",
-    "submitting": "Saving",
-    "title": "Choose a new password"
+    "theme": "Switch theme"
   },
   "Images": {
     "access": {
@@ -243,27 +177,11 @@
     }
   },
   "Navigation": {
-    "account": "Account",
-    "apps": "Apps",
-    "breadcrumb": "Breadcrumb",
     "home": "Home",
     "images": "Images",
-    "language": "Language",
     "mail": "Mail",
-    "menu": "Main menu",
-    "role": {
-      "ADMIN": "Admin",
-      "USER": "User",
-      "VIEWER": "Viewer"
-    },
     "services": "Services",
-    "signOut": "Sign out",
     "storage": "Storage",
-    "switchApp": "Switch App",
-    "theme": "Theme",
-    "themeDark": "Dark",
-    "themeLight": "Light",
-    "toggleMenu": "Collapse or expand the menu",
     "users": "Users"
   },
   "Services": {
@@ -508,17 +426,5 @@
       "label": "Copy {email}",
       "tip": "Copy email"
     }
-  },
-  "Password": {
-    "rule": {
-      "length": "At least {min} characters",
-      "lowercase": "A lowercase letter",
-      "match": "Both passwords match",
-      "noSpaces": "No spaces",
-      "number": "A number",
-      "symbol": "A symbol",
-      "uppercase": "An uppercase letter"
-    },
-    "rules": "The password needs"
   }
 }

@@ -11,7 +11,7 @@ import { cn } from "../../../shared/utils/utils";
  * under every toast and dialog. It exists only in iOS WebKit
  * (`-webkit-touch-callout`) in a tab (`display-mode: browser`); elsewhere it
  * is `display: none`, so it takes no room and Safari on a Mac, other browsers
- * and an installed App never meet it. Mount it once, beside the toaster.
+ * and an installed App never meet it. `AOFLocaleDocument` mounts it once, so an App never does.
  */
 export const AOFEdgeTint = ({
   className,

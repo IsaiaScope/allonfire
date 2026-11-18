@@ -5,8 +5,9 @@ import { SectionLoading } from "../components/section-loading";
 /**
  * Every signed-in page's default export: `withAppSession` with the Back
  * Office's loading screen as what the page area shows while the Session
- * check waits.
+ * check waits. `options.minRole` is a Section above the App's floor's own.
  */
 export const signedInPage = <Props extends object>(
-  Page: ComponentType<Props>
-) => withAppSession(Page, <SectionLoading />);
+  Page: ComponentType<Props>,
+  options?: Parameters<typeof withAppSession>[2]
+) => withAppSession(Page, <SectionLoading />, options);

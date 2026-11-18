@@ -4,10 +4,13 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { MAIL } from "@allonfire/core/features/mail/constants/mail";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { ServiceType } from "@allonfire/database/enums";
 import { refresh, updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { SERVICES, serviceTag } from "../../constants/services";
 import { saveProvider, sendTestEmail, setServiceEnabled } from "../services";
 
@@ -15,7 +18,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 const ID = "provider-1";
 const OPENED = "version-1";

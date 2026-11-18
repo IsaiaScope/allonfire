@@ -2,10 +2,13 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
+import {
+  nextFrames,
+  toastWouldHaveArrived,
+} from "@allonfire/ui/shared/tests/toast-timing";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
-import { nextFrames, toastWouldHaveArrived } from "@/shared/tests/toast-timing";
 import { OfflineBanner } from "../offline-banner";
 
 const offline = vi.hoisted(() => ({ value: false }));

@@ -20,7 +20,7 @@ const SIZE_OF_BUCKET = formatSize(
 
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 
 const { answer, renderChart, renderView } = setupOverview({
@@ -64,7 +64,7 @@ describe("StorageOverview", () => {
       .poll(() => element.querySelectorAll(".recharts-bar-rectangle").length)
       .toBeGreaterThanOrEqual(3);
     expect(element.textContent).toContain("Laura");
-    expect(element.textContent).toContain(BACK_OFFICE.NAME);
+    expect(element.textContent).toContain(BACK_OFFICE.name);
     expect(element.textContent).toContain(t.chart.public);
     expect(element.textContent).toContain(t.chart.private);
   });

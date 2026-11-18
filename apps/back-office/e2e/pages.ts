@@ -1,16 +1,12 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { expect, type Page } from "@playwright/test";
-import EN from "../src/features/i18n/translations/en.json" with {
-  type: "json",
-};
-import IT from "../src/features/i18n/translations/it.json" with {
-  type: "json",
-};
 import { SECTION } from "../src/features/navigation/constants/sections";
-import { sectionHref } from "../src/features/navigation/utils/sections";
+import { AUTH_EN, AUTH_IT } from "../src/shared/tests/auth-words";
 import { enT } from "../src/shared/tests/translators";
 
 /** Any locale's Sign in page. */
@@ -39,7 +35,9 @@ export const openSidebar = async (page: Page) => {
   await expect(async () => {
     if (!(await drawer.isVisible())) {
       await page
-        .getByRole("button", { name: EN.Navigation.toggleMenu })
+        .getByRole("button", {
+          name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+        })
         .click();
     }
     await expect(drawer).toBeVisible({ timeout: 1000 });
@@ -58,7 +56,7 @@ export const signIn = async (
     password = FIXTURE.PASSWORD,
   }: { locale?: "it"; password?: string } = {}
 ) => {
-  const t = locale === "it" ? IT : EN;
+  const t = locale === "it" ? AUTH_IT : AUTH_EN;
   await page.goto(
     locale ? `/${locale}${AUTH.PAGE.SIGN_IN}` : AUTH.PAGE.SIGN_IN
   );
@@ -87,7 +85,9 @@ export const usersSearchHref = (email: string) =>
 export const signInAsAdmin = async (page: Page) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await expect(
-    page.getByRole("button", { name: EN.Navigation.toggleMenu })
+    page.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
 };
 
@@ -100,7 +100,9 @@ export const tapSidebarLink = async (page: Page, name: string) => {
   await openSidebar(page);
   await page.waitForLoadState("networkidle");
   await page
-    .getByRole("navigation", { name: EN.Navigation.menu })
+    .getByRole("navigation", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.menu,
+    })
     .filter({ visible: true })
     .getByRole("link", { name })
     .click();
@@ -110,7 +112,9 @@ export const tapSidebarLink = async (page: Page, name: string) => {
 export const openAccountMenu = async (page: Page) => {
   await openSidebar(page);
   await page
-    .getByRole("button", { name: EN.Navigation.account })
+    .getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.account,
+    })
     .filter({ visible: true })
     .click();
 };

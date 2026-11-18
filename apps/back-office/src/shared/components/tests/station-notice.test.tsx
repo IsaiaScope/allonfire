@@ -17,7 +17,7 @@ describe("StationNotice", () => {
     const html = notice({});
     expect(html).toContain(`>${SIGNAGE.WALL_KANJI}<`);
     expect(html).toContain(`>${SIGNAGE.CODE}<`);
-    expect(html).toContain(`>${BACK_OFFICE.NAME}<`);
+    expect(html).toContain(`>${BACK_OFFICE.name}<`);
   });
 
   // The tab's title waits for the page to show (`NoticeTitle`, its own

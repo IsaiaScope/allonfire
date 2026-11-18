@@ -1,9 +1,9 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
-import { retryUnlessRefused } from "@/shared/utils/retry";
 import { STORAGE } from "../constants/storage";
 
 /**

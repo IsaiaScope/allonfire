@@ -8,7 +8,7 @@ import { render } from "vitest-browser-react";
 import { StationSign } from "../station-sign";
 
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+  AOFImage: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
 }));
 
 const { DARK } = METADATA.COLOR_SCHEME;

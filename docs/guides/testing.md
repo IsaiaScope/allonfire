@@ -9,7 +9,16 @@ middleware chain still lives in its own `tests/` and builds the app with
 `shutdown` keep root-level tests.
 A vi.mock factory, stub or fixture that a second test file needs moves to the
 area's shared/tests (exported when another package needs it, as stub-auth and
-stub-image-deps are) instead of being copied. The HTTP modules' tests share
+stub-image-deps are) instead of being copied. The helpers every Next App's tests
+share live in ui's `shared/tests` (`@allonfire/ui/shared/tests/*`: `renderInUi`,
+`heightAtIn`, the fetch, navigation, cache, session-cookie and image mocks, the
+message lengths); an App binds `renderInUi` and `heightAtIn` over its own
+messages once (`renderInApp`), and a test that renders a shared piece mounts the
+merged words (`aofMessages("en", EN)`), or a bare App JSON raises `MISSING_MESSAGE`
+for core's `Common`. An App's proxy matcher test is one call to core's
+`proxyMatcherSuite({ config, pages })`
+(`@allonfire/core/features/next/i18n/tests/proxy-matcher-suite`); the matcher
+itself stays a literal in its `proxy.ts`. The HTTP modules' tests share
 auth's `moduleTestHost` (`@allonfire/auth/shared/tests/test-host`).
 Tests write HTTP statuses, methods, headers and media types through core's
 `HTTP` (`HTTP.STATUS.FORBIDDEN`, `HTTP.HEADER.COOKIE`), never as numbers or
@@ -101,5 +110,5 @@ it; a deprecated name a library's own type still requires goes in the rule's
 - Apply Biome fixes only to touched files, then run `pnpm static:types`, `pnpm static:lint` and `pnpm test`; fix lint rather than adding a Biome suppression without the owner's approval. Configuration: `biome.jsonc`, `.oxlintrc.json`, `packages/config/typescript/base.json`.
 - Only the e2e build sets `CONFIG_E2E_TESTING_API`, which turns on Next's `exposeTestingApiInProductionBuild` for `instant()` tests; an image that serves traffic never has it: `packages/config/tests/e2e/playwright.config.ts`. (`docs/superpowers/specs/2026-11-02-instant-users-navigation-design.md`)
 - The Vitest preset's options, the root test scripts (`test:unit` needs no Docker, `test:integration`, `test:coverage`, `test:ui`), the e2e projects and the headed scripts: `packages/config/README.md`.
-- The `static` Stage also runs ShellCheck on the Liquibase scripts, `docker build --check` on the `db-migrate` image and actionlint on the workflows (a Mac without the binary skips the tool; CI has them all); the `test` Stage checks the changelog against the Prisma schema on the Test template (`pnpm test:drift`): `packages/config/stages/stages.ts`.
+- The `static` Stage also runs ShellCheck on every shell script (Liquibase, database, config, the VPS's), `docker build --check` on the `db-migrate` image and actionlint on the workflows (a Mac without the binary skips the tool; CI has them all); the `test` Stage checks the changelog against the Prisma schema on the Test template (`pnpm test:drift`): `packages/config/stages/stages.ts`.
 - The `static` Stage runs `pnpm static:knip`, `pnpm static:knip-production` and `pnpm static:dupes` in the hook and on every PR, over the whole workspace (no affected-filter): an unused export or file, code only tests use, or a clone fails it wherever it sits. Fix the hit, or accept it with a reason (`tooling.md`, knip and jscpd): `.github/workflows/ci.yml`.

@@ -11,7 +11,7 @@ const LOGO_SIZES = "216px";
 // The band is always night. Inlined in the HTML, so it paints with the sign
 // instead of waiting for its own request.
 const LOGO_SRC = aofLogoDataUrl({
-  app: BACK_OFFICE.LOGO,
+  app: BACK_OFFICE.logo,
   layout: METADATA.LOGO.LAYOUT.HORIZONTAL,
   scheme: METADATA.LOGO.SCHEME.DARK,
 });
@@ -44,7 +44,7 @@ export const StationSign = ({
     <div className="dark flex items-center gap-3 border-led border-b bg-led-panel/75 p-3 text-foreground dark:border-led-dim">
       <h1>
         <AOFImage
-          alt={BACK_OFFICE.NAME}
+          alt={BACK_OFFICE.name}
           className="h-16 w-auto"
           height={AOF_LOGO.LAYOUT.horizontal.HEIGHT}
           sizes={LOGO_SIZES}

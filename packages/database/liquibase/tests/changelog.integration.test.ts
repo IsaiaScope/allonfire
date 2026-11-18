@@ -48,6 +48,22 @@ const LAURA_VIEWER = "laura-viewer";
 /** A User whose access was revoked by deleting their Memberships. */
 const NO_MEMBERSHIP = "no-membership";
 
+const LAURA_VIEWERS_FILE = "0008-laura-viewers-to-users.sql";
+/** Every changeset from the one that moves Laura's Viewers on, so the test survives later ones. */
+const CHANGESETS_FROM_LAURA_VIEWERS = readdirSync(CHANGESET.DIR).filter(
+  (file) => PATTERN.CHANGESET.FILE.test(file) && file >= LAURA_VIEWERS_FILE
+).length;
+const LAURA_VIEWER_MEMBER = "a-laura-viewer";
+const LAURA_ADMIN_MEMBER = "b-laura-admin";
+const BACK_OFFICE_VIEWER_MEMBER = "c-back-office-viewer";
+
+const rolesOf = async (client: PrismaClient) =>
+  (
+    await client.$queryRaw<{ role: string }[]>`
+      SELECT unnest(enum_range(NULL::auth."Role"))::TEXT AS role
+    `
+  ).map(({ role }) => role);
+
 /** Every changeset above the baseline, so the rollback test survives new ones. */
 const CHANGESETS_AFTER_BASELINE =
   readdirSync(CHANGESET.DIR).filter((file) => PATTERN.CHANGESET.FILE.test(file))
@@ -180,10 +196,11 @@ describe("changelog on a database that already has the tables", () => {
     `;
     // `all` reached every App; `laura` Laura; `social` nothing. `m.app`
     // sorts by the enum's declaration order, `app` would sort the text.
+    // 0008 turns Laura's Viewer into a User; the three rows pin that none is lost.
     expect(rows).toEqual([
       { app: "laura", role: "USER", userId: EXISTING_USER },
       { app: "back-office", role: "USER", userId: EXISTING_USER },
-      { app: "laura", role: "VIEWER", userId: LAURA_VIEWER },
+      { app: "laura", role: "USER", userId: LAURA_VIEWER },
     ]);
   });
 
@@ -257,6 +274,65 @@ describe("rolling back the schema move", () => {
       expect(await tablesIn(client, "auth")).toEqual(AUTH_TABLES);
       expect(await tablesIn(client, "laura")).toEqual(LAURA_TABLES);
       expect(await tablesIn(client, "image")).toEqual(IMAGE_TABLES);
+    },
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
+  );
+});
+
+describe("moving Laura's Viewers to Users", () => {
+  const database = throwawayName("changelog_viewers");
+  const url = throwawayUrl(database);
+  let client: PrismaClient;
+
+  beforeAll(async () => {
+    await recreateDatabase(database);
+    client = clientFor(url);
+  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
+
+  afterAll(async () => {
+    await client.$disconnect();
+    await dropDatabase(database);
+  });
+
+  it(
+    "turns Laura's Viewers into Users and leaves every other Membership and the Role alone",
+    async () => {
+      liquibase(url, "update");
+      // The move does nothing on rollback: that puts the database before it.
+      liquibase(
+        url,
+        "rollback-count",
+        `--count=${CHANGESETS_FROM_LAURA_VIEWERS}`
+      );
+      await client.$executeRaw`
+        INSERT INTO auth."User" (id, email, "updatedAt") VALUES
+          (${LAURA_VIEWER_MEMBER}, 'a@allonfire.test', now()),
+          (${LAURA_ADMIN_MEMBER}, 'b@allonfire.test', now()),
+          (${BACK_OFFICE_VIEWER_MEMBER}, 'c@allonfire.test', now())
+      `;
+      await client.$executeRaw`
+        INSERT INTO auth."Membership" ("userId", app, role) VALUES
+          (${LAURA_VIEWER_MEMBER}, 'laura', 'VIEWER'),
+          (${LAURA_ADMIN_MEMBER}, 'laura', 'ADMIN'),
+          (${BACK_OFFICE_VIEWER_MEMBER}, 'back-office', 'VIEWER')
+      `;
+      liquibase(url, "update");
+      const rows = await client.$queryRaw<
+        { userId: string; app: string; role: string }[]
+      >`
+        SELECT "userId", app::TEXT AS app, role::TEXT AS role
+        FROM auth."Membership" ORDER BY "userId"
+      `;
+      expect(rows).toEqual([
+        { app: "laura", role: "USER", userId: LAURA_VIEWER_MEMBER },
+        { app: "laura", role: "ADMIN", userId: LAURA_ADMIN_MEMBER },
+        {
+          app: "back-office",
+          role: "VIEWER",
+          userId: BACK_OFFICE_VIEWER_MEMBER,
+        },
+      ]);
+      expect(await rolesOf(client)).toEqual(["ADMIN", "USER", "VIEWER"]);
     },
     TEST_DATABASE.DOCKER_TIMEOUT_MS
   );

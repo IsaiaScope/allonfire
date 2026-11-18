@@ -1,20 +1,21 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import {
+  NAVIGATION,
+  sidebarParam,
+} from "@allonfire/ui/features/navigation/constants/navigation";
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
 import {
-  NAVIGATION,
-  sidebarParam,
-} from "../src/features/navigation/constants/navigation";
-import {
   SECTION,
   type SECTIONS,
 } from "../src/features/navigation/constants/sections";
-import { sectionHref } from "../src/features/navigation/utils/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import {
   onPhone,
@@ -26,6 +27,7 @@ import {
 } from "./pages";
 
 const t = EN.Navigation;
+const common = SHARED_TRANSLATIONS.en.Common.Navigation;
 const ITALIAN = "it";
 /** Named in itself; WebKit capitalises it ("Italiano"). */
 const ITALIAN_NAME = new RegExp(`^${languageName(ITALIAN)}$`, "i");
@@ -36,7 +38,7 @@ const TRANSPARENT = "rgba(0, 0, 0, 0)";
 
 /** The menu on screen: the sidebar, or the drawer on a phone. */
 const menuOf = (page: Page) =>
-  page.getByRole("navigation", { name: t.menu }).filter({ visible: true });
+  page.getByRole("navigation", { name: common.menu }).filter({ visible: true });
 
 /** Clicks `link` in the menu on screen and checks the page `path` opened is the one marked. */
 const clickAndCheck = async (page: Page, link: Locator, path: string) => {
@@ -104,16 +106,16 @@ test("the sidebar's header names the Back Office as the App you are in", async (
   // its button (or, with no other App, on the header alone), never in a menu.
   await expect(
     page.locator('[data-sidebar="header"]').filter({ visible: true })
-  ).toContainText(BACK_OFFICE.NAME);
+  ).toContainText(BACK_OFFICE.name);
   await expect(
-    page.getByRole("menuitem", { name: BACK_OFFICE.NAME })
+    page.getByRole("menuitem", { name: BACK_OFFICE.name })
   ).toHaveCount(0);
 });
 
 test("signs out from the account menu", async ({ page }) => {
   await signIn(page, FIXTURE.USER.BACK_OFFICE.ADMIN);
   await openAccountMenu(page);
-  await page.getByRole("menuitem", { name: t.signOut }).click();
+  await page.getByRole("menuitem", { name: common.signOut }).click();
   await expect(page).toHaveURL(SIGN_IN_URL);
 });
 
@@ -153,7 +155,7 @@ test.describe("before the page runs", () => {
     );
     // The App's own scripts really did not run.
     expect(blocked).toBeGreaterThan(0);
-    const trigger = page.getByRole("button", { name: t.toggleMenu });
+    const trigger = page.getByRole("button", { name: common.toggleMenu });
     await expect(
       trigger.locator(".tabler-icon-layout-sidebar-left-expand")
     ).toBeVisible();

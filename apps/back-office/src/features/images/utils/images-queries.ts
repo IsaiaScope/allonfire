@@ -1,10 +1,10 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
-import { retryUnlessRefused } from "@/shared/utils/retry";
 import { IMAGES } from "../constants/images";
 import type { ImagesQuery } from "../constants/images-params";
 

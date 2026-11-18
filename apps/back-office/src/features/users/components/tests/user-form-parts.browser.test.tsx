@@ -3,12 +3,14 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { App } from "@allonfire/database/enums";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import { AUTH_EN } from "@/shared/tests/auth-words";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { replace } from "../../tests/user-form-mocks";
 import { AddUser } from "../add-user";
@@ -21,6 +23,10 @@ vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
 // within its own file, so only the factories are shared (user-form-mocks).
 vi.mock(
   "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
   () => import("../../tests/user-form-mocks")
 );
 vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
@@ -54,7 +60,7 @@ const renderIn = (children: ReactNode) =>
     <NextIntlClientProvider
       formats={DATE.FORMATS}
       locale={I18N.DEFAULT_LANGUAGE}
-      messages={EN}
+      messages={aofMessages("en", EN)}
       timeZone={DATE.TIME_ZONE}
     >
       {children}
@@ -87,7 +93,7 @@ const sharedParts = (password: string, confirmPassword: string) => {
     reveals: page.getByRole("button", { name: FORM.showPassword }).elements()
       .length,
     roles: shows(FORM.roles),
-    rules: shows(EN.Password.rules),
+    rules: shows(AUTH_EN.Password.rules),
   };
 };
 

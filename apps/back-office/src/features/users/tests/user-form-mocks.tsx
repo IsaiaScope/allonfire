@@ -1,5 +1,5 @@
-import { ImageMock } from "@/shared/tests/image-mock";
-import { LinkMock } from "@/shared/tests/link-mock";
+import { ImageMock } from "@allonfire/ui/shared/tests/image-mock";
+import { LinkMock } from "@allonfire/ui/shared/tests/link-mock";
 
 /**
  * What a User form's test mocks, one module standing in for each:
@@ -14,6 +14,9 @@ export const replace = vi.fn();
 
 /** The App's router (`@/features/i18n/navigation`): `replace` recorded. */
 export const useRouter = () => ({ replace });
+
+/** Core's base navigation (`@allonfire/core/.../aof-base-navigation`), which a shared piece reads: the same `Link` and router. */
+export const aofBaseNavigation = { Link, useRouter };
 
 /** ui's `AOFImage` (`@allonfire/ui/shared/components/aof-image`): what it was handed. */
 export const AOFImage = ImageMock;

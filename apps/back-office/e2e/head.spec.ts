@@ -13,6 +13,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { AUTH_EN } from "../src/shared/tests/auth-words";
 
 const { SIGN_IN } = AUTH.PAGE;
 const COLOR_SCHEMES = objectValues(METADATA.COLOR_SCHEME).length;
@@ -28,7 +29,9 @@ test("gives Sign in a complete head", async ({ page }) => {
     METADATA.ROBOTS.NOINDEX
   );
   const meta = (selector: string) => page.locator(selector).first();
-  await expect(page).toHaveTitle(pageTitle(EN.SignIn.submit, BACK_OFFICE.NAME));
+  await expect(page).toHaveTitle(
+    pageTitle(AUTH_EN.SignIn.submit, BACK_OFFICE.name)
+  );
   await expect(meta('meta[name="robots"]')).toHaveAttribute(
     "content",
     METADATA.ROBOTS.NOINDEX
@@ -43,7 +46,7 @@ test("gives Sign in a complete head", async ({ page }) => {
   );
   await expect(meta('meta[property="og:site_name"]')).toHaveAttribute(
     "content",
-    BACK_OFFICE.NAME
+    BACK_OFFICE.name
   );
   await expect(meta('meta[property="og:locale"]')).toHaveAttribute(
     "content",
@@ -122,7 +125,7 @@ for (const unowned of [
       page.getByRole("heading", { name: NOT_FOUND.title })
     ).toBeVisible();
     await expect(page).toHaveTitle(
-      pageTitle(NOT_FOUND.title, BACK_OFFICE.NAME)
+      pageTitle(NOT_FOUND.title, BACK_OFFICE.name)
     );
     const background = await page.evaluate(
       () => getComputedStyle(document.body).backgroundColor
@@ -138,7 +141,7 @@ test("answers Not Found, titled, for an unknown page in a language", async ({
   // A loading.tsx above the page would stream a 200 shell first.
   expect(response?.status()).toBe(HTTP.STATUS.NOT_FOUND);
   await expect(page).toHaveTitle(
-    pageTitle(SHARED_TRANSLATIONS.it.Common.NotFound.title, BACK_OFFICE.NAME)
+    pageTitle(SHARED_TRANSLATIONS.it.Common.NotFound.title, BACK_OFFICE.name)
   );
 });
 
@@ -179,9 +182,9 @@ test("serves the manifest and links it with the icons", async ({
   expect(manifest).toMatchObject({
     display: "standalone",
     id: METADATA.PATH.ROOT,
-    name: BACK_OFFICE.NAME,
+    name: BACK_OFFICE.name,
     scope: METADATA.PATH.ROOT,
-    short_name: BACK_OFFICE.NAME,
+    short_name: BACK_OFFICE.name,
     start_url: METADATA.PATH.ROOT,
   });
   expect(manifest.icons).toHaveLength(MANIFEST_ICONS.length);
@@ -228,7 +231,7 @@ test("links the preview images from the head, with their alt", async ({
   await expect(og).toHaveAttribute("content", OPENGRAPH_IMAGE_URL);
   await expect(
     page.locator('meta[property="og:image:alt"]').first()
-  ).toHaveAttribute("content", BACK_OFFICE.SHARE_IMAGE_ALT);
+  ).toHaveAttribute("content", BACK_OFFICE.shareImageAlt);
   await expect(
     page.locator('meta[name="twitter:image"]').first()
   ).toHaveAttribute("content", TWITTER_IMAGE_URL);

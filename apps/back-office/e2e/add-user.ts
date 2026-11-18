@@ -1,3 +1,4 @@
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { App, Role } from "@allonfire/database/enums";
 import { expect, type Page } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -52,7 +53,9 @@ export const addUser = async (
     .getByRole("radiogroup", {
       name: enT("Users.form.role", { app: APP_ENTRY[App.BACK_OFFICE].name }),
     })
-    .getByRole("button", { name: EN.Navigation.role[Role.ADMIN] })
+    .getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.ADMIN],
+    })
     .click();
   if (mustVerify) {
     await form

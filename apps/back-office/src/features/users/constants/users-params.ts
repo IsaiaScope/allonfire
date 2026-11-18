@@ -2,11 +2,14 @@
 // Server Component) and the table read the address through the same ones.
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import {
+  codecParser,
+  pageParser,
+} from "@allonfire/ui/features/data-table/utils/list-params";
+import {
   createLoader,
   type inferParserType,
   parseAsNumberLiteral,
 } from "nuqs/server";
-import { codecParser, pageParser } from "@/shared/utils/list-params";
 import { USERS } from "./users";
 
 /**

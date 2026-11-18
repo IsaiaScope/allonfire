@@ -2,9 +2,9 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
+import { nextFrames } from "@allonfire/ui/shared/tests/toast-timing";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
-import { nextFrames } from "@/shared/tests/toast-timing";
 import { StationToaster } from "../station-toaster";
 
 const LINE_CLAMP = "5";

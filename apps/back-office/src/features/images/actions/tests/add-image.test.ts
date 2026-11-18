@@ -1,11 +1,14 @@
 // @module-tag unit
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { parseJson } from "@allonfire/core/shared/utils/json";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { IMAGES } from "../../constants/images";
 import { imageNames, rowPrefix } from "../../utils/image-form-data";
@@ -15,7 +18,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 const formOf = (count: number) => {
   const form = new FormData();

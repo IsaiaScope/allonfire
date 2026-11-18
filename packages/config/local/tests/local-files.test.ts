@@ -14,10 +14,12 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
   [
     // `pnpm dev:tailscale` serves each dev App as its own Tailscale Service
     // (ADR 0021).
-    "package.json",
+    "packages/config/local/tailscale.sh",
     [
-      `--service=svc:back-office --https=443 ${LOCAL.URL.BACK_OFFICE} `,
-      `--service=svc:laura --https=443 ${LOCAL.URL.LAURA} `,
+      `serve back-office ${LOCAL.URL.BACK_OFFICE}\n`,
+      `serve laura ${LOCAL.URL.LAURA}\n`,
+      `serve cdn ${LOCAL.URL.CDN}\n`,
+      `serve api ${LOCAL.URL.API}\n`,
     ],
   ],
   [

@@ -4,11 +4,11 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { StationSign } from "../station-sign";
 
 vi.mock("next/image", async () => ({
-  default: (await import("@/shared/tests/image-mock")).ImageMock,
+  default: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
 }));
 
 const LOGO_HEADING = new RegExp(
-  `<h1[^>]*><span data-alt="${BACK_OFFICE.NAME}"[^>]*data-src="data:image/svg\\+xml,`
+  `<h1[^>]*><span data-alt="${BACK_OFFICE.name}"[^>]*data-src="data:image/svg\\+xml,`
 );
 
 const sign = () =>

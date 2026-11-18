@@ -40,8 +40,30 @@ describe("requireApp", () => {
     const guard = requireApp(App.LAURA);
     const laura = (role: Role) =>
       sessionFor({ memberships: [{ app: App.LAURA, role }] });
-    expect(await status(laura(Role.VIEWER), guard)).toBe(HTTP.STATUS.OK);
+    expect(await status(laura(Role.USER), guard)).toBe(HTTP.STATUS.OK);
     expect(await status(laura(Role.ADMIN), guard)).toBe(HTTP.STATUS.OK);
+    expect(await status(laura(Role.VIEWER), guard)).toBe(HTTP.STATUS.FORBIDDEN);
+  });
+
+  it("with a Role above the floor, lets in only that Role: an Admin-only Section", async () => {
+    const guard = requireApp(App.LAURA, Role.ADMIN);
+    const laura = (role: Role) =>
+      sessionFor({ memberships: [{ app: App.LAURA, role }] });
+    expect(await status(laura(Role.USER), guard)).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(await status(laura(Role.ADMIN), guard)).toBe(HTTP.STATUS.OK);
+    expect(await status(null, guard)).toBe(HTTP.STATUS.UNAUTHORIZED);
+  });
+
+  it("with a Role under the floor, still asks the floor", async () => {
+    const guard = requireApp(App.BACK_OFFICE, Role.USER);
+    expect(
+      await status(
+        sessionFor({
+          memberships: [{ app: App.BACK_OFFICE, role: Role.USER }],
+        }),
+        guard
+      )
+    ).toBe(HTTP.STATUS.FORBIDDEN);
   });
 
   it("refuses a User of another App, and a Role under the floor", async () => {

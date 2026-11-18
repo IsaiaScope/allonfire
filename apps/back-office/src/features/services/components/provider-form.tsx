@@ -1,5 +1,6 @@
 "use client";
 
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { AOFSubmitButton } from "@allonfire/ui/features/form/components/aof-submit-button";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
@@ -8,7 +9,6 @@ import { IconDeviceFloppy, IconLoader2 } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
-import { FormAlert } from "@/shared/components/form-alert";
 import { saveProvider } from "../actions/services";
 import { SERVICES } from "../constants/services";
 import { useRefreshServices } from "../hooks/use-refresh-services";
@@ -76,9 +76,9 @@ export const ProviderForm = ({ provider }: { provider: ListedProvider }) => {
       <ProviderIdentity fields={PROVIDER_FIELDS.IDENTITY} form={form} />
       <ProviderLimits fields={PROVIDER_FIELDS.LIMITS} form={form} />
       <ProviderSwitches fields={PROVIDER_FIELDS.SWITCHES} form={form} />
-      <FormAlert className="@2xl:col-span-2 mt-2">
+      <AOFFormAlert className="@2xl:col-span-2 mt-2">
         {error ? t(`error.${error}`) : null}
-      </FormAlert>
+      </AOFFormAlert>
       <div className="@2xl:col-span-2 flex justify-end gap-3 pt-2">
         <AOFSubmitButton
           className={kanjiAction()}

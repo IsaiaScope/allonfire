@@ -156,7 +156,7 @@ const ROLE_BADGE = {
 /** A User's Role in `app` on its chip, or `NoMembership`: the table's cell
  *  and the phone's card alike. */
 export const RoleIn = ({ app, user }: { app: App; user: UserBody }) => {
-  const t = useTranslations("Navigation");
+  const t = useTranslations("Common.Navigation");
   const role = roleIn(user, app);
   return role ? (
     <AOFBadge className="h-6 px-2 text-sm" variant={ROLE_BADGE[role]}>

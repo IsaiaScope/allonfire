@@ -1,15 +1,15 @@
 import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
 import { ServiceType } from "@allonfire/database/enums";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { IconMail } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { ServiceProviders } from "@/features/services/components/service-providers";
 import { ServicesSkeleton } from "@/features/services/components/services-skeleton";
 import { servicesHydration } from "@/features/services/utils/services-hydration";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(BACK_OFFICE.PAGE.SERVICES_MAIL, "Navigation.mail");
@@ -37,13 +37,13 @@ const hydrateMail = () => servicesHydration(ServiceType.MAIL);
 const MailPage = () => {
   const title = <MailTitle />;
   return (
-    <SectionPage className="gap-6" width="form">
+    <AOFSectionPage className="gap-6" width="form">
       <Suspense fallback={<ServicesSkeleton title={title} />}>
         <AOFHydratedBoundary hydration={hydrateMail}>
           <ServiceProviders title={title} type={ServiceType.MAIL} />
         </AOFHydratedBoundary>
       </Suspense>
-    </SectionPage>
+    </AOFSectionPage>
   );
 };
 

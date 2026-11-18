@@ -35,7 +35,7 @@ describe("UsersOverview", () => {
     expect(element.textContent).toContain(t.chart.users);
     expect(element.textContent).toContain(t.chart.admins);
     expect(element.textContent).toContain("Laura");
-    expect(element.textContent).toContain(BACK_OFFICE.NAME);
+    expect(element.textContent).toContain(BACK_OFFICE.name);
   });
 
   it("says no User is a member of an App when there are none", async () => {

@@ -24,6 +24,7 @@
     "./features/next/utils/session-cookie": "./src/features/next/utils/session-cookie.ts",
     "./features/next/utils/with-provider-pictures": "./src/features/next/utils/with-provider-pictures.ts",
     "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
+    "./features/next/utils/has-section-role": "./src/features/next/utils/has-section-role.ts",
     "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
     "./features/server/utils/mail-options": "./src/features/server/utils/mail-options.ts",

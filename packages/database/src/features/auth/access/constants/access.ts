@@ -20,7 +20,7 @@ const ROLE_RANK = {
 const APP_SETTINGS = {
   [App.LAURA]: {
     indexing: METADATA.INDEXING.UNINDEXED,
-    minRole: Role.VIEWER,
+    minRole: Role.USER,
     registration: null,
   },
   [App.BACK_OFFICE]: {

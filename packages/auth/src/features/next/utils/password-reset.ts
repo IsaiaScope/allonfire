@@ -1,5 +1,5 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { forwardedHeaders } from "@allonfire/core/features/next/api/utils/visitor-headers";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { headers } from "next/headers";
 import { z } from "zod";

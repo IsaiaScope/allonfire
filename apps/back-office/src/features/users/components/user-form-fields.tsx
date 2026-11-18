@@ -7,6 +7,10 @@ import type {
   AOFAvatarFieldProps,
 } from "@allonfire/ui/features/form/avatar-field/components/aof-avatar-field";
 import { withAOFFieldGroup } from "@allonfire/ui/features/form/utils/form";
+import {
+  type PasswordPair,
+  passwordChecks,
+} from "@allonfire/ui/features/form/utils/password-checks";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconKey, IconKeyFilled, IconUser } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
@@ -22,10 +26,6 @@ import {
   toolbarActionKanji,
 } from "@/shared/components/toolbar-action";
 import { ACTION_KANJI } from "@/shared/constants/action-kanji";
-import {
-  type PasswordPair,
-  passwordChecks,
-} from "@/shared/utils/password-checks";
 import { USERS } from "../constants/users";
 
 /*

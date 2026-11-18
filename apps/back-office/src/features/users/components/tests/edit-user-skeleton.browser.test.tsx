@@ -3,8 +3,9 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
+import { FORM_WIDTHS } from "@allonfire/ui/shared/tests/height-at";
 import { page } from "vitest/browser";
-import { FORM_WIDTHS, heightAt } from "@/shared/tests/height-at";
+import { heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { replace } from "../../tests/user-form-mocks";
@@ -15,6 +16,10 @@ import { EditUserSkeleton } from "../edit-user-skeleton";
 vi.mock("../../actions/edit-user", () => ({ editUser: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
   () => import("../../tests/user-form-mocks")
 );
 vi.mock(

@@ -1,10 +1,13 @@
+import type { Role } from "@allonfire/database/enums";
 import { type ComponentType, type ReactNode, Suspense } from "react";
 import { requireAppSession } from "../utils/session";
 
 /** Asks for the Session, then draws nothing: a visitor the App keeps out is
  *  redirected. */
-const AppGate = async () => {
-  await requireAppSession();
+const AppGate = async ({ minRole }: { minRole: Role | undefined }) => {
+  // Bare when the page asks nothing more: the frame asks the same, so the
+  // browser keeps one private-cache read for both.
+  await (minRole ? requireAppSession({ minRole }) : requireAppSession());
   return null;
 };
 
@@ -19,16 +22,18 @@ const AppGate = async () => {
  * page's static frame may reach them first, its data never (the API checks
  * every request). Checked per page, not in a layout, so each navigation
  * checks again; the browser keeps a passed check a while
- * (`AUTH.SESSION.PAGE_CHECK_STALE_S`).
+ * (`AUTH.SESSION.PAGE_CHECK_STALE_S`). A Section above the App's floor passes
+ * its `minRole`: a lower Role is sent Home.
  */
 export const withAppSession = <Props extends object>(
   Page: ComponentType<Props>,
-  fallback: ReactNode
+  fallback: ReactNode,
+  options?: { minRole?: Role | undefined }
 ) => {
   const SignedInPage = (props: Props) => (
     <>
       <Suspense fallback={null}>
-        <AppGate />
+        <AppGate minRole={options?.minRole} />
       </Suspense>
       <Suspense fallback={fallback}>
         <Page {...props} />

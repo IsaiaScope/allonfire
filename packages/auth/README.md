@@ -36,7 +36,7 @@ real instance.
 ## Exports
 
 Roles and Apps are the Prisma enums, imported from
-`@allonfire/database/enums` (`Role.VIEWER`, `App.LAURA`); this package keeps
+`@allonfire/database/enums` (`Role.ADMIN`, `App.LAURA`); this package keeps
 no copy of them. A User's Role is per App: the Session's `user.memberships`
 lists each App they belong to and their Role there. HTTP statuses and methods come from
 `@allonfire/core/features/http/constants/http`.
@@ -44,20 +44,20 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | Export | Contents |
 |--------|----------|
 | `./environment/environment` | `authEnvSchema` (`AUTH_SECRET`, `AUTH_URL`, `AUTH_COOKIE_DOMAIN` (optional: the parent domain the Session cookies are set for), `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
-| `./features/hono/guards/middleware/require-app` | `requireApp(app)` — 403 unless the User is allowed into it (`canEnterApp` from `@allonfire/database/features/auth/access/access`: a Membership there whose Role reaches the App's floor in `ACCESS.APP_SETTINGS`); mount it once per App |
+| `./features/hono/guards/middleware/require-app` | `requireApp(app, min?)` — 403 unless the User is allowed into it (`canEnterApp` from `@allonfire/database/features/auth/access/access`: a Membership there whose Role reaches the App's floor in `ACCESS.APP_SETTINGS`); mount it once per App. `min` raises the door for one Section (`requireApp(App.LAURA, Role.ADMIN)`, ADR 0032) and never lowers the floor |
 | `./features/hono/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
 | `./features/hono/guards/utils/manage-guard` | `manageGuard(canManage)` — 401 without a Session, 403 unless the Host's `canManage({ sessionId, userId })` says yes (`CanManage`); every Admin-only route takes it, never a guard of its own |
 | `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL` and `AUTH_APP`, required; `AUTH_COOKIE_DOMAIN`, optional: the API's own value, so Sign out clears the cookies even when the API does not answer) for a Next App to extend its env with |
 | `./features/next/actions/password-reset` | `requestPasswordReset(locale, resetPage, previous, formData)` (`{ sent: true }` for any address, else `{ error }`) and `resetPassword(locale, token, previous, formData)` (Sign in once set, else `{ error }`): server actions for the Forgot and Reset password forms |
 | `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
 | `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
-| `./features/next/components/with-app-session` | `withAppSession(Page, fallback)` — wraps every signed-in page: `requireAppSession` runs beside the page behind its own `<Suspense>` and redirects anyone the App keeps out; the page sits in its own `<Suspense>` showing `fallback` for its data, so a page without request-time data is in the static shell |
+| `./features/next/components/with-app-session` | `withAppSession(Page, fallback, { minRole }?)` — wraps every signed-in page: `requireAppSession` runs beside the page behind its own `<Suspense>` and redirects anyone the App keeps out; the page sits in its own `<Suspense>` showing `fallback` for its data, so a page without request-time data is in the static shell; a Section above the App's floor passes its `minRole`, and a lower Role is sent Home |
 | `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
 | `./features/next/utils/with-provider-pictures` | `withProviderPictures(config)` — lets an App's next/image optimize a sign-in provider's picture (`AUTH.PICTURE_HOSTS`, Google's today, over https), added to the App's own `remotePatterns`; a new provider adds its host there first |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
-| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, pages })` (`pages`: the App's signed-in paths after the locale, `""` for Home) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in or Forgot password by someone the App already lets in (asked of the API) to Home (307); Reset password always renders |
+| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, sections })` (`sections`: the App's Sections as its descriptor lists them, `{ path, minRole? }`: each path after the locale, `""` for Home, is signed-in only; each one with a `minRole` is above the App's floor: a visit by a Session whose Role does not reach it goes Home (307), asked of the API only on those paths) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in or Forgot password by someone the App already lets in (asked of the API) to Home (307); Reset password always renders |
 | `./features/next/constants/api` | `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
-| `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession()` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`), or a redirect to Sign in |
+| `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession({ minRole }?)` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`) whose Role reaches `minRole` when given (`hasSectionRole`, `hasRoleIn` in `AUTH_APP`), or a redirect: to Sign in for someone kept out, Home for a Role below the Section's |
 | `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
 | `./features/hono/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
 | `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
@@ -111,7 +111,9 @@ new Hono()
   .route("/", authRoutes(auth))
   .use(sessionLoader(auth))
   .post("/v1/things", requireSession(), handler)
-  .route("/v1/laura", new Hono().use(requireApp(App.LAURA)).get(...));
+  .route("/v1/laura", new Hono().use(requireApp(App.LAURA)).get(...))
+  // An Admin-only Section of the same App:
+  .route("/v1/laura-admin", new Hono().use(requireApp(App.LAURA, Role.ADMIN)).post(...));
 ```
 
 The `AuthLike` port carries the `basePath` given to `createAuth`, so the

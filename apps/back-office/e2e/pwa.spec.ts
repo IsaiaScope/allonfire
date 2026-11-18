@@ -5,9 +5,7 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translat
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";
-import APP_IT from "../src/features/i18n/translations/it.json" with {
-  type: "json",
-};
+import { AUTH_IT } from "../src/shared/tests/auth-words";
 
 const { en: EN, it: IT } = SHARED_TRANSLATIONS;
 
@@ -83,13 +81,13 @@ test("reports a lost connection mid-session without leaving the page", async ({
   await page.goto(IT_SIGN_IN);
   await page.waitForLoadState("networkidle");
   await page
-    .getByLabel(APP_IT.SignIn.email)
+    .getByLabel(AUTH_IT.SignIn.email)
     .fill(FIXTURE.USER.BACK_OFFICE.ADMIN.email);
   await page
-    .getByLabel(APP_IT.SignIn.password, { exact: true })
+    .getByLabel(AUTH_IT.SignIn.password, { exact: true })
     .fill(WRONG_PASSWORD);
   await context.setOffline(true);
-  await page.getByRole("button", { name: APP_IT.SignIn.submit }).click();
+  await page.getByRole("button", { name: AUTH_IT.SignIn.submit }).click();
   await expect(page.getByText(IT.Common.Offline.banner.title)).toBeVisible();
   await context.setOffline(false);
   await expect(page.getByText(IT.Common.Offline.banner.title)).toHaveCount(0);

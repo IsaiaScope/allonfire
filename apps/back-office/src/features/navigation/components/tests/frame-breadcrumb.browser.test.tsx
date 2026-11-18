@@ -1,6 +1,11 @@
 // @module-tag integration
 
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
+import { NAVIGATION } from "@allonfire/ui/features/navigation/constants/navigation";
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
@@ -8,21 +13,24 @@ import { cdp, page, server, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { NAVIGATION } from "../../constants/navigation";
 import { SECTION, SECTIONS } from "../../constants/sections";
-import { sectionHref } from "../../utils/sections";
 import { AppFrame } from "../app-frame";
-import { SectionPage } from "../section-page";
 
 const t = EN.Navigation;
+const common = SHARED_TRANSLATIONS.en.Common.Navigation;
 
 /** The address the mocked router reports; a test moves it to navigate. */
 const at = { pathname: sectionHref(SECTION.USERS.path) };
 
-vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
-  usePathname: () => at.pathname,
-}));
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  async () => ({
+    aofBaseNavigation: {
+      Link: (await import("@allonfire/ui/shared/tests/link-mock")).LinkMock,
+      usePathname: () => at.pathname,
+    },
+  })
+);
 
 /** Following a link would reload the test's own page: links stay put. */
 const stayPut = (event: MouseEvent) => event.preventDefault();
@@ -32,7 +40,7 @@ const PAGE = "Page";
 
 const frame = (search = "", content: ReactNode = <p>{PAGE}</p>) => (
   <NuqsTestingAdapter searchParams={search}>
-    <NextIntlClientProvider locale="en" messages={EN}>
+    <NextIntlClientProvider locale="en" messages={aofMessages("en", EN)}>
       <AppFrame account={<span>{ACCOUNT}</span>} switcher={<span>Apps</span>}>
         {content}
       </AppFrame>
@@ -41,7 +49,7 @@ const frame = (search = "", content: ReactNode = <p>{PAGE}</p>) => (
 );
 
 const breadcrumb = () =>
-  page.getByRole("navigation", { exact: true, name: t.breadcrumb });
+  page.getByRole("navigation", { exact: true, name: common.breadcrumb });
 
 /** The words of the crumb marked as the current page. */
 const currentCrumb = () =>
@@ -62,7 +70,7 @@ describe("FrameBreadcrumb", () => {
   it("shows the App then the Section", async () => {
     await render(frame());
     await expect
-      .element(breadcrumb().getByRole("link", { name: BACK_OFFICE.NAME }))
+      .element(breadcrumb().getByRole("link", { name: BACK_OFFICE.name }))
       .toBeVisible();
     await expect.poll(currentCrumb).toContain(t.users);
   });
@@ -81,7 +89,7 @@ describe("FrameBreadcrumb", () => {
     await expect.poll(currentCrumb).toContain(t.home);
     // shadcn draws the current crumb as a disabled link: look for the App.
     await expect
-      .element(breadcrumb().getByText(BACK_OFFICE.NAME))
+      .element(breadcrumb().getByText(BACK_OFFICE.name))
       .not.toBeInTheDocument();
   });
 });
@@ -123,7 +131,7 @@ describe("AppFrame", () => {
         `?${new URLSearchParams({ [NAVIGATION.PARAM.SIDEBAR]: String(false) })}`
       )
     );
-    const menu = page.getByRole("navigation", { name: t.menu });
+    const menu = page.getByRole("navigation", { name: common.menu });
     await Promise.all(
       SECTIONS.map(({ label }) =>
         expect
@@ -139,21 +147,21 @@ describe("AppFrame", () => {
       SCREEN.VIEWPORT.PHONE.HEIGHT
     );
     const screen = await render(frame());
-    const toggle = screen.getByRole("button", { name: t.toggleMenu });
+    const toggle = screen.getByRole("button", { name: common.toggleMenu });
     await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
     // The drawer is modal: once open, the page behind it, the button
     // included, leaves the accessibility tree, so hold the button itself.
     const button = toggle.element();
     await toggle.click();
     await expect
-      .element(page.getByRole("dialog", { exact: true, name: t.menu }))
+      .element(page.getByRole("dialog", { exact: true, name: common.menu }))
       .toBeVisible();
     expect(button.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("says whether the desktop sidebar is expanded", async () => {
     await render(frame());
-    const toggle = page.getByRole("button", { name: t.toggleMenu });
+    const toggle = page.getByRole("button", { name: common.toggleMenu });
     await expect.element(toggle).toHaveAttribute("aria-expanded", "true");
     await toggle.click();
     await expect.element(toggle).toHaveAttribute("aria-expanded", "false");
@@ -165,7 +173,7 @@ describe("AppFrame", () => {
       SCREEN.VIEWPORT.PHONE.HEIGHT
     );
     const screen = await render(frame());
-    await screen.getByRole("button", { name: t.toggleMenu }).click();
+    await screen.getByRole("button", { name: common.toggleMenu }).click();
     await expect.element(page.getByRole("dialog")).toBeVisible();
     at.pathname = sectionHref(SECTION.STORAGE.path);
     await screen.rerender(frame());
@@ -178,7 +186,7 @@ describe("AppFrame", () => {
       SCREEN.VIEWPORT.PHONE.HEIGHT
     );
     const screen = await render(frame());
-    await screen.getByRole("button", { name: t.toggleMenu }).click();
+    await screen.getByRole("button", { name: common.toggleMenu }).click();
     // The keyboard, not a pointer: without the App's styles Base UI's
     // backdrop lies over the drawer here.
     page
@@ -235,7 +243,7 @@ describe.runIf(server.browser === "chromium")(
       );
       const screen = await render(frame());
       await notch(NOTCH);
-      await screen.getByRole("button", { name: t.toggleMenu }).click();
+      await screen.getByRole("button", { name: common.toggleMenu }).click();
       await expect.element(page.getByRole("dialog")).toBeVisible();
       expect(px(footer(), "Bottom")).toBe(NOTCH.bottom);
     });
@@ -243,7 +251,7 @@ describe.runIf(server.browser === "chromium")(
     it("keeps the header's right end clear of a notch on that side", async () => {
       const screen = await render(frame());
       const header = screen
-        .getByRole("button", { name: t.toggleMenu })
+        .getByRole("button", { name: common.toggleMenu })
         .element()
         .closest("header");
       const clear = px(header, "Right");
@@ -254,7 +262,7 @@ describe.runIf(server.browser === "chromium")(
     /** The page's header, the frame's top bar. */
     const header = () =>
       page
-        .getByRole("button", { name: t.toggleMenu })
+        .getByRole("button", { name: common.toggleMenu })
         .element()
         .closest("header");
     /** The sidebar's header: the App switcher's band. */
@@ -298,7 +306,7 @@ describe.runIf(server.browser === "chromium")(
     it("drops the left notch from the page's gutter beside the sidebar, which clears it", async () => {
       const section = () =>
         page.getByText(PAGE, { exact: true }).element().closest("section");
-      await render(frame("", <SectionPage>{PAGE}</SectionPage>));
+      await render(frame("", <AOFSectionPage>{PAGE}</AOFSectionPage>));
       const clear = px(section(), "Left");
       await notch(NOTCH);
       expect(px(section(), "Left")).toBe(clear);

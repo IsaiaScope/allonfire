@@ -1,27 +1,19 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
-import { entryRoles } from "@allonfire/database/features/auth/access/access";
-import { cn } from "@allonfire/ui/shared/utils/utils";
+import {
+  AOFFormActionsSkeleton,
+  AOFFormAlertSkeleton,
+  AOFFormBar,
+  AOFFormSkeleton,
+} from "@allonfire/ui/features/form/components/aof-form-skeleton";
 import { IconServerCog, IconUserShield } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import {
-  Bar,
-  FormActionsSkeleton,
-  FormAlertSkeleton,
-  FormSkeleton,
-} from "@/shared/components/form-skeleton";
 import { APP_ENTRY } from "@/shared/constants/apps";
-
-/**
- * A Role row with this many entry Roles (and "Not a member" besides) outgrows
- * a phone's width and wraps to a second line, below the container's `@md`.
- */
-const WRAPPING_ROLES = 3;
 
 /** A field as the form draws it: its label stands, its input and its error line are bars. */
 const FieldSkeleton = ({
-  children = <Bar part="field" />,
+  children = <AOFFormBar part="field" />,
   label,
 }: {
   children?: ReactNode;
@@ -30,7 +22,7 @@ const FieldSkeleton = ({
   <div aria-hidden className="flex flex-col gap-2">
     <span className="font-bold text-sm leading-snug">{label}</span>
     {children}
-    <Bar part="error" />
+    <AOFFormBar part="error" />
   </div>
 );
 
@@ -45,8 +37,8 @@ const FieldSkeleton = ({
 export const EditUserSkeleton = () => {
   const t = useTranslations();
   return (
-    <FormSkeleton label={t("Users.edit.loading")}>
-      <Bar part="title" />
+    <AOFFormSkeleton label={t("Users.edit.loading")}>
+      <AOFFormBar part="title" />
       <div className="flex flex-1 flex-col">
         <div
           aria-hidden
@@ -56,13 +48,13 @@ export const EditUserSkeleton = () => {
             <FieldSkeleton label={t("Users.edit.email")} />
             <FieldSkeleton label={t("Users.form.name")} />
             <FieldSkeleton label={t("Users.form.avatar.label")}>
-              <Bar className="h-52 w-full" part="tile" />
+              <AOFFormBar className="h-52 w-full" part="tile" />
             </FieldSkeleton>
           </div>
           <div className="flex flex-col">
             <FieldSkeleton label={t("Users.edit.password")} />
             <FieldSkeleton label={t("Users.edit.confirmPassword")} />
-            <Bar className="h-51 w-full" part="tile" />
+            <AOFFormBar className="h-51 w-full" part="tile" />
           </div>
           <fieldset className="@2xl:col-span-2 mt-8 flex flex-col gap-8">
             <legend className="mb-2 flex items-center gap-2 font-bold text-base">
@@ -72,13 +64,7 @@ export const EditUserSkeleton = () => {
             {objectValues(App).map((app) => (
               <div className="flex flex-col gap-2" key={app}>
                 <span className="font-bold text-sm">{APP_ENTRY[app].name}</span>
-                <Bar
-                  className={cn(
-                    entryRoles(app).length >= WRAPPING_ROLES &&
-                      "@md:h-[46.8px] h-[85.6px]"
-                  )}
-                  part="toggle"
-                />
+                <AOFFormBar part="toggle" />
               </div>
             ))}
           </fieldset>
@@ -89,15 +75,15 @@ export const EditUserSkeleton = () => {
             </legend>
             <div className="flex flex-col gap-2">
               <span className="font-bold text-sm">{t("Navigation.mail")}</span>
-              <Bar part="toggle" />
+              <AOFFormBar part="toggle" />
             </div>
           </fieldset>
           <div className="@2xl:col-span-2 mt-4">
-            <FormAlertSkeleton />
+            <AOFFormAlertSkeleton />
           </div>
         </div>
-        <FormActionsSkeleton />
+        <AOFFormActionsSkeleton />
       </div>
-    </FormSkeleton>
+    </AOFFormSkeleton>
   );
 };

@@ -4,11 +4,11 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { updateTag } from "next/cache";
 import {
   type ApiRefusalKey,
   refusalOf,
-  textOf,
 } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";

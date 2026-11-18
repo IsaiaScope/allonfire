@@ -14,6 +14,7 @@ import {
   isBackOfficeAdmin,
   roleIn,
 } from "../access";
+import { ACCESS } from "../constants/access";
 import { appSchema } from "../constants/schemas";
 
 const member = (app: App, role: Role) => ({
@@ -88,7 +89,7 @@ describe("hasRoleIn", () => {
 
 describe("canEnterApp", () => {
   it("needs a Membership in the App", () => {
-    expect(canEnterApp(member(App.LAURA, Role.VIEWER), App.LAURA)).toBe(true);
+    expect(canEnterApp(member(App.LAURA, Role.USER), App.LAURA)).toBe(true);
     expect(canEnterApp(member(App.LAURA, Role.ADMIN), App.BACK_OFFICE)).toBe(
       false
     );
@@ -101,6 +102,57 @@ describe("canEnterApp", () => {
     expect(
       canEnterApp(member(App.BACK_OFFICE, Role.ADMIN), App.BACK_OFFICE)
     ).toBe(true);
+  });
+});
+
+describe("Laura's floor", () => {
+  it("is User: a User Membership enters Laura, no Membership does not", () => {
+    expect(ACCESS.APP_SETTINGS[App.LAURA].minRole).toBe(Role.USER);
+    expect(canEnterApp(member(App.LAURA, Role.USER), App.LAURA)).toBe(true);
+    expect(canEnterApp(member(App.LAURA, Role.ADMIN), App.LAURA)).toBe(true);
+    expect(canEnterApp({ memberships: [] }, App.LAURA)).toBe(false);
+  });
+});
+
+describe("no App admits a Viewer", () => {
+  it.each(objectValues(App))(
+    "a Viewer of %s does not enter it, see its private Images or count as enterable",
+    (app) => {
+      const viewer = member(app, Role.VIEWER);
+      expect(canEnterApp(viewer, app)).toBe(false);
+      expect(
+        canSeeImage(viewer, { access: ImageAccess.PRIVATE, apps: [app] })
+      ).toBe(false);
+      expect(enterableApps(viewer)).toEqual([]);
+    }
+  );
+});
+
+describe("canEnterApp with a Section's Role", () => {
+  it("asks more than the App's floor: Admin only", () => {
+    expect(
+      canEnterApp(member(App.LAURA, Role.USER), App.LAURA, Role.ADMIN)
+    ).toBe(false);
+    expect(
+      canEnterApp(member(App.LAURA, Role.ADMIN), App.LAURA, Role.ADMIN)
+    ).toBe(true);
+    expect(
+      canEnterApp(member(App.LAURA, Role.USER), App.LAURA, Role.USER)
+    ).toBe(true);
+  });
+
+  it("never asks less than the App's floor, and never lets in a stranger to the App", () => {
+    expect(
+      canEnterApp(
+        member(App.BACK_OFFICE, Role.USER),
+        App.BACK_OFFICE,
+        Role.USER
+      )
+    ).toBe(false);
+    expect(
+      canEnterApp(member(App.LAURA, Role.ADMIN), App.BACK_OFFICE, Role.USER)
+    ).toBe(false);
+    expect(canEnterApp({ memberships: [] }, App.LAURA, Role.USER)).toBe(false);
   });
 });
 
@@ -119,7 +171,7 @@ describe("who enters the Back Office", () => {
 
 describe("entryRoles", () => {
   it("lists the Roles that reach an App's floor, in enum order", () => {
-    expect(entryRoles(App.LAURA)).toEqual([Role.ADMIN, Role.USER, Role.VIEWER]);
+    expect(entryRoles(App.LAURA)).toEqual([Role.ADMIN, Role.USER]);
     expect(entryRoles(App.BACK_OFFICE)).toEqual([Role.ADMIN]);
   });
 
@@ -172,7 +224,7 @@ describe("accessUserFrom", () => {
 describe("canSeeImage", () => {
   it("shows a public Image to anyone: a visitor, a member, an outsider", () => {
     expect(canSeeImage(null, PUBLIC_IN_LAURA)).toBe(true);
-    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PUBLIC_IN_LAURA)).toBe(
+    expect(canSeeImage(member(App.LAURA, Role.USER), PUBLIC_IN_LAURA)).toBe(
       true
     );
     expect(canSeeImage({ memberships: [] }, PUBLIC_IN_LAURA)).toBe(true);
@@ -180,7 +232,7 @@ describe("canSeeImage", () => {
 
   it("shows a private Image only to those who enter one of its Apps", () => {
     expect(canSeeImage(null, PRIVATE_IN_LAURA)).toBe(false);
-    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PRIVATE_IN_LAURA)).toBe(
+    expect(canSeeImage(member(App.LAURA, Role.USER), PRIVATE_IN_LAURA)).toBe(
       true
     );
     expect(
@@ -189,7 +241,7 @@ describe("canSeeImage", () => {
   });
 
   it("lets a member of either App see a private Image in both", () => {
-    expect(canSeeImage(member(App.LAURA, Role.VIEWER), PRIVATE_IN_BOTH)).toBe(
+    expect(canSeeImage(member(App.LAURA, Role.USER), PRIVATE_IN_BOTH)).toBe(
       true
     );
     expect(
@@ -223,7 +275,7 @@ describe("canManageEverywhere", () => {
 describe("enterableApps", () => {
   it("lists the Apps the User enters, none for a visitor", () => {
     expect(enterableApps(null)).toEqual([]);
-    expect(enterableApps(member(App.LAURA, Role.VIEWER))).toEqual([App.LAURA]);
+    expect(enterableApps(member(App.LAURA, Role.USER))).toEqual([App.LAURA]);
     expect(enterableApps(member(App.BACK_OFFICE, Role.USER))).toEqual([]);
     expect(enterableApps(everywhereAdmin)).toEqual([
       App.LAURA,

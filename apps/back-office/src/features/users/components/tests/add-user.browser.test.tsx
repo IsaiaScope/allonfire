@@ -3,6 +3,8 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
@@ -14,6 +16,7 @@ import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { AUTH_EN } from "@/shared/tests/auth-words";
 import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { type AddUserState, addUser } from "../../actions/add-user";
@@ -27,6 +30,10 @@ vi.mock("../../actions/add-user", () => ({ addUser: vi.fn() }));
 // within its own file, so only the factories are shared (user-form-mocks).
 vi.mock(
   "@/features/i18n/navigation",
+  () => import("../../tests/user-form-mocks")
+);
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
   () => import("../../tests/user-form-mocks")
 );
 vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
@@ -58,7 +65,7 @@ const Providers = ({ children }: { children: ReactNode }) => (
   <NextIntlClientProvider
     formats={DATE.FORMATS}
     locale={I18N.DEFAULT_LANGUAGE}
-    messages={EN}
+    messages={aofMessages("en", EN)}
     timeZone={DATE.TIME_ZONE}
   >
     {children}
@@ -120,22 +127,6 @@ describe("AddUser on its page", () => {
 });
 
 describe("AddUser", () => {
-  it("shows a Role row per App, offering only Roles that reach its floor", async () => {
-    await renderForm();
-    await expect.element(roleRow(App.LAURA)).toBeVisible();
-    expect(
-      await roleRow(App.BACK_OFFICE).getByRole("button").all()
-    ).toHaveLength(2);
-    expect(await roleRow(App.LAURA).getByRole("button").all()).toHaveLength(4);
-    await expect
-      .element(
-        roleRow(App.BACK_OFFICE).getByRole("button", {
-          name: EN.Navigation.role[Role.ADMIN],
-        })
-      )
-      .toBeVisible();
-  });
-
   it("checks the fields before posting", async () => {
     await renderForm();
     await page.getByRole("button", { name: t.submit }).click();
@@ -147,32 +138,34 @@ describe("AddUser", () => {
     await renderForm();
     const password = page.getByLabelText(FORM.password, { exact: true });
     const length = rule(
-      enT("Password.rule.length", { min: USER.LIMIT.PASSWORD_MIN })
+      enT("Common.Auth.Password.rule.length", { min: USER.LIMIT.PASSWORD_MIN })
     );
     await expect.element(length).not.toBeChecked();
     await password.fill("a");
-    await expect.element(rule(EN.Password.rule.lowercase)).toBeChecked();
-    await expect.element(rule(EN.Password.rule.uppercase)).not.toBeChecked();
+    await expect.element(rule(AUTH_EN.Password.rule.lowercase)).toBeChecked();
+    await expect
+      .element(rule(AUTH_EN.Password.rule.uppercase))
+      .not.toBeChecked();
     await password.fill(NEW.password);
     await Promise.all(
       [
         length,
-        rule(EN.Password.rule.uppercase),
-        rule(EN.Password.rule.number),
-        rule(EN.Password.rule.symbol),
+        rule(AUTH_EN.Password.rule.uppercase),
+        rule(AUTH_EN.Password.rule.number),
+        rule(AUTH_EN.Password.rule.symbol),
       ].map((met) => expect.element(met).toBeChecked())
     );
-    await expect.element(rule(EN.Password.rule.match)).not.toBeChecked();
+    await expect.element(rule(AUTH_EN.Password.rule.match)).not.toBeChecked();
     await page
       .getByLabelText(FORM.confirmPassword, { exact: true })
       .fill(NEW.password);
-    await expect.element(rule(EN.Password.rule.match)).toBeChecked();
+    await expect.element(rule(AUTH_EN.Password.rule.match)).toBeChecked();
   });
 
   it("keeps the rules out of the tab order: they only report", async () => {
     await renderForm();
     await expect
-      .element(rule(EN.Password.rule.match))
+      .element(rule(AUTH_EN.Password.rule.match))
       .toHaveAttribute("tabindex", "-1");
   });
 
@@ -194,7 +187,9 @@ describe("AddUser", () => {
     await renderForm();
     await fill();
     await roleRow(App.LAURA)
-      .getByRole("button", { name: EN.Navigation.role[Role.USER] })
+      .getByRole("button", {
+        name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.USER],
+      })
       .click();
     await page.getByRole("button", { name: t.submit }).click();
     await expect.poll(() => vi.mocked(addUser).mock.calls.length).toBe(1);
@@ -237,6 +232,32 @@ describe("AddUser", () => {
     expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(
       window.innerWidth
     );
+  });
+});
+
+describe("AddUser's Role picker", () => {
+  it("shows a Role row per App, offering only Roles that reach its floor", async () => {
+    await renderForm();
+    await expect.element(roleRow(App.LAURA)).toBeVisible();
+    expect(
+      await roleRow(App.BACK_OFFICE).getByRole("button").all()
+    ).toHaveLength(2);
+    // Not a member, Admin and User: Laura admits no Viewer.
+    expect(await roleRow(App.LAURA).getByRole("button").all()).toHaveLength(3);
+    await expect
+      .element(
+        roleRow(App.LAURA).getByRole("button", {
+          name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.VIEWER],
+        })
+      )
+      .not.toBeInTheDocument();
+    await expect
+      .element(
+        roleRow(App.BACK_OFFICE).getByRole("button", {
+          name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.ADMIN],
+        })
+      )
+      .toBeVisible();
   });
 });
 

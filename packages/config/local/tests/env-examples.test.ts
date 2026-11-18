@@ -56,6 +56,7 @@ const OWNERS = [
       fromSchemas(
         "apps/back-office/src/environment/environment.ts",
         "packages/auth/src/environment/next-environment.ts",
+        "packages/core/src/environment/next-api-environment.ts",
         "packages/core/src/environment/telemetry-environment.ts"
       ),
   ],

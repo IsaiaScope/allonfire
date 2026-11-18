@@ -1,8 +1,8 @@
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import type { AOFRow } from "@allonfire/ui/features/data-table/components/aof-data-table";
+import { useSelectableRows } from "@allonfire/ui/features/data-table/hooks/use-selectable-rows";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useCallback } from "react";
-import { useSelectableRows } from "@/shared/hooks/use-selectable-rows";
 import { ImageCard } from "../components/image-card";
 import { useAltLanguage, useImageColumns } from "../components/image-columns";
 import { altFor } from "../utils/image-alt";

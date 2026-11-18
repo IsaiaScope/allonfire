@@ -49,7 +49,7 @@ describe("guards through the API", () => {
 
   it("renders 403 for a User the App does not let in", async () => {
     const res = await guarded(
-      sessionFor({ memberships: [{ app: App.LAURA, role: Role.VIEWER }] })
+      sessionFor({ memberships: [{ app: App.LAURA, role: Role.USER }] })
     ).request(BACK_OFFICE_ROUTE);
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect((await problemOf(res)).code).toBe(ERROR.CODE.FORBIDDEN);

@@ -23,6 +23,10 @@ vi.mock(
   () => import("../../tests/image-form-mocks")
 );
 vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/image-form-mocks")
+);
+vi.mock(
   "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/image-form-mocks")
 );
@@ -56,7 +60,7 @@ beforeEach(() => {
 
 const renderAdd = (apps: readonly App[] = BOTH) =>
   renderInApp({
-    // The page's own width, which the form's wide layout reads (`SectionPage`).
+    // The page's own width, which the form's wide layout reads (`AOFSectionPage`).
     children: (
       <div className="@container">
         <AddImage apps={apps} />

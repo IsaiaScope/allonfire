@@ -1,8 +1,8 @@
+import { optimisticMutation } from "@allonfire/core/features/next/query/utils/optimistic-mutation";
+import { optimisticUpdate } from "@allonfire/core/features/next/query/utils/optimistic-update";
 import type { ServiceType } from "@allonfire/database/enums";
 import { MUTATION } from "@/shared/constants/mutation";
 import { QUERY } from "@/shared/constants/query";
-import { optimisticMutation } from "@/shared/utils/optimistic-mutation";
-import { optimisticUpdate } from "@/shared/utils/optimistic-update";
 import { setServiceEnabled } from "../actions/services";
 import { type ServiceList, servicesListKey } from "./services-queries";
 

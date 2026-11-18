@@ -10,7 +10,7 @@ export const contentType = HTTP.CONTENT_TYPE.SVG;
 const Icon = () =>
   new Response(
     aofLogoSvg({
-      app: BACK_OFFICE.LOGO,
+      app: BACK_OFFICE.logo,
       layout: METADATA.LOGO.LAYOUT.SQUARE,
       scheme: METADATA.LOGO.SCHEME.AUTO,
     }),

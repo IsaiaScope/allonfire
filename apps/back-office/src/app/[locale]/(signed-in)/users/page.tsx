@@ -1,10 +1,9 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { HydrationBoundary } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
@@ -14,6 +13,7 @@ import {
   queryOf,
 } from "@/features/users/constants/users-params";
 import { usersHydration } from "@/features/users/utils/users-hydration";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(SECTION.USERS.path, `Navigation.${SECTION.USERS.label}`);
@@ -54,14 +54,14 @@ const UsersList = async ({ searchParams }: UsersPageProps) => {
 const UsersPage = ({ searchParams }: UsersPageProps) => {
   const t = useTranslations("Navigation");
   return (
-    <SectionPage className="gap-6">
+    <AOFSectionPage className="gap-6">
       {/* The header's breadcrumb already names the Section on screen; the
           page keeps its h1 for screen readers. */}
       <h1 className="sr-only">{t(SECTION.USERS.label)}</h1>
       <Suspense fallback={<UsersListSkeleton />}>
         <UsersList searchParams={searchParams} />
       </Suspense>
-    </SectionPage>
+    </AOFSectionPage>
   );
 };
 

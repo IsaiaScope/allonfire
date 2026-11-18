@@ -1,6 +1,7 @@
 "use client";
 
 import { AOFBarChart } from "@allonfire/ui/features/chart/components/aof-bar-chart";
+import { cardBadge } from "@allonfire/ui/features/data-table/utils/card-badge";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import {
   AOFCardAction,
@@ -15,7 +16,6 @@ import { CardFrame } from "@/shared/components/card-frame";
 import { OverviewTitle } from "@/shared/components/overview-card-state";
 import { OverviewQueryView } from "@/shared/components/overview-query-view";
 import { APP_ENTRY } from "@/shared/constants/apps";
-import { cardBadge } from "@/shared/utils/card-badge";
 import { USERS } from "../constants/users";
 import { usersOverviewQuery } from "../utils/users-overview-queries";
 import { UsersOverviewSkeleton } from "./users-overview-skeleton";

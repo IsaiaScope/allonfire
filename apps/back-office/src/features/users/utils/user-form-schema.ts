@@ -6,8 +6,8 @@ import {
   objectValues,
 } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
+import type { PasswordPair } from "@allonfire/ui/features/form/utils/password-checks";
 import { z } from "zod";
-import type { PasswordPair } from "@/shared/utils/password-checks";
 import { USERS } from "../constants/users";
 
 /** The field messages both User forms share, translated by the form. */

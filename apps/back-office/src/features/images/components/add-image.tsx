@@ -3,6 +3,8 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import type { App } from "@allonfire/database/enums";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-toast-then-list";
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import {
   AOFButton,
@@ -28,13 +30,11 @@ import {
 } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 import { CardFrame } from "@/shared/components/card-frame";
-import { FormAlert } from "@/shared/components/form-alert";
 import {
   ToolbarActionBody,
   toolbarActionClass,
 } from "@/shared/components/toolbar-action";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { type AddImageState, addImage } from "../actions/add-image";
 import { IMAGES } from "../constants/images";
 import {
@@ -281,7 +281,7 @@ const Refusal = ({
   }
   const { error } = answer;
   const text = error !== undefined && given.files === files ? t(error) : null;
-  return <FormAlert className="mt-4">{text}</FormAlert>;
+  return <AOFFormAlert className="mt-4">{text}</AOFFormAlert>;
 };
 
 type RowsState = { values: { rows: AddImageRowValues[] } };

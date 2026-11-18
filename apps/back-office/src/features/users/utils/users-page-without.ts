@@ -1,4 +1,4 @@
-import { rowsWithout } from "@/shared/utils/page-without";
+import { rowsWithout } from "@allonfire/core/features/next/query/utils/page-without";
 import type { fetchUsers } from "./users-queries";
 
 /** One page of the Users list, as the API answers it. */

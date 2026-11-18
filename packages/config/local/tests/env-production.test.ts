@@ -80,6 +80,19 @@ describe("env-production.sh", () => {
     expect(readFileSync(join(dir, "pbcopy.in"), "utf8")).toBe(SECRET);
   });
 
+  it("copy says it needs macOS where there is no pbcopy", () => {
+    // A PATH holding only the folder: no pbcopy, however the machine is set up.
+    const result = spawnSync("/bin/bash", [SCRIPT, "copy", file(), "A"], {
+      encoding: "utf8",
+      env: { ...process.env, PATH: dir },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("pbcopy");
+    expect(result.stderr).toContain("macOS");
+    expect(result.stdout + result.stderr).not.toContain(SECRET);
+  });
+
   it("gh-secret pipes the value to gh secret set and never echoes it", () => {
     stub("gh");
     const result = run("gh-secret", file(), "B", "prod");

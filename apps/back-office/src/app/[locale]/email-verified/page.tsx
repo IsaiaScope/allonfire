@@ -1,10 +1,11 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { EmailVerified } from "@/features/auth/components/email-verified";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
+import { AOFEmailVerified } from "@allonfire/ui/features/auth/components/aof-email-verified";
+import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
-  pageMetadata(AUTH.PAGE.EMAIL_VERIFIED, "EmailVerified.title");
+  pageMetadata(AUTH.PAGE.EMAIL_VERIFIED, "Common.Auth.EmailVerified.title");
 
-const EmailVerifiedPage = () => <EmailVerified />;
+const EmailVerifiedPage = () => <AOFEmailVerified dressing={AUTH_DRESSING} />;
 
 export default EmailVerifiedPage;

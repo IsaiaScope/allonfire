@@ -10,9 +10,9 @@ import {
 } from "@allonfire/config/tests/e2e/safe-area";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { expect, type Page, test } from "@playwright/test";
 import { SECTIONS } from "../src/features/navigation/constants/sections";
-import { sectionHref } from "../src/features/navigation/utils/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { imageLink } from "./images-flow";
 import {
