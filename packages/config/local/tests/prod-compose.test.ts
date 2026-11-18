@@ -197,6 +197,17 @@ it("keeps the storage console out of search results, ahead of its login", () => 
   );
 });
 
+it.each([
+  ["api", "allonfire-api"],
+  ["cdn", "allonfire-cdn"],
+])("keeps the %s out of search results", (name, router) => {
+  // A router naming a middleware that is missing from the VPS answers 404, so
+  // noindex.yml must be restored with the Traefik files (vps-security.md).
+  expect(service(name)).toContain(
+    `traefik.http.routers.${router}.middlewares=noindex@file`
+  );
+});
+
 it("the prod compose reads no vendor variable and requires the Back Office's public URL", () => {
   // The storage image's own MINIO_ROOT_* keys stay; what they read is ours.
   expect(COMPOSE).not.toContain(interpolate("MINIO_"));

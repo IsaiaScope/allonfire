@@ -6,8 +6,8 @@ import {
   AOFDropdownMenuLabel,
   AOFDropdownMenuTrigger,
 } from "../../../shared/components/aof-dropdown-menu";
-import type { AppDescriptor } from "../types/app-descriptor";
-import type { SwitcherApp } from "../utils/switcher-apps";
+import type { AppSwitcherDescriptor } from "../types/app-descriptor";
+import type { SwitcherEntry } from "../utils/switcher-apps";
 import { AOFAppTile } from "./aof-app-tile";
 import { AOFCurrentAppMark, aofSwitcherButton } from "./aof-current-app-mark";
 import {
@@ -19,9 +19,9 @@ import {
 
 export type AOFAppSwitcherMenuProps = {
   /** The App you are in: its button, and how it draws each other App. */
-  app: Pick<AppDescriptor, "app" | "entries" | "name">;
+  app: AppSwitcherDescriptor;
   /** The other Apps the User is allowed into; at least one. */
-  apps: SwitcherApp[];
+  apps: SwitcherEntry[];
   labels: { apps: string; switchApp: string };
 };
 

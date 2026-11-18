@@ -2,6 +2,7 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App } from "@allonfire/database/enums";
 import { JAPAN_EMAIL_LOOK } from "@allonfire/design/designs/japan/email-look";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
+import { OCEAN_EMAIL_LOOK } from "@allonfire/design/designs/ocean/email-look";
 import {
   AOF_EMAIL_LOOK,
   type AOFEmailLook,
@@ -36,6 +37,6 @@ export const EMAIL = {
       brand: "AllOnFire Back Office",
       ...JAPAN_EMAIL_LOOK,
     },
-    [App.LAURA]: { ...AOF_EMAIL_LOOK, brand: "Laura" },
+    [App.LAURA]: { ...AOF_EMAIL_LOOK, brand: "Laura", ...OCEAN_EMAIL_LOOK },
   } as const satisfies Record<App, AOFEmailLook>,
 } as const;

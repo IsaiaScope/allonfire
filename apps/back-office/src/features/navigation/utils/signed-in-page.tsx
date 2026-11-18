@@ -1,4 +1,7 @@
-import { withAppSession } from "@allonfire/auth/features/next/components/with-app-session";
+import {
+  type AppSessionOptions,
+  withAppSession,
+} from "@allonfire/auth/features/next/components/with-app-session";
 import type { ComponentType } from "react";
 import { SectionLoading } from "../components/section-loading";
 
@@ -9,5 +12,5 @@ import { SectionLoading } from "../components/section-loading";
  */
 export const signedInPage = <Props extends object>(
   Page: ComponentType<Props>,
-  options?: Parameters<typeof withAppSession>[2]
+  options?: AppSessionOptions
 ) => withAppSession(Page, <SectionLoading />, options);

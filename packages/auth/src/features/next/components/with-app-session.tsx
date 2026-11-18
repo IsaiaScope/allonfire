@@ -2,6 +2,9 @@ import type { Role } from "@allonfire/database/enums";
 import { type ComponentType, type ReactNode, Suspense } from "react";
 import { requireAppSession } from "../utils/session";
 
+/** What a page tells `withAppSession` beyond the page itself. */
+export type AppSessionOptions = { minRole?: Role | undefined };
+
 /** Asks for the Session, then draws nothing: a visitor the App keeps out is
  *  redirected. */
 const AppGate = async ({ minRole }: { minRole: Role | undefined }) => {
@@ -28,7 +31,7 @@ const AppGate = async ({ minRole }: { minRole: Role | undefined }) => {
 export const withAppSession = <Props extends object>(
   Page: ComponentType<Props>,
   fallback: ReactNode,
-  options?: { minRole?: Role | undefined }
+  options?: AppSessionOptions
 ) => {
   const SignedInPage = (props: Props) => (
     <>

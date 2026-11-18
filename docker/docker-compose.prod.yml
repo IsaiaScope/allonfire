@@ -129,6 +129,7 @@ services:
       - "traefik.http.routers.allonfire-api.rule=Host(`${API_HOST}`)"
       - "traefik.http.routers.allonfire-api.entrypoints=websecure"
       - "traefik.http.routers.allonfire-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-api.middlewares=noindex@file"
       - "traefik.http.services.allonfire-api.loadbalancer.server.port=3000"
 
   # NEXT_PUBLIC_API_URL and BACK_OFFICE_URL are baked in at build (deploy.yml); BACK_OFFICE_URL is also read at runtime, the same value.
@@ -350,6 +351,7 @@ services:
       - "traefik.http.routers.allonfire-cdn.rule=Host(`${CDN_HOST}`)"
       - "traefik.http.routers.allonfire-cdn.entrypoints=websecure"
       - "traefik.http.routers.allonfire-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-cdn.middlewares=noindex@file"
       - "traefik.http.services.allonfire-cdn.loadbalancer.server.port=8080"
 
 volumes:

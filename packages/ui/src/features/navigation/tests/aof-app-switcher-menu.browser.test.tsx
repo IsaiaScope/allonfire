@@ -7,8 +7,8 @@ import { page, userEvent } from "vitest/browser";
 import { renderInUi } from "../../../shared/tests/render-in-ui";
 import { AOFAppSwitcherMenu } from "../components/aof-app-switcher-menu";
 import { AOFSidebarProvider } from "../components/aof-sidebar";
-import type { AppDescriptor } from "../types/app-descriptor";
-import { type SwitcherApp, switcherApps } from "../utils/switcher-apps";
+import type { AppSwitcherDescriptor } from "../types/app-descriptor";
+import { type SwitcherEntry, switcherApps } from "../utils/switcher-apps";
 
 vi.mock("../../../shared/components/aof-image", async () => ({
   AOFImage: (await import("../../../shared/tests/image-mock")).ImageMock,
@@ -25,12 +25,12 @@ const APP = {
     [App.LAURA]: { mark: { icon: IconLibraryPhoto }, name: LAURA },
   },
   name: HERE,
-} as const satisfies Pick<AppDescriptor, "app" | "entries" | "name">;
+} as const satisfies AppSwitcherDescriptor;
 const OTHERS = switcherApps(APP, [App.BACK_OFFICE, App.LAURA], {
   [App.LAURA]: LOCAL.URL.LAURA,
 });
 
-const renderSwitcher = (apps: SwitcherApp[]) =>
+const renderSwitcher = (apps: SwitcherEntry[]) =>
   renderInUi({
     children: (
       <AOFSidebarProvider>

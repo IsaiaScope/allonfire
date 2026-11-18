@@ -1,6 +1,6 @@
-import { cn } from "@allonfire/ui/shared/utils/utils";
 import { IconAlertTriangle, IconMailForward } from "@tabler/icons-react";
 import type { ComponentProps, ReactNode } from "react";
+import { cn } from "../../../shared/utils/utils";
 
 /**
  * What a form's last submit came to, boxed, at the end of the form, in a

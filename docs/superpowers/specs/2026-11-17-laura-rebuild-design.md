@@ -15,7 +15,7 @@ The owner wants Laura rebuilt on that standard, with every piece both Apps need 
 - Same auth flow as the Back Office (Sign in, Forgot password, Reset password, Email verified, sign-in gate, proxy). No registration in Laura: an Admin adds Users.
 - Laura admits Admin and User only: its floor is User and no Laura code, form option or copy branches on Viewer. The Viewer Role itself stays in the system (ADR 0032, owner decision of 2026-11-18).
 - Laura keeps only the Gallery (with Favorites) and the Memory game (with its leaderboard). Quiz is deleted completely.
-- A new Design for Laura: polpo / octopus / sea, in `packages/design/src/designs/`, worn through `/aof-design`. The Japan Design stays for the Back Office.
+- A new Design for Laura: ocean / octopus / sea, in `packages/design/src/designs/`, worn through `/aof-design`. The Japan Design stays for the Back Office.
 - Everything standard from the Back Office: PWA (install hint, offline, Offline page, service worker), link previews and share card, metadata, icons, launch screens, robots, 404/403/error pages, instrumentation, safe-area guard, e2e.
 
 ## Non-goals

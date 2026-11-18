@@ -55,7 +55,7 @@ it in their tab; a declined look is reverted.
    message says before anything else.
 4. **Target.** The App file. A route's interface beyond a few lines lives in
    a feature component, `apps/<app>/src/features/<topic>/components/<name>.tsx`
-   (the Sign in page is `features/auth/components/sign-in.tsx`, export
+   (the Sign in page is `features/auth/components/ticket-gate.tsx`, export
    `SignIn`); its page only adds metadata and renders it. A trivial page
    (home placeholder, error, not found) keeps its markup in the page. A new
    page gets its component file first.
@@ -347,6 +347,37 @@ viewport. Buttons need `cursor-pointer` (`AOFButton` adds it). A custom
 beside the element's real one (Japan's dot grids are `pattern-led-grid`,
 `pattern-tactile-dots`).
 
+## Ocean Design (Laura)
+
+Chosen with the owner (2026-11-18) for the Laura rebuild; hold new Laura pages
+to it.
+
+- **Name and look.** `ocean`, direction A, the tide pool: teal on sea glass by
+  day, deep water by night, one coral. Fraunces for page headings
+  (`--font-heading`), Nunito for text and for generated images (Satori reads
+  no variable or WOFF2 fonts), soft corners (`--radius` 0.75rem).
+- **The Ink Rule.** The card back and any other dark furniture are ink in both
+  schemes.
+- **The Coral Rule.** Coral marks a Favorite and the card back's octopus only;
+  never text on the ground, never a state.
+- **The Floating Frame Rule.** Only the floating frame and floating controls
+  cast a shadow (an emoji gets only its tight `--emoji-shadow`); gap,
+  radius and shadow come from `--frame-*`.
+- **The Quiet Image Rule.** Chrome never competes with an Image; a stored
+  picture shows the real `blurDataUrl`, never a stand-in gradient.
+- **The octopus.** A mascot, not the logo: the Laura logo is the AOF logo as
+  the Back Office wears it, with Ocean's teal banner behind its label. The
+  octopus (`ocean-mark.ts`) is the owner's chosen "kawaii blob" (a round
+  body on four tiny feet), plain ellipses in two colours with one face per
+  moment (dizzy on the Memory game's card back); a new face is a new
+  function. The owner likes variety: show many options (a board with codes)
+  before drawing the final one, and say where each comes from and under which
+  licence.
+- **Variants, never forks.** A shared component serves every App and Design
+  through a variant, a slot or a CSS token read with a fallback; a Design
+  supplies tokens only.
+- **The Emoji Rule.** Laura's pictures of the sea and its moments are Noto or Firefox emoji (`sea-emoji.ts`), never the ship, always drawn with `filter: var(--emoji-shadow)`: full colour fails 3:1 on the light ground without it.
+
 ## new <name> --app <app>
 
 1. Create `packages/design/src/designs/<name>/`. If
@@ -373,7 +404,7 @@ beside the element's real one (Japan's dot grids are `pattern-led-grid`,
    prose), mapped onto shadcn's variables in `:root` and `.dark`, plus
    `@theme inline` for any token shadcn has no variable for. Keep every text
    pair at WCAG AA: `src/designs/<name>/tests/theme.test.ts` checks them
-   (copy Japan's test for a new Design).
+   (call `describeContrast` from `designs/shared/tests/theme-css`; copy nothing from Japan's test).
 5. Add `@import "../../designs/<name>/theme.css";` at the top of the App's
    `styles.css` (the App's `globals.css` imports ui's base first), then
    `pnpm design:sync`.

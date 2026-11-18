@@ -17,7 +17,10 @@ import {
 } from "../../form/components/aof-password-rules";
 import { useAOFForm } from "../../form/utils/form";
 import { useAOFFormAction } from "../../form/utils/form-submit";
-import { passwordChecks } from "../../form/utils/password-checks";
+import {
+  type PasswordPair,
+  passwordChecks,
+} from "../../form/utils/password-checks";
 import { resetSchema } from "../utils/reset-schema";
 import { AOFGateNote } from "./aof-gate-note";
 import { AOFGateSubmit } from "./aof-gate-submit";
@@ -25,11 +28,8 @@ import { AOFGateSubmit } from "./aof-gate-submit";
 const { Link } = aofBaseNavigation;
 
 /** The rules ticked under the fields, from what both hold. */
-const checksOf = ({
-  values,
-}: {
-  values: { confirmPassword: string; password: string };
-}) => passwordChecks(values);
+const checksOf = ({ values }: { values: PasswordPair }) =>
+  passwordChecks(values);
 
 type DressedProps = {
   actions: AOFActionDressing;

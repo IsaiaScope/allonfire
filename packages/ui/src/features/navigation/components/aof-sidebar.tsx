@@ -1,7 +1,5 @@
 "use client";
 
-import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import {
   Sheet,
   SheetContent,
@@ -28,76 +26,17 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
 } from "@tabler/icons-react";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps } from "react";
 import {
   AOFButton,
   type AOFButtonProps,
 } from "../../../shared/components/aof-button";
 import { AOFDropdownMenuContent } from "../../../shared/components/aof-dropdown-menu";
 import { cn } from "../../../shared/utils/utils";
-
-type Collapsible = NonNullable<ComponentProps<typeof Sidebar>["collapsible"]>;
-
-/** The address param that holds the sidebar's state, and its collapsed value. */
-type AOFSidebarCollapsedBy = { param: string; value: string };
-
-/**
- * Runs while the HTML is parsed, before the first paint: when the address
- * holds the collapsed value, the wrapper right before it says so.
- */
-const collapseOnArrival = (
-  { param, value }: AOFSidebarCollapsedBy,
-  collapsible: Collapsible
-) => `{
-  const wrapper = document.currentScript.previousElementSibling;
-  if (new URLSearchParams(location.search).get(${stringifyJson(param)}) === ${stringifyJson(value)}) {
-    wrapper.dataset.state = "collapsed";
-    wrapper.dataset.collapsible = ${stringifyJson(collapsible)};
-  }
-}`;
-
-/**
- * Draws the sidebar collapsed from the first paint (Next's "Preventing flash
- * before hydration"). A prerendered page's HTML is the sidebar open, and the
- * App reads its address only once the page runs: alone, the menu would show
- * open, then close. This wrapper carries shadcn's own marks (`group`,
- * `data-state`, `data-collapsible`), which every `group-data-*` class inside
- * the sidebar reads from any ancestor; the inline script sets them before
- * the first paint, and after that they follow the sidebar's state, so the
- * hydration mismatch is the script's, expected. React never runs a script it
- * renders in the browser, so there the script is inert.
- */
-const CollapsedOnArrival = ({
-  by,
-  children,
-  collapsible,
-}: {
-  by: AOFSidebarCollapsedBy;
-  children: ReactNode;
-  collapsible: Collapsible;
-}) => {
-  const { state } = useSidebar();
-  return (
-    <>
-      <div
-        className="group contents"
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-state={state}
-        suppressHydrationWarning
-      >
-        {children}
-      </div>
-      <script
-        suppressHydrationWarning
-        type={
-          typeof window === "undefined" ? undefined : HTTP.CONTENT_TYPE.JSON
-        }
-      >
-        {collapseOnArrival(by, collapsible)}
-      </script>
-    </>
-  );
-};
+import {
+  type AOFSidebarCollapsedBy,
+  CollapsedOnArrival,
+} from "./aof-sidebar-collapsed-on-arrival";
 
 /**
  * The phone's drawer, as shadcn draws it, but named by the App: shadcn's
@@ -165,9 +104,15 @@ export const AOFSidebar = ({
     <Sidebar
       collapsible={collapsible}
       {...props}
-      // Its content clear of a notch on the left; its colour runs to the edge.
       className={cn(
+        // Its content clear of a notch on the left; its colour runs to the edge.
         "md:*:data-[sidebar=sidebar]:pl-[env(safe-area-inset-left,0px)]",
+        // A floating frame wears the Design's tokens (`--frame-gap`,
+        // `--frame-radius`, `--frame-shadow`), each falling back to shadcn's
+        // own value, so a Design that sets none, and the `sidebar` variant,
+        // are unchanged. The shadow goes in `--tw-shadow`, so the ring
+        // shadcn composes beside it stays.
+        "group-data-[variant=floating]:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+2*var(--frame-gap,0.5rem)+2px)] group-data-[variant=floating]:p-(--frame-gap,0.5rem) group-data-[variant=floating]:*:data-[sidebar=sidebar]:rounded-(--frame-radius,var(--radius-lg)) group-data-[variant=floating]:*:data-[sidebar=sidebar]:[--tw-shadow:var(--frame-shadow,var(--shadow-sm))]",
         props.className
       )}
     />
@@ -295,6 +240,9 @@ export const AOFSidebarProvider = ({
   <SidebarProvider
     className={cn(
       "[--frame-inset-left:env(safe-area-inset-left,0px)] md:has-data-[slot=sidebar-gap]:[--frame-inset-left:0px]",
+      // A floating frame folded to its icons leaves the rail plus its gap on
+      // both sides (`AOFSidebar` reads the same `--frame-gap`).
+      "**:data-[slot=sidebar-gap]:group-data-[variant=floating]:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+2*var(--frame-gap,0.5rem))]",
       className
     )}
     style={{ ...RAIL, ...style }}

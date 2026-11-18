@@ -2,6 +2,7 @@
 import { signIn } from "@allonfire/auth/features/next/actions/sign-in";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofTranslators } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
@@ -10,6 +11,7 @@ import { STUB_DRESSING, STUB_MESSAGES } from "./stub-dressing";
 
 const t = SHARED_TRANSLATIONS.en.Common.Auth.SignIn;
 const APP = "Test App";
+const translate = aofTranslators({ en: {}, it: {} }).en;
 
 // The action runs on the Next server, which browser tests do not start;
 // e2e covers the real round trip.
@@ -96,7 +98,9 @@ describe("AOFSignInForm", () => {
     await fill(screen, FIXTURE.USER.BACK_OFFICE.USER.email, FIXTURE.PASSWORD);
     await expect
       .element(screen.getByRole("alert"))
-      .toHaveTextContent(t.error.forbidden.replace("{app}", APP));
+      .toHaveTextContent(
+        translate("Common.Auth.SignIn.error.forbidden", { app: APP })
+      );
   });
 
   it("marks both fields wrong when the credentials are", async () => {

@@ -1,6 +1,6 @@
 import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { cva } from "class-variance-authority";
-import type { AppDescriptor } from "../types/app-descriptor";
+import type { AppSwitcherDescriptor } from "../types/app-descriptor";
 import { AOFAppTile } from "./aof-app-tile";
 
 /**
@@ -11,7 +11,7 @@ import { AOFAppTile } from "./aof-app-tile";
 export const aofSwitcherButton = cva("h-13 gap-3 p-0.5 pr-1.5");
 
 export type AOFCurrentAppMarkProps = {
-  app: Pick<AppDescriptor, "app" | "entries" | "name">;
+  app: AppSwitcherDescriptor;
 };
 
 /**

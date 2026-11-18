@@ -1,9 +1,9 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
-import type { AppDescriptor } from "../types/app-descriptor";
+import type { AppSwitcherDescriptor } from "../types/app-descriptor";
 
 /** One entry of the switcher's menu. */
-export type SwitcherApp = {
+export type SwitcherEntry = {
   app: App;
   /** The address without its scheme, shown under the name. */
   host: string;
@@ -18,10 +18,10 @@ export type SwitcherApp = {
  * button already shows it.
  */
 export const switcherApps = (
-  app: Pick<AppDescriptor, "app" | "entries">,
+  app: Pick<AppSwitcherDescriptor, "app" | "entries">,
   enterable: readonly App[],
   addresses: Partial<Record<App, string | undefined>>
-): SwitcherApp[] =>
+): SwitcherEntry[] =>
   objectValues(App).flatMap((other) => {
     const href = addresses[other];
     if (other === app.app || !(enterable.includes(other) && href)) {

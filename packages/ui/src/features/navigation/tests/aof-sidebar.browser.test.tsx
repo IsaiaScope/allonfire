@@ -348,3 +348,101 @@ describe.runIf(server.browser === "chromium")(
     });
   }
 );
+
+// A Design declares these on `:root` and sets none it does not want: the
+// frame reads each with a fallback to shadcn's own value.
+const FRAME_TOKENS = [
+  "--frame-gap",
+  "--frame-radius",
+  "--frame-shadow",
+] as const;
+const SHADCN_FLOATING_SHADOW = "0px 1px 3px 0px";
+/** The folded rail, 3.375rem (`AOFSidebarProvider`'s `--sidebar-width-icon`). */
+const RAIL_PX = 54;
+
+const declareFrame = (
+  tokens: Partial<Record<(typeof FRAME_TOKENS)[number], string>>
+) => {
+  for (const name of FRAME_TOKENS) {
+    const value = tokens[name];
+    if (value) {
+      document.documentElement.style.setProperty(name, value);
+    }
+  }
+};
+
+const frameParts = async (variant: "floating" | "sidebar", open = true) => {
+  const screen = await render(
+    <AOFSidebarProvider defaultOpen={open}>
+      <AOFSidebar label="Menu" variant={variant}>
+        Sections
+      </AOFSidebar>
+    </AOFSidebarProvider>
+  );
+  const part = (selector: string) => {
+    const element = screen.container.querySelector(selector);
+    if (!element) {
+      throw new Error(`the sidebar drew no ${selector}`);
+    }
+    return element;
+  };
+  return {
+    container: part('[data-slot="sidebar-container"]'),
+    gap: part('[data-slot="sidebar-gap"]'),
+    inner: part('[data-sidebar="sidebar"]'),
+  };
+};
+
+describe("a floating sidebar reads the Design's frame tokens", () => {
+  afterEach(() => {
+    for (const name of FRAME_TOKENS) {
+      document.documentElement.style.removeProperty(name);
+    }
+  });
+
+  it("pads the frame by --frame-gap, and by shadcn's 8px without it", async () => {
+    declareFrame({ "--frame-gap": "1rem" });
+    const { container } = await frameParts("floating");
+    expect(getComputedStyle(container).padding).toBe("16px");
+    document.documentElement.style.removeProperty("--frame-gap");
+    expect(getComputedStyle(container).padding).toBe("8px");
+  });
+
+  it("rounds the frame by --frame-radius, and by shadcn's large radius without it", async () => {
+    declareFrame({ "--frame-radius": "20px" });
+    const { inner } = await frameParts("floating");
+    expect(getComputedStyle(inner).borderRadius).toBe("20px");
+    document.documentElement.style.removeProperty("--frame-radius");
+    expect(getComputedStyle(inner).borderRadius).toBe(
+      computedValue("border-radius", "var(--radius-lg)")
+    );
+  });
+
+  it("casts --frame-shadow, and shadcn's small shadow without it", async () => {
+    declareFrame({ "--frame-shadow": "0 0 0 4px rgb(1 2 3)" });
+    const { inner } = await frameParts("floating");
+    expect(getComputedStyle(inner).boxShadow).toContain("rgb(1, 2, 3)");
+    document.documentElement.style.removeProperty("--frame-shadow");
+    expect(getComputedStyle(inner).boxShadow).toContain(SHADCN_FLOATING_SHADOW);
+  });
+
+  it("leaves a collapsed frame's gap the rail plus the gap on both sides", async () => {
+    declareFrame({ "--frame-gap": "1rem" });
+    const { gap } = await frameParts("floating", false);
+    const rail = RAIL_PX;
+    const settled = await afterTransitions(gap);
+    expect(Number.parseFloat(settled.width)).toBe(rail + 2 * 16);
+  });
+
+  it("is ignored by the sidebar variant, the Back Office's", async () => {
+    declareFrame({
+      "--frame-gap": "1rem",
+      "--frame-radius": "20px",
+      "--frame-shadow": "0 0 0 4px rgb(1 2 3)",
+    });
+    const { container, inner } = await frameParts("sidebar");
+    expect(getComputedStyle(container).padding).toBe("0px");
+    expect(getComputedStyle(inner).borderRadius).toBe("0px");
+    expect(getComputedStyle(inner).boxShadow).toBe("none");
+  });
+});

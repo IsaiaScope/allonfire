@@ -29,6 +29,12 @@ export type AppSection = {
   pages?: readonly AppSubPage[];
 };
 
+/** The slice of an App the switcher draws: its mark and the Apps beside it. */
+export type AppSwitcherDescriptor = Pick<
+  AppDescriptor,
+  "app" | "entries" | "name"
+>;
+
 /**
  * What an App tells the shared frame about itself. `S` is the App's own
  * Section type, so its labels stay literal where it reads them.

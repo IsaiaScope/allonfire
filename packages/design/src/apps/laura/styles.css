@@ -1,0 +1,6 @@
+/* Laura's own layer over ui's base: the Design it wears and the App's few
+   rules. The App imports ui's base.css, then this file, and adds its own
+   `@source`. A Design is worn by importing its theme.css here
+   (`/aof-design new` adds it). The rules every App shares (no scrollbars,
+   Sonner's wider toaster) live in ui's base.css, never here. */
+@import "../../designs/ocean/theme.css";

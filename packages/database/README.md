@@ -95,6 +95,12 @@ fails a `.prisma` edit that has no changeset.
 
 Liquibase needs Java, so it only runs in Docker: every `db:*` Liquibase script
 builds the same `db-migrate` image Production runs (`scripts/liquibase.sh`).
+The image is tagged `allonfire-db-migrate:<hash of its build context>`: an
+unchanged changelog reuses it, and callers running at once (every package's
+tests under Turbo) share one tag instead of moving it. Each changelog edit
+leaves one old tag; remove them with
+`docker rmi $(docker images -q allonfire-db-migrate)` (an image a container is
+using stays).
 
 ## Test Databases and Fixtures
 

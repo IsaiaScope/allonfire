@@ -32,9 +32,18 @@ cp "$repo_root/package.json" "$context/"
 rsync -a --exclude='._*' --exclude='.DS_Store' --exclude='tests' \
   "$package_dir/changelog" "$package_dir/liquibase" "$context/packages/database/"
 
-# By ID, not by tag: another checkout building at the same time moves the tag.
-image=$(docker build --quiet --tag allonfire-db-migrate \
-  --file "$context/packages/database/liquibase/Dockerfile" "$context")
+# The tag is a hash of the build context: the same content is the same tag, so
+# a parallel caller (another package's tests, another checkout) never moves it
+# to other content, and Docker never deletes an image another caller is about
+# to run. An image that exists is not built again.
+if command -v sha256sum >/dev/null; then sha=(sha256sum); else sha=(shasum -a 256); fi
+hash="$(cd "$context" && find . -type f -print0 | LC_ALL=C sort -z |
+  xargs -0 "${sha[@]}" | "${sha[@]}" | cut -c1-12)"
+image="allonfire-db-migrate:$hash"
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+  docker build --quiet --tag "$image" \
+    --file "$context/packages/database/liquibase/Dockerfile" "$context" >/dev/null
+fi
 
 volume=()
 if [[ -n "${DATABASE_BACKUP_VOLUME:-}" ]]; then

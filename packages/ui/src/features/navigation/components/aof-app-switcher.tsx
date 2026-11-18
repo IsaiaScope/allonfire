@@ -6,7 +6,7 @@ import {
 } from "@allonfire/database/features/auth/access/access";
 import { getTranslations } from "next-intl/server";
 import { cn } from "../../../shared/utils/utils";
-import type { AppDescriptor } from "../types/app-descriptor";
+import type { AppSwitcherDescriptor } from "../types/app-descriptor";
 import { switcherApps } from "../utils/switcher-apps";
 import { AOFAppSwitcherMenu } from "./aof-app-switcher-menu";
 import { AOFCurrentAppMark, aofSwitcherButton } from "./aof-current-app-mark";
@@ -16,13 +16,11 @@ import {
   AOFSidebarMenuItem,
 } from "./aof-sidebar";
 
-type SwitcherApp = Pick<AppDescriptor, "app" | "entries" | "name">;
-
 /**
  * The App you are in, drawn as the switcher's button but with no menu: the
  * frame's static shell, and what a visitor without a Session sees.
  */
-export const AOFCurrentApp = ({ app }: { app: SwitcherApp }) => (
+export const AOFCurrentApp = ({ app }: { app: AppSwitcherDescriptor }) => (
   <AOFSidebarMenu>
     <AOFSidebarMenuItem>
       {/* The switcher's own button, folded and unfolded alike, opening
@@ -52,7 +50,7 @@ export const AOFAppSwitcher = async ({
   app,
 }: {
   addresses: Partial<Record<App, string | undefined>>;
-  app: SwitcherApp;
+  app: AppSwitcherDescriptor;
 }) => {
   const [session, t] = await Promise.all([
     requireAppSession(),

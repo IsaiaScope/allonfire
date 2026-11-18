@@ -36,6 +36,8 @@ const MAIL_KEYS = [0, 1].flatMap((slot) =>
 
 // Laura keeps its old names until it is rebuilt (package-layout.md).
 const OWNERS = [
+  // Turbo's own names, read by local/check.sh, not by an App.
+  [".env.example", () => ["TURBO_TEAM", "TURBO_TOKEN"]],
   [
     "apps/api/.env.example",
     () =>

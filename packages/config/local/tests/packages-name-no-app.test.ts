@@ -4,7 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { REPO } from "../repo";
 
-// ponytail: plain fs and a regex, config imports nothing, core's helpers included.
+// Plain fs and a regex, config imports nothing, core's helpers included.
 
 /** Files that catalogue per App on purpose (package-layout.md), each with its reason. */
 const ALLOWED = [

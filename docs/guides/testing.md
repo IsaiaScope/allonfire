@@ -92,7 +92,13 @@ failing tool; CI adds `--keep-going` (every tool reported) and `--affected`
 Redis, storage, the image server and the cdn, waited for; Docker must be
 running), never the rest of Local. The pre-commit hook
 (`.husky/pre-commit`) runs lint-staged on the staged files (Tailwind classes,
-then Biome's fixes; errors and warnings fail), then `pnpm check`. e2e runs the
+then Biome's fixes; errors and warnings fail), then
+`packages/config/local/check.sh`, which runs `pnpm check --affected` with
+`TURBO_SCM_BASE=HEAD`: a commit checks what it changes and the packages that
+read it (Turbo's tools only; lint, knip and jscpd still read the whole repo),
+where CI diffs against the PR's base. A commit made with `--no-verify`, a
+merge or a rebase is not re-checked by the next hook; CI still checks it.
+`pnpm check` by hand stays whole-repo. e2e runs the
 App's production build, served like the Docker image (standalone server),
 plus the API, on their own ports (3310 and the App's e2e port) beside
 `pnpm dev`, the same locally and in CI. Turbo's cache replays every task

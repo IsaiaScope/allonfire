@@ -318,6 +318,34 @@ describe("AddImage picking", () => {
     revoke.mockRestore();
     log.mockRestore();
   });
+
+  it("keeps each row's own Apps and access when a row above it is removed, and lets the shifted rows be edited", async () => {
+    renderAdd();
+    await pick(photo("a.jpg"), photo("b.jpg"), photo("c.jpg"));
+    await appIn(rowTitle(2), App.LAURA).click();
+    await page
+      .getByRole("button", {
+        name: enT("Images.add.row.remove", { name: "a.jpg" }),
+      })
+      .click();
+    await expect.element(rowTitle(3)).not.toBeInTheDocument();
+    // b.jpg moved up to row 1 with its own Apps; c.jpg to row 2 with the shared ones.
+    await expect
+      .element(appIn(rowTitle(1), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect
+      .element(appIn(rowTitle(2), App.LAURA))
+      .not.toHaveAttribute("aria-current");
+    // Editing a shifted row writes to that row, and the last one still renders.
+    await appIn(rowTitle(2), App.LAURA).click();
+    await expect
+      .element(appIn(rowTitle(2), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect
+      .element(appIn(rowTitle(1), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect.element(rowTitle(2)).toBeVisible();
+  });
 });
 
 describe("AddImage saving", () => {

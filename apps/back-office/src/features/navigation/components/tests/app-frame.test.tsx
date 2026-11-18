@@ -14,8 +14,10 @@ vi.mock("@allonfire/auth/features/next/utils/session", () => ({
   requireAppSession: vi.fn(),
 }));
 // The Role rule reads the App auth serves, which a test has no env for.
-vi.mock("@allonfire/auth/environment/next-environment", () => ({
-  nextAuthEnv: { AUTH_APP: "BACK_OFFICE" },
+vi.mock("@allonfire/auth/environment/next-environment", async () => ({
+  nextAuthEnv: {
+    AUTH_APP: (await import("@allonfire/database/enums")).App.BACK_OFFICE,
+  },
 }));
 vi.mock(
   "@allonfire/core/features/next/i18n/utils/aof-base-navigation",

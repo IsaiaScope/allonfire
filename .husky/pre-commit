@@ -4,6 +4,7 @@
 pnpm exec lint-staged --allow-empty
 # Then every Stage but build, in order, as CI runs them: static, test (the
 # Test services up first), e2e. A Stage stops at its first failing tool; what
-# each runs, and why, is packages/config/stages/stages.ts. Turbo's cache
-# replays what this commit did not touch.
-pnpm check
+# each runs, and why, is packages/config/stages/stages.ts. Turbo's tools are
+# narrowed to what this commit changes (`--affected` against HEAD) and its
+# remote cache is switched on from the token in `.env`: local/check.sh.
+bash packages/config/local/check.sh

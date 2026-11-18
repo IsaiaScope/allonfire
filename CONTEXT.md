@@ -81,12 +81,12 @@ words and its Design. Not part of the Design system.
 _Avoid_: boilerplate, starter, kit, template
 
 **App descriptor**:
-The one object an App gives the shared scaffold: its `App`, its Sections (each with its icon, its path and, when it sits above the App's floor, a `minRole`), the frame's look (`variant`, `collapsible`) and its address. The shared frame, the switcher, the proxy's gate and the guard tests read it; the App never repeats it.
+The one object an App gives the shared scaffold: its `App`, its name and Brand logo, how it draws every App in the switcher (`entries`), its share card's band colour and alt text, and its Sections (each with its icon, its path and, when it sits above the App's floor, a `minRole`). The frame's look (`variant`, `collapsible`) and an App's address are not in it: they are the frame's props and the environment's. The shared frame, the switcher, the proxy's gate and the guard tests read it; the App never repeats it.
 _Avoid_: manifest, config
 
 **Design**:
 A named visual world, its rules and its tokens, that one or more Apps wear.
-Japan is the first. Each App wears exactly one; a change to a Design reaches
+Japan (the Back Office's) and Ocean (Laura's). Each App wears exactly one; a change to a Design reaches
 every App wearing it.
 _Avoid_: theme, skin, look, palette
 

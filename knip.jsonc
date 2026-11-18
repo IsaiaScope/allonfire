@@ -97,6 +97,14 @@
     "packages/shadcn/src/components/faceted.d.ts": ["exports"],
     "packages/shadcn/src/components/scroll-area.d.ts": ["exports"],
     "packages/shadcn/src/components/sonner.d.ts": ["exports"],
+    // Ocean's constants are read by the Laura App, rebuilt in Phase 3 of the
+    // Laura rebuild; delete these entries when it lands.
+    "packages/design/src/designs/ocean/card-back.ts": ["exports"],
+    "packages/design/src/designs/ocean/image-fonts.ts": ["exports"],
+    "packages/design/src/designs/ocean/ocean-mark.ts": ["exports"],
+    "packages/design/src/designs/ocean/sea-emoji.ts": ["exports"],
+    "packages/design/src/designs/ocean/sea-icons.ts": ["exports"],
+    "packages/design/src/designs/ocean/share-card-look.ts": ["exports"],
     // Held only by Laura, which sits outside the workspace.
     "packages/core/src/features/errors/format-error-message.ts": ["exports"],
     "packages/database/src/features/apps/laura/game-score.service.ts": [

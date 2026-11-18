@@ -1,5 +1,6 @@
 // @module-tag integration
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { aofTranslators } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { firstLoad } from "@allonfire/core/features/next/pwa/utils/install-hint-state";
 import { renderInUi } from "../../../shared/tests/render-in-ui";
 import {
@@ -11,6 +12,7 @@ import type { AOFInstallHintCardProps } from "../types/install-hint-card";
 
 const TEXT = SHARED_TRANSLATIONS.en.Common.Install;
 const APP = "Her App";
+const translate = aofTranslators({ en: {}, it: {} }).en;
 const IPHONE_SAFARI =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1";
 
@@ -59,7 +61,7 @@ describe("AOFInstallHint", () => {
   it("sends the App's card with its name in the words and the browser's steps", async () => {
     const screen = await hint();
     await expect
-      .element(screen.getByText(TEXT.cta.replace("{app}", APP)))
+      .element(screen.getByText(translate("Common.Install.cta", { app: APP })))
       .toBeVisible();
     await expect.element(screen.getByRole("listitem").first()).toBeVisible();
     screen.unmount();
