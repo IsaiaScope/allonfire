@@ -31,17 +31,20 @@ ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
 # collection. NEXT_PUBLIC_API_URL must match the runtime value: Next.js bakes in
 # the API the browser calls, and the Back Office's build fails without it.
-# BACK_OFFICE_URL is the Back Office's metadataBase, baked into prerendered
-# pages; it must equal the runtime value.
+# BACK_OFFICE_URL and LAURA_URL are the two Apps' public addresses (each App's
+# metadataBase, and the link in the other's switcher), baked into prerendered
+# pages; each must equal the runtime value.
 # Other values are placeholders that never reach the runner stage. The
 # secret-shaped ones live on the build RUN line, not ENV, so they never enter
 # the image config and the SecretsUsedInArgOrEnv check stays quiet.
 ARG NEXT_PUBLIC_API_URL
 ARG BACK_OFFICE_URL
+ARG LAURA_URL
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
     API_URL="http://build.placeholder" \
     NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
-    BACK_OFFICE_URL=${BACK_OFFICE_URL}
+    BACK_OFFICE_URL=${BACK_OFFICE_URL} \
+    LAURA_URL=${LAURA_URL}
 RUN pnpm --filter @allonfire/database db:generate
 RUN AUTH_SECRET="build-placeholder-secret-not-used-at-runtime" \
     AUTH_URL="http://build.placeholder" \

@@ -15,12 +15,7 @@
       }
     ]
   },
-  // Paused Laura, the untracked reference packages, generated shadcn code and
-  // the exFAT AppleDouble twins.
-  "ignorePatterns": [
-    "apps/laura/**",
-    "packages/*-old/**",
-    "packages/shadcn/src/**",
-    "**/._*"
-  ]
+  // The untracked reference packages, generated shadcn code and the exFAT
+  // AppleDouble twins.
+  "ignorePatterns": ["packages/*-old/**", "packages/shadcn/src/**", "**/._*"]
 }

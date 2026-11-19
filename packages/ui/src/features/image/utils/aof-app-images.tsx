@@ -4,6 +4,7 @@ import {
 } from "@allonfire/core/features/metadata/constants/metadata";
 import { AOFIconImage } from "@allonfire/core/features/next/metadata/components/aof-icon-images";
 import type { AppLogo } from "@allonfire/design/brand/aof-logo";
+import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { ImageResponse } from "next/og";
 import type { ComponentProps } from "react";
 import { AOFBrandLogo } from "../components/aof-brand-logo";
@@ -17,35 +18,39 @@ type Fonts = NonNullable<MarkImage["fonts"]>;
  * The images an App generates, from the App's own values: its icons (the
  * apple-touch-icon and the manifest's), the iOS launch screen per colour
  * scheme and the link-preview card. `fonts` is the Design's slot (a
- * `"use cache"` function stays in the App); `ground` says what the icon and
- * each launch screen sit on; `shareCardLook` is the Design's card colours.
- * `description` reads the card's line in a locale (`aofAppMetadata`'s
- * `metadataText`).
+ * `"use cache"` function stays in the App); the icon sits on the Brand's
+ * ground (it draws the logo's dark scheme) and each launch screen on its
+ * scheme's `imageColor` background; `shareCard` is the Design's card colours,
+ * the light one drawn. `metadataText` is `aofAppMetadata`'s: the card's line
+ * is the `description` it reads in the locale.
  */
 export const aofAppImages = ({
-  description,
   fonts,
-  ground,
-  line,
+  band,
+  imageColor,
   logo,
-  shareCardLook,
+  metadataText,
+  shareCard,
 }: {
-  description: (locale: string) => string;
+  /** The colour of the card's band along the top. */
+  band: string;
   fonts: () => Promise<Fonts>;
-  ground: { icon: string; launch: (scheme: ColorScheme) => string };
-  /** The App's colour, as the card's band. */
-  line: string;
+  imageColor: Record<ColorScheme, { background: string }>;
   logo: AppLogo;
-  shareCardLook: Omit<
-    ComponentProps<typeof AOFShareCard>,
-    "band" | "description" | "headline" | "logo"
+  metadataText: (locale: string) => (key: "description") => string;
+  shareCard: Record<
+    ColorScheme,
+    Omit<
+      ComponentProps<typeof AOFShareCard>,
+      "band" | "description" | "headline" | "logo"
+    >
   >;
 }) => ({
   /** A square icon PNG, on the dark ground: no icon follows the viewer's theme. */
   iconImage: async (icon: { edge: number; inset: number }) =>
     AOFIconImage(icon, {
       fonts: await fonts(),
-      ground: ground.icon,
+      ground: BRAND.GROUND,
       mark: (edge) => (
         <AOFBrandLogo
           app={logo}
@@ -58,7 +63,7 @@ export const aofAppImages = ({
   /** How the mark looks on a launch screen in a scheme (`AOFLaunchScreenRoute`'s callback). */
   launchScreen: async (scheme: ColorScheme): Promise<MarkImage> => ({
     fonts: await fonts(),
-    ground: ground.launch(scheme),
+    ground: imageColor[scheme].background,
     mark: (edge) => (
       <AOFBrandLogo
         app={logo}
@@ -74,9 +79,9 @@ export const aofAppImages = ({
     const [{ locale }, loaded] = await Promise.all([params, fonts()]);
     return new ImageResponse(
       <AOFShareCard
-        {...shareCardLook}
-        band={line}
-        description={description(locale)}
+        {...shareCard[METADATA.COLOR_SCHEME.LIGHT]}
+        band={band}
+        description={metadataText(locale)("description")}
         headline={logo.name}
         logo={logo}
       />,

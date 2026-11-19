@@ -1,6 +1,8 @@
+import { env } from "@allonfire/core/environment/environment";
 import { AOFNuqsAdapter } from "@allonfire/core/features/next/providers/components/aof-nuqs-adapter";
 import { AOFThemeProvider } from "@allonfire/core/features/next/providers/components/aof-theme-provider";
 import { AOFPwa } from "@allonfire/core/features/next/pwa/components/aof-pwa";
+import { ENV } from "@allonfire/core/shared/constants/env";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { AOFEdgeTint } from "../../feedback/components/aof-edge-tint";
@@ -20,7 +22,7 @@ export const AOFLocaleDocument = ({
   children,
   hint,
   locale,
-  pwaEnabled,
+  pwaEnabled = env.NODE_ENV === ENV.NODE.PRODUCTION,
   toaster,
 }: {
   /** The App's offline banner. */
@@ -29,8 +31,8 @@ export const AOFLocaleDocument = ({
   /** The App's Install hint. */
   hint: ReactNode;
   locale: string;
-  /** Registers the service worker: the App's production build only. */
-  pwaEnabled: boolean;
+  /** Registers the service worker: a production build only, unless the App says otherwise. */
+  pwaEnabled?: boolean;
   /** Every toast the App sends, above an iPhone's home indicator. */
   toaster: ReactNode;
 }) => (

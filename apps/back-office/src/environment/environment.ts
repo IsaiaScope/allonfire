@@ -10,7 +10,8 @@ export const env = createEnv({
   // Local sets): core's schema; the runtime mappings below stay here, where
   // Next inlines them.
   client: { ...nextApiEnvSchema.client },
-  // An empty value reads as unset, so `LAURA_URL=` hides Laura.
+  // An empty value reads as unset, so an empty address is refused where one
+  // is needed and means no remote address where it is optional.
   emptyStringAsUndefined: true,
   experimental__runtimeEnv: {
     NEXT_PUBLIC_API_REMOTE_URL: process.env.NEXT_PUBLIC_API_REMOTE_URL,
@@ -31,10 +32,10 @@ export const env = createEnv({
      */
     BACK_OFFICE_URL: z.url(),
     /**
-     * Laura's public address, for the App switcher. Unset (or empty), Laura
-     * is not listed: it is not deployed yet.
+     * Laura's public address, for the App switcher, which lists Laura for
+     * every Admin who enters it. Build and runtime must carry the same value.
      */
-    LAURA_URL: z.url().optional(),
+    LAURA_URL: z.url(),
   },
   shared: runtimeEnvSchema,
 });

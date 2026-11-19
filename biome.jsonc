@@ -15,15 +15,9 @@
   },
   "files": {
     // Written only by the shadcn CLI (ADR 0010): formatting it would turn every
-    // CLI update into a diff against our own edits. Laura is paused until it
-    // moves to the new Design system (ADR 0010), out of lint like it is out of
-    // the workspace, turbo and vitest.
+    // CLI update into a diff against our own edits.
     // impeccable is written by its installer (ADR 0011), same reason as shadcn.
-    "includes": [
-      "!packages/shadcn/src",
-      "!apps/laura",
-      "!.claude/skills/impeccable"
-    ]
+    "includes": ["!packages/shadcn/src", "!.claude/skills/impeccable"]
   },
   "linter": {
     "rules": {
@@ -71,13 +65,6 @@
     }
   },
   "overrides": [
-    {
-      // ponytail: Laura's React components carry lint debt from before the
-      // rules were tightened; the linter skips them until the Laura redesign.
-      // Formatting still applies.
-      "includes": ["apps/laura/**"],
-      "linter": { "enabled": false }
-    },
     {
       // vitest runs with `globals: true` (packages/config/tests/vitest/vitest.config.ts).
       "includes": ["**/*.test.ts", "**/*.test-d.ts", "**/tests/**"],

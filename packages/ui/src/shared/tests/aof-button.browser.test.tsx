@@ -35,7 +35,7 @@ const fieldHeight = () => computedValue("height", "var(--field-height)");
 
 describe("AOFButton", () => {
   it("paints the default variant in the Design's primary, under a pointer", async () => {
-    const style = getComputedStyle(await button());
+    const style = await afterTransitions(await button());
     expect(style.backgroundColor).toBe(
       computedValue("background-color", "var(--primary)")
     );

@@ -3,9 +3,11 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { App } from "@allonfire/database/enums";
 import {
+  IconCards,
   IconHome,
   IconPhoto,
   IconServer2,
+  IconTrophy,
   IconUsers,
 } from "@tabler/icons-react";
 import { NAVIGATION } from "../../constants/navigation";
@@ -82,5 +84,24 @@ describe("Section helpers", () => {
     expect(currentSubPage(STORAGE, IMAGES.path)).toBe(IMAGES);
     expect(currentSubPage(STORAGE, `${IMAGES.path}/abc`)).toBe(IMAGES);
     expect(currentSection(app, `${IMAGES.path}/new`)).toBe(STORAGE);
+  });
+
+  it("marks the longest matching page of a Section whose first page is the Section itself", () => {
+    const play = { icon: IconCards, label: "play", path: "/memory" };
+    const leaderboard = {
+      icon: IconTrophy,
+      label: "leaderboard",
+      path: "/memory/leaderboard",
+    };
+    const memory = {
+      icon: IconCards,
+      label: "memory",
+      pages: [play, leaderboard],
+      path: "/memory",
+    };
+    expect(currentSubPage(memory, "/memory/leaderboard")?.label).toBe(
+      "leaderboard"
+    );
+    expect(currentSubPage(memory, "/memory")?.label).toBe("play");
   });
 });

@@ -1,19 +1,26 @@
-import { playwrightConfig } from "@allonfire/config/tests/e2e";
-import { defineConfig, devices } from "@playwright/test";
+import { API } from "@allonfire/api/shared/constants/api";
+import { LOCAL } from "@allonfire/config/local/addresses";
+import { aofPlaywrightConfig } from "@allonfire/config/tests/e2e";
+import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
+import { stringifyJson } from "@allonfire/core/shared/utils/json";
+import { App } from "@allonfire/database/enums";
 
-const PORT = 3200;
-const baseURL = `http://localhost:${PORT}`;
-
-export default defineConfig(playwrightConfig, {
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["iPhone 15"] } },
-  ],
-  use: { baseURL },
-  // Reuses `pnpm dev` when it is already up; CI starts its own.
-  webServer: {
-    command: "pnpm dev",
-    reuseExistingServer: !process.env.CI,
-    url: baseURL,
+export default aofPlaywrightConfig({
+  apiPath: API.PATH,
+  app: "laura",
+  env: {
+    AUTH_APP: App.LAURA,
+    // The e2e stack sets its own addresses, the Apps' included.
+    BACK_OFFICE_URL: LOCAL.URL.BACK_OFFICE_E2E,
+    LAURA_URL: LOCAL.URL.LAURA_E2E,
   },
+  // The Install hint shows from a visitor's second page on and, on a phone,
+  // covers a form's button: every e2e visitor has dismissed it already.
+  localStorage: [
+    {
+      name: PWA.INSTALL_HINT.STORAGE_KEY.DISMISSED,
+      value: stringifyJson(Date.now()),
+    },
+  ],
+  port: LOCAL.PORT.LAURA_E2E,
 });

@@ -2,7 +2,12 @@
 
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
-import { IconMail, IconServerCog } from "@tabler/icons-react";
+import {
+  IconCards,
+  IconMail,
+  IconServerCog,
+  IconTrophy,
+} from "@tabler/icons-react";
 import { page } from "vitest/browser";
 import { navigationAt } from "../../../shared/tests/navigation-mock";
 import { renderInUi } from "../../../shared/tests/render-in-ui";
@@ -15,8 +20,19 @@ import {
 import { AOFSidebarSectionLink } from "../components/aof-sidebar-section-link";
 
 /** An App's own words for a Section and its page, and their paths. */
-const t = { mail: "Mail", services: "Services" };
-const PATH = { SERVICES: "/services", SERVICES_MAIL: "/services/mail" };
+const t = {
+  leaderboard: "Leaderboard",
+  mail: "Mail",
+  memory: "Memory",
+  play: "Play",
+  services: "Services",
+};
+const PATH = {
+  LEADERBOARD: "/memory/leaderboard",
+  MEMORY: "/memory",
+  SERVICES: "/services",
+  SERVICES_MAIL: "/services/mail",
+};
 const ROW = { current: "CUR", idle: "IDLE" };
 const common = SHARED_TRANSLATIONS.en.Common.Navigation;
 
@@ -101,5 +117,66 @@ describe("AOFSidebarSectionLink with pages", () => {
     navigationAt.pathname = PATH.SERVICES_MAIL;
     await screen.rerender(services());
     await expect.element(row).toHaveAttribute("aria-expanded", "true");
+  });
+});
+
+/** A Section whose first page is the Section's own path, the other under it. */
+const memory = () => (
+  <AOFSidebarProvider>
+    <AOFSidebar label={common.menu}>
+      <AOFSidebarMenu>
+        <AOFSidebarMenuItem>
+          <AOFSidebarSectionLink
+            label={t.memory}
+            pages={[
+              {
+                icon: <IconCards aria-hidden />,
+                label: t.play,
+                path: PATH.MEMORY,
+              },
+              {
+                icon: <IconTrophy aria-hidden />,
+                label: t.leaderboard,
+                path: PATH.LEADERBOARD,
+              },
+            ]}
+            path={PATH.MEMORY}
+            rowClassName={ROW}
+          >
+            <IconCards aria-hidden />
+          </AOFSidebarSectionLink>
+        </AOFSidebarMenuItem>
+      </AOFSidebarMenu>
+    </AOFSidebar>
+  </AOFSidebarProvider>
+);
+
+describe("AOFSidebarSectionLink whose pages sit under one another", () => {
+  it("marks only the longest page's link: Leaderboard, never Play too", async () => {
+    navigationAt.pathname = PATH.LEADERBOARD;
+    const screen = await renderInUi({ children: memory(), messages: {} });
+    await expect
+      .element(screen.getByRole("link", { name: t.leaderboard }))
+      .toHaveAttribute("aria-current", "page");
+    expect(
+      screen
+        .getByRole("link", { name: t.play })
+        .element()
+        .getAttribute("aria-current")
+    ).toBeNull();
+  });
+
+  it("marks Play on the Section's own path", async () => {
+    navigationAt.pathname = PATH.MEMORY;
+    const screen = await renderInUi({ children: memory(), messages: {} });
+    await expect
+      .element(screen.getByRole("link", { name: t.play }))
+      .toHaveAttribute("aria-current", "page");
+    expect(
+      screen
+        .getByRole("link", { name: t.leaderboard })
+        .element()
+        .getAttribute("aria-current")
+    ).toBeNull();
   });
 });

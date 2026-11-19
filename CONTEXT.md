@@ -6,8 +6,8 @@ one database, and one design system.
 ## Language
 
 **App**:
-One product in the monorepo, with its own users. Laura is the first App (paused
-while the Design system is rebuilt); the Back Office is the internal one, and a
+One product in the monorepo, with its own users. Laura is the first App (rebuilt
+on the shared packages); the Back Office is the internal one, and a
 React Native client is planned. Who is allowed into an App is decided by their
 Membership in it and the lowest Role the App lets in, including for internal
 ones.

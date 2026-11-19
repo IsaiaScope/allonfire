@@ -108,12 +108,19 @@ const EXPECTED: readonly (readonly [string, readonly string[]])[] = [
   [
     "apps/laura/.env.example",
     [
-      `DATABASE_URL="${LOCAL.URL.DATABASE}"`,
-      `BETTER_AUTH_URL="${LOCAL.URL.LAURA}"`,
-      `MINIO_ENDPOINT="${LOCAL.URL.STORAGE}"`,
+      `NEXT_PUBLIC_API_URL="${LOCAL.URL.API}"`,
+      `API_URL="${LOCAL.URL.API}"`,
+      `LAURA_URL="${LOCAL.URL.LAURA}"`,
+      `BACK_OFFICE_URL="${LOCAL.URL.BACK_OFFICE}"`,
     ],
   ],
-  ["apps/laura/package.json", [`next dev --port ${LOCAL.PORT.LAURA}`]],
+  [
+    "apps/laura/package.json",
+    [
+      `next dev --port ${LOCAL.PORT.LAURA}`,
+      `next start --port ${LOCAL.PORT.LAURA}`,
+    ],
+  ],
 ];
 
 describe.each(EXPECTED)("%s", (path, lines) => {
@@ -157,6 +164,61 @@ describe("the Back Office build", () => {
   ])("%s reads no STORAGE_ENDPOINT or STORAGE_BUCKET", (_where, text) => {
     expect(text).toBeTruthy();
     expect(text).not.toMatch(BUILD_STORAGE);
+  });
+});
+
+// Both Apps are workspace Apps: Laura's address reaches the Back Office's
+// build (its switcher link) and its Docker build the same way.
+describe("Laura's hosting and tooling wiring", () => {
+  const builderStage = read("docker/Dockerfile")
+    .split(DOCKERFILE_STAGE)
+    .find((stage) => BUILDER_STAGE.test(stage));
+  const rootPackage = read("package.json");
+  const name = "LAURA_URL";
+
+  it("builds the Docker image with LAURA_URL, declared in the builder stage", () => {
+    expect(builderStage).toContain("ARG LAURA_URL");
+    expect(builderStage).toContain(`${name}=\${${name}}`);
+  });
+
+  it("passes LAURA_URL to deploy.yml's build-args", () => {
+    expect(read(".github/workflows/deploy.yml")).toContain(
+      `${name}=\${{ secrets.${name} }}`
+    );
+  });
+
+  it("passes LAURA_URL to ci.yml's build job", () => {
+    expect(read(".github/workflows/ci.yml")).toContain(
+      `${name}: \${{ secrets.${name} }}`
+    );
+  });
+
+  it("canonicalizes the Tailwind classes of both Apps", () => {
+    expect(rootPackage).toContain(
+      '"pnpm --filter @allonfire/laura tailwind:canonicalize"'
+    );
+    expect(rootPackage).toContain(
+      "pnpm --workspace-concurrency=1 --filter @allonfire/back-office --filter @allonfire/laura tailwind:fix"
+    );
+  });
+
+  it("has no docker:build:laura script, which cannot build without the build args", () => {
+    expect(rootPackage).not.toContain("docker:build:laura");
+  });
+
+  it.each([
+    [".jscpd.json", "apps/laura"],
+    ["knip.jsonc", '"apps/laura"'],
+  ])("lists Laura in %s", (path, entry) => {
+    expect(read(path)).toContain(entry);
+  });
+
+  it.each([
+    ["biome.jsonc", "!apps/laura"],
+    ["biome.jsonc", 'includes": ["apps/laura/**"]'],
+    [".oxlintrc.json", "apps/laura/**"],
+  ])("no longer pauses Laura in %s", (path, gone) => {
+    expect(read(path)).not.toContain(gone);
   });
 });
 

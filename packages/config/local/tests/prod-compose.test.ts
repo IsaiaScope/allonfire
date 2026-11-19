@@ -208,10 +208,15 @@ it.each([
   );
 });
 
-it("the prod compose reads no vendor variable and requires the Back Office's public URL", () => {
+it("the prod compose reads no vendor variable and requires both Apps' public URLs in the Back Office", () => {
   // The storage image's own MINIO_ROOT_* keys stay; what they read is ours.
   expect(COMPOSE).not.toContain(interpolate("MINIO_"));
   expect(service("back-office")).toContain(
     `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}`
+  );
+  // The Back Office's switcher links to Laura; Laura's own service arrives
+  // with the cutover.
+  expect(service("back-office")).toContain(
+    `LAURA_URL=${required("LAURA_URL")}`
   );
 });

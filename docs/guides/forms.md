@@ -67,6 +67,5 @@ page stays on the server. The server action keeps the last word:
 - A field the user must not change is locked (`aria-disabled` plus `inert`), never `disabled`, which posts nothing: `apps/back-office/src/features/users/components/user-form-parts.tsx`. (`docs/superpowers/specs/2026-10-28-edit-user-design.md`)
 - Password rules are one list, auth's `passwordRules` (at least 12 characters, a lowercase, an uppercase, a digit, a symbol): the API refuses with `meetsPasswordRules`, the form ticks the same list live: `packages/auth/src/features/users/utils/password-rules.ts`. (`docs/superpowers/specs/2026-10-23-password-rules-library-survey.md`)
 
-A form without fields (Sign out) stays a plain `<form action>`. Laura keeps
-`react-hook-form` until it is rebuilt.
+A form without fields (Sign out) stays a plain `<form action>`.
 

@@ -46,13 +46,13 @@ vi.mock("@allonfire/core/features/next/pwa/components/aof-pwa", () => ({
 
 const PAGE_IN_PWA = /<section data-pwa="false"><p>PAGE<\/p>/;
 const ARIA_HIDDEN = /aria-hidden="true"/g;
-const document = (pwaEnabled = false) =>
+const document = (pwaEnabled?: boolean) =>
   renderToStaticMarkup(
     <AOFLocaleDocument
       banner={<i>BANNER</i>}
       hint={<u>HINT</u>}
       locale="it"
-      pwaEnabled={pwaEnabled}
+      {...(pwaEnabled === undefined ? {} : { pwaEnabled })}
       toaster={<s>TOASTER</s>}
     >
       <p>PAGE</p>
@@ -76,6 +76,31 @@ describe("AOFLocaleDocument", () => {
   it("keeps the page inside the PWA, which is told whether it is on", () => {
     expect(document()).toMatch(PAGE_IN_PWA);
     expect(document(true)).toContain('data-pwa="true"');
+  });
+
+  it("turns the PWA on in a production build and off elsewhere when the App does not say", async () => {
+    expect(document()).toContain('data-pwa="false"');
+    vi.stubEnv("NODE_ENV", "production");
+    vi.resetModules();
+    try {
+      const { AOFLocaleDocument: Production } = await import(
+        "../components/aof-locale-document"
+      );
+      expect(
+        renderToStaticMarkup(
+          <Production
+            banner={<i>BANNER</i>}
+            hint={<u>HINT</u>}
+            locale="it"
+            toaster={<s>TOASTER</s>}
+          >
+            <p>PAGE</p>
+          </Production>
+        )
+      ).toContain('data-pwa="true"');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("mounts the edge tint once itself, so no App adds its own", () => {

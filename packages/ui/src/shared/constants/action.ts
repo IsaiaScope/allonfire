@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** The actions a shared piece draws that mean the same in every App. */
-const AOF_ACTION = {
+export const AOF_ACTION = {
   BACK: "back",
   ENTER: "enter",
   RETRY: "retry",

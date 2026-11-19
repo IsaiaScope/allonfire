@@ -13,10 +13,10 @@ stub-image-deps are) instead of being copied. The helpers every Next App's tests
 share live in ui's `shared/tests` (`@allonfire/ui/shared/tests/*`: `renderInUi`,
 `heightAtIn`, the fetch, navigation, cache, session-cookie and image mocks, the
 message lengths); an App binds `renderInUi` and `heightAtIn` over its own
-messages once (`renderInApp`), and a test that renders a shared piece mounts the
+messages once (`renderInApp = bindRenderInUi(EN)`), and a test that renders a shared piece mounts the
 merged words (`aofMessages("en", EN)`), or a bare App JSON raises `MISSING_MESSAGE`
 for core's `Common`. An App's proxy matcher test is one call to core's
-`proxyMatcherSuite({ config, pages })`
+`proxyMatcherSuite({ config, pages })` over `config = await proxyConfig(() => import("./proxy"))` (auth's `shared/tests/proxy-config`: it mocks the Session refresh, the sign-in gate and the locale middleware, which a per-file `vi.mock` would repeat)
 (`@allonfire/core/features/next/i18n/tests/proxy-matcher-suite`); the matcher
 itself stays a literal in its `proxy.ts`. The HTTP modules' tests share
 auth's `moduleTestHost` (`@allonfire/auth/shared/tests/test-host`).
@@ -53,7 +53,7 @@ the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no t
 checks them and nothing executes. Three layers: unit and integration tests run
 in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `integration`) render one client component in real Chromium and WebKit through
-`vitest.browser.config.ts`. The Back Office and `packages/ui` have them. An
+`vitest.browser.config.ts`. Both Apps and `packages/ui` have them. An
 App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
 Design's `theme.css` (`src/shared/tests/browser.css`), never an App's. A
 look a visitor sees (a corner, a height, padding, an overflow axis, a
@@ -76,9 +76,21 @@ headless; `pnpm e2e:headed`, `pnpm e2e:ui` and
 `pnpm e2e:browser:headed` show the browser. A server action is mocked in a browser test and
 covered for real by e2e. CI runs the browser tests of every affected package
 that has them (an App, ui: the `affected` job's `browser` output) and e2e
-tests for the affected Apps. Every App has an `e2e/safe-area.spec.ts` that
-checks each of its pages against the notch (`design-system.md`), and a new
+tests for the affected Apps. Every App has an `e2e/safe-area.spec.ts`, one call
+to ui's `safeAreaSuite` (`@allonfire/ui/features/app/tests/e2e/safe-area-suite`),
+that checks each of its pages against the notch (`design-system.md`), and a new
 App adds one.
+
+What every Next App's tests share is a package piece, never a copy: config's
+`aofAppVitest` and `aofAppBrowserVitest` build the App's Vitest configs
+(`@allonfire/config/tests/vitest/app`), and `environmentSuite({ authApp,
+authPath, examplePath, importEnv })` is the App's whole `environment.test.ts`
+(`tests/vitest/environment-suite`); ui's `translationsSuite`
+(`shared/tests/translations-suite`) is the App's `translations.test.ts`; and
+the e2e specs are one call each to ui's `signInSuite`, `frameSuite`,
+`headSuite`, `pwaSuite` and `safeAreaSuite`, over `aofAppPages()` for the
+frame's and Sign in form's helpers (`features/app/tests/e2e/`). An App's own
+specs sit beside them (Laura's `upload-gate.spec.ts`, `floating-frame.spec.ts`).
 
 Every check sits in one **Stage** (`CONTEXT.md`): `static`, `test`, `e2e`
 or `build`, each one root command (`pnpm static`, …) that runs the same on a
@@ -101,7 +113,7 @@ merge or a rebase is not re-checked by the next hook; CI still checks it.
 `pnpm check` by hand stays whole-repo. e2e runs the
 App's production build, served like the Docker image (standalone server),
 plus the API, on their own ports (3310 and the App's e2e port) beside
-`pnpm dev`, the same locally and in CI. Turbo's cache replays every task
+`pnpm dev`, the same locally and in CI; the Apps share the API's and the mail sink's ports, so `pnpm e2e:run` runs them one at a time (`--concurrency=1`). Turbo's cache replays every task
 whose package and dependencies did not change, e2e included, and the remote
 cache lets CI replay an e2e run that passed
 locally. A package test that reads a repo file outside its package lists that

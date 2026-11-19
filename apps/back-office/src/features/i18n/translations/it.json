@@ -3,10 +3,8 @@
     "description": "Dove si gestiscono i contenuti, gli utenti e i dati della famiglia AllOnFire."
   },
   "SignIn": {
-    "language": "Lingua",
     "notice": "Solo utenti autorizzati. Registrazione chiusa.",
-    "pauseNotice": "Metti in pausa l'avviso",
-    "theme": "Cambia tema"
+    "pauseNotice": "Metti in pausa l'avviso"
   },
   "Images": {
     "access": {

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
+  <img src="../../docs/assets/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
 </p>
 
 <h1 align="center">Photos & Games</h1>
@@ -7,135 +7,78 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
   <img src="https://img.shields.io/badge/next--intl-i18n-007ACC?logoColor=white" alt="next-intl" />
-  <img src="https://img.shields.io/badge/Framer_Motion-12-FF0055?logo=framer&logoColor=white" alt="Framer Motion" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white" alt="TanStack Query" />
 </p>
 
 <p align="center">
-  Private family photo gallery with masonry grid, infinite scroll, memory and quiz games, i18n support, and blurhash placeholders.
+  Our private place for two: a photo gallery and the Memory game, in Italian and English, installable as a PWA and wearing the Ocean Design.
 </p>
 
 ---
 
-<p align="center">
-  <img src="../../docs/screenshots/laura-gallery.png" width="550" alt="Gallery" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-gallery.png" width="180" alt="Mobile Gallery" />
-</p>
+Laura is a Next App on the shared scaffold (ADR 0033). It reads the API only: no
+Prisma client, no service, and Better Auth runs in the API. Screenshots arrive
+with the cutover phase.
 
 ## 📱 Routes
 
-| | Route | Page | Feature |
-|-|-------|------|---------|
-| 🖼️ | `/` | Photo gallery with masonry grid and infinite scroll | [gallery](src/features/gallery/) |
-| ❤️ | `/favorites` | Favorited photos | [gallery](src/features/gallery/) |
-| 📤 | `/upload` | Photo upload with HEIC conversion (USER/ADMIN) | [upload](src/features/upload/) |
-| ⚙️ | `/settings` | Language, appearance, user info | [settings](src/features/settings/) |
-| 🎮 | `/games` | Game hub with animated cards | [games](src/features/games/) |
-| 🃏 | `/games/memory` | Memory card matching game | [games](src/features/games/) |
-| 🏆 | `/games/memory/leaderboard` | Memory scores | [games](src/features/games/) |
-| ❓ | `/games/quiz` | Multiple choice quiz game | [games](src/features/games/) |
-| 🏆 | `/games/quiz/leaderboard` | Quiz scores | [games](src/features/games/) |
-| ✏️ | `/games/quiz/edit` | Quiz question management (ADMIN) | [games](src/features/games/) |
-| ➕ | `/games/quiz/edit/new` | Create new quiz question (ADMIN) | [games](src/features/games/) |
-| ✏️ | `/games/quiz/edit/[id]` | Edit existing quiz question (ADMIN) | [games](src/features/games/) |
+| | Route | Page | Status |
+|-|-------|------|--------|
+| 🖼️ | `/` | Gallery | placeholder, Phase 4 |
+| ⭐ | `/favorites` | Favorites | placeholder, Phase 4 |
+| 🃏 | `/memory` | Memory game | placeholder, Phase 6 |
+| 🏆 | `/memory/leaderboard` | Memory leaderboard | placeholder, Phase 6 |
+| 📤 | `/upload` | Upload (Admin only) | placeholder, Phase 5 |
 
-## 🖼️ Features Gallery
-
-<p align="center">
-  <img src="../../docs/screenshots/laura-upload.png" width="550" alt="Upload" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-upload.png" width="180" alt="Mobile Upload" />
-</p>
-
-**📤 [Upload](src/features/upload/)** — Drag-and-drop photo upload with HEIC auto-conversion, S3/MinIO storage, and real-time preview.
-
----
-
-<p align="center">
-  <img src="../../docs/screenshots/laura-games.png" width="550" alt="Games Hub" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-games.png" width="180" alt="Mobile Games Hub" />
-</p>
-
-**🎮 [Games Hub](src/features/games/)** — Memory and Quiz game selection with Framer Motion animated cards and score summaries.
-
----
-
-<p align="center">
-  <img src="../../docs/screenshots/laura-memory.png" width="550" alt="Memory Game" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-memory.png" width="180" alt="Mobile Memory Game" />
-</p>
-
-**🃏 [Memory Game](src/features/games/)** — Card matching game using gallery photos. Timer-based scoring with leaderboard.
-
----
-
-<p align="center">
-  <img src="../../docs/screenshots/laura-quiz.png" width="550" alt="Quiz Game" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-quiz.png" width="180" alt="Mobile Quiz Game" />
-</p>
-
-**❓ [Quiz Game](src/features/games/)** — Multiple choice questions with image support. Score tracking and leaderboard.
-
----
-
-<p align="center">
-  <img src="../../docs/screenshots/laura-settings.png" width="550" alt="Settings" />
-  &nbsp;&nbsp;
-  <img src="../../docs/screenshots/mobile-laura-settings.png" width="180" alt="Mobile Settings" />
-</p>
-
-**⚙️ [Settings](src/features/settings/)** — Language switcher (Italian/English), theme toggle, user profile info, and sign out.
+The signed-out pages are Sign in, Forgot password, Reset password, Email
+verified and Offline. Nobody registers: an Admin adds Users in the Back Office.
 
 ## 🏗️ Architecture
 
 ```
-pages ──> features ──> shared packages
-
-  app/[locale]/(dashboard)/
-    page.tsx           server component, fetches data
-        |
-    features/{name}/
-      components/      UI (client components)
-      actions/         server actions (mutations)
-      hooks/           client state management
-      utils/           shared helpers
-
-  i18n: next-intl wraps all routes under [locale]
-  roles: UserRoleProvider guards mutations for viewers
+src/
+  app/             Next's routes: [locale]/ pages, manifest, icons, special pages
+  environment/     the env schema (owner-prefixed names)
+  features/        auth, errors, i18n, metadata, navigation, pwa: thin bindings
+  shared/          constants (LAURA, page information), components, test helpers
 ```
 
-Each feature is self-contained with its own components, actions, and hooks. No barrel `index.ts` files — import directly from the specific file.
+An App holds only its descriptor (`LAURA` in `src/shared/constants/laura.ts`),
+its words, its Ocean dressing and its pages; the frame, account menu, sign-in
+pages, notices, PWA pieces and page information are shared packages
+(`packages/ui`, `packages/core`, `packages/auth`, `packages/design`). Where each
+one lives and what Laura binds: `docs/guides/laura.md`.
 
 ## 🔧 Development
 
 ```bash
-pnpm dev          # Start on :3200
-pnpm dev:tailscale   # Start on :3201, over Tailscale
-pnpm build        # Production build
-pnpm check-types  # TypeScript check
-pnpm seed-photos  # Seed sample photos
+cp .env.example .env.development   # Local values; see the table below
+pnpm --filter @allonfire/laura dev       # :3200
+pnpm --filter @allonfire/laura test      # unit tests
+pnpm --filter @allonfire/laura test:browser
+pnpm --filter @allonfire/laura test:e2e  # production build on :3210, with the API
+pnpm --filter @allonfire/laura preview   # production build on :3220
 ```
+
+`pnpm dev` from the repo root starts both Apps, the API and the Local services;
+over Tailscale, see the root `README.md` (Local).
 
 ## 🔑 Environment Variables
 
+Every variable is documented in `.env.example`.
+
 | Variable | Required | Description |
 |----------|:--------:|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `BETTER_AUTH_SECRET` | ✅ | Auth session encryption key |
-| `BETTER_AUTH_URL` | ✅ | App base URL for auth callbacks |
-| `MINIO_ENDPOINT` | ✅ | MinIO/S3 endpoint URL |
-| `MINIO_ACCESS_KEY` | ✅ | MinIO/S3 access key |
-| `MINIO_SECRET_KEY` | ✅ | MinIO/S3 secret key |
-| `MINIO_BUCKET` | ✅ | MinIO/S3 bucket name |
-| `VIEWER_EMAIL` | | Email for auto-created viewer account |
-| `VIEWER_PASSWORD` | | Password for auto-created viewer account |
+| `API_URL` | yes | The API's address for the server |
+| `API_AUTH_URL` | yes | The API's Auth address for the server |
+| `NEXT_PUBLIC_API_URL` | yes | The API's address for the browser, baked in at build |
+| `AUTH_APP` | yes | `LAURA`: the App a sign-in is for |
+| `AUTH_COOKIE_DOMAIN` | | Production: the parent domain the Apps share Session cookies on |
+| `LAURA_URL` | yes | Laura's own address; build and runtime must match |
+| `BACK_OFFICE_URL` | yes | The Back Office's address, for the App switcher; build and runtime must match |
+| `TELEMETRY_*` | | No endpoint, no telemetry |
 
 ---
 

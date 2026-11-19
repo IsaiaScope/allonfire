@@ -5,6 +5,7 @@ import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
 import { firstLoad } from "@allonfire/core/features/next/pwa/utils/install-hint-state";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { AOFToaster } from "@allonfire/ui/features/feedback/components/aof-toaster";
+import { toastAndCardHeights } from "@allonfire/ui/shared/tests/toast-card";
 import { nextFrames } from "@allonfire/ui/shared/tests/toast-timing";
 import { NextIntlClientProvider } from "next-intl";
 import { page } from "vitest/browser";
@@ -82,11 +83,8 @@ describe("Install hint", () => {
     const screen = await hint();
     await expect.element(screen.getByRole("complementary")).toBeVisible();
     await nextFrames();
-    const card = document.querySelector("aside");
-    const toast = document.querySelector("[data-sonner-toast]");
-    expect(toast?.getBoundingClientRect().height).toBeGreaterThanOrEqual(
-      card?.getBoundingClientRect().height ?? Number.POSITIVE_INFINITY
-    );
+    const { card, toast } = toastAndCardHeights();
+    expect(toast).toBeGreaterThanOrEqual(card);
     screen.unmount();
   });
 

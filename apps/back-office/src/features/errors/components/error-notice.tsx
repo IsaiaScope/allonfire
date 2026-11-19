@@ -4,12 +4,14 @@ import {
   AOFErrorNotice,
   type AOFErrorNoticeProps,
 } from "@allonfire/ui/features/feedback/components/aof-error-notice";
+import { aofErrorPages } from "@allonfire/ui/features/feedback/utils/aof-error-pages";
 import { ACTION_DRESSING } from "@/shared/constants/action-dressing";
 import { StationNoticeFrame } from "./station-notice-frame";
 
-export type { AOFErrorBoundaryProps as ErrorBoundaryProps } from "@allonfire/ui/features/feedback/components/aof-error-notice";
-
-/** The shared error notice in the Back Office's station signage. */
+/**
+ * The shared error notice in the Back Office's station signage.
+ * @internal
+ */
 export const ErrorNotice = (
   props: Omit<AOFErrorNoticeProps, "actions" | "Frame">
 ) => (
@@ -19,3 +21,9 @@ export const ErrorNotice = (
     {...props}
   />
 );
+
+/** The error pages Next reads from `error.tsx` and `global-error.tsx`. */
+export const { GlobalError, RouteError } = aofErrorPages({
+  actions: ACTION_DRESSING,
+  Frame: StationNoticeFrame,
+});

@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./apps/back-office/back-office-logo": "./src/apps/back-office/back-office-logo.ts",
     "./apps/back-office/styles.css": "./src/apps/back-office/styles.css",
+    "./apps/laura/laura-logo": "./src/apps/laura/laura-logo.ts",
     "./apps/laura/styles.css": "./src/apps/laura/styles.css",
     "./brand/aof-logo": "./src/brand/aof-logo.ts",
     "./brand/aof-monogram": "./src/brand/aof-monogram.ts",

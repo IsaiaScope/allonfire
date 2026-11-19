@@ -215,8 +215,10 @@ Soft: `--radius` is 0.75rem; cards step to `xl` (1.05rem) and the frame to
 - **Do** check a new colour against `theme.test.ts`: AA for text, 3:1 for a
   mark.
 - **Do** keep motion behind `motion-safe:`.
-- **Do** give the octopus a face for the moment (dizzy for the card back); a
-  new face is a new function in `ocean-mark.ts`.
+- **Do** give the octopus a face for the moment (`OCEAN_FACE`: dizzy for the
+  card back and an error, lost for a 404, sleepy offline, happy at the door
+  and while waiting, a wink and wide eyes in toasts); a new face is a new
+  function in `ocean-mark.ts`.
 
 ### Don't
 - **Don't** put coral on text, or on anything but a Favorite.

@@ -26,6 +26,7 @@
         "NEXT_PUBLIC_API_REMOTE_URL",
         "NEXT_PUBLIC_API_URL",
         "BACK_OFFICE_URL",
+        "LAURA_URL",
         "API_URL"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "!**/*.md"],

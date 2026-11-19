@@ -97,22 +97,19 @@
     "packages/shadcn/src/components/faceted.d.ts": ["exports"],
     "packages/shadcn/src/components/scroll-area.d.ts": ["exports"],
     "packages/shadcn/src/components/sonner.d.ts": ["exports"],
-    // Ocean's constants are read by the Laura App, rebuilt in Phase 3 of the
-    // Laura rebuild; delete these entries when it lands.
+    // Ocean's card back and sea marks: held by the Memory game and the score
+    // screens, rebuilt in Phases 6 and 7 of the Laura rebuild.
     "packages/design/src/designs/ocean/card-back.ts": ["exports"],
-    "packages/design/src/designs/ocean/image-fonts.ts": ["exports"],
-    "packages/design/src/designs/ocean/ocean-mark.ts": ["exports"],
     "packages/design/src/designs/ocean/sea-emoji.ts": ["exports"],
     "packages/design/src/designs/ocean/sea-icons.ts": ["exports"],
-    "packages/design/src/designs/ocean/share-card-look.ts": ["exports"],
-    // Held only by Laura, which sits outside the workspace.
+    // Held only by the games and uploads Phases 6 and 7 rebuild.
     "packages/core/src/features/errors/format-error-message.ts": ["exports"],
     "packages/database/src/features/apps/laura/game-score.service.ts": [
       "exports",
       "types"
     ],
-    // Held only by Laura (`playwrightConfig`); `aofPlaywrightConfig` is read
-    // by the Apps' playwright.config.ts, which production mode leaves out.
+    // Read by the Apps' playwright.config.ts, which production mode leaves
+    // out.
     "packages/config/tests/e2e/playwright.config.ts": ["exports"],
     // The helpers the Apps' e2e specs share (safe area); production mode
     // leaves e2e out.
@@ -138,10 +135,16 @@
     "packages/auth/src/features/users/hono/tests/stub-user-deps.ts": [
       "exports"
     ],
+    "packages/auth/src/features/next/tests/session-request-mocks.ts": [
+      "exports"
+    ],
+    "packages/auth/src/shared/tests/proxy-config.ts": ["exports"],
     "packages/auth/src/shared/tests/stub-auth.ts": ["exports"],
     "packages/auth/src/shared/tests/test-host.ts": ["exports"],
     "packages/config/tests/browser/msw.ts": ["exports"],
     "packages/config/tests/browser/vitest.browser.config.ts": ["exports"],
+    "packages/config/tests/vitest/app-vitest.ts": ["exports"],
+    "packages/config/tests/vitest/environment-suite.ts": ["exports"],
     "packages/core/src/features/next/api/tests/fake-api.ts": ["exports"],
     "packages/core/src/features/next/i18n/tests/proxy-matcher-suite.ts": [
       "exports"
@@ -158,6 +161,7 @@
     "packages/ui/src/shared/tests/render-in-ui.tsx": ["exports"],
     "packages/ui/src/shared/tests/height-at.tsx": ["exports"],
     "packages/ui/src/shared/tests/fetch-stub.ts": ["exports"],
+    "packages/ui/src/shared/tests/toast-card.ts": ["exports"],
     "packages/ui/src/shared/tests/toast-timing.ts": ["exports"],
     "packages/ui/src/shared/tests/link-mock.tsx": ["exports"],
     "packages/ui/src/shared/tests/navigation-mock.tsx": ["exports"],
@@ -166,6 +170,13 @@
     "packages/ui/src/shared/tests/image-mock.tsx": ["exports"],
     "packages/ui/src/shared/tests/aof-image-mock.tsx": ["exports"],
     "packages/ui/src/shared/tests/message-length.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/app-pages.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/frame-suite.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/head-suite.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/pwa-suite.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/safe-area-suite.ts": ["exports"],
+    "packages/ui/src/features/app/tests/e2e/sign-in-suite.ts": ["exports"],
+    "packages/ui/src/shared/tests/translations-suite.ts": ["exports"],
     // watchRedis is unit-tested; awaitReady is the wait apps/api/README.md
     // asks of any command issued at startup, and only integration tests
     // issue one yet.
@@ -200,6 +211,15 @@
       ]
     },
     "apps/back-office": {
+      "project": [
+        "**/*.{js,ts,tsx,css}!",
+        "!**/tests/**!",
+        "!**/*.test*.{ts,tsx}!",
+        "!vitest.*.ts!",
+        "!e2e/**!"
+      ]
+    },
+    "apps/laura": {
       "project": [
         "**/*.{js,ts,tsx,css}!",
         "!**/tests/**!",

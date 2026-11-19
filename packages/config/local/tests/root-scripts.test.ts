@@ -62,8 +62,7 @@ const READERS = execFileSync(
   .filter(
     (path) =>
       path !== "" && !path.split("/").some((part) => part.startsWith("._"))
-  )
-  .filter((path) => !path.startsWith("apps/laura/"));
+  );
 
 describe("the root scripts", () => {
   it("run every Stage, and none of the names they replaced", () => {
@@ -128,6 +127,10 @@ describe("the root scripts", () => {
     expect(SCRIPTS.get("test:services")).toBe(
       "docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn"
     );
+  });
+
+  it("runs the Apps' e2e one at a time, since they share the API's and the mail sink's ports", () => {
+    expect(SCRIPTS.get("e2e:run")).toBe("turbo run test:e2e --concurrency=1");
   });
 
   it.each(READERS)("%s names only root scripts that exist", (path) => {

@@ -8,7 +8,12 @@ import {
   AOFCollapsibleContent,
   AOFCollapsibleTrigger,
 } from "../../../shared/components/aof-collapsible";
-import { isCurrentSection, sectionEntry, sectionHref } from "../utils/sections";
+import {
+  currentSubPage,
+  isCurrentSection,
+  sectionEntry,
+  sectionHref,
+} from "../utils/sections";
 import {
   AOFSidebarMenuButton,
   AOFSidebarMenuSub,
@@ -109,6 +114,9 @@ const SectionWithPages = ({
     }
   }
   const [first] = pages;
+  // A page's path can sit under another's (`/memory` and
+  // `/memory/leaderboard`): the longest match is the one you are on.
+  const onPage = currentSubPage({ pages }, pathname);
   if (first && state === "collapsed" && !isMobile) {
     return (
       <SectionRow
@@ -147,7 +155,7 @@ const SectionWithPages = ({
       >
         <AOFSidebarMenuSub>
           {pages.map((page) => {
-            const here = isCurrentSection(pathname, page.path);
+            const here = page.path === onPage?.path;
             return (
               <AOFSidebarMenuSubItem key={page.path}>
                 <AOFSidebarMenuSubButton

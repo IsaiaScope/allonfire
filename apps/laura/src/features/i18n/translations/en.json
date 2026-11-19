@@ -1,0 +1,13 @@
+{
+  "Metadata": {
+    "description": "Our private place, just for the two of us."
+  },
+  "Navigation": {
+    "favorites": "Favorites",
+    "gallery": "Gallery",
+    "leaderboard": "Leaderboard",
+    "memory": "Memory",
+    "play": "Play",
+    "upload": "Upload"
+  }
+}

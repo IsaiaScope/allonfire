@@ -1,11 +1,12 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
 import { USER } from "../../users/constants/users";
 import { meetsPasswordRules } from "../../users/utils/password-rules";
 import type { ForgotError, ResetError } from "../constants/api";
-import { appHeaders, formText } from "./app-request";
+import { appHeaders } from "./app-request";
 import { createApiAuthClient } from "./auth-client";
 
 const emailSchema = z.email();
@@ -19,7 +20,7 @@ export const requestResetLink = async (
   formData: FormData,
   { language, resetPage }: { language: string; resetPage: string }
 ): Promise<ForgotError | undefined> => {
-  const email = formText(formData.get("email"));
+  const email = textOf(formData, "email").trim();
   if (!emailSchema.safeParse(email).success) {
     return AUTH.FORGOT_ERROR.INVALID;
   }

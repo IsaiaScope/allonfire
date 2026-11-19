@@ -17,7 +17,7 @@ config/
   local/
     addresses.ts           LOCAL (PORT, URL with URL.TEST_API, DATABASE, STORAGE): every Local and test address, once
     repo.ts                REPO (ROOT, APPS, PACKAGES): the repository's folders, for a script or test that reads outside its package
-    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it; package-exports.test.ts checks each export key of auth, storage, database and config has a reader outside its package
+    tests/                 local-files.test.ts checks compose, CI, the .env.example files and the Apps' --port against it; package-exports.test.ts checks each export key of auth, storage, database and config has a reader outside its package; laura-app.test.ts guards the rebuilt Laura's package and folders; laura-parity-audit.test.ts checks `docs/superpowers/specs/2026-11-17-laura-parity-audit.md` against the old file list in `tests/fixtures/` (its Markdown is outside turbo's inputs: run it directly)
   stages/
     stages.ts              STAGE: each Stage's tools (static, test, e2e, build), each a root script with why it runs; CHECK, what `pnpm check` and the hook run
     run.ts                 runStage(stage, options): runs the tools in order, fail-fast unless keepGoing, appends a Markdown summary when asked
@@ -27,8 +27,10 @@ config/
     vitest/
       vitest.config.ts     Unit and integration tests in Node: globals, auto-restored mocks/env, v8 coverage, tags; VITEST.BROWSER_FILES, the files only the browser config collects
       vitest.setup.ts      Fails a test file with no `// @module-tag`
+      app-vitest.ts        `aofAppVitest(srcDir)` and `aofAppBrowserVitest(...)`: a Next App's whole Vitest and browser configs over the presets (the `@/` alias, JSX, next-intl), so an App's config files are a few lines
+      environment-suite.ts `environmentSuite({ authApp, authPath, examplePath, importEnv })`: the cases every Next App's env module passes, so an App's `environment.test.ts` is one call
     browser/
-      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit: the Back Office's and ui's
+      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit: both Apps' and ui's
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
       asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/
@@ -85,6 +87,13 @@ import { aofPlaywrightConfig } from "@allonfire/config/tests/e2e";
 export default aofPlaywrightConfig({ app: "back-office", env: { AUTH_APP: "BACK_OFFICE" }, port: LOCAL.PORT.BACK_OFFICE_E2E });
 ```
 
+A Next App's `vitest.config.ts` and `vitest.browser.config.ts` are built with
+`aofAppVitest` and `aofAppBrowserVitest` (`@allonfire/config/tests/vitest/app`)
+instead of merging the presets by hand, and its `environment.test.ts` is one
+call to `environmentSuite` (`@allonfire/config/tests/vitest/environment-suite`):
+`apps/laura/vitest.config.ts` and `apps/laura/src/environment/tests/environment.test.ts`
+are the models.
+
 What the vitest preset gives every package:
 
 | Option | Effect |
@@ -109,7 +118,7 @@ them as projects):
 | `pnpm test:ui` | the Vitest UI with coverage on :51204. It runs nothing at start (`--standalone`), only what a save touches; press Run all in the UI for the full suite |
 | `pnpm dev` | runs `test` through turbo (unchanged packages come from cache, a change re-runs that package) next to the apps and the UI |
 | `pnpm e2e` | the `e2e` Stage: the Test services up, the browser tests, then end-to-end |
-| `pnpm e2e:run` | Playwright, through turbo, cached: an App re-runs only when it or a package it reads changed |
+| `pnpm e2e:run` | Playwright, through turbo, one App at a time (they share the e2e API and mail sink ports), cached: an App re-runs only when it or a package it reads changed |
 
 End-to-end tests run each spec once per project, on one build and one Test
 database:
@@ -167,7 +176,7 @@ bug class the others don't:
 | `allowUnreachableCode: false`, `allowUnusedLabels: false` | code after `return`, labels nothing jumps to |
 | `verbatimModuleSyntax` | type-only imports must say `import type`, so nothing is imported at runtime by accident |
 | `erasableSyntaxOnly` | no `enum`, `namespace` or parameter properties: every file is valid once types are stripped (what `tsx` and Node's type stripping do) |
-| `noUncheckedSideEffectImports` | `import "./x"` must resolve; `*.css` is declared in `apps/laura/src/types/css.d.ts` |
+| `noUncheckedSideEffectImports` | `import "./x"` must resolve; `*.css` is declared by Next's own types |
 | `moduleDetection: "force"`, `isolatedModules` | every file is a module and compiles on its own |
 
 Left out on purpose:

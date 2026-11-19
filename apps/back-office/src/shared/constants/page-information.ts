@@ -1,9 +1,7 @@
-import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { aofAppMetadata } from "@allonfire/core/features/next/metadata/utils/aof-app-metadata";
 import { AOFLaunchScreenLinks } from "@allonfire/core/features/next/metadata/utils/launch-screens";
 import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
-import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors";
 import { JAPAN_SHARE_CARD } from "@allonfire/design/designs/japan/share-card-look";
 import { aofAppImages } from "@allonfire/ui/features/image/utils/aof-app-images";
@@ -31,13 +29,11 @@ export const { layoutMetadata, metadataText, pageMetadata } = aofAppMetadata({
 });
 
 export const { iconImage, launchScreen, shareImage } = aofAppImages({
-  description: (locale) => metadataText(locale)("description"),
+  // The card's top band is the Japan blue, the logo's green is the line.
+  band: JAPAN_IMAGE_COLOR.light.primary,
   fonts: imageFonts,
-  ground: {
-    icon: BRAND.GROUND,
-    launch: (scheme) => JAPAN_IMAGE_COLOR[scheme].background,
-  },
-  line: BACK_OFFICE.line,
+  imageColor: JAPAN_IMAGE_COLOR,
   logo: BACK_OFFICE.logo,
-  shareCardLook: JAPAN_SHARE_CARD[METADATA.COLOR_SCHEME.LIGHT],
+  metadataText,
+  shareCard: JAPAN_SHARE_CARD,
 });

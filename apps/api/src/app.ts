@@ -71,7 +71,7 @@ export const createApp = (deps: AppDeps) => {
     () => new HTTPException(HTTP.STATUS.SERVICE_UNAVAILABLE)
   );
   // The Image module brings its own, larger body limit and time budget:
-  // 100 MiB and up to 20 sharp passes outlast both defaults.
+  // 90 MiB and up to 20 sharp passes outlast both defaults.
   const isUpload = (c: Context) =>
     isImageUpload(c.req.method, c.req.path, API.PATH.IMAGES);
   const app = new Hono<AppBindings>()

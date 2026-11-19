@@ -2,6 +2,7 @@ import {
   type InstallStep,
   PWA,
 } from "@allonfire/core/features/next/pwa/constants/pwa";
+import { AOFInstallSteps } from "@allonfire/ui/features/pwa/components/aof-install-steps";
 import type { AOFInstallHintCardProps } from "@allonfire/ui/features/pwa/types/install-hint-card";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { cn } from "@allonfire/ui/shared/utils/utils";
@@ -113,29 +114,15 @@ export const InstallHintCard = ({
       {installProps ? <InstallButton {...installProps} /> : null}
     </div>
     {steps ? (
-      <ol className="flex flex-col gap-2">
-        {steps.map(({ step, text }, index) => {
-          const Icon = STEP_ICON[step];
-          return (
-            <li className="flex items-center gap-2.5 text-sm" key={step}>
-              <span
-                aria-hidden
-                className="grid size-6 shrink-0 place-items-center rounded-sm border border-led-dim font-led text-led text-xs"
-              >
-                {index + 1}
-              </span>
-              <span className="flex-1 text-muted-foreground">{text}</span>
-              {/* The ✕'s box, so the icons stand in its column. */}
-              <span
-                aria-hidden
-                className="grid size-7 shrink-0 place-items-center"
-              >
-                <Icon className="size-4 text-muted-foreground" />
-              </span>
-            </li>
-          );
-        })}
-      </ol>
+      <AOFInstallSteps
+        classNames={{
+          icon: "text-muted-foreground",
+          number: "rounded-sm border border-led-dim font-led text-led",
+          text: "text-muted-foreground",
+        }}
+        icons={STEP_ICON}
+        steps={steps}
+      />
     ) : null}
   </aside>
 );

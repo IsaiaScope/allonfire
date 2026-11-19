@@ -1,8 +1,10 @@
 // @module-tag integration
 
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
+import { App } from "@allonfire/database/enums";
 import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { NAVIGATION } from "@allonfire/ui/features/navigation/constants/navigation";
 import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
@@ -32,6 +34,20 @@ vi.mock(
   })
 );
 
+// The account menu and the switcher read the Session behind their own
+// Suspense; the breadcrumb is what this test is about.
+vi.mock("@allonfire/ui/features/navigation/components/aof-account", () => ({
+  AOFAccount: () => <span>Account</span>,
+  AOFAccountPlaceholder: () => <span>Account</span>,
+}));
+vi.mock(
+  "@allonfire/ui/features/navigation/components/aof-app-switcher",
+  () => ({
+    AOFAppSwitcher: () => <span>Apps</span>,
+    AOFCurrentApp: () => <span>Apps</span>,
+  })
+);
+
 /** Following a link would reload the test's own page: links stay put. */
 const stayPut = (event: MouseEvent) => event.preventDefault();
 
@@ -41,7 +57,7 @@ const PAGE = "Page";
 const frame = (search = "", content: ReactNode = <p>{PAGE}</p>) => (
   <NuqsTestingAdapter searchParams={search}>
     <NextIntlClientProvider locale="en" messages={aofMessages("en", EN)}>
-      <AppFrame account={<span>{ACCOUNT}</span>} switcher={<span>Apps</span>}>
+      <AppFrame addresses={{ [App.LAURA]: LOCAL.URL.LAURA }}>
         {content}
       </AppFrame>
     </NextIntlClientProvider>

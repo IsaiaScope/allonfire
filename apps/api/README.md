@@ -79,7 +79,7 @@ image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
 - **All or nothing.** One bad file rejects the whole upload (415), an unknown
   id rejects a whole PATCH or DELETE (404). A failed insert deletes the files
   it already stored.
-- **Limits:** 20 MiB per file and 100 MiB per upload (413 naming the limit
+- **Limits:** 20 MiB per file and 90 MiB per upload (413 naming the limit
   crossed), 20 files per upload, 100 items per PATCH or DELETE. The upload
   skips the API-wide 1 MiB body limit and brings its own.
 - **App values are the enum names**, `LAURA` and `BACK_OFFICE`, not the

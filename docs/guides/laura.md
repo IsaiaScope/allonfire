@@ -1,74 +1,45 @@
 # Laura
 
-Laura (`apps/laura`), until it is rebuilt.
+Laura (`apps/laura`, `@allonfire/laura`) is the couple's private photo gallery and Memory game: a Next App built on the same shared scaffold as the Back Office (ADR 0033) and wearing the Ocean Design. It reads the API only (no Prisma client, no service import) and signs in through the API's Auth module. Its description, in both languages' `Metadata`, is "Our private place, just for the two of us."
 
-- Keep Laura's `randomUUID` fallback while its own Tailscale dev script serves HTTP, where secure-context APIs can be unavailable.
-- For fixed-height pages, pass available height down a flex chain; iOS Safari viewport calculations can overflow.
-- For Safari blur and opacity, include `-webkit-backdrop-filter` and use `color-mix(in srgb, ...)` where needed.
+## Sections and routes
 
-## Laura App Structure (`apps/laura/src/`)
+The Sections are `SECTION` in `src/shared/constants/laura.ts`, an explicit list (`SECTIONS`) that the sidebar, the proxy's sign-in gate and `sections.test.ts` all read:
 
-Family photo gallery and games app. Uses next-intl for i18n (Italian + English), Framer Motion for animations, and an old viewer role system (`UserRoleProvider` + `checkMutationAccess`), replaced by two Roles (see Roles below).
+- `/` Gallery (Home), `/favorites`, `/memory` (Play) and `/memory/leaderboard` (Memory's second page, in its sub-menu), `/upload` (Admin only).
+- Every page but Upload is placeholder text for now; Phase 4 fills the Gallery and Favorites, Phase 5 Upload, Phase 6 Memory and its leaderboard. Each phase replaces the page body and adds that page's skeleton and height test with its data; `generateMetadata`, `signedInPage(...)` and the `minRole` option stay (plan: `docs/superpowers/plans/2026-11-17-laura-p3-laura-shell.md`, "Page data checklist").
 
-### Route Layer (`app/[locale]/`)
+## The frame and Ocean
 
-All routes are nested under `[locale]` for i18n. Dashboard pages are async Server Components.
+- The signed-in frame is `(signed-in)/layout.tsx` over ui's `AOFAppFrame` with `variant="floating"` and `collapsible="icon"` (ADR 0033); the account menu holds language, theme and sign out, and the App switcher lists the Back Office for a Back Office Admin. Back Office specifics are in `back-office.md`; the frame, signed-in pages and special pages are in `next-apps.md`.
+- Laura's Ocean dressing is bound once, in thin files, to the shared pieces through slots: `features/auth/constants/dressing.tsx` (the sign-in pages), `features/errors/components` and `features/pwa/components` (notices and PWA cards), `shared/components` and `shared/constants/action-dressing.tsx`. The Design itself is `packages/design/src/designs/ocean` and `src/apps/laura` (`design-system.md`).
 
-```
-app/[locale]/(auth)/login/page.tsx
-app/[locale]/(dashboard)/
-├── layout.tsx                          → Dashboard shell (top bar, auth, UserRoleProvider)
-├── page.tsx                            → Photo gallery (main view)
-├── favorites/page.tsx                  → Favorited photos
-├── upload/page.tsx                     → Photo upload (USER/ADMIN only)
-├── settings/page.tsx                   → Language, appearance, user info
-├── games/page.tsx                      → Game hub (memory + quiz cards)
-├── games/memory/page.tsx               → Memory card matching game
-├── games/memory/leaderboard/page.tsx   → Memory leaderboard
-├── games/quiz/page.tsx                 → Quiz game
-├── games/quiz/leaderboard/page.tsx     → Quiz leaderboard
-├── games/quiz/edit/page.tsx            → Quiz questions management (ADMIN)
-├── games/quiz/edit/new/page.tsx        → Create new quiz question (ADMIN)
-└── games/quiz/edit/[id]/page.tsx       → Edit existing quiz question (ADMIN)
-```
+## Roles and the Upload gate
 
-### Feature Layer (`features/`)
+- Laura admits two Roles, Admin and User, and no Viewer (ADR 0032): its floor in `ACCESS.APP_SETTINGS[App.LAURA]` is User. A User browses and plays; an Admin also adds Images.
+- Upload's `minRole` is read in four places that must agree: the proxy sends a User Home (`withSignInGate({ sections })`), the page does the same (`signedInPage(Page, { minRole: Role.ADMIN })`), the sidebar hides the row (`AOFRoleGatedSection`), and the API refuses with 403 (`requireApp(App.LAURA, Role.ADMIN)`, a route from Phase 5). Pinned by `upload-gate.test.ts`, `sections.test.ts` and `e2e/upload-gate.spec.ts`.
 
-No barrel index files — import directly.
+## Auth
 
-Features: `gallery/`, `games/`, `upload/`, `settings/`, `layout/`
+- No registration (`registration: null`): an Admin adds Users in the Back Office (`back-office.md`).
+- One Session across the Apps: on the parent domain in Production (`AUTH_COOKIE_DOMAIN`), on `localhost` Locally. Sign-in actions and the proxy wrappers are `@allonfire/auth` (`packages/auth/README.md`).
 
-Each has: `components/` (UI), `actions/` (server actions), optionally `hooks/`
+## Environment and ports
 
-### Shared Layer
+- Names are in `apps/laura/.env.example` and `src/environment/environment.ts` (`API_*`, `AUTH_*`, `LAURA_URL`, `BACK_OFFICE_URL`, `TELEMETRY_*`); both Apps' addresses are required in both Apps, at build and at runtime (`deployment.md`).
+- Ports are `LOCAL.PORT` in `packages/config/local/addresses.ts`: 3200 Local, 3210 e2e, 3220 preview (`pnpm --filter @allonfire/laura preview`).
 
-- `components/` — `animated-page`, `motion-provider` (LazyMotion), `user-role-provider`
-- `lib/` — `auth.ts`, `animation-variants.ts`, `file-validation.ts`, `seo.ts`
-- `i18n/` — next-intl routing and request config
+## Where each shared piece lives
 
-### Roles
+- The scaffold (providers, request config, page information, manifest, proxy matcher suite): core, `packages/core/README.md`.
+- The session pieces (`requireAppSession`, `withSignInGate`, `hasSectionRole`): auth, `packages/auth/README.md`.
+- The frame, account, switcher, signed-out pages (`AOFGateFrame`), `AOFLanguageSwitch`, notices (`AOFNoticeStage`), PWA cards, share card and the e2e and translation suites: ui, `package-layout.md` ("shared scaffold") and `testing.md`.
+- The Vitest presets and `environmentSuite`: `packages/config/README.md`.
 
-- Laura has two Roles, Admin and User (ADR 0032): its floor in `ACCESS.APP_SETTINGS` is User, so no Viewer enters it and its Role picker offers Admin and User. The Viewer Role itself stays in the system for an App that wants a read-only Role.
-- The API has `requireApp(App.LAURA)` (User or Admin) and `requireApp(App.LAURA, Role.ADMIN)` for an Admin-only Section such as Upload.
-- This page describes the old app, which still branches on a `"VIEWER"` string (`UserRoleProvider`, `useIsViewer()`, `checkMutationAccess`) until Phase 3 empties its `src/` and Phase 7 deletes it.
+## Parity audit
 
-### Laura Dashboard Routes
+What became of every file and library of the old Laura: `docs/superpowers/specs/2026-11-17-laura-parity-audit.md`, checked by `packages/config/local/tests/laura-parity-audit.test.ts`.
 
-- `/` — Photo gallery grid with infinite scroll
-- `/favorites` — Favorited photos
-- `/upload` — Photo upload (Admin only)
-- `/settings` — Language, theme, user info
-- `/games` — Game hub
-- `/games/memory` — Memory card game
-- `/games/memory/leaderboard` — Memory scores
-- `/games/quiz` — Quiz game
-- `/games/quiz/leaderboard` — Quiz scores
-- `/games/quiz/edit` — Quiz question management (ADMIN)
-- `/games/quiz/edit/new` — Create new quiz question
-- `/games/quiz/edit/[id]` — Edit existing quiz question
+## History and gotchas
 
-### Caching and link previews
-
-- Leaderboards are `"use cache"` plus `cacheTag`, and a submitted score `updateTag`s its game (`features/games/actions/leaderboard-cache.ts`); the quiz admin actions call `revalidatePath("/games/quiz/edit", "layout")`, which clears the whole client router cache; `staleTimes.dynamic` is 300: `apps/laura/next.config.ts`.
-- The layout names `openGraph.images` and `twitter.images` (the root `/opengraph-image`) explicitly, since WhatsApp and iMessage miss the convention file alone; `appleWebApp.title` matches the manifest's `short_name`; JSON-LD in `src/components/json-ld.tsx`.
-- Laura's dev scripts and its env, under the old names: `apps/laura/README.md`.
+- 2026-11-19: the sidebar marked Play and Leaderboard both on `/memory/leaderboard`. Cause: `currentSubPage` took the first page whose path prefixes the address. Fix: ui's `currentSubPage` takes the longest match (`packages/ui/src/features/navigation/utils/sections.ts`).

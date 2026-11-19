@@ -1,7 +1,9 @@
 // @module-tag unit
 
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
+import { App } from "@allonfire/database/enums";
 import { sectionEntry } from "@allonfire/ui/features/navigation/utils/sections";
 import { NextIntlClientProvider } from "next-intl";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -13,6 +15,16 @@ import { AppFrame } from "../app-frame";
 vi.mock("@allonfire/auth/features/next/utils/session", () => ({
   requireAppSession: vi.fn(),
 }));
+// The account menu and the switcher read the Session behind their own
+// Suspense; the frame's own markup is what this test is about.
+vi.mock("@allonfire/ui/features/navigation/components/aof-account", () => ({
+  AOFAccount: () => null,
+  AOFAccountPlaceholder: () => null,
+}));
+vi.mock(
+  "@allonfire/ui/features/navigation/components/aof-app-switcher",
+  () => ({ AOFAppSwitcher: () => null, AOFCurrentApp: () => null })
+);
 // The Role rule reads the App auth serves, which a test has no env for.
 vi.mock("@allonfire/auth/environment/next-environment", async () => ({
   nextAuthEnv: {
@@ -32,7 +44,7 @@ vi.mock(
 const renderFrame = () =>
   renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={aofMessages("en", EN)}>
-      <AppFrame account={<span>Account</span>} switcher={<span>Apps</span>}>
+      <AppFrame addresses={{ [App.LAURA]: LOCAL.URL.LAURA }}>
         <p>Page</p>
       </AppFrame>
     </NextIntlClientProvider>

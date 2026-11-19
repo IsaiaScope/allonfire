@@ -15,7 +15,7 @@ vi.mock("next/og", () => ({
   },
 }));
 
-const LINE = "#102030";
+const BAND = "#102030";
 const FONTS = [{ data: new ArrayBuffer(0), name: "Test Face" }];
 const APP = {
   banner: ["#000031", "#000032", "#000033"],
@@ -32,15 +32,15 @@ const LOOK = {
 } as const;
 
 const images = aofAppImages({
-  description: (locale) => `Described in ${locale}`,
+  band: BAND,
   fonts: async () => FONTS,
-  ground: {
-    icon: "#111111",
-    launch: (scheme) => (scheme === "dark" ? "#222222" : "#333333"),
+  imageColor: {
+    dark: { background: "#222222" },
+    light: { background: "#333333" },
   },
-  line: LINE,
   logo: APP,
-  shareCardLook: LOOK,
+  metadataText: (locale) => () => `Described in ${locale}`,
+  shareCard: { dark: LOOK, light: LOOK },
 });
 
 describe("aofAppImages", () => {
@@ -55,7 +55,7 @@ describe("aofAppImages", () => {
     const html = renderToStaticMarkup(element);
     expect(html).toContain(APP.name);
     expect(html).toContain("Described in it");
-    expect(html).toContain(LINE);
+    expect(html).toContain(BAND);
     expect(options).toMatchObject({
       ...METADATA.SHARE_IMAGE.SIZE,
       fonts: FONTS,

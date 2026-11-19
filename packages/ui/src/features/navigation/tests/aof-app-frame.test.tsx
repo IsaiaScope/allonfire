@@ -91,8 +91,8 @@ describe("AOFAppFrame", () => {
     const html = renderFrame();
     const { menu } = SHARED_TRANSLATIONS.en.Common.Navigation;
     expect(html.split(`aria-label="${menu}"`)).toHaveLength(2);
-    for (const { label } of [HOME, USERS]) {
-      expect(html).toContain(MESSAGES.Navigation[label as "home" | "users"]);
+    for (const text of [MESSAGES.Navigation.home, MESSAGES.Navigation.users]) {
+      expect(html).toContain(text);
     }
     expect(html).toContain(ROW.idle);
   });

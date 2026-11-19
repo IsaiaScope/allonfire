@@ -35,14 +35,14 @@
     "e2e:browser": "turbo run test:browser",
     "e2e:browser:headed": "pnpm -r --workspace-concurrency=1 run test:browser:headed",
     "e2e:headed": "pnpm -r --workspace-concurrency=1 run test:e2e:headed",
-    "e2e:run": "turbo run test:e2e",
+    "e2e:run": "turbo run test:e2e --concurrency=1",
     "e2e:ui": "pnpm -r --workspace-concurrency=1 run test:e2e:ui",
     "env:prod": "bash packages/config/local/env-production.sh",
     "prepare": "husky",
     "static": "tsx packages/config/stages/scripts/stage.ts static",
     "static:design": "pnpm design:sync --check",
     "static:dupes": "jscpd",
-    "static:fix": "ultracite fix && pnpm --filter @allonfire/back-office tailwind:fix",
+    "static:fix": "ultracite fix && pnpm --workspace-concurrency=1 --filter @allonfire/back-office --filter @allonfire/laura tailwind:fix",
     "static:i18n": "turbo run i18n:check",
     "static:knip": "knip",
     "static:knip-production": "knip --production",
@@ -83,6 +83,7 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}": [
       "pnpm --filter @allonfire/back-office tailwind:canonicalize",
+      "pnpm --filter @allonfire/laura tailwind:canonicalize",
       "biome check --write --no-errors-on-unmatched --error-on-warnings --files-ignore-unknown=true"
     ]
   },

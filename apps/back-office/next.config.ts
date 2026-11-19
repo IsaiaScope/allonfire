@@ -14,7 +14,7 @@ export default AOFCreateNextConfig(
   // default language's 404 instead of Next's bare error shell. Core's own
   // routes are kept already. A sign-in provider's picture (Google's) goes
   // through the optimizer; a stored one never does (its signed link).
-  // Adding Images posts up to the API's whole upload (100 MiB) through a
+  // Adding Images posts up to the API's whole upload (90 MiB) through a
   // Server Action, whose body Next caps at 1 MB unless told, and the proxy
   // buffers a body only up to 10 MB: past that the form arrives cut off
   // ("Unexpected end of form").

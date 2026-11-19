@@ -1,10 +1,11 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { BASE_ERROR_CODES } from "better-auth";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
 import type { SignInError } from "../constants/api";
-import { appHeaders, formText } from "./app-request";
+import { appHeaders } from "./app-request";
 import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
 import { adoptSetCookies } from "./set-cookie";
 
@@ -47,12 +48,12 @@ const errorFor = ({ code, status }: { code?: string; status: number }) => {
 export const signInWithEmail = async (
   formData: FormData
 ): Promise<SignInError | undefined> => {
-  const email = formText(formData.get("email"));
+  const email = textOf(formData, "email").trim();
   const password = formData.get("password");
   if (!(email && typeof password === "string" && password)) {
     return AUTH.SIGN_IN_ERROR.MISSING;
   }
-  const callbackURL = formText(formData.get("callbackURL")) || undefined;
+  const callbackURL = textOf(formData, "callbackURL").trim() || undefined;
   const credentials = credentialsSchema.safeParse({
     callbackURL,
     email,

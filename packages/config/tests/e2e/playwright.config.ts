@@ -40,7 +40,7 @@ const cli = (target: { dir: string; script: string }) => (command: string) =>
 const testDatabase = cli(E2E.CLI.DATABASE);
 const testBucket = cli(E2E.CLI.BUCKET);
 
-export const playwrightConfig = defineConfig({
+const playwrightConfig = defineConfig({
   forbidOnly: isCi,
   fullyParallel: true,
   reporter: isCi ? [["github"], ["html", { open: "never" }]] : "list",

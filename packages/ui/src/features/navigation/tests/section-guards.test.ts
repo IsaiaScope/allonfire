@@ -6,7 +6,7 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { Role } from "@allonfire/database/enums";
 import { IconHome } from "@tabler/icons-react";
 import type { AppSection } from "../types/app-descriptor";
-import { sectionPageProblems } from "./section-guards";
+import { sectionLabelProblems, sectionPageProblems } from "./section-guards";
 
 const GATE = "export default signedInPage(";
 const section = (path: string, minRole?: Role): AppSection => ({
@@ -75,6 +75,19 @@ describe("sectionPageProblems", () => {
     expect(unmatchedRole.join("\n")).toContain(join(dir, "none", "page.tsx"));
   });
 
+  it("holds a page nested under a gated Section to that Section's minRole", () => {
+    page("", GATE);
+    page("upload", `${GATE} minRole: Role.ADMIN`);
+    page("upload/new", GATE);
+    const { unmatchedRole } = sectionPageProblems({
+      sections: [section(AUTH.PAGE.HOME), section("/upload", Role.ADMIN)],
+      signedInDir: dir,
+    });
+    expect(unmatchedRole.join("\n")).toContain(
+      join(dir, "upload", "new", "page.tsx")
+    );
+  });
+
   it("names a page that declares a minRole its Section does not have", () => {
     page("", GATE);
     page("open", `${GATE} minRole: Role.ADMIN`);
@@ -83,5 +96,35 @@ describe("sectionPageProblems", () => {
       signedInDir: dir,
     });
     expect(unmatchedRole.join("\n")).toContain(join(dir, "open", "page.tsx"));
+  });
+});
+
+describe("sectionLabelProblems", () => {
+  const sections = [
+    {
+      ...section(AUTH.PAGE.HOME),
+      label: "home",
+      pages: [{ icon: IconHome, label: "play", path: "/play" }],
+    },
+  ] satisfies AppSection[];
+
+  it("finds nothing when both languages name every Section and page", () => {
+    const navigation = { home: "Home", play: "Play" };
+    expect(
+      sectionLabelProblems({
+        navigation: { en: navigation, it: navigation },
+        sections,
+      })
+    ).toEqual([]);
+  });
+
+  it("names the label a language lacks, a page's included", () => {
+    const problems = sectionLabelProblems({
+      navigation: { en: { home: "Home", play: "Play" }, it: { home: "Casa" } },
+      sections,
+    });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("it");
+    expect(problems[0]).toContain("play");
   });
 });

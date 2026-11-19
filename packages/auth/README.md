@@ -26,8 +26,8 @@ plus `AUTH_COOKIE_DOMAIN` where the API sets one (`authRoutes` drops its `Domain
 and draws its own components; who it lets in is `canEnterApp` with the App's
 row in `ACCESS.APP_SETTINGS` (its floor and Registration, ADR 0019), the same rule
 the API's `requireApp` applies.
-Laura still uses the old Next-bound package in `packages/auth-old`,
-untracked, until its refactor.
+The old Next-bound package lives on in `packages/auth-old`, untracked and
+outside the workspace, kept only as reference.
 
 Everything the adapter touches goes through the `AuthLike` port
 (`basePath`, `handler`, `getSession`, `openApi`), so a test passes `stubAuth()` instead of a
@@ -66,6 +66,7 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./shared/constants/errors` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `MAIL_UNAVAILABLE`, `PASSWORD_WEAK`, `REGISTRATION_CLOSED`) |
 | `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.SECRET_MIN_LENGTH`, `AUTH.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.ERROR_CODE`, `AUTH.SIGN_IN_ERROR` (an App translates each), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
 | `./features/users/hono/tests/stub-user-deps` | `stubUserDeps(overrides?)`: the User module's deps for a test (no access, writes throw, Avatars quiet); `userHost(session, deps)`, the module on `moduleTestHost` |
+| `./shared/tests/proxy-config` | tests only: `proxyConfig(() => import("./proxy"))` loads an App's `proxy.ts` for its matcher, the Session refresh, the sign-in gate and the locale middleware passed through |
 | `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` (a User in every App by default), `membershipsIn(role)` (that Role in every App), `cookieOf(response)` (the cookies it set, as one `cookie` header), `HOST_AUTH_PATH` |
 | `./shared/tests/test-host` | `moduleTestHost({ session, path, routes })`, the smallest host for an HTTP module's tests (a CodedError answers its code, errors and values; an HTTPException its status; anything else `INTERNAL_ERROR`), `json(method, body)` (a JSON request), `errorOf(response)` (the error it answered) |
 | `./shared/types/auth` | `AuthSession`, `AuthLike`, `OpenApiFragment` |
@@ -95,7 +96,7 @@ src/
   shared/
     constants/   auth (AUTH), errors (authErrorCodeSchema)
     types/       auth (AuthSession, AuthLike, OpenApi*)
-    tests/       stub-auth (stubAuth, sessionFor, membershipsIn),
+    tests/       proxy-config (proxyConfig), stub-auth (stubAuth, sessionFor, membershipsIn),
                  test-host (moduleTestHost, json, errorOf)
 ```
 

@@ -80,6 +80,7 @@ jobs:
             APP_NAME=${{ matrix.unit }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             BACK_OFFICE_URL=${{ secrets.BACK_OFFICE_URL }}
+            LAURA_URL=${{ secrets.LAURA_URL }}
           platforms: linux/arm64
           push: true
           provenance: false

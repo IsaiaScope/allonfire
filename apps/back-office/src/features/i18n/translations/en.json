@@ -3,10 +3,8 @@
     "description": "Where the AllOnFire family's content, users and data are managed."
   },
   "SignIn": {
-    "language": "Language",
     "notice": "Authorized users only. Sign-up is closed.",
-    "pauseNotice": "Pause notice",
-    "theme": "Switch theme"
+    "pauseNotice": "Pause notice"
   },
   "Images": {
     "access": {

@@ -1,0 +1,13 @@
+{
+  "Metadata": {
+    "description": "Il nostro posto privato, solo per noi due."
+  },
+  "Navigation": {
+    "favorites": "Preferiti",
+    "gallery": "Gallery",
+    "leaderboard": "Classifica",
+    "memory": "Memory",
+    "play": "Gioca",
+    "upload": "Carica"
+  }
+}

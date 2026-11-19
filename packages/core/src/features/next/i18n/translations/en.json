@@ -63,6 +63,10 @@
       "toggleMenu": "Collapse or expand the menu"
     },
     "Auth": {
+      "Gate": {
+        "language": "Language",
+        "theme": "Switch theme"
+      },
       "SignIn": {
         "email": "Email",
         "error": {

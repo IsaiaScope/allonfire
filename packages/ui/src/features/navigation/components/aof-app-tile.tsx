@@ -20,10 +20,11 @@ const tile = cva("flex shrink-0 items-center justify-center", {
 });
 
 /**
- * The logo's side on the largest tile (`size-12`), drawn 1.2 times larger
- * and cut by the tile: the square logo's empty frame would shrink its mark.
+ * The logo's side on the largest tile (`size-12`), drawn 1.1 times larger
+ * and cut by the tile: the square logo's empty frame would shrink its mark,
+ * and a larger overscan puts the lettering against the tile's corners.
  */
-const LOGO_SIZE = 58;
+const LOGO_SIZE = 53;
 
 // One logo per theme, shown by the theme toggle's `.dark` class: `auto`
 // would follow the system.
@@ -32,7 +33,7 @@ const SCHEMES = [
   METADATA.LOGO.SCHEME.DARK,
 ] as const;
 
-const logoImage = cva("size-full max-w-none scale-120", {
+const logoImage = cva("size-full max-w-none scale-110", {
   variants: {
     scheme: {
       [METADATA.LOGO.SCHEME.DARK]: "hidden dark:block",

@@ -12,7 +12,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 # AllOnFire — agent guide
 
 pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
-(Next 16, 3400), `apps/laura` (old Next, until rebuilt). Packages under
+(Next 16, 3400), `apps/laura` (Next 16, 3200). Packages under
 `packages/`, one per concept. Domain words: `CONTEXT.md`; decisions:
 `docs/adr/`.
 

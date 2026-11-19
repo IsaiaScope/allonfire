@@ -63,3 +63,17 @@ export const renderInUi = ({
       </NuqsTestingAdapter>
     </QueryClientProvider>
   );
+
+/**
+ * `renderInUi` over an App's own words, bound once (`renderInApp`): the words
+ * are the default `messages`, and a call can swap them.
+ */
+export const bindRenderInUi =
+  <Messages extends object>(own: Messages) =>
+  ({
+    messages = own,
+    ...options
+  }: Omit<Parameters<typeof renderInUi>[0], "messages"> & {
+    messages?: Messages;
+  }) =>
+    renderInUi({ messages, ...options });
