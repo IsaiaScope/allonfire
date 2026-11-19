@@ -42,7 +42,9 @@ export const renderInUi = ({
             fallback: SHARED_TRANSLATIONS.en.Common.Request.failed,
             notify: aofNotifyError,
           }),
-          defaultOptions: { queries: { retry: false } },
+          // No retries unless a query asks for them, and then at once: a test
+          // never waits on TanStack's own clock (1s before the first retry).
+          defaultOptions: { queries: { retry: false, retryDelay: 0 } },
         })
       }
     >

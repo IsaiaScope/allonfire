@@ -33,7 +33,7 @@ vi.mock(
   () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 vi.mock("@/environment/environment", () => ({
-  env: { BACK_OFFICE_URL: LOCAL.URL.BACK_OFFICE, LAURA_URL: LOCAL.URL.LAURA },
+  env: { LAURA_URL: LOCAL.URL.LAURA },
 }));
 
 const renderLayout = () =>

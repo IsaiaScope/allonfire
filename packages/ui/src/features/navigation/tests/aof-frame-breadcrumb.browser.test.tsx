@@ -33,7 +33,7 @@ const APP = {
 
 const renderAt = (
   pathname: string,
-  crumbMark?: (position: string) => React.ReactNode
+  crumbMark?: (position: string, label?: string) => React.ReactNode
 ) => {
   navigationAt.pathname = pathname;
   return renderInUi({
@@ -73,6 +73,16 @@ describe("AOFFrameBreadcrumb", () => {
       (mark) => mark.textContent
     );
     expect(marks).toEqual(["00", "02", "01"]);
+  });
+
+  it("hands the mark the label of the Section or page it stands for, none for the App", async () => {
+    await renderAt("/storage/images", (_position, label) => (
+      <b data-testid="mark">{label ?? "app"}</b>
+    ));
+    const marks = [...breadcrumb().element().querySelectorAll("b")].map(
+      (mark) => mark.textContent
+    );
+    expect(marks).toEqual(["app", "storage", "images"]);
   });
 
   it("draws no number without a mark", async () => {

@@ -1,11 +1,14 @@
 // @module-tag integration
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
+import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
+import { OCEAN_ART } from "@allonfire/design/designs/ocean/mascot-art";
 import { nextFrames } from "@allonfire/ui/shared/tests/toast-timing";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import EN from "@/features/i18n/translations/en.json" with { type: "json" };
 import { OceanToaster } from "@/shared/components/ocean-toaster";
+import { MASCOT } from "@/shared/constants/mascots";
 import { OfflineBanner } from "../offline-banner";
 import { OfflineCard } from "../offline-card";
 
@@ -21,6 +24,16 @@ const TEXT = SHARED_TRANSLATIONS.en.Common.Offline;
 afterEach(nextFrames);
 
 describe("OfflineCard", () => {
+  it("draws the jellyfish, the offline picture", async () => {
+    const screen = await render(
+      <OfflineCard description="Waiting for the sea" title="No connection" />
+    );
+    expect(
+      document.querySelector("[data-testid=picture]")?.getAttribute("data-src")
+    ).toBe(svgDataUrl(OCEAN_ART[MASCOT.OFFLINE].SVG));
+    screen.unmount();
+  });
+
   it("shows its title and description", async () => {
     const screen = await render(
       <OfflineCard description="Waiting for the sea" title="No connection" />

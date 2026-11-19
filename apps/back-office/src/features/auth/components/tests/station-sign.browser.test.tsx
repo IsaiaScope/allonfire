@@ -19,7 +19,11 @@ const setTheme = (night: boolean) =>
 
 /** The sign's card, and its band: what holds the logo, the page's heading. */
 const renderSign = async () => {
-  const screen = await render(<StationSign seal={null}>body</StationSign>);
+  const screen = await render(
+    <StationSign seal={null} status="Reset password">
+      body
+    </StationSign>
+  );
   // The mocked logo carries no name: the heading is the page's one h1.
   const band = screen
     .getByRole("heading", { level: 1 })

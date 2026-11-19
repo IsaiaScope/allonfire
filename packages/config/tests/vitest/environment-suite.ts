@@ -6,7 +6,13 @@ import { resolve } from "node:path";
 import { LOCAL } from "../../local/addresses";
 import { REPO } from "../../local/repo";
 
+/** The two Apps' own public addresses. */
+const ADDRESSES = ["BACK_OFFICE_URL", "LAURA_URL"] as const;
+type Address = (typeof ADDRESSES)[number];
+
 type Options = {
+  /** The Apps' addresses this App reads, and so refuses to start without; any other is not its business. */
+  addresses: readonly Address[];
   /** The `AUTH_APP` the App is served as (`App.LAURA`). */
   authApp: string;
   /** The API's own Auth path (`API.PATH.AUTH`); the App is told it behind the API's address (`API_AUTH_URL`). */
@@ -27,8 +33,8 @@ const BUILD_VARIABLES = [
 ] as const;
 /** Addresses every App starts with, but whose absence is not an error. */
 const OPTIONAL = ["NEXT_PUBLIC_API_REMOTE_URL"] as const;
-/** Addresses every App refuses to start without, and refuses when not a URL (both Apps' own, for the switcher). */
-const REQUIRED = ["BACK_OFFICE_URL", "LAURA_URL", "API_URL"] as const;
+/** The API's address, which every App refuses to start without, and refuses when not a URL. */
+const API_ADDRESS = "API_URL";
 
 const INVALID = "Invalid environment variables";
 const NOT_A_URL = "not-a-url";
@@ -55,16 +61,19 @@ const turboBuildVariables = () => {
 /**
  * The cases every Next App's env module passes: it loads with its variables,
  * refuses an address it needs when unset or not a URL, starts without an
- * optional one, takes its build variables from Turbo, and its example holds
+ * optional one or one it never reads, takes its build variables from Turbo, and its example holds
  * the API's Auth address.
  */
 export const environmentSuite = ({
+  addresses,
   authApp,
   authPath,
   examplePath,
   importEnv,
 }: Options) => {
   const authUrl = `${LOCAL.URL.API}${authPath}`;
+  const required = [...addresses, API_ADDRESS];
+  const unused = ADDRESSES.filter((name) => !addresses.includes(name));
   /** Every variable the App needs to load, with a valid value. */
   const stub: Record<string, string> = {
     API_AUTH_URL: authUrl,
@@ -89,14 +98,19 @@ export const environmentSuite = ({
       await expect(importEnv()).resolves.toHaveProperty("env");
     });
 
-    it.each(REQUIRED)("refuses to start without %s", async (name) => {
+    it.each(required)("refuses to start without %s", async (name) => {
       vi.stubEnv(name, undefined);
       await expect(importEnv()).rejects.toThrow(INVALID);
     });
 
-    it.each(REQUIRED)("refuses %s when it is not a URL", async (name) => {
+    it.each(required)("refuses %s when it is not a URL", async (name) => {
       vi.stubEnv(name, NOT_A_URL);
       await expect(importEnv()).rejects.toThrow(INVALID);
+    });
+
+    it.each(unused)("starts without %s, which it never reads", async (name) => {
+      vi.stubEnv(name, undefined);
+      await expect(importEnv()).resolves.toHaveProperty("env");
     });
 
     it.each(OPTIONAL)("starts without %s", async (name) => {

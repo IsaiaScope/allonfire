@@ -107,6 +107,10 @@ export const AOFSidebar = ({
       className={cn(
         // Its content clear of a notch on the left; its colour runs to the edge.
         "md:*:data-[sidebar=sidebar]:pl-[env(safe-area-inset-left,0px)]",
+        // A floating frame is a card, so the card itself stands clear of the
+        // notch (its frame gap, or the inset when that is larger), and its
+        // content needs no inset of its own.
+        "md:group-data-[variant=floating]:pl-[max(var(--frame-gap,0.5rem),env(safe-area-inset-left,0px))] md:group-data-[variant=floating]:*:data-[sidebar=sidebar]:pl-0",
         // A floating frame wears the Design's tokens (`--frame-gap`,
         // `--frame-radius`, `--frame-shadow`), each falling back to shadcn's
         // own value, so a Design that sets none, and the `sidebar` variant,

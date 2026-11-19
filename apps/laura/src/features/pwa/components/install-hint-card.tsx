@@ -2,7 +2,6 @@ import {
   type InstallStep,
   PWA,
 } from "@allonfire/core/features/next/pwa/constants/pwa";
-import { OCEAN_FACE } from "@allonfire/design/designs/ocean/ocean-mark";
 import { AOFInstallSteps } from "@allonfire/ui/features/pwa/components/aof-install-steps";
 import type { AOFInstallHintCardProps } from "@allonfire/ui/features/pwa/types/install-hint-card";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
@@ -16,7 +15,8 @@ import {
   IconSquarePlus,
   IconX,
 } from "@tabler/icons-react";
-import { OceanMark } from "@/shared/components/ocean-mark";
+import { OceanArt } from "@/shared/components/ocean-art";
+import { MASCOT } from "@/shared/constants/mascots";
 
 const { STEP } = PWA.INSTALL_HINT;
 
@@ -55,7 +55,7 @@ const InstallButton = ({
 
 /**
  * The Install hint's card, sent as a toast: an ink card (ink in both
- * schemes) with the winking octopus and the words, an Install button on the
+ * schemes) with the octopus and the words, an Install button on the
  * same row when the card has room, else on a row of its own (a phone); or
  * the browser's steps below, their icons in the ✕'s column. A failed install
  * says so under the words.
@@ -77,10 +77,9 @@ export const InstallHintCard = ({
     {...props}
   >
     <div className="grid @sm:grid-cols-[auto_1fr_auto_auto] grid-cols-[auto_1fr_auto] items-center gap-3">
-      <OceanMark
+      <OceanArt
+        art={MASCOT.INSTALL}
         className="col-start-1 row-start-1 size-10"
-        face={OCEAN_FACE.WINK}
-        tone="white"
       />
       <p className="col-start-2 row-start-1 min-w-0 font-bold text-sm">{cta}</p>
       <AOFButton

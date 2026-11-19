@@ -16,7 +16,7 @@ vi.mock("@allonfire/auth/environment/next-environment", () => ({
 }));
 // The env is read at import and a unit test lacks it.
 vi.mock("@/environment/environment", () => ({
-  env: { BACK_OFFICE_URL: LOCAL.URL.BACK_OFFICE, LAURA_URL: LOCAL.URL.LAURA },
+  env: { LAURA_URL: LOCAL.URL.LAURA },
 }));
 
 /** A Session whose User holds `role` in Laura. */

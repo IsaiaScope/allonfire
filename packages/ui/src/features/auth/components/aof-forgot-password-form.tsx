@@ -49,8 +49,7 @@ export const AOFForgotPasswordForm = ({
   const formProps = useAOFFormAction(form, action);
   return (
     <form aria-label={t("title")} className="flex flex-col p-3" {...formProps}>
-      <h2 className="font-bold text-lg">{t("title")}</h2>
-      <p className="mt-1 mb-6 text-muted-foreground text-sm">{t("intro")}</p>
+      <p className="mb-6 text-base text-muted-foreground">{t("intro")}</p>
       <form.AppField name="email">
         {(email) => (
           <email.TextField

@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@allonfire/shadcn/components/tooltip";
 import type { ReactElement } from "react";
+import { useSafeAreaPadding } from "../hooks/use-safe-area-padding";
 import type { ComponentPropsWithoutChildren } from "../types/types";
 import { cn } from "../utils/utils";
 
@@ -37,6 +38,7 @@ export const AOFTooltip = ({
   onOpenChange,
   ...props
 }: AOFTooltipProps) => {
+  const padding = useSafeAreaPadding();
   const open: AOFTooltipProps["onOpenChange"] = (next, details) => {
     // `innerText` leaves out what CSS hides, so it is what the eye reads.
     if (
@@ -53,6 +55,7 @@ export const AOFTooltip = ({
     <Tooltip {...props} onOpenChange={open}>
       <TooltipTrigger render={children} />
       <TooltipContent
+        collisionPadding={padding}
         {...contentProps}
         className={cn("pointer-events-none text-sm", contentProps?.className)}
       >

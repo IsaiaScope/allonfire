@@ -1,8 +1,11 @@
 // @module-tag integration
+import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
+import { OCEAN_ART } from "@allonfire/design/designs/ocean/mascot-art";
 import {
   CAN_EMULATE_MEDIA,
   withReducedMotion,
 } from "@allonfire/ui/shared/tests/emulated-media";
+import { MASCOT } from "@/shared/constants/mascots";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
 import { SectionLoading } from "../section-loading";
@@ -24,6 +27,14 @@ describe("SectionLoading", () => {
       .element(screen.getByRole("status"))
       .toHaveTextContent(enT("Common.Loading.label"));
     expect(document.querySelector("[aria-busy]")).toBeNull();
+    screen.unmount();
+  });
+
+  it("draws the classic octopus, the loading picture", async () => {
+    const screen = await renderInApp({ children: <SectionLoading /> });
+    expect(
+      document.querySelector("[data-testid=picture]")?.getAttribute("data-src")
+    ).toBe(svgDataUrl(OCEAN_ART[MASCOT.LOADING].SVG));
     screen.unmount();
   });
 

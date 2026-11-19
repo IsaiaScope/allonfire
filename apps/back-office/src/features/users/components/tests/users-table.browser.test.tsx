@@ -31,10 +31,7 @@ import { UsersListSkeleton } from "../users-list-skeleton";
 import { UsersTable } from "../users-table";
 
 const t = EN.Users;
-/**
- * Well past the box's typing rest (WebKit types slower) and TanStack's first
- * retry delay (1s).
- */
+/** Well past the box's typing rest (WebKit types slower). */
 const WAIT_MS = 3 * UNIT.MS_PER_SECOND;
 /** The first try and the retries a server failure gets. */
 const QUERY_ATTEMPTS = 1 + USERS.RETRIES;

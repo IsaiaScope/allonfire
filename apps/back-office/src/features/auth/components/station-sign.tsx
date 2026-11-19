@@ -1,29 +1,20 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { AOF_LOGO, aofLogoDataUrl } from "@allonfire/design/brand/aof-logo";
-import { AOFImage } from "@allonfire/ui/shared/components/aof-image";
+import { AOFAppLogo } from "@allonfire/ui/features/navigation/components/aof-app-logo";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import type { ComponentProps, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 
-// The logo's width at `h-16` (64px tall, 740 by 220).
-const LOGO_SIZES = "216px";
-
-// The band is always night. Inlined in the HTML, so it paints with the sign
-// instead of waiting for its own request.
-const LOGO_SRC = aofLogoDataUrl({
-  app: BACK_OFFICE.logo,
-  layout: METADATA.LOGO.LAYOUT.HORIZONTAL,
-  scheme: METADATA.LOGO.SCHEME.DARK,
-});
-
 export type StationSignProps = ComponentProps<"div"> & {
   /** What sits at the band's far end (the hanko). */
   seal: ReactNode;
+  /** What the page is (Sign in, Forgot password…), under the band. */
+  status: string;
 };
 
 /**
  * A station sign: the Sign in's card. A night band carries the App's logo,
- * the page's heading, and a seal; the body, the form, follows the theme.
+ * the page's heading, and a seal; under it the page's name, then the body,
+ * the form, which follows the theme.
  * Both are a little see-through, so the kanji painted behind the page shows
  * through. It enters once, short, and never for reduced motion.
  */
@@ -31,6 +22,7 @@ export const StationSign = ({
   children,
   className,
   seal,
+  status,
   ...props
 }: StationSignProps) => (
   <div
@@ -43,17 +35,15 @@ export const StationSign = ({
   >
     <div className="dark flex items-center gap-3 border-led border-b bg-led-panel/75 p-3 text-foreground dark:border-led-dim">
       <h1>
-        <AOFImage
-          alt={BACK_OFFICE.name}
-          className="h-16 w-auto"
-          height={AOF_LOGO.LAYOUT.horizontal.HEIGHT}
-          sizes={LOGO_SIZES}
-          src={LOGO_SRC}
-          width={AOF_LOGO.LAYOUT.horizontal.WIDTH}
+        <AOFAppLogo
+          logo={BACK_OFFICE.logo}
+          name={BACK_OFFICE.name}
+          scheme={METADATA.LOGO.SCHEME.DARK}
         />
       </h1>
       <span className="ml-auto">{seal}</span>
     </div>
+    <p className="px-3 pt-3 font-bold text-xl">{status}</p>
     {children}
   </div>
 );

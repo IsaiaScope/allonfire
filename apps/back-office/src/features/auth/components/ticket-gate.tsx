@@ -65,7 +65,9 @@ export const TicketGate = ({
         <BrushKanji kanji={SIGN_IN.BOARD_KANA} />
       }
     >
-      <StationSign seal={<Hanko seal={SIGN_IN.SEAL} />}>{children}</StationSign>
+      <StationSign seal={<Hanko seal={SIGN_IN.SEAL} />} status={status}>
+        {children}
+      </StationSign>
     </AOFGateFrame>
   );
 };

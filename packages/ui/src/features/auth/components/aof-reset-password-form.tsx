@@ -42,7 +42,7 @@ const AskAgain = ({ actions, back }: DressedProps) => {
   const t = useTranslations("Common.Auth.ResetPassword");
   return (
     <div className="flex flex-col gap-4 p-3">
-      <h2 className="font-bold text-lg">{t("title")}</h2>
+      <p className="text-base text-muted-foreground">{t("expiredIntro")}</p>
       <AOFGateNote tone="warning">{t("error.invalidToken")}</AOFGateNote>
       <div className="flex gap-2">
         {back}
@@ -98,7 +98,7 @@ export const AOFResetPasswordForm = ({
   }
   return (
     <form aria-label={t("title")} className="flex flex-col p-3" {...formProps}>
-      <h2 className="mb-6 font-bold text-lg">{t("title")}</h2>
+      <p className="mb-6 text-base text-muted-foreground">{t("intro")}</p>
       <form.AppField name="password">
         {(field) => (
           <field.TextField

@@ -74,6 +74,12 @@ describe("AOFAppFrame", () => {
     expect(html).toContain("Crumb");
   });
 
+  it("scrolls the page area at the visible height, so no band shows under it when Safari hides its toolbar", () => {
+    const html = renderFrame();
+    expect(html).toContain("md:h-dvh");
+    expect(html).not.toContain("svh");
+  });
+
   it("takes the variant from the App", () => {
     const html = renderFrame({ variant: "floating" });
     expect(html).toContain('data-frame-variant="floating"');

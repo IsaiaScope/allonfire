@@ -18,7 +18,7 @@ test("Sign in leads to Forgot password, which answers the same for any address",
 }) => {
   await page.goto(AUTH.PAGE.SIGN_IN);
   await page.getByRole("link", { name: AUTH_EN.SignIn.forgot }).click();
-  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+  await expect(page.getByRole("form", { name: t.title })).toBeVisible();
   await askFor(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email);
   await askFor(page, "nobody-at-all@reset.allonfire.test");
 });

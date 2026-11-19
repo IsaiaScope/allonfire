@@ -1,6 +1,9 @@
 // @module-tag integration
 import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
+import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
+import { OCEAN_ART } from "@allonfire/design/designs/ocean/mascot-art";
 import { render } from "vitest-browser-react";
+import { MASCOT } from "@/shared/constants/mascots";
 import { InstallHintCard } from "../install-hint-card";
 
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
@@ -13,6 +16,16 @@ const INSTALL = "Install";
 const DISMISS = "Not now";
 
 describe("InstallHintCard", () => {
+  it("draws the Firefox octopus, the install picture", async () => {
+    const screen = await render(
+      <InstallHintCard cta={CTA} dismissProps={{ "aria-label": DISMISS }} />
+    );
+    expect(
+      document.querySelector("[data-testid=picture]")?.getAttribute("data-src")
+    ).toBe(svgDataUrl(OCEAN_ART[MASCOT.INSTALL].SVG));
+    screen.unmount();
+  });
+
   it("offers Install and a dismiss button, each named and wired", async () => {
     const install = vi.fn();
     const dismiss = vi.fn();

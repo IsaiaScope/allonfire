@@ -8,7 +8,7 @@ import { z } from "zod";
 export const env = createEnv({
   // jscpd:ignore-start
   // Next inlines `process.env.NEXT_PUBLIC_*` only where it is written, and no package names an
-  // App's own addresses (`BACK_OFFICE_URL`, `LAURA_URL`): the Back Office's twin holds the same lines.
+  // App's own address (`LAURA_URL`): the Back Office's twin holds the same lines.
   // The API's public addresses (`NEXT_PUBLIC_API_URL`, and the remote one
   // Local sets): core's schema; the runtime mappings below stay here, where
   // Next inlines them.
@@ -27,12 +27,6 @@ export const env = createEnv({
   server: {
     // The API's internal address: core's schema.
     ...nextApiEnvSchema.server,
-    /**
-     * The Back Office's public address, for the App switcher, which lists the
-     * Back Office for a Back Office Admin. Build and runtime must carry the
-     * same value.
-     */
-    BACK_OFFICE_URL: z.url(),
     /**
      * Laura's own public address: metadataBase for every absolute URL in its
      * head (link-preview images, og:url). Read at build (prerendered pages

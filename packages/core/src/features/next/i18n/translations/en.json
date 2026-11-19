@@ -119,10 +119,12 @@
           "rateLimited": "Too many attempts. Try again later.",
           "unavailable": "Saving the password is not available now. Try again later."
         },
+        "expiredIntro": "Ask for a new link and we will send it to your email, so you can choose a new password.",
         "field": {
           "passwordMismatch": "The passwords differ",
           "passwordWeak": "Not every rule below is met yet"
         },
+        "intro": "Choose a password that meets every rule below.",
         "password": "New password",
         "showPassword": "Show password",
         "submit": "Save password",

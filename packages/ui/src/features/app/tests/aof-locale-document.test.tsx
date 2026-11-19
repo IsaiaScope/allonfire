@@ -103,7 +103,10 @@ describe("AOFLocaleDocument", () => {
     }
   });
 
-  it("mounts the edge tint once itself, so no App adds its own", () => {
-    expect(document().match(ARIA_HIDDEN)).toHaveLength(1);
+  it("draws no strip at the screen's edge, so Safari's toolbar shows the page under it", () => {
+    // A fixed element there makes Safari 26 fill its whole toolbar band with
+    // that element's colour and clip the page above it.
+    expect(document().match(ARIA_HIDDEN)).toBeNull();
+    expect(document()).not.toContain("fixed");
   });
 });

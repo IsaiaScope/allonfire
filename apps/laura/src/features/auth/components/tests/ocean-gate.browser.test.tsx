@@ -2,10 +2,13 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
+import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
+import { OCEAN_ART } from "@allonfire/design/designs/ocean/mascot-art";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
 import EN from "@/features/i18n/translations/en.json" with { type: "json" };
 import { LAURA } from "@/shared/constants/laura";
+import { MASCOT } from "@/shared/constants/mascots";
 import { enT } from "@/shared/tests/translators";
 import { OceanGate } from "../ocean-gate";
 
@@ -42,6 +45,39 @@ describe("OceanGate", () => {
     expect(
       document.querySelector("h1 [data-alt]")?.getAttribute("data-alt")
     ).toBe(LAURA.name);
+  });
+
+  it("holds the logo, the status and the form in one card, headed by a band", async () => {
+    await gate();
+    const sign = document.querySelector('[data-slot="ocean-sign"]');
+    expect(sign?.querySelector("h1")).not.toBeNull();
+    expect(sign?.textContent).toContain(STATUS);
+    expect(sign?.textContent).toContain(CARD);
+    // The band is night in both themes, like the Back Office's sign.
+    expect(sign?.querySelector(".dark h1")).not.toBeNull();
+  });
+
+  it("draws the octopus 64px, as tall as the logo, so it adds nothing to the band's height", async () => {
+    await gate();
+    const picture = document.querySelector(
+      '[data-slot="ocean-sign"] .dark [data-testid=picture]'
+    );
+    const wrapper = [
+      ...document.querySelectorAll('[data-slot="ocean-sign"] .dark > span'),
+    ].at(-1);
+    expect(picture).not.toBeNull();
+    expect(wrapper?.getBoundingClientRect().height).toBe(64);
+  });
+
+  it("ends the band with the octopus of the forms, the gate's picture", async () => {
+    await gate();
+    const band = document.querySelector('[data-slot="ocean-sign"] .dark');
+    const pictures = [
+      ...(band?.querySelectorAll("[data-testid=picture]") ?? []),
+    ];
+    expect(pictures.at(-1)?.getAttribute("data-src")).toBe(
+      svgDataUrl(OCEAN_ART[MASCOT.GATE].SVG)
+    );
   });
 
   it("names the language the page speaks and lets the visitor change it", async () => {

@@ -19,19 +19,26 @@ beforeEach(() =>
   page.viewport(SCREEN.VIEWPORT.DESKTOP.WIDTH, SCREEN.VIEWPORT.DESKTOP.HEIGHT)
 );
 
+const Frame = ({
+  onUrlUpdate = vi.fn(),
+  search,
+}: {
+  onUrlUpdate?: (event: UrlUpdateEvent) => void;
+  search: string;
+}) => (
+  <NuqsTestingAdapter hasMemory onUrlUpdate={onUrlUpdate} searchParams={search}>
+    <AOFSidebarProvider>
+      <AOFSidebarParam />
+      <AOFSidebar label={common.menu}>Sections</AOFSidebar>
+      <AOFSidebarTrigger aria-label={common.toggleMenu} />
+    </AOFSidebarProvider>
+  </NuqsTestingAdapter>
+);
+
 const renderAt = (
   search: string,
   onUrlUpdate: (event: UrlUpdateEvent) => void = vi.fn()
-) =>
-  render(
-    <NuqsTestingAdapter onUrlUpdate={onUrlUpdate} searchParams={search}>
-      <AOFSidebarProvider>
-        <AOFSidebarParam />
-        <AOFSidebar label={common.menu}>Sections</AOFSidebar>
-        <AOFSidebarTrigger aria-label={common.toggleMenu} />
-      </AOFSidebarProvider>
-    </NuqsTestingAdapter>
-  );
+) => render(<Frame onUrlUpdate={onUrlUpdate} search={search} />);
 
 /** The desktop sidebar's state: `expanded` or `collapsed`. */
 const sidebarState = () =>
@@ -52,6 +59,23 @@ describe("AOFSidebarParam", () => {
     await expect
       .poll(() => onUrlUpdate.mock.lastCall?.[0].queryString)
       .toBe(`?${NAVIGATION.PARAM.SIDEBAR}=false`);
+  });
+
+  it("writes the collapsed state back when a link to a bare address drops it", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    const screen = await renderAt(
+      `?${NAVIGATION.PARAM.SIDEBAR}=false`,
+      onUrlUpdate
+    );
+    await expect.poll(sidebarState).toBe("collapsed");
+    onUrlUpdate.mockClear();
+    // A Section link navigates to its bare address: the layout stays mounted,
+    // so the sidebar stays collapsed, and a refresh would open it.
+    await screen.rerender(<Frame onUrlUpdate={onUrlUpdate} search="" />);
+    await expect
+      .poll(() => onUrlUpdate.mock.lastCall?.[0].queryString)
+      .toBe(`?${NAVIGATION.PARAM.SIDEBAR}=false`);
+    expect(sidebarState()).toBe("collapsed");
   });
 
   it("falls back to open on a value it cannot read", async () => {

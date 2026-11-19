@@ -1,6 +1,7 @@
 "use client";
 
 import { aofBaseNavigation } from "@allonfire/core/features/next/i18n/utils/aof-base-navigation";
+import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
 import { NAVIGATION } from "../constants/navigation";
@@ -29,10 +30,14 @@ export type AOFFrameBreadcrumbProps = {
   /**
    * Draws a crumb's position (`"00"` the App, `"02"` a Section) in the App's
    * Design; none, and no position shows. A function: only a client binding
-   * of the App passes it.
+   * of the App passes it. `label` is the key of the Section or page the crumb
+   * stands for (`"memory"`), none for the App.
    */
-  crumbMark?: (position: string) => ReactNode;
+  crumbMark?: (position: string, label?: string) => ReactNode;
 };
+
+/** One crumb: its mark beside its words, never wider than the header lets it. */
+const crumbBox = cva("flex min-w-0 items-center gap-1.5");
 
 /** The Section's crumb where you are: the page, or only a name over its own page's crumb. */
 const SectionCrumb = ({
@@ -43,11 +48,9 @@ const SectionCrumb = ({
   named: boolean;
 }) =>
   named ? (
-    <span className="flex min-w-0 items-center gap-1.5">{children}</span>
+    <span className={crumbBox()}>{children}</span>
   ) : (
-    <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
-      {children}
-    </AOFBreadcrumbPage>
+    <AOFBreadcrumbPage className={crumbBox()}>{children}</AOFBreadcrumbPage>
   );
 
 /**
@@ -59,7 +62,6 @@ const CurrentBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
   const t = useTranslations("Navigation");
   const common = useTranslations("Common.Navigation");
   const pathname = usePathname();
-  const mark = (position: string) => crumbMark?.(position);
   const section: AppSection = currentSection(app, pathname);
   const [home] = app.sections;
   // One of the Section's own pages (`/services/mail`) follows it as a crumb.
@@ -69,13 +71,13 @@ const CurrentBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
   const below = !sub && pathname !== sectionHref(section.path);
   const crumb = (
     <>
-      {mark(sectionPosition(app, section))}
+      {crumbMark?.(sectionPosition(app, section), section.label)}
       <span className="truncate">{t(section.label)}</span>
     </>
   );
   const subCrumb = sub ? (
     <>
-      {mark(subPagePosition(section, sub))}
+      {crumbMark?.(subPagePosition(section, sub), sub.label)}
       <span className="truncate">{t(sub.label)}</span>
     </>
   ) : null;
@@ -86,10 +88,10 @@ const CurrentBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
           <>
             <AOFBreadcrumbItem className="hidden md:block">
               <AOFBreadcrumbLink
-                className="flex min-w-0 items-center gap-1.5"
+                className={crumbBox()}
                 render={<Link href={sectionHref(home.path)} />}
               >
-                {mark(NAVIGATION.APP_POSITION)}
+                {crumbMark?.(NAVIGATION.APP_POSITION)}
                 <span className="truncate">{app.name}</span>
               </AOFBreadcrumbLink>
             </AOFBreadcrumbItem>
@@ -99,7 +101,7 @@ const CurrentBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
         <AOFBreadcrumbItem>
           {below ? (
             <AOFBreadcrumbLink
-              className="flex min-w-0 items-center gap-1.5"
+              className={crumbBox()}
               render={<Link href={sectionHref(section.path)} prefetch />}
             >
               {crumb}
@@ -113,12 +115,12 @@ const CurrentBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
             <AOFBreadcrumbSeparator />
             <AOFBreadcrumbItem>
               {pathname === sectionHref(sub.path) ? (
-                <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+                <AOFBreadcrumbPage className={crumbBox()}>
                   {subCrumb}
                 </AOFBreadcrumbPage>
               ) : (
                 <AOFBreadcrumbLink
-                  className="flex min-w-0 items-center gap-1.5"
+                  className={crumbBox()}
                   render={<Link href={sectionHref(sub.path)} prefetch />}
                 >
                   {subCrumb}
@@ -139,7 +141,7 @@ const AppBreadcrumb = ({ app, crumbMark }: AOFFrameBreadcrumbProps) => {
     <AOFBreadcrumb aria-label={t("breadcrumb")}>
       <AOFBreadcrumbList>
         <AOFBreadcrumbItem>
-          <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
+          <AOFBreadcrumbPage className={crumbBox()}>
             {crumbMark?.(NAVIGATION.APP_POSITION)}
             <span className="truncate">{app.name}</span>
           </AOFBreadcrumbPage>

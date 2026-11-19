@@ -21,7 +21,7 @@
     "./designs/ocean/image-colors": "./src/designs/ocean/image-colors.ts",
     "./designs/ocean/image-font": "./src/designs/ocean/image-font.ts",
     "./designs/ocean/image-fonts": "./src/designs/ocean/image-fonts.ts",
-    "./designs/ocean/ocean-mark": "./src/designs/ocean/ocean-mark.ts",
+    "./designs/ocean/mascot-art": "./src/designs/ocean/mascot-art.ts",
     "./designs/ocean/sea-emoji": "./src/designs/ocean/sea-emoji.ts",
     "./designs/ocean/sea-icons": "./src/designs/ocean/sea-icons.ts",
     "./designs/ocean/sea-wave": "./src/designs/ocean/sea-wave.ts",

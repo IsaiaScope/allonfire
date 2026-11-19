@@ -11,8 +11,8 @@ import {
   AlertDialogTitle,
 } from "@allonfire/shadcn/components/alert-dialog";
 import { type ReactNode, useCallback } from "react";
-import { SAFE_AREA } from "../constants/safe-area";
 import type { ComponentPropsWithoutChildren } from "../types/types";
+import { centredInSafeArea } from "../utils/safe-area-box";
 import { cn } from "../utils/utils";
 
 /** Base UI's alert dialog root (`open`, `onOpenChange`, ...), plus its parts. */
@@ -76,7 +76,7 @@ export const AOFAlertDialog = ({
     <AlertDialog {...props}>
       <AlertDialogContent
         {...contentProps}
-        className={cn(SAFE_AREA.CENTRED, contentProps?.className)}
+        className={cn(centredInSafeArea(), contentProps?.className)}
       >
         {top}
         {/* Under a head of its own the text reads from the left on every

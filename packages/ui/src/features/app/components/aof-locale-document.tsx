@@ -5,17 +5,15 @@ import { AOFPwa } from "@allonfire/core/features/next/pwa/components/aof-pwa";
 import { ENV } from "@allonfire/core/shared/constants/env";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
-import { AOFEdgeTint } from "../../feedback/components/aof-edge-tint";
 import { AOFQueryProvider } from "../../query/components/aof-query-provider";
 
 /**
  * Every App's `[locale]` document: the language, the providers every page
- * reads (words, queries, theme, URL state), the App's toaster, the edge
- * tint that keeps iOS Safari's toolbar the page's colour (never a slot, so
- * an App cannot forget it) and the PWA around the pages (ADR 0023). The
- * toaster, the Install hint and the offline banner are the App's, drawn in
- * its Design. `generateStaticParams`, `generateMetadata` and `viewport` stay
- * in the App's layout file: Next reads those exports from it.
+ * reads (words, queries, theme, URL state), the App's toaster and the PWA
+ * around the pages (ADR 0023). Nothing fixed is drawn at the screen's bottom
+ * edge but the toaster (`docs/guides/safari.md`). `generateStaticParams`,
+ * `generateMetadata` and `viewport` stay in the App's layout file: Next reads
+ * those exports from it.
  */
 export const AOFLocaleDocument = ({
   banner,
@@ -43,7 +41,6 @@ export const AOFLocaleDocument = ({
           <AOFThemeProvider>
             <AOFNuqsAdapter>
               {toaster}
-              <AOFEdgeTint />
               <AOFPwa banner={banner} enabled={pwaEnabled} hint={hint}>
                 {children}
               </AOFPwa>

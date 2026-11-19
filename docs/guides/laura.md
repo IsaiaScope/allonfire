@@ -14,6 +14,8 @@ The Sections are `SECTION` in `src/shared/constants/laura.ts`, an explicit list 
 - The signed-in frame is `(signed-in)/layout.tsx` over ui's `AOFAppFrame` with `variant="floating"` and `collapsible="icon"` (ADR 0033); the account menu holds language, theme and sign out, and the App switcher lists the Back Office for a Back Office Admin. Back Office specifics are in `back-office.md`; the frame, signed-in pages and special pages are in `next-apps.md`.
 - Laura's Ocean dressing is bound once, in thin files, to the shared pieces through slots: `features/auth/constants/dressing.tsx` (the sign-in pages), `features/errors/components` and `features/pwa/components` (notices and PWA cards), `shared/components` and `shared/constants/action-dressing.tsx`. The Design itself is `packages/design/src/designs/ocean` and `src/apps/laura` (`design-system.md`).
 
+- Laura's mascot is a pool of emoji art (`OCEAN_ART`, `OCEAN_MASCOT_POOL`: `packages/design/src/designs/ocean/mascot-art.ts`, licences in `SOURCES.md`), never a drawing. `src/shared/constants/mascots.ts` (`MASCOT`) assigns one picture to each moment (gate, error, 404, offline, loading, toasts, Install card) and the server component `OceanArt` draws it; the frame's breadcrumb wears one beside each crumb, fixed: the favourite (`MASCOT.APP`) for the App, then `MASCOT.CRUMB` by `Navigation` label for each Section and page (`crumbArt`), never one whose fill all but vanishes on the light ground (the Noto jellyfish, lighthouse, shark, whale, the Fluent wave).
+
 ## Roles and the Upload gate
 
 - Laura admits two Roles, Admin and User, and no Viewer (ADR 0032): its floor in `ACCESS.APP_SETTINGS[App.LAURA]` is User. A User browses and plays; an Admin also adds Images.

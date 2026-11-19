@@ -103,9 +103,10 @@ treasures. By day the ground is sea glass, pale and a little green, with white
 foam cards resting on it and one deep teal for what can be pressed. By night
 the pool goes to deep water, and the teal turns bright enough to find in the
 dark. A single coral, the colour of what is loved, marks Favorites and nothing
-else. An octopus is its mascot, drawn as a kawaii blob (a round body on four
-tiny feet) with a face that can change. The Laura logo is not the octopus: it is the AOF
-logo as the Back Office wears it, with the teal banner behind its label.
+else. Its mascot is a small pool of emoji art, not a drawing: three octopuses,
+a squid, a jellyfish and one one-colour octopus (`OCEAN_MASCOT_POOL`). The
+Laura logo is not the mascot: it is the AOF logo as the Back Office wears it,
+with the teal banner behind its label.
 
 It is warm without being childish: Nunito's round letters for reading, a soft
 serif (Fraunces) only for page headings, soft corners, one hand's reach for
@@ -154,9 +155,9 @@ The palette is teal water with one warm accent. Every value lives in
 (`#0a2530`, pale text `#e8f2f3`) in both schemes: it does not follow the
 theme, like a station sign that stays lit.
 
-**The Coral Rule.** Coral marks a Favorite and the octopus on the Memory game's
-card back, and nothing else. It is never text on the ground and never a state
-(success, warning and failure have their own colours).
+**The Coral Rule.** Coral marks a Favorite and nothing else. It is never text
+on the ground and never a state (success, warning and failure have their own
+colours); the mascot art keeps its own colours and is never tinted coral.
 
 ## Typography
 
@@ -199,10 +200,15 @@ Soft: `--radius` is 0.75rem; cards step to `xl` (1.05rem) and the frame to
 - **Floating frame.** The sidebar as a card with a gap round it.
 - **Favorite mark.** Coral, 24px.
 - **Card back.** The Memory game's card: ink, an edge in the night teal, two
-  rows of waves, the dizzy octopus in night coral.
+  rows of waves, the Noto octopus in its own colours.
 - **Sea line.** One wave (`sea-wave.ts`): the share card's foot, a divider.
 - **Sea icons.** Solid and single-colour: crab, jellyfish, lighthouse
   (`sea-icons.ts`, credits in `SOURCES.md`).
+- **Mascot art.** `OCEAN_ART` (`mascot-art.ts`, every origin and licence in
+  `SOURCES.md`): the pool the pages show is the Noto, Firefox and classic Noto
+  octopus, the Noto squid, the Noto jellyfish and the one-colour game-icons
+  octopus (`OCEAN_MASCOT_POOL`); the details are the crab, a jellyfish, a
+  lighthouse, a shark, a whale, Fluent's jellyfish, squid and water wave.
 - **Emoji.** Noto and Firefox, full colour, one per thing the app shows
   (`sea-emoji.ts`), each with `filter: var(--emoji-shadow)`: a tight shadow,
   ink-tinted on the light ground and a light rim at night. No ship.
@@ -215,15 +221,16 @@ Soft: `--radius` is 0.75rem; cards step to `xl` (1.05rem) and the frame to
 - **Do** check a new colour against `theme.test.ts`: AA for text, 3:1 for a
   mark.
 - **Do** keep motion behind `motion-safe:`.
-- **Do** give the octopus a face for the moment (`OCEAN_FACE`: dizzy for the
-  card back and an error, lost for a 404, sleepy offline, happy at the door
-  and while waiting, a wink and wide eyes in toasts); a new face is a new
-  function in `ocean-mark.ts`.
+- **Do** draw the mascot only from the pool (`OCEAN_ART`), one picture per
+  moment from one table (Laura's `MASCOT`): the Firefox octopus at the door and
+  in the Install card, the Noto octopus for an error, the squid for a 404, the
+  jellyfish offline, the classic octopus while waiting; each full-colour one
+  with `filter: var(--emoji-shadow)`, the one-colour octopus in the primary.
 
 ### Don't
 - **Don't** put coral on text, or on anything but a Favorite.
 - **Don't** add a shadow to a tile, a card or a button (**The Quiet Image
   Rule**: chrome never competes with an Image).
-- **Don't** draw the octopus as a large illustration or with filters: plain
-  paths, two colours.
+- **Don't** draw a mascot of our own or tint the art: it keeps its own colours,
+  at a size that is an accent, never a large illustration.
 - **Don't** show Japanese or station furniture here: that is Japan's.

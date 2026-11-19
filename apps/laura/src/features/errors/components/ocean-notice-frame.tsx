@@ -1,5 +1,5 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import { OCEAN_FACE } from "@allonfire/design/designs/ocean/ocean-mark";
+import type { OceanArtKey } from "@allonfire/design/designs/ocean/mascot-art";
 import { AOFNoticeStage } from "@allonfire/ui/features/feedback/components/aof-notice-stage";
 import { AOFNoticeTitle } from "@allonfire/ui/features/feedback/components/aof-notice-title";
 import type {
@@ -8,18 +8,16 @@ import type {
 } from "@allonfire/ui/features/feedback/types/notice";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
-import { OceanMark, type OceanMarkProps } from "@/shared/components/ocean-mark";
+import { OceanArt } from "@/shared/components/ocean-art";
 import { LAURA } from "@/shared/constants/laura";
+import { MASCOT } from "@/shared/constants/mascots";
 
-/** The octopus each kind of notice shows: dizzy and coral for an error, lost or asleep in teal. */
-const MARK = {
-  error: { face: OCEAN_FACE.DIZZY, tone: "coral" },
-  notFound: { face: OCEAN_FACE.LOST, tone: "teal" },
-  offline: { face: OCEAN_FACE.SLEEPY, tone: "teal" },
-} as const satisfies Record<
-  AOFNoticeFrameProps["kind"],
-  Pick<OceanMarkProps, "face" | "tone">
->;
+/** The picture each kind of notice shows: the octopus for an error, the squid lost, the jellyfish offline. */
+const ART = {
+  error: MASCOT.ERROR,
+  notFound: MASCOT.NOT_FOUND,
+  offline: MASCOT.OFFLINE,
+} as const satisfies Record<AOFNoticeFrameProps["kind"], OceanArtKey>;
 
 /** What rises in: the octopus first, then the words and the action, once, never for reduced motion. */
 const rise = cva("", {
@@ -33,7 +31,7 @@ const rise = cva("", {
 });
 
 /**
- * The notices drawn as a pool's: the octopus with the face of the moment, the
+ * The notices drawn as a pool's: the picture of the moment (`MASCOT`), the
  * heading in Fraunces, the words, the action; a reference (an error's
  * digest) goes on an ink pill. A page names its tab while it shows.
  */
@@ -55,8 +53,8 @@ export const OceanNoticeFrame: AOFNoticeFrame = ({
         <AOFNoticeTitle>{pageTitle(heading, LAURA.name)}</AOFNoticeTitle>
       ) : null}
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
-        <OceanMark
-          {...MARK[kind]}
+        <OceanArt
+          art={ART[kind]}
           className={cn("size-36", rise({ after: "mark", entrance }))}
         />
         <div

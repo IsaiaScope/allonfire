@@ -97,11 +97,10 @@
     "packages/shadcn/src/components/faceted.d.ts": ["exports"],
     "packages/shadcn/src/components/scroll-area.d.ts": ["exports"],
     "packages/shadcn/src/components/sonner.d.ts": ["exports"],
-    // Ocean's card back and sea marks: held by the Memory game and the score
+    // Ocean's card back and sea emoji: held by the Memory game and the score
     // screens, rebuilt in Phases 6 and 7 of the Laura rebuild.
     "packages/design/src/designs/ocean/card-back.ts": ["exports"],
     "packages/design/src/designs/ocean/sea-emoji.ts": ["exports"],
-    "packages/design/src/designs/ocean/sea-icons.ts": ["exports"],
     // Held only by the games and uploads Phases 6 and 7 rebuild.
     "packages/core/src/features/errors/format-error-message.ts": ["exports"],
     "packages/database/src/features/apps/laura/game-score.service.ts": [

@@ -4,6 +4,7 @@ import { environmentSuite } from "@allonfire/config/tests/vitest/environment-sui
 import { App } from "@allonfire/database/enums";
 
 environmentSuite({
+  addresses: ["LAURA_URL"],
   authApp: App.LAURA,
   authPath: API.PATH.AUTH,
   examplePath: new URL("../../../.env.example", import.meta.url),

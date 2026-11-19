@@ -102,6 +102,58 @@ describe("AOFForgotPasswordForm", () => {
     ]);
   });
 
+  it("explains Forgot password under the gate's title", async () => {
+    const forgotScreen = await inEnglish(
+      <AOFForgotPasswordForm
+        actions={actions}
+        back={backLink}
+        resetPage={RESET_PAGE}
+      />
+    );
+    await expect.element(forgotScreen.getByText(forgot.intro)).toBeVisible();
+  });
+
+  it("explains Reset password with a link", async () => {
+    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    const screen = await inEnglish(
+      <AOFResetPasswordForm actions={actions} back={backLink} />
+    );
+    await expect.element(screen.getByText(reset.intro)).toBeVisible();
+  });
+
+  it("explains the dead-link notice, above its warning", async () => {
+    const screen = await inEnglish(
+      <AOFResetPasswordForm actions={actions} back={backLink} />
+    );
+    await expect.element(screen.getByText(reset.expiredIntro)).toBeVisible();
+  });
+
+  it("leaves the page's title to the gate: Forgot password has no heading of its own", async () => {
+    const screen = await inEnglish(
+      <AOFForgotPasswordForm
+        actions={actions}
+        back={backLink}
+        resetPage={RESET_PAGE}
+      />
+    );
+    expect(screen.getByRole("heading").elements()).toHaveLength(0);
+  });
+
+  it("leaves the page's title to the gate: Reset password has none, nor has the dead-link notice", async () => {
+    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    const screen = await inEnglish(
+      <AOFResetPasswordForm actions={actions} back={backLink} />
+    );
+    expect(screen.getByRole("heading").elements()).toHaveLength(0);
+  });
+
+  it("leaves the page's title to the gate in the dead-link notice too", async () => {
+    const screen = await inEnglish(
+      <AOFResetPasswordForm actions={actions} back={backLink} />
+    );
+    expect(screen.getByRole("heading").elements()).toHaveLength(0);
+  });
+
   it("stays the same form once the link is sent: the address kept but locked, Send link off, nothing moved", async () => {
     vi.mocked(requestPasswordReset).mockResolvedValue({ sent: true });
     const screen = await inEnglish(

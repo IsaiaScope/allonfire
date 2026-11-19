@@ -16,6 +16,13 @@
    there, never on a disabled one (Base UI marks one `data-disabled`, cmdk
    marks every row `data-disabled="false"`). */
 @layer base {
+  /* The page's ground on the root too, never transparent: iOS Safari 26 tints
+     its bars from the root's background where no fixed element is, and falls
+     back to white on a transparent one (`docs/guides/safari.md`). */
+  html {
+    background-color: var(--background);
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;

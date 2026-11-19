@@ -10,8 +10,7 @@ export default aofPlaywrightConfig({
   app: "laura",
   env: {
     AUTH_APP: App.LAURA,
-    // The e2e stack sets its own addresses, the Apps' included.
-    BACK_OFFICE_URL: LOCAL.URL.BACK_OFFICE_E2E,
+    // The e2e stack sets its own address.
     LAURA_URL: LOCAL.URL.LAURA_E2E,
   },
   // The Install hint shows from a visitor's second page on and, on a phone,

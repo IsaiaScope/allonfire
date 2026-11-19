@@ -13,17 +13,22 @@ import {
   DropdownMenuTrigger,
 } from "@allonfire/shadcn/components/dropdown-menu";
 import type { ComponentProps } from "react";
+import { useSafeAreaPadding } from "../hooks/use-safe-area-padding";
 import { cn } from "../utils/utils";
 import { AOFTooltip } from "./aof-tooltip";
 
 // ponytail: shadcn's menu under AOF names; the account menu is its one
 // user. Add behaviour here, never in packages/shadcn.
 export const AOFDropdownMenu = DropdownMenu;
-export const AOFDropdownMenuContent = DropdownMenuContent;
 export const AOFDropdownMenuGroup = DropdownMenuGroup;
 export const AOFDropdownMenuLabel = DropdownMenuLabel;
 export const AOFDropdownMenuSeparator = DropdownMenuSeparator;
 export const AOFDropdownMenuTrigger = DropdownMenuTrigger;
+
+/** The menu's box, kept clear of a notch and the home indicator (`useSafeAreaPadding`). */
+export const AOFDropdownMenuContent = (
+  props: ComponentProps<typeof DropdownMenuContent>
+) => <DropdownMenuContent collisionPadding={useSafeAreaPadding()} {...props} />;
 
 /**
  * A row of the menu (its pointer comes from ui's base.css, over shadcn's

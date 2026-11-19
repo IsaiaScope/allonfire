@@ -77,8 +77,17 @@ Every variable is documented in `.env.example`.
 | `AUTH_APP` | yes | `LAURA`: the App a sign-in is for |
 | `AUTH_COOKIE_DOMAIN` | | Production: the parent domain the Apps share Session cookies on |
 | `LAURA_URL` | yes | Laura's own address; build and runtime must match |
-| `BACK_OFFICE_URL` | yes | The Back Office's address, for the App switcher; build and runtime must match |
 | `TELEMETRY_*` | | No endpoint, no telemetry |
+
+## 🐙 Credits
+
+Laura's mascot art is open emoji art and icons (`packages/design/src/designs/ocean/SOURCES.md` lists every picture and its licence):
+
+- Noto Emoji and Noto classic emoji (Google), Apache 2.0.
+- Firefox emoji (Mozilla), Apache 2.0.
+- Fluent Emoji Flat (Microsoft), MIT.
+- Material Design Icons, Apache 2.0.
+- The one-colour [octopus](https://game-icons.net/1x1/lorc/octopus.html) and [crab](https://game-icons.net/1x1/lorc/crab.html) are by Lorc, from [game-icons.net](https://game-icons.net), licensed [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Recoloured to the theme; the drawing is unchanged.
 
 ---
 

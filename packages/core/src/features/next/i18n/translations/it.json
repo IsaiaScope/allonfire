@@ -119,10 +119,12 @@
           "rateLimited": "Troppi tentativi. Riprova più tardi.",
           "unavailable": "Salvataggio non disponibile ora. Riprova più tardi."
         },
+        "expiredIntro": "Chiedi un nuovo link e te lo invieremo via email, così potrai scegliere una nuova password.",
         "field": {
           "passwordMismatch": "Le password sono diverse",
           "passwordWeak": "Non tutte le regole sotto sono ancora rispettate"
         },
+        "intro": "Scegli una password che rispetti ogni regola qui sotto.",
         "password": "Nuova password",
         "showPassword": "Mostra password",
         "submit": "Salva password",

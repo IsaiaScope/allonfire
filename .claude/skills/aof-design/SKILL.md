@@ -358,21 +358,24 @@ to it.
   no variable or WOFF2 fonts), soft corners (`--radius` 0.75rem).
 - **The Ink Rule.** The card back and any other dark furniture are ink in both
   schemes.
-- **The Coral Rule.** Coral marks a Favorite and the card back's octopus only;
-  never text on the ground, never a state.
+- **The Coral Rule.** Coral marks a Favorite and nothing else; never text on
+  the ground, never a state, never a tint on the mascot art.
 - **The Floating Frame Rule.** Only the floating frame and floating controls
   cast a shadow (an emoji gets only its tight `--emoji-shadow`); gap,
   radius and shadow come from `--frame-*`.
 - **The Quiet Image Rule.** Chrome never competes with an Image; a stored
   picture shows the real `blurDataUrl`, never a stand-in gradient.
-- **The octopus.** A mascot, not the logo: the Laura logo is the AOF logo as
-  the Back Office wears it, with Ocean's teal banner behind its label. The
-  octopus (`ocean-mark.ts`) is the owner's chosen "kawaii blob" (a round
-  body on four tiny feet), plain ellipses in two colours with one face per
-  moment (dizzy on the Memory game's card back); a new face is a new
-  function. The owner likes variety: show many options (a board with codes)
-  before drawing the final one, and say where each comes from and under which
-  licence.
+- **The octopus.** The mascot is not a drawing: it is the owner's pool of
+  emoji art, `OCEAN_ART` in `mascot-art.ts` (origins and licences in
+  `SOURCES.md`, the CC BY 3.0 credit in Laura's README). The pool the pages
+  show (`OCEAN_MASCOT_POOL`): Noto, Firefox and classic Noto octopus, Noto
+  squid, Noto jellyfish and the one-colour game-icons octopus; the rest are
+  details. Laura's `MASCOT` table (`shared/constants/mascots.ts`) assigns one
+  picture to each moment, and `OceanArt` draws it; a moment never picks its
+  own. A new picture is a new `OCEAN_ART` entry with its licence and its row
+  in `SOURCES.md`. The owner likes variety: show many options (a board with
+  codes) before adding one, and say where each comes from and under which
+  licence. The logo is the AOF logo, not the mascot.
 - **Variants, never forks.** A shared component serves every App and Design
   through a variant, a slot or a CSS token read with a fallback; a Design
   supplies tokens only.

@@ -146,12 +146,13 @@ export const AOFAppFrame = ({
             control assistive tech meets, so this duplicate stays hidden. */}
         <AOFSidebarRail aria-hidden title={common("toggleMenu")} />
       </AOFSidebar>
-      {/* On a wider screen the page area is the screen's height and scrolls
+      {/* On a wider screen the page area is the visible height (`dvh`, so no band
+          shows once Safari hides its toolbar) and scrolls
           itself, so a list's table fills what is left and keeps its own
           scroll bars on screen; a phone scrolls the page, pull to refresh
           included. Its pages' gutters clear every inset; the left one only
           when no sidebar stands beside it (AOFSidebarInset). */}
-      <AOFSidebarInset className="md:h-svh md:overflow-y-auto">
+      <AOFSidebarInset className="md:h-dvh md:overflow-y-auto">
         <AOFFrameHeader className={classNames?.frameHeader}>
           {slots?.headerWall}
           <AOFSidebarTrigger
