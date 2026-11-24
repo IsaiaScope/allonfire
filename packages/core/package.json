@@ -6,12 +6,14 @@
   "exports": {
     "./environment/environment": "./src/environment/environment.ts",
     "./environment/mail-environment": "./src/environment/mail-environment.ts",
+    "./environment/next-api-environment": "./src/environment/next-api-environment.ts",
     "./environment/telemetry-environment": "./src/environment/telemetry-environment.ts",
     "./features/ci/affected": "./src/features/ci/affected.ts",
     "./features/version/constants/version": "./src/features/version/constants/version.ts",
     "./features/version/utils/resource-changed-error": "./src/features/version/utils/resource-changed-error.ts",
     "./features/version/utils/version-of": "./src/features/version/utils/version-of.ts",
     "./features/search/constants/search": "./src/features/search/constants/search.ts",
+    "./features/search/keyset-cursor": "./src/features/search/keyset-cursor.ts",
     "./features/search/search-query": "./src/features/search/search-query.ts",
     "./features/search/columns-query": "./src/features/search/columns-query.ts",
     "./features/search/sort-query": "./src/features/search/sort-query.ts",
@@ -33,10 +35,17 @@
     "./features/mail/utils/drivers": "./src/features/mail/utils/drivers.ts",
     "./features/metadata/constants/metadata": "./src/features/metadata/constants/metadata.ts",
     "./features/metadata/utils/page-title": "./src/features/metadata/utils/page-title.ts",
-    "./features/next/api/visitor-headers": "./src/features/next/api/visitor-headers.ts",
+    "./features/next/api/tests/answering-api": "./src/features/next/api/tests/answering-api.ts",
+    "./features/next/api/tests/fake-api": "./src/features/next/api/tests/fake-api.ts",
+    "./features/next/api/utils/aof-create-api": "./src/features/next/api/utils/aof-create-api.ts",
+    "./features/next/api/utils/aof-create-server-api": "./src/features/next/api/utils/aof-create-server-api.ts",
+    "./features/next/api/utils/aof-refusal": "./src/features/next/api/utils/aof-refusal.ts",
+    "./features/next/api/utils/visitor-headers": "./src/features/next/api/utils/visitor-headers.ts",
     "./features/next/config/utils/aof-create-next-config": "./src/features/next/config/utils/aof-create-next-config.ts",
     "./features/next/config/utils/aof-with-localized-not-found": "./src/features/next/config/utils/aof-with-localized-not-found.ts",
     "./features/next/i18n/utils/aof-create-middleware": "./src/features/next/i18n/utils/aof-create-middleware.ts",
+    "./features/next/i18n/utils/aof-base-navigation": "./src/features/next/i18n/utils/aof-base-navigation.ts",
+    "./features/next/i18n/utils/aof-base-routing": "./src/features/next/i18n/utils/aof-base-routing.ts",
     "./features/next/i18n/utils/aof-create-navigation": "./src/features/next/i18n/utils/aof-create-navigation.ts",
     "./features/next/i18n/utils/aof-define-routing": "./src/features/next/i18n/utils/aof-define-routing.ts",
     "./features/next/i18n/utils/aof-get-request-config": "./src/features/next/i18n/utils/aof-get-request-config.ts",
@@ -45,6 +54,9 @@
     "./features/next/instrumentation/guard-performance-measure": "./src/features/next/instrumentation/guard-performance-measure.ts",
     "./features/next/instrumentation/instrumentation": "./src/features/next/instrumentation/instrumentation.ts",
     "./features/next/logger/server-logger": "./src/features/next/logger/server-logger.ts",
+    "./features/next/i18n/tests/proxy-matcher-suite": "./src/features/next/i18n/tests/proxy-matcher-suite.ts",
+    "./features/next/metadata/utils/aof-app-metadata": "./src/features/next/metadata/utils/aof-app-metadata.ts",
+    "./features/next/metadata/utils/aof-manifest": "./src/features/next/metadata/utils/aof-manifest.ts",
     "./features/next/metadata/utils/aof-base-metadata": "./src/features/next/metadata/utils/aof-base-metadata.ts",
     "./features/next/metadata/utils/aof-base-viewport": "./src/features/next/metadata/utils/aof-base-viewport.ts",
     "./features/next/metadata/components/aof-icon-images": "./src/features/next/metadata/components/aof-icon-images.tsx",
@@ -66,10 +78,16 @@
     "./features/next/pwa/utils/install-prompt": "./src/features/next/pwa/utils/install-prompt.ts",
     "./features/next/pwa/utils/offline-fallback": "./src/features/next/pwa/utils/offline-fallback.ts",
     "./features/next/pwa/hooks/use-install-hint": "./src/features/next/pwa/hooks/use-install-hint.ts",
+    "./features/next/query/components/aof-hydrate-missing": "./src/features/next/query/components/aof-hydrate-missing.tsx",
     "./features/next/query/components/aof-hydrated-boundary": "./src/features/next/query/components/aof-hydrated-boundary.tsx",
     "./features/next/query/components/aof-resource-view": "./src/features/next/query/components/aof-resource-view.tsx",
     "./features/next/query/utils/aof-get-query-client": "./src/features/next/query/utils/aof-get-query-client.ts",
     "./features/next/query/utils/aof-query-errors": "./src/features/next/query/utils/aof-query-errors.ts",
+    "./features/next/query/utils/invalidate-static": "./src/features/next/query/utils/invalidate-static.ts",
+    "./features/next/query/utils/optimistic-mutation": "./src/features/next/query/utils/optimistic-mutation.ts",
+    "./features/next/query/utils/optimistic-update": "./src/features/next/query/utils/optimistic-update.ts",
+    "./features/next/query/utils/page-without": "./src/features/next/query/utils/page-without.ts",
+    "./features/next/query/utils/retry": "./src/features/next/query/utils/retry.ts",
     "./features/telemetry/constants/telemetry": "./src/features/telemetry/constants/telemetry.ts",
     "./features/telemetry/diag-logger": "./src/features/telemetry/diag-logger.ts",
     "./features/telemetry/otlp": "./src/features/telemetry/otlp.ts",
@@ -82,7 +100,8 @@
     "./shared/utils/object": "./src/shared/utils/object.ts",
     "./shared/utils/route-path": "./src/shared/utils/route-path.ts",
     "./shared/utils/storage": "./src/shared/utils/storage.ts",
-    "./shared/utils/svg-data-url": "./src/shared/utils/svg-data-url.ts"
+    "./shared/utils/svg-data-url": "./src/shared/utils/svg-data-url.ts",
+    "./shared/utils/url": "./src/shared/utils/url.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -117,6 +136,7 @@
     "@tanstack/react-query-devtools": "^5.103.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "hono": "^4.9.0",
     "next": "^16.3.6",
     "next-intl": "^4.14.7",
     "next-themes": "^0.4.6",
@@ -132,6 +152,7 @@
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-query-devtools": "^5.0.0",
+    "hono": "^4.9.0",
     "next": "^16.0.0",
     "next-intl": "^4.0.0",
     "next-themes": "^0.4.0",
@@ -144,6 +165,9 @@
       "optional": true
     },
     "@tanstack/react-query-devtools": {
+      "optional": true
+    },
+    "hono": {
       "optional": true
     },
     "next": {

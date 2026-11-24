@@ -1,14 +1,14 @@
+import { AOFRobots } from "@allonfire/core/features/next/metadata/utils/aof-indexed";
+import { App } from "@allonfire/database/enums";
+import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import type { MetadataRoute } from "next";
-import { baseUrl, getRobotsRules } from "@/lib/seo";
+import { env } from "@/environment/environment";
 
-export default function robots(): MetadataRoute.Robots {
-  const { allow, disallow } = getRobotsRules();
-  return {
-    rules: {
-      userAgent: "*",
-      allow,
-      disallow,
-    },
-    sitemap: `${baseUrl}/sitemap.xml`,
-  };
-}
+// Crawling stays open so search engines read the pages' noindex.
+const robots = (): MetadataRoute.Robots =>
+  AOFRobots({
+    indexing: ACCESS.APP_SETTINGS[App.LAURA].indexing,
+    origin: env.LAURA_URL,
+  });
+
+export default robots;

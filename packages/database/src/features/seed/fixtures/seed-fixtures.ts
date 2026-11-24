@@ -23,6 +23,19 @@ async function upsertImage(
   ]);
 }
 
+/** The Favorite Fixture: the master row for its Image, found by key as the Fixtures own it. No Profile is seeded: Profiles are created on first use. */
+async function markFavoriteFixture(client: PrismaClient) {
+  const { id } = await client.image.findUniqueOrThrow({
+    select: { id: true },
+    where: { key: FIXTURE.FAVORITE.IMAGE.key },
+  });
+  await client.favorite.upsert({
+    create: { imageId: id },
+    update: {},
+    where: { imageId: id },
+  });
+}
+
 /** The MAIL providers every Test database has on; their rows exist from the changelog. */
 const enableMailProvider = (client: PrismaClient) =>
   client.mailProvider.updateMany({
@@ -40,4 +53,6 @@ export async function seedFixtures(client: PrismaClient): Promise<void> {
     ...images.map((image) => upsertImage(client, image)),
     enableMailProvider(client),
   ]);
+  // After the Images: replacing an Image's placements takes its Favorite with them.
+  await markFavoriteFixture(client);
 }

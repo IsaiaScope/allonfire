@@ -2,23 +2,24 @@
   "extends": "../../packages/config/typescript/nextjs.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@allonfire/ui/*": ["../../packages/ui/src/*"],
-      "@allonfire/storage": ["../../packages/storage/src/index.ts"],
-      "@allonfire/storage/*": ["../../packages/storage/src/*"],
-      "@allonfire/auth/*": ["../../packages/auth/src/*"],
-      "@allonfire/core/*": ["../../packages/core/src/*"]
+      "@/*": ["./src/*"]
     },
-    "allowJs": true
+    "types": [
+      "node",
+      "vitest/globals",
+      "@allonfire/config/tests/browser/asset-url"
+    ]
   },
   "include": [
     "src",
-    "scripts",
+    "e2e",
     "next.config.ts",
     "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "e2e",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "vitest.browser.config.ts",
+    "vitest.browser.setup.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

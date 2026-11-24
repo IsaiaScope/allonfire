@@ -1,5 +1,12 @@
 {
-  "path": ["apps/api", "apps/back-office", "packages", ".github", "docker"],
+  "path": [
+    "apps/api",
+    "apps/back-office",
+    "apps/laura",
+    "packages",
+    ".github",
+    "docker"
+  ],
   "format": ["typescript", "tsx", "javascript", "yaml"],
   "minTokens": 60,
   "minLines": 6,

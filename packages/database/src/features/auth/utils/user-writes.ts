@@ -31,14 +31,26 @@ export const setPasswordLogin = async (
       }));
 };
 
-/** Makes `memberships` the User's whole set: every other one is removed. */
+/**
+ * Makes `memberships` the User's whole set: every other one is removed. A
+ * Membership kept is updated in place, never deleted and made again, since
+ * an App's own rows hang from it (Laura's Profile, ADR 0034).
+ */
 export const replaceMemberships = async (
   client: Prisma.TransactionClient,
   userId: string,
   memberships: readonly AccessMembership[]
 ): Promise<void> => {
-  await client.membership.deleteMany({ where: { userId } });
-  await client.membership.createMany({
-    data: memberships.map(({ app, role }) => ({ app, role, userId })),
+  await client.membership.deleteMany({
+    where: { app: { notIn: memberships.map(({ app }) => app) }, userId },
   });
+  await Promise.all(
+    memberships.map(({ app, role }) =>
+      client.membership.upsert({
+        create: { app, role, userId },
+        update: { role },
+        where: { userId_app: { app, userId } },
+      })
+    )
+  );
 };

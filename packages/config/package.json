@@ -13,7 +13,9 @@
     "./tests/e2e/run": "./tests/e2e/run.ts",
     "./tests/e2e/safe-area": "./tests/e2e/safe-area.ts",
     "./tests/run/test-run": "./tests/run/test-run.ts",
-    "./tests/vitest": "./tests/vitest/vitest.config.ts"
+    "./tests/vitest": "./tests/vitest/vitest.config.ts",
+    "./tests/vitest/app": "./tests/vitest/app-vitest.ts",
+    "./tests/vitest/environment-suite": "./tests/vitest/environment-suite.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

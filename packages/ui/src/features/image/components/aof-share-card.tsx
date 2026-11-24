@@ -16,8 +16,8 @@ const CARD = {
 
 /**
  * How a Design dresses the card, as data: its scheme's colours, the face its
- * image fonts load, and an optional strip along the bottom edge (the Japan
- * Design's tactile paving), drawn as a background image.
+ * image fonts load, and an optional strip along the bottom edge, drawn as a
+ * background image.
  * @internal
  */
 export type ShareCardLook = {
@@ -27,7 +27,7 @@ export type ShareCardLook = {
 };
 
 export type AOFShareCardProps = ShareCardLook & {
-  /** The App's colour as a band along the top (Japan: the App's line). */
+  /** The App's colour as a band along the top (the App's line). */
   band: string;
   description: string;
   /** What the card says first; the logo's banner already names the App. */

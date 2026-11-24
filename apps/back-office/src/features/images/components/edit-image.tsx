@@ -3,6 +3,8 @@
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import type { App } from "@allonfire/database/enums";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
+import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-toast-then-list";
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import { IconDeviceFloppy, IconPhotoEdit } from "@tabler/icons-react";
@@ -10,9 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useActionState, useCallback } from "react";
 import { useRouter } from "@/features/i18n/navigation";
-import { FormAlert } from "@/shared/components/form-alert";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { useCreated } from "@/shared/utils/use-created";
 import { editImage } from "../actions/edit-image";
 import { IMAGES } from "../constants/images";
@@ -153,7 +153,9 @@ export const EditImage = ({
               offered={offered}
             />
           </div>
-          <FormAlert className="@2xl:col-span-2 mt-4">{errorText}</FormAlert>
+          <AOFFormAlert className="@2xl:col-span-2 mt-4">
+            {errorText}
+          </AOFFormAlert>
         </div>
         <ImageFormActions
           pending={pending}

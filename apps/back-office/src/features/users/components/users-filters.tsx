@@ -4,6 +4,7 @@ import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { type App, Role } from "@allonfire/database/enums";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
+import { useRangePicker } from "@allonfire/ui/features/data-table/hooks/use-range-picker";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import {
@@ -11,7 +12,6 @@ import {
   SearchTile,
 } from "@/shared/components/list-filter-panel";
 import { APP_ENTRY, APP_OPTIONS } from "@/shared/constants/apps";
-import { useRangePicker } from "@/shared/hooks/use-range-picker";
 import { USERS } from "../constants/users";
 import { useUsersView } from "../hooks/use-users-view";
 
@@ -49,7 +49,7 @@ export const UsersFilters = ({
     [search, write]
   );
   const roles = objectValues(Role).map((role) => ({
-    label: t(`Navigation.role.${role}`),
+    label: t(`Common.Navigation.role.${role}`),
     value: role,
   }));
   const list = {

@@ -1,5 +1,6 @@
 import type { App, Role } from "@allonfire/database/enums";
 import { AUTH } from "../../../shared/constants/auth";
+import type { Session } from "../utils/auth-client";
 
 /**
  * What a session read's test mocks, one module standing in for each:
@@ -35,4 +36,30 @@ export const apiSends = (memberships: { app: App; role: Role }[] | null) => {
   );
   vi.stubGlobal("fetch", fetch);
   return fetch;
+};
+
+/** A Session as the API client types it, for a User holding `memberships`. */
+export const sessionOf = (memberships: { app: App; role: Role }[]): Session => {
+  const now = new Date();
+  return {
+    session: {
+      createdAt: now,
+      expiresAt: now,
+      id: "session-1",
+      token: "token",
+      updatedAt: now,
+      userId: "user-1",
+    },
+    user: {
+      createdAt: now,
+      email: "someone@example.com",
+      emailVerified: true,
+      id: "user-1",
+      image: null,
+      imageBlurDataUrl: null,
+      memberships,
+      name: "Someone",
+      updatedAt: now,
+    },
+  };
 };

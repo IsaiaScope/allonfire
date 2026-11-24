@@ -1,11 +1,9 @@
 "use client";
 
-import {
-  type HostLanguage,
-  I18N,
-} from "@allonfire/core/features/i18n/constants/locales";
+import type { HostLanguage } from "@allonfire/core/features/i18n/constants/locales";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import Image, { type ImageProps } from "next/image";
+import { aofAltFor } from "../../features/image/utils/alt-for";
 import { srcSetLoader } from "../utils/image-server-loader";
 import { AOFPictureGuard } from "./aof-picture-guard";
 
@@ -87,7 +85,7 @@ export const AOFStorageImage = ({
   ...props
 }: AOFStorageImageProps) => {
   // Base languages are always stored; another content language can be missing.
-  const alt = image.alt[language] ?? image.alt[I18N.DEFAULT_LANGUAGE];
+  const alt = aofAltFor(image.alt, language);
   return (
     <AOFPictureGuard
       alt={alt}

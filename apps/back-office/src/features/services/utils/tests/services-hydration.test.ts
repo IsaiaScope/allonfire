@@ -3,25 +3,28 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { ServiceType } from "@allonfire/database/enums";
-import { cacheLife, cacheTag } from "next/cache";
 import {
   dehydratedData,
   sentCookie,
   stubFetchJson,
-} from "@/shared/tests/fetch-stub";
-import { SESSION_COOKIE } from "@/shared/tests/session-cookie-mock";
+} from "@allonfire/ui/shared/tests/fetch-stub";
+import { SESSION_COOKIE } from "@allonfire/ui/shared/tests/session-cookie-mock";
+import { cacheLife, cacheTag } from "next/cache";
 import { SERVICES, serviceTag } from "../../constants/services";
 import { servicesHydration } from "../services-hydration";
 import { servicesListKey } from "../services-queries";
 
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 vi.mock(
   "@/environment/environment",
   () => import("@/shared/tests/environment-mock")
 );
 vi.mock(
   "@allonfire/auth/features/next/utils/session-cookie",
-  () => import("@/shared/tests/session-cookie-mock")
+  () => import("@allonfire/ui/shared/tests/session-cookie-mock")
 );
 
 describe("servicesHydration", () => {

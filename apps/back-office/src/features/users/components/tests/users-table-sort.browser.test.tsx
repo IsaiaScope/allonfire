@@ -18,12 +18,12 @@ import { UsersTable } from "../users-table";
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 // An App's mark (a User's card) only needs an element there.
 vi.mock(
   "@allonfire/ui/shared/components/aof-image",
-  () => import("@/shared/tests/aof-image-mock")
+  () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
 const LAURA = APP_ENTRY[App.LAURA].name;

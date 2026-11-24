@@ -21,12 +21,12 @@ database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
 |---|---|---|
 | `auth` | the user base every App shares (Better Auth) | `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App` |
 | `image` | the Images, each placed in one or more Apps, public or private in each ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [ADR 0020](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md)) | `Image`, `ImageApp` |
-| `laura` | Laura | `GameScore`, `QuizQuestion`, `QuizAnswer`, enum `GameType` |
+| `laura` | Laura | `GameScore`, enum `GameType`; the Profile tables `Profile`, `Favorite`, `ProfileFavorite` ([ADR 0034](../../docs/adr/0034-an-apps-data-about-a-user-lives-in-its-profile.md)) |
 | `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
 
 Foreign keys cross schemas (`image."Image"."uploadedBy"` references
 `auth."User"."id"`), so one Prisma client spans them all. Prisma requires
-back-relations, which is why `User` in `auth.prisma` lists other schemas' models.
+back-relations, which is why `Membership` in `auth.prisma` lists one line per App Profile (`User` lists none).
 
 ## Exports
 
@@ -35,11 +35,12 @@ back-relations, which is why `User` in `auth.prisma` lists other schemas' models
 | `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client, on the `pg` driver adapter (no root entry, no barrel) |
 | `@allonfire/database/features/image/image-stats` | `imageStats()`: every Image once (`total`, `totalBytes`) and, per App that has any, its bytes and count by access (`byApp`); an Image in two Apps counts in each; types `ImageStats`, `ImageAppStat` |
 | `@allonfire/database/features/image/image.service` | `createImages`, `listImagesPage` (a numbered page of the Images visible to the Apps the caller enters, narrowed by `app`, any of `apps`, any of `accesses` and `text`, which matches the alt in any language or the file name; with the count and bytes of every Image it matches), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImagePlacementsById`, `AuthorisePlacements`, `ResolveChanges` |
-| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app)`, `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,roles}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app, min?)` (a Section's `min` Role only raises the door), `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,access,app-settings}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
 | `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
+| `@allonfire/database/features/apps/laura/{profile,favorite,gallery}.service` | `ensureLauraProfile` (first use: the Profile and the copies), `markFavorite` and `unmarkFavorite` (the master and every copy in one transaction), `listGalleryPage` and `listFavoritesPage` (the caller's own copies, by keyset) |
 | `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
-| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD` (meets the password rules) and `FIXTURE.NEW_PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) |
+| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD` (meets the password rules) and `FIXTURE.NEW_PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) and `FIXTURE.FAVORITE` (the one Image the master Favorites hold) |
 | `@allonfire/database/features/seed/utils/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
 | `@allonfire/database/features/test-database/{names,global-setup,local-env}` | The Test database: `global-setup` is the Vitest `globalSetup`, a Test database per run cloned from the template (built when missing, after a sweep of crashed runs), dropped when the run ends; `testDatabaseName` names it; `fillLocalDatabaseEnv()` fills an unset `DATABASE_URL` from `LOCAL`, for a test setup; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
 
@@ -89,23 +90,29 @@ fails a `.prisma` edit that has no changeset.
 | `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
 | `pnpm db:drift` | Compare the database with the Prisma schema |
 | `pnpm db:seed` | Seed the real Admin, Admin in every App; the Fixtures go only into the Test template |
-| `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5555 (`pnpm dev` starts it too) |
+| `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5565, clear of the Android emulator's ADB port 5555 (`pnpm dev` starts it too) |
 | `pnpm --filter @allonfire/database test-database template \| create <label> <stamp> \| drop <label> <stamp>` | Build or check the template; make a Test database (prints its URL); drop it |
 | `pnpm test` | Unit tests, plus `*.integration.test.ts` on a Test database (`pnpm docker:up` first). Tests live in a `tests/` folder beside what they test |
 
 Liquibase needs Java, so it only runs in Docker: every `db:*` Liquibase script
 builds the same `db-migrate` image Production runs (`scripts/liquibase.sh`).
+The image is tagged `allonfire-db-migrate:<hash of its build context>`: an
+unchanged changelog reuses it, and callers running at once (every package's
+tests under Turbo) share one tag instead of moving it. Each changelog edit
+leaves one old tag; remove them with
+`docker rmi $(docker images -q allonfire-db-migrate)` (an image a container is
+using stays).
 
 ## Test Databases and Fixtures
 
 No test writes the Local database. The template is built on the server
 `DATABASE_URL` names: Liquibase's `update`, then `seedFixtures`. Its name,
-`allonfire_test_template_<epoch>_<fingerprint>`, carries the start of a sha256
+`aof_test_template_<YYMMDD>_<HHMMSS>_<fingerprint>` (UTC), carries the start of a sha256
 of `changelog/`, `liquibase/` and `src/features/seed/` (dotfiles and `tests/`
 left out), so a changeset, db-migrate or Fixture edit builds
 a new one on the next run while a tree built from other sources keeps its own;
 an advisory lock makes packages that start at once build it once. Each package's Vitest run clones it
-(`allonfire_test_<package>_<epoch>_<pid>_<random>`, `<pid>` the run's process), hands the clone to its workers as
+(`aof_test_<package>_<YYMMDD>_<HHMMSS>_p<pid>_<random>`, `<pid>` the run's process), hands the clone to its workers as
 `DATABASE_URL` and drops it at the end, also on Ctrl-C and a closed terminal
 (`dropWhenRunEnds`); a run with `--tags-filter=unit`
 skips all of it, so unit tests need no Docker. A run ended any other way

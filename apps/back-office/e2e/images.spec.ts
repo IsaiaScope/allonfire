@@ -5,6 +5,7 @@ import { newImageHref } from "../src/features/images/utils/image-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import {
+  addLanguage,
   altField,
   altOf,
   deleteFromList,
@@ -31,8 +32,7 @@ test("an Admin adds a picture with alt in three languages, edits it, and deletes
   await pick(page, PHOTO);
   const row = rowOf(page, 1);
   await fillRow(page, 1, alt);
-  await row.getByRole("combobox", { name: t.form.addLanguage }).fill("French");
-  await page.getByRole("option", { name: "French" }).click();
+  await addLanguage(page, row, "French");
   await altField(row, "français").fill(`${alt} fr`);
   await submitAdd(page);
   await expect(page).toHaveURL(BACK_OFFICE.PAGE.STORAGE_IMAGES);

@@ -77,7 +77,8 @@ Mirror of the server's `/opt/backups/.env`: git-ignored `vps/.env.production`, r
 - 2026-02-27: plan to move MonorepoOnFire off Railway (Turso DB) and add n8n and utility apps on one Hetzner `cax11` (2 vCPU, 4 GB) with Dokploy, about 4 EUR a month.
 - 2026-02-28: `cax11` created in `fsn1`, Ubuntu 24.04, Dokploy installed (one-line installer, single-node Swarm), shared Postgres is Dokploy's own `dokploy-postgres`.
 - 2026-03: MonorepoOnFire moved from Railway and Turso to the VPS and the shared Postgres; DNS cut over with TTL lowered to 300 s first, records DNS only (grey cloud) then.
-- 2026-03: UptimeRobot monitors created for the hosts of the time (`www.`, `n8n.`, `panel.`, `db.`, `monitor.`); two were renamed in 2026-10, so check the list against `workflow.` and `database-console.`.
+- 2026-03: UptimeRobot monitors created for the hosts of the time (`www.`, `n8n.`, `panel.`, `db.`, `monitor.`); later ones followed, and the list now uses the purpose names (`workflow.`, `database-console.`).
+- 2026-11-18: UptimeRobot monitor added for `https://cdn.isaiariva.com/health` (nginx answers `200`, empty body, no edge cache): `cdn.` carries every picture, and the check also catches a broken route, such as a missing `noindex@file`. 14 of the free plan's 50 monitors are in use.
 - 2026-04: upgraded live to `cax21` (8 GB) for AllOnFire; Hetzner resizes in place.
 - 2026-10: purpose-name hosts: `db.` became `database-console.`, `minio.` `storage.`, `multica.` `board.`, `n8n.` `workflow.`; the old records are gone.
 - 2026-11-02: every record proxied through Cloudflare, firewall narrowed to Cloudflare's ranges, SSL Full (strict).

@@ -26,10 +26,14 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/image-form-mocks")
 );
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/image-form-mocks")
+);
 // jscpd:ignore-start
 // A stored Image is drawn through the image server: here, a tile the picture's size.
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+  AOFImage: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
   AOFStorageImage: ({
     className,
     lcp,
@@ -68,7 +72,7 @@ beforeEach(() => {
 
 const renderEdit = () =>
   renderInApp({
-    // The page's own width, which the form's wide layout reads (`SectionPage`).
+    // The page's own width, which the form's wide layout reads (`AOFSectionPage`).
     children: (
       <div className="@container">
         <EditImage image={IMAGE} offered={[App.BACK_OFFICE, App.LAURA]} />

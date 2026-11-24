@@ -3,6 +3,7 @@ import {
   type AOFDataTableSkeletonColumn,
   aofDataTableFrame,
 } from "@allonfire/ui/features/data-table/components/aof-data-table-skeleton";
+import { ink } from "@allonfire/ui/shared/utils/skeleton-ink";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
 import type { ReactNode } from "react";
@@ -10,7 +11,6 @@ import {
   tiledControl,
   toolbarLayout,
 } from "@/shared/components/toolbar-action";
-import { ink } from "@/shared/utils/skeleton-ink";
 
 /** Cards a phone gets while it waits: enough to fill its screen. */
 const CARDS = 4;

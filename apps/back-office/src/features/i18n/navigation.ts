@@ -1,11 +1,3 @@
-import { AOFCreateNavigation } from "@allonfire/core/features/next/i18n/utils/aof-create-navigation";
-import { routing } from "./routing";
+import { aofBaseNavigation } from "@allonfire/core/features/next/i18n/utils/aof-base-navigation";
 
-export const {
-  Link,
-  redirect,
-  usePathname,
-  useRouter,
-  getPathname,
-  languageLinks,
-} = AOFCreateNavigation(routing);
+export const { Link, redirect, useRouter, getPathname } = aofBaseNavigation;

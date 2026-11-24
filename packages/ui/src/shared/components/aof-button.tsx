@@ -4,6 +4,7 @@ import {
 } from "@allonfire/shadcn/components/button";
 import { cva } from "class-variance-authority";
 import type { ComponentProps, ReactNode } from "react";
+import type { AOFActionDressing } from "../types/action-dressing";
 import { cn } from "../utils/utils";
 
 type ShadcnButtonProps = ComponentProps<typeof ShadcnButton>;
@@ -22,7 +23,7 @@ export type AOFButtonProps = Omit<ShadcnButtonProps, "size"> & {
 /**
  * A button inside an AOF component that writes its own label: anything a
  * button takes but its children, and a `decoration` drawn before the label
- * (an App's brushed kanji), so an App dresses it without retelling it.
+ * (a decoration behind the label), so an App dresses it without retelling it.
  */
 export type AOFButtonPartProps = Omit<AOFButtonProps, "children"> & {
   decoration?: ReactNode;
@@ -83,3 +84,13 @@ export const aofButtonVariants = ({
   const shadcn = sized(size);
   return cn(buttonVariants({ size: shadcn.size, variant }), shadcn.extra);
 };
+
+/**
+ * The classes of a link drawn as an App's action button: the field-tall
+ * button, the Design's dressing for its actions, then what the place needs
+ * (`extra`).
+ */
+export const aofActionLinkClass = (
+  actions: AOFActionDressing,
+  extra?: string
+) => cn(aofButtonVariants({ size: "field" }), actions.className, extra);

@@ -4,15 +4,19 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { StationSign } from "../station-sign";
 
 vi.mock("next/image", async () => ({
-  default: (await import("@/shared/tests/image-mock")).ImageMock,
+  default: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
 }));
 
 const LOGO_HEADING = new RegExp(
-  `<h1[^>]*><span data-alt="${BACK_OFFICE.NAME}"[^>]*data-src="data:image/svg\\+xml,`
+  `<h1[^>]*><span data-alt="${BACK_OFFICE.name}"[^>]*data-src="data:image/svg\\+xml,`
 );
 
 const sign = () =>
-  renderToStaticMarkup(<StationSign seal={<i data-seal />}>body</StationSign>);
+  renderToStaticMarkup(
+    <StationSign seal={<i data-seal />} status="Reset password">
+      body
+    </StationSign>
+  );
 
 // Its band at night, and both parts see-through: its browser test.
 describe("StationSign", () => {
@@ -20,6 +24,12 @@ describe("StationSign", () => {
     const html = sign();
     expect(html).toMatch(LOGO_HEADING);
     expect(html).toContain(">body<");
+  });
+
+  it("names the page under the band, once, before the form", () => {
+    const html = sign();
+    expect(html.match(/Reset password/g)).toHaveLength(1);
+    expect(html.indexOf("Reset password")).toBeLessThan(html.indexOf(">body<"));
   });
 
   it("ends the band with the seal", () => {

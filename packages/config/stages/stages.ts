@@ -85,7 +85,7 @@ export const STAGE = {
     ),
     script(
       "static:shell",
-      "ShellCheck on the Liquibase and database scripts.",
+      "ShellCheck on the shell scripts: Liquibase, database, config and the VPS's.",
       {
         requires: "shellcheck",
       }

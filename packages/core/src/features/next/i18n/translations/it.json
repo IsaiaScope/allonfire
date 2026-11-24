@@ -43,6 +43,112 @@
         "ios-add": "Scegli Aggiungi alla schermata Home, poi Aggiungi",
         "mac-add-to-dock": "Scegli File, poi Aggiungi al Dock"
       }
+    },
+    "Navigation": {
+      "account": "Account",
+      "apps": "App",
+      "breadcrumb": "Percorso",
+      "language": "Lingua",
+      "menu": "Menu principale",
+      "role": {
+        "ADMIN": "Admin",
+        "USER": "Utente",
+        "VIEWER": "Visualizzatore"
+      },
+      "signOut": "Esci",
+      "switchApp": "Cambia App",
+      "theme": "Tema",
+      "themeDark": "Scuro",
+      "themeLight": "Chiaro",
+      "toggleMenu": "Comprimi o espandi il menu"
+    },
+    "Auth": {
+      "Gate": {
+        "language": "Lingua",
+        "theme": "Cambia tema"
+      },
+      "SignIn": {
+        "email": "Email",
+        "error": {
+          "forbidden": "Questo account non ha accesso a {app}.",
+          "invalid": "Email o password errate.",
+          "missing": "Inserisci email e password.",
+          "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
+          "unavailable": "L’accesso non è disponibile ora. Riprova tra poco."
+        },
+        "field": {
+          "emailInvalid": "Inserisci un indirizzo email valido.",
+          "emailRequired": "Inserisci la tua email.",
+          "passwordRequired": "Inserisci la password."
+        },
+        "forgot": "Password dimenticata?",
+        "password": "Password",
+        "showPassword": "Mostra password",
+        "submit": "Accedi",
+        "submitting": "Accesso in corso",
+        "note": {
+          "unverified": "Controlla la posta: ti abbiamo inviato un link per verificare l'email. Aprilo, poi accedi."
+        }
+      },
+      "ForgotPassword": {
+        "back": "Torna all'accesso",
+        "email": "Email",
+        "error": {
+          "invalid": "Inserisci un indirizzo email valido.",
+          "rateLimited": "Troppe richieste. Riprova più tardi.",
+          "unavailable": "L'invio dei link non è disponibile ora. Riprova più tardi."
+        },
+        "field": {
+          "emailInvalid": "Inserisci un indirizzo email valido.",
+          "emailRequired": "Inserisci la tua email."
+        },
+        "intro": "Inserisci la tua email e ti invieremo un link per scegliere una nuova password.",
+        "submit": "Invia link",
+        "submitting": "Invio",
+        "title": "Reimposta la password",
+        "note": {
+          "sent": "Se un account usa questo indirizzo, ti arriva un link per reimpostare la password. Controlla la posta."
+        }
+      },
+      "ResetPassword": {
+        "askAgain": "Chiedi un nuovo link",
+        "confirmPassword": "Conferma la nuova password",
+        "error": {
+          "invalid": "Le password devono coincidere e rispettare ogni regola.",
+          "invalidToken": "Questo link non funziona più. Chiedine uno nuovo.",
+          "rateLimited": "Troppi tentativi. Riprova più tardi.",
+          "unavailable": "Salvataggio non disponibile ora. Riprova più tardi."
+        },
+        "expiredIntro": "Chiedi un nuovo link e te lo invieremo via email, così potrai scegliere una nuova password.",
+        "field": {
+          "passwordMismatch": "Le password sono diverse",
+          "passwordWeak": "Non tutte le regole sotto sono ancora rispettate"
+        },
+        "intro": "Scegli una password che rispetti ogni regola qui sotto.",
+        "password": "Nuova password",
+        "showPassword": "Mostra password",
+        "submit": "Salva password",
+        "submitting": "Salvataggio",
+        "title": "Scegli una nuova password"
+      },
+      "EmailVerified": {
+        "failed": "Questo link non funziona più. Accedi per riceverne uno nuovo.",
+        "signIn": "Vai al login",
+        "title": "Verifica email",
+        "verified": "La tua email è verificata. Ora puoi accedere."
+      },
+      "Password": {
+        "rule": {
+          "length": "Almeno {min} caratteri",
+          "lowercase": "Una lettera minuscola",
+          "match": "Le due password coincidono",
+          "noSpaces": "Nessuno spazio",
+          "number": "Un numero",
+          "symbol": "Un simbolo",
+          "uppercase": "Una lettera maiuscola"
+        },
+        "rules": "La password deve avere"
+      }
     }
   }
 }

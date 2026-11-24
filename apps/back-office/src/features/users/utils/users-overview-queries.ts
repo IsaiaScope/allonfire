@@ -7,7 +7,9 @@ import { retryUsers } from "./users-queries";
 
 /** The Users overview, as the API answers an Admin. */
 export const fetchUsersOverview = (client: ApiClient) =>
-  parseResponse(client[API.VERSION.CURRENT]["user-usage"].overview.$get());
+  parseResponse(
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].overview.users.$get()
+  );
 
 type UsersOverview = Awaited<ReturnType<typeof fetchUsersOverview>>;
 

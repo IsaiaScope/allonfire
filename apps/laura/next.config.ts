@@ -1,72 +1,30 @@
-import { HTTP } from "@allonfire/core/features/http/constants/http";
-import bundleAnalyzer from "@next/bundle-analyzer";
-import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
+import { AOFCreateNextConfig } from "@allonfire/core/features/next/config/utils/aof-create-next-config";
+import { AOFWithLocalizedNotFound } from "@allonfire/core/features/next/config/utils/aof-with-localized-not-found";
+import { App } from "@allonfire/database/enums";
+import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
+import { routing } from "./src/features/i18n/routing";
 
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
-
-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
-
-const nextConfig: NextConfig = {
-  cacheComponents: true,
-  distDir: process.env.NEXT_DIST_DIR || ".next",
-  experimental: {
-    authInterrupts: true,
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
-    staleTimes: {
-      dynamic: 300,
-    },
-    // ponytail: the repo lives on an exFAT volume, where macOS writes `._*`
-    // sidecar files next to Turbopack's numbered cache files and the cache fails
-    // to load ("invalid digit found in string"). Off until the repo moves to APFS.
-    turbopackFileSystemCacheForDev: false,
-  },
-  async headers() {
-    return [
-      {
-        headers: HTTP.SECURITY_HEADERS,
-        source: "/(.*)",
-      },
-      {
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-        source: "/storage/:path*",
-      },
-    ];
-  },
-  images: {
-    formats: ["image/avif", "image/webp"],
-    remotePatterns: [{ hostname: "picsum.photos" }],
-  },
-  output: "standalone",
-  async rewrites() {
-    const endpoint = process.env.MINIO_ENDPOINT;
-    const bucket = process.env.MINIO_BUCKET;
-    if (!(endpoint && bucket)) {
-      return [];
-    }
-    return [
-      {
-        destination: `${endpoint}/${bucket}/:path*`,
-        source: "/storage/:path*",
-      },
-    ];
-  },
-  transpilePackages: [
-    "@allonfire/auth",
-    "@allonfire/ui",
-    "@allonfire/database",
-    "@allonfire/storage",
-    "@allonfire/core",
-  ],
-};
-
-export default withBundleAnalyzer(withNextIntl(nextConfig));
+// Turbopack's file cache stays on (the default). On the exFAT drive macOS writes
+// a `._*` sidecar next to each cache file and Turbopack fails to open the cache,
+// so `dev` and `build` delete them under `.next` first; a no-op elsewhere.
+export default AOFCreateNextConfig(
+  // A URL no language owns (one with a dot, which the proxy skips) gets the
+  // default language's 404 instead of Next's bare error shell. Core's own
+  // routes are kept already. Laura shows no sign-in provider's picture
+  // (nobody registers), and a stored picture never goes through the optimizer
+  // (its signed link).
+  AOFWithLocalizedNotFound({}, { routing }),
+  {
+    indexing: ACCESS.APP_SETTINGS[App.LAURA].indexing,
+    // next-intl reads the request config from src/features/i18n, next to the translations.
+    intl: { requestConfig: "./src/features/i18n/request.ts" },
+    transpile: [
+      "@allonfire/auth",
+      "@allonfire/database",
+      "@allonfire/design",
+      "@allonfire/shadcn",
+      "@allonfire/storage",
+      "@allonfire/ui",
+    ],
+  }
+);

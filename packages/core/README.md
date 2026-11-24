@@ -80,6 +80,12 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 | `fillPath(path, params)` | Function | A Hono route path with its `:params` filled, each URI-encoded; throws on a param left out. never filled by hand |
 | `openApiPath(path)` | Function | A Hono route path as OpenAPI writes it: `/users/:id` → `/users/{id}` |
 
+### `./shared/utils/url`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `hostOf(address)` | Function | An address's host, `undefined` when the text is not an address. `new URL` in a `try`, never `URL.parse` (Chrome 126, Safari 18): safe in the browser on an older phone |
+
 ### `./shared/utils/storage`
 
 | Export | Type | Description |
@@ -182,10 +188,16 @@ imports these.
 | `./features/next/providers/components/aof-nuqs-adapter` | `NuqsAdapter` | App Router adapter |
 | `./features/next/query/utils/aof-get-query-client` | `getQueryClient` | per request on the server, one in the browser |
 | `./features/next/query/components/aof-hydrated-boundary` | `HydrationBoundary` | a Server Component: `hydration` is a private-cache read (ADR 0028) and a read that throws is left to the view, never thrown past it |
+| `./features/next/query/utils/optimistic-mutation` | `mutationOptions` | `optimisticMutation({ action, invalidates, keeps?, mutationKey, patchCache?, scope? })`: the cache is patched first, the action runs, a refusal rolls back; once saved, `invalidateAll` reads `invalidates` again, except an active read under a `keeps(variables)` key, which the patch already made exact (an infinite feed reads one request per loaded page) |
+| `./features/next/query/utils/invalidate-static` | `invalidateQueries` | `invalidateStatic(client, key, { keep? })`: TanStack never reads an active `staleTime: "static"` query on an invalidation, so each observer reads it again (every loaded page of an infinite one, in order) and an inactive one is removed; `keep` skips the active ones it names (`static-stale-time.test.ts`, `invalidate-static.test.ts`) |
+| `./features/search/keyset-cursor` | — | `keysetCursor`: `encode({ at, id })` and `schema` for a list paged by keyset (time, then id), such as an infinite feed: stays exact when a row is added or removed between two pages, and refuses a hand-edited cursor |
 | `./features/next/query/components/aof-resource-view` | `AOFResourceView` | a page of one resource (an edit form) from its `useQuery`: the form once read, `notFound()` for a 404, the host's `failed` (with a retry) for any other failure, the host's `loading` while it waits; a read that fails after the form was drawn leaves it |
 | `./features/next/i18n/utils/aof-get-request-config` | `getRequestConfig` | root-param locale, 404 on one not routed, shared translations merged; `translations` is one loader per routed language, and a Host routing an extra language must pass `shared` text in it |
+| `./features/next/i18n/tests/proxy-matcher-suite` | — | tests only: `proxyMatcherSuite({ config, pages })` registers the matcher cases every App's proxy answers the same way (its pages routed, with and without a language; Next's metadata routes, files with a dot, each language's Offline page and the API skipped); an App's `proxy.test.ts` is one call |
+| `./features/next/metadata/utils/aof-app-metadata` | — | `aofAppMetadata({ name, indexing, shareImageAlt, routing, getPathname, translations, startupImage })` returns `{ baseMetadata, layoutMetadata({ locale, origin }), metadataText, pageMetadata, pageOpenGraph }`: the App's whole head from its own values; `metadataText` falls back to the default language for Next's build-time `[locale]` placeholder |
+| `./features/next/metadata/utils/aof-manifest` | — | `aofManifest({ name, description, ground })`: the App's `MetadataRoute.Manifest`, `display: "standalone"` (ADR 0025), icons from `AOFManifestIcons()` |
 | `./features/next/i18n/utils/aof-create-middleware` | next-intl `createMiddleware`, re-exported | a step before it wraps the returned proxy (`withSessionRefresh`) |
-| `./features/next/api/visitor-headers` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API; `readVisitorHeaders()`, the same read from the request being answered |
+| `./features/next/api/utils/visitor-headers` | — | `forwardedHeaders(headers)`, the visitor's `origin` and `x-forwarded-for`; `visitorHeaders(cookie, headers)`, their cookies, address and origin for a call to the API; `readVisitorHeaders()`, the same read from the request being answered |
 | `./features/next/i18n/utils/aof-define-routing` | `defineRouting` | `AOFDefineRouting(languages, options?)`: the Host's languages (`I18N.BASE_LANGUAGES` or its `defineLanguages` list), `as-needed`, default the first; the App overrides the default and other options |
 | `./features/next/i18n/utils/aof-create-navigation` | `createNavigation` | `Link` and helpers typed from the App's routing, plus `languageLinks(href, locale)`: one always-prefixed link per language, the current one marked |
 | `./features/next/i18n/utils/aof-translators` | next-intl `createTranslator` | tests only: `aofTranslators({ en, it })`, one translator per base language over an App's messages with the shared `Common` text under them (`t.en("Users.copy.label", { email })` fills placeholders as the page does); `aofMessages(language, messages)`, the same merge for a test's `NextIntlClientProvider` |

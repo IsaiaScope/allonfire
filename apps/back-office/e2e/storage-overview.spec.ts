@@ -1,10 +1,10 @@
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { instant } from "@next/playwright";
 import { expect, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
 import { SECTION } from "../src/features/navigation/constants/sections";
-import { sectionHref } from "../src/features/navigation/utils/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { signInAsAdmin, tapSidebarLink } from "./pages";
 
@@ -53,7 +53,7 @@ test("a visit to Home shows its heading at once, the overview behind its skeleto
   await instant(page, async () => {
     await tapSidebarLink(page, EN.Navigation.home);
     await expect(
-      page.getByRole("heading", { name: BACK_OFFICE.NAME })
+      page.getByRole("heading", { name: BACK_OFFICE.name })
     ).toBeVisible();
   });
 });

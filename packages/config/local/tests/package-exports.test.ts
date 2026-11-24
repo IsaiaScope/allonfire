@@ -17,8 +17,8 @@ type Package = (typeof PACKAGES)[number];
 const KEPT = {
   auth: [],
   config: [],
-  // Held only by Laura, which sits outside the workspace and still imports
-  // it by an older path.
+  // Held only by the old Laura scores, which Phase 7 of the Laura rebuild
+  // brings back.
   database: ["./features/apps/laura/game-score.service"],
   storage: [],
 } as const satisfies Record<Package, readonly string[]>;

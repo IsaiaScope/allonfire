@@ -20,13 +20,15 @@ const ROLE_RANK = {
 const APP_SETTINGS = {
   [App.LAURA]: {
     indexing: METADATA.INDEXING.UNINDEXED,
-    minRole: Role.VIEWER,
+    minRole: Role.USER,
     registration: null,
+    slug: "laura",
   },
   [App.BACK_OFFICE]: {
     indexing: METADATA.INDEXING.UNINDEXED,
     minRole: Role.ADMIN,
     registration: null,
+    slug: "back-office",
   },
 } as const satisfies AppSettingsTable;
 

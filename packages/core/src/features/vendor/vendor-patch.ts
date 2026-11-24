@@ -3,11 +3,7 @@ import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { REPO } from "@allonfire/config/local/repo";
 import { objectValues } from "../../shared/utils/object";
-import {
-  patchVendor,
-  VENDOR_PATCHES,
-  type VendorPatch,
-} from "./vendor-patches";
+import { patchVendor, VENDOR_PATCHES } from "./vendor-patches";
 
 /**
  * `pnpm --filter @allonfire/core vendor:patch [--check]`: applies every
@@ -18,23 +14,26 @@ const {
   values: { check },
 } = parseArgs({ options: { check: { type: "boolean" } } });
 
-/** Applies `patch`; the file's name when it was not yet patched. */
-const apply = async (patch: VendorPatch) => {
-  const path = resolve(REPO.ROOT, patch.file);
+const patches = objectValues(VENDOR_PATCHES);
+const files = [...new Set(patches.map((patch) => patch.file))];
+
+/** Applies every patch that names `file`, in turn, then writes it once; the file's name when it was not yet patched. */
+const apply = async (file: string) => {
+  const path = resolve(REPO.ROOT, file);
   const source = await readFile(path, "utf8");
-  const patched = patchVendor(patch, source);
+  const patched = patches
+    .filter((patch) => patch.file === file)
+    .reduce((text, patch) => patchVendor(patch, text), source);
   if (patched === source) {
     return [];
   }
   if (!check) {
     await writeFile(path, patched);
   }
-  return [patch.file];
+  return [file];
 };
 
-const stale = (
-  await Promise.all(objectValues(VENDOR_PATCHES).map(apply))
-).flat();
+const stale = (await Promise.all(files.map(apply))).flat();
 if (check && stale.length) {
   throw new Error(`vendor:patch would rewrite ${stale.join(", ")}`);
 }

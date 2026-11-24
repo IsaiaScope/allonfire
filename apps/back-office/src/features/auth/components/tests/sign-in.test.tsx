@@ -1,21 +1,19 @@
 // @module-tag unit
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { objectValues } from "@allonfire/core/shared/utils/object";
+import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
+import { AOFSignIn } from "@allonfire/ui/features/auth/components/aof-sign-in";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
 import { BrushKanji } from "@/shared/components/brush-kanji";
+import { BACK_OFFICE } from "@/shared/constants/back-office";
 import en from "../../../i18n/translations/en.json" with { type: "json" };
-import itMessages from "../../../i18n/translations/it.json" with {
-  type: "json",
-};
 import { SIGN_IN } from "../../constants/sign-in";
-import { SignIn } from "../sign-in";
-import { SignInForm } from "../sign-in-form";
 
 vi.mock("next/image", async () => ({
-  default: (await import("@/shared/tests/image-mock")).ImageMock,
+  default: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
 }));
 // The server action reaches the API; the markup only needs a function.
 vi.mock("@allonfire/auth/features/next/actions/sign-in", () => ({
@@ -32,43 +30,38 @@ const CURRENT_LANGUAGE = new RegExp(
 const ENTER_KANJI = new RegExp(
   `<span aria-hidden="true"[^>]*lang="ja">${SIGN_IN.ENTER_KANJI}<`
 );
-const EMAIL_LABEL = /<label[^>]*for="sign-in-email"[^>]*>Email</;
-const EMAIL_AUTOCOMPLETE = /<input[^>]*autoComplete="username"/;
-const PASSWORD_AUTOCOMPLETE = /<input[^>]*autoComplete="current-password"/;
-const EMPTY_ALERT = /role="alert"[^>]*><\/div>/;
-const REQUIRED_MARK = /aria-hidden="true"[^>]*>\*</;
-const ARIA_REQUIRED = /<input[^>]*aria-required="true"/g;
-const ERROR_ALERT = /role="alert"[^>]*>.*Email or password is wrong\./;
-const INVALID_FIELD = /aria-invalid="true"/g;
 
 const render = (node: ReactNode) =>
   renderToStaticMarkup(
-    <NextIntlClientProvider locale="en" messages={en}>
+    <NextIntlClientProvider locale="en" messages={aofMessages("en", en)}>
       {node}
     </NextIntlClientProvider>
   );
 
-describe("SignIn", () => {
+const signIn = () =>
+  render(<AOFSignIn appName={BACK_OFFICE.name} dressing={AUTH_DRESSING} />);
+
+describe("Sign in at the ticket gate", () => {
   it("heads the card with the App and says Sign in on the board", () => {
-    const html = render(<SignIn />);
+    const html = signIn();
     expect(html).toMatch(HEADING);
     expect(html).toMatch(BOARD_SIGN_IN);
   });
 
   // How the brush paints it: BrushKanji's browser test.
   it("stands at the ticket gate: no photograph, its name brushed behind", () => {
-    expect(render(<SignIn />)).toContain(
+    expect(signIn()).toContain(
       renderToStaticMarkup(<BrushKanji kanji={SIGN_IN.BOARD_KANA} />)
     );
   });
 
   // Where it sits in the submit: the form's browser test.
   it("sets the kanji for enter behind the submit, hidden from assistive tech", () => {
-    expect(render(<SignInForm />)).toMatch(ENTER_KANJI);
+    expect(signIn()).toMatch(ENTER_KANJI);
   });
 
   it("links to the page in each language, marking the current one", () => {
-    const html = render(<SignIn />);
+    const html = signIn();
     expect(html).toContain('aria-label="Language"');
     expect(html).toMatch(CURRENT_LANGUAGE);
     expect(html).toContain(`href="/it${AUTH.PAGE.SIGN_IN}"`);
@@ -77,79 +70,6 @@ describe("SignIn", () => {
 
   it("states who can sign in on the departure board", () => {
     // Read once, not as it runs: the board's browser test.
-    expect(render(<SignIn />)).toContain(`>${en.SignIn.notice}<`);
+    expect(signIn()).toContain(`>${en.SignIn.notice}<`);
   });
-});
-
-describe("SignInForm", () => {
-  it("asks for email and password", () => {
-    const html = render(<SignInForm />);
-    expect(html).toMatch(EMAIL_LABEL);
-    expect(html).toMatch(EMAIL_AUTOCOMPLETE);
-    expect(html).toMatch(PASSWORD_AUTOCOMPLETE);
-    expect(html).toContain('type="submit"');
-    // The line stays, empty, so a refusal moves nothing.
-    expect(html).toMatch(EMPTY_ALERT);
-  });
-
-  it("marks no field with an asterisk: both are needed, and the inputs say so", () => {
-    const html = render(<SignInForm />);
-    expect(html).not.toMatch(REQUIRED_MARK);
-    expect(html.match(ARIA_REQUIRED)).toHaveLength(2);
-  });
-
-  it("shows an error as an alert and marks both fields", () => {
-    const html = render(
-      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.INVALID }} />
-    );
-    expect(html).toMatch(ERROR_ALERT);
-    expect(html.match(INVALID_FIELD)).toHaveLength(2);
-  });
-
-  it("leaves the fields alone when the API, not the visitor, failed", () => {
-    const html = render(
-      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.UNAVAILABLE }} />
-    );
-    expect(html).toContain('role="alert"');
-    expect(html).not.toMatch(INVALID_FIELD);
-  });
-
-  it("names each field, so a post before hydration sends both", () => {
-    const html = render(<SignInForm />);
-    expect(html).toContain('name="email"');
-    expect(html).toContain('name="password"');
-    expect(html).toContain('id="sign-in-password"');
-  });
-
-  it("marks both fields on a refusal although the browser found nothing wrong", () => {
-    const html = render(
-      <SignInForm initialState={{ error: AUTH.SIGN_IN_ERROR.MISSING }} />
-    );
-    expect(html.match(INVALID_FIELD)).toHaveLength(2);
-  });
-
-  it("leaves the checks to the server", () => {
-    expect(render(<SignInForm />)).toContain("noValidate");
-  });
-
-  it.each(
-    objectValues(AUTH.SIGN_IN_ERROR).filter(
-      (error) => error !== AUTH.SIGN_IN_ERROR.UNVERIFIED
-    )
-  )("has an error translation for %s", (error) => {
-    expect(en.SignIn.error).toHaveProperty(error);
-  });
-
-  it("says unverified as a note: a link went out, nothing failed", () => {
-    expect(en.SignIn.note).toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
-    expect(en.SignIn.error).not.toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
-  });
-
-  it.each(["emailInvalid", "emailRequired", "passwordRequired"])(
-    "has a field translation for %s in English and Italian",
-    (key) => {
-      expect(en.SignIn.field).toHaveProperty(key);
-      expect(itMessages.SignIn.field).toHaveProperty(key);
-    }
-  );
 });

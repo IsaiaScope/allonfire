@@ -1,6 +1,6 @@
 import { guard } from "./guard";
 
-/** A Back Office Admin, read now, on a Session still there. */
+/** An Admin of the Host's App, read now, on a Session still there. */
 export type CanManage = (ids: {
   sessionId: string;
   userId: string;

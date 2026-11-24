@@ -1,139 +1,38 @@
-import { Providers } from "@allonfire/auth/components/providers";
-import { Wrapper } from "@allonfire/ui/components/wrapper";
-import type { Metadata, Viewport } from "next";
-import { Fira_Code, Oxanium } from "next/font/google";
-import { notFound } from "next/navigation";
-import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { AppleSplashLinks } from "@/components/apple-splash-links";
-import { JsonLd } from "@/components/json-ld";
-import { MotionProvider } from "@/components/motion-provider";
-import { routing } from "@/i18n/routing";
-import { baseUrl } from "@/lib/seo";
+import { AOFBaseViewport } from "@allonfire/core/features/next/metadata/utils/aof-base-viewport";
+import { OCEAN_IMAGE_COLOR } from "@allonfire/design/designs/ocean/image-colors";
+import { AOFLocaleDocument } from "@allonfire/ui/features/app/components/aof-locale-document";
+import { getLocale } from "next-intl/server";
+import type { ReactNode } from "react";
+import { routing } from "@/features/i18n/routing";
+import { layoutHead } from "@/features/metadata/utils/layout-head";
+import { InstallHint } from "@/features/pwa/components/install-hint";
+import { OfflineBanner } from "@/features/pwa/components/offline-banner";
+import { OceanToaster } from "@/shared/components/ocean-toaster";
 import "../globals.css";
 
-const fontSans = Oxanium({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
+export const generateStaticParams = () =>
+  routing.locales.map((locale) => ({ locale }));
+
+// Pages add `title`, `description` and `openGraph` from `pageMetadata(...)`. Next
+// merges shallowly: a page's `openGraph` or `robots` replaces the layout's
+// whole, so a page never writes either by hand.
+export const generateMetadata = layoutHead;
+
+export const viewport = AOFBaseViewport({
+  schemeColors: OCEAN_IMAGE_COLOR,
 });
 
-const fontMono = Fira_Code({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
+// The locale comes from next/root-params via src/features/i18n/request.ts, which also
+// 404s an unknown one.
+const LocaleLayout = async ({ children }: { children: ReactNode }) => (
+  <AOFLocaleDocument
+    banner={<OfflineBanner />}
+    hint={<InstallHint />}
+    locale={await getLocale()}
+    toaster={<OceanToaster />}
+  >
+    {children}
+  </AOFLocaleDocument>
+);
 
-type LayoutProps = {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-};
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "Metadata" });
-  const seo = await getTranslations({ locale, namespace: "SEO" });
-
-  return {
-    metadataBase: new URL(baseUrl),
-    title: {
-      default: t("title"),
-      template: `%s | ${t("title")}`,
-    },
-    description: t("description"),
-    openGraph: {
-      type: "website",
-      locale: locale === "it" ? "it_IT" : "en_US",
-      siteName: seo("siteName"),
-      url: baseUrl,
-      images: [{ url: `${baseUrl}/opengraph-image`, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      images: [`${baseUrl}/opengraph-image`],
-    },
-    alternates: {
-      canonical: locale === "it" ? baseUrl : `${baseUrl}/en`,
-      languages: {
-        it: baseUrl,
-        en: `${baseUrl}/en`,
-      },
-    },
-    appleWebApp: {
-      capable: true,
-      title: "Laura",
-      statusBarStyle: "black-translucent",
-    },
-    other: {
-      "mobile-web-app-capable": "yes",
-    },
-    icons: {
-      icon: [
-        { url: "/favicon.ico", sizes: "32x32" },
-        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      ],
-      apple: [{ url: "/apple-icon-180x180.png", sizes: "180x180" }],
-    },
-    formatDetection: {
-      telephone: false,
-    },
-  };
-}
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
-  themeColor: "#37302a",
-  colorScheme: "dark",
-};
-
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
-
-export default async function LocaleLayout({ children, params }: LayoutProps) {
-  const { locale } = await params;
-
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
-
-  setRequestLocale(locale);
-
-  const seo = await getTranslations({ locale, namespace: "SEO" });
-
-  return (
-    <html lang={locale} suppressHydrationWarning translate="no">
-      <head>
-        <AppleSplashLinks />
-      </head>
-      <body
-        className={`${fontSans.variable} ${fontMono.variable} flex h-dvh flex-col overflow-hidden bg-background font-sans antialiased`}
-      >
-        <JsonLd
-          baseUrl={baseUrl}
-          description={seo("siteDescription")}
-          locale={locale}
-          siteName={seo("siteName")}
-        />
-        <NextIntlClientProvider>
-          <Providers>
-            <MotionProvider>
-              <Wrapper className="flex min-h-0 flex-1 flex-col" tag="div">
-                {children}
-              </Wrapper>
-            </MotionProvider>
-          </Providers>
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
-}
+export default LocaleLayout;

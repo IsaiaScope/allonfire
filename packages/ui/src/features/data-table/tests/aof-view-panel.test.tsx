@@ -33,4 +33,12 @@ describe("AOFViewPanel", () => {
     expect(markup.match(/data-checked="true"/g)).toHaveLength(1);
     expect(markup.indexOf(CHECKED)).toBeGreaterThan(markup.indexOf("Size"));
   });
+
+  // The Filters panel scrolls as a whole, so a list cap of its own would
+  // nest one scroller inside another.
+  it("lets its list grow to its rows, the panel around it doing the scrolling", () => {
+    const markup = html([]);
+    expect(markup).toContain("max-h-none");
+    expect(markup).toContain("overflow-visible");
+  });
 });

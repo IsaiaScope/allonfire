@@ -1,6 +1,7 @@
 "use client";
 
 import { ServiceType } from "@allonfire/database/enums";
+import { cardBadge } from "@allonfire/ui/features/data-table/utils/card-badge";
 import { AOFEmpty } from "@allonfire/ui/features/feedback/components/aof-empty";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import {
@@ -14,7 +15,6 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { api } from "@/features/api/utils/api";
 import { CardFrame } from "@/shared/components/card-frame";
-import { cardBadge } from "@/shared/utils/card-badge";
 import { SERVICES } from "../constants/services";
 import { type ListedProvider, servicesQuery } from "../utils/services-queries";
 import { ProviderForm } from "./provider-form";

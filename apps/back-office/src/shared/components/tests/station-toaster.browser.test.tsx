@@ -2,9 +2,10 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
+import { noticeLineClamp } from "@allonfire/ui/shared/tests/toast-card";
+import { nextFrames } from "@allonfire/ui/shared/tests/toast-timing";
 import { NextIntlClientProvider } from "next-intl";
 import { render } from "vitest-browser-react";
-import { nextFrames } from "@/shared/tests/toast-timing";
 import { StationToaster } from "../station-toaster";
 
 const LINE_CLAMP = "5";
@@ -24,11 +25,7 @@ describe("StationToaster", () => {
     aofToast("A notice", "error");
     await nextFrames();
     await expect.element(screen.getByText("A notice")).toBeVisible();
-    const title = document.querySelector("[data-sonner-toast] [data-title]");
-    if (!title) {
-      throw new Error("The notice has no title element");
-    }
-    expect(getComputedStyle(title).webkitLineClamp).toBe(LINE_CLAMP);
+    expect(noticeLineClamp()).toBe(LINE_CLAMP);
     screen.unmount();
   });
 });

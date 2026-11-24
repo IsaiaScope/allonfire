@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { REPO } from "@allonfire/config/local/repo";
+import { objectValues } from "../../../shared/utils/object";
 import { patchVendor, VENDOR_PATCHES } from "../vendor-patches";
 
 /** What shadcn's CLI writes for `use-mobile`. */
@@ -45,10 +46,65 @@ describe("patchVendor", () => {
   });
 
   it("finds every vendor file already patched", () => {
-    for (const patch of [USE_MOBILE]) {
+    for (const patch of objectValues(VENDOR_PATCHES)) {
       const path = resolve(REPO.ROOT, patch.file);
       const source = readFileSync(path, "utf8");
       expect(patchVendor(patch, source)).toBe(source);
     }
+  });
+
+  // Base UI keeps a popup 5px from the screen's edge; shadcn's wrappers give
+  // an App no way to say more, so a menu can open under a notch.
+  it("lets every popup's wrapper hand its Positioner a collisionPadding", () => {
+    const files = [
+      "dropdown-menu",
+      "select",
+      "popover",
+      "tooltip",
+      "combobox",
+    ].map((name) =>
+      readFileSync(
+        resolve(REPO.ROOT, `packages/shadcn/src/components/${name}.tsx`),
+        "utf8"
+      )
+    );
+    for (const source of files) {
+      expect(source).toContain('"collisionPadding"');
+      expect(source).toContain("collisionPadding={collisionPadding}");
+    }
+  });
+
+  // The CLI's popover, as it writes it: the three patches of one file must
+  // compose, each reading what the last wrote.
+  it("composes a file's patches, in any order, into a wrapper that forwards collisionPadding", () => {
+    const upstream = `function PopoverContent({
+  className,
+  sideOffset = 4,
+  ...props
+}: PopoverPrimitive.Popup.Props &
+  Pick<
+    PopoverPrimitive.Positioner.Props,
+    "align" | "sideOffset"
+  >) {
+  return (
+    <PopoverPrimitive.Positioner
+      sideOffset={sideOffset}
+    />
+  )
+}`;
+    const patches = objectValues(VENDOR_PATCHES).filter((patch) =>
+      patch.file.endsWith("popover.tsx")
+    );
+    expect(patches).toHaveLength(3);
+    const patched = patches.reduce(
+      (text, patch) => patchVendor(patch, text),
+      upstream
+    );
+    expect(patched).toContain("  collisionPadding,\n  ...props");
+    expect(patched).toContain('"collisionPadding" | "align"');
+    expect(patched).toContain("collisionPadding={collisionPadding}");
+    expect(
+      patches.reduce((text, patch) => patchVendor(patch, text), patched)
+    ).toBe(patched);
   });
 });

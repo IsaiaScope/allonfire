@@ -1,10 +1,12 @@
 // @module-tag unit
 
+import { heicToJpeg } from "../../../../shared/utils/heic-to-jpeg";
 import { useCropPictures } from "../hooks/use-avatar-pictures";
 import { canDraw } from "../utils/crop-image";
-import { heicToJpeg } from "../utils/heic-to-jpeg";
 
-vi.mock("../utils/heic-to-jpeg", () => ({ heicToJpeg: vi.fn() }));
+vi.mock("../../../../shared/utils/heic-to-jpeg", () => ({
+  heicToJpeg: vi.fn(),
+}));
 vi.mock("../utils/crop-image", () => ({ canDraw: vi.fn() }));
 // No DOM here: the hook is called outside a render, its state never kept.
 vi.mock("react", async (original) => ({

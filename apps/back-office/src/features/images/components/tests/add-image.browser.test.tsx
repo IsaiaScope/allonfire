@@ -23,6 +23,10 @@ vi.mock(
   () => import("../../tests/image-form-mocks")
 );
 vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/image-form-mocks")
+);
+vi.mock(
   "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/image-form-mocks")
 );
@@ -56,7 +60,7 @@ beforeEach(() => {
 
 const renderAdd = (apps: readonly App[] = BOTH) =>
   renderInApp({
-    // The page's own width, which the form's wide layout reads (`SectionPage`).
+    // The page's own width, which the form's wide layout reads (`AOFSectionPage`).
     children: (
       <div className="@container">
         <AddImage apps={apps} />
@@ -177,6 +181,7 @@ describe("AddImage header", () => {
       enT("Images.add.pick.hint", {
         files: IMAGE.LIMIT.FILES_PER_UPLOAD,
         size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
+        total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
       })
     );
     await expect.element(hint).toBeVisible();
@@ -313,6 +318,34 @@ describe("AddImage picking", () => {
     expect(log.mock.calls.flat().join(" ")).not.toContain("uncontrolled");
     revoke.mockRestore();
     log.mockRestore();
+  });
+
+  it("keeps each row's own Apps and access when a row above it is removed, and lets the shifted rows be edited", async () => {
+    renderAdd();
+    await pick(photo("a.jpg"), photo("b.jpg"), photo("c.jpg"));
+    await appIn(rowTitle(2), App.LAURA).click();
+    await page
+      .getByRole("button", {
+        name: enT("Images.add.row.remove", { name: "a.jpg" }),
+      })
+      .click();
+    await expect.element(rowTitle(3)).not.toBeInTheDocument();
+    // b.jpg moved up to row 1 with its own Apps; c.jpg to row 2 with the shared ones.
+    await expect
+      .element(appIn(rowTitle(1), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect
+      .element(appIn(rowTitle(2), App.LAURA))
+      .not.toHaveAttribute("aria-current");
+    // Editing a shifted row writes to that row, and the last one still renders.
+    await appIn(rowTitle(2), App.LAURA).click();
+    await expect
+      .element(appIn(rowTitle(2), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect
+      .element(appIn(rowTitle(1), App.LAURA))
+      .toHaveAttribute("aria-current", "page");
+    await expect.element(rowTitle(2)).toBeVisible();
   });
 });
 

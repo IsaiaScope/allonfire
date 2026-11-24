@@ -29,6 +29,6 @@ describe("ErrorNotice", () => {
     );
     await expect
       .poll(() => document.title)
-      .toBe(pageTitle(t("title"), BACK_OFFICE.NAME));
+      .toBe(pageTitle(t("title"), BACK_OFFICE.name));
   });
 });
