@@ -36,7 +36,7 @@ const onePath = (id: string) =>
 /**
  * The recap agreed for ADR 0020 and ADR 0027, one test per row. P is public,
  * in Laura and the Back Office; Q private in Laura, R private in the Back
- * office. Giulia is a Laura Viewer, Mario a Laura Admin outside the Back
+ * office. Giulia is a Laura User, Mario a Laura Admin outside the Back
  * office, Admin an Admin in every App.
  */
 const P = imageRecord({
@@ -59,7 +59,7 @@ const IMAGES = [P, Q, R];
 
 const visitor: AuthSession | null = null;
 const giulia = sessionFor({
-  memberships: [{ app: App.LAURA, role: Role.VIEWER }],
+  memberships: [{ app: App.LAURA, role: Role.USER }],
 });
 const mario = sessionFor({
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],

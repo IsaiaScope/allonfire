@@ -6,18 +6,24 @@ const MS_PER_DAY = 24 * 60 * 60 * MS_PER_SECOND;
 
 /**
  * What a Test run owns, a Test database (`_`) or a bucket (`-`, S3 allows no
- * underscore): `allonfire<sep>test<sep><label><sep><epoch><sep><pid><sep><suffix>`,
- * `<pid>` the process that holds it. A template's name has no `<pid>`.
+ * underscore): `aof<sep>test<sep><label><sep><YYMMDD><sep><HHMMSS><sep>p<pid><sep><suffix>`,
+ * the time in UTC, `p<pid>` the process that holds it. A template's name has
+ * no `p<pid>`.
  */
 export const TEST_RUN = {
+  /** A name Postgres keeps whole: it cuts an identifier at 63 bytes, S3 allows 63 characters. */
+  MAX_NAME_LENGTH: 63,
   /** Every Test run's name starts with it, spelled with its separator. */
-  PREFIX: "allonfire_test_",
+  PREFIX: "aof_test_",
   /** A stamp's random suffix; a template's fingerprint is cut to it, so it parses too. */
   SUFFIX_LENGTH: 6,
 } as const;
 const TEST_RUN_NAME = new RegExp(
-  `^allonfire[_-]test[_-]([a-z0-9_-]+)[_-](\\d{10})(?:[_-](\\d+))?[_-][a-z0-9]{${TEST_RUN.SUFFIX_LENGTH}}$`
+  `^aof[_-]test[_-](?<label>[a-z0-9_-]+)[_-](?<year>\\d{2})(?<month>\\d{2})(?<day>\\d{2})[_-](?<hour>\\d{2})(?<minute>\\d{2})(?<second>\\d{2})(?:[_-]p(?<pid>\\d+))?[_-][a-z0-9]{${TEST_RUN.SUFFIX_LENGTH}}$`
 );
+/** An ISO string, `2026-11-20T10:07:48.000Z`, cut into the stamp's date and time. */
+const ISO_STAMP =
+  /^\d{2}(\d{2})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.\d{3}Z$/;
 /** What a name may hold: Postgres takes it unquoted, and DDL takes no bind parameter. */
 const SAFE_NAME = /^[a-z0-9_]+$/;
 const SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -47,15 +53,21 @@ const suffix = () =>
 export const runsIntegration = (tagsFilter: readonly string[] | undefined) =>
   !tagsFilter?.length || tagsFilter.some((filter) => filter !== "unit");
 
+/** A moment as `<YYMMDD>_<HHMMSS>` in UTC: it reads as a date and sorts by time. */
+export const stampTime = (epochSeconds: number) =>
+  new Date(epochSeconds * MS_PER_SECOND)
+    .toISOString()
+    .replace(ISO_STAMP, "$1$2$3_$4$5$6");
+
 /**
- * A run's stamp, `<epoch seconds>_<pid>_<suffix>`, naming what it owns and
+ * A run's stamp, `<YYMMDD>_<HHMMSS>_p<pid>_<suffix>`, naming what it owns and
  * the process that holds it, the one that made the stamp. An e2e run makes
  * one in Playwright's main process for its database and bucket; under Vitest
  * each global setup makes its own, so a package's database and bucket carry
  * different stamps.
  */
 export const testRunStamp = (now = new Date()) =>
-  `${Math.floor(now.getTime() / MS_PER_SECOND)}_${process.pid}_${suffix()}`;
+  `${stampTime(Math.floor(now.getTime() / MS_PER_SECOND))}_p${process.pid}_${suffix()}`;
 
 /** Whether process `pid` still runs; one owned by another user does too. */
 function isProcessRunning(pid: number): boolean {
@@ -77,12 +89,16 @@ export function isStaleTestRun(
   now: Date,
   isRunning: (pid: number) => boolean = isProcessRunning
 ): boolean {
-  const [, , epoch, pid] = name.match(TEST_RUN_NAME) ?? [];
-  if (epoch === undefined) {
+  const parts = name.match(TEST_RUN_NAME)?.groups;
+  if (parts === undefined) {
     return false;
   }
+  const { year, month, day, hour, minute, second, pid } = parts;
+  const startedAt = Date.parse(
+    `20${year}-${month}-${day}T${hour}:${minute}:${second}Z`
+  );
   return (
-    now.getTime() - Number(epoch) * MS_PER_SECOND > STALE_AFTER_MS ||
+    now.getTime() - startedAt > STALE_AFTER_MS ||
     (pid !== undefined && !isRunning(Number(pid)))
   );
 }
@@ -101,16 +117,17 @@ export function testRunName(
   separator: "_" | "-" = "_"
 ): string {
   const name = `${TEST_RUN.PREFIX}${spelled(label)}_${stamp}`;
-  if (!SAFE_NAME.test(name)) {
+  if (!SAFE_NAME.test(name) || name.length > TEST_RUN.MAX_NAME_LENGTH) {
     throw new Error(`Not a safe Test run name: ${name}`);
   }
   return name.replaceAll("_", separator);
 }
 
 /** Whether `name` is the Test database or bucket of a run labelled `label`. */
-export const isTestRunOf = (name: string, label: string) =>
-  TEST_RUN_NAME.test(name) &&
-  spelled(name.replace(TEST_RUN_NAME, "$1")) === spelled(label);
+export function isTestRunOf(name: string, label: string): boolean {
+  const found = name.match(TEST_RUN_NAME)?.groups?.label;
+  return found !== undefined && spelled(found) === spelled(label);
+}
 
 /**
  * A global setup's teardown for what its run owns. Vitest runs it when the

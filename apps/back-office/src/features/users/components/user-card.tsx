@@ -3,6 +3,7 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
+import { AOFAppTile } from "@allonfire/ui/features/navigation/components/aof-app-tile";
 import {
   type AOFCard,
   AOFCardContent,
@@ -12,7 +13,6 @@ import {
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { AppTile } from "@/shared/components/app-tile";
 import { SignCard, SignCardFoot } from "@/shared/components/sign-card";
 import { UserAvatar } from "@/shared/components/user-avatar";
 import { APP_ENTRY } from "@/shared/constants/apps";
@@ -74,7 +74,7 @@ export const UserCard = ({
               key={app}
             >
               <dt className="flex min-w-0 items-center gap-2 text-base">
-                <AppTile app={app} size="sm" />
+                <AOFAppTile entry={APP_ENTRY[app]} size="sm" />
                 <span className="truncate">{APP_ENTRY[app].name}</span>
               </dt>
               <dd className="shrink-0">

@@ -16,6 +16,13 @@
    there, never on a disabled one (Base UI marks one `data-disabled`, cmdk
    marks every row `data-disabled="false"`). */
 @layer base {
+  /* The page's ground on the root too, never transparent: iOS Safari 26 tints
+     its bars from the root's background where no fixed element is, and falls
+     back to white on a transparent one (`docs/guides/safari.md`). */
+  html {
+    background-color: var(--background);
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -67,6 +74,27 @@
   --gutter-right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
   --gutter-bottom: max(var(--page-gutter), env(safe-area-inset-bottom, 0px));
   --gutter-left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+}
+
+/* No scrollbars anywhere in the App; every area still scrolls by wheel,
+   touch and keyboard. Overscroll stays the browser's: turning it off also
+   turns off pull to refresh. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Toasts as wide as the Install hint's one-row layout needs (Sonner's own
+   356px is narrower). Sonner's stylesheet is unlayered, so a utility class
+   loses to it: this rule outranks it by one attribute instead. On a phone
+   Sonner's own full-width rule applies. */
+@media (min-width: 601px) {
+  [data-sonner-toaster][data-x-position] {
+    width: 28rem;
+  }
 }
 
 /* While a modal is open (the phone's menu drawer, a dialog), Base UI marks

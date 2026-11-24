@@ -1,6 +1,7 @@
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { hc } from "hono/client";
 import type { ApiType, AppType, ErrorCode, ProblemDetails } from "./client";
+import { API } from "./shared/constants/api";
 
 describe("client contract", () => {
   it("infers the /health response body", async () => {
@@ -36,5 +37,55 @@ describe("client contract", () => {
     // everything.
     expectTypeOf<ErrorArm>().not.toBeNever();
     expectTypeOf<ErrorArm>().toExtend<ProblemDetails>();
+  });
+});
+
+describe("Laura client contract", () => {
+  it("types a Gallery page: favorite is a boolean, nextCursor is text or null", async () => {
+    const client = hc<AppType>(LOCAL.URL.API);
+    const res = await client.v1.laura.gallery.$get({ query: {} });
+    const body = await res.json();
+    type Page = Extract<typeof body, { items: unknown }>;
+
+    expectTypeOf<Page>().not.toBeNever();
+    expectTypeOf<Page["items"][number]["favorite"]>().toEqualTypeOf<boolean>();
+    expectTypeOf<Page["nextCursor"]>().toEqualTypeOf<string | null>();
+  });
+});
+
+describe("Laura Favorite writes", () => {
+  it("takes the Image id as a param", async () => {
+    const client = hc<AppType>(LOCAL.URL.API);
+    const res = await client.v1.laura.favorites[":imageId"].$put({
+      param: { imageId: "x" },
+    });
+    const body = await res.json();
+    type Marked = Extract<typeof body, { favorite: boolean }>;
+
+    expectTypeOf<Marked>().not.toBeNever();
+    expectTypeOf<Marked["imageId"]>().toEqualTypeOf<string>();
+    // @ts-expect-error the Image id is required
+    await client.v1.laura.favorites[":imageId"].$put({ param: {} });
+  });
+});
+
+describe("admin console client contract", () => {
+  it("reads the Users and the overviews under back-office, and no longer at the old paths", () => {
+    const client = hc<AppType>(LOCAL.URL.API);
+    const backOffice = client.v1[API.SEGMENT.BACK_OFFICE];
+
+    expectTypeOf(backOffice.users.$get).toBeFunction();
+    expectTypeOf(backOffice.overview.storage.$get).toBeFunction();
+    expectTypeOf(backOffice.overview.users.$get).toBeFunction();
+    // They moved under back-office (ADR 0035): the old keys are gone.
+    type V1 = typeof client.v1;
+    expectTypeOf<"users" | "storage" | "user-usage">().not.toExtend<keyof V1>();
+    // The two overviews share one prefix under back-office.
+    expectTypeOf<"storage" | "user-usage">().not.toExtend<
+      keyof typeof backOffice
+    >();
+    expectTypeOf<"users" & keyof V1>().toBeNever();
+    expectTypeOf<"storage" & keyof V1>().toBeNever();
+    expectTypeOf<"user-usage" & keyof V1>().toBeNever();
   });
 });

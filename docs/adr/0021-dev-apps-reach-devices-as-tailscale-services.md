@@ -45,7 +45,7 @@ stops them otherwise.
   1. a Service defined in the admin console (Services, Define a Service, its
      name, `tcp:443`);
   2. an `autoApprovers` line and a grant entry in the policy;
-  3. a line in `dev:tailscale`;
+  3. a line in `packages/config/local/tailscale.sh`;
   4. an `allowedDevOrigins` that covers it. That is automatic once the App is
      built on `AOFCreateNextConfig` (Laura is not yet).
 - A host that advertised a Service before it was defined stays pending.

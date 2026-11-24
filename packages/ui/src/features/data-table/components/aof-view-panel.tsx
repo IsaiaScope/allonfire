@@ -87,7 +87,7 @@ export const AOFViewPanel = ({
           </span>
         )}
       </div>
-      <CommandList>
+      <CommandList className="max-h-none overflow-visible">
         <CommandEmpty>{labels.empty}</CommandEmpty>
         <CommandGroup>
           {columns.map(({ id, label }) => (

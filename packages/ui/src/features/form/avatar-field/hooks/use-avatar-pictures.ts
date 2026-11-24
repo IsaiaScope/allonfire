@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { heicToJpeg } from "../../../../shared/utils/heic-to-jpeg";
 import { canDraw } from "../utils/crop-image";
-import { heicToJpeg } from "../utils/heic-to-jpeg";
 
 /**
  * The field's own file input, the one the form posts: `holdInInput` puts the

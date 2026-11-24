@@ -1,5 +1,7 @@
 import { E2E } from "@allonfire/config/tests/e2e/run";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { instant } from "@next/playwright";
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
@@ -7,7 +9,6 @@ import EN from "../src/features/i18n/translations/en.json" with {
 };
 import { newImageHref } from "../src/features/images/utils/image-href";
 import { SECTION } from "../src/features/navigation/constants/sections";
-import { sectionHref } from "../src/features/navigation/utils/sections";
 import { newUserHref } from "../src/features/users/utils/user-href";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT } from "../src/shared/tests/translators";
@@ -86,7 +87,9 @@ test("the breadcrumb's Users opens the list with its rows already there", async 
   await openShown(page);
   await instant(page, async () => {
     await page
-      .getByRole("navigation", { name: EN.Navigation.breadcrumb })
+      .getByRole("navigation", {
+        name: SHARED_TRANSLATIONS.en.Common.Navigation.breadcrumb,
+      })
       .getByRole("link", { name: EN.Navigation.users })
       .click();
     await page.waitForURL(toUsers);
@@ -139,7 +142,9 @@ test("the sidebar's Email link opens the providers already there", async ({
   await page.goto(HOME);
   await openSidebar(page);
   const menu = page
-    .getByRole("navigation", { name: EN.Navigation.menu })
+    .getByRole("navigation", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.menu,
+    })
     .filter({ visible: true });
   // The Services group opens first, so its link is on screen to prefetch.
   await menu.getByRole("button", { name: EN.Navigation.services }).click();

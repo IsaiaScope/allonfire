@@ -13,9 +13,9 @@ The owner wants Laura rebuilt on that standard, with every piece both Apps need 
 - Laura is a new Next App built the way the Back Office is (everything in `docs/guides/next-apps.md`, `package-layout.md`, `forms.md`, `testing.md`): API data path, the data checklist per page, skeleton plus height test per waiting page, `signedInPage`, `useAOFForm`, no `as`, no raw JSON/Object helpers, constants per owner.
 - The scaffold both Apps share lives in `packages/` (ui, core, auth). The Back Office is moved onto it in the same project, as proof; an App is thin: Sections, features, copy, Design, env.
 - Same auth flow as the Back Office (Sign in, Forgot password, Reset password, Email verified, sign-in gate, proxy). No registration in Laura: an Admin adds Users.
-- Roles are Admin and User only. Viewer disappears everywhere.
+- Laura admits Admin and User only: its floor is User and no Laura code, form option or copy branches on Viewer. The Viewer Role itself stays in the system (ADR 0032, owner decision of 2026-11-18).
 - Laura keeps only the Gallery (with Favorites) and the Memory game (with its leaderboard). Quiz is deleted completely.
-- A new Design for Laura: polpo / octopus / sea, in `packages/design/src/designs/`, worn through `/aof-design`. The Japan Design stays for the Back Office.
+- A new Design for Laura: ocean / octopus / sea, in `packages/design/src/designs/`, worn through `/aof-design`. The Japan Design stays for the Back Office.
 - Everything standard from the Back Office: PWA (install hint, offline, Offline page, service worker), link previews and share card, metadata, icons, launch screens, robots, 404/403/error pages, instrumentation, safe-area guard, e2e.
 
 ## Non-goals
@@ -31,7 +31,7 @@ The owner wants Laura rebuilt on that standard, with every piece both Apps need 
 - A piece copied from the Back Office into Laura. `pnpm static:dupes` (jscpd) must stay green and any clone is merged into a package.
 - Laura reaching the database from Next (no Prisma in the App).
 - A package that names an App, or imports one.
-- A Viewer branch left in a guard, a form, a test, an ADR or the glossary.
+- A Viewer branch left in Laura's guards, Role picker, copy or tests (the Role in the enum, rank table and glossary is kept on purpose).
 
 ## Constraints (read from the repo)
 
@@ -68,7 +68,7 @@ This document is the roadmap. Each phase has its own plan file under `docs/super
 
 1. Laura reads and writes through the API (Hono) like the Back Office. New `laura` routes/modules live in `apps/api` or a package (ADR 0015), guarded by `requireApp(App.LAURA)` plus a role check. Laura has no database dependency.
 2. Laura registers nobody (Back Office rule). Users are added by an Admin in the Back Office. Laura's own Better Auth in `lib/auth.ts` is deleted; the Auth module in the API is the only auth.
-3. Existing Viewer Memberships become User (changeset), then the enum value is dropped. `Viewer` leaves `CONTEXT.md`, ADR 0019 gets an amendment (new ADR, not an edit of the old one).
+3. Laura's floor becomes User and existing Laura Viewer Memberships become User (changeset, data only; the enum value stays). `Viewer` stays in `CONTEXT.md`, reworded; ADR 0019 gets an amendment (new ADR, not an edit of the old one).
 4. Gallery = list of Images that are in the Laura App. Favorites need a new `laura.Favorite` table (userId + imageId, unique), Liquibase changeset; the old Photo/Favorite models are already gone.
 5. `GameType` drops `QUIZ`; existing QUIZ `GameScore` rows are deleted in the changeset. Only `MEMORY` stays (the enum might stay as a one-value enum for later games, or become implicit: decided in Phase 6).
 6. Settings page is dropped: language and theme live in the account menu / frame like the Back Office. User info is the account menu.
@@ -83,7 +83,7 @@ Order is a dependency chain; each plan file is `docs/superpowers/plans/2026-11-1
 
 | # | Phase | Delivers | Depends on |
 |---|---|---|---|
-| 0 | Drop Viewer | Changeset (Viewer to User, enum value gone), API guards and `roleIn`/`hasRole` rework, Back Office Users form/Role picker, tests, `CONTEXT.md`, new ADR | none |
+| 0 | Drop Viewer from Laura | Changeset (Laura Viewer Memberships to User; the Role stays), Laura's floor User, `canEnterApp`/`requireApp` gain a Section's `min` Role, tests that put a Viewer in Laura, `CONTEXT.md`, new ADR | none |
 | 1 | Extract the scaffold | Generic pieces of the Back Office moved to packages (see below), Back Office refactored onto them, dupes/knip green | 0 |
 | 2 | Octopus/sea Design | `packages/design/src/designs/<name>/` (DESIGN.md/json, theme.css, fonts, image fonts, image colours, share-card look), Laura `PRODUCT.md`/`styles.css`, logo variants, chosen through `/aof-design new` with previews | 1 (slots) |
 | 3 | Laura shell | Empty-`src/` Laura: env, i18n, proxy, instrumentation, auth pages (4), floating frame with Sections (Gallery, Favorites, Memory, Upload), account menu, PWA, offline page, metadata routes, special pages, launch screens, manifest, safe-area e2e, turbo/lint-staged/CI wiring, `laura.md` rewrite | 1, 2 |
@@ -134,6 +134,7 @@ Found while planning (binds the plans): the VPS holds no old Laura (live read-on
 ## Grill outcomes
 
 - **Favorite** (decided): shared across Laura, never per User; only a Laura Admin sets or clears one. Table `laura.Favorite` keyed on the Image, referencing `image."ImageApp" (imageId, app)` with `ON DELETE CASCADE` and `CHECK (app = 'LAURA')`, so removing the Image from Laura, or deleting it, removes the Favorite in the database with no cleanup code. Optional `markedBy` (User, `SET NULL`) and `createdAt`. The API sets and clears with idempotent `PUT`/`DELETE` on the Image (never a toggle: two Admins cannot flip each other), through the optimistic-mutation pattern (click-driven, rarely refused; `next-apps.md` point 2). There is no Version (no form).
+  - Amended 2026-11-20 (`docs/superpowers/specs/2026-11-20-per-app-user-relations-design.md`, ADR 0034): the Admins' selection is now held in every Laura User's own Profile (`laura.ProfileFavorite`), copied from the master `laura.Favorite`, and `markedBy` is dropped. The text above is history.
 - **Who sees the heart** (agent's call, from "not heart" for Users): a User sees a small static mark on a Favorite photo and the read-only Favorites Section; only an Admin gets the control. A User never gets a heart button.
 - **Gallery scope** (decided): plain masonry feed, newest first, infinite scroll, fullscreen preview, share. No sort, filter, search or date range in v1; the `sort` param of ADR 0031 can be added later. Caption is the Image's alt in the page's language.
 - **Roles in Laura** (decided): User = browse Gallery and Favorites, play Memory, see leaderboard. Admin = also set Favorites and add/edit/delete Images (Upload section, Image placed in Laura only; whoever is Admin in every App an Image is in keeps the make-public rule of ADR 0027 / `CONTEXT.md`).
@@ -143,7 +144,7 @@ Found while planning (binds the plans): the VPS holds no old Laura (live read-on
 - **Section role** (agent's call): a Section can ask for a higher Role than its App's floor (`minRole` in the Sections tuple, read by the proxy gate, the frame and the guard test); the API enforces it again. Upload is the first.
 - **Branches** (agent's call): one branch and PR to `dev` per phase, merged in order; Phase 0 and 1 ship before Laura's `src/` is emptied.
 - **Registration** (checked): `APP_SETTINGS` already has `registration: null` for Laura; no change.
-- **ADRs written**: `0032-roles-are-admin-and-user.md` (amends 0019), `0033-the-app-scaffold-lives-in-packages.md`. `CONTEXT.md`: Gallery, Favorite, Memory game added; App scaffolding sharpened. `Viewer` is removed from `CONTEXT.md` by Phase 0, when the code stops having it.
+- **ADRs written**: `0032-laura-admits-no-viewer.md` (amends 0019), `0033-the-app-scaffold-lives-in-packages.md`. `CONTEXT.md`: Gallery, Favorite, Memory game added; App scaffolding sharpened. `Viewer` stays in `CONTEXT.md`, reworded by Phase 0 to say no App admits it today.
 
 ## Parity rule (owner, added after the grill)
 

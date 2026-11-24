@@ -8,7 +8,7 @@ import { AOFDataTablePagination } from "@allonfire/ui/features/data-table/compon
 import {
   type PaginationWords,
   paginationLabels,
-} from "@/shared/utils/pagination-labels";
+} from "@allonfire/ui/features/data-table/utils/pagination-labels";
 
 /**
  * A list's table: the rows under their toolbar (the `children`), the pager

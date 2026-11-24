@@ -1,6 +1,6 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { readVisitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/utils/visitor-headers";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
 import { SECURE_COOKIE_PREFIX } from "better-auth/cookies";
 import { cookies } from "next/headers";

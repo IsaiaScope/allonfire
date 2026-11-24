@@ -21,7 +21,7 @@ import { USERS } from "../../constants/users";
 const KILOBYTES = /\d+(\.\d)?\s?kB/;
 
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+  AOFImage: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
 }));
 
 const LABELS = {

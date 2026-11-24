@@ -1,5 +1,6 @@
-import { readVisitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { readVisitorHeaders } from "@allonfire/core/features/next/api/utils/visitor-headers";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
+import type { Role } from "@allonfire/database/enums";
 import { getSessionCookie } from "better-auth/cookies";
 import { cacheLife } from "next/cache";
 import { headers } from "next/headers";
@@ -8,6 +9,7 @@ import { cache } from "react";
 import { AUTH } from "../../../shared/constants/auth";
 import { createApiAuthClient, type Session } from "./auth-client";
 import { entersApp } from "./enters-app";
+import { hasSectionRole } from "./has-section-role";
 import { redirectTo } from "./redirect-to";
 
 /**
@@ -36,17 +38,26 @@ export const getSession = cache(async (): Promise<Session | null> => {
 
 /**
  * The Session of someone this App lets in, or a redirect to Sign in for
- * anyone else. Every signed-in page runs it through `withAppSession`.
+ * anyone else. Every signed-in page runs it through `withAppSession`. A
+ * Section above the App's floor passes its `minRole`: a Session whose Role
+ * does not reach it is sent Home (no 403 page exists; the API refuses it
+ * again). The options are part of the cache key, so a call with a `minRole`
+ * never reuses one without.
  * Kept in the browser only (`use cache: private`, never on the server) for
  * `AUTH.SESSION.PAGE_CHECK_STALE_S`: only a passed check, since a redirect
  * throws and nothing thrown is kept.
  */
-export const requireAppSession = async (): Promise<Session> => {
+export const requireAppSession = async (options?: {
+  minRole?: Role | undefined;
+}): Promise<Session> => {
   "use cache: private";
   cacheLife({ stale: AUTH.SESSION.PAGE_CHECK_STALE_S });
   const session = await getSession();
   if (!entersApp(session)) {
     return redirectTo(await getLocale(), AUTH.PAGE.SIGN_IN);
+  }
+  if (!hasSectionRole(session, options?.minRole)) {
+    return redirectTo(await getLocale(), AUTH.PAGE.HOME);
   }
   return session;
 };

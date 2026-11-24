@@ -1,0 +1,184 @@
+/* Ocean: Laura's tide pool (see DESIGN.md beside this file). Overrides
+   shadcn's tokens after ui's base layer. Day is `:root`, night is `.dark`,
+   which next-themes puts on <html> from the OS or the visitor's toggle; each
+   sets `color-scheme` so native controls, scrollbars and autofill follow.
+   Every text pair is AA in both, checked by tests/theme.test.ts. Neither
+   ground is pure white or pure black; by day cards sit white on a pale sea
+   ground. */
+
+/* Nunito, self-hosted (OFL, fonts/OFL-Nunito.txt): a rounded text face,
+   friendly without going childish. Latin covers English and Italian. */
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("./fonts/nunito-latin.woff2") format("woff2");
+}
+
+/* Fraunces, self-hosted (OFL, fonts/OFL-Fraunces.txt): a soft serif for the
+   page headings only (`--font-heading`). The images keep Nunito, because
+   Satori reads no variable or WOFF2 fonts (fonts/README.md). */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./fonts/fraunces-latin.woff2") format("woff2");
+}
+
+:root {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Fraunces", ui-serif, Georgia, serif;
+  --radius: 0.75rem;
+
+  /* The floating frame (ui's sidebar, `variant="floating"`): a gap round it,
+     a corner from the radius scale and a shadow, read with fallbacks so a
+     Design that sets none keeps shadcn's. Only the frame and floating
+     controls cast a shadow (an emoji has its own, below). The gap is a plain length: the frame adds the
+     screen's safe-area insets itself. */
+  --frame-gap: 0.5rem;
+  --frame-radius: var(--radius-2xl);
+  --frame-shadow:
+    0 10px 30px -12px rgb(10 37 48 / 0.28), 0 2px 8px rgb(10 37 48 / 0.08);
+
+  /* A full-colour emoji keeps its own colours, so a tight shadow lifts it off
+     any ground: ink-tinted here, a light rim and a black drop at night. A
+     `filter` value, used as `filter: var(--emoji-shadow)`. */
+  --emoji-shadow: drop-shadow(0 0 0.5px rgb(11 74 90 / 0.32))
+    drop-shadow(0 1px 0.5px rgb(11 74 90 / 0.22));
+
+  --background: #f2f8f8;
+  --foreground: #0f2a30;
+  --card: #ffffff;
+  --card-foreground: #0f2a30;
+  --popover: #ffffff;
+  --popover-foreground: #0f2a30;
+  --primary: #0b6b7c;
+  --primary-foreground: #ffffff;
+  --secondary: #e1eded;
+  --secondary-foreground: #0f2a30;
+  --muted: #e1eded;
+  --muted-foreground: #4a6168;
+  --accent: #e1eded;
+  --accent-foreground: #0f2a30;
+  --destructive: #b3261e;
+  --border: #cfdfe0;
+  --input: #78939a;
+  --ring: #0b6b7c;
+
+  /* The coral of the tide pool: a second accent for marks and favourites,
+     drawn (3:1), never used for words. */
+  --coral: #c93d3a;
+
+  /* The octopus mark's own dark, the same by day and night (declared once,
+     so `.dark` inherits it): a pill that carries pale text. */
+  --ink: #0a2530;
+  --ink-foreground: #e8f2f3;
+
+  /* How a notice went (a toast's edge and pictogram), beside shadcn's
+     `--destructive` for a failure. Each is AA on a popover, so it can carry
+     text too. */
+  --success: #1f7a4d;
+  --warning: #8f5200;
+  --info: #0b6b7c;
+
+  /* A toast filled with how its notice went, the same in both themes:
+     deepened until white on it reads clearly on a light page and a dark one. */
+  --toast-foreground: #ffffff;
+  --toast-success: #1b5e3b;
+  --toast-warning: #7a4600;
+  --toast-info: #0a5a69;
+  --toast-error: #a3231c;
+
+  /* The first series in the primary, then success, warning, and the muted
+     and plain text colours. */
+  --chart-1: #0b6b7c;
+  --chart-2: #1f7a4d;
+  --chart-3: #8f5200;
+  --chart-4: #4a6168;
+  --chart-5: #0f2a30;
+
+  --sidebar: #e8f1f1;
+  --sidebar-foreground: #0f2a30;
+  --sidebar-primary: #0b6b7c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d9e8e8;
+  --sidebar-accent-foreground: #0f2a30;
+  --sidebar-border: #cfdfe0;
+  --sidebar-ring: #0b6b7c;
+  color-scheme: light;
+}
+
+.dark {
+  --frame-shadow:
+    0 12px 32px -12px rgb(0 0 0 / 0.6), 0 2px 8px rgb(0 0 0 / 0.35);
+  --emoji-shadow: drop-shadow(0 0 0.5px rgb(232 242 243 / 0.55))
+    drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+
+  --background: #0c1b21;
+  --foreground: #e8f2f3;
+  --card: #142a32;
+  --card-foreground: #e8f2f3;
+  --popover: #142a32;
+  --popover-foreground: #e8f2f3;
+  --primary: #4fc3d4;
+  --primary-foreground: #0c1b21;
+  --secondary: #1f3a44;
+  --secondary-foreground: #e8f2f3;
+  --muted: #1f3a44;
+  --muted-foreground: #9db8be;
+  --accent: #1f3a44;
+  --accent-foreground: #e8f2f3;
+  --destructive: #f0736d;
+  --border: #2b4650;
+  --input: #5d818c;
+  --ring: #4fc3d4;
+  --coral: #ff7a72;
+  --success: #46c487;
+  --warning: #f0a23a;
+  --info: #4fc3d4;
+
+  /* The same series at night: the night primary, success and warning, and the
+     muted and plain text colours. */
+  --chart-1: #4fc3d4;
+  --chart-2: #46c487;
+  --chart-3: #f0a23a;
+  --chart-4: #9db8be;
+  --chart-5: #e8f2f3;
+
+  --sidebar: #142a32;
+  --sidebar-foreground: #e8f2f3;
+  --sidebar-primary: #4fc3d4;
+  --sidebar-primary-foreground: #0c1b21;
+  --sidebar-accent: #1f3a44;
+  --sidebar-accent-foreground: #e8f2f3;
+  --sidebar-border: #2b4650;
+  --sidebar-ring: #4fc3d4;
+  color-scheme: dark;
+}
+
+/* The parts no component draws still wear the Design. */
+::selection {
+  color: var(--primary-foreground);
+  background-color: var(--primary);
+}
+
+:where(input, textarea) {
+  caret-color: var(--primary);
+}
+
+@theme inline {
+  --color-coral: var(--coral);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-toast-foreground: var(--toast-foreground);
+  --color-toast-success: var(--toast-success);
+  --color-toast-warning: var(--toast-warning);
+  --color-toast-info: var(--toast-info);
+  --color-toast-error: var(--toast-error);
+  --font-heading: var(--font-heading);
+}

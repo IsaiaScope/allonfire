@@ -50,8 +50,12 @@ const LIMIT = {
   SEARCH_MAX: 200,
   /** The longest `sort` the API reads, `name.asc,size.desc,created.desc` and room to spare. */
   SORT_MAX: 200,
-  /** One upload request, every file and the meta part together. */
-  UPLOAD_BYTES: 100 * UNIT.BYTES_PER_MIB,
+  /**
+   * One upload request, every file and the meta part together. Kept under
+   * Cloudflare's 100 MB request body limit (free plan), which sits in front of
+   * every App: 100 MiB would be refused there with a 413 before reaching us.
+   */
+  UPLOAD_BYTES: 90 * UNIT.BYTES_PER_MIB,
   /**
    * The upload's own time budget, in place of the API-wide 30 s: a 503 there
    * would not stop the handler, so the batch would still land and a retry

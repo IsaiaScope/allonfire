@@ -1,8 +1,8 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import type { AOFRow } from "@allonfire/ui/features/data-table/components/aof-data-table";
+import { useSelectableRows } from "@allonfire/ui/features/data-table/hooks/use-selectable-rows";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useCallback } from "react";
-import { useSelectableRows } from "@/shared/hooks/use-selectable-rows";
 import { UserCard } from "../components/user-card";
 import { useUserColumns } from "../components/user-columns";
 

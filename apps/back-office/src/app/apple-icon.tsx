@@ -1,6 +1,6 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { iconImage } from "@/features/metadata/utils/icon-image";
+import { iconImage } from "@/shared/constants/page-information";
 
 const { edge } = METADATA.ICON.APPLE;
 export const size = { height: edge, width: edge };

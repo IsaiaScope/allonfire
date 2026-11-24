@@ -1,0 +1,64 @@
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../../../shared/utils/utils";
+import { AOFPage, type AOFPageProps } from "./aof-page";
+
+// Twice the bottom gutter: a page's last row (a form's buttons, a table's
+// pages) needs air above the edge; the gutter keeps the home indicator in.
+// Contained inline: the frame gives the page its width, never its content,
+// so a wide row (a long email) scrolls inside its table instead of pushing
+// the frame past the screen.
+const sectionPage = cva(
+  "flex-1 pb-[calc(var(--gutter-bottom)*2)] contain-inline-size",
+  {
+    defaultVariants: { width: "full" },
+    variants: {
+      width: {
+        /**
+         * Edge to edge, for a page that is its content (a grid of photos): a
+         * container (`@`, for columns measured by the page's own width) with
+         * only a bare gutter between the content and what the screen
+         * reserves. The left side reads the frame's own inset
+         * (`--frame-inset-left`: none beside a docked sidebar, which already
+         * clears a landscape notch; the screen's where no sidebar stands),
+         * never the screen's alone, or the notch is cleared twice. The right
+         * and the bottom clear the screen's own insets.
+         */
+        edge: "@container pt-1 pr-[max(--spacing(1),env(safe-area-inset-right,0px))] pb-[max(--spacing(4),env(safe-area-inset-bottom,0px))] pl-[max(--spacing(1),var(--frame-inset-left,env(safe-area-inset-left,0px)))]",
+        /**
+         * A form: centred and capped, laid out by its own width (a container,
+         * `@2xl:` for two columns), never the screen's: the sidebar decides
+         * how much room the page really has. As tall as the form: the
+         * frame's `<main>` scrolls it, the padding after its buttons.
+         */
+        form: "@container mx-auto w-full max-w-4xl",
+        /**
+         * The whole page area, as a list or a table wants: what the header
+         * leaves, and taller only when its table's minimum needs it, so the
+         * padding stays under the pager. A long table still scrolls in
+         * place: its rows never size its box.
+         */
+        full: "",
+      },
+    },
+  }
+);
+
+export type AOFSectionPageProps = AOFPageProps &
+  VariantProps<typeof sectionPage>;
+
+/**
+ * A Section's page area, inside the frame: a `<section>` (the frame holds the
+ * `<main>`) filling what the header leaves rather than the whole screen, as
+ * wide as its content wants (`width`).
+ */
+export const AOFSectionPage = ({
+  className,
+  width,
+  ...props
+}: AOFSectionPageProps) => (
+  <AOFPage
+    as="section"
+    className={cn(sectionPage({ width }), className)}
+    {...props}
+  />
+);

@@ -24,9 +24,11 @@ import {
 } from "../../../shared/tests/sign-in";
 import { auth } from "../auth";
 
-const LAURA_VIEWER = FIXTURE.USER.LAURA.VIEWER;
-/** A route only this file mounts, behind `requireApp(BACK_OFFICE)`. */
+const LAURA_USER = FIXTURE.USER.LAURA.USER;
+/** Routes only this file mounts, behind each App's door and a Section's higher Role. */
 const BACK_OFFICE_ROUTE = `${API.PATH.VERSION}/back-office`;
+const LAURA_ROUTE = `${API.PATH.VERSION}/laura`;
+const LAURA_ADMIN_ROUTE = `${API.PATH.VERSION}/laura-admin`;
 const CLOSED_APPS = objectValues(App).filter(
   (each) => ACCESS.APP_SETTINGS[each].registration === null
 );
@@ -35,11 +37,12 @@ const CLOSED_APPS = objectValues(App).filter(
 // sign-ins in this file never add up to the auth limit.
 let app: TestApp;
 beforeEach(() => {
-  app = createApp(appDeps({ auth })).get(
-    BACK_OFFICE_ROUTE,
-    requireApp(App.BACK_OFFICE),
-    (c) => c.text("ok")
-  );
+  app = createApp(appDeps({ auth }))
+    .get(BACK_OFFICE_ROUTE, requireApp(App.BACK_OFFICE), (c) => c.text("ok"))
+    .get(LAURA_ROUTE, requireApp(App.LAURA), (c) => c.text("ok"))
+    .get(LAURA_ADMIN_ROUTE, requireApp(App.LAURA, Role.ADMIN), (c) =>
+      c.text("ok")
+    );
 });
 
 afterAll(async () => {
@@ -65,17 +68,46 @@ const joinApp = (headers: Record<string, string>) =>
 
 describe("sign-in against Postgres", () => {
   it("returns a Session carrying the User's Memberships", async () => {
-    const session = await getSession(app, await cookieFor(app, LAURA_VIEWER));
+    const session = await getSession(app, await cookieFor(app, LAURA_USER));
     expect(session?.user).toMatchObject({
-      email: LAURA_VIEWER.email,
-      memberships: [{ app: App.LAURA, role: Role.VIEWER }],
+      email: LAURA_USER.email,
+      memberships: [{ app: App.LAURA, role: Role.USER }],
     });
   });
 
-  it("refuses a Laura Viewer at requireApp(BACK_OFFICE)", async () => {
-    const cookie = await cookieFor(app, LAURA_VIEWER);
+  it("refuses a Laura User at requireApp(BACK_OFFICE)", async () => {
+    const cookie = await cookieFor(app, LAURA_USER);
     const res = await app.request(BACK_OFFICE_ROUTE, { headers: { cookie } });
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
+  });
+
+  it.each([
+    { path: LAURA_ROUTE, status: HTTP.STATUS.OK, user: LAURA_USER },
+    {
+      path: LAURA_ROUTE,
+      status: HTTP.STATUS.FORBIDDEN,
+      user: FIXTURE.USER.LAURA.VIEWER,
+    },
+    {
+      path: LAURA_ADMIN_ROUTE,
+      status: HTTP.STATUS.FORBIDDEN,
+      user: LAURA_USER,
+    },
+    {
+      path: LAURA_ADMIN_ROUTE,
+      status: HTTP.STATUS.OK,
+      user: FIXTURE.USER.LAURA.ADMIN,
+    },
+    {
+      path: LAURA_ROUTE,
+      status: HTTP.STATUS.FORBIDDEN,
+      user: FIXTURE.USER.BACK_OFFICE.ADMIN,
+    },
+  ])("$user.email at $path: $status", async ({ path, status, user }) => {
+    const cookie = await cookieFor(app, user);
+    expect((await app.request(path, { headers: { cookie } })).status).toBe(
+      status
+    );
   });
 
   it.each([
@@ -83,7 +115,7 @@ describe("sign-in against Postgres", () => {
     { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.BACK_OFFICE.USER },
     { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.BACK_OFFICE.VIEWER },
     { status: HTTP.STATUS.FORBIDDEN, user: FIXTURE.USER.NO_MEMBERSHIP },
-    { status: HTTP.STATUS.FORBIDDEN, user: LAURA_VIEWER },
+    { status: HTTP.STATUS.FORBIDDEN, user: LAURA_USER },
   ])(
     "signs $user.email into the Back Office: $status",
     async ({ status, user }) => {
@@ -138,12 +170,12 @@ describe("Registration on the real ACCESS.APP_SETTINGS", () => {
   });
 
   it("refuses joining a closed App and adds no Membership", async () => {
-    const res = await joinApp({ cookie: await cookieFor(app, LAURA_VIEWER) });
+    const res = await joinApp({ cookie: await cookieFor(app, LAURA_USER) });
     expect(res.status).toBe(HTTP.STATUS.FORBIDDEN);
     expect(await authCodeOf(res)).toBe(AUTH.ERROR_CODE.REGISTRATION_CLOSED);
     expect(
       await prisma.membership.count({
-        where: { app: App.BACK_OFFICE, user: { email: LAURA_VIEWER.email } },
+        where: { app: App.BACK_OFFICE, user: { email: LAURA_USER.email } },
       })
     ).toBe(0);
   });

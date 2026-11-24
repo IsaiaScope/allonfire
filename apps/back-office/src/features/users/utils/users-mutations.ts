@@ -1,7 +1,7 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
+import { bulkDeleteMutation } from "@allonfire/ui/features/data-table/utils/bulk-delete";
 import { MUTATION } from "@/shared/constants/mutation";
 import { QUERY } from "@/shared/constants/query";
-import { bulkDeleteMutation } from "@/shared/utils/bulk-delete";
 import { deleteUsers } from "../actions/delete-users";
 import { usersPageWithout } from "./users-page-without";
 

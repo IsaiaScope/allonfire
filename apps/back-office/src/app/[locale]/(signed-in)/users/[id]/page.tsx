@@ -1,15 +1,15 @@
 import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
 import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
 import { App } from "@allonfire/database/enums";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { Suspense } from "react";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { EditUserSkeleton } from "@/features/users/components/edit-user-skeleton";
 import { UserEditor } from "@/features/users/components/user-editor";
 import { userHref } from "@/features/users/utils/user-href";
 import { userHydration } from "@/features/users/utils/users-hydration";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 type UserPageProps = { params: Promise<{ id: string }> };
 
@@ -33,7 +33,7 @@ const UserForm = async ({ params }: UserPageProps) => {
   const session = await requireAppSession();
   const hydrate = () => userHydration(id);
   return (
-    <SectionPage width="form">
+    <AOFSectionPage width="form">
       <AOFHydratedBoundary hydration={hydrate}>
         {/* Opens fresh on every visit: no typed password kept in the page
             Next hides on leaving. */}
@@ -45,7 +45,7 @@ const UserForm = async ({ params }: UserPageProps) => {
           />
         </AOFFreshOnReturn>
       </AOFHydratedBoundary>
-    </SectionPage>
+    </AOFSectionPage>
   );
 };
 
@@ -56,9 +56,9 @@ const UserForm = async ({ params }: UserPageProps) => {
 const UserPage = ({ params }: UserPageProps) => (
   <Suspense
     fallback={
-      <SectionPage width="form">
+      <AOFSectionPage width="form">
         <EditUserSkeleton />
-      </SectionPage>
+      </AOFSectionPage>
     }
   >
     <UserForm params={params} />

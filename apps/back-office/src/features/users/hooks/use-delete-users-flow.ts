@@ -1,5 +1,5 @@
+import { useBulkDeleteFlow } from "@allonfire/ui/features/data-table/hooks/use-bulk-delete-flow";
 import { useTranslations } from "next-intl";
-import { useBulkDeleteFlow } from "@/shared/hooks/use-bulk-delete-flow";
 import { deleteUsersMutation } from "../utils/users-mutations";
 
 /** Deleting the `selectedIds` Users: `useBulkDeleteFlow` over `deleteUsersMutation`, in the `Users.delete` words. */

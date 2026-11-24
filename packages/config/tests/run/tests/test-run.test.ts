@@ -4,6 +4,7 @@ import {
   isStaleTestRun,
   isTestRunOf,
   runsIntegration,
+  stampTime,
   TEST_RUN,
   testRunName,
   testRunStamp,
@@ -18,9 +19,14 @@ const LIVE_PID = 4242;
 const DEAD_PID = 4343;
 const isRunning = (pid: number) => pid === LIVE_PID;
 
-it("stamps a run with its epoch seconds, its process and a random suffix", () => {
+it("reads a moment as UTC year, month, day, hour, minute and second", () => {
+  expect(stampTime(EPOCH)).toBe("261009_120000");
+  expect(stampTime(EPOCH + 3661)).toBe("261009_130101");
+});
+
+it("stamps a run with its time, its process and a random suffix", () => {
   expect(testRunStamp(NOW)).toMatch(
-    new RegExp(`^${EPOCH}_${process.pid}_[a-z0-9]{6}$`)
+    new RegExp(`^261009_120000_p${process.pid}_[a-z0-9]{6}$`)
   );
 });
 
@@ -29,7 +35,8 @@ it.each([
   ["a bucket", "-"],
 ])("calls %s stale once its run has ended", (_, separator) => {
   const name = (pid: number) =>
-    ["allonfire", "test", "back", "office", EPOCH, pid, "aaaaaa"].join(
+    `aof_test_back_office_${stampTime(EPOCH)}_p${pid}_aaaaaa`.replaceAll(
+      "_",
       separator
     );
   // Killed: Vitest exits on SIGTERM before any teardown finishes.
@@ -45,7 +52,8 @@ it.each([
   "calls %s stale after a day, whoever holds its process number",
   (_, separator) => {
     const name = (epoch: number) =>
-      ["allonfire", "test", "back", "office", epoch, LIVE_PID, "aaaaaa"].join(
+      `aof_test_back_office_${stampTime(epoch)}_p${LIVE_PID}_aaaaaa`.replaceAll(
+        "_",
         separator
       );
     expect(isStaleTestRun(name(EPOCH - DAY - HOUR), NOW, isRunning)).toBe(true);
@@ -54,7 +62,8 @@ it.each([
 );
 
 it("ages a name without a process, a template's, by its epoch only", () => {
-  const template = (epoch: number) => `allonfire_test_template_${epoch}_03d6c9`;
+  const template = (epoch: number) =>
+    `aof_test_template_${stampTime(epoch)}_03d6c9`;
   expect(isStaleTestRun(template(EPOCH - DAY - HOUR), NOW, isRunning)).toBe(
     true
   );
@@ -65,26 +74,33 @@ it("ages a name without a process, a template's, by its epoch only", () => {
 
 it("sees its own process running", () => {
   expect(
-    isStaleTestRun(`allonfire_test_api_${EPOCH}_${process.pid}_aaaaaa`, NOW)
+    isStaleTestRun(
+      `aof_test_api_${stampTime(EPOCH)}_p${process.pid}_aaaaaa`,
+      NOW
+    )
   ).toBe(false);
 });
 
-it.each(["allonfire", "image", "allonfire_test_api_1_ab12cd_extra"])(
-  "never calls %s stale",
-  (name) => {
-    expect(isStaleTestRun(name, NOW)).toBe(false);
-  }
-);
+it.each([
+  "allonfire",
+  "image",
+  "aof_test_api_1_ab12cd_extra",
+  // The epoch names before the date-time ones: never swept, dropped by hand once.
+  "allonfire_test_api_1791907884_ab12cd",
+])("never calls %s stale", (name) => {
+  expect(isStaleTestRun(name, NOW)).toBe(false);
+});
 
 it.each([
-  ["allonfire_test_e2e_1791907884_p9blh8", "e2e", true],
-  ["allonfire_test_e2e_1791907884_4242_p9blh8", "e2e", true],
-  ["allonfire-test-back-office-1791907884-4242-p9blh8", "back-office", true],
-  ["allonfire-test-e2e-1791907884-p9blh8", "e2e", true],
-  ["allonfire-test-back-office-1791907884-p9blh8", "back-office", true],
-  ["allonfire_test_back_office_1791907884_p9blh8", "back-office", true],
-  ["allonfire_test_e2e_extra_1791907884_p9blh8", "e2e", false],
-  ["allonfire_test_template_1791880206_03d6c9", "e2e", false],
+  ["aof_test_e2e_261009_120000_p9blh8", "e2e", true],
+  ["aof_test_e2e_261009_120000_p4242_p9blh8", "e2e", true],
+  ["aof-test-back-office-261009-120000-p4242-p9blh8", "back-office", true],
+  ["aof-test-e2e-261009-120000-p9blh8", "e2e", true],
+  ["aof-test-back-office-261009-120000-p9blh8", "back-office", true],
+  ["aof_test_back_office_261009_120000_p9blh8", "back-office", true],
+  ["aof_test_e2e_extra_261009_120000_p9blh8", "e2e", false],
+  ["aof_test_template_261009_120000_03d6c9", "e2e", false],
+  ["allonfire_test_e2e_1791907884_p9blh8", "e2e", false],
   ["allonfire", "e2e", false],
 ])("says whether %s is a run labelled %s", (name, label, expected) => {
   expect(isTestRunOf(name, label)).toBe(expected);
@@ -92,12 +108,18 @@ it.each([
 
 describe("testRunName", () => {
   it.each([
-    ["_", "allonfire_test_back_office_1760011200_ab12cd"],
-    ["-", "allonfire-test-back-office-1760011200-ab12cd"],
+    ["_", "aof_test_back_office_261009_120000_p12345_ab12cd"],
+    ["-", "aof-test-back-office-261009-120000-p12345-ab12cd"],
   ] as const)("spells a run's name with %s", (separator, expected) => {
-    expect(testRunName("back-office", "1760011200_ab12cd", separator)).toBe(
-      expected
-    );
+    expect(
+      testRunName("back-office", "261009_120000_p12345_ab12cd", separator)
+    ).toBe(expected);
+  });
+
+  it("refuses a name Postgres would cut at its length limit", () => {
+    const stamp = "261009_120000_p1234567_ab12cd";
+    expect(() => testRunName("a".repeat(24), stamp)).not.toThrow();
+    expect(() => testRunName("a".repeat(25), stamp)).toThrow();
   });
 
   it.each([
@@ -111,7 +133,10 @@ describe("testRunName", () => {
   it("names what its own stamp and suffix length parse back", () => {
     const fingerprint = "a".repeat(TEST_RUN.SUFFIX_LENGTH);
     const run = testRunName("e2e", testRunStamp(NOW), "-");
-    const template = testRunName("template", `${EPOCH}_${fingerprint}`);
+    const template = testRunName(
+      "template",
+      `${stampTime(EPOCH)}_${fingerprint}`
+    );
     expect(isTestRunOf(run, "e2e")).toBe(true);
     expect(
       isStaleTestRun(template, new Date(NOW.getTime() + 2 * DAY * 1000))

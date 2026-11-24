@@ -1,4 +1,4 @@
-import { STORAGE_USAGE } from "@allonfire/api/features/storage-usage/constants/storage-usage";
+import { BACK_OFFICE } from "@allonfire/api/features/back-office/constants/back-office";
 import { API } from "@allonfire/api/shared/constants/api";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import type { HTTP } from "@allonfire/core/features/http/constants/http";
@@ -17,7 +17,7 @@ export const HEALTH_OK = {
 } satisfies InferResponseType<typeof api.health.$get, typeof HTTP.STATUS.OK>;
 
 /** Where the browser asks for Users. */
-export const USERS_URL = `${LOCAL.URL.TEST_API}${API.PATH.USERS}`;
+export const USERS_URL = `${LOCAL.URL.TEST_API}${API.PATH.BACK_OFFICE.USERS}`;
 
 /** Two Fixtures: Laura's Admin, and the User in no App. */
 export const USERS_PAGE = {
@@ -48,7 +48,7 @@ export const USERS_PAGE = {
     },
   ],
 } satisfies InferResponseType<
-  (typeof api)[typeof API.VERSION.CURRENT]["users"]["$get"],
+  (typeof api)[typeof API.VERSION.CURRENT][typeof API.SEGMENT.BACK_OFFICE]["users"]["$get"],
   typeof HTTP.STATUS.OK
 >;
 
@@ -94,7 +94,7 @@ export const IMAGES_PAGE = {
 } satisfies ImagePageBody;
 
 /** Where the browser asks for the Storage overview. */
-export const STORAGE_OVERVIEW_URL = `${LOCAL.URL.TEST_API}${API.PATH.STORAGE_USAGE}/overview`;
+export const STORAGE_OVERVIEW_URL = `${LOCAL.URL.TEST_API}${API.PATH.BACK_OFFICE.OVERVIEW.STORAGE}`;
 
 /** The Images' bucket, and two Apps' Images by access. */
 export const STORAGE_OVERVIEW = {
@@ -107,7 +107,7 @@ export const STORAGE_OVERVIEW = {
   buckets: [
     {
       id: "image",
-      kind: STORAGE_USAGE.BUCKET_KIND.IMAGE,
+      kind: BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND.IMAGE,
       reading: {
         asOf: "2026-11-09T10:00:00.000Z",
         bytes: 2_600_000,
@@ -136,12 +136,12 @@ export const STORAGE_OVERVIEW = {
     totalBytes: 2_500_000,
   },
 } satisfies InferResponseType<
-  (typeof api)[typeof API.VERSION.CURRENT]["storage"]["overview"]["$get"],
+  (typeof api)[typeof API.VERSION.CURRENT][typeof API.SEGMENT.BACK_OFFICE]["overview"]["storage"]["$get"],
   typeof HTTP.STATUS.OK
 >;
 
 /** Where the browser asks for the Users overview. */
-export const USER_OVERVIEW_URL = `${LOCAL.URL.TEST_API}${API.PATH.USER_USAGE}/overview`;
+export const USER_OVERVIEW_URL = `${LOCAL.URL.TEST_API}${API.PATH.BACK_OFFICE.OVERVIEW.USERS}`;
 
 /** What the Users overview answers when a test does not set its own. */
 export const USER_OVERVIEW = {
@@ -151,7 +151,7 @@ export const USER_OVERVIEW = {
   ],
   total: 4,
 } satisfies InferResponseType<
-  (typeof api)[typeof API.VERSION.CURRENT]["user-usage"]["overview"]["$get"],
+  (typeof api)[typeof API.VERSION.CURRENT][typeof API.SEGMENT.BACK_OFFICE]["overview"]["users"]["$get"],
   typeof HTTP.STATUS.OK
 >;
 

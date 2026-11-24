@@ -3,8 +3,9 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { languageOf } from "@allonfire/auth/features/next/utils/redirect-to";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { updateTag } from "next/cache";
-import { refusalOf, textOf } from "@/features/api/utils/api-refusal";
+import { refusalOf } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { redirect } from "@/features/i18n/navigation";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -67,7 +68,9 @@ export const addUser = async (
   }
   const { email, name, password, roles, verification } = parsed.data;
   const client = await serverApi();
-  const response = await client[API.VERSION.CURRENT].users.$post({
+  const response = await client[API.VERSION.CURRENT][
+    API.SEGMENT.BACK_OFFICE
+  ].users.$post({
     json: {
       email,
       memberships: membershipsOf(roles),

@@ -1,4 +1,5 @@
 import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { useTranslations } from "next-intl";
 import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
@@ -9,10 +10,9 @@ import {
   queryOf,
 } from "@/features/images/constants/images-params";
 import { imagesHydration } from "@/features/images/utils/images-hydration";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(BACK_OFFICE.PAGE.STORAGE_IMAGES, "Navigation.images");
@@ -45,14 +45,14 @@ const ImagesList = async ({ searchParams }: ImagesPageProps) => {
 const ImagesPage = ({ searchParams }: ImagesPageProps) => {
   const t = useTranslations("Navigation");
   return (
-    <SectionPage className="gap-6">
+    <AOFSectionPage className="gap-6">
       {/* The header's breadcrumb already names the page on screen; the page
           keeps its h1 for screen readers. */}
       <h1 className="sr-only">{t("images")}</h1>
       <Suspense fallback={<ImagesListSkeleton />}>
         <ImagesList searchParams={searchParams} />
       </Suspense>
-    </SectionPage>
+    </AOFSectionPage>
   );
 };
 

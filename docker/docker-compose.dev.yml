@@ -83,7 +83,7 @@ services:
       AWS_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY:-allonfire}
       AWS_SECRET_ACCESS_KEY: ${STORAGE_SECRET_KEY:-allonfire}
       # Only the Apps' bucket and a test run's (`testBucketName`), never another.
-      IMGPROXY_ALLOWED_SOURCES: "s3://image/,s3://allonfire-test-"
+      IMGPROXY_ALLOWED_SOURCES: "s3://image/,s3://aof-test-"
       IMGPROXY_AUTO_AVIF: "true"
       IMGPROXY_AUTO_WEBP: "true"
       IMGPROXY_MAX_SRC_RESOLUTION: "100"

@@ -1,7 +1,10 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../../constants/users";
 import { deleteUsers } from "../delete-users";
@@ -12,7 +15,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 beforeEach(() => {
   resetFakeApi();

@@ -28,4 +28,4 @@ server. A form without fields (Sign out) stays a plain `<form action>`.
   beside the fields, not inside TanStack's state.
 - The browser and the action repeat the field rules; the action's copy is the
   one that counts.
-- Laura keeps `react-hook-form` until it is rebuilt.
+- The rebuilt Laura declares no `react-hook-form`: its forms are ui's AOF forms.

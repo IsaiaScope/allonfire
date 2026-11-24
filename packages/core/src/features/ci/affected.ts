@@ -3,8 +3,7 @@ import { parseJsonWith } from "../../shared/utils/json";
 
 /**
  * An App is a workspace package under `apps/` (the API included), named by
- * its folder; pnpm-workspace.yaml leaves paused Laura out, so Turbo never
- * lists it.
+ * its folder, so Turbo lists every one of them.
  */
 const APPS_DIR = "apps/";
 

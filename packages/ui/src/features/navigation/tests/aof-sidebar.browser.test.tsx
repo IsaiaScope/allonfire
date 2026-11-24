@@ -14,12 +14,17 @@ import {
 } from "../../../shared/tests/computed-style";
 import {
   CAN_EMULATE_MEDIA,
+  clearSafeAreaInsets,
+  notchedPhone,
   withCoarsePointer,
 } from "../../../shared/tests/emulated-media";
+import { AOFAccountPlaceholder } from "../components/aof-account";
 import { AOFFrameHeader } from "../components/aof-frame-header";
 import {
   AOFSidebar,
+  AOFSidebarContent,
   AOFSidebarDropdownContent,
+  AOFSidebarGroup,
   AOFSidebarHeader,
   AOFSidebarInset,
   AOFSidebarMenu,
@@ -348,3 +353,181 @@ describe.runIf(server.browser === "chromium")(
     });
   }
 );
+
+// A Design declares these on `:root` and sets none it does not want: the
+// frame reads each with a fallback to shadcn's own value.
+const FRAME_TOKENS = [
+  "--frame-gap",
+  "--frame-radius",
+  "--frame-shadow",
+] as const;
+const SHADCN_FLOATING_SHADOW = "0px 1px 3px 0px";
+/** The folded rail, 3.375rem (`AOFSidebarProvider`'s `--sidebar-width-icon`). */
+const RAIL_PX = 54;
+
+const declareFrame = (
+  tokens: Partial<Record<(typeof FRAME_TOKENS)[number], string>>
+) => {
+  for (const name of FRAME_TOKENS) {
+    const value = tokens[name];
+    if (value) {
+      document.documentElement.style.setProperty(name, value);
+    }
+  }
+};
+
+const frameParts = async (variant: "floating" | "sidebar", open = true) => {
+  const screen = await render(
+    <AOFSidebarProvider defaultOpen={open}>
+      <AOFSidebar label="Menu" variant={variant}>
+        Sections
+      </AOFSidebar>
+    </AOFSidebarProvider>
+  );
+  const part = (selector: string) => {
+    const element = screen.container.querySelector(selector);
+    if (!element) {
+      throw new Error(`the sidebar drew no ${selector}`);
+    }
+    return element;
+  };
+  return {
+    container: part('[data-slot="sidebar-container"]'),
+    gap: part('[data-slot="sidebar-gap"]'),
+    inner: part('[data-sidebar="sidebar"]'),
+  };
+};
+
+/** The folded rail's icon: 22px, in a 40px square (the rail's content width). */
+const FOLDED_ICON_PX = 22;
+const FOLDED_SQUARE_PX = 40;
+
+describe("a folded sidebar", () => {
+  const foldedRow = async () => {
+    const screen = await render(
+      <AOFSidebarProvider defaultOpen={false}>
+        <AOFSidebar label="Menu" variant="floating">
+          <AOFSidebarContent>
+            <AOFSidebarGroup>
+              <AOFSidebarMenu>
+                <AOFSidebarMenuItem>
+                  <AOFSidebarMenuButton>
+                    <svg aria-hidden data-testid="icon" />
+                    <span>{ROW}</span>
+                  </AOFSidebarMenuButton>
+                </AOFSidebarMenuItem>
+              </AOFSidebarMenu>
+            </AOFSidebarGroup>
+          </AOFSidebarContent>
+        </AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    const button = screen.getByRole("button", { name: ROW }).element();
+    const inner = screen.container.querySelector('[data-sidebar="sidebar"]');
+    await afterTransitions(button);
+    return { button, icon: screen.getByTestId("icon").element(), inner };
+  };
+
+  const centre = (element: Element | null) => {
+    const box = element?.getBoundingClientRect();
+    return box ? box.left + box.width / 2 : Number.NaN;
+  };
+
+  it("centres a row's icon in the rail", async () => {
+    const { button, icon, inner } = await foldedRow();
+    expect(centre(icon)).toBeCloseTo(centre(inner), 0);
+    expect(centre(button)).toBeCloseTo(centre(inner), 0);
+  });
+
+  it("centres the account's avatar in the rail", async () => {
+    const screen = await render(
+      <AOFSidebarProvider defaultOpen={false}>
+        <AOFSidebar label="Menu" variant="floating">
+          <AOFSidebarContent>
+            <AOFSidebarGroup>
+              <AOFAccountPlaceholder />
+            </AOFSidebarGroup>
+          </AOFSidebarContent>
+        </AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    const inner = screen.container.querySelector('[data-sidebar="sidebar"]');
+    const avatar = screen.container.querySelector("span.size-8");
+    await afterTransitions(inner ?? document.body);
+    expect(centre(avatar)).toBeCloseTo(centre(inner), 0);
+  });
+
+  // A phone turned sideways: the notch's inset widens the rail on the left.
+  describe.runIf(server.browser === "chromium")("on a notched screen", () => {
+    beforeEach(() =>
+      notchedPhone({ bottom: 21, left: NOTCH_LEFT_PX, right: 47, top: 0 })
+    );
+    afterEach(clearSafeAreaInsets);
+
+    it("centres a row's icon in the rail's visible card", async () => {
+      const { button, icon, inner } = await foldedRow();
+      expect(centre(icon)).toBeCloseTo(centre(inner), 0);
+      expect(centre(button)).toBeCloseTo(centre(inner), 0);
+    });
+  });
+
+  it("draws the icon at 22px in a 40px square", async () => {
+    const { button, icon } = await foldedRow();
+    expect(button.getBoundingClientRect().width).toBe(FOLDED_SQUARE_PX);
+    expect(icon.getBoundingClientRect().width).toBe(FOLDED_ICON_PX);
+  });
+});
+
+describe("a floating sidebar reads the Design's frame tokens", () => {
+  afterEach(() => {
+    for (const name of FRAME_TOKENS) {
+      document.documentElement.style.removeProperty(name);
+    }
+  });
+
+  it("pads the frame by --frame-gap, and by shadcn's 8px without it", async () => {
+    declareFrame({ "--frame-gap": "1rem" });
+    const { container } = await frameParts("floating");
+    expect(getComputedStyle(container).padding).toBe("16px");
+    document.documentElement.style.removeProperty("--frame-gap");
+    expect(getComputedStyle(container).padding).toBe("8px");
+  });
+
+  it("rounds the frame by --frame-radius, and by shadcn's large radius without it", async () => {
+    declareFrame({ "--frame-radius": "20px" });
+    const { inner } = await frameParts("floating");
+    expect(getComputedStyle(inner).borderRadius).toBe("20px");
+    document.documentElement.style.removeProperty("--frame-radius");
+    expect(getComputedStyle(inner).borderRadius).toBe(
+      computedValue("border-radius", "var(--radius-lg)")
+    );
+  });
+
+  it("casts --frame-shadow, and shadcn's small shadow without it", async () => {
+    declareFrame({ "--frame-shadow": "0 0 0 4px rgb(1 2 3)" });
+    const { inner } = await frameParts("floating");
+    expect(getComputedStyle(inner).boxShadow).toContain("rgb(1, 2, 3)");
+    document.documentElement.style.removeProperty("--frame-shadow");
+    expect(getComputedStyle(inner).boxShadow).toContain(SHADCN_FLOATING_SHADOW);
+  });
+
+  it("leaves a collapsed frame's gap the rail plus the gap on both sides", async () => {
+    declareFrame({ "--frame-gap": "1rem" });
+    const { gap } = await frameParts("floating", false);
+    const rail = RAIL_PX;
+    const settled = await afterTransitions(gap);
+    expect(Number.parseFloat(settled.width)).toBe(rail + 2 * 16);
+  });
+
+  it("is ignored by the sidebar variant, the Back Office's", async () => {
+    declareFrame({
+      "--frame-gap": "1rem",
+      "--frame-radius": "20px",
+      "--frame-shadow": "0 0 0 4px rgb(1 2 3)",
+    });
+    const { container, inner } = await frameParts("sidebar");
+    expect(getComputedStyle(container).padding).toBe("0px");
+    expect(getComputedStyle(inner).borderRadius).toBe("0px");
+    expect(getComputedStyle(inner).boxShadow).toBe("none");
+  });
+});

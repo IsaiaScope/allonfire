@@ -1,11 +1,11 @@
-import { useQueryStates } from "nuqs";
-import { useCallback } from "react";
-import { useRowSelection } from "@/shared/hooks/use-row-selection";
+import { useRowSelection } from "@allonfire/ui/features/data-table/hooks/use-row-selection";
 import {
   resolveUpdater,
   type TablePagination,
   type TablePaginationUpdater,
-} from "@/shared/utils/table-pagination";
+} from "@allonfire/ui/features/data-table/utils/table-pagination";
+import { useQueryStates } from "nuqs";
+import { useCallback } from "react";
 import { IMAGES } from "../constants/images";
 import { imagesParams, queryOf } from "../constants/images-params";
 import { useImagesView } from "./use-images-view";

@@ -27,10 +27,13 @@ vi.mock("@/features/images/actions/delete-images", () => ({
 vi.mock("@/features/users/actions/delete-users", () => ({
   deleteUsers: vi.fn(),
 }));
-vi.mock("@/features/i18n/navigation", () => import("./navigation-mock"));
+vi.mock(
+  "@/features/i18n/navigation",
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
+);
 vi.mock(
   "@allonfire/ui/shared/components/aof-image",
-  () => import("./aof-image-mock")
+  () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
 /**

@@ -3,7 +3,7 @@
 # leave only through the clipboard (`copy`) or `gh`'s stdin (`gh-secret`).
 #   keys      <file>                 the key names, one per line
 #   check     <file>                 each empty key; exits 1 when any is empty
-#   copy      <file> <key>           the value onto the macOS clipboard
+#   copy      <file> <key>           the value onto the macOS clipboard (macOS only)
 #   gh-secret <file> <key> <env>     the value into `gh secret set <key> --env <env>`
 set -euo pipefail
 
@@ -55,6 +55,10 @@ case $command in
     ;;
   copy)
     [ $# -eq 3 ] || usage
+    command -v pbcopy >/dev/null || {
+      echo "env-production: copy needs pbcopy (macOS only); gh-secret works anywhere" >&2
+      exit 1
+    }
     value=$(value_of "$3")
     printf '%s' "$value" | pbcopy
     echo "copied $3"

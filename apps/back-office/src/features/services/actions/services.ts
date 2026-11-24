@@ -4,6 +4,7 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import type { SendOutcome } from "@allonfire/core/features/mail/constants/mail";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import type { ServiceType } from "@allonfire/database/enums";
 import { updateTag } from "next/cache";
@@ -11,7 +12,6 @@ import { z } from "zod";
 import {
   type ApiRefusalKey,
   refusalOf,
-  textOf,
 } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { SERVICES, serviceTag } from "../constants/services";

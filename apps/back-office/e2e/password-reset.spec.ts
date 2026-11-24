@@ -1,11 +1,9 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, type Page, test } from "@playwright/test";
-import EN from "../src/features/i18n/translations/en.json" with {
-  type: "json",
-};
+import { AUTH_EN } from "../src/shared/tests/auth-words";
 
-const t = EN.ForgotPassword;
+const t = AUTH_EN.ForgotPassword;
 
 /** Asks for a reset link for `email`, then reads the one answer every address gets. */
 const askFor = async (page: Page, email: string) => {
@@ -19,8 +17,8 @@ test("Sign in leads to Forgot password, which answers the same for any address",
   page,
 }) => {
   await page.goto(AUTH.PAGE.SIGN_IN);
-  await page.getByRole("link", { name: EN.SignIn.forgot }).click();
-  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+  await page.getByRole("link", { name: AUTH_EN.SignIn.forgot }).click();
+  await expect(page.getByRole("form", { name: t.title })).toBeVisible();
   await askFor(page, FIXTURE.USER.BACK_OFFICE.ADMIN.email);
   await askFor(page, "nobody-at-all@reset.allonfire.test");
 });
@@ -29,7 +27,7 @@ test("a reset link that no longer works offers a new one", async ({ page }) => {
   await page.goto(
     `${AUTH.PAGE.RESET_PASSWORD}?${AUTH.MAIL.TOKEN_PARAM}=not-a-token`
   );
-  const reset = EN.ResetPassword;
+  const reset = AUTH_EN.ResetPassword;
   await page
     .getByLabel(reset.password, { exact: true })
     .fill(FIXTURE.NEW_PASSWORD);

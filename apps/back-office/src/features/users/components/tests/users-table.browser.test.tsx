@@ -7,6 +7,7 @@ import {
   I18N,
   languageSchema,
 } from "@allonfire/core/features/i18n/constants/locales";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
@@ -30,10 +31,7 @@ import { UsersListSkeleton } from "../users-list-skeleton";
 import { UsersTable } from "../users-table";
 
 const t = EN.Users;
-/**
- * Well past the box's typing rest (WebKit types slower) and TanStack's first
- * retry delay (1s).
- */
+/** Well past the box's typing rest (WebKit types slower). */
 const WAIT_MS = 3 * UNIT.MS_PER_SECOND;
 /** The first try and the retries a server failure gets. */
 const QUERY_ATTEMPTS = 1 + USERS.RETRIES;
@@ -62,7 +60,7 @@ const SLOW_MS = 400;
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 
 /** Every query the list sent, as its search params. */
@@ -85,7 +83,7 @@ const language = (messages: typeof EN) =>
 // An App's mark (a User's card) only needs an element there.
 vi.mock(
   "@allonfire/ui/shared/components/aof-image",
-  () => import("@/shared/tests/aof-image-mock")
+  () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
 /** The table at an address (`search`), in a language, signed in as `selfId`. */
@@ -144,6 +142,9 @@ beforeEach(() => {
   );
 });
 
+/** The Roles' names, as the shared copy words them. */
+const ROLE = SHARED_TRANSLATIONS.en.Common.Navigation.role;
+
 describe("UsersTable", () => {
   it("shows the email, a column per App and when each User joined", async () => {
     const screen = await renderAt();
@@ -168,9 +169,7 @@ describe("UsersTable", () => {
     ).not.toBeNull();
     // A Role on its chip, as on a phone's card.
     await expect
-      .element(
-        table.getByText(EN.Navigation.role.ADMIN, { exact: true }).first()
-      )
+      .element(table.getByText(ROLE.ADMIN, { exact: true }).first())
       .toHaveAttribute("data-slot", "badge");
     const [laura] = USERS_PAGE.users;
     await expect
@@ -348,8 +347,8 @@ describe("UsersTable filters", () => {
       .toHaveAttribute("aria-checked", "true");
     await userEvent.keyboard("{Escape}");
     await page.getByRole("button", { name: t.filter.role }).click();
-    await page.getByRole("option", { name: EN.Navigation.role.ADMIN }).click();
-    await page.getByRole("option", { name: EN.Navigation.role.USER }).click();
+    await page.getByRole("option", { name: ROLE.ADMIN }).click();
+    await page.getByRole("option", { name: ROLE.USER }).click();
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(
@@ -360,7 +359,7 @@ describe("UsersTable filters", () => {
         })
       );
     // Choosing a chosen value again takes it out.
-    await page.getByRole("option", { name: EN.Navigation.role.USER }).click();
+    await page.getByRole("option", { name: ROLE.USER }).click();
     await expect
       .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(ADMIN_IN_LAURA);

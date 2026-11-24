@@ -1,5 +1,6 @@
-import { STORAGE_USAGE } from "@allonfire/api/features/storage-usage/constants/storage-usage";
+import { BACK_OFFICE } from "@allonfire/api/features/back-office/constants/back-office";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
+import { cardBadge } from "@allonfire/ui/features/data-table/utils/card-badge";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import {
   AOFCardAction,
@@ -10,7 +11,6 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { CardFrame } from "@/shared/components/card-frame";
 import { OverviewTitle } from "@/shared/components/overview-card-state";
-import { cardBadge } from "@/shared/utils/card-badge";
 import { BUCKET_VIEW } from "../constants/buckets";
 import type {
   StorageAvatars,
@@ -32,7 +32,7 @@ type BucketDetails = {
 };
 
 const DETAILS = {
-  [STORAGE_USAGE.BUCKET_KIND.IMAGE]: { body: ImageBucketBody },
+  [BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND.IMAGE]: { body: ImageBucketBody },
 } as const satisfies Record<StorageBucket["kind"], BucketDetails>;
 
 /**

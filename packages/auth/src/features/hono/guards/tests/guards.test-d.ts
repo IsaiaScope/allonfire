@@ -1,4 +1,4 @@
-import { App } from "@allonfire/database/enums";
+import { App, Role } from "@allonfire/database/enums";
 import { Hono } from "hono";
 import type { AuthSession } from "../../../../shared/types/auth";
 import type { AuthEnv } from "../../types/variables";
@@ -25,3 +25,11 @@ new Hono<AuthEnv>().use(requireApp(App.LAURA)).get("/", (c) => {
 
 // @ts-expect-error an App comes from the enum, not a free string
 requireApp("back-office");
+
+// @ts-expect-error a minimum Role comes from the enum, not a free string
+requireApp(App.LAURA, "OWNER");
+
+// A Section's Role does not change the guard's type.
+expectTypeOf(requireApp(App.LAURA, Role.ADMIN)).toEqualTypeOf(
+  requireApp(App.LAURA)
+);

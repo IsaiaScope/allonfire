@@ -24,6 +24,10 @@ const publicly = (...apps: App[]): ImageVisibility => ({
 const lauraAdmin: AccessUser = {
   memberships: [{ app: App.LAURA, role: Role.ADMIN }],
 };
+const lauraUser: AccessUser = {
+  memberships: [{ app: App.LAURA, role: Role.USER }],
+};
+/** A Role no App admits: it sees nothing private, in Laura or anywhere. */
 const lauraViewer: AccessUser = {
   memberships: [{ app: App.LAURA, role: Role.VIEWER }],
 };
@@ -82,9 +86,14 @@ describe("authoriseDelete from one App", () => {
 
   it("answers 403 to a User who sees the Image but does not manage it", () => {
     const current = new Map([["a", privately(App.LAURA)]]);
-    expect(
-      statusOf(() => authoriseDelete(lauraViewer, current, App.LAURA))
-    ).toBe(HTTP.STATUS.FORBIDDEN);
+    expect(statusOf(() => authoriseDelete(lauraUser, current, App.LAURA))).toBe(
+      HTTP.STATUS.FORBIDDEN
+    );
+  });
+
+  it("skips a private Laura Image for a Laura Viewer: Laura's floor is User", () => {
+    const current = new Map([["a", privately(App.LAURA)]]);
+    expect(authoriseDelete(lauraViewer, current)).toEqual([]);
   });
 
   it("skips an Image the User cannot see, and refuses one they see but do not manage", () => {
@@ -92,7 +101,7 @@ describe("authoriseDelete from one App", () => {
       ["seen", privately(App.LAURA)],
       ["hidden", privately(App.BACK_OFFICE)],
     ]);
-    expect(statusOf(() => authoriseDelete(lauraViewer, current))).toBe(
+    expect(statusOf(() => authoriseDelete(lauraUser, current))).toBe(
       HTTP.STATUS.FORBIDDEN
     );
     expect(

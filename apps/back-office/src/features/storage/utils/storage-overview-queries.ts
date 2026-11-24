@@ -1,9 +1,9 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
-import { retryUnlessRefused } from "@/shared/utils/retry";
 import { STORAGE } from "../constants/storage";
 
 /**
@@ -15,7 +15,9 @@ export const retryStorageOverview = retryUnlessRefused(STORAGE.RETRIES);
 
 /** The Storage overview, as the API answers an Admin. */
 export const fetchStorageOverview = (client: ApiClient) =>
-  parseResponse(client[API.VERSION.CURRENT].storage.overview.$get());
+  parseResponse(
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].overview.storage.$get()
+  );
 
 type StorageOverview = Awaited<ReturnType<typeof fetchStorageOverview>>;
 export type StorageBucket = StorageOverview["buckets"][number];

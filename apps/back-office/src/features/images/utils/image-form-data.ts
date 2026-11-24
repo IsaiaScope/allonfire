@@ -1,8 +1,8 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { ImageAccess } from "@allonfire/database/enums";
-import { textOf } from "@/features/api/utils/api-refusal";
 import type { AddImageRowValues } from "./add-image-schema";
 import type { EditImageValues } from "./edit-image-schema";
 import { isBaseLanguage } from "./image-alt";

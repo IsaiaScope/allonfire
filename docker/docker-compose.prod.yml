@@ -71,8 +71,9 @@ services:
       - allonfire
 
   # Every Deploy unit below is an image CI built (ADR 0018); compose recreates
-  # only the ones whose :prod tag moved. Laura is out of Production until its
-  # rebuild (ADR 0010).
+  # only the ones whose :prod tag moved. Laura's own service, host and Dokploy
+  # entry arrive with the cutover (ADR 0010); until then only the Back Office
+  # knows its address.
   api:
     image: ghcr.io/isaiascope/allonfire-api:prod
     pull_policy: always
@@ -129,9 +130,10 @@ services:
       - "traefik.http.routers.allonfire-api.rule=Host(`${API_HOST}`)"
       - "traefik.http.routers.allonfire-api.entrypoints=websecure"
       - "traefik.http.routers.allonfire-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-api.middlewares=noindex@file"
       - "traefik.http.services.allonfire-api.loadbalancer.server.port=3000"
 
-  # NEXT_PUBLIC_API_URL and BACK_OFFICE_URL are baked in at build (deploy.yml); BACK_OFFICE_URL is also read at runtime, the same value.
+  # NEXT_PUBLIC_API_URL, BACK_OFFICE_URL and LAURA_URL are baked in at build (deploy.yml); BACK_OFFICE_URL and LAURA_URL are also read at runtime, the same values (LAURA_URL is the switcher's link to Laura).
   back-office:
     image: ghcr.io/isaiascope/allonfire-back-office:prod
     pull_policy: always
@@ -144,6 +146,7 @@ services:
       - API_URL=http://api:3000
       - AUTH_APP=BACK_OFFICE
       - BACK_OFFICE_URL=${BACK_OFFICE_URL:?BACK_OFFICE_URL is required}
+      - LAURA_URL=${LAURA_URL:?LAURA_URL is required}
       - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
       # Telemetry: required, as the API's.
       - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default
@@ -350,6 +353,7 @@ services:
       - "traefik.http.routers.allonfire-cdn.rule=Host(`${CDN_HOST}`)"
       - "traefik.http.routers.allonfire-cdn.entrypoints=websecure"
       - "traefik.http.routers.allonfire-cdn.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.allonfire-cdn.middlewares=noindex@file"
       - "traefik.http.services.allonfire-cdn.loadbalancer.server.port=8080"
 
 volumes:

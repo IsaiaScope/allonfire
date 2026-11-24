@@ -3,13 +3,16 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { avatarRemoval } from "@allonfire/ui/features/form/avatar-field/utils/avatar-change";
 import { updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../../constants/users";
 import { editUser } from "../edit-user";
@@ -25,7 +28,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 /** The removal the picture field posts. */
 const REMOVAL = avatarRemoval(USERS.AVATAR_FIELD);
@@ -244,8 +250,8 @@ describe("editUser, once saved", () => {
     expect(
       FAKE_API.sent.map(({ method, path }) => `${method} ${path}`)
     ).toEqual([
-      `${HTTP.METHOD.PATCH} ${API.PATH.USERS}${fillPath(USER.PATH.ONE, { id: ID })}`,
-      `${HTTP.METHOD.DELETE} ${API.PATH.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
+      `${HTTP.METHOD.PATCH} ${API.PATH.BACK_OFFICE.USERS}${fillPath(USER.PATH.ONE, { id: ID })}`,
+      `${HTTP.METHOD.DELETE} ${API.PATH.BACK_OFFICE.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
     ]);
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(state).toEqual({ notice: USERS.EDIT_NOTICE.SAVED });

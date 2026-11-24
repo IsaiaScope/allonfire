@@ -3,19 +3,20 @@ import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { env } from "./environment/environment";
 import { auth } from "./features/auth/auth";
+import { overviewStorageDeps } from "./features/back-office/overview/storage/storage-deps";
+import { overviewUsersDeps } from "./features/back-office/overview/users/users-deps";
+import { userDeps } from "./features/back-office/users/user-deps";
 import { imageDeps } from "./features/image/image-deps";
+import { lauraDeps } from "./features/laura/laura-deps";
 import { logger } from "./features/logger/logger";
 import { createRedisStore } from "./features/rate-limit/middleware/rate-limiter";
 import { REDIS } from "./features/redis/constants/redis";
 import { sharedRedis as redis } from "./features/redis/shared-redis";
 import { servicesDeps } from "./features/services/services-deps";
-import { storageUsageDeps } from "./features/storage-usage/storage-usage-deps";
 import {
   shutdownTelemetry,
   startTelemetry,
 } from "./features/telemetry/telemetry";
-import { userUsageDeps } from "./features/user-usage/user-usage-deps";
-import { userDeps } from "./features/users/user-deps";
 import { API } from "./shared/constants/api";
 import { createCrashHandler, createShutdown } from "./shutdown";
 
@@ -31,11 +32,12 @@ const app = createApp({
   },
   checkRedis: async () => (await redis.ping()) === REDIS.PING_REPLY,
   images: imageDeps(logger),
+  laura: lauraDeps,
+  overviewStorage: overviewStorageDeps,
+  overviewUsers: overviewUsersDeps,
   services: servicesDeps,
-  storageUsage: storageUsageDeps,
   store: createRedisStore(redis),
   users: userDeps(logger),
-  userUsage: userUsageDeps,
 });
 
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) =>

@@ -107,4 +107,32 @@ describe("AOFSidebar", () => {
       "--sidebar-width-icon:calc(3.375rem + env(safe-area-inset-left, 0px))"
     );
   });
+
+  it("stands a floating card clear of the notch, not only its content", () => {
+    const html = renderToStaticMarkup(
+      <AOFSidebarProvider>
+        <AOFSidebar label="Menu" variant="floating">
+          Sections
+        </AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    expect(html).toContain(
+      "md:group-data-[variant=floating]:pl-[max(var(--frame-gap,0.5rem),env(safe-area-inset-left,0px))]"
+    );
+    expect(html).toContain(
+      "md:group-data-[variant=floating]:*:data-[sidebar=sidebar]:pl-0"
+    );
+  });
+  it("sizes the docked sidebar and the wrapper by the visible height, not the small one", () => {
+    // Safari hides its toolbar while the page scrolls: `svh` stays the height
+    // with the toolbar up, which leaves a band of ground under the frame.
+    const html = renderToStaticMarkup(
+      <AOFSidebarProvider>
+        <AOFSidebar label="Menu">Sections</AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    expect(html).toContain("min-h-dvh");
+    expect(html).toContain("h-dvh");
+    expect(html).not.toContain("svh");
+  });
 });

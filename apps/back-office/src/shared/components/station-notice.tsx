@@ -1,15 +1,12 @@
 import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
-import {
-  AOFPage,
-  type AOFPageProps,
-} from "@allonfire/ui/features/navigation/components/aof-page";
+import { AOFNoticeStage } from "@allonfire/ui/features/feedback/components/aof-notice-stage";
+import { AOFNoticeTitle } from "@allonfire/ui/features/feedback/components/aof-notice-title";
+import type { AOFNoticeFrameProps } from "@allonfire/ui/features/feedback/types/notice";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
-import type { ComponentType, ReactNode } from "react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { BrushKanji } from "./brush-kanji";
 import { EkiStamp } from "./eki-stamp";
-import { NoticeTitle } from "./notice-title";
 
 /**
  * What rises in as the stamp lands, then the action: once, short, never for
@@ -30,16 +27,6 @@ const rise = cva("", {
   },
 });
 
-/**
- * How much the notice fills: a whole page (its `h1` names the tab), or a part
- * of one where something else stands (a table's rows), boxed as that part,
- * headed by an `h2` under the page's own heading. The stamp keeps its size:
- * its ring is drawn around its words, which a smaller ring cuts.
- */
-const partFrame = cva(
-  "relative isolate flex min-h-96 flex-1 flex-col items-center justify-center overflow-hidden rounded-lg border px-4 py-10"
-);
-
 /** A notice's signage, decoration only: the page says it in words. */
 export type StationSignage = {
   /** The eki stamp's figure. */
@@ -50,24 +37,17 @@ export type StationSignage = {
   WALL_KANJI: string;
 };
 
-export type StationNoticeProps = {
-  /** What follows the notice, rising in after its words. */
-  action?: ReactNode | undefined;
-  /** More words under the description (a reference, a status). */
-  children?: ReactNode;
-  description?: string;
-  /** Whether the stamp lands and the words rise in (the default), or all of
-   *  it stands from the first frame: a wait is often over before an
-   *  entrance would end, leaving only the wall kanji on screen. */
-  entrance?: boolean;
-  /** The notice's heading: on a page its `h1`, which also names the tab (a
-   *  special page takes no metadata exports); in a part, an `h2`. */
-  heading?: string | undefined;
-  /** What frames the notice: the whole screen (`AOFPage`) unless it fills
-   *  another frame's page area. */
-  page?: ComponentType<AOFPageProps> | undefined;
-  /** A whole page (the default) or a part of one; a part ignores `page`. */
-  scope?: "page" | "part";
+/**
+ * What a station notice takes: the shared notice's props (`AOFNoticeFrameProps`:
+ * heading, description, action, entrance, page, scope) less the `kind` and
+ * `reference` the frame binding adds, plus its station's signage. `entrance`
+ * false stands all of it from the first frame: a wait is often over before
+ * the stamp would land, leaving only the wall kanji on screen.
+ */
+export type StationNoticeProps = Omit<
+  AOFNoticeFrameProps,
+  "kind" | "reference"
+> & {
   signage: StationSignage;
 };
 
@@ -75,7 +55,7 @@ export type StationNoticeProps = {
  * A station's notice, the page a special state shows (not found, an error,
  * a wait): a kanji brushed across the wall, the station's eki stamp pressed
  * in, then the words, then the action. Its `<title>` names the tab while
- * it shows (`NoticeTitle`).
+ * it shows (`AOFNoticeTitle`).
  */
 export const StationNotice = ({
   action,
@@ -83,7 +63,7 @@ export const StationNotice = ({
   description,
   entrance = true,
   heading,
-  page: Page = AOFPage,
+  page,
   scope = "page",
   signage,
 }: StationNoticeProps) => {
@@ -91,7 +71,7 @@ export const StationNotice = ({
   const notice = (
     <>
       {heading && scope === "page" ? (
-        <NoticeTitle>{pageTitle(heading, BACK_OFFICE.NAME)}</NoticeTitle>
+        <AOFNoticeTitle>{pageTitle(heading, BACK_OFFICE.name)}</AOFNoticeTitle>
       ) : null}
       <BrushKanji kanji={signage.WALL_KANJI} />
       <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
@@ -99,7 +79,7 @@ export const StationNotice = ({
           code={signage.CODE}
           entrance={entrance}
           kana={signage.KANA}
-          station={BACK_OFFICE.NAME}
+          station={BACK_OFFICE.name}
         />
         <div
           className={cn(
@@ -123,11 +103,9 @@ export const StationNotice = ({
       </div>
     </>
   );
-  return scope === "part" ? (
-    <div className={partFrame()}>{notice}</div>
-  ) : (
-    <Page className="overflow-hidden" layout="centered">
+  return (
+    <AOFNoticeStage className="rounded-lg" page={page} scope={scope}>
       {notice}
-    </Page>
+    </AOFNoticeStage>
   );
 };

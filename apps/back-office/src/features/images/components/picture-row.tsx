@@ -93,6 +93,27 @@ const RowFile = ({ file, name }: { file: File; name: string }) => {
   return <input hidden name={name} ref={ref} tabIndex={-1} type="file" />;
 };
 
+/** A row's alt, access and Apps, bound under `fields` (`rows[n]`). */
+const RowFields = ({
+  fields,
+  form,
+  offered,
+}: {
+  fields: `rows[${number}]`;
+  form: AddImageForm;
+  offered: readonly App[];
+}) => (
+  <div className="grid @2xl:grid-cols-2 grid-cols-1 @2xl:gap-x-6">
+    <div className="flex flex-col">
+      <ImageAltFields fields={fields} form={form} />
+    </div>
+    <div className="flex flex-col gap-8">
+      <ImageAccessRow fields={fields} form={form} />
+      <ImageAppsRow fields={fields} form={form} offered={offered} />
+    </div>
+  </div>
+);
+
 /** One picked file: its preview, name and size, its alt, access and Apps, and a way to drop it. */
 export const PictureRow = ({
   form,
@@ -162,15 +183,8 @@ export const PictureRow = ({
             />
           </AOFButton>
         </div>
-        <div className="grid @2xl:grid-cols-2 grid-cols-1 @2xl:gap-x-6">
-          <div className="flex flex-col">
-            <ImageAltFields fields={fields} form={form} />
-          </div>
-          <div className="flex flex-col gap-8">
-            <ImageAccessRow fields={fields} form={form} />
-            <ImageAppsRow fields={fields} form={form} offered={offered} />
-          </div>
-        </div>
+        {/* Keyed by its index: a TanStack field keeps the name it first got, so a row that shifts up needs fields bound to its new one (else they read and write its old slot). */}
+        <RowFields fields={fields} form={form} key={fields} offered={offered} />
       </AOFCardContent>
     </CardFrame>
   );

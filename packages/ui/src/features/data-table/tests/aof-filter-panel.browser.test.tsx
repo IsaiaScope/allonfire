@@ -2,7 +2,7 @@
 
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import type { SortingState } from "@tanstack/react-table";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { AOFFilterPanel } from "../components/aof-filter-panel";
@@ -46,9 +46,11 @@ const reported: { hidden: string[]; sorting: SortingState } = {
 };
 
 const Panel = ({
+  decoration,
   hiddenAtStart = [],
   viewFromMd,
 }: {
+  decoration?: ReactNode;
   hiddenAtStart?: string[];
   viewFromMd?: boolean;
 }) => {
@@ -61,6 +63,7 @@ const Panel = ({
       action={<button type="button">Reset all</button>}
       count={1}
       counts={{ sort: sorting.length, view: hidden.length }}
+      decoration={decoration}
       label="Filters"
       sort={
         <AOFSortPanel
@@ -252,6 +255,61 @@ describe("AOFFilterPanel sort and view", () => {
     await expect
       .element(page.getByRole("option", { name: "Size" }))
       .not.toBeInTheDocument();
+  });
+});
+
+/** A screen far shorter than the panel's tallest tab: a phone turned sideways with a bar or a keyboard up. */
+const SHORT = { HEIGHT: 240, WIDTH: 926 } as const;
+
+describe("AOFFilterPanel on a tall screen", () => {
+  beforeEach(() => page.viewport(NARROW.WIDTH, NARROW.HEIGHT));
+
+  it("does not scroll when its content fits, whatever its decoration overflows", async () => {
+    await render(
+      <Panel
+        decoration={
+          <span
+            aria-hidden
+            style={{
+              height: 2000,
+              left: 0,
+              position: "absolute",
+              top: 0,
+              width: 2000,
+            }}
+          />
+        }
+      />
+    );
+    await openPanel();
+    const panel = page.getByRole("dialog").element();
+    await expect.element(page.getByText("the filters")).toBeVisible();
+    expect(panel.scrollHeight).toBeLessThanOrEqual(panel.clientHeight);
+    expect(panel.scrollWidth).toBeLessThanOrEqual(panel.clientWidth);
+  });
+});
+
+describe("AOFFilterPanel on a short screen", () => {
+  beforeEach(() => page.viewport(SHORT.WIDTH, SHORT.HEIGHT));
+
+  it("stays inside the screen and scrolls as a whole, footer included", async () => {
+    await render(<Panel />);
+    await openPanel();
+    await userEvent.click(page.getByRole("tab", { name: TAB_LABELS.view }));
+    const panel = page.getByRole("dialog").element();
+    await expect
+      .poll(() => panel.getBoundingClientRect().bottom)
+      .toBeLessThanOrEqual(window.innerHeight);
+    expect(panel.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+    expect(panel.scrollHeight).toBeGreaterThan(panel.clientHeight);
+    expect(getComputedStyle(panel).overflowY).toBe("auto");
+    // The footer is out of sight until the panel is scrolled to its end.
+    panel.scrollTop = panel.scrollHeight;
+    const footer = page
+      .getByRole("button", { name: "Reset all" })
+      .element()
+      .getBoundingClientRect();
+    expect(footer.bottom).toBeLessThanOrEqual(window.innerHeight);
   });
 });
 

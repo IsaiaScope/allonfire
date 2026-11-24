@@ -15,11 +15,11 @@ import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { ImageCard } from "../image-card";
 
 vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
+  Link: (await import("@allonfire/ui/shared/tests/link-mock")).LinkMock,
 }));
 // A stored Image is drawn through the image server: here, a tile the picture's size.
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+  AOFImage: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
   AOFStorageImage: ({
     className,
     placeholder,

@@ -15,6 +15,7 @@
         "$TURBO_ROOT$/.github/workflows/deploy.yml",
         "$TURBO_ROOT$/.gitignore",
         "$TURBO_ROOT$/turbo.json",
+        "$TURBO_ROOT$/.env.example",
         "$TURBO_ROOT$/docker/.env.example",
         "$TURBO_ROOT$/docker/Dockerfile",
         "$TURBO_ROOT$/docker/docker-compose.dev.yml",

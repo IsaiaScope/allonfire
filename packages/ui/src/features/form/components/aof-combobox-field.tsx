@@ -2,7 +2,6 @@
 
 import {
   Combobox,
-  ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
@@ -12,6 +11,7 @@ import { cva } from "class-variance-authority";
 import { type ReactNode, useCallback, useId, useMemo } from "react";
 import { useShownErrors } from "../hooks/use-shown-errors";
 import { useFieldContext } from "../utils/form-context";
+import { AOFComboboxContent } from "./aof-combobox-content";
 import { AOFField } from "./aof-field";
 import {
   AOFFieldErrorLine,
@@ -103,7 +103,7 @@ export const AOFComboboxField = ({
           />
           {icon ? <AOFFieldTile>{icon}</AOFFieldTile> : null}
         </div>
-        <ComboboxContent>
+        <AOFComboboxContent>
           <ComboboxEmpty>{empty}</ComboboxEmpty>
           <ComboboxList>
             {(option: AOFComboboxOption) => (
@@ -117,7 +117,7 @@ export const AOFComboboxField = ({
               </ComboboxItem>
             )}
           </ComboboxList>
-        </ComboboxContent>
+        </AOFComboboxContent>
       </Combobox>
       <AOFFieldErrorLine errors={errors} id={errorId} />
     </AOFField>

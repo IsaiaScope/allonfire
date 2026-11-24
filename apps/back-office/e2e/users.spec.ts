@@ -18,6 +18,7 @@ import IT from "../src/features/i18n/translations/it.json" with {
 import { newUserHref, userHref } from "../src/features/users/utils/user-href";
 import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { AUTH_EN } from "../src/shared/tests/auth-words";
 import { enT } from "../src/shared/tests/translators";
 import { addedBy, addedUser, addForm, addUser, fillAddForm } from "./add-user";
 import {
@@ -80,7 +81,9 @@ test("opens a User's page, still under Users", async ({ page }) => {
   await openSidebar(page);
   await expect(
     page
-      .getByRole("navigation", { name: EN.Navigation.menu })
+      .getByRole("navigation", {
+        name: SHARED_TRANSLATIONS.en.Common.Navigation.menu,
+      })
       .filter({ visible: true })
       .getByRole("link", { name: EN.Navigation.users })
   ).toHaveAttribute("aria-current", "page");
@@ -190,7 +193,9 @@ test("adds a User from the list's Add button; they sign in with the password the
   const added = await context.newPage();
   await signIn(added, user, { password: user.password });
   await expect(
-    added.getByRole("button", { name: EN.Navigation.toggleMenu })
+    added.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
   await context.close();
 });
@@ -284,7 +289,7 @@ for (const { name, path, title } of [
     await signInAsAdmin(page);
     const at = await path(page);
     await page.goto(`/it${at}`);
-    await expect(page).toHaveTitle(pageTitle(title, BACK_OFFICE.NAME));
+    await expect(page).toHaveTitle(pageTitle(title, BACK_OFFICE.name));
     await expect(
       page.locator('meta[property="og:url"]').first()
     ).toHaveAttribute("content", `${LOCAL.URL.BACK_OFFICE_E2E}/it${at}`);
@@ -366,12 +371,16 @@ test("renames a User and changes their Laura Role; the list shows both", async (
     .getByRole("radiogroup", {
       name: enT("Users.form.role", { app: APP_ENTRY[App.LAURA].name }),
     })
-    .getByRole("button", { name: EN.Navigation.role[Role.VIEWER] })
+    .getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.USER],
+    })
     .click();
   await saveEdit(page, user.email);
   const row = rowOf(page, user.email).first();
   await expect(row).toContainText("Renamed");
-  await expect(row).toContainText(EN.Navigation.role[Role.VIEWER]);
+  await expect(row).toContainText(
+    SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.USER]
+  );
   // Reopened, the saved User is read again, not the copy kept before the
   // save: their new Version lets a second save through.
   await row.getByRole("link").click();
@@ -399,7 +408,9 @@ test("a new password lets the User sign in with it", async ({
   const signedIn = await context.newPage();
   await signIn(signedIn, user, { password });
   await expect(
-    signedIn.getByRole("button", { name: EN.Navigation.toggleMenu })
+    signedIn.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
   await context.close();
 });
@@ -430,7 +441,9 @@ test("an unknown id shows the 404 inside the frame", async ({ page }) => {
     })
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: EN.Navigation.toggleMenu })
+    page.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
 });
 
@@ -558,14 +571,18 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   const stale = await (await browser.newContext()).newPage();
   await signIn(stale, admin, { password: admin.password });
   await expect(
-    stale.getByRole("button", { name: EN.Navigation.toggleMenu })
+    stale.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
   await stale.goto(await userPathOf(stale, admin.email));
   // ...while the other sets the Admin a new password, ending it.
   const fresh = await (await browser.newContext()).newPage();
   await signIn(fresh, admin, { password: admin.password });
   await expect(
-    fresh.getByRole("button", { name: EN.Navigation.toggleMenu })
+    fresh.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
   ).toBeVisible();
   await fresh.goto(await userPathOf(fresh, admin.email));
   const password = "A-newer-e2e-password-2";
@@ -575,7 +592,7 @@ test("an Admin whose Session a new password ended can no longer save, and is tol
   // Typed right after the page loads: React keeps text typed before it
   // hydrates, but not a click. The rule ticks only once it has.
   await expect(
-    own.getByRole("checkbox", { name: EN.Password.rule.match })
+    own.getByRole("checkbox", { name: AUTH_EN.Password.rule.match })
   ).toBeChecked();
   await saveEdit(fresh, admin.email);
 

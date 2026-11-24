@@ -1,7 +1,5 @@
 import { authRoutes } from "@allonfire/auth/features/hono/routes";
 import { sessionLoader } from "@allonfire/auth/features/hono/session/middleware/session-loader";
-import { userRoutes } from "@allonfire/auth/features/users/hono/routes";
-import type { UserDeps } from "@allonfire/auth/features/users/hono/utils/deps";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { imageRoutes } from "@allonfire/storage/features/image/hono/routes";
@@ -15,6 +13,8 @@ import { requestId } from "hono/request-id";
 import { timeout } from "hono/timeout";
 import type { Logger } from "pino";
 import { authRateLimit } from "./features/auth/middleware/auth-rate-limit";
+import { backOfficeRoutes } from "./features/back-office/routes";
+import type { BackOfficeDeps } from "./features/back-office/utils/deps";
 import { docsRoutes } from "./features/docs/routes";
 import {
   normalizeThrown,
@@ -24,6 +24,8 @@ import {
 import { healthRoutes } from "./features/health/routes";
 import type { HealthDeps } from "./features/health/utils/status";
 import { localeResolver } from "./features/i18n/middleware/locale-resolver";
+import { lauraRoutes } from "./features/laura/routes";
+import type { LauraDeps } from "./features/laura/utils/deps";
 import { requestLogger } from "./features/logger/middleware/request-logger";
 import {
   failOpen,
@@ -32,33 +34,26 @@ import {
 } from "./features/rate-limit/middleware/rate-limiter";
 import { servicesRoutes } from "./features/services/routes";
 import type { ServicesDeps } from "./features/services/utils/deps";
-import { storageUsageRoutes } from "./features/storage-usage/routes";
-import type { StorageUsageDeps } from "./features/storage-usage/utils/deps";
 import { requestSpans } from "./features/telemetry/middleware/request-spans";
-import { userUsageRoutes } from "./features/user-usage/routes";
-import type { UserUsageDeps } from "./features/user-usage/utils/deps";
 import { API } from "./shared/constants/api";
 import { corsPolicy } from "./shared/middleware/cors";
 import { securityHeaders } from "./shared/middleware/security-headers";
 import type { AppBindings } from "./shared/types/bindings";
 
-export type AppDeps = HealthDeps & {
-  /** Every limiter's counters; each limiter brings its own window and key prefix. */
-  store: RateLimitStore;
-  auth: AuthLike;
-  /** Image storage and rows; tests stub them. */
-  images: ImageDeps;
-  /** The User module's list and who may read it; tests stub them. */
-  users: UserDeps;
-  /** The Services routes' stack: providers, quota, mail; tests stub it. */
-  services: ServicesDeps;
-  /** The Storage overview's stack: the bucket, the Images' stats and who may read them; tests stub it. */
-  storageUsage: StorageUsageDeps;
-  /** The Users overview's stack: the Users' stats and who may read them; tests stub it. */
-  userUsage: UserUsageDeps;
-  /** Optional so tests can capture log output. Defaults to the shared logger. */
-  logger?: Logger;
-};
+export type AppDeps = HealthDeps &
+  BackOfficeDeps & {
+    /** Every limiter's counters; each limiter brings its own window and key prefix. */
+    store: RateLimitStore;
+    auth: AuthLike;
+    /** Image storage and rows; tests stub them. */
+    images: ImageDeps;
+    /** Laura's routes: the Gallery and the Favorites; tests stub them. */
+    laura: LauraDeps;
+    /** The Services routes' stack: providers, quota, mail; tests stub it. */
+    services: ServicesDeps;
+    /** Optional so tests can capture log output. Defaults to the shared logger. */
+    logger?: Logger;
+  };
 
 /** Middleware order is the contract; each piece lives in its feature. */
 export const createApp = (deps: AppDeps) => {
@@ -71,7 +66,7 @@ export const createApp = (deps: AppDeps) => {
     () => new HTTPException(HTTP.STATUS.SERVICE_UNAVAILABLE)
   );
   // The Image module brings its own, larger body limit and time budget:
-  // 100 MiB and up to 20 sharp passes outlast both defaults.
+  // 90 MiB and up to 20 sharp passes outlast both defaults.
   const isUpload = (c: Context) =>
     isImageUpload(c.req.method, c.req.path, API.PATH.IMAGES);
   const app = new Hono<AppBindings>()
@@ -101,10 +96,9 @@ export const createApp = (deps: AppDeps) => {
     // After the limiters, so a flood of requests never reaches the Session read.
     .use(sessionLoader(deps.auth))
     .route(API.PATH.IMAGES, imageRoutes(deps.images))
-    .route(API.PATH.USERS, userRoutes(deps.users))
-    .route(API.PATH.SERVICES, servicesRoutes(deps.services))
-    .route(API.PATH.STORAGE_USAGE, storageUsageRoutes(deps.storageUsage))
-    .route(API.PATH.USER_USAGE, userUsageRoutes(deps.userUsage));
+    .route(API.PATH.LAURA.BASE, lauraRoutes(deps.laura))
+    .route(API.PATH.BACK_OFFICE.BASE, backOfficeRoutes(deps))
+    .route(API.PATH.SERVICES, servicesRoutes(deps.services));
 
   return app
     .route(API.PATH.ROOT, docsRoutes(app, deps.auth))

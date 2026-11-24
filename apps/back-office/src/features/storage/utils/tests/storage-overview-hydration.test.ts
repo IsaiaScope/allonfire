@@ -2,26 +2,29 @@
 
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
-import { cacheLife, cacheTag } from "next/cache";
 import {
   dehydratedData,
   sentCookie,
   stubFetchJson,
-} from "@/shared/tests/fetch-stub";
+} from "@allonfire/ui/shared/tests/fetch-stub";
+import { SESSION_COOKIE } from "@allonfire/ui/shared/tests/session-cookie-mock";
+import { cacheLife, cacheTag } from "next/cache";
 import { STORAGE_OVERVIEW } from "@/shared/tests/msw/handlers";
-import { SESSION_COOKIE } from "@/shared/tests/session-cookie-mock";
 import { STORAGE } from "../../constants/storage";
 import { storageOverviewHydration } from "../storage-overview-hydration";
 import { storageOverviewKey } from "../storage-overview-queries";
 
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 vi.mock(
   "@/environment/environment",
   () => import("@/shared/tests/environment-mock")
 );
 vi.mock(
   "@allonfire/auth/features/next/utils/session-cookie",
-  () => import("@/shared/tests/session-cookie-mock")
+  () => import("@allonfire/ui/shared/tests/session-cookie-mock")
 );
 
 describe("storageOverviewHydration", () => {

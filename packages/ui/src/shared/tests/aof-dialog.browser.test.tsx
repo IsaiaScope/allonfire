@@ -1,6 +1,5 @@
 // @module-tag integration
-import { SCREEN } from "@allonfire/core/shared/constants/screens";
-import { cdp, page, server } from "vitest/browser";
+import { server } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { AOFAlertDialog } from "../components/aof-alert-dialog";
 import {
@@ -8,6 +7,7 @@ import {
   AOFDialogContent,
   AOFDialogTitle,
 } from "../components/aof-dialog";
+import { clearSafeAreaInsets, notchedPhone } from "./emulated-media";
 
 /** A phone turned sideways: the sensor housing's width on both sides, the
  *  home indicator below, nothing above. */
@@ -36,18 +36,8 @@ const pastSafeEdges = (popup: Element) => {
 describe.runIf(server.browser === "chromium")(
   "Dialogs on a notched screen",
   () => {
-    beforeEach(async () => {
-      await page.viewport(
-        SCREEN.VIEWPORT.PHONE_LANDSCAPE.WIDTH,
-        SCREEN.VIEWPORT.PHONE_LANDSCAPE.HEIGHT
-      );
-      await cdp().send("Emulation.setSafeAreaInsetsOverride", {
-        insets: NOTCH,
-      });
-    });
-    afterEach(() =>
-      cdp().send("Emulation.setSafeAreaInsetsOverride", { insets: {} })
-    );
+    beforeEach(() => notchedPhone(NOTCH));
+    afterEach(clearSafeAreaInsets);
 
     it("keeps a dialog taller than the screen inside its safe edges, scrolling", async () => {
       const screen = await render(

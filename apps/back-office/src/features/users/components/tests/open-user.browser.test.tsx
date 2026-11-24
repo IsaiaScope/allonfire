@@ -10,7 +10,7 @@ import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { OpenUser } from "../user-columns";
 
 vi.mock("@/features/i18n/navigation", async () => ({
-  Link: (await import("@/shared/tests/link-mock")).LinkMock,
+  Link: (await import("@allonfire/ui/shared/tests/link-mock")).LinkMock,
 }));
 
 const [USER] = USERS_PAGE.users;

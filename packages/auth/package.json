@@ -24,6 +24,7 @@
     "./features/next/utils/session-cookie": "./src/features/next/utils/session-cookie.ts",
     "./features/next/utils/with-provider-pictures": "./src/features/next/utils/with-provider-pictures.ts",
     "./features/next/utils/with-session-refresh": "./src/features/next/utils/with-session-refresh.ts",
+    "./features/next/utils/has-section-role": "./src/features/next/utils/has-section-role.ts",
     "./features/next/utils/with-sign-in-gate": "./src/features/next/utils/with-sign-in-gate.ts",
     "./features/openapi/openapi": "./src/features/openapi/openapi.ts",
     "./features/server/utils/mail-options": "./src/features/server/utils/mail-options.ts",
@@ -36,6 +37,8 @@
     "./features/users/utils/password-rules": "./src/features/users/utils/password-rules.ts",
     "./shared/constants/errors": "./src/shared/constants/errors.ts",
     "./shared/constants/auth": "./src/shared/constants/auth.ts",
+    "./features/next/tests/session-request-mocks": "./src/features/next/tests/session-request-mocks.ts",
+    "./shared/tests/proxy-config": "./src/shared/tests/proxy-config.ts",
     "./shared/tests/stub-auth": "./src/shared/tests/stub-auth.ts",
     "./shared/tests/test-host": "./src/shared/tests/test-host.ts",
     "./shared/types/auth": "./src/shared/types/auth.ts"

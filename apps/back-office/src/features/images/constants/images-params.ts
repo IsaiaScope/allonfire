@@ -2,11 +2,14 @@
 // Server Component) and the table read the address through the same ones.
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import {
+  codecParser,
+  pageParser,
+} from "@allonfire/ui/features/data-table/utils/list-params";
+import {
   createLoader,
   type inferParserType,
   parseAsNumberLiteral,
 } from "nuqs/server";
-import { codecParser, pageParser } from "@/shared/utils/list-params";
 import { IMAGES } from "./images";
 
 /**

@@ -36,12 +36,10 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
   <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
   <img src="https://img.shields.io/badge/next--intl-i18n-007ACC?logoColor=white" alt="next-intl" />
-  <img src="https://img.shields.io/badge/Framer_Motion-12-FF0055?logo=framer&logoColor=white" alt="Framer Motion" />
-  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" alt="Prisma" />
 </p>
 
 <p align="center">
-  Private photo gallery and games app with i18n support, S3/MinIO storage, and blurhash placeholders.
+  Our private place for two: a photo gallery and the Memory game, in Italian and English, installable as a PWA and wearing the Ocean Design.
 </p>
 
 <p align="center">
@@ -77,6 +75,8 @@ Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm wo
 ```
 allonfire/
   apps/
+    api/                  Hono HTTP backend (auth, Images)
+    back-office/          Next.js admin app
     laura/                Next.js photos & games app
   packages/
     auth/                 Shared BetterAuth config
@@ -112,7 +112,7 @@ compose project, which recreates only the services whose image changed (ADR 0018
 
 One-time setup:
 
-1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
+1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL`, `LAURA_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
 2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
 3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds every key of `docker/.env.example` except `POSTGRES_*` and `DOKPLOY_*`, filled from `docker/.env.production` (`pnpm env:prod`).
 4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
@@ -121,9 +121,11 @@ Before the API starts, the one-shot `storage-setup` service creates the `image` 
 
 Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
 
-Laura is out of Production until its rebuild.
+Laura is out of Production until the cutover phase.
 
 ### 💻 Local
+
+The scripts are bash: macOS and Linux run them as they are; on Windows use WSL.
 
 `pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
 real Admin (`DATABASE_SEED_ADMIN_*` in `packages/database/.env`, Admin in
@@ -183,16 +185,18 @@ One-time setup, in the admin console:
    reaches no phone. The Mac reaches it too while Tailscale is on; with
    Tailscale off, put `http://localhost:9010/image` back.
 7. Set `BACK_OFFICE_URL` to `https://back-office.<tailnet>.ts.net` in
-   `apps/back-office/.env.development.local`, so link previews on the phone
-   load their images; delete the file to go back to localhost.
+   `apps/back-office/.env.development.local`, and `LAURA_URL` to
+   `https://laura.<tailnet>.ts.net` in `apps/laura/.env.development.local`, so
+   link previews on the phone load their images; delete a file to take that App
+   back to localhost.
 8. Set `NEXT_PUBLIC_API_REMOTE_URL` to `https://api.<tailnet>.ts.net` in the
-   same file: a page opened on the tailnet address (the phone) calls the API
-   there, since `localhost:3300` reaches nothing on a phone (a saved edit
+   same file of each App: a page opened on the tailnet address (the phone)
+   calls the API there, since `localhost:3300` reaches nothing on a phone (a saved edit
    refreshes the list). A page on `localhost` keeps `NEXT_PUBLIC_API_URL`.
-   Restart the Back Office: the value is baked in at build.
+   Restart the Apps: the value is baked in at build.
 9. Share the Session cookie with that API: set
    `AUTH_COOKIE_DOMAIN=".<tailnet>.ts.net"` in `apps/api/.env` and in
-   `apps/back-office/.env.development.local`, restart both, and sign in again
+   each App's `.env.development.local`, restart them, and sign in again
    at each address you use. Without it the browser's call to the API from the
    tailnet address carries no Session and gets the signed-out answer (only
    public Images, one page), so the pager's arrows step back and a delete

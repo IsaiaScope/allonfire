@@ -18,6 +18,10 @@ vi.mock(
   () => import("../../tests/user-form-mocks")
 );
 vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/user-form-mocks")
+);
+vi.mock(
   "@allonfire/ui/shared/components/aof-image",
   () => import("../../tests/user-form-mocks")
 );

@@ -1,13 +1,9 @@
 import { columnsQuery } from "@allonfire/core/features/search/columns-query";
-import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { barChartHeight } from "@allonfire/ui/features/chart/utils/bar-chart-height";
 import type { StationSignage } from "@/shared/components/station-notice";
-
-/** How long the Avatar links a list holds stay valid, at least. */
-const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
 
 /**
  * The columns the View tab can hide (ADR 0031): one per App, by its enum value
@@ -50,11 +46,7 @@ export const USERS = {
    * nothing can reach it sooner).
    */
   CACHE: {
-    LIFE: {
-      expire: LINK_SECONDS,
-      revalidate: LINK_SECONDS / 2,
-      stale: 5 * UNIT.SECONDS_PER_MINUTE,
-    },
+    LIFE: IMAGE_SERVER.LINK_CACHE_LIFE,
     TAG: "users",
   },
   /** Brushed faint behind a User's card: 乗, a passenger (the brush face

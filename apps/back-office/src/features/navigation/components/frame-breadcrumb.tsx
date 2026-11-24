@@ -1,148 +1,17 @@
 "use client";
 
-import {
-  AOFBreadcrumb,
-  AOFBreadcrumbItem,
-  AOFBreadcrumbLink,
-  AOFBreadcrumbList,
-  AOFBreadcrumbPage,
-  AOFBreadcrumbSeparator,
-} from "@allonfire/ui/features/navigation/components/aof-breadcrumb";
-import { useTranslations } from "next-intl";
-import { type ReactNode, Suspense } from "react";
-import { Link, usePathname } from "@/features/i18n/navigation";
+import { AOFFrameBreadcrumb } from "@allonfire/ui/features/navigation/components/aof-frame-breadcrumb";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { SECTION } from "../constants/sections";
-import {
-  APP_NUMBER,
-  currentSection,
-  currentSubPage,
-  sectionHref,
-  stationNumber,
-  subPageNumber,
-} from "../utils/sections";
 import { StationNumber } from "./station-number";
 
-/** The Section's crumb where you are: the page, or only a name over its own page's crumb. */
-const SectionCrumb = ({
-  children,
-  named,
-}: {
-  children: ReactNode;
-  named: boolean;
-}) =>
-  named ? (
-    <span className="flex min-w-0 items-center gap-1.5">{children}</span>
-  ) : (
-    <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
-      {children}
-    </AOFBreadcrumbPage>
-  );
+/** A crumb's number, drawn as a station sign's. */
+const stationMark = (number: string) => <StationNumber number={number} />;
 
 /**
- * Where you are: the Back Office, then the Section (the App's name hides on
- * a phone, as in shadcn's `sidebar-07`), a link back to it from a page under
- * it. On Home, Home alone.
- */
-const CurrentBreadcrumb = () => {
-  const t = useTranslations("Navigation");
-  const pathname = usePathname();
-  const section = currentSection(pathname);
-  const home = section === SECTION.HOME;
-  // One of the Section's own pages (`/services/mail`) follows it as a crumb.
-  const sub = currentSubPage(section, pathname);
-  // On a page under the Section (`/users/new`), the Section is a way back;
-  // with its own pages, the Section only names where they sit.
-  const below = !sub && pathname !== sectionHref(section.path);
-  const crumb = (
-    <>
-      <StationNumber number={stationNumber(section)} />
-      <span className="truncate">{t(section.label)}</span>
-    </>
-  );
-  const subCrumb = sub ? (
-    <>
-      <StationNumber number={subPageNumber(section, sub)} />
-      <span className="truncate">{t(sub.label)}</span>
-    </>
-  ) : null;
-  return (
-    <AOFBreadcrumb aria-label={t("breadcrumb")}>
-      <AOFBreadcrumbList>
-        {home ? null : (
-          <>
-            <AOFBreadcrumbItem className="hidden md:block">
-              <AOFBreadcrumbLink
-                className="flex min-w-0 items-center gap-1.5"
-                render={<Link href={sectionHref(SECTION.HOME.path)} />}
-              >
-                <StationNumber number={APP_NUMBER} />
-                <span className="truncate">{BACK_OFFICE.NAME}</span>
-              </AOFBreadcrumbLink>
-            </AOFBreadcrumbItem>
-            <AOFBreadcrumbSeparator className="hidden md:block" />
-          </>
-        )}
-        <AOFBreadcrumbItem>
-          {below ? (
-            <AOFBreadcrumbLink
-              className="flex min-w-0 items-center gap-1.5"
-              render={<Link href={sectionHref(section.path)} prefetch />}
-            >
-              {crumb}
-            </AOFBreadcrumbLink>
-          ) : (
-            <SectionCrumb named={Boolean(sub)}>{crumb}</SectionCrumb>
-          )}
-        </AOFBreadcrumbItem>
-        {sub ? (
-          <>
-            <AOFBreadcrumbSeparator />
-            <AOFBreadcrumbItem>
-              {pathname === sectionHref(sub.path) ? (
-                <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
-                  {subCrumb}
-                </AOFBreadcrumbPage>
-              ) : (
-                <AOFBreadcrumbLink
-                  className="flex min-w-0 items-center gap-1.5"
-                  render={<Link href={sectionHref(sub.path)} prefetch />}
-                >
-                  {subCrumb}
-                </AOFBreadcrumbLink>
-              )}
-            </AOFBreadcrumbItem>
-          </>
-        ) : null}
-      </AOFBreadcrumbList>
-    </AOFBreadcrumb>
-  );
-};
-
-/** The App's name alone: what a page whose address waits for the request prerenders. */
-const AppBreadcrumb = () => {
-  const t = useTranslations("Navigation");
-  return (
-    <AOFBreadcrumb aria-label={t("breadcrumb")}>
-      <AOFBreadcrumbList>
-        <AOFBreadcrumbItem>
-          <AOFBreadcrumbPage className="flex min-w-0 items-center gap-1.5">
-            <StationNumber number={APP_NUMBER} />
-            <span className="truncate">{BACK_OFFICE.NAME}</span>
-          </AOFBreadcrumbPage>
-        </AOFBreadcrumbItem>
-      </AOFBreadcrumbList>
-    </AOFBreadcrumb>
-  );
-};
-
-/**
- * The breadcrumb. Under a page whose address the build cannot know
- * (`/users/<id>`), the pathname waits for the request: the App's name is
- * prerendered in its place.
+ * The frame's breadcrumb with the Back Office's station numbers: a client
+ * binding, since the Design's mark is a function a Server Component cannot
+ * hand a client one.
  */
 export const FrameBreadcrumb = () => (
-  <Suspense fallback={<AppBreadcrumb />}>
-    <CurrentBreadcrumb />
-  </Suspense>
+  <AOFFrameBreadcrumb app={BACK_OFFICE} crumbMark={stationMark} />
 );

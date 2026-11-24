@@ -4,29 +4,32 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
-import { cacheLife, cacheTag } from "next/cache";
 import {
   dehydratedData,
   sentCookie,
   stubFetchJson,
-} from "@/shared/tests/fetch-stub";
-import { USERS_PAGE } from "@/shared/tests/msw/handlers";
+} from "@allonfire/ui/shared/tests/fetch-stub";
 import {
   readSessionCookie,
   SESSION_COOKIE,
-} from "@/shared/tests/session-cookie-mock";
+} from "@allonfire/ui/shared/tests/session-cookie-mock";
+import { cacheLife, cacheTag } from "next/cache";
+import { USERS_PAGE } from "@/shared/tests/msw/handlers";
 import { USERS } from "../../constants/users";
 import { userHydration, usersHydration } from "../users-hydration";
 import { userKey, usersPageKey } from "../users-queries";
 
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 vi.mock(
   "@/environment/environment",
   () => import("@/shared/tests/environment-mock")
 );
 vi.mock(
   "@allonfire/auth/features/next/utils/session-cookie",
-  () => import("@/shared/tests/session-cookie-mock")
+  () => import("@allonfire/ui/shared/tests/session-cookie-mock")
 );
 
 const PARAMS = {

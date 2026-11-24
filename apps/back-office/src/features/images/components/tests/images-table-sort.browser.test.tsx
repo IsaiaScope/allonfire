@@ -17,12 +17,12 @@ import { ImagesTable } from "../images-table";
 vi.mock("../../actions/delete-images", () => ({ deleteImages: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 // A stored Image is drawn through the image server: here, a mark with its alt.
 vi.mock(
   "@allonfire/ui/shared/components/aof-image",
-  () => import("@/shared/tests/aof-image-mock")
+  () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
 const LIST = enT("Images.list");

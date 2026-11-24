@@ -6,7 +6,8 @@
   "exports": {
     "./client": "./src/client.ts",
     "./features/services/constants/services": "./src/features/services/constants/services.ts",
-    "./features/storage-usage/constants/storage-usage": "./src/features/storage-usage/constants/storage-usage.ts",
+    "./features/laura/constants/schemas": "./src/features/laura/constants/schemas.ts",
+    "./features/back-office/constants/back-office": "./src/features/back-office/constants/back-office.ts",
     "./shared/constants/api": "./src/shared/constants/api.ts"
   },
   "scripts": {

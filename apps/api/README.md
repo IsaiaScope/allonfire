@@ -1,8 +1,9 @@
 # @allonfire/api
 
 The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
-(`packages/auth`) under `/v1/auth`, and the Images every App shows under
-`/v1/images`.
+(`packages/auth`) under `/v1/auth`, the Images every App shows under
+`/v1/images`, each App's own routes under `/v1/<app>` (`/v1/laura`), and the
+admin console under `/v1/back-office` (ADR 0035).
 
 ## Running it
 
@@ -73,13 +74,11 @@ image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
 | `POST /v1/images` | Session; `ADMIN` in every App named (a User who is `ADMIN` in no App is refused before the body is read) | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [{ app, public? }], alt: { en, it, …any other ISO 639-1 language } }]` in file order |
 | `PATCH /v1/images` | Session; `ADMIN` in each App whose placement is added, removed or switched public; for `alt`, in every App the Image is in | `[{ id, apps?, alt? }]`, each Image once: `apps` is the full new list; a `public` left out keeps the placement's own |
 | `DELETE /v1/images` | Session; with `app`, `ADMIN` there; without, in every App the Image is in | `{ ids, app? }`: with `app`, takes the Images out of it and deletes those left in none; without, deletes them everywhere; rows first, then files |
-| `GET /v1/user-usage/overview` | Session; a Back Office `ADMIN`, read now | `total`: every User once, and `byApp`: for each App that has a member, its `count` of members and its `admins` (a User in two Apps counts in both) |
-| `GET /v1/storage/overview` | Session; a Back Office `ADMIN`, read now | `buckets`: each bucket the API reads, `{ id, reading }` (`reading`: `objects`, `bytes`, `asOf`; Avatars included in the Images' bucket; listed at most every 5 minutes, kept in Redis per bucket; `null` when it cannot be listed), and `images`: the Images by App (`byApp`: public and private bytes and counts) with `total`, `totalBytes`, and `avatars`: the Avatars by App (`byApp`: bytes and count; a User's file counts in every App they are in), listed fresh |
 
 - **All or nothing.** One bad file rejects the whole upload (415), an unknown
   id rejects a whole PATCH or DELETE (404). A failed insert deletes the files
   it already stored.
-- **Limits:** 20 MiB per file and 100 MiB per upload (413 naming the limit
+- **Limits:** 20 MiB per file and 90 MiB per upload (413 naming the limit
   crossed), 20 files per upload, 100 items per PATCH or DELETE. The upload
   skips the API-wide 1 MiB body limit and brings its own.
 - **App values are the enum names**, `LAURA` and `BACK_OFFICE`, not the
@@ -93,6 +92,34 @@ image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
   browser reaches a picture only through a link the API signs, served by the
   image server (docs/guides/images.md). Never give the bucket an anonymous
   policy again, read-only included.
+
+## Laura
+
+Laura's own routes, under `/v1/laura` (ADR 0035). Each needs a Session with a Laura Membership.
+
+| Endpoint | Guard | Does |
+|---|---|---|
+| `GET /v1/laura/gallery?cursor=&limit=` | `requireApp(LAURA)` | a keyset page of the Images placed in Laura, newest first; `favorite` is the caller's own flag. The first read makes the caller's Laura Profile once; 403 when they have no Laura Membership now |
+| `GET /v1/laura/favorites?cursor=&limit=` | `requireApp(LAURA)` | a keyset page of the caller's own Favorites, most recently marked first (same first-use step) |
+| `PUT /v1/laura/favorites/:imageId` | `ADMIN` in Laura, read now | marks the Image for every Laura User; 404 when it is not placed in Laura; marking again changes nothing |
+| `DELETE /v1/laura/favorites/:imageId` | `ADMIN` in Laura, read now | clears it for every Laura User; an Image that is not a Favorite is no error |
+
+## Back Office
+
+The admin console, under `/v1/back-office` (ADR 0035): routes only Back Office Admins call, tagged `Users` and `Overview` and grouped under `Back Office` in the docs. Each needs a Session whose User is a Back Office `ADMIN`; the writes read the User and the Session fresh. The User module is `packages/auth`'s and keeps its own `/users` paths; this API mounts it here.
+
+| Endpoint | Does |
+|---|---|
+| `GET /v1/back-office/users?page=&perPage=&search=&sort=` | a numbered page of Users, filtered and sorted |
+| `POST /v1/back-office/users` | adds a User with their Memberships |
+| `DELETE /v1/back-office/users` | deletes the Users named (never the caller) |
+| `GET /v1/back-office/users/:id` | one User, with their Version |
+| `PATCH /v1/back-office/users/:id` | edits the name, the Memberships and the password on the Version the form was opened on (409 when the User changed since) |
+| `PUT /v1/back-office/users/:id/avatar`, `DELETE ...` | sets or clears a User's Avatar |
+| `GET /v1/back-office/overview/users` | Session; a Back Office `ADMIN`, read now. `total`: every User once, and `byApp`: for each App that has a member, its `count` of members and its `admins` (a User in two Apps counts in both) |
+| `GET /v1/back-office/overview/storage` | Session; a Back Office `ADMIN`, read now. `buckets`: each bucket the API reads, `{ id, reading }` (`reading`: `objects`, `bytes`, `asOf`; Avatars included in the Images' bucket; listed at most every 5 minutes, kept in Redis per bucket; `null` when it cannot be listed), and `images`: the Images by App (`byApp`: public and private bytes and counts) with `total`, `totalBytes`, and `avatars`: the Avatars by App (`byApp`: bytes and count; a User's file counts in every App they are in), listed fresh |
+
+A User changing their own data later gets separate routes (`/v1/me`), never a "self or Admin" branch here.
 
 ## Mail and Services
 
