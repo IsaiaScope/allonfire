@@ -8,8 +8,14 @@ import { enT } from "../src/shared/tests/translators";
 
 const pages = aofAppPages();
 
-export const { onPhone, openSidebar, SIGN_IN_URL, signIn, tapSidebarLink } =
-  pages;
+export const {
+  onPhone,
+  openSidebar,
+  otherVisitor,
+  SIGN_IN_URL,
+  signIn,
+  tapSidebarLink,
+} = pages;
 
 /** The Users list. */
 export const USERS = sectionHref(SECTION.USERS.path);

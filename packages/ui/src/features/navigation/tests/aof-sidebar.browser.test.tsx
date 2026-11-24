@@ -14,12 +14,17 @@ import {
 } from "../../../shared/tests/computed-style";
 import {
   CAN_EMULATE_MEDIA,
+  clearSafeAreaInsets,
+  notchedPhone,
   withCoarsePointer,
 } from "../../../shared/tests/emulated-media";
+import { AOFAccountPlaceholder } from "../components/aof-account";
 import { AOFFrameHeader } from "../components/aof-frame-header";
 import {
   AOFSidebar,
+  AOFSidebarContent,
   AOFSidebarDropdownContent,
+  AOFSidebarGroup,
   AOFSidebarHeader,
   AOFSidebarInset,
   AOFSidebarMenu,
@@ -392,6 +397,86 @@ const frameParts = async (variant: "floating" | "sidebar", open = true) => {
     inner: part('[data-sidebar="sidebar"]'),
   };
 };
+
+/** The folded rail's icon: 22px, in a 40px square (the rail's content width). */
+const FOLDED_ICON_PX = 22;
+const FOLDED_SQUARE_PX = 40;
+
+describe("a folded sidebar", () => {
+  const foldedRow = async () => {
+    const screen = await render(
+      <AOFSidebarProvider defaultOpen={false}>
+        <AOFSidebar label="Menu" variant="floating">
+          <AOFSidebarContent>
+            <AOFSidebarGroup>
+              <AOFSidebarMenu>
+                <AOFSidebarMenuItem>
+                  <AOFSidebarMenuButton>
+                    <svg aria-hidden data-testid="icon" />
+                    <span>{ROW}</span>
+                  </AOFSidebarMenuButton>
+                </AOFSidebarMenuItem>
+              </AOFSidebarMenu>
+            </AOFSidebarGroup>
+          </AOFSidebarContent>
+        </AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    const button = screen.getByRole("button", { name: ROW }).element();
+    const inner = screen.container.querySelector('[data-sidebar="sidebar"]');
+    await afterTransitions(button);
+    return { button, icon: screen.getByTestId("icon").element(), inner };
+  };
+
+  const centre = (element: Element | null) => {
+    const box = element?.getBoundingClientRect();
+    return box ? box.left + box.width / 2 : Number.NaN;
+  };
+
+  it("centres a row's icon in the rail", async () => {
+    const { button, icon, inner } = await foldedRow();
+    expect(centre(icon)).toBeCloseTo(centre(inner), 0);
+    expect(centre(button)).toBeCloseTo(centre(inner), 0);
+  });
+
+  it("centres the account's avatar in the rail", async () => {
+    const screen = await render(
+      <AOFSidebarProvider defaultOpen={false}>
+        <AOFSidebar label="Menu" variant="floating">
+          <AOFSidebarContent>
+            <AOFSidebarGroup>
+              <AOFAccountPlaceholder />
+            </AOFSidebarGroup>
+          </AOFSidebarContent>
+        </AOFSidebar>
+      </AOFSidebarProvider>
+    );
+    const inner = screen.container.querySelector('[data-sidebar="sidebar"]');
+    const avatar = screen.container.querySelector("span.size-8");
+    await afterTransitions(inner ?? document.body);
+    expect(centre(avatar)).toBeCloseTo(centre(inner), 0);
+  });
+
+  // A phone turned sideways: the notch's inset widens the rail on the left.
+  describe.runIf(server.browser === "chromium")("on a notched screen", () => {
+    beforeEach(() =>
+      notchedPhone({ bottom: 21, left: NOTCH_LEFT_PX, right: 47, top: 0 })
+    );
+    afterEach(clearSafeAreaInsets);
+
+    it("centres a row's icon in the rail's visible card", async () => {
+      const { button, icon, inner } = await foldedRow();
+      expect(centre(icon)).toBeCloseTo(centre(inner), 0);
+      expect(centre(button)).toBeCloseTo(centre(inner), 0);
+    });
+  });
+
+  it("draws the icon at 22px in a 40px square", async () => {
+    const { button, icon } = await foldedRow();
+    expect(button.getBoundingClientRect().width).toBe(FOLDED_SQUARE_PX);
+    expect(icon.getBoundingClientRect().width).toBe(FOLDED_ICON_PX);
+  });
+});
 
 describe("a floating sidebar reads the Design's frame tokens", () => {
   afterEach(() => {

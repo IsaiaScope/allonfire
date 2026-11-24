@@ -18,7 +18,7 @@ export const retryUsers = retryUnlessRefused(USERS.RETRIES);
 /** One page of Users from the API; an error throws `DetailedError`. */
 export const fetchUsers = (client: ApiClient, params: UsersQuery) =>
   parseResponse(
-    client[API.VERSION.CURRENT].users.$get({
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].users.$get({
       query: {
         [USER.PARAM.PAGE]: String(params[USER.PARAM.PAGE]),
         [USER.PARAM.PER_PAGE]: String(params[USER.PARAM.PER_PAGE]),
@@ -31,7 +31,9 @@ export const fetchUsers = (client: ApiClient, params: UsersQuery) =>
 /** One User from the API; an error throws `DetailedError`. */
 export const fetchUser = (client: ApiClient, id: string) =>
   parseResponse(
-    client[API.VERSION.CURRENT].users[":id"].$get({ param: { id } })
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].users[":id"].$get({
+      param: { id },
+    })
   );
 
 /**

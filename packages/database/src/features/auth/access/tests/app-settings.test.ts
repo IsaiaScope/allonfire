@@ -1,7 +1,10 @@
 // @module-tag unit
 
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { objectEntries } from "@allonfire/core/shared/utils/object";
+import {
+  objectEntries,
+  objectValues,
+} from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../../generated/prisma/enums";
 import { hasRole } from "../access";
 import { ACCESS } from "../constants/access";
@@ -27,7 +30,22 @@ describe("ACCESS.APP_SETTINGS", () => {
       indexing: METADATA.INDEXING.UNINDEXED,
       minRole: Role.ADMIN,
       registration: null,
+      slug: "back-office",
     });
+  });
+
+  it("spells each App's slug as the database does: lowercase, a hyphen for each underscore", () => {
+    for (const [app, { slug }] of objectEntries(ACCESS.APP_SETTINGS)) {
+      expect({ app, slug }).toEqual({
+        app,
+        slug: app.toLowerCase().replaceAll("_", "-"),
+      });
+    }
+  });
+
+  it("gives no two Apps the same slug", () => {
+    const slugs = objectValues(ACCESS.APP_SETTINGS).map(({ slug }) => slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it("keeps Laura out of search", () => {

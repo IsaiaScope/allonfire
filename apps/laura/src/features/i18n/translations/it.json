@@ -1,10 +1,65 @@
 {
+  "Favorites": {
+    "empty": {
+      "admin": "Segna una foto della Galleria con il suo cuore.",
+      "description": "Le foto segnate come preferite compariranno qui.",
+      "title": "Ancora nessun preferito"
+    },
+    "list": "Foto preferite",
+    "loading": "Caricamento dei preferiti"
+  },
+  "Gallery": {
+    "empty": {
+      "admin": "Aggiungi le prime foto da Carica.",
+      "description": "Quando arriveranno foto, compariranno qui.",
+      "title": "Ancora nessuna foto"
+    },
+    "error": {
+      "description": "Qualcosa è andato storto lungo la strada. Riprova tra un momento.",
+      "retry": "Riprova",
+      "title": "Le foto non si sono caricate"
+    },
+    "favorite": {
+      "add": "Aggiungi ai preferiti",
+      "failed": "Non è stato possibile salvare il preferito. Riprova.",
+      "is": "Un preferito",
+      "remove": "Togli dai preferiti",
+      "toggle": "Preferito"
+    },
+    "list": "Foto",
+    "loading": "Caricamento delle foto",
+    "more": {
+      "failed": "Non è stato possibile caricare altre foto.",
+      "load": "Mostra altre foto",
+      "loading": "Caricamento di altre foto",
+      "retry": "Riprova"
+    },
+    "photo": {
+      "open": "Apri la foto"
+    },
+    "preview": {
+      "close": "Chiudi la foto",
+      "gone": "Quella foto non c'è più.",
+      "next": "Foto successiva",
+      "position": "Foto {index} di {total}",
+      "previous": "Foto precedente",
+      "title": "Visualizzatore di foto"
+    },
+    "remove": {
+      "action": "Rimuovi",
+      "cancel": "Tieni la foto",
+      "confirm": "Rimuovi la foto",
+      "description": "La foto sparisce da Laura per tutti ed è eliminata se nessun'altra App la conserva.",
+      "failed": "Non è stato possibile rimuovere la foto. Riprova.",
+      "title": "Rimuovere questa foto da Laura?"
+    }
+  },
   "Metadata": {
     "description": "Il nostro posto privato, solo per noi due."
   },
   "Navigation": {
     "favorites": "Preferiti",
-    "gallery": "Gallery",
+    "gallery": "Galleria",
     "leaderboard": "Classifica",
     "memory": "Memory",
     "play": "Gioca",

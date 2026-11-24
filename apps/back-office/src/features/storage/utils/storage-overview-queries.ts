@@ -15,7 +15,9 @@ export const retryStorageOverview = retryUnlessRefused(STORAGE.RETRIES);
 
 /** The Storage overview, as the API answers an Admin. */
 export const fetchStorageOverview = (client: ApiClient) =>
-  parseResponse(client[API.VERSION.CURRENT].storage.overview.$get());
+  parseResponse(
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].overview.storage.$get()
+  );
 
 type StorageOverview = Awaited<ReturnType<typeof fetchStorageOverview>>;
 export type StorageBucket = StorageOverview["buckets"][number];

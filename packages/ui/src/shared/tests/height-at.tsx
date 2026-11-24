@@ -33,5 +33,7 @@ export const heightAtIn = async ({
     ),
     messages,
   });
+  // A line wraps differently in the fallback font than in the loaded one: measure once the page's fonts are in.
+  await document.fonts.ready;
   return screen.container.firstElementChild?.getBoundingClientRect().height;
 };

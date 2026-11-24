@@ -35,6 +35,13 @@ export const FAKE_API = {
   unreachable: new Set<string>(),
 };
 
+/** Answers every `DELETE` as a bulk delete does: 200 and how many went. */
+export const answerDeleted = (deleted: number) =>
+  FAKE_API.answers.set(HTTP.METHOD.DELETE, {
+    body: { deleted },
+    status: HTTP.STATUS.OK,
+  });
+
 export const resetFakeApi = () => {
   FAKE_API.answers.clear();
   FAKE_API.sent.length = 0;

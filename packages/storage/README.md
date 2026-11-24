@@ -65,7 +65,7 @@ packages/storage/
 ## 🧪 Test buckets
 
 A Vitest run with integration tests gets its own bucket
-(`allonfire-test-<package>-<epoch>-<pid>-<random>`) holding every Image Fixture as
+(`aof-test-<package>-<YYMMDD>-<HHMMSS>-p<pid>-<random>`) holding every Image Fixture as
 AVIF, closed like `image`, as `STORAGE_BUCKET` (the Local image server reads it through the links tests sign); it is emptied
 and removed when the run ends; a killed run's is swept by the next run, which
 sees its process gone (the stamp carries it). e2e makes one per Playwright run through

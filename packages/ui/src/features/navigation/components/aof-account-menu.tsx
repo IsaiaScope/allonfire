@@ -78,7 +78,7 @@ type IdentityProps = Pick<AOFAccountMenuProps, "email" | "image" | "name">;
 const Identity = ({ email, image, name }: IdentityProps) => (
   <>
     <AOFUserAvatar
-      className="size-8 rounded-lg group-data-[collapsible=icon]:mx-0.5"
+      className="size-8 rounded-lg group-data-[collapsible=icon]:mx-1"
       image={image}
       name={name}
       side={32}

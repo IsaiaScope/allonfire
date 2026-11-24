@@ -70,7 +70,7 @@ verifies this table before the cutover.
 | `src/lib/blur-placeholder.ts` | replaced | the API's `blurDataUrl` with `AOFStorageImage placeholder="blur"` (Phase 4) |
 | `src/lib/convert-heic.ts` | replaced | `heicToJpeg` and `isHeic` in `@allonfire/ui/shared/utils/heic-to-jpeg` (`heic-to`; Phase 5) |
 | `src/lib/file-validation.ts` | replaced | the Image module's `IMAGE.LIMIT.*` and ui's file field (Phase 5) |
-| `src/features/gallery/**` | replaced | Phase 4 `features/gallery`: private-cache hydration, `useInfiniteQuery`, an `optimisticMutation` favorite, `AOFStorageImage`; `use-heart-animation.ts` and its heart are not carried (a Favorite is a static mark for a User) |
+| `src/features/gallery/**` | kept (rewritten: Phase 4) | Phase 4 `features/gallery`: private-cache hydration, `useInfiniteQuery`, an `optimisticMutation` favorite, `AOFStorageImage`; `use-heart-animation.ts` and its heart are not carried (a Favorite is a static mark for a User) |
 | `src/features/games/**/quiz*`, `src/features/games/hooks/use-quiz-game.ts`, `src/features/games/components/game-hub.tsx` | deleted | Quiz is removed completely (spec); the hub listed games and Memory is the only one |
 | `src/features/games/utils/format-time.ts` | replaced | the Phase 6 timer helper |
 | `src/features/games/**` | replaced | Phase 6 `features/memory` (the Memory board, leaderboard and score actions) |
@@ -91,6 +91,6 @@ verifies this table before the cutover.
 | `@t3-oss/env-nextjs` | kept | `createEnv`, as the Back Office |
 | `better-auth`, `@better-auth/prisma-adapter` | deleted | auth runs in the API |
 | `@allonfire/database` | kept | enums, `ACCESS` and fixtures only; no Prisma client or service import (Task 1's guard) |
-| `@allonfire/storage` | deleted | the shell does not import it; Phases 4 and 5 list it with their first import |
+| `@allonfire/storage` | kept | Phase 4: the Gallery reads the image server's constants (`IMAGE_SERVER`) through it |
 | `@next/bundle-analyzer`, `sharp`, `tsx` | deleted | the Back Office has none; the scripts that needed `sharp` and `tsx` are gone |
 | `next-themes`, `@tanstack/react-query` | kept | the Back Office's range; `@tanstack/react-query` is read first in Phase 4 |

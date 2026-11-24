@@ -47,6 +47,8 @@ model Membership {
   role      Role
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Laura's Profile of this Membership (ADR 0034): Prisma needs the inverse of its foreign key.
+  lauraProfile LauraProfile?
 
   @@id([userId, app])
   @@schema("auth")

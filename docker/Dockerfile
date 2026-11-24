@@ -31,9 +31,10 @@ ARG APP_NAME
 # Build-time env stubs: satisfy @t3-oss/env validation during Next.js page data
 # collection. NEXT_PUBLIC_API_URL must match the runtime value: Next.js bakes in
 # the API the browser calls, and the Back Office's build fails without it.
-# BACK_OFFICE_URL and LAURA_URL are the two Apps' public addresses (each App's
-# metadataBase, and the link in the other's switcher), baked into prerendered
-# pages; each must equal the runtime value.
+# BACK_OFFICE_URL and LAURA_URL are the two Apps' public addresses, baked into
+# prerendered pages; each must equal the runtime value. The Back Office reads
+# both (its own metadataBase, and its switcher's link to Laura); Laura reads
+# only LAURA_URL, so its build is given no BACK_OFFICE_URL.
 # Other values are placeholders that never reach the runner stage. The
 # secret-shaped ones live on the build RUN line, not ENV, so they never enter
 # the image config and the SecretsUsedInArgOrEnv check stays quiet.

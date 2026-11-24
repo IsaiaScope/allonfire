@@ -82,6 +82,22 @@ on a real phone, never only in Chromium or the Simulator.
 
 ## History and gotchas
 
+- 2026-11-24: Laura's Gallery showed a gap of about one notch's width between the
+  docked sidebar and the photos in landscape. Cause: `GalleryPage` padded its left
+  with `env(safe-area-inset-left)` itself, but the docked sidebar already stands
+  clear of the notch, so the notch was kept clear of twice (the Back Office never
+  showed it: its pages use `AOFSectionPage`'s `--gutter-left`, which the frame sets
+  from `--frame-inset-left`). Fix: `AOFSectionPage` has an `edge` variant for an
+  edge-to-edge page that reads `--frame-inset-left`, and a unit test
+  (`aof-left-inset.test.ts`) fails when any App file outside ui's frame reads
+  `safe-area-inset-left`. A page needs its own left padding: use the variant,
+  never `env()`. Unverified on a phone at the time of writing.
+- 2026-11-24: Chrome on iOS and Android shows a strip beside the docked sidebar in
+  landscape. It is the browser's own area, not the page: Chrome on iOS insets the web
+  view by the safe area and paints the strip with the page root's background, and
+  Chrome on Android leaves the cutout side black. The page cannot remove it. Settled,
+  do not chase it.
+
 - 2026-11-19: with a toast on screen (Laura's Install hint, the Back Office's
   Saved) the toolbar band takes the toast's colour: the sampled band matched the
   card's colour exactly. Normal Safari 26 behaviour for a fixed toast, the same in

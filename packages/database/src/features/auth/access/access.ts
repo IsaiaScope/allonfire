@@ -29,7 +29,6 @@ export const roleIn = (user: AccessUser, app: App): Role | undefined =>
 /**
  * Whether a User holds at least `min` in `app`: a Membership there whose Role
  * reaches it. `hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN)`.
- * @internal
  */
 export const hasRoleIn = (user: AccessUser, app: App, min: Role): boolean => {
   const role = roleIn(user, app);

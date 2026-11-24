@@ -50,7 +50,8 @@ export const sendAvatarChange = async (
     version,
   }: { change: AOFAvatarChange; id: string; version: string }
 ): Promise<Response | null> => {
-  const { avatar } = client[API.VERSION.CURRENT].users[":id"];
+  const { avatar } =
+    client[API.VERSION.CURRENT][API.SEGMENT.BACK_OFFICE].users[":id"];
   if (change.kind === "unchanged") {
     return null;
   }

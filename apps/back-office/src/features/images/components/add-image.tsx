@@ -141,8 +141,8 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
   const sharedId = useId();
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="flex items-center gap-2 font-bold text-2xl">
             <IconPhotoPlus aria-hidden className="size-7" />
             {t("Images.add.title")}
@@ -151,6 +151,7 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
             {t("Images.add.pick.hint", {
               files: IMAGE.LIMIT.FILES_PER_UPLOAD,
               size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
+              total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
             })}
           </p>
         </div>
@@ -166,7 +167,7 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
         />
         <AOFButton
           aria-label={t("Images.add.pick.button")}
-          className={toolbarActionClass("labeled")}
+          className={cn("shrink-0", toolbarActionClass("labeled"))}
           onClick={open}
           type="button"
         >

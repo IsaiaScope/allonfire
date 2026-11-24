@@ -13,7 +13,7 @@ import {
   putImageObject,
 } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
-import { forgetBuckets } from "../storage-usage/buckets";
+import { forgetBuckets } from "../back-office/overview/storage/buckets";
 
 /** The Image module on the real stack: Prisma, sharp and MinIO. */
 export const imageDeps = (log: ImageDeps["log"]): ImageDeps => ({

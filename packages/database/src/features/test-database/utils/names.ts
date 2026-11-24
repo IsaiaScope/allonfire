@@ -1,5 +1,6 @@
 import {
   isStaleTestRun,
+  stampTime,
   testRunName,
 } from "@allonfire/config/tests/run/test-run";
 
@@ -16,7 +17,7 @@ export const testDatabaseName = (label: string, stamp: string) =>
  * clone (`isStaleTestRun`); the sweep keeps the current one.
  */
 export const templateName = (fingerprint: string, epochSeconds: number) =>
-  testRunName("template", `${epochSeconds}_${fingerprint}`);
+  testRunName("template", `${stampTime(epochSeconds)}_${fingerprint}`);
 
 /**
  * What a sweep drops out of `names`: crashed runs' clones and old templates,

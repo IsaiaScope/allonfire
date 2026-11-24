@@ -18,6 +18,12 @@ type AppSettings = {
   minRole: Role;
   /** The Role a visitor registering here gets; null: Registration is closed. */
   registration: RegistrationRole | null;
+  /**
+   * How the App is spelled in an address, a path and a folder name: the enum
+   * value in lowercase, a hyphen for each underscore (the database stores it
+   * so). The one place it is written; everything else reads it.
+   */
+  slug: string;
 };
 
 export type AppSettingsTable = Readonly<Record<App, AppSettings>>;

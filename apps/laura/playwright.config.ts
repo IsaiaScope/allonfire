@@ -7,7 +7,7 @@ import { App } from "@allonfire/database/enums";
 
 export default aofPlaywrightConfig({
   apiPath: API.PATH,
-  app: "laura",
+  app: API.SEGMENT.LAURA,
   env: {
     AUTH_APP: App.LAURA,
     // The e2e stack sets its own address.

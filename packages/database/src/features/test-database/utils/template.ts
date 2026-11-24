@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { stampTime } from "@allonfire/config/tests/run/test-run";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { seedFixtures } from "../../seed/fixtures/seed-fixtures";
 import { TEST_DATABASE } from "../constants/test-database";
@@ -64,7 +65,7 @@ export const buildingName = (
   fingerprint: string,
   epoch: number,
   pid: number = process.pid
-) => testDatabaseName("building", `${epoch}_${pid}_${fingerprint}`);
+) => testDatabaseName("building", `${stampTime(epoch)}_p${pid}_${fingerprint}`);
 
 /**
  * Built under a working name and renamed once seeded, so a build that dies

@@ -133,9 +133,9 @@ export const AOFSidebar = ({
 /**
  * A row a little larger than shadcn's: 40px with a 16px label and an 18px
  * icon for a mouse, the tap target (`--tap-target`, `--tap-icon`) on a touch
- * screen. Folded to icons every row is a 36px square
- * (shadcn's is 32px): an 18px icon with 9px around it, in the rail
- * `AOFSidebarProvider` widens to match (plus the left inset). The `lg` rows are 48px. A row that
+ * screen. Folded to icons every row is a 40px square
+ * (shadcn's is 32px), centred in the rail: a 22px icon with 9px around it, in
+ * the rail `AOFSidebarProvider` widens to match (plus the left inset). The `lg` rows are 48px. A row that
  * opens a menu stays lit while it is open (Base UI marks its trigger
  * `data-popup-open`; `data-open` is the popup's own). Its highlight fades:
  * on a touch screen the menu opens once the finger lifts, so the pressed
@@ -153,8 +153,9 @@ export const AOFSidebarMenuButton = ({
       "data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground",
       // 40px with a 16px label and an 18px icon; the tap target on a touch screen.
       "data-[size=default]:h-10 pointer-coarse:data-[size=default]:h-(--tap-target) data-[size=default]:text-base data-[size=default]:[&_svg]:size-4.5 pointer-coarse:data-[size=default]:[&_svg]:size-(--tap-icon)",
-      // Folded: a 36px square, the 18px icon with 9px around it.
-      "group-data-[collapsible=icon]:size-9! group-data-[collapsible=icon]:data-[size=default]:p-2.25!",
+      // Folded: a 40px square, centred in the rail whatever its width (a
+      // notch widens it), the 22px icon with 9px around it.
+      "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:data-[size=default]:p-2.25! group-data-[collapsible=icon]:data-[size=default]:[&_svg]:size-5.5!",
       className
     )}
     {...props}

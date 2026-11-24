@@ -3,15 +3,22 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { STORAGE } from "@allonfire/storage/shared/constants/paths";
 import { z } from "zod";
+import { BACK_OFFICE } from "../../features/back-office/constants/back-office";
+import { LAURA } from "../../features/laura/constants/laura";
 import { SERVICES } from "../../features/services/constants/services";
-import { STORAGE_USAGE } from "../../features/storage-usage/constants/storage-usage";
-import { USER_USAGE } from "../../features/user-usage/constants/user-usage";
 import { API_ERROR } from "./error";
 
 /** The version the API serves today, written once: a new one changes this line only. */
 const CURRENT_VERSION = "v1";
 /** Domain routes mount here; `/health` and `/ready` stay unversioned. */
 const VERSION_PATH = `/${CURRENT_VERSION}` as const;
+/** Laura's own data: routes its Members call (ADR 0035). */
+const LAURA_PATH = `${VERSION_PATH}${LAURA.PATH.BASE}` as const;
+/** The admin console: routes only Back Office Admins call (ADR 0035). */
+const BACK_OFFICE_PATH = `${VERSION_PATH}${BACK_OFFICE.PATH.BASE}` as const;
+/** The two overviews mount under one prefix. */
+const OVERVIEW_PATH =
+  `${BACK_OFFICE_PATH}${BACK_OFFICE.OVERVIEW.PATH.BASE}` as const;
 /** Unversioned: orchestrators pin the probes, so they never move under the version. */
 const HEALTH = "/health";
 const READY = "/ready";
@@ -76,9 +83,31 @@ export const API = {
   PATH: {
     /** Where the Auth module is mounted and what `createAuth` gets as `basePath`. */
     AUTH: `${VERSION_PATH}${AUTH.PATH.BASE}`,
+    /** The admin console (ADR 0035): its own prefix, the Users routes and the two overviews. */
+    BACK_OFFICE: {
+      BASE: BACK_OFFICE_PATH,
+      /** The two overviews, one prefix for both. */
+      OVERVIEW: {
+        BASE: OVERVIEW_PATH,
+        /** The Storage overview. */
+        STORAGE: `${OVERVIEW_PATH}${BACK_OFFICE.OVERVIEW.STORAGE.PATH.BASE}`,
+        /** The Users overview. */
+        USERS: `${OVERVIEW_PATH}${BACK_OFFICE.OVERVIEW.USERS.PATH.BASE}`,
+      },
+      /** Where the User module mounts. */
+      USERS: `${BACK_OFFICE_PATH}${USER.PATH.BASE}`,
+    },
     HEALTH,
     /** Where the Image module mounts. */
     IMAGES: `${VERSION_PATH}${STORAGE.PATH.IMAGES}`,
+    /** Laura's own routes (ADR 0035): its prefix, the Favorites list and the Gallery list. */
+    LAURA: {
+      BASE: LAURA_PATH,
+      /** The Favorites list, and one Favorite's write at `FAVORITES` + `/:imageId`. */
+      FAVORITES: `${LAURA_PATH}${LAURA.FAVORITES.PATH.BASE}`,
+      /** The Gallery list. */
+      GALLERY: `${LAURA_PATH}${LAURA.GALLERY.PATH.BASE}`,
+    },
     /** The OpenAPI document, and the URL the reference page fetches. */
     OPENAPI: "/openapi.json",
     READY,
@@ -87,15 +116,11 @@ export const API = {
     ROOT: "/",
     /** Where the Services routes mount. */
     SERVICES: `${VERSION_PATH}${SERVICES.PATH.BASE}`,
-    /** Where the Storage overview routes mount. */
-    STORAGE_USAGE: `${VERSION_PATH}${STORAGE_USAGE.PATH.BASE}`,
-    /** Where the Users overview routes mount. */
-    USER_USAGE: `${VERSION_PATH}${USER_USAGE.PATH.BASE}`,
-    /** Where the User module mounts. */
-    USERS: `${VERSION_PATH}${USER.PATH.BASE}`,
     /** The version prefix every domain route mounts under. */
     VERSION: VERSION_PATH,
   },
+  /** The key of each mount under `client.v1`, for a typed client that reads it as a property. */
+  SEGMENT: { BACK_OFFICE: BACK_OFFICE.SEGMENT, LAURA: LAURA.SEGMENT },
   SHUTDOWN: {
     SIGNAL: ["SIGTERM", "SIGINT"],
     /**

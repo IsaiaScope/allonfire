@@ -1,4 +1,6 @@
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectKeys } from "@allonfire/core/shared/utils/object";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import {
   AOFFormActionsSkeleton,
   AOFFormAlertSkeleton,
@@ -29,15 +31,21 @@ export const AddImageSkeleton = () => {
   const t = useTranslations("Images");
   return (
     <AOFFormSkeleton label={t("loading")}>
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="flex items-center gap-2 font-bold text-2xl">
             <IconPhotoPlus aria-hidden className="size-7" />
             {t("add.title")}
           </h1>
-          <AOFFormBar className="w-64" part="label" />
+          <p className="text-muted-foreground text-sm">
+            {t("add.pick.hint", {
+              files: IMAGE.LIMIT.FILES_PER_UPLOAD,
+              size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
+              total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
+            })}
+          </p>
         </div>
-        <AOFFormBar className="w-44" part="button" tone="primary" />
+        <AOFFormBar className="w-44 shrink-0" part="button" tone="primary" />
       </div>
       <div className="flex flex-1 flex-col gap-8">
         <CardFrame kanji={IMAGES.ADD_KANJI}>

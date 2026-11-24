@@ -22,11 +22,13 @@ const APP_SETTINGS = {
     indexing: METADATA.INDEXING.UNINDEXED,
     minRole: Role.USER,
     registration: null,
+    slug: "laura",
   },
   [App.BACK_OFFICE]: {
     indexing: METADATA.INDEXING.UNINDEXED,
     minRole: Role.ADMIN,
     registration: null,
+    slug: "back-office",
   },
 } as const satisfies AppSettingsTable;
 

@@ -5,7 +5,7 @@ import type { Page } from "@playwright/test";
 
 const pages = aofAppPages();
 
-export const { openSidebar, SIGN_IN_URL } = pages;
+export const { openSidebar, otherVisitor, SIGN_IN_URL, tapSidebarLink } = pages;
 
 /** Signs in as Laura's User and waits for the frame. */
 export const signInAsUser = (page: Page) =>

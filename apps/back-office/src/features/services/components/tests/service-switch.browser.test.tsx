@@ -4,6 +4,7 @@ import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { aofErrorCaches } from "@allonfire/core/features/next/query/utils/aof-query-errors";
 import { ServiceType } from "@allonfire/database/enums";
+import { QUIET_MS } from "@allonfire/ui/features/query/hooks/use-aof-quiet-toggle";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import {
   QueryClient,
@@ -81,6 +82,22 @@ const held = (answer: boolean) => {
   return { promise, release };
 };
 
+/** Lets the quiet that follows a burst of choices run out, on the fake clock. */
+const quiet = () => vi.advanceTimersByTimeAsync(QUIET_MS * 2);
+
+/** The clock the quiet runs on: only its timers are fake, the clicks stay real. */
+const fakeQuiet = () =>
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+
+/** The API saves each choice and holds it. */
+const saveAtOnce = () =>
+  vi.mocked(setServiceEnabled).mockImplementation((_type, enabled) => {
+    server.enabled = enabled;
+    return Promise.resolve(true);
+  });
+
+afterEach(() => vi.useRealTimers());
+
 beforeEach(() => {
   server.enabled = true;
   queryClient = new QueryClient({
@@ -109,10 +126,7 @@ it("turns the Service off as soon as Off is chosen, before the API answers", asy
 });
 
 it("keeps the choice once the Service is saved and read again", async () => {
-  vi.mocked(setServiceEnabled).mockImplementation((_type, enabled) => {
-    server.enabled = enabled;
-    return Promise.resolve(true);
-  });
+  saveAtOnce();
   await renderSwitch();
   await choice(t.off).click();
   await expect.poll(() => queryClient.getQueryData(KEY)).toEqual(listOf(false));
@@ -153,7 +167,34 @@ it.each([
   }
 );
 
-it("runs two quick choices in order", async () => {
+it("saves a burst of choices once, the last", async () => {
+  fakeQuiet();
+  saveAtOnce();
+  await renderSwitch();
+  await choice(t.off).click();
+  await choice(t.on).click();
+  await choice(t.off).click();
+  await expect.element(choice(t.off)).toHaveAttribute("aria-current", "page");
+  expect(setServiceEnabled).not.toHaveBeenCalled();
+  await quiet();
+  expect(vi.mocked(setServiceEnabled).mock.calls).toEqual([
+    [ServiceType.MAIL, false],
+  ]);
+});
+
+it("saves nothing when a burst ends where it began", async () => {
+  fakeQuiet();
+  saveAtOnce();
+  await renderSwitch();
+  await choice(t.off).click();
+  await choice(t.on).click();
+  await expect.element(choice(t.on)).toHaveAttribute("aria-current", "page");
+  await quiet();
+  expect(setServiceEnabled).not.toHaveBeenCalled();
+});
+
+it("runs a choice made while one is being saved after it, in order", async () => {
+  fakeQuiet();
   const first = held(true);
   const calls: boolean[] = [];
   vi.mocked(setServiceEnabled).mockImplementation((_type, enabled) => {
@@ -166,9 +207,13 @@ it("runs two quick choices in order", async () => {
   });
   await renderSwitch();
   await choice(t.off).click();
+  await quiet();
+  expect(calls).toEqual([false]);
   await choice(t.on).click();
-  await expect.poll(() => calls).toEqual([false]);
+  await quiet();
+  expect(calls).toEqual([false]);
   first.release();
-  await expect.poll(() => calls).toEqual([false, true]);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(calls).toEqual([false, true]);
   await expect.element(choice(t.on)).toHaveAttribute("aria-current", "page");
 });

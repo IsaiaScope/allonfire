@@ -1,0 +1,47 @@
+import { keysetCursor } from "@allonfire/core/features/search/keyset-cursor";
+import { imageBodySchema } from "@allonfire/storage/features/image/constants/schemas";
+import { z } from "zod";
+import { LAURA } from "./laura";
+
+/** An Image as Laura's screens show it, with the caller's own Favorite flag. */
+const galleryItemBodySchema = imageBodySchema
+  .pick({
+    alt: true,
+    blurDataUrl: true,
+    height: true,
+    id: true,
+    srcSet: true,
+    width: true,
+  })
+  .extend({ favorite: z.boolean() })
+  .meta({ ref: "GalleryItem" });
+export type GalleryItemBody = z.infer<typeof galleryItemBodySchema>;
+
+/** One page; `nextCursor` is null on the last. */
+export const galleryPageBodySchema = z
+  .object({
+    items: z.array(galleryItemBodySchema),
+    nextCursor: z.string().nullable(),
+  })
+  .meta({ ref: "GalleryPage" });
+export type GalleryPageBody = z.infer<typeof galleryPageBodySchema>;
+
+/** Both lists page the same way. */
+export const pageQuerySchema = z.object({
+  cursor: keysetCursor.schema.optional(),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(LAURA.GALLERY.LIMIT.MAX)
+    .default(LAURA.GALLERY.LIMIT.DEFAULT),
+});
+
+/** The Image a Favorite write names. */
+export const imageIdParamSchema = z.object({ imageId: z.string().min(1) });
+
+/** What a write answers: the Image and whether it is a Favorite now. */
+export const favoriteBodySchema = z
+  .object({ favorite: z.boolean(), imageId: z.string() })
+  .meta({ ref: "Favorite" });
+export type FavoriteBody = z.infer<typeof favoriteBodySchema>;

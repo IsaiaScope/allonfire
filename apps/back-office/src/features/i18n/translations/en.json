@@ -24,7 +24,7 @@
       "page": "Add Images",
       "pick": {
         "button": "Pick pictures",
-        "hint": "Up to {files} pictures, {size} MiB each.",
+        "hint": "Up to {files} pictures, {size} MiB each, {total} MiB in all.",
         "input": "Pictures to add",
         "none": "No pictures picked yet."
       },

@@ -1,12 +1,14 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { useLocale, useTranslations } from "next-intl";
+import { AOFClearQueries } from "../../query/components/aof-clear-queries";
 import type { AOFAuthDressing } from "../types/auth-dressing";
 import { verifiedLanding } from "../utils/verified-landing";
 import { AOFSignInForm } from "./aof-sign-in-form";
 
 /**
  * Signing in: the form inside the App's frame. A Server Component: the
- * form is its only client part. `appName` fills the words that name the
+ * form and the cache clearing (`AOFClearQueries`: the Session before this one
+ * leaves nothing behind) are its only client parts. `appName` fills the words that name the
  * App; `appUrl` is its public address, where a verification link lands.
  */
 export const AOFSignIn = ({
@@ -23,6 +25,7 @@ export const AOFSignIn = ({
   const { Gate } = dressing;
   return (
     <Gate page={AUTH.PAGE.SIGN_IN} status={t("submit")}>
+      <AOFClearQueries />
       <AOFSignInForm
         actions={dressing.actions}
         appName={appName}

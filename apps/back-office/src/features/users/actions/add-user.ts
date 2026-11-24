@@ -68,7 +68,9 @@ export const addUser = async (
   }
   const { email, name, password, roles, verification } = parsed.data;
   const client = await serverApi();
-  const response = await client[API.VERSION.CURRENT].users.$post({
+  const response = await client[API.VERSION.CURRENT][
+    API.SEGMENT.BACK_OFFICE
+  ].users.$post({
     json: {
       email,
       memberships: membershipsOf(roles),

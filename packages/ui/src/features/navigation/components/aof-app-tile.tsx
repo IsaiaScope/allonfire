@@ -10,7 +10,7 @@ const tile = cva("flex shrink-0 items-center justify-center", {
   variants: {
     size: {
       /** On the switcher's button. */
-      lg: "size-12 rounded-lg group-data-[collapsible=icon]:size-9",
+      lg: "size-12 rounded-lg group-data-[collapsible=icon]:size-10",
       /** In the switcher's menu, as the block's team rows. */
       md: "size-8 rounded-md border [&_svg]:size-4.5",
       /** Beside an App's name in a list (a User's card). */

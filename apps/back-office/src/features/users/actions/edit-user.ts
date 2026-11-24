@@ -82,7 +82,9 @@ export const editUser = async (
   const { name, password, roles, verification } = parsed.data;
   const verified = verification === USERS.VERIFICATION.VERIFIED;
   const client = await serverApi();
-  const response = await client[API.VERSION.CURRENT].users[":id"].$patch({
+  const response = await client[API.VERSION.CURRENT][
+    API.SEGMENT.BACK_OFFICE
+  ].users[":id"].$patch({
     json: {
       memberships: membershipsOf(roles),
       name,

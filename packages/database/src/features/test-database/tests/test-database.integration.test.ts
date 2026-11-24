@@ -1,4 +1,5 @@
 // @module-tag integration
+import { stampTime } from "@allonfire/config/tests/run/test-run";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { env } from "../../../environment/environment";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
@@ -44,7 +45,7 @@ describe("Test databases", { timeout: TEST_DATABASE.DOCKER_TIMEOUT_MS }, () => {
   });
 
   it("clones the template with every Fixture User, then drops the clone", async () => {
-    const stamp = `${EPOCH}_clonet`;
+    const stamp = `${stampTime(EPOCH)}_clonet`;
     const admin = await withClient(
       await createTestDatabase(SERVER, "selftest", stamp),
       (client) =>
@@ -61,7 +62,7 @@ describe("Test databases", { timeout: TEST_DATABASE.DOCKER_TIMEOUT_MS }, () => {
 
   it("sweeps a crashed run's clone and keeps the template in use", async () => {
     const twoDaysAgo = EPOCH - 2 * UNIT.SECONDS_PER_DAY;
-    const oldClone = `${twoDaysAgo}_oldone`;
+    const oldClone = `${stampTime(twoDaysAgo)}_oldone`;
     await createTestDatabase(SERVER, "selftest", oldClone);
     // The tree's own template: any other `keep` would let this sweep drop it
     // under the packages testing beside this one.
@@ -74,8 +75,11 @@ describe("Test databases", { timeout: TEST_DATABASE.DOCKER_TIMEOUT_MS }, () => {
   });
 
   it("drops every earlier run of a label, however young, and no other label's", async () => {
-    const mine = testDatabaseName("solotest", `${EPOCH}_young1`);
-    const other = testDatabaseName("solotest_two", `${EPOCH}_young2`);
+    const mine = testDatabaseName("solotest", `${stampTime(EPOCH)}_young1`);
+    const other = testDatabaseName(
+      "solotest_two",
+      `${stampTime(EPOCH)}_young2`
+    );
     await Promise.all([
       createDatabase(SERVER, mine),
       createDatabase(SERVER, other),

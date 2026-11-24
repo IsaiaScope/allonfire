@@ -6,8 +6,8 @@ export type Rollback = () => void;
 /**
  * Writes to the cache before the server answers: stops the reads under
  * `prefix` (a slower answer would overwrite the patch), patches each cached
- * query under it with `patch` (handed its own key), and answers one rollback
- * that restores every snapshot taken. A query under the prefix that holds no
+ * query under it with `patch` (handed its own key; each keeps its age), and
+ * answers one rollback that restores every snapshot taken. A query under the prefix that holds no
  * data is skipped; an empty cache is a no-op.
  */
 export const optimisticUpdate = async <TData>(
@@ -16,18 +16,22 @@ export const optimisticUpdate = async <TData>(
   patch: (cached: TData, key: QueryKey) => TData
 ): Promise<Rollback> => {
   await queryClient.cancelQueries({ queryKey: prefix });
-  const snapshots: [QueryKey, TData][] = [];
+  const snapshots: [QueryKey, TData, number][] = [];
   for (const [key, cached] of queryClient.getQueriesData<TData>({
     queryKey: prefix,
   })) {
     if (cached !== undefined) {
-      snapshots.push([key, cached]);
-      queryClient.setQueryData<TData>(key, patch(cached, key));
+      // A patch is not a read: the data keeps its age, so whatever ages by it
+      // (signed links, `useAOFLinkRefresh`) is not told it is fresh.
+      const updatedAt =
+        queryClient.getQueryState(key)?.dataUpdatedAt ?? Date.now();
+      snapshots.push([key, cached, updatedAt]);
+      queryClient.setQueryData<TData>(key, patch(cached, key), { updatedAt });
     }
   }
   return () => {
-    for (const [key, cached] of snapshots) {
-      queryClient.setQueryData<TData>(key, cached);
+    for (const [key, cached, updatedAt] of snapshots) {
+      queryClient.setQueryData<TData>(key, cached, { updatedAt });
     }
   };
 };

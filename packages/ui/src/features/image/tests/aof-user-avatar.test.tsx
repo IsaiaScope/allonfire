@@ -1,4 +1,6 @@
 // @module-tag unit
+
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -53,5 +55,32 @@ describe("AOFUserAvatar", () => {
     const { html, warnings } = render(36);
     expect(html).not.toContain(BLUR);
     expect(warnings).toBe(0);
+  });
+
+  describe("in a browser without URL.parse (Chrome before 126, Safari before 18)", () => {
+    const { parse } = URL;
+    beforeEach(() => {
+      Reflect.deleteProperty(URL, "parse");
+    });
+    afterEach(() => {
+      Reflect.set(URL, "parse", parse);
+    });
+
+    it("still draws a sign-in provider's picture, and a stored one, instead of throwing", () => {
+      const google = `https://${AUTH.PICTURE_HOSTS[0]}/a/picture=s96-c`;
+      expect(() =>
+        renderToStaticMarkup(
+          <AOFUserAvatar image={google} name="Ann" side={36} />
+        )
+      ).not.toThrow();
+      expect(() => render(36)).not.toThrow();
+    });
+
+    it("shows only the initial for an address that is not a URL", () => {
+      const html = renderToStaticMarkup(
+        <AOFUserAvatar image="not a url" name="Ann" side={36} />
+      );
+      expect(html).toContain("A");
+    });
   });
 });

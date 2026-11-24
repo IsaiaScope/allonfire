@@ -51,6 +51,16 @@ export const MASCOT = {
   },
   /** The error page and the error notice. */
   ERROR: "OCTOPUS_NOTO",
+  /**
+   * The photos' empty moments, each its own picture (a failed load shows
+   * `ERROR`'s, like every other error): the classic octopus over the empty
+   * Gallery, waiting for its first photo; the Firefox octopus over the empty
+   * Favorites.
+   */
+  GALLERY: {
+    EMPTY: "OCTOPUS_CLASSIC",
+    FAVORITES_EMPTY: "OCTOPUS_FIREFOX",
+  },
   /** The signed-out card's band: the forms' octopus, the owner's pick. */
   GATE: "OCTOPUS_NOTO",
   /** The Install hint's card. */
@@ -61,6 +71,8 @@ export const MASCOT = {
   NOT_FOUND: "SQUID_NOTO",
   /** The Offline page and the offline card. */
   OFFLINE: "JELLYFISH_NOTO",
+  /** The picture faint behind the act that removes a photo: a crab pinches it away. */
+  REMOVE: "CRAB_MONO",
   /** What peeks in at the end of a toast, per kind. */
   TOAST: {
     ERROR: "OCTOPUS_NOTO",

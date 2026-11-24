@@ -1,4 +1,59 @@
 {
+  "Favorites": {
+    "empty": {
+      "admin": "Mark a photo from the Gallery with its heart.",
+      "description": "Photos marked as favorites will show here.",
+      "title": "No favorites yet"
+    },
+    "list": "Favorite photos",
+    "loading": "Loading favorites"
+  },
+  "Gallery": {
+    "empty": {
+      "admin": "Add the first photos from Upload.",
+      "description": "When photos arrive, they will show here.",
+      "title": "No photos yet"
+    },
+    "error": {
+      "description": "Something went wrong on the way. Try again in a moment.",
+      "retry": "Try again",
+      "title": "The photos did not load"
+    },
+    "favorite": {
+      "add": "Add to favorites",
+      "failed": "The favorite could not be saved. Try again.",
+      "is": "A favorite",
+      "remove": "Remove from favorites",
+      "toggle": "Favorite"
+    },
+    "list": "Photos",
+    "loading": "Loading photos",
+    "more": {
+      "failed": "More photos could not be loaded.",
+      "load": "Show more photos",
+      "loading": "Loading more photos",
+      "retry": "Try again"
+    },
+    "photo": {
+      "open": "Open photo"
+    },
+    "preview": {
+      "close": "Close the photo",
+      "gone": "That photo is no longer there.",
+      "next": "Next photo",
+      "position": "Photo {index} of {total}",
+      "previous": "Previous photo",
+      "title": "Photo viewer"
+    },
+    "remove": {
+      "action": "Remove",
+      "cancel": "Keep photo",
+      "confirm": "Remove photo",
+      "description": "The photo leaves Laura for everyone, and is deleted if no other App holds it.",
+      "failed": "The photo could not be removed. Try again.",
+      "title": "Remove this photo from Laura?"
+    }
+  },
   "Metadata": {
     "description": "Our private place, just for the two of us."
   },

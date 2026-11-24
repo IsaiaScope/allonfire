@@ -181,6 +181,7 @@ describe("AddImage header", () => {
       enT("Images.add.pick.hint", {
         files: IMAGE.LIMIT.FILES_PER_UPLOAD,
         size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
+        total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
       })
     );
     await expect.element(hint).toBeVisible();

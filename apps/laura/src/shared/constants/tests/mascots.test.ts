@@ -10,11 +10,14 @@ describe("MASCOT", () => {
   it("names a picture that exists for every moment", () => {
     const keys = [
       MASCOT.ERROR,
+      MASCOT.GALLERY.EMPTY,
+      MASCOT.GALLERY.FAVORITES_EMPTY,
       MASCOT.GATE,
       MASCOT.INSTALL,
       MASCOT.LOADING,
       MASCOT.NOT_FOUND,
       MASCOT.OFFLINE,
+      MASCOT.REMOVE,
       ...objectValues(MASCOT.TOAST),
     ];
     for (const key of keys) {
@@ -59,5 +62,15 @@ describe("MASCOT", () => {
     expect(new Set([MASCOT.ERROR, MASCOT.NOT_FOUND, MASCOT.OFFLINE]).size).toBe(
       3
     );
+  });
+
+  it("tells the photos' moments apart: an empty Gallery, an empty Favorites and a failed load differ", () => {
+    expect(
+      new Set([
+        MASCOT.GALLERY.EMPTY,
+        MASCOT.GALLERY.FAVORITES_EMPTY,
+        MASCOT.ERROR,
+      ]).size
+    ).toBe(3);
   });
 });

@@ -137,9 +137,11 @@ Member of Laura sees it; only a Laura Admin adds to it.
 _Avoid_: album, photo stream, library
 
 **Favorite**:
-An Image of the Laura App that a Laura Admin marked, shown to every Member
-of Laura as one shared selection, never one per User. It exists only while
-the Image is placed in the Laura App: removing the placement removes it.
+An Image of the Laura App that a Laura Admin marked. The Admins keep one
+selection, and every Laura User holds it in their own Profile, so an Admin
+marking or clearing one changes it for all of them; a User cannot change theirs.
+It exists only while the Image is placed in the Laura App: removing the
+placement removes it everywhere.
 _Avoid_: like, heart, bookmark, starred
 
 **Memory game**:
@@ -229,6 +231,14 @@ _Avoid_: account, member, customer
 A User's place in one App, with their Role there. A User holds one per App
 they belong to; nothing spans every App.
 _Avoid_: Allowed apps, permissions, entitlements, account
+
+**Profile**:
+What one App remembers about one User beyond their access: their settings
+there and the things they saved. It belongs to the Membership, so ending the
+Membership removes it; the User, and their Profile in every other App, stay.
+An App's Profile is its own: no App reads another's. Where a Role says what
+a User may do, a Profile says what the App holds for them.
+_Avoid_: member, customer, account, settings
 
 **Registration**:
 Becoming a User through an App that allows it, which gives a Membership in that

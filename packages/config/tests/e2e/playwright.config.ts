@@ -44,7 +44,10 @@ const playwrightConfig = defineConfig({
   forbidOnly: isCi,
   fullyParallel: true,
   reporter: isCi ? [["github"], ["html", { open: "never" }]] : "list",
-  retries: isCi ? 2 : 0,
+  // Locally too: a flaky spec must not abort a commit (the pre-commit hook
+  // runs e2e). A retry passes as "flaky" and records the trace of the first
+  // failure (`trace: on-first-retry`).
+  retries: 2,
   testDir: "./e2e",
   // macOS writes `._name` AppleDouble twins on non-APFS volumes, and
   // Playwright would load `._smoke.spec.ts` as a test file.

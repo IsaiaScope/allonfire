@@ -5,6 +5,11 @@ import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { computedValue } from "../../../shared/tests/computed-style";
 import {
+  CAN_EMULATE_MEDIA,
+  clearSafeAreaInsets,
+  notchedPhone,
+} from "../../../shared/tests/emulated-media";
+import {
   AOFSectionPage,
   type AOFSectionPageProps,
 } from "../components/aof-section-page";
@@ -91,3 +96,53 @@ describe("AOFSectionPage", () => {
     }
   );
 });
+
+describe.runIf(CAN_EMULATE_MEDIA)(
+  "AOFSectionPage edge to edge, beside a notch",
+  () => {
+    const NOTCH_PX = 59;
+    const GUTTER_PX = 4;
+    afterEach(clearSafeAreaInsets);
+
+    /** The page as a frame holds it: `--frame-inset-left` is its own, set by the frame. */
+    const leftPaddingIn = async (frameInset: string) => {
+      await notchedPhone({
+        bottom: 21,
+        left: NOTCH_PX,
+        right: NOTCH_PX,
+        top: 0,
+      });
+      const screen = await render(
+        <div className={frameInset}>
+          <AOFSectionPage width="edge">Photos</AOFSectionPage>
+        </div>
+      );
+      const section = screen.container.querySelector("section");
+      return px(getComputedStyle(section ?? document.body).paddingLeft);
+    };
+
+    it("keeps the notch clear only once: beside a docked sidebar, which already clears it, the side is the bare gutter", async () => {
+      expect(await leftPaddingIn("[--frame-inset-left:0px]")).toBe(GUTTER_PX);
+    });
+
+    it("clears the notch itself when no sidebar stands beside it", async () => {
+      expect(
+        await leftPaddingIn(
+          "[--frame-inset-left:env(safe-area-inset-left,0px)]"
+        )
+      ).toBeGreaterThanOrEqual(NOTCH_PX);
+    });
+
+    it("keeps its right side and its bottom clear of what the screen reserves", async () => {
+      await notchedPhone({ bottom: 21, left: 0, right: NOTCH_PX, top: 0 });
+      const screen = await render(
+        <AOFSectionPage width="edge">Photos</AOFSectionPage>
+      );
+      const style = getComputedStyle(
+        screen.container.querySelector("section") ?? document.body
+      );
+      expect(px(style.paddingRight)).toBeGreaterThanOrEqual(NOTCH_PX);
+      expect(px(style.paddingBottom)).toBeGreaterThanOrEqual(21);
+    });
+  }
+);

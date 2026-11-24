@@ -250,8 +250,8 @@ describe("editUser, once saved", () => {
     expect(
       FAKE_API.sent.map(({ method, path }) => `${method} ${path}`)
     ).toEqual([
-      `${HTTP.METHOD.PATCH} ${API.PATH.USERS}${fillPath(USER.PATH.ONE, { id: ID })}`,
-      `${HTTP.METHOD.DELETE} ${API.PATH.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
+      `${HTTP.METHOD.PATCH} ${API.PATH.BACK_OFFICE.USERS}${fillPath(USER.PATH.ONE, { id: ID })}`,
+      `${HTTP.METHOD.DELETE} ${API.PATH.BACK_OFFICE.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
     ]);
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
     expect(state).toEqual({ notice: USERS.EDIT_NOTICE.SAVED });

@@ -4,9 +4,6 @@ import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import type { StationSignage } from "@/shared/components/station-notice";
 
-/** How long the private links a list holds stay valid, at least. */
-const LINK_SECONDS = IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR;
-
 const PAGE_SIZES = [25, 50, 100] as const;
 
 /**
@@ -52,11 +49,7 @@ export const IMAGES = {
    * reach it sooner).
    */
   CACHE: {
-    LIFE: {
-      expire: LINK_SECONDS,
-      revalidate: LINK_SECONDS / 2,
-      stale: 5 * UNIT.SECONDS_PER_MINUTE,
-    },
+    LIFE: IMAGE_SERVER.LINK_CACHE_LIFE,
     TAG: "images",
   },
   DEFAULT_PAGE: 1,

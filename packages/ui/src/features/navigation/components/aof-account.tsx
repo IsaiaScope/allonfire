@@ -68,7 +68,7 @@ export const AOFAccountPlaceholder = () => (
         render={<div />}
         size="lg"
       >
-        <span className="size-8 shrink-0 rounded-lg bg-muted group-data-[collapsible=icon]:mx-0.5" />
+        <span className="size-8 shrink-0 rounded-lg bg-muted group-data-[collapsible=icon]:mx-1" />
         <span className="grid flex-1 gap-1.5">
           <span className="h-3.5 w-28 rounded-sm bg-muted" />
           <span className="h-3 w-40 max-w-full rounded-sm bg-muted" />

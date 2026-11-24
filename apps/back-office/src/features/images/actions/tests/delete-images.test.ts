@@ -1,6 +1,7 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
+  answerDeleted,
   FAKE_API,
   resetFakeApi,
 } from "@allonfire/core/features/next/api/tests/fake-api";
@@ -25,15 +26,9 @@ beforeEach(() => {
   vi.mocked(updateTag).mockClear();
 });
 
-const answeredDeleted = (deleted: number) =>
-  FAKE_API.answers.set(HTTP.METHOD.DELETE, {
-    body: { deleted },
-    status: HTTP.STATUS.OK,
-  });
-
 describe("deleteImages", () => {
   it("sends the ids, answers how many went and updates the Images and Storage tags", async () => {
-    answeredDeleted(IDS.length);
+    answerDeleted(IDS.length);
     expect(await deleteImages(IDS)).toBe(IDS.length);
     expect(FAKE_API.sent[0]?.body).toEqual({ ids: IDS });
     expect(updateTag).toHaveBeenCalledWith(IMAGES.CACHE.TAG);
@@ -41,7 +36,7 @@ describe("deleteImages", () => {
   });
 
   it("answers fewer, and still clears the kept copies, when another Admin deleted some already", async () => {
-    answeredDeleted(0);
+    answerDeleted(0);
     expect(await deleteImages(IDS)).toBe(0);
     expect(updateTag).toHaveBeenCalledWith(IMAGES.CACHE.TAG);
     expect(updateTag).toHaveBeenCalledWith(STORAGE.CACHE.TAG);

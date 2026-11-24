@@ -1,6 +1,11 @@
 // @module-tag unit
-import { QueryClient } from "@tanstack/react-query";
 import {
+  QueryClient,
+  type QueryKey,
+  QueryObserver,
+} from "@tanstack/react-query";
+import {
+  invalidateAll,
   optimisticMutation,
   type PatchCache,
 } from "../utils/optimistic-mutation";
@@ -14,6 +19,7 @@ type Action = (variables: string) => Promise<string | null>;
 const optionsOf = (
   action: Action,
   extra: {
+    keeps?: (variables: string) => readonly QueryKey[];
     patchCache?: PatchCache<string>;
     scope?: string;
   } = {}
@@ -174,5 +180,73 @@ describe("optimisticMutation, with a cache patch", () => {
     releaseFirst();
     await Promise.all([firstRun, secondRun]);
     expect(order).toEqual(["first starts", "first ends", "second starts"]);
+  });
+});
+
+describe("optimisticMutation, with keeps", () => {
+  const watchPages = async (queryClient: QueryClient) => {
+    const queryFn = vi.fn(() => Promise.resolve("data"));
+    new QueryObserver(queryClient, {
+      queryFn,
+      queryKey: PAGES,
+      staleTime: "static",
+    }).subscribe(() => undefined);
+    await vi.waitUntil(() => queryClient.getQueryData(PAGES) === "data");
+    return queryFn;
+  };
+
+  it("leaves an active read it keeps as the patch made it, once saved", async () => {
+    const queryClient = new QueryClient();
+    const queryFn = await watchPages(queryClient);
+    await run(
+      queryClient,
+      optionsOf(() => Promise.resolve("ok"), { keeps: () => [PAGES] })
+    );
+    expect(queryFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads it again when the save fails: the cache is no longer known", async () => {
+    const queryClient = new QueryClient();
+    const queryFn = await watchPages(queryClient);
+    await run(
+      queryClient,
+      optionsOf(() => Promise.resolve(null), { keeps: () => [PAGES] })
+    ).catch(() => undefined);
+    expect(queryFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("asks which keys to keep with the variables it ran with", async () => {
+    const queryClient = new QueryClient();
+    const keeps = vi.fn(() => [PAGES] as const);
+    await run(
+      queryClient,
+      optionsOf(() => Promise.resolve("ok"), { keeps }),
+      "photo-1"
+    );
+    expect(keeps).toHaveBeenCalledWith("photo-1");
+  });
+});
+
+describe("invalidateAll", () => {
+  it("reads an active static query under each key again", async () => {
+    const queryClient = new QueryClient();
+    const reads = [PAGES, OVERVIEW].map((queryKey) => {
+      const queryFn = vi.fn(() => Promise.resolve("data"));
+      new QueryObserver(queryClient, {
+        queryFn,
+        queryKey,
+        staleTime: "static",
+      }).subscribe(() => undefined);
+      return { queryFn, queryKey };
+    });
+    await vi.waitFor(() =>
+      expect(
+        reads.every(({ queryKey }) => queryClient.getQueryData(queryKey))
+      ).toBe(true)
+    );
+    await invalidateAll(queryClient, [PAGES, OVERVIEW]);
+    expect(reads.map(({ queryFn }) => queryFn.mock.calls.length)).toEqual([
+      2, 2,
+    ]);
   });
 });

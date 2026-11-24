@@ -2,6 +2,7 @@
 
 import type { ApiType } from "@allonfire/api/client";
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { answeringApi } from "@allonfire/core/features/next/api/tests/answering-api";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { hc } from "hono/client";
@@ -49,17 +50,8 @@ describe("imageQuery", () => {
   });
 });
 
-/** A client whose fetch answers `body` and records the URL it was asked. */
-const answering = (body: unknown) => {
-  const seen: URL[] = [];
-  const client = hc<ApiType>(LOCAL.URL.TEST_API, {
-    fetch: (input: RequestInfo | URL) => {
-      seen.push(new URL(new Request(input).url));
-      return Promise.resolve(Response.json(body));
-    },
-  });
-  return { client, seen };
-};
+const answering = (body: unknown) =>
+  answeringApi(hc<ApiType>, LOCAL.URL.TEST_API, body);
 
 describe("fetchImages", () => {
   it("asks for the numbered page and answers its body", async () => {

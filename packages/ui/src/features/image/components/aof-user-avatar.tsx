@@ -1,4 +1,5 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import { hostOf } from "@allonfire/core/shared/utils/url";
 import { AOFImage } from "../../../shared/components/aof-image";
 import type { ComponentPropsWithoutChildren } from "../../../shared/types/types";
 import { cn } from "../../../shared/utils/utils";
@@ -13,7 +14,7 @@ const hideOnError = ({ currentTarget }: { currentTarget: HTMLElement }) => {
 
 /** A sign-in provider's picture, which the App's optimizer may fetch. */
 const fromProvider = (image: string): boolean => {
-  const host = URL.parse(image)?.hostname;
+  const host = hostOf(image);
   return AUTH.PICTURE_HOSTS.some((picture) => picture === host);
 };
 

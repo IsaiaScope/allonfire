@@ -1,4 +1,4 @@
-import { STORAGE_USAGE } from "@allonfire/api/features/storage-usage/constants/storage-usage";
+import { BACK_OFFICE } from "@allonfire/api/features/back-office/constants/back-office";
 import type { ValueOf } from "@allonfire/core/shared/utils/object";
 import { IconPhoto, type TablerIcon } from "@tabler/icons-react";
 import { STORAGE } from "./storage";
@@ -18,11 +18,11 @@ export type BucketView = {
  */
 export const BUCKET_VIEW = {
   /** Images and Avatars share the bucket. 写, a photograph. */
-  [STORAGE_USAGE.BUCKET_KIND.IMAGE]: {
+  [BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND.IMAGE]: {
     icon: IconPhoto,
     kanji: STORAGE.KANJI.IMAGE,
   },
 } as const satisfies Record<
-  ValueOf<typeof STORAGE_USAGE.BUCKET_KIND>,
+  ValueOf<typeof BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND>,
   BucketView
 >;

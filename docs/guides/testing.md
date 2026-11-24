@@ -39,7 +39,7 @@ neither fails. Integration tests need a running service (database, cache,
 queue, external API) and are named
 `*.integration.test.ts`. They never touch the Local database: a Vitest
 `globalSetup` clones a Test database per package per run from the template
-(`allonfire_test_template_<epoch>_<fingerprint>`: the changelog plus the
+(`aof_test_template_<YYMMDD>_<HHMMSS>_<fingerprint>`: the changelog plus the
 Fixtures, a new one when `changelog/`, `liquibase/` or `src/features/seed/`
 change) and a bucket per run holding the
 Image Fixtures, and drops both when the run ends (`dropWhenRunEnds`); a
@@ -113,7 +113,7 @@ merge or a rebase is not re-checked by the next hook; CI still checks it.
 `pnpm check` by hand stays whole-repo. e2e runs the
 App's production build, served like the Docker image (standalone server),
 plus the API, on their own ports (3310 and the App's e2e port) beside
-`pnpm dev`, the same locally and in CI; the Apps share the API's and the mail sink's ports, so `pnpm e2e:run` runs them one at a time (`--concurrency=1`). Turbo's cache replays every task
+`pnpm dev`, the same locally and in CI, with two retries in both, so a flaky spec passes as "flaky" with its trace saved instead of aborting a commit; the Apps share the API's and the mail sink's ports, so `pnpm e2e:run` runs them one at a time (`--concurrency=1`). Turbo's cache replays every task
 whose package and dependencies did not change, e2e included, and the remote
 cache lets CI replay an e2e run that passed
 locally. A package test that reads a repo file outside its package lists that

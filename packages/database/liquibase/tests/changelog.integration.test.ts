@@ -27,7 +27,7 @@ const AUTH_TABLES = [
   "User",
   "Verification",
 ];
-const LAURA_TABLES = ["GameScore"];
+const LAURA_TABLES = ["Favorite", "GameScore", "Profile", "ProfileFavorite"];
 const IMAGE_TABLES = ["Image", "ImageApp"];
 /** What the baseline holds in public; 0003 dropped Laura's photo and quiz tables, its rollback brings them back. */
 const BASELINE_TABLES = [
@@ -35,7 +35,7 @@ const BASELINE_TABLES = [
   "Session",
   "User",
   "Verification",
-  ...LAURA_TABLES,
+  "GameScore",
   "Favorite",
   "Photo",
   "QuizAnswer",
@@ -63,6 +63,25 @@ const rolesOf = async (client: PrismaClient) =>
       SELECT unnest(enum_range(NULL::auth."Role"))::TEXT AS role
     `
   ).map(({ role }) => role);
+
+/** The columns of a laura table, sorted, and its primary key's columns, sorted. */
+const lauraShapeOf = async (client: PrismaClient, table: string) => {
+  const columns = await client.$queryRaw<{ column_name: string }[]>`
+    SELECT column_name FROM information_schema.columns
+    WHERE table_schema = 'laura' AND table_name = ${table}
+    ORDER BY column_name
+  `;
+  const key = await client.$queryRaw<{ attname: string }[]>`
+    SELECT a.attname FROM pg_index i
+    JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+    WHERE i.indrelid = ('laura."' || ${table} || '"')::regclass AND i.indisprimary
+    ORDER BY a.attname
+  `;
+  return {
+    columns: columns.map(({ column_name }) => column_name),
+    key: key.map(({ attname }) => attname),
+  };
+};
 
 /** Every changeset above the baseline, so the rollback test survives new ones. */
 const CHANGESETS_AFTER_BASELINE =
@@ -137,6 +156,38 @@ describe("changelog on an empty database", () => {
   it("leaves nothing of ours in public", async () => {
     expect(await tablesIn(client, "public")).toEqual([]);
   });
+
+  it.each([
+    [
+      "Favorite",
+      { columns: ["app", "createdAt", "imageId"], key: ["imageId"] },
+    ],
+    [
+      "Profile",
+      { columns: ["app", "createdAt", "userId"], key: ["app", "userId"] },
+    ],
+    [
+      "ProfileFavorite",
+      {
+        columns: ["app", "createdAt", "imageId", "userId"],
+        key: ["imageId", "userId"],
+      },
+    ],
+  ])(
+    "shapes laura.%s: its columns and its primary key",
+    async (table, shape) => {
+      expect(await lauraShapeOf(client, table)).toEqual(shape);
+    }
+  );
+
+  it(
+    "drops the Favorite and Profile tables when 0009 is rolled back, the last test here",
+    async () => {
+      liquibase(url, "rollback-count", "--count=1");
+      expect(await tablesIn(client, "laura")).toEqual(["GameScore"]);
+    },
+    TEST_DATABASE.DOCKER_TIMEOUT_MS
+  );
 });
 
 describe("changelog on a database that already has the tables", () => {

@@ -107,17 +107,23 @@
 
 ### Task 1: The changeset and the Prisma schema (Memory-only `GameScore`)
 
+> **Many games amendment (2026-11-20, ADR 0034):** one typed table per game, no polymorphic score table. The table is renamed in the same changeset: `ALTER TABLE "laura"."GameScore" RENAME TO "MemoryScore"`, with its primary key, indexes, foreign key and CHECK renamed to `MemoryScore_*` so Prisma's names match (`MemoryScore_plausible_check`, `MemoryScore_score_timeMs_idx`, `MemoryScore_userId_score_timeMs_idx`, `MemoryScore_pkey`); the Prisma model is `MemoryScore` (`@@map("MemoryScore")` is the default) and `LauraProfile.memoryScores MemoryScore[]`. Everywhere below, read `GameScore` as `MemoryScore` and `00NN-memory-only-game-scores` as `00NN-memory-score` (the changeset id and file). A future game (for example a Quiz) adds `laura."QuizScore"` with its own columns, CHECKs and indexes under the same Profile, its own service, and its routes under `/v1/laura/games/<game>/`; a leaderboard is that game's own query, since games rank by different rules. Tests add: the old rows are readable from `laura."MemoryScore"` after the rename and `laura` has no `GameScore` table; the rollback renames it back.
+
+> **Profile amendment (2026-11-20, ADR 0034):** a score belongs to the User's Laura Profile, not to `auth.User`, so `auth.User` lists no `gameScores` line. `laura."GameScore"` gains `app` (always `laura`, a CHECK, default `laura`) and its foreign key becomes `("userId", "app")` to `laura."Profile"("userId", "app")` with `ON DELETE CASCADE`; the `userId` foreign key to `auth."User"` is dropped. Prisma: `GameScore.profile LauraProfile @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)`, `LauraProfile.gameScores GameScore[]`, and `User.gameScores` removed from `auth.prisma`. The changeset first makes a Profile (with its Favorite copies, `INSERT ... SELECT` from `laura."Favorite"`, `ON CONFLICT DO NOTHING`) for every User who has a score and a Laura Membership, and deletes the scores of Users with no Laura Membership (the leaderboard never listed them). Tests add: a score of a Laura Member survives and its Profile exists with the master Favorites copied; a score of a User with no Laura Membership is gone; the database refuses a score for a pair with no Profile; deleting the Laura Membership removes the Profile and its scores; `auth."User"` has no `GameScore` foreign key after the changeset; the rollback restores the `userId` foreign key to `auth."User"`.
+
 **Files:**
 - Modify: `packages/database/prisma/schema/apps/laura.prisma`, `packages/database/liquibase/tests/changelog.integration.test.ts`
 - Create: `packages/database/changelog/changesets/00NN-memory-only-game-scores.sql` (via `pnpm db:changeset memory-only-game-scores`, then hand-edited)
 
-**Interfaces:** Produces the table `laura."GameScore"` = `id`, `userId` (cascade), `score INT NOT NULL` (Prisma field `moves`), `timeMs INT NOT NULL`, `createdAt`; indexes `GameScore_score_timeMs_idx`, `GameScore_userId_score_timeMs_idx` (names as Prisma drafts them: reconcile); constraint `GameScore_plausible_check`; no `GameType` enum, no `gameType`, no `metadata`. Prisma model:
+**Interfaces:** Produces the table `laura."GameScore"` = `id`, `userId` and `app` (a composite foreign key to `laura."Profile"`, cascade), `score INT NOT NULL` (Prisma field `moves`), `timeMs INT NOT NULL`, `createdAt`; indexes `GameScore_score_timeMs_idx`, `GameScore_userId_score_timeMs_idx` (names as Prisma drafts them: reconcile); constraint `GameScore_plausible_check`; no `GameType` enum, no `gameType`, no `metadata`. Prisma model:
 
 ```prisma
 model GameScore {
   id        String   @id @default(cuid(2))
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Always LAURA (a CHECK in the changeset).
+  app       App      @default(LAURA)
+  profile   LauraProfile @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)
   /// Moves (two cards turned) it took to match every pair; fewer is better.
   moves     Int      @map("score")
   timeMs    Int
@@ -191,6 +197,8 @@ it("is 12 cards of 6 pairs", () => expect(MEMORY_RULE.CARDS).toBe(MEMORY_RULE.PA
 - [ ] Step 4: run, expected PASS.
 
 ### Task 3: The game-score service, Memory only
+
+> **Many games amendment (2026-11-20, ADR 0034):** the service file is `memory-score.service.ts` (renamed from `game-score.service.ts`, test `memory-score.integration.test.ts`, export key `./features/apps/laura/memory-score.service`; the Prisma delegate is `prisma.memoryScore`, the SQL reads `laura."MemoryScore"`). Each future game gets its own `<game>-score.service.ts`; nothing here is generic over games, and no `gameType` argument is added.
 
 **Files:**
 - Modify: `packages/database/src/features/apps/laura/game-score.service.ts` (read it first: `submitGameScore`, `getLeaderboard`, `getGlobalBestScore`, `getUserBestScore`, `getUserGameStats`, `getGameStats`, `getScoreOrderBy` with its QUIZ branch all go), `packages/database/package.json` (key already exists)
@@ -300,6 +308,8 @@ Schemas (`.meta({ ref })` names `MemoryDeck`, `MemoryScoreInput`, `MemoryScore`,
 - [ ] Step 4: run, expected PASS; `pnpm --filter @allonfire/api check-types`.
 
 ### Task 7: `POST /v1/laura/games/memory/scores`
+
+> **Profile amendment (2026-11-20, ADR 0034):** the handler runs `deps.ensureProfile(userId)` after the guards and before the write (403 when it answers false), as the Gallery reads do, so the score's Profile exists. `GamesDeps` gains `ensureProfile: typeof ensureLauraProfile`; the Task 6 deck route and the Task 8 reads need no Profile.
 
 **Files:**
 - Modify: `apps/api/src/features/laura/games/routes/{routes,handlers}.ts`
@@ -545,6 +555,8 @@ Data checklist, point by point:
 - Modify: `docs/guides/next-apps.md`, `docs/guides/api.md`, `packages/database/README.md`, `CONTEXT.md`, `knip.jsonc`, `packages/config/local/tests/package-exports.test.ts`
 
 **Interfaces:** none produced; documents Tasks 1 to 19.
+
+> **Many games amendment (2026-11-20):** read `game-score.service` as `memory-score.service` and `GameScore` as `MemoryScore` in this task, and add to `docs/guides/laura.md` a short "Adding a game" recipe: a typed `<Game>Score` table under `LauraProfile` (one changeset, its CHECKs and indexes), `<game>-score.service.ts`, routes under `/v1/laura/games/<game>/`, its own leaderboard query and its own Section page; never a shared score table with a `gameType` or a JSON score (ADR 0034).
 
 - [ ] Step 1: tests that already guard this: `package-exports.test.ts` fails once `./features/apps/laura/game-score.service` has a reader outside the package (the API) and still sits in `KEPT.database`; delete that entry (and the `./features/apps/laura/constants/memory-rule` key has two readers, the API and Laura, so it needs none). Run it first: `pnpm --filter @allonfire/config exec vitest run local/tests/package-exports.test.ts`, expected FAIL until the entry is removed.
 - [ ] Step 2: edit: `knip.jsonc` drops the `game-score.service.ts` accept entry and its "held only by Laura" comment (the API reads it now); `packages/database/README.md` fixes line 24 (`laura` holds `GameScore` only: the Quiz tables went in changeset 0003, `GameType` in this one), the services row (`submitMemoryScore`, `memoryLeaderboard`, `memoryStats`, `userMemoryStats`, `randomImages` under the Image service row, `MEMORY_RULE`) and its `import { getLeaderboard }` example; `docs/guides/api.md` one bullet under "Guards, env, Redis, i18n": the Laura games routes (`features/laura/games`), the deck is never cached (`no-cache`, a client draw), a score's write asks the Session fresh through `canPlay`, and `IMPLAUSIBLE_SCORE`; `docs/guides/next-apps.md` one bullet under "Reading and changing data": "A read whose point is randomness (Laura's Memory deck) is a TanStack `useQuery` with `staleTime: "static"`, `gcTime: 0` and a key per play outside the prefix a change refreshes, never hydrated from the private cache (its copy would repeat the draw), asked by the browser behind the page's skeleton; the checklist's point 1 applies to the TanStack half only"; `CONTEXT.md` Memory game entry gains "ranked by fewest moves, then the faster time, the best game of each current Member of Laura; a game that no player could have produced is refused".

@@ -1,4 +1,5 @@
 // @module-tag integration
+import { stampTime } from "@allonfire/config/tests/run/test-run";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
@@ -17,7 +18,7 @@ import { s3 } from "../../s3/utils/client";
 import { dropTestBucketsOf, sweepTestBuckets } from "../utils/bucket";
 import { testBucketName } from "../utils/names";
 
-const RUN_BUCKET = /^allonfire-test-storage-/;
+const RUN_BUCKET = /^aof-test-storage-/;
 
 it("holds every Image Fixture as AVIF, cached like an upload, in the run's closed bucket", async () => {
   expect(env.STORAGE_BUCKET).toMatch(RUN_BUCKET);
@@ -42,7 +43,7 @@ it("lets two runs sweep the same crashed run's bucket at once", async () => {
     Math.floor(Date.now() / UNIT.MS_PER_SECOND) - 2 * UNIT.SECONDS_PER_DAY;
   // Empty, and stale by its name: any package's run sweeps it, this one's or
   // another running beside it, so only "gone, and nobody threw" is certain.
-  const stale = testBucketName("sweeptest", `${twoDaysAgo}_crash1`);
+  const stale = testBucketName("sweeptest", `${stampTime(twoDaysAgo)}_crash1`);
   await s3.send(new CreateBucketCommand({ Bucket: stale }));
   await Promise.all([sweepTestBuckets(), sweepTestBuckets()]);
   const { Buckets = [] } = await s3.send(new ListBucketsCommand({}));
@@ -51,8 +52,8 @@ it("lets two runs sweep the same crashed run's bucket at once", async () => {
 
 it("drops every earlier run of a label, however young and whatever it holds, and no other label's", async () => {
   const now = Math.floor(Date.now() / UNIT.MS_PER_SECOND);
-  const mine = testBucketName("solotest", `${now}_young1`);
-  const other = testBucketName("solotest-two", `${now}_young2`);
+  const mine = testBucketName("solotest", `${stampTime(now)}_young1`);
+  const other = testBucketName("solotest-two", `${stampTime(now)}_young2`);
   await Promise.all(
     [mine, other].map((Bucket) => s3.send(new CreateBucketCommand({ Bucket })))
   );

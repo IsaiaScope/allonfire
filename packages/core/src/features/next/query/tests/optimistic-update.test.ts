@@ -24,6 +24,21 @@ describe("optimisticUpdate", () => {
     expect(queryClient.getQueryData(FIRST)).toEqual([1, 2]);
   });
 
+  it("keeps the age of the data it patches, and gives it back on a rollback", async () => {
+    const queryClient = new QueryClient();
+    const read = Date.now() - 45 * 60_000;
+    queryClient.setQueryData(FIRST, [1, 2], { updatedAt: read });
+    const rollback = await optimisticUpdate<Numbers>(
+      queryClient,
+      PAGES,
+      doubled
+    );
+    // A patch is not a read: the links in the data keep ageing from `read`.
+    expect(queryClient.getQueryState(FIRST)?.dataUpdatedAt).toBe(read);
+    rollback();
+    expect(queryClient.getQueryState(FIRST)?.dataUpdatedAt).toBe(read);
+  });
+
   it("patches every query under the prefix and restores them all", async () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(FIRST, [1]);

@@ -22,7 +22,9 @@ import { createApp } from "../../../app";
 import { API } from "../../../shared/constants/api";
 import { apiAuth, appDeps } from "../../../shared/tests/app-deps";
 import type { AppBindings } from "../../../shared/types/bindings";
+import { BACK_OFFICE } from "../../back-office/constants/back-office";
 import { healthRoutes } from "../../health/routes/index";
+import { LAURA } from "../../laura/constants/laura";
 import { SERVICES } from "../../services/constants/services";
 import { docsRoutes } from "../routes";
 
@@ -213,6 +215,191 @@ describe("GET /openapi.json", () => {
   });
 });
 
+describe("GET /openapi.json: the admin console", () => {
+  it("lists the Users routes and the two overviews under the back-office prefix, the overviews under one overview prefix", async () => {
+    const { paths } = z
+      .object({ paths: z.record(z.string(), z.unknown()) })
+      .parse(await fullSpec());
+    const listed = objectKeys(paths);
+    const underBackOffice = listed.filter((path) =>
+      path.startsWith(`${API.PATH.VERSION}/back-office/`)
+    );
+    expect(underBackOffice).toEqual(
+      expect.arrayContaining([
+        API.PATH.BACK_OFFICE.USERS,
+        `${API.PATH.BACK_OFFICE.USERS}${openApiPath(USER.PATH.ONE)}`,
+        `${API.PATH.BACK_OFFICE.USERS}${openApiPath(USER.PATH.AVATAR)}`,
+        API.PATH.BACK_OFFICE.OVERVIEW.USERS,
+        API.PATH.BACK_OFFICE.OVERVIEW.STORAGE,
+      ])
+    );
+    expect(underBackOffice).toHaveLength(5);
+  });
+
+  it("no longer lists the Users routes or the overviews at their old paths", async () => {
+    const { paths } = z
+      .object({ paths: z.record(z.string(), z.unknown()) })
+      .parse(await fullSpec());
+    const outside = objectKeys(paths).filter(
+      (path) => !path.startsWith(`${API.PATH.BACK_OFFICE.BASE}/`)
+    );
+    const moved = [
+      USER.PATH.BASE,
+      BACK_OFFICE.OVERVIEW.STORAGE.PATH.BASE,
+      BACK_OFFICE.OVERVIEW.USERS.PATH.BASE,
+    ];
+    expect(
+      outside.filter((path) => moved.some((base) => path.includes(base)))
+    ).toEqual([]);
+  });
+});
+
+describe("GET /openapi.json: tags and their groups", () => {
+  const groupedSpecSchema = z.object({
+    paths: z.record(
+      z.string(),
+      z.record(z.string(), z.object({ tags: z.array(z.string()).optional() }))
+    ),
+    "x-tagGroups": z.array(
+      z.object({ name: z.string(), tags: z.array(z.string()) })
+    ),
+  });
+  const read = async () => groupedSpecSchema.parse(await fullSpec());
+  const groupNamed = (
+    document: z.infer<typeof groupedSpecSchema>,
+    name: string
+  ) => document["x-tagGroups"].find((group) => group.name === name)?.tags;
+  const usedTags = (document: z.infer<typeof groupedSpecSchema>) => [
+    ...new Set(
+      objectValues(document.paths).flatMap((methods) =>
+        objectValues(methods).flatMap((operation) => operation.tags ?? [])
+      )
+    ),
+  ];
+
+  it("groups the Back Office's tags and Laura's, so the docs nest them", async () => {
+    const document = await read();
+    expect(groupNamed(document, BACK_OFFICE.OPENAPI_GROUP)).toEqual([
+      USER.OPENAPI_TAG,
+      BACK_OFFICE.OVERVIEW.OPENAPI_TAG,
+    ]);
+    expect(groupNamed(document, LAURA.OPENAPI_GROUP)).toEqual([
+      LAURA.GALLERY.OPENAPI_TAG,
+      LAURA.FAVORITES.OPENAPI_TAG,
+    ]);
+  });
+
+  it("lists every tag an operation uses in exactly one group, and no tag that nothing uses", async () => {
+    const document = await read();
+    const grouped = document["x-tagGroups"].flatMap(({ tags }) => tags);
+    const used = usedTags(document);
+    expect(grouped).toEqual(expect.arrayContaining(used));
+    // The Auth module describes its own endpoints, which this stub leaves out.
+    expect(used).toEqual(
+      expect.arrayContaining(grouped.filter((tag) => tag !== AUTH.OPENAPI_TAG))
+    );
+    expect(new Set(grouped).size).toBe(grouped.length);
+  });
+
+  it("tags each route by its own feature, under its App's prefix", async () => {
+    const { paths } = await read();
+    const tagsUnder = (prefix: string) =>
+      new Set(
+        objectKeys(paths)
+          .filter((path) => path.startsWith(`${prefix}/`))
+          .flatMap((path) =>
+            objectValues(paths[path] ?? {}).flatMap((op) => op.tags ?? [])
+          )
+      );
+    expect(tagsUnder(API.PATH.BACK_OFFICE.BASE)).toEqual(
+      new Set([USER.OPENAPI_TAG, BACK_OFFICE.OVERVIEW.OPENAPI_TAG])
+    );
+    expect(tagsUnder(API.PATH.LAURA.BASE)).toEqual(
+      new Set([LAURA.GALLERY.OPENAPI_TAG, LAURA.FAVORITES.OPENAPI_TAG])
+    );
+  });
+});
+
+describe("GET /openapi.json: Laura", () => {
+  const LAURA_PATHS = [API.PATH.LAURA.GALLERY, API.PATH.LAURA.FAVORITES];
+  const lauraSpecSchema = z.object({
+    components: z.object({
+      schemas: z.object({
+        GalleryItem: z.object({ required: z.array(z.string()) }),
+      }),
+    }),
+    paths: z.record(
+      z.string(),
+      z.object({
+        get: z
+          .object({
+            responses: z.record(
+              z.string(),
+              z.looseObject({ $ref: z.string().optional() })
+            ),
+            tags: z.array(z.string()),
+          })
+          .optional(),
+      })
+    ),
+  });
+
+  it.each(LAURA_PATHS)(
+    "lists %s under the Laura tag with the problem responses",
+    async (path) => {
+      const { paths } = lauraSpecSchema.parse(await fullSpec());
+      const get = paths[path]?.get;
+      expect(get?.tags).toHaveLength(1);
+      expect(get?.responses[HTTP.STATUS.OK]).toBeDefined();
+      for (const status of [
+        HTTP.STATUS.BAD_REQUEST,
+        HTTP.STATUS.UNAUTHORIZED,
+        HTTP.STATUS.FORBIDDEN,
+      ]) {
+        expect(get?.responses[status]?.$ref).toBe(
+          `#/components/responses/${problemResponseName(status)}`
+        );
+      }
+    }
+  );
+
+  it("documents the Favorite writes with 401 and 403, and 404 for the mark", async () => {
+    const { paths } = z
+      .object({
+        paths: z.record(
+          z.string(),
+          z.record(
+            z.string(),
+            z.object({ responses: z.record(z.string(), z.unknown()) })
+          )
+        ),
+      })
+      .parse(await fullSpec());
+    const one =
+      paths[`${LAURA_PATHS[1]}${openApiPath(LAURA.FAVORITES.PATH.ONE)}`];
+    const codes = (method: string) =>
+      objectKeys(one?.[method]?.responses ?? {});
+    expect(codes("put")).toEqual(
+      expect.arrayContaining([
+        String(HTTP.STATUS.UNAUTHORIZED),
+        String(HTTP.STATUS.FORBIDDEN),
+        String(HTTP.STATUS.NOT_FOUND),
+      ])
+    );
+    expect(codes("delete")).toEqual(
+      expect.arrayContaining([
+        String(HTTP.STATUS.UNAUTHORIZED),
+        String(HTTP.STATUS.FORBIDDEN),
+      ])
+    );
+  });
+
+  it("makes the Favorite flag of a Gallery item required", async () => {
+    const { components } = lauraSpecSchema.parse(await fullSpec());
+    expect(components.schemas.GalleryItem.required).toContain("favorite");
+  });
+});
+
 const problemSpecSchema = z.object({
   components: z.object({
     responses: z.record(z.string(), z.unknown()),
@@ -323,7 +510,7 @@ describe("GET /openapi.json error responses", () => {
     "documents $method /users under Users, with its refusals",
     async ({ method, statuses }) => {
       const { paths } = specSchema.parse(await fullSpec());
-      const operation = paths[API.PATH.USERS]?.[method];
+      const operation = paths[API.PATH.BACK_OFFICE.USERS]?.[method];
       expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
       expect(objectKeys(operation?.responses ?? {})).toEqual(
         expect.arrayContaining(statuses.map(String))
@@ -442,7 +629,9 @@ describe("GET /openapi.json one User", () => {
     async ({ method, statuses }) => {
       const { paths } = specSchema.parse(await fullSpec());
       const operation =
-        paths[`${API.PATH.USERS}${openApiPath(USER.PATH.ONE)}`]?.[method];
+        paths[`${API.PATH.BACK_OFFICE.USERS}${openApiPath(USER.PATH.ONE)}`]?.[
+          method
+        ];
       expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
       expect(objectKeys(operation?.responses ?? {})).toEqual(
         expect.arrayContaining(
@@ -476,7 +665,9 @@ describe("GET /openapi.json Avatars", () => {
     async ({ method, status }) => {
       const { paths } = specSchema.parse(await fullSpec());
       const operation =
-        paths[`${API.PATH.USERS}${openApiPath(USER.PATH.AVATAR)}`]?.[method];
+        paths[
+          `${API.PATH.BACK_OFFICE.USERS}${openApiPath(USER.PATH.AVATAR)}`
+        ]?.[method];
       expect(operation?.tags).toEqual([USER.OPENAPI_TAG]);
       expect(objectKeys(operation?.responses ?? {})).toEqual(
         expect.arrayContaining(

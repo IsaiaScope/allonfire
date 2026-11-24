@@ -76,10 +76,11 @@ jobs:
           context: .
           file: ${{ matrix.unit == 'db-migrate' && 'packages/database/liquibase/Dockerfile' || 'docker/Dockerfile' }}
           target: ${{ matrix.unit == 'api' && 'node-runner' || '' }}
+          # Only the Back Office reads BACK_OFFICE_URL; Laura never does.
           build-args: |
             APP_NAME=${{ matrix.unit }}
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            BACK_OFFICE_URL=${{ secrets.BACK_OFFICE_URL }}
+            BACK_OFFICE_URL=${{ matrix.unit == 'back-office' && secrets.BACK_OFFICE_URL || '' }}
             LAURA_URL=${{ secrets.LAURA_URL }}
           platforms: linux/arm64
           push: true

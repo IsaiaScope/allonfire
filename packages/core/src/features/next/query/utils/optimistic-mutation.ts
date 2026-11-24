@@ -3,6 +3,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
+import { invalidateStatic } from "./invalidate-static";
 import type { Rollback } from "./optimistic-update";
 
 /** Writes the cache before the server answers; answers how to undo it. */
@@ -11,13 +12,18 @@ export type PatchCache<TVariables> = (
   variables: TVariables
 ) => Promise<Rollback>;
 
-/** Reads every key again in this browser; settles once all of them have answered. */
+/**
+ * Reads every key again in this browser; settles once all of them have
+ * answered. A `staleTime: "static"` query is read again too (`invalidateStatic`),
+ * except an active one under a `keep` key.
+ */
 export const invalidateAll = async (
   queryClient: QueryClient,
-  keys: readonly QueryKey[]
+  keys: readonly QueryKey[],
+  keep: readonly QueryKey[] = []
 ) => {
   await Promise.all(
-    keys.map((queryKey) => queryClient.invalidateQueries({ queryKey }))
+    keys.map((queryKey) => invalidateStatic(queryClient, queryKey, { keep }))
   );
 };
 
@@ -41,6 +47,7 @@ export const optimisticMutation = <
 >({
   action,
   invalidates,
+  keeps,
   mutationKey,
   patchCache,
   scope,
@@ -48,6 +55,12 @@ export const optimisticMutation = <
   action: (variables: TVariables) => Promise<TResult | null>;
   /** The kept reads this browser holds that the change moves. */
   invalidates: readonly QueryKey[];
+  /**
+   * Keys under `invalidates` the patch left exactly right (the action's answer
+   * is the state it wrote): once saved, an active read there is kept as
+   * patched, not read again page after page. A save that fails reads them all.
+   */
+  keeps?: (variables: TVariables) => readonly QueryKey[];
   mutationKey: TKey;
   patchCache?: PatchCache<TVariables>;
   scope?: string;
@@ -70,8 +83,12 @@ export const optimisticMutation = <
     // TanStack hands the client last, after the answer, error, variables and
     // the patch's rollback.
     onSettled: async (...callbackArgs) => {
-      const [, , , , { client: queryClient }] = callbackArgs;
-      await invalidateAll(queryClient, invalidates);
+      const [, error, variables, , { client: queryClient }] = callbackArgs;
+      await invalidateAll(
+        queryClient,
+        invalidates,
+        error === null && keeps ? keeps(variables) : []
+      );
     },
     retry: false,
     ...(scope === undefined ? {} : { scope: { id: scope } }),

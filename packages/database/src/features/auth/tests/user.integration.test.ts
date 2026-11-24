@@ -630,6 +630,35 @@ describe("readUser and updateUser", () => {
     expect(await sessionsOf(id)).toHaveLength(2);
   });
 
+  it("keeps the Profile of a Membership the edit leaves in place", async () => {
+    const { id } = await edited();
+    await prisma.lauraProfile.create({ data: { app: App.LAURA, userId: id } });
+    await updateNow(id, {
+      memberships: [
+        { app: App.LAURA, role: Role.ADMIN },
+        { app: App.BACK_OFFICE, role: Role.VIEWER },
+      ],
+      name: "Renamed",
+    });
+    expect((await readUser(id))?.memberships).toEqual(
+      expect.arrayContaining([
+        { app: App.BACK_OFFICE, role: Role.VIEWER },
+        { app: App.LAURA, role: Role.ADMIN },
+      ])
+    );
+    expect(await prisma.lauraProfile.count({ where: { userId: id } })).toBe(1);
+  });
+
+  it("removes the Memberships an edit leaves out", async () => {
+    const { id } = await edited();
+    await updateNow(id, {
+      memberships: [{ app: App.BACK_OFFICE, role: Role.USER }],
+    });
+    expect((await readUser(id))?.memberships).toEqual([
+      { app: App.BACK_OFFICE, role: Role.USER },
+    ]);
+  });
+
   it("answers null and writes nothing for an unknown id", async () => {
     expect(
       await updateUser(

@@ -14,6 +14,17 @@ const sectionPage = cva(
     variants: {
       width: {
         /**
+         * Edge to edge, for a page that is its content (a grid of photos): a
+         * container (`@`, for columns measured by the page's own width) with
+         * only a bare gutter between the content and what the screen
+         * reserves. The left side reads the frame's own inset
+         * (`--frame-inset-left`: none beside a docked sidebar, which already
+         * clears a landscape notch; the screen's where no sidebar stands),
+         * never the screen's alone, or the notch is cleared twice. The right
+         * and the bottom clear the screen's own insets.
+         */
+        edge: "@container pt-1 pr-[max(--spacing(1),env(safe-area-inset-right,0px))] pb-[max(--spacing(4),env(safe-area-inset-bottom,0px))] pl-[max(--spacing(1),var(--frame-inset-left,env(safe-area-inset-left,0px)))]",
+        /**
          * A form: centred and capped, laid out by its own width (a container,
          * `@2xl:` for two columns), never the screen's: the sidebar decides
          * how much room the page really has. As tall as the form: the

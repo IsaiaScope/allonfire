@@ -30,22 +30,27 @@ const rise = cva("", {
   },
 });
 
+export type OceanNoticeProps = Omit<AOFNoticeFrameProps, "kind"> & {
+  /** The picture of the moment: a `MASCOT` entry. */
+  art: OceanArtKey;
+};
+
 /**
- * The notices drawn as a pool's: the picture of the moment (`MASCOT`), the
- * heading in Fraunces, the words, the action; a reference (an error's
- * digest) goes on an ink pill. A page names its tab while it shows.
+ * A notice drawn as a pool's: the picture of its moment, the heading in
+ * Fraunces, the words, the action; a reference (an error's digest) goes on an
+ * ink pill. A page names its tab while it shows.
  */
-export const OceanNoticeFrame: AOFNoticeFrame = ({
+export const OceanNotice = ({
   action,
+  art,
   children,
   description,
   entrance = true,
   heading,
-  kind,
   page,
   reference,
   scope = "page",
-}) => {
+}: OceanNoticeProps) => {
   const Heading = scope === "page" ? "h1" : "h2";
   return (
     <AOFNoticeStage className="rounded-xl bg-card" page={page} scope={scope}>
@@ -54,7 +59,7 @@ export const OceanNoticeFrame: AOFNoticeFrame = ({
       ) : null}
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <OceanArt
-          art={ART[kind]}
+          art={art}
           className={cn("size-36", rise({ after: "mark", entrance }))}
         />
         <div
@@ -85,3 +90,8 @@ export const OceanNoticeFrame: AOFNoticeFrame = ({
     </AOFNoticeStage>
   );
 };
+
+/** The shared notices drawn as a pool's: the picture each kind has in `MASCOT`. */
+export const OceanNoticeFrame: AOFNoticeFrame = ({ kind, ...props }) => (
+  <OceanNotice art={ART[kind]} {...props} />
+);

@@ -1,4 +1,4 @@
-import { STORAGE_USAGE } from "@allonfire/api/features/storage-usage/constants/storage-usage";
+import { BACK_OFFICE } from "@allonfire/api/features/back-office/constants/back-office";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { cardBadge } from "@allonfire/ui/features/data-table/utils/card-badge";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
@@ -32,7 +32,7 @@ type BucketDetails = {
 };
 
 const DETAILS = {
-  [STORAGE_USAGE.BUCKET_KIND.IMAGE]: { body: ImageBucketBody },
+  [BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND.IMAGE]: { body: ImageBucketBody },
 } as const satisfies Record<StorageBucket["kind"], BucketDetails>;
 
 /**

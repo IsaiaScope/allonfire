@@ -118,6 +118,15 @@
     "packages/database/src/features/service/provider.service.ts": ["exports"],
     // Kept for the Images page.
     "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
+    // Held only by Laura's feed and preview (Phase 4, Tasks 12 to 15) until they land; delete these entries then.
+    "packages/ui/src/features/image/components/aof-lightbox.tsx": [
+      "exports",
+      "types"
+    ],
+    "packages/ui/src/features/query/components/aof-infinite-sentinel.tsx": [
+      "exports"
+    ],
+    "packages/ui/src/features/query/hooks/use-aof-link-refresh.ts": ["exports"],
     "apps/back-office/src/features/images/utils/images-queries.ts": ["exports"],
     // Read by the Apps' next.config.ts, which production mode leaves out.
     "packages/auth/src/features/next/utils/with-provider-pictures.ts": [

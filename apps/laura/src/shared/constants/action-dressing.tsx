@@ -1,4 +1,7 @@
-import { AOF_ACTION } from "@allonfire/ui/shared/constants/action";
+import {
+  AOF_ACTION,
+  type AOFAction,
+} from "@allonfire/ui/shared/constants/action";
 import type { AOFActionDressing } from "@allonfire/ui/shared/types/action-dressing";
 import { cva } from "class-variance-authority";
 import { ActionArt } from "@/shared/components/action-art";
@@ -10,6 +13,19 @@ import { MASCOT } from "./mascots";
  * `kanjiAction`).
  */
 const action = cva("relative isolate min-w-40 overflow-hidden pr-12 font-bold");
+
+/**
+ * The same button, small: 32px tall, a 14px label and a smaller picture, as
+ * the Back Office's compact action (its filters' Reset). For an action that
+ * sits beside the page's content and is not the page's one (Show more photos),
+ * where a field-height button would shout.
+ */
+const compact = cva(
+  "relative isolate h-8 min-w-0 gap-1.5 overflow-hidden pr-8 pl-3 font-bold text-sm"
+);
+const smallArt = (which: AOFAction) => (
+  <ActionArt art={MASCOT.ACTION[which]} className="right-1 size-5" />
+);
 
 /**
  * Laura's action buttons: the shared pieces draw each action's Tabler icon
@@ -24,5 +40,17 @@ export const ACTION_DRESSING = {
     [AOF_ACTION.RETRY]: <ActionArt art={MASCOT.ACTION[AOF_ACTION.RETRY]} />,
     [AOF_ACTION.SAVE]: <ActionArt art={MASCOT.ACTION[AOF_ACTION.SAVE]} />,
     [AOF_ACTION.SEND]: <ActionArt art={MASCOT.ACTION[AOF_ACTION.SEND]} />,
+  },
+} as const satisfies AOFActionDressing;
+
+/** `ACTION_DRESSING` in its small size, for the same actions. */
+export const COMPACT_ACTION = {
+  className: compact(),
+  marks: {
+    [AOF_ACTION.BACK]: smallArt(AOF_ACTION.BACK),
+    [AOF_ACTION.ENTER]: smallArt(AOF_ACTION.ENTER),
+    [AOF_ACTION.RETRY]: smallArt(AOF_ACTION.RETRY),
+    [AOF_ACTION.SAVE]: smallArt(AOF_ACTION.SAVE),
+    [AOF_ACTION.SEND]: smallArt(AOF_ACTION.SEND),
   },
 } as const satisfies AOFActionDressing;

@@ -2,7 +2,12 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
-import { expect, type Page } from "@playwright/test";
+import {
+  type Browser,
+  type BrowserContextOptions,
+  expect,
+  type Page,
+} from "@playwright/test";
 
 const { Auth, Navigation } = SHARED_TRANSLATIONS.en.Common;
 
@@ -72,6 +77,30 @@ export const aofAppPages = () => {
   };
 
   /**
+   * Another visitor: a second browser context with the first one's address
+   * and storage (the install hint dismissed), signed in as `user`, so the two
+   * see the same data but keep their own caches.
+   */
+  const otherVisitor = async (
+    browser: Browser,
+    options: {
+      baseURL: string | undefined;
+      storageState: BrowserContextOptions["storageState"] | undefined;
+    },
+    user: { email: string }
+  ) => {
+    const { baseURL, storageState } = options;
+    // Playwright's own types refuse an explicit `undefined`: pass only what is set.
+    const context = await browser.newContext({
+      ...(baseURL ? { baseURL } : {}),
+      ...(storageState ? { storageState } : {}),
+    });
+    const page = await context.newPage();
+    await signInAndWait(page, user);
+    return { context, page };
+  };
+
+  /**
    * Taps a sidebar link by its name. A phone's drawer brings its links into
    * view only on opening, and the link's prefetch runs inside an `instant`
    * lock: waiting for the network to settle lets the prefetch land before the
@@ -100,6 +129,7 @@ export const aofAppPages = () => {
     onPhone,
     openAccountMenu,
     openSidebar,
+    otherVisitor,
     /** Any locale's Sign in page. */
     SIGN_IN_URL: new RegExp(`${AUTH.PAGE.SIGN_IN}$`),
     signIn,
