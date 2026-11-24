@@ -1,10 +1,11 @@
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import type { AOFRow } from "@allonfire/ui/features/data-table/components/aof-data-table";
+import { useSelectableRows } from "@allonfire/ui/features/data-table/hooks/use-selectable-rows";
+import { useAOFAltLanguage } from "@allonfire/ui/features/image/hooks/use-aof-alt-language";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useCallback } from "react";
-import { useSelectableRows } from "@/shared/hooks/use-selectable-rows";
 import { ImageCard } from "../components/image-card";
-import { useAltLanguage, useImageColumns } from "../components/image-columns";
+import { useImageColumns } from "../components/image-columns";
 import { altFor } from "../utils/image-alt";
 
 /** A row's card on a phone, around its selection box. */
@@ -17,7 +18,7 @@ const imageCard = (row: AOFRow<ImageBody>, select: ReactNode) => (
 export const useSelectableImages = () => {
   const t = useTranslations("Images");
   const columns = useImageColumns();
-  const language = useAltLanguage();
+  const language = useAOFAltLanguage();
   const label = useCallback(
     (row: AOFRow<ImageBody>) =>
       t("delete.select", {

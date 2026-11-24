@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
+import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import {
   type Browser,
-  type BrowserContextOptions,
   expect,
   type Locator,
   type Page,
@@ -13,7 +13,7 @@ import EN from "../src/features/i18n/translations/en.json" with {
 import { newImageHref } from "../src/features/images/utils/image-href";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT } from "../src/shared/tests/translators";
-import { signInAsAdmin } from "./pages";
+import { otherVisitor } from "./pages";
 
 /** The Images words every Images spec reads. */
 export const t = EN.Images;
@@ -71,6 +71,21 @@ export type PickedFile = { buffer: Buffer; mimeType: string; name: string };
 export const pick = (page: Page, files: string | string[] | PickedFile[]) =>
   page.getByLabel(t.add.pick.input).setInputFiles(files);
 
+/**
+ * Adds `language` to a row's alt, and waits for the picker's popup to leave.
+ * It still closes when the next field is typed in; when it unmounts under the
+ * click on Save, the page shrinks and the button moves from under the pointer.
+ */
+export const addLanguage = async (
+  page: Page,
+  row: Locator,
+  language: string
+) => {
+  await row.getByRole("combobox", { name: t.form.addLanguage }).fill(language);
+  await page.getByRole("option", { name: language }).click();
+  await expect(page.locator('[data-slot="combobox-content"]')).toHaveCount(0);
+};
+
 /** Gives row `number` its alt in English and Italian. */
 export const fillRow = async (page: Page, number: number, alt: string) => {
   const row = rowOf(page, number);
@@ -121,20 +136,7 @@ export const idOf = async (page: Page, alt: string) => {
  * Admin, with the first one's address and storage (the install hint
  * dismissed), so the two see the same data but keep their own caches.
  */
-export const otherAdmin = async (
+export const otherAdmin = (
   browser: Browser,
-  options: {
-    baseURL: string | undefined;
-    storageState: BrowserContextOptions["storageState"] | undefined;
-  }
-) => {
-  const { baseURL, storageState } = options;
-  // Playwright's own types refuse an explicit `undefined`: pass only what is set.
-  const context = await browser.newContext({
-    ...(baseURL ? { baseURL } : {}),
-    ...(storageState ? { storageState } : {}),
-  });
-  const page = await context.newPage();
-  await signInAsAdmin(page);
-  return { context, page };
-};
+  options: Parameters<typeof otherVisitor>[1]
+) => otherVisitor(browser, options, FIXTURE.USER.BACK_OFFICE.ADMIN);

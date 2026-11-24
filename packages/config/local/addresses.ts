@@ -11,6 +11,7 @@ const PORT = {
   CDN: 9010,
   DATABASE: 5432,
   LAURA: 3200,
+  LAURA_E2E: 3210,
   MAIL_SINK_E2E: 3320,
   REDIS: 6379,
   STORAGE: 9000,
@@ -63,6 +64,7 @@ const ADDRESS = {
   /** Signed links to stored pictures (imgproxy), through the cdn. */
   IMAGE_SERVER: `${http(PORT.CDN)}${CDN.PATH.IMAGE}`,
   LAURA: http(PORT.LAURA),
+  LAURA_E2E: http(PORT.LAURA_E2E),
   /** The fake mail provider an e2e run sends through; https, as a provider's URL must be. */
   MAIL_SINK_E2E: https(PORT.MAIL_SINK_E2E),
   /** db 0: rate limits (ADR 0002). */

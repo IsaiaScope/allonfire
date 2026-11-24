@@ -1,11 +1,11 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { BASE_ERROR_CODES } from "better-auth";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { z } from "zod";
-import { nextAuthEnv } from "../../../environment/next-environment";
 import { AUTH } from "../../../shared/constants/auth";
 import type { SignInError } from "../constants/api";
+import { appHeaders } from "./app-request";
 import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
 import { adoptSetCookies } from "./set-cookie";
 
@@ -15,10 +15,6 @@ const credentialsSchema = z.object({
   email: z.email(),
   password: z.string().min(1),
 });
-
-/** A form field as text; a missing field or a file reads as empty. */
-const text = (value: FormDataEntryValue | null) =>
-  typeof value === "string" ? value.trim() : "";
 
 /**
  * Why the API refused, by its status. Only the App's own refusal is
@@ -52,12 +48,12 @@ const errorFor = ({ code, status }: { code?: string; status: number }) => {
 export const signInWithEmail = async (
   formData: FormData
 ): Promise<SignInError | undefined> => {
-  const email = text(formData.get("email"));
+  const email = textOf(formData, "email").trim();
   const password = formData.get("password");
   if (!(email && typeof password === "string" && password)) {
     return AUTH.SIGN_IN_ERROR.MISSING;
   }
-  const callbackURL = text(formData.get("callbackURL")) || undefined;
+  const callbackURL = textOf(formData, "callbackURL").trim() || undefined;
   const credentials = credentialsSchema.safeParse({
     callbackURL,
     email,
@@ -67,8 +63,7 @@ export const signInWithEmail = async (
     return AUTH.SIGN_IN_ERROR.INVALID;
   }
 
-  const requestHeaders = new Headers(forwardedHeaders(await headers()));
-  requestHeaders.set(AUTH.HEADER.APP, nextAuthEnv.AUTH_APP);
+  const requestHeaders = await appHeaders();
   let setCookies: string[] = [];
   let signedIn: Awaited<ReturnType<ApiAuthClient["signIn"]["email"]>>;
   try {

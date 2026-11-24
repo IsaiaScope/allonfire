@@ -5,8 +5,9 @@
 ## API App Structure (`apps/api/src/`)
 
 The HTTP backend serving every app. Hono on Node, port 3300. It mounts the
-Auth and User modules (`packages/auth`) and the Image module (`packages/storage`) under `/v1`
-— see `apps/api/README.md`.
+Auth module (`packages/auth`), the Image module (`packages/storage`), each App's own routes
+(`/v1/<app>`) and the admin console (`/v1/back-office`, which mounts the User module of
+`packages/auth`) under `/v1` — see `apps/api/README.md`.
 
 ```
 apps/api/
@@ -21,6 +22,12 @@ apps/api/
     │   │                 each owns its routes/, constants/, middleware/,
     │   │                 utils/ and tests/; the Image module mounts from
     │   │                 @allonfire/storage (ADR 0015)
+    │   ├── back-office/  the admin console under /v1/back-office (ADR 0035): constants/back-office,
+    │   │                 routes/index (backOfficeRoutes), and the folders users/ (user-deps, the
+    │   │                 User module's Host deps) and overview/ (routes/index, constants/overview, and
+    │   │                 users/ and storage/, the two overviews, each its own routes, constants and deps)
+    │   ├── laura/        Laura's own routes under /v1/laura: gallery/ and favorites/, laura-deps,
+    │   │                 utils/{deps,page-handlers,gallery-body}
     │   ├── docs/         routes/{index,handlers}, constants/openapi,
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
@@ -51,7 +58,6 @@ apps/api/
     │   │                 utils/usage-reader (what each provider's API reports, cached in Redis)
     │   ├── telemetry/    constants/telemetry, middleware/request-spans (@hono/otel
     │   │                 + corrections), telemetry — OTel SDK
-    │   └── users/        user-deps (the User module's Host deps)
     └── shared/           anything more than one feature reads, or no feature owns
         ├── constants/    api (API), error (API.ERROR, built on core's
         │                 ERROR.CODE and each module's codes) — no logic
@@ -71,7 +77,7 @@ redaction list, `ENV.BOOLEAN`, `SEPARATOR`, `PATTERN.TRAILING_SLASHES`, `UNIT` (
 in `shared/constants/error.ts`. An error code is never a string literal, tests included; only core's own test types them, as the contract clients switch on. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
-Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `API.PATH` is
+Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `API.PATH` nests as the routes do: an App's group is an object with its own `BASE` and its mounts (`API.PATH.LAURA.GALLERY`, `API.PATH.BACK_OFFICE.OVERVIEW.STORAGE`); an App's constants are one root named after it (`LAURA`, `BACK_OFFICE`, in the API; each App's own descriptor of the same name is aliased where both are imported) whose keys are its folders (`LAURA.FAVORITES`, `BACK_OFFICE.OVERVIEW.STORAGE`), built from each child folder's own object (`LAURA_FAVORITES`, `OVERVIEW_STORAGE`), which only its parent imports; a feature's constants are named after its folder path (`LAURA_GALLERY` in `laura/gallery`, `OVERVIEW_STORAGE` in `back-office/overview/storage`, its files `constants/storage` and `storage-deps`), never after what it holds. `API.PATH` is
 shared too: the health routes serve its probes, and telemetry, the request logger and
 the rate limiter skip the `PROBE_PATHS` derived from them. `HEALTH`, `OPENAPI`,
 `RATE_LIMIT`, `REDIS` and `TELEMETRY` (span attributes, the default service
@@ -124,6 +130,9 @@ many, and `middlewares/` reads wrong.
   `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
 - **Routes must be chained** (`new Hono().get(...).get(...)`) or `hc<AppType>`
   client types silently collapse. Guarded by `src/client.test-d.ts`.
+- **Routes are grouped by who calls them** (ADR 0035): `/v1/<app>/...` for data an App owns (`/v1/laura/...`, guarded by `requireApp(app)`), `/v1/back-office/...` for the admin console (the Users routes and the two overviews, `/overview/users` and `/overview/storage` under one prefix, called only by Back Office Admins), and plain `/v1/...` for a capability several Apps use (`/v1/auth`, `/v1/images`, `/v1/services`). A User changing their own data later gets separate routes (`/v1/me`, `/v1/<app>/profile`), never a "self or Admin" branch inside the admin routes. The User module in `packages/auth` keeps its own `/users` paths; only the API's mount prefix is `/v1/back-office`.
+- **An App's slug is written once**, in its `ACCESS.APP_SETTINGS` row (`slug: "back-office"`, the enum value in lowercase with hyphens, as the database stores it). The API's App prefix (`BACK_OFFICE.SEGMENT`, `LAURA.PATH.BASE`), the Back Office's typed client key (`API.SEGMENT.BACK_OFFICE`) and each App's Playwright `app` read it; nobody types `"back-office"` or `"laura"` as a name.
+- **The docs nest tags in groups** (`OPENAPI.TAG_GROUPS`, `x-tagGroups`): each App's tags under the App's name (Back Office: Users, Overview; Laura: Gallery, Favorites), what every App shares under Platform (Auth, Image, Services, Infrastructure). A route's tag is its own feature's; a new tag goes into a group in the same edit, or the docs would hide it (`spec.test.ts` fails first).
 - **Domain routes mount under `/v1`** via `API.PATH.VERSION` (`shared/constants/api.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
 
@@ -188,11 +197,12 @@ many, and `middlewares/` reads wrong.
 
 - **`/ready` answers 503 only when Postgres is down**; Redis down answers 200 `degraded`, since the rate limiter fails open and a degraded feature is no outage (`features/health/routes/handlers.ts`). (`docs/superpowers/specs/2026-08-27-hono-api-scaffold-design.md`)
 - **Mail** (`features/mail`, core's `features/mail`): Better Auth's verification and reset emails go through `createAuth`'s `mail`, sent after the response (`advanced.backgroundTasks`), each counted first against the reader's address (five in any rolling hour, `EMAIL.ADDRESS_LIMIT`; an Admin's provider test counts apart under its own prefix, so anonymous reset requests for an Admin's address never use up the budget their test needs; failing closed: while Redis cannot count, `/request-password-reset` and `/send-verification-email` answer 503 `MAIL_UNAVAILABLE` for any address). Providers are tried in slot order, each reached over its HTTP API (a driver named for the API's shape); one that answers for want of room (its quota or rate) or refuses is skipped for the next, and an uncertain outcome is never retried elsewhere. Each message carries its own `X-Entity-Ref-ID` (one `crypto.randomUUID()`, the same through a failover), in the `headers` both providers' APIs take: Resend documents it as the way to keep Gmail from threading mail that looks alike, which trims a repeat behind "..." (`MAIL.HEADER.ENTITY_REF_ID`). Where each is reached: `API_MAIL_PROVIDER_<slot>_URL`, `_KEY`, `_DRIVER`, read when sending. A reset link lands on the App's page (`<redirectTo>?token=`), never the API's `GET /reset-password/:token`, whose path the request log records.
-- **Services** (`features/services`): every route but the keep-alive needs a Back Office Admin read now (`canManageUsers`); `POST /v1/services/keep-alive` needs `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>` (compared in constant time; unset, every call is 401) and sends its check emails to `API_KEEP_ALIVE_RECIPIENT` (no usage rows to prune: a provider reports its own). A Service is addressed by its `type` (`PATCH /v1/services/:type`); a test send to a provider that is gone is a 404, and a disabled provider can be tested while its Service is on.
-- **Users overview** (`features/user-usage`): `GET /v1/user-usage/overview`, a Back Office Admin read now (`canManageUsers`). `userStats` (database) counts every User and the members of each App, read fresh; it has its own base path so it never meets `GET /v1/users/:id`. Wired as `userUsage` in `createApp`'s deps.
-- **Storage overview** (`features/storage-usage`): `GET /v1/storage/overview`, a Back Office Admin read now (`canManageUsers`, as Services). Each bucket's totals (`listBucketTotals`, paged through the listing) are kept `STORAGE_USAGE.CACHE.TTL_MS` (5 minutes) in the shared Redis under `STORAGE_USAGE.CACHE.KEY_PREFIX` and its name by `createBucketReader`; the buckets listed are the `BUCKETS` lines of `storage-usage-deps.ts` (a new bucket is one line there, and its storage login must be allowed to list it); a listing that fails answers that bucket's `reading: null` with the rest, a Redis that is down only means every read lists. The Image stats (`imageStats`) are read fresh, and so are the Avatars per App (`avatars`: the bucket's files under the Avatar prefix, `listObjectSizes`, matched to each User's `User.image` and Apps by `avatarsByApp`; a listing that fails logs and answers none). Wired as `storageUsage` in `createApp`'s deps.
-- **Managing Users is gated on Admin in the Back Office** (`isBackOfficeAdmin`, `features/users/user-deps.ts`), never on its floor (`canEnterApp`), so lowering `minRole` never opens Users. (`docs/superpowers/specs/2026-10-21-back-office-users-list-design.md`)
-- **List sort and date range** (ADR 0031): `GET /v1/users` and `GET /v1/images` take `sort` (`USER.SORT`, `IMAGE.SORT` from `sortQuery`: `created.desc,size.asc`, at most three, an unknown column or direction dropped, `id` the last tiebreak) beside `search`, whose `created:2026-11-26..2026-11-28` field is a whole-UTC-day range; an empty sort is left out of the query. `hide` is the table's own and never reaches the API.
+- **Services** (`features/services`): every route but the keep-alive needs a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`); `POST /v1/services/keep-alive` needs `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>` (compared in constant time; unset, every call is 401) and sends its check emails to `API_KEEP_ALIVE_RECIPIENT` (no usage rows to prune: a provider reports its own). A Service is addressed by its `type` (`PATCH /v1/services/:type`); a test send to a provider that is gone is a 404, and a disabled provider can be tested while its Service is on.
+- **Laura** (`features/laura`): `GET /v1/laura/gallery` and `GET /v1/laura/favorites` (`?cursor=&limit=`, keyset pages) and the Admin-only `PUT`/`DELETE /v1/laura/favorites/:imageId`. Both reads first make sure the caller has a Laura Profile (`deps.ensureProfile`: get-or-create, the Favorites copied in) and answer 403 when they have no Laura Membership now; then they read the caller's own copies. The writes take `requireApp(App.LAURA, Role.ADMIN)` then `manageGuard(deps.canManage)` (a Laura Admin read now, `adminOf(App.LAURA)`) and change the master and every copy. Wired as `laura` in `createApp`'s deps.
+- **Users overview** (`features/back-office/overview/users`): `GET /v1/back-office/overview/users`, a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`). `userStats` (database) counts every User and the members of each App, read fresh; it has its own base path so it never meets `GET /v1/back-office/users/:id`. Wired as `overviewUsers` in `createApp`'s deps.
+- **Storage overview** (`features/back-office/overview/storage`): `GET /v1/back-office/overview/storage`, a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`, as Services). Each bucket's totals (`listBucketTotals`, paged through the listing) are kept `OVERVIEW_STORAGE.CACHE.TTL_MS` (5 minutes) in the shared Redis under `OVERVIEW_STORAGE.CACHE.KEY_PREFIX` and its name by `createBucketReader`; the buckets listed are the `BUCKETS` lines of `storage-deps.ts` (a new bucket is one line there, and its storage login must be allowed to list it); a listing that fails answers that bucket's `reading: null` with the rest, a Redis that is down only means every read lists. The Image stats (`imageStats`) are read fresh, and so are the Avatars per App (`avatars`: the bucket's files under the Avatar prefix, `listObjectSizes`, matched to each User's `User.image` and Apps by `avatarsByApp`; a listing that fails logs and answers none). Wired as `overviewStorage` in `createApp`'s deps.
+- **Managing Users is gated on Admin in the Back Office** (`isBackOfficeAdmin`, `features/back-office/users/user-deps.ts`), never on its floor (`canEnterApp`), so lowering `minRole` never opens Users. (`docs/superpowers/specs/2026-10-21-back-office-users-list-design.md`)
+- **List sort and date range** (ADR 0031): `GET /v1/back-office/users` and `GET /v1/images` take `sort` (`USER.SORT`, `IMAGE.SORT` from `sortQuery`: `created.desc,size.asc`, at most three, an unknown column or direction dropped, `id` the last tiebreak) beside `search`, whose `created:2026-11-26..2026-11-28` field is a whole-UTC-day range; an empty sort is left out of the query. `hide` is the table's own and never reaches the API.
 
 ## Pointers
 

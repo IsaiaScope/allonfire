@@ -2,11 +2,14 @@
 
 import { API } from "@allonfire/api/shared/constants/api";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { redirect } from "@/features/i18n/navigation";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { USERS } from "../../constants/users";
@@ -16,7 +19,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 vi.mock("@/features/i18n/navigation", () => ({ redirect: vi.fn() }));
 
 const STRONG = FIXTURE.PASSWORD;

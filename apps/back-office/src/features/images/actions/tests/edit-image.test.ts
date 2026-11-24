@@ -2,13 +2,16 @@
 
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import { MAX_ALT_LENGTH } from "@allonfire/database/features/image/utils/alt";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { IMAGES } from "../../constants/images";
 import { imageNames } from "../../utils/image-form-data";
@@ -20,7 +23,10 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 const formOf = (languages: Record<string, string>) => {
   const form = new FormData();

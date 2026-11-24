@@ -1,9 +1,9 @@
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { AddUser } from "@/features/users/components/add-user";
 import { newUserHref } from "@/features/users/utils/user-href";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 /** Its own title and link preview, not the Users list's. */
 export const generateMetadata = () =>
@@ -15,11 +15,11 @@ export const generateMetadata = () =>
  * the page Next hides on leaving.
  */
 const AddUserPage = () => (
-  <SectionPage width="form">
+  <AOFSectionPage width="form">
     <AOFFreshOnReturn>
       <AddUser />
     </AOFFreshOnReturn>
-  </SectionPage>
+  </AOFSectionPage>
 );
 
 export default signedInPage(AddUserPage);

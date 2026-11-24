@@ -11,10 +11,10 @@ const commands = HOOK.split("\n").filter(
 );
 
 describe("the pre-commit hook", () => {
-  it("fixes the staged files, then runs every Stage as CI does", () => {
+  it("fixes the staged files, then runs every Stage through check.sh", () => {
     expect(commands).toEqual([
       "pnpm exec lint-staged --allow-empty",
-      "pnpm check",
+      "bash packages/config/local/check.sh",
     ]);
   });
 

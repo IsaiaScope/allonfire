@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTitle,
-  PopoverTrigger,
-} from "@allonfire/shadcn/components/popover";
+import { PopoverTitle } from "@allonfire/shadcn/components/popover";
 import {
   Tabs,
   TabsContent,
@@ -22,12 +17,17 @@ import {
 import { type ReactNode, useCallback, useState } from "react";
 import { AOFBadge } from "../../../shared/components/aof-badge";
 import { AOFButton } from "../../../shared/components/aof-button";
+import {
+  AOFPopover,
+  AOFPopoverContent,
+  AOFPopoverTrigger,
+} from "../../../shared/components/aof-popover";
 import type { ComponentPropsWithoutChildren } from "../../../shared/types/types";
 import { cn } from "../../../shared/utils/utils";
 
 /** Base UI's popover root (`open`, `onOpenChange`, ...), plus the panel. */
 export type AOFFilterPanelProps = ComponentPropsWithoutChildren<
-  typeof Popover
+  typeof AOFPopover
 > & {
   /** Drawn at the panel's bottom left, under every tab: what acts on all of
    *  them at once, such as a Clear all button. Without tabs it is drawn at
@@ -225,8 +225,8 @@ export const AOFFilterPanel = ({
     ? count + (counts?.sort ?? 0) + (view ? (counts?.view ?? 0) : 0)
     : count;
   return (
-    <Popover {...props}>
-      <PopoverTrigger
+    <AOFPopover {...props}>
+      <AOFPopoverTrigger
         render={
           <AOFButton
             variant="outline"
@@ -245,12 +245,19 @@ export const AOFFilterPanel = ({
             {total}
           </AOFBadge>
         ) : null}
-      </PopoverTrigger>
-      <PopoverContent
+      </AOFPopoverTrigger>
+      <AOFPopoverContent
         align="start"
-        className="relative isolate w-[min(calc(100vw-var(--gutter-left)-var(--gutter-right)),26rem)] gap-3 overflow-hidden p-3 ring-input sm:p-4"
+        className="relative isolate w-[min(calc(100vw-var(--gutter-left)-var(--gutter-right)),26rem)] gap-3 overflow-x-hidden p-3 ring-input sm:p-4"
       >
-        {decoration}
+        {/* Clipped to the panel's box: a wall kanji reaches past it, and the
+            panel scrolls, so what overflows would make it scroll for nothing. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          {decoration}
+        </div>
         <PopoverTitle className="sr-only">{label}</PopoverTitle>
         {tabbed ? (
           <TabbedBody
@@ -273,7 +280,7 @@ export const AOFFilterPanel = ({
             ) : null}
           </>
         )}
-      </PopoverContent>
-    </Popover>
+      </AOFPopoverContent>
+    </AOFPopover>
   );
 };

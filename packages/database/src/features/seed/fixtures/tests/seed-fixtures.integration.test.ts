@@ -48,4 +48,16 @@ describe("seedFixtures", () => {
       slots.map((slot) => ({ enabled: true, fromAddress, slot }))
     );
   });
+
+  it("leaves one master row for the Favorite Fixture's Image, even seeded twice", async () => {
+    await seedFixtures(prisma);
+    await seedFixtures(prisma);
+    const image = await prisma.image.findUniqueOrThrow({
+      select: { id: true },
+      where: { key: FIXTURE.FAVORITE.IMAGE.key },
+    });
+    expect(await prisma.favorite.count({ where: { imageId: image.id } })).toBe(
+      1
+    );
+  });
 });

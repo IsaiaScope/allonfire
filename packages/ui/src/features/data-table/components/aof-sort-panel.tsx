@@ -71,12 +71,12 @@ export type AOFSortPanelProps = {
   /** The most sorts a list takes. */
   max: number;
   /** The remove button's own props, a `decoration` drawn behind its pictogram
-   *  (a brushed kanji) and its `icon` in place of the trash. */
+   *  (a Design's mark) and its `icon` in place of the trash. */
   removeButton?: AOFSortIconButton | undefined;
   /** The drag handle's own props, `decoration` and `icon` likewise. */
   dragButton?: AOFSortIconButton | undefined;
   /** The Add sort button's own props, and a `decoration` drawn before its
-   *  label (a kanji brushed in it). */
+   *  label (a Design's mark in it). */
   addProps?: AOFButtonPartProps;
   onSortingChange: (next: SortingState) => void;
   sorting: SortingState;

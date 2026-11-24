@@ -8,7 +8,7 @@
     "check-types": "next typegen && tsc --noEmit",
     "dev": "find .next -name '._*' -delete 2>/dev/null; next dev --port 3400",
     "i18n:check": "i18n-check --locales src/features/i18n/translations --source en",
-    "preview": "set -a && . ./.env.development && if [ -f .env.development.local ]; then . ./.env.development.local; fi && set +a && pnpm build && cp -R .next/static .next/standalone/apps/back-office/.next/ && cp -R public .next/standalone/apps/back-office/ && PORT=3420 node .next/standalone/apps/back-office/server.js",
+    "preview": "bash ../../packages/config/local/preview.sh 3420",
     "start": "next start --port 3400",
     "tailwind:canonicalize": "pnpm --filter @allonfire/core tailwind:canonicalize --css apps/back-office/src/app/globals.css --dir apps/back-office/src --dir packages/ui/src",
     "tailwind:check": "pnpm tailwind:canonicalize --check",

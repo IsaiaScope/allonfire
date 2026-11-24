@@ -5,14 +5,13 @@ import { LOCAL } from "@allonfire/config/local/addresses";
 import { E2E } from "@allonfire/config/tests/e2e/run";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import EN from "../src/features/i18n/translations/en.json" with {
   type: "json",
 };
-import IT from "../src/features/i18n/translations/it.json" with {
-  type: "json",
-};
+import { AUTH_EN, AUTH_IT } from "../src/shared/tests/auth-words";
 import { addedUser } from "./add-user";
 import { attemptsTo, linkIn, mailArrives, mailTo } from "./mail-box";
 import { SERVICES, SIGN_IN_URL, signIn, signInAsAdmin } from "./pages";
@@ -60,6 +59,14 @@ const watchConsole = (page: Page) => {
   return errors;
 };
 
+/** The signed-in frame is up: its menu button shows. */
+const expectSignedIn = (page: Page) =>
+  expect(
+    page.getByRole("button", {
+      name: SHARED_TRANSLATIONS.en.Common.Navigation.toggleMenu,
+    })
+  ).toBeVisible();
+
 /** A visitor in a browser of their own, signed out, and the console errors of their page. */
 const visitorOf = async (browser: Browser) => {
   const page = await (await browser.newContext()).newPage();
@@ -68,7 +75,7 @@ const visitorOf = async (browser: Browser) => {
 
 /** Asks for a reset link for `email` on the Forgot password page of `locale`. */
 const askForLink = async (page: Page, email: string, locale?: "it") => {
-  const t = (locale === "it" ? IT : EN).ForgotPassword;
+  const t = (locale === "it" ? AUTH_IT : AUTH_EN).ForgotPassword;
   await page.goto(`${locale ? `/${locale}` : ""}${AUTH.PAGE.FORGOT_PASSWORD}`);
   await page.getByLabel(t.email).fill(email);
   await page.getByRole("button", { name: t.submit }).click();
@@ -81,7 +88,7 @@ const chooseNewPassword = async (
   link: string,
   password: string
 ) => {
-  const reset = EN.ResetPassword;
+  const reset = AUTH_EN.ResetPassword;
   await page.goto(link);
   await page.getByLabel(reset.password, { exact: true }).fill(password);
   await page.getByLabel(reset.confirmPassword, { exact: true }).fill(password);
@@ -109,11 +116,9 @@ test("a reset email carries a link that sets a new password: the old one stops w
   await expect(visitor).toHaveURL(SIGN_IN_URL);
 
   await signIn(visitor, user, { password: user.password });
-  await expect(visitor.getByText(EN.SignIn.error.invalid)).toBeVisible();
+  await expect(visitor.getByText(AUTH_EN.SignIn.error.invalid)).toBeVisible();
   await signIn(visitor, user, { password: FIXTURE.NEW_PASSWORD });
-  await expect(
-    visitor.getByRole("button", { name: EN.Navigation.toggleMenu })
-  ).toBeVisible();
+  await expectSignedIn(visitor);
   expect(errors).toEqual([]);
   await visitor.context().close();
 });
@@ -182,7 +187,7 @@ test("a reset link works once", async ({ browser, page }, info) => {
   await expect(visitor).toHaveURL(SIGN_IN_URL);
   await chooseNewPassword(visitor, link, "Another-e2e-password-3");
   await expect(
-    visitor.getByRole("link", { name: EN.ResetPassword.askAgain })
+    visitor.getByRole("link", { name: AUTH_EN.ResetPassword.askAgain })
   ).toBeVisible();
   expect(errors).toEqual([]);
   await visitor.context().close();
@@ -231,20 +236,18 @@ test("a User who must verify gets a link at sign in, and signs in after opening 
 
   // A wrong password reveals nothing and sends nothing.
   await signIn(visitor, user, { password: "Not-the-password-9" });
-  await expect(visitor.getByText(EN.SignIn.error.invalid)).toBeVisible();
+  await expect(visitor.getByText(AUTH_EN.SignIn.error.invalid)).toBeVisible();
   expect(await mailTo(user.email)).toEqual([]);
 
   await signIn(visitor, user, { password: user.password });
-  await expect(visitor.getByText(EN.SignIn.note.unverified)).toBeVisible();
+  await expect(visitor.getByText(AUTH_EN.SignIn.note.unverified)).toBeVisible();
   const [mail] = await mailArrives(user.email);
   expect(mail?.subject).toContain(BRAND);
 
   await visitor.goto(linkIn(mail as NonNullable<typeof mail>));
-  await expect(visitor.getByText(EN.EmailVerified.verified)).toBeVisible();
+  await expect(visitor.getByText(AUTH_EN.EmailVerified.verified)).toBeVisible();
   await signIn(visitor, user, { password: user.password });
-  await expect(
-    visitor.getByRole("button", { name: EN.Navigation.toggleMenu })
-  ).toBeVisible();
+  await expectSignedIn(visitor);
   expect(errors).toEqual([]);
   await visitor.context().close();
 });
@@ -280,9 +283,7 @@ test("an Admin's Test button sends a check email to their own address and the ri
   const adminPage = await context.newPage();
   const errors = watchConsole(adminPage);
   await signIn(adminPage, admin, { password: admin.password });
-  await expect(
-    adminPage.getByRole("button", { name: EN.Navigation.toggleMenu })
-  ).toBeVisible();
+  await expectSignedIn(adminPage);
   await adminPage.goto(SERVICES);
 
   const today = adminPage.getByLabel(TODAY_RING).first();

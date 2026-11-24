@@ -41,6 +41,15 @@ merely reading `window.localStorage` throws. Every call is guarded, so what
 is kept there is a convenience a visitor can lose, never state that must
 survive. A schema crosses no package: a package's `storageItem` takes its own zod's schema (the Apps and core can resolve different zod versions, and tsc runs out of memory comparing them), so a test seeds a value through the owner's function (`firstLoad()`), never its own `storageItem`.
 
+## URL Helper (`@allonfire/core/shared/utils/url`)
+
+Never call `URL.parse` in ui or an App: it is Chrome 126 and Safari 18 or
+later, and on an older phone it throws inside the browser (the signed-in frame
+went down with the account menu, 2026-11-24). `hostOf(address)` reads a host
+through `new URL` in a `try`, none when the text is not an address. A test
+(`no-url-parse.test.ts` in ui) fails when a file there reads `URL.parse`;
+server packages (auth, storage) are not covered, they run on Node.
+
 ## Constants
 
 - **Constants are one nested object per owner**, named so the first word says where a

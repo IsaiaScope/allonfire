@@ -4,6 +4,7 @@ import type { DayRange } from "@allonfire/core/features/search/utc-day-range";
 import type { AOFSorting } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { AOFDateRangeFilter } from "@allonfire/ui/features/data-table/components/aof-date-range-filter";
 import { AOFFilterPanel } from "@allonfire/ui/features/data-table/components/aof-filter-panel";
+import { useDayFormat } from "@allonfire/ui/features/data-table/hooks/use-day-format";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import {
@@ -28,7 +29,6 @@ import {
   tiledControl,
 } from "@/shared/components/toolbar-action";
 import { ACTION_KANJI } from "@/shared/constants/action-kanji";
-import { useDayFormat } from "@/shared/hooks/use-day-format";
 
 /** The tile a filter list's search box opens on, the same as the page's search. */
 export const SearchTile = () => (

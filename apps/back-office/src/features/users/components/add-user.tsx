@@ -1,12 +1,12 @@
 "use client";
+import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-toast-then-list";
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import { IconMail, IconUserPlus } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useActionState } from "react";
-import { FormAlert } from "@/shared/components/form-alert";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { addUser } from "../actions/add-user";
 import { USERS } from "../constants/users";
 import {
@@ -117,9 +117,9 @@ export const AddUser = () => {
             form={form}
           />
           {/* The end of the form: why the last submit failed, in its kept place. */}
-          <FormAlert className="@2xl:col-span-2 mt-4">
+          <AOFFormAlert className="@2xl:col-span-2 mt-4">
             {error ? t(`Users.add.error.${error}`) : null}
-          </FormAlert>
+          </AOFFormAlert>
         </div>
         <UserFormActions
           pending={pending}

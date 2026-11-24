@@ -16,7 +16,9 @@ import { USERS } from "../constants/users";
  */
 export const deleteUsers = async (ids: string[]): Promise<number | null> => {
   const client = await serverApi();
-  const response = await client[API.VERSION.CURRENT].users.$delete({
+  const response = await client[API.VERSION.CURRENT][
+    API.SEGMENT.BACK_OFFICE
+  ].users.$delete({
     json: { ids },
   });
   if (response.status !== HTTP.STATUS.OK) {

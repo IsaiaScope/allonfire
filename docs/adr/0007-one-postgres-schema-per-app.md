@@ -19,3 +19,6 @@ break those relations and double the connection pools.
 - `Role` stays global on `User`. A second App needing a different role for the
   same person moves it to a per-App table in that App's schema.
 - Table names were kept (`"Photo"`, PascalCase); only the schema moved.
+- Superseded in part by ADR 0034: an App's data about a User lives in its
+  Profile, tied to the Membership, so `User` lists no App model; the back-relation
+  moves to `Membership`.

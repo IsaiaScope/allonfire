@@ -9,7 +9,7 @@ import { SECTIONS } from "./features/navigation/constants/sections";
 export default withSessionRefresh(
   withSignInGate(AOFCreateMiddleware(routing), {
     locales: routing.locales,
-    pages: SECTIONS.map(({ path }) => path),
+    sections: SECTIONS,
   })
 );
 

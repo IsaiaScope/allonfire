@@ -1,7 +1,6 @@
+import type { AOFOfflineCardProps } from "@allonfire/ui/features/pwa/components/aof-offline-banner";
 import { WifiOff } from "lucide-react";
 import { PWA_SIGNAGE } from "@/features/pwa/constants/pwa-signage";
-
-export type OfflineCardProps = { description: string; title: string };
 
 /**
  * The offline notice's look, sent as a toast centred at the top: a red
@@ -9,7 +8,7 @@ export type OfflineCardProps = { description: string; title: string };
  * of range) on the right.
  * The tint sits over an opaque card, so the page never shows through.
  */
-export const OfflineCard = ({ description, title }: OfflineCardProps) => (
+export const OfflineCard = ({ description, title }: AOFOfflineCardProps) => (
   <div className="mx-auto w-fit rounded-lg bg-card font-sans shadow-lg">
     <div className="flex items-center gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3">
       <WifiOff aria-hidden className="size-5 shrink-0 text-destructive" />

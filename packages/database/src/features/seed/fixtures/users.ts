@@ -3,6 +3,7 @@ import {
   objectValues,
 } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "../../../../generated/prisma/enums";
+import { ACCESS } from "../../auth/access/constants/access";
 import { adminSeedUser, type SeedUser } from "../utils/seed-user";
 
 /**
@@ -19,7 +20,7 @@ export const DOMAIN = "allonfire.test";
 const slug = (value: string) => value.toLowerCase().replaceAll("_", "-");
 
 const gridUser = (app: App, role: Role): SeedUser => {
-  const name = `${slug(app)}-${slug(role)}`;
+  const name = `${ACCESS.APP_SETTINGS[app].slug}-${slug(role)}`;
   return { email: `${name}@${DOMAIN}`, memberships: [{ app, role }], name };
 };
 

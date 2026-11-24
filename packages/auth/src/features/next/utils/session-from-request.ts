@@ -1,5 +1,5 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { visitorHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { visitorHeaders } from "@allonfire/core/features/next/api/utils/visitor-headers";
 import type { NextRequest } from "next/server";
 import { createApiAuthClient } from "./auth-client";
 

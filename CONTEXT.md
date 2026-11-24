@@ -6,8 +6,8 @@ one database, and one design system.
 ## Language
 
 **App**:
-One product in the monorepo, with its own users. Laura is the first App (paused
-while the Design system is rebuilt); the Back Office is the internal one, and a
+One product in the monorepo, with its own users. Laura is the first App (rebuilt
+on the shared packages); the Back Office is the internal one, and a
 React Native client is planned. Who is allowed into an App is decided by their
 Membership in it and the lowest Role the App lets in, including for internal
 ones.
@@ -80,9 +80,13 @@ never copied into an App; an App adds only its Sections, its features, its
 words and its Design. Not part of the Design system.
 _Avoid_: boilerplate, starter, kit, template
 
+**App descriptor**:
+The one object an App gives the shared scaffold: its `App`, its name and Brand logo, how it draws every App in the switcher (`entries`), its share card's band colour and alt text, and its Sections (each with its icon, its path and, when it sits above the App's floor, a `minRole`). The frame's look (`variant`, `collapsible`) and an App's address are not in it: they are the frame's props and the environment's. The shared frame, the switcher, the proxy's gate and the guard tests read it; the App never repeats it.
+_Avoid_: manifest, config
+
 **Design**:
 A named visual world, its rules and its tokens, that one or more Apps wear.
-Japan is the first. Each App wears exactly one; a change to a Design reaches
+Japan (the Back Office's) and Ocean (Laura's). Each App wears exactly one; a change to a Design reaches
 every App wearing it.
 _Avoid_: theme, skin, look, palette
 
@@ -133,9 +137,11 @@ Member of Laura sees it; only a Laura Admin adds to it.
 _Avoid_: album, photo stream, library
 
 **Favorite**:
-An Image of the Laura App that a Laura Admin marked, shown to every Member
-of Laura as one shared selection, never one per User. It exists only while
-the Image is placed in the Laura App: removing the placement removes it.
+An Image of the Laura App that a Laura Admin marked. The Admins keep one
+selection, and every Laura User holds it in their own Profile, so an Admin
+marking or clearing one changes it for all of them; a User cannot change theirs.
+It exists only while the Image is placed in the Laura App: removing the
+placement removes it everywhere.
 _Avoid_: like, heart, bookmark, starred
 
 **Memory game**:
@@ -226,6 +232,14 @@ A User's place in one App, with their Role there. A User holds one per App
 they belong to; nothing spans every App.
 _Avoid_: Allowed apps, permissions, entitlements, account
 
+**Profile**:
+What one App remembers about one User beyond their access: their settings
+there and the things they saved. It belongs to the Membership, so ending the
+Membership removes it; the User, and their Profile in every other App, stay.
+An App's Profile is its own: no App reads another's. Where a Role says what
+a User may do, a Profile says what the App holds for them.
+_Avoid_: member, customer, account, settings
+
 **Registration**:
 Becoming a User through an App that allows it, which gives a Membership in that
 App only. An existing User joins another such App the same way, once signed in.
@@ -235,13 +249,17 @@ Admin chose.
 _Avoid_: sign-up (except in Better Auth's route names), enrolment, invite
 
 **Role**:
-What a User may do inside one App: Admin, User or Viewer. It belongs to a
-Membership, never to the User as a whole. The Role named User is always
+What a User may do inside one App: Admin, User or Viewer. Each App names the
+lowest Role it lets in (its floor, `ACCESS.APP_SETTINGS`), and a Section can
+ask for a higher one (Laura's Upload Section is Admin only), which the API
+enforces again. It belongs to a Membership, never to the User as a whole. The Role named User is always
 written as a Role ("the User Role"), never as the person.
 _Avoid_: permission level, rank
 
 **Viewer**:
-A Role in an App that allows browsing and playing but no mutations.
+A Role below User, for browsing and playing without changes. No App's floor
+admits it today: Laura's was Viewer until ADR 0032, and its Viewers became
+Users. Kept for an App that wants a read-only Role.
 _Avoid_: guest, demo user, read-only user
 
 **Version**:

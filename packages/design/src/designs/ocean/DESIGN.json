@@ -1,0 +1,484 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T09:35:35.000Z",
+  "title": "Design System: Ocean",
+  "extensions": {
+    "colorMeta": {
+      "tide-teal": {
+        "role": "primary",
+        "displayName": "Tide Teal",
+        "canonical": "#0b6b7c",
+        "tonalRamp": [
+          "oklch(15% 0.083 214.1)",
+          "oklch(26% 0.083 214.1)",
+          "oklch(38% 0.083 214.1)",
+          "oklch(50% 0.083 214.1)",
+          "oklch(62% 0.083 214.1)",
+          "oklch(74% 0.083 214.1)",
+          "oklch(85% 0.083 214.1)",
+          "oklch(95% 0.083 214.1)"
+        ]
+      },
+      "tide-teal-night": {
+        "role": "primary",
+        "displayName": "Tide Teal Night",
+        "canonical": "#4fc3d4",
+        "tonalRamp": [
+          "oklch(15% 0.106 208.6)",
+          "oklch(26% 0.106 208.6)",
+          "oklch(38% 0.106 208.6)",
+          "oklch(50% 0.106 208.6)",
+          "oklch(62% 0.106 208.6)",
+          "oklch(74% 0.106 208.6)",
+          "oklch(85% 0.106 208.6)",
+          "oklch(95% 0.106 208.6)"
+        ]
+      },
+      "sea-glass": {
+        "role": "neutral",
+        "displayName": "Sea Glass",
+        "canonical": "#f2f8f8",
+        "tonalRamp": [
+          "oklch(15% 0.006 197.1)",
+          "oklch(26% 0.006 197.1)",
+          "oklch(38% 0.006 197.1)",
+          "oklch(50% 0.006 197.1)",
+          "oklch(62% 0.006 197.1)",
+          "oklch(74% 0.006 197.1)",
+          "oklch(85% 0.006 197.1)",
+          "oklch(95% 0.006 197.1)"
+        ]
+      },
+      "foam": {
+        "role": "neutral",
+        "displayName": "Foam",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(38% 0.000 89.9)",
+          "oklch(50% 0.000 89.9)",
+          "oklch(62% 0.000 89.9)",
+          "oklch(74% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "deep-water": {
+        "role": "neutral",
+        "displayName": "Deep Water",
+        "canonical": "#0f2a30",
+        "tonalRamp": [
+          "oklch(15% 0.034 214.3)",
+          "oklch(26% 0.034 214.3)",
+          "oklch(38% 0.034 214.3)",
+          "oklch(50% 0.034 214.3)",
+          "oklch(62% 0.034 214.3)",
+          "oklch(74% 0.034 214.3)",
+          "oklch(85% 0.034 214.3)",
+          "oklch(95% 0.034 214.3)"
+        ]
+      },
+      "shallows": {
+        "role": "neutral",
+        "displayName": "Shallows",
+        "canonical": "#e1eded",
+        "tonalRamp": [
+          "oklch(15% 0.013 196.9)",
+          "oklch(26% 0.013 196.9)",
+          "oklch(38% 0.013 196.9)",
+          "oklch(50% 0.013 196.9)",
+          "oklch(62% 0.013 196.9)",
+          "oklch(74% 0.013 196.9)",
+          "oklch(85% 0.013 196.9)",
+          "oklch(95% 0.013 196.9)"
+        ]
+      },
+      "slate-sea": {
+        "role": "neutral",
+        "displayName": "Slate Sea",
+        "canonical": "#4a6168",
+        "tonalRamp": [
+          "oklch(15% 0.030 218.4)",
+          "oklch(26% 0.030 218.4)",
+          "oklch(38% 0.030 218.4)",
+          "oklch(50% 0.030 218.4)",
+          "oklch(62% 0.030 218.4)",
+          "oklch(74% 0.030 218.4)",
+          "oklch(85% 0.030 218.4)",
+          "oklch(95% 0.030 218.4)"
+        ]
+      },
+      "rim": {
+        "role": "neutral",
+        "displayName": "Rim",
+        "canonical": "#cfdfe0",
+        "tonalRamp": [
+          "oklch(15% 0.017 201.4)",
+          "oklch(26% 0.017 201.4)",
+          "oklch(38% 0.017 201.4)",
+          "oklch(50% 0.017 201.4)",
+          "oklch(62% 0.017 201.4)",
+          "oklch(74% 0.017 201.4)",
+          "oklch(85% 0.017 201.4)",
+          "oklch(95% 0.017 201.4)"
+        ]
+      },
+      "reed": {
+        "role": "neutral",
+        "displayName": "Reed",
+        "canonical": "#78939a",
+        "tonalRamp": [
+          "oklch(15% 0.032 215.2)",
+          "oklch(26% 0.032 215.2)",
+          "oklch(38% 0.032 215.2)",
+          "oklch(50% 0.032 215.2)",
+          "oklch(62% 0.032 215.2)",
+          "oklch(74% 0.032 215.2)",
+          "oklch(85% 0.032 215.2)",
+          "oklch(95% 0.032 215.2)"
+        ]
+      },
+      "coral": {
+        "role": "secondary",
+        "displayName": "Coral",
+        "canonical": "#c93d3a",
+        "tonalRamp": [
+          "oklch(15% 0.140 25.9)",
+          "oklch(26% 0.140 25.9)",
+          "oklch(38% 0.140 25.9)",
+          "oklch(50% 0.140 25.9)",
+          "oklch(62% 0.140 25.9)",
+          "oklch(74% 0.140 25.9)",
+          "oklch(85% 0.140 25.9)",
+          "oklch(95% 0.140 25.9)"
+        ]
+      },
+      "coral-night": {
+        "role": "secondary",
+        "displayName": "Coral Night",
+        "canonical": "#ff7a72",
+        "tonalRamp": [
+          "oklch(15% 0.140 25.4)",
+          "oklch(26% 0.140 25.4)",
+          "oklch(38% 0.140 25.4)",
+          "oklch(50% 0.140 25.4)",
+          "oklch(62% 0.140 25.4)",
+          "oklch(74% 0.140 25.4)",
+          "oklch(85% 0.140 25.4)",
+          "oklch(95% 0.140 25.4)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0a2530",
+        "tonalRamp": [
+          "oklch(15% 0.038 228.2)",
+          "oklch(26% 0.038 228.2)",
+          "oklch(38% 0.038 228.2)",
+          "oklch(50% 0.038 228.2)",
+          "oklch(62% 0.038 228.2)",
+          "oklch(74% 0.038 228.2)",
+          "oklch(85% 0.038 228.2)",
+          "oklch(95% 0.038 228.2)"
+        ]
+      },
+      "ink-pale": {
+        "role": "neutral",
+        "displayName": "Ink Pale",
+        "canonical": "#e8f2f3",
+        "tonalRamp": [
+          "oklch(15% 0.011 204.1)",
+          "oklch(26% 0.011 204.1)",
+          "oklch(38% 0.011 204.1)",
+          "oklch(50% 0.011 204.1)",
+          "oklch(62% 0.011 204.1)",
+          "oklch(74% 0.011 204.1)",
+          "oklch(85% 0.011 204.1)",
+          "oklch(95% 0.011 204.1)"
+        ]
+      },
+      "kelp": {
+        "role": "notice",
+        "displayName": "Kelp",
+        "canonical": "#1f7a4d",
+        "tonalRamp": [
+          "oklch(15% 0.110 156.8)",
+          "oklch(26% 0.110 156.8)",
+          "oklch(38% 0.110 156.8)",
+          "oklch(50% 0.110 156.8)",
+          "oklch(62% 0.110 156.8)",
+          "oklch(74% 0.110 156.8)",
+          "oklch(85% 0.110 156.8)",
+          "oklch(95% 0.110 156.8)"
+        ]
+      },
+      "amber-weed": {
+        "role": "notice",
+        "displayName": "Amber Weed",
+        "canonical": "#8f5200",
+        "tonalRamp": [
+          "oklch(15% 0.114 63.3)",
+          "oklch(26% 0.114 63.3)",
+          "oklch(38% 0.114 63.3)",
+          "oklch(50% 0.114 63.3)",
+          "oklch(62% 0.114 63.3)",
+          "oklch(74% 0.114 63.3)",
+          "oklch(85% 0.114 63.3)",
+          "oklch(95% 0.114 63.3)"
+        ]
+      },
+      "riptide": {
+        "role": "notice",
+        "displayName": "Riptide",
+        "canonical": "#b3261e",
+        "tonalRamp": [
+          "oklch(15% 0.140 28.7)",
+          "oklch(26% 0.140 28.7)",
+          "oklch(38% 0.140 28.7)",
+          "oklch(50% 0.140 28.7)",
+          "oklch(62% 0.140 28.7)",
+          "oklch(74% 0.140 28.7)",
+          "oklch(85% 0.140 28.7)",
+          "oklch(95% 0.140 28.7)"
+        ]
+      },
+      "night-water": {
+        "role": "neutral",
+        "displayName": "Night Water",
+        "canonical": "#0c1b21",
+        "tonalRamp": [
+          "oklch(15% 0.024 225.7)",
+          "oklch(26% 0.024 225.7)",
+          "oklch(38% 0.024 225.7)",
+          "oklch(50% 0.024 225.7)",
+          "oklch(62% 0.024 225.7)",
+          "oklch(74% 0.024 225.7)",
+          "oklch(85% 0.024 225.7)",
+          "oklch(95% 0.024 225.7)"
+        ]
+      },
+      "night-card": {
+        "role": "neutral",
+        "displayName": "Night Card",
+        "canonical": "#142a32",
+        "tonalRamp": [
+          "oklch(15% 0.032 223.6)",
+          "oklch(26% 0.032 223.6)",
+          "oklch(38% 0.032 223.6)",
+          "oklch(50% 0.032 223.6)",
+          "oklch(62% 0.032 223.6)",
+          "oklch(74% 0.032 223.6)",
+          "oklch(85% 0.032 223.6)",
+          "oklch(95% 0.032 223.6)"
+        ]
+      },
+      "night-shallows": {
+        "role": "neutral",
+        "displayName": "Night Shallows",
+        "canonical": "#1f3a44",
+        "tonalRamp": [
+          "oklch(15% 0.037 223.9)",
+          "oklch(26% 0.037 223.9)",
+          "oklch(38% 0.037 223.9)",
+          "oklch(50% 0.037 223.9)",
+          "oklch(62% 0.037 223.9)",
+          "oklch(74% 0.037 223.9)",
+          "oklch(85% 0.037 223.9)",
+          "oklch(95% 0.037 223.9)"
+        ]
+      },
+      "night-muted": {
+        "role": "neutral",
+        "displayName": "Night Muted",
+        "canonical": "#9db8be",
+        "tonalRamp": [
+          "oklch(15% 0.031 212.6)",
+          "oklch(26% 0.031 212.6)",
+          "oklch(38% 0.031 212.6)",
+          "oklch(50% 0.031 212.6)",
+          "oklch(62% 0.031 212.6)",
+          "oklch(74% 0.031 212.6)",
+          "oklch(85% 0.031 212.6)",
+          "oklch(95% 0.031 212.6)"
+        ]
+      },
+      "night-border": {
+        "role": "neutral",
+        "displayName": "Night Border",
+        "canonical": "#2b4650",
+        "tonalRamp": [
+          "oklch(15% 0.037 223.4)",
+          "oklch(26% 0.037 223.4)",
+          "oklch(38% 0.037 223.4)",
+          "oklch(50% 0.037 223.4)",
+          "oklch(62% 0.037 223.4)",
+          "oklch(74% 0.037 223.4)",
+          "oklch(85% 0.037 223.4)",
+          "oklch(95% 0.037 223.4)"
+        ]
+      },
+      "night-input": {
+        "role": "neutral",
+        "displayName": "Night Input",
+        "canonical": "#5d818c",
+        "tonalRamp": [
+          "oklch(15% 0.044 218.7)",
+          "oklch(26% 0.044 218.7)",
+          "oklch(38% 0.044 218.7)",
+          "oklch(50% 0.044 218.7)",
+          "oklch(62% 0.044 218.7)",
+          "oklch(74% 0.044 218.7)",
+          "oklch(85% 0.044 218.7)",
+          "oklch(95% 0.044 218.7)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "A page's one heading, in Fraunces."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "A section, in Fraunces."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "A card's name."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading, in English and Italian."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Fields and buttons."
+      }
+    },
+    "shadows": [
+      {
+        "name": "frame-shadow",
+        "value": "0 10px 30px -12px rgb(10 37 48 / 0.28), 0 2px 8px rgb(10 37 48 / 0.08)",
+        "purpose": "The floating frame only (`--frame-shadow`); at night a black pair."
+      },
+      {
+        "name": "emoji-shadow",
+        "value": "drop-shadow(0 0 0.5px rgb(11 74 90 / 0.32)) drop-shadow(0 1px 0.5px rgb(11 74 90 / 0.22))",
+        "purpose": "A full-colour emoji only (`filter: var(--emoji-shadow)`); lifts it off the light ground."
+      }
+    ],
+    "motion": [
+      {
+        "name": "pulse",
+        "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "purpose": "The octopus while a page waits, behind `motion-safe:`; it stands still for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tide Teal with a white label, the one pressed colour; 40px, 44px on a finger.",
+      "html": "<button class=\"ds-btn-primary\">Sign in</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 16px; border: 0; border-radius: 0.75rem; background: #0b6b7c; color: #ffffff; font: 700 0.875rem/1.4 Nunito, ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background 0.2s; } .ds-btn-primary:hover { background: #09596a; } .ds-btn-primary:focus-visible { outline: 2px solid #0b6b7c; outline-offset: 2px; } .ds-btn-primary:active { background: #074a59; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Foam on Sea Glass, a hairline of Rim and no shadow; the Image is the interface.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Summer</h3><p class=\"ds-card-body\">A card holds one thing.</p></div>",
+      "css": ".ds-card { padding: 16px; border: 1px solid #cfdfe0; border-radius: 1.05rem; background: #ffffff; color: #0f2a30; font-family: Nunito, ui-sans-serif, system-ui, sans-serif; } .ds-card-title { margin: 0 0 4px; font: 700 1.125rem/1.5 Nunito, ui-sans-serif, system-ui, sans-serif; } .ds-card-body { margin: 0; font-size: 1rem; line-height: 1.55; color: #4a6168; }"
+    },
+    {
+      "name": "Floating Frame",
+      "kind": "nav",
+      "refersTo": "floating-frame",
+      "description": "The sidebar as a card on the pool, a gap round it; the only chrome that casts a shadow.",
+      "html": "<nav class=\"ds-frame\" aria-label=\"Menu\"><a class=\"ds-frame-row ds-frame-row-current\" href=\"#\">Gallery</a><a class=\"ds-frame-row\" href=\"#\">Favorites</a><a class=\"ds-frame-row\" href=\"#\">Memory</a></nav>",
+      "css": ".ds-frame { display: flex; flex-direction: column; gap: 4px; width: 220px; padding: 8px; border-radius: 1.35rem; background: #e1eded; box-shadow: 0 10px 30px -12px rgb(10 37 48 / 0.28), 0 2px 8px rgb(10 37 48 / 0.08); font-family: Nunito, ui-sans-serif, system-ui, sans-serif; } .ds-frame-row { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 0.75rem; color: #0f2a30; font-size: 1rem; text-decoration: none; } .ds-frame-row:hover { background: #cfdfe0; } .ds-frame-row:focus-visible { outline: 2px solid #0b6b7c; outline-offset: 2px; } .ds-frame-row-current { background: #0a2530; color: #e8f2f3; } .ds-frame-row-current:hover { background: #0a2530; }"
+    },
+    {
+      "name": "Ink Pill",
+      "kind": "chip",
+      "refersTo": "ink-pill",
+      "description": "The Section you are on: ink with pale text in both schemes, the frame's only dark furniture.",
+      "html": "<span class=\"ds-pill\">Gallery</span>",
+      "css": ".ds-pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 0.75rem; background: #0a2530; color: #e8f2f3; font: 700 0.875rem/1.4 Nunito, ui-sans-serif, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Favorite Mark",
+      "kind": "custom",
+      "refersTo": "favorite-mark",
+      "description": "A starred photo in coral, 24px: the only coral on a page, never text.",
+      "html": "<svg class=\"ds-fav\" aria-hidden=\"true\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M15 8h.01\"/><path d=\"M11.5 21H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v6\"/><path d=\"M3 16l5-5c.928-.893 2.072-.893 3 0l2 2\"/><path d=\"M17.8 21.4l2.2-1.4 2.2 1.4-.6-2.5 2-1.7-2.6-.2-1-2.4-1 2.4-2.6.2 2 1.7z\"/></svg>",
+      "css": ".ds-fav { width: 24px; height: 24px; color: #c93d3a; }"
+    },
+    {
+      "name": "Card Back",
+      "kind": "card",
+      "refersTo": "card-back",
+      "description": "The Memory game's card: ink in both schemes, an edge in night teal, the Noto octopus in its own colours.",
+      "html": "<div class=\"ds-card-back\" aria-hidden=\"true\"><span class=\"ds-card-back-mark\">?</span></div>",
+      "css": ".ds-card-back { display: flex; align-items: center; justify-content: center; width: 150px; height: 200px; border: 2px solid #4fc3d4; border-radius: 1.05rem; background: #0a2530; color: #e8f2f3; } .ds-card-back-mark { font: 600 2.25rem/1.15 Fraunces, ui-serif, Georgia, serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tide Pool",
+    "overview": "Ocean is Laura's Design: a small, clear pool where the pictures are the treasures. By day the ground is sea glass, pale and a little green, with white foam cards resting on it and one deep teal for what can be pressed. By night the pool goes to deep water, and the teal turns bright enough to find in the dark. A single coral, the colour of what is loved, marks Favorites and nothing else. Its mascot is a small pool of emoji art, not a drawing: three octopuses, a squid, a jellyfish and one one-colour octopus (`OCEAN_MASCOT_POOL`). The Laura logo is not the mascot: it is the AOF logo as the Back Office wears it, with the teal banner behind its label.\n\nIt is warm without being childish: Nunito's round letters for reading, a soft serif (Fraunces) only for page headings, soft corners, one hand's reach for every control. It rejects the gallery that shouts (heavy frames, drop shadows on every tile, decoration around the picture) and the admin look the Back Office wears: density is not welcome here.",
+    "keyCharacteristics": [
+      "The Image is the interface; the chrome steps back.",
+      "A floating frame: the sidebar is a card on the pool, with a gap round it.",
+      "Sea glass by day, deep water by night, following the OS.",
+      "Coral for Favorites only.",
+      "One dark, the ink, shared by both schemes."
+    ],
+    "rules": [
+      {
+        "name": "The Ink Rule",
+        "body": "The card back and any other dark furniture are ink (`#0a2530`, pale text `#e8f2f3`) in both schemes: it does not follow the theme, like a station sign that stays lit.",
+        "section": "colors"
+      },
+      {
+        "name": "The Coral Rule",
+        "body": "Coral marks a Favorite and nothing else. It is never text on the ground and never a state (success, warning and failure have their own colours); the mascot art keeps its own colours and is never tinted coral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Floating Frame Rule",
+        "body": "Only the floating frame and floating controls cast a shadow (an emoji has only its own tight `--emoji-shadow`). The frame's gap, radius and shadow come from `--frame-gap`, `--frame-radius` and `--frame-shadow`, which the shared sidebar reads with shadcn's values as fallback.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** let the Image fill its space; the chrome is the frame, not the picture.",
+      "**Do** check a new colour against `theme.test.ts`: AA for text, 3:1 for a mark.",
+      "**Do** keep motion behind `motion-safe:`.",
+      "**Do** draw the mascot only from the pool (`OCEAN_ART`), one picture per moment from one table (Laura's `MASCOT`): the Firefox octopus at the door and in the Install card, the Noto octopus for an error, the squid for a 404, the jellyfish offline, the classic octopus while waiting; each full-colour one with `filter: var(--emoji-shadow)`, the one-colour octopus in the primary."
+    ],
+    "donts": [
+      "**Don't** put coral on text, or on anything but a Favorite.",
+      "**Don't** add a shadow to a tile, a card or a button (**The Quiet Image Rule**: chrome never competes with an Image).",
+      "**Don't** draw a mascot of our own or tint the art: it keeps its own colours, at a size that is an accent, never a large illustration.",
+      "**Don't** show Japanese or station furniture here: that is Japan's."
+    ]
+  }
+}

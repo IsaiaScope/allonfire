@@ -1,5 +1,5 @@
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { useListView } from "@/shared/hooks/use-list-view";
+import { useListView } from "@allonfire/ui/features/data-table/hooks/use-list-view";
 import { IMAGES } from "../constants/images";
 import { imagesParams } from "../constants/images-params";
 

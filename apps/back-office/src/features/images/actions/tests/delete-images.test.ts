@@ -1,7 +1,11 @@
 // @module-tag unit
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import {
+  answerDeleted,
+  FAKE_API,
+  resetFakeApi,
+} from "@allonfire/core/features/next/api/tests/fake-api";
 import { updateTag } from "next/cache";
-import { FAKE_API, resetFakeApi } from "@/features/api/tests/fake-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { IMAGES } from "../../constants/images";
 import { deleteImages } from "../delete-images";
@@ -12,22 +16,19 @@ vi.mock(
   "@/features/api/utils/server-api",
   () => import("@/features/api/tests/fake-api")
 );
-vi.mock("next/cache", () => import("@/shared/tests/next-cache-mock"));
+vi.mock(
+  "next/cache",
+  () => import("@allonfire/ui/shared/tests/next-cache-mock")
+);
 
 beforeEach(() => {
   resetFakeApi();
   vi.mocked(updateTag).mockClear();
 });
 
-const answeredDeleted = (deleted: number) =>
-  FAKE_API.answers.set(HTTP.METHOD.DELETE, {
-    body: { deleted },
-    status: HTTP.STATUS.OK,
-  });
-
 describe("deleteImages", () => {
   it("sends the ids, answers how many went and updates the Images and Storage tags", async () => {
-    answeredDeleted(IDS.length);
+    answerDeleted(IDS.length);
     expect(await deleteImages(IDS)).toBe(IDS.length);
     expect(FAKE_API.sent[0]?.body).toEqual({ ids: IDS });
     expect(updateTag).toHaveBeenCalledWith(IMAGES.CACHE.TAG);
@@ -35,7 +36,7 @@ describe("deleteImages", () => {
   });
 
   it("answers fewer, and still clears the kept copies, when another Admin deleted some already", async () => {
-    answeredDeleted(0);
+    answerDeleted(0);
     expect(await deleteImages(IDS)).toBe(0);
     expect(updateTag).toHaveBeenCalledWith(IMAGES.CACHE.TAG);
     expect(updateTag).toHaveBeenCalledWith(STORAGE.CACHE.TAG);

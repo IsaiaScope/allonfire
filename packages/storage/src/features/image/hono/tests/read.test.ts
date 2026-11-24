@@ -29,7 +29,7 @@ const onePath = (id: string) =>
   `${STORAGE.PATH.IMAGES}${fillPath(STORAGE.PATH.ONE, { id })}`;
 
 const lauraUser = sessionFor({
-  memberships: [{ app: App.LAURA, role: Role.VIEWER }],
+  memberships: [{ app: App.LAURA, role: Role.USER }],
 });
 const otherAppUser = sessionFor({ memberships: [] });
 const visitor: AuthSession | null = null;

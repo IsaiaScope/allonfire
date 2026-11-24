@@ -1,6 +1,6 @@
 // @module-tag integration
 
-import { STORAGE_USAGE } from "@allonfire/api/features/storage-usage/constants/storage-usage";
+import { BACK_OFFICE as API_BACK_OFFICE } from "@allonfire/api/features/back-office/constants/back-office";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import {
@@ -12,7 +12,7 @@ import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { StorageOverview } from "../storage-overview";
 
 const t = EN.Storage;
-const IMAGE_KIND = STORAGE_USAGE.BUCKET_KIND.IMAGE;
+const IMAGE_KIND = API_BACK_OFFICE.OVERVIEW.STORAGE.BUCKET_KIND.IMAGE;
 const AS_OF = "2026-11-09T10:00:00.000Z";
 const SIZE_OF_BUCKET = formatSize(
   STORAGE_OVERVIEW.buckets[0]?.reading?.bytes ?? 0
@@ -20,7 +20,7 @@ const SIZE_OF_BUCKET = formatSize(
 
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 
 const { answer, renderChart, renderView } = setupOverview({
@@ -64,7 +64,7 @@ describe("StorageOverview", () => {
       .poll(() => element.querySelectorAll(".recharts-bar-rectangle").length)
       .toBeGreaterThanOrEqual(3);
     expect(element.textContent).toContain("Laura");
-    expect(element.textContent).toContain(BACK_OFFICE.NAME);
+    expect(element.textContent).toContain(BACK_OFFICE.name);
     expect(element.textContent).toContain(t.chart.public);
     expect(element.textContent).toContain(t.chart.private);
   });

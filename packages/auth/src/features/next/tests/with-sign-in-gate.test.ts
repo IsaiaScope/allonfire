@@ -21,7 +21,7 @@ const APP_PAGE = { REPORTS: "/reports" } as const;
 const proxy = vi.fn(() => new Response());
 const gate = withSignInGate(proxy, {
   locales: [I18N.DEFAULT_LANGUAGE, IT],
-  pages: [HOME],
+  sections: [{ path: HOME }],
 });
 const visit = (path: string, cookie = "") =>
   gate(new NextRequest(`${ORIGIN}${path}`, { headers: { cookie } }));
@@ -48,7 +48,7 @@ describe("withSignInGate", () => {
   it("gates any page the App lists, not only the shared ones", async () => {
     const appGate = withSignInGate(proxy, {
       locales: [I18N.DEFAULT_LANGUAGE, IT],
-      pages: [HOME, APP_PAGE.REPORTS],
+      sections: [{ path: HOME }, { path: APP_PAGE.REPORTS }],
     });
     const response = await appGate(
       new NextRequest(`${ORIGIN}/${IT}${APP_PAGE.REPORTS}`)
@@ -72,7 +72,7 @@ describe("withSignInGate", () => {
   it("gates every page under a listed page, in either language form", async () => {
     const appGate = withSignInGate(proxy, {
       locales: [I18N.DEFAULT_LANGUAGE, IT],
-      pages: [HOME, APP_PAGE.REPORTS],
+      sections: [{ path: HOME }, { path: APP_PAGE.REPORTS }],
     });
     const under = await appGate(
       new NextRequest(`${ORIGIN}${APP_PAGE.REPORTS}/abc`)
@@ -89,7 +89,7 @@ describe("withSignInGate", () => {
   it("never gates by a prefix that is only part of a name, nor under Home", async () => {
     const appGate = withSignInGate(proxy, {
       locales: [I18N.DEFAULT_LANGUAGE, IT],
-      pages: [HOME, APP_PAGE.REPORTS],
+      sections: [{ path: HOME }, { path: APP_PAGE.REPORTS }],
     });
     await appGate(new NextRequest(`${ORIGIN}${APP_PAGE.REPORTS}x`));
     await appGate(new NextRequest(`${ORIGIN}/unknown/abc`));
@@ -144,6 +144,74 @@ describe("withSignInGate", () => {
     const fetch = apiSends(null);
     await visit(`/${IT}${SIGN_IN}`);
     expect(fetch).not.toHaveBeenCalled();
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+});
+
+describe("withSignInGate on a gated path", () => {
+  const UPLOAD = "/upload";
+  const gated = withSignInGate(proxy, {
+    locales: [I18N.DEFAULT_LANGUAGE, IT],
+    sections: [{ path: HOME }, { minRole: Role.ADMIN, path: UPLOAD }],
+  });
+  const goTo = (path: string, cookie = "") =>
+    gated(new NextRequest(`${ORIGIN}${path}`, { headers: { cookie } }));
+
+  it("sends a User to Home from a path above their Role, in the same language form", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.USER }]);
+    const response = await goTo(`/${IT}${UPLOAD}`, TOKEN);
+    expect(response.status).toBe(HTTP.STATUS.TEMPORARY_REDIRECT);
+    expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
+      `${ORIGIN}/${IT}${HOME}`
+    );
+    expect(
+      (await goTo(`${UPLOAD}/abc`, TOKEN)).headers.get(HTTP.HEADER.LOCATION)
+    ).toBe(`${ORIGIN}${METADATA.PATH.ROOT}`);
+    expect(proxy).not.toHaveBeenCalled();
+  });
+
+  it("lets an Admin through to the page", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    await goTo(UPLOAD, TOKEN);
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+
+  it("still sends a signed-out visit to Sign in first, asking the API nothing", async () => {
+    const fetch = apiSends(null);
+    const response = await goTo(UPLOAD);
+    expect(response.headers.get(HTTP.HEADER.LOCATION)).toBe(
+      `${ORIGIN}${SIGN_IN}`
+    );
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("never reads a gated Home as the prefix of every other path", async () => {
+    const homeGated = withSignInGate(proxy, {
+      locales: [I18N.DEFAULT_LANGUAGE, IT],
+      sections: [{ minRole: Role.ADMIN, path: HOME }, { path: UPLOAD }],
+    });
+    const fetch = apiSends([{ app: App.BACK_OFFICE, role: Role.USER }]);
+    await homeGated(
+      new NextRequest(`${ORIGIN}${UPLOAD}`, { headers: { cookie: TOKEN } })
+    );
+    expect(fetch).not.toHaveBeenCalled();
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+
+  it("asks nothing extra of a path with no minRole", async () => {
+    const fetch = apiSends([{ app: App.BACK_OFFICE, role: Role.USER }]);
+    await goTo(METADATA.PATH.ROOT, TOKEN);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(proxy).toHaveBeenCalledOnce();
+  });
+
+  it("lets the visit through when the API cannot say, for the page's own check", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new Error("API down")))
+    );
+    vi.spyOn(serverLogger(), "error").mockImplementation(() => undefined);
+    await goTo(UPLOAD, TOKEN);
     expect(proxy).toHaveBeenCalledOnce();
   });
 });

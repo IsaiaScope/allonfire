@@ -4,6 +4,7 @@ import { objectValues } from "@allonfire/core/shared/utils/object";
 import { type App, ImageAccess } from "@allonfire/database/enums";
 import type { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
+import { useRangePicker } from "@allonfire/ui/features/data-table/hooks/use-range-picker";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 import {
@@ -11,7 +12,6 @@ import {
   SearchTile,
 } from "@/shared/components/list-filter-panel";
 import { APP_OPTIONS } from "@/shared/constants/apps";
-import { useRangePicker } from "@/shared/hooks/use-range-picker";
 import { IMAGES } from "../constants/images";
 import { useImagesView } from "../hooks/use-images-view";
 

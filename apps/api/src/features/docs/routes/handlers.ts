@@ -70,7 +70,10 @@ export const specHandler = (app: Hono<AppBindings>, auth: AuthLike) => {
       generateSpecs(app, { documentation: DOCUMENTATION }),
       authOpenApi(auth),
     ])
-      .then(([routes, authSpec]) => mergeOpenApi(routes, authSpec))
+      .then(([routes, authSpec]) => ({
+        ...mergeOpenApi(routes, authSpec),
+        "x-tagGroups": OPENAPI.TAG_GROUPS,
+      }))
       .catch((err: unknown) => {
         // A failed build is not kept: the next request tries again.
         spec = undefined;

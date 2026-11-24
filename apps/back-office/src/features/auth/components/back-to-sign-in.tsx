@@ -2,7 +2,6 @@
 
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
-import { cn } from "@allonfire/ui/shared/utils/utils";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/features/i18n/navigation";
@@ -18,13 +17,13 @@ import { ACTION_KANJI } from "@/shared/constants/action-kanji";
  * 戻 (return) behind a left arrow, set left of the page's action. Its words
  * live in the tip above it and in its accessible name.
  */
-export const BackToSignIn = ({ className }: { className?: string }) => {
-  const t = useTranslations("ForgotPassword");
+export const BackToSignIn = () => {
+  const t = useTranslations("Common.Auth.ForgotPassword");
   return (
     <AOFTooltip contentProps={{ side: "top" }} label={t("back")}>
       <Link
         aria-label={t("back")}
-        className={cn(toolbarActionClass("icon", "outline"), className)}
+        className={toolbarActionClass("icon", "outline")}
         href={AUTH.PAGE.SIGN_IN}
       >
         <ToolbarActionBody

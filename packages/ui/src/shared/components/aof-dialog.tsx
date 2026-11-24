@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@allonfire/shadcn/components/dialog";
 import type { ComponentProps } from "react";
-import { SAFE_AREA } from "../constants/safe-area";
+import { centredInSafeArea } from "../utils/safe-area-box";
 import { cn } from "../utils/utils";
 
 // ponytail: shadcn's dialog (Base UI) under AOF names, like AOFCard: focus
@@ -20,7 +20,7 @@ export const AOFDialogContent = ({
   className,
   ...props
 }: ComponentProps<typeof DialogContent>) => (
-  <DialogContent className={cn(SAFE_AREA.CENTRED, className)} {...props} />
+  <DialogContent className={cn(centredInSafeArea(), className)} {...props} />
 );
 export const AOFDialogTitle = DialogTitle;
 export const AOFDialogFooter = DialogFooter;

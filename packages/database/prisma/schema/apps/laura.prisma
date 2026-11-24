@@ -24,3 +24,50 @@ model GameScore {
   @@index([userId, gameType])
   @@schema("laura")
 }
+
+/// An Image of the Laura App that a Laura Admin marked: the Admins' one
+/// selection, copied into every Profile (`ProfileFavorite`). It exists only
+/// while the Image is placed in Laura.
+model Favorite {
+  imageId   String   @id
+  /// Always LAURA (a CHECK in the changeset): the column lets the foreign key
+  /// name the `ImageApp` primary key, so removing the placement removes the row.
+  app       App      @default(LAURA)
+  createdAt DateTime @default(now())
+  imageApp  ImageApp @relation(fields: [imageId, app], references: [imageId, app], onDelete: Cascade)
+
+  @@index([createdAt, imageId])
+  @@schema("laura")
+}
+
+/// What Laura remembers about one User: one row per Laura Membership, created
+/// the first time they use Laura, removed with the Membership (ADR 0034).
+model LauraProfile {
+  userId     String
+  /// Always LAURA (a CHECK in the changeset): the Membership's key needs it.
+  app        App               @default(LAURA)
+  createdAt  DateTime          @default(now())
+  membership Membership        @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)
+  favorites  ProfileFavorite[]
+
+  @@id([userId, app])
+  @@map("Profile")
+  @@schema("laura")
+}
+
+/// A User's own copy of a Favorite. An Admin's mark or clear writes the master
+/// and every Profile's copy in one transaction; the copy keeps the master's
+/// `createdAt`, so every User's Favorites are in the same order.
+model ProfileFavorite {
+  userId    String
+  imageId   String
+  /// Always LAURA (a CHECK in the changeset).
+  app       App          @default(LAURA)
+  createdAt DateTime     @default(now())
+  profile   LauraProfile @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)
+  imageApp  ImageApp     @relation(fields: [imageId, app], references: [imageId, app], onDelete: Cascade)
+
+  @@id([userId, imageId])
+  @@index([userId, createdAt, imageId])
+  @@schema("laura")
+}

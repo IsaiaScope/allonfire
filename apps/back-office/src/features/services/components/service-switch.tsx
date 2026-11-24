@@ -3,6 +3,7 @@
 import { aofErrorMeta } from "@allonfire/core/features/next/query/utils/aof-query-errors";
 import type { ServiceType } from "@allonfire/database/enums";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
+import { useAOFQuietToggle } from "@allonfire/ui/features/query/hooks/use-aof-quiet-toggle";
 import { IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -15,10 +16,12 @@ const choiceOf = (enabled: boolean) =>
   enabled ? SERVICES.CHOICE.ON : SERVICES.CHOICE.OFF;
 
 /**
- * Turns a whole Service on or off, as soon as it is chosen: off, none of
- * its providers sends, whatever their own switch says. The choice is written
- * to the cached list first (`serviceEnabledMutation`) and `enabled` follows
- * the cache, so a save that fails puts the switch back through it, and says so.
+ * Turns a whole Service on or off: off, none of its providers sends, whatever
+ * their own switch says. The switch shows a choice at once; once the choices
+ * stop (`useAOFQuietToggle`) the last one is written to the cached list
+ * (`serviceEnabledMutation`) and saved, so a burst is one write, and none when
+ * it ends where it began. `enabled` follows the cache, so a save that fails
+ * puts the switch back through it, and says so.
  */
 export const ServiceSwitch = ({
   enabled,
@@ -40,20 +43,23 @@ export const ServiceSwitch = ({
       dontRunListeners: true,
     });
   }, [enabled, form]);
+  const { set } = useAOFQuietToggle({
+    // A refusal can undo the cache before a render saw it change, so the field
+    // is put back here too: the Service kept its state.
+    commit: (turnOn, options) =>
+      mutate(turnOn, {
+        ...options,
+        onError: () =>
+          form.setFieldValue("enabled", choiceOf(!turnOn), {
+            dontRunListeners: true,
+          }),
+      }),
+    confirmed: enabled,
+  });
   return (
     <form.AppField
       listeners={{
-        onChange: ({ value: choice }) => {
-          const turnOn = choice === SERVICES.CHOICE.ON;
-          mutate(turnOn, {
-            // A refusal can undo the cache before a render saw it change, so
-            // the field is put back here too: the Service kept its state.
-            onError: () =>
-              form.setFieldValue("enabled", choiceOf(!turnOn), {
-                dontRunListeners: true,
-              }),
-          });
-        },
+        onChange: ({ value: choice }) => set(choice === SERVICES.CHOICE.ON),
       }}
       name="enabled"
     >

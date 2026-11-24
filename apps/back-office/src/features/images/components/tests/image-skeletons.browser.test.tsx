@@ -2,8 +2,9 @@
 
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App } from "@allonfire/database/enums";
+import { FORM_WIDTHS } from "@allonfire/ui/shared/tests/height-at";
 import { page } from "vitest/browser";
-import { FORM_WIDTHS, heightAt } from "@/shared/tests/height-at";
+import { heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { imageBody } from "../../tests/image-body";
@@ -23,9 +24,13 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/image-form-mocks")
 );
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/image-form-mocks")
+);
 // A stored Image is drawn through the image server: here, a tile the picture's size.
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  AOFImage: (await import("@/shared/tests/image-mock")).ImageMock,
+  AOFImage: (await import("@allonfire/ui/shared/tests/image-mock")).ImageMock,
   AOFStorageImage: ({ className }: { className?: string }) => (
     <span className={className} data-testid="picture" />
   ),

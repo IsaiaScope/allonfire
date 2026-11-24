@@ -41,11 +41,11 @@ const PAST_THE_END = `?${IMAGES.PARAM.PAGE}=5`;
 vi.mock("../../actions/delete-images", () => ({ deleteImages: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 // A stored Image is drawn through the image server: here, a mark with its alt.
 vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
-  ...(await import("@/shared/tests/aof-image-mock")),
+  ...(await import("@allonfire/ui/shared/tests/aof-image-mock")),
   AOFStorageImage: ({ image }: { image: { alt: { en: string } } }) => (
     <span data-alt={image.alt.en} data-testid="picture" />
   ),

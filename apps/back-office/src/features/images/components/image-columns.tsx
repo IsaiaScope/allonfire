@@ -1,9 +1,5 @@
 "use client";
 
-import {
-  hostLanguageSchema,
-  I18N,
-} from "@allonfire/core/features/i18n/constants/locales";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { objectValues } from "@allonfire/core/shared/utils/object";
@@ -11,12 +7,13 @@ import { App, ImageAccess } from "@allonfire/database/enums";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import { AOFColumnHeader } from "@allonfire/ui/features/data-table/components/aof-column-header";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
+import { useAOFAltLanguage } from "@allonfire/ui/features/image/hooks/use-aof-alt-language";
 import { useAOFIntentPrefetch } from "@allonfire/ui/features/query/hooks/use-aof-intent-prefetch";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
 import { AOFStorageImage } from "@allonfire/ui/shared/components/aof-image";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 import { cva } from "class-variance-authority";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { type ComponentProps, useMemo } from "react";
 import { Link } from "@/features/i18n/navigation";
 import { CopyText } from "@/shared/components/copy-text";
@@ -37,13 +34,6 @@ const thumb = cva(
     variants: { size: { card: "size-30", page: "size-40", row: "size-12" } },
   }
 );
-
-/** The content language the page speaks: the alt shows in it. */
-export const useAltLanguage = () => {
-  const locale = useLocale();
-  const parsed = hostLanguageSchema.safeParse(locale);
-  return parsed.success ? parsed.data : I18N.DEFAULT_LANGUAGE;
-};
 
 /**
  * An Image's page, as a real link whose click area stretches over the whole
@@ -82,7 +72,7 @@ export const ImageThumb = ({
   image: ImageBody;
   size?: "card" | "page" | "row";
 }) => {
-  const language = useAltLanguage();
+  const language = useAOFAltLanguage();
   return (
     // The blur behind the picture: where it does not fill its square (it keeps
     // its shape) the square shows the picture's own colours, and the picture
@@ -130,7 +120,7 @@ export const CopyName = ({
 /** An Image's alt in the page's language, or a muted note that it has none. */
 export const AltText = ({ image }: { image: ImageBody }) => {
   const t = useTranslations("Images.column");
-  const language = useAltLanguage();
+  const language = useAOFAltLanguage();
   const alt = altFor(image.alt, language);
   return alt ? (
     alt

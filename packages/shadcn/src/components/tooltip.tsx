@@ -31,15 +31,17 @@ function TooltipContent({
   align = "center",
   alignOffset = 0,
   children,
+  collisionPadding,
   ...props
 }: TooltipPrimitive.Popup.Props &
   Pick<
     TooltipPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
+    "collisionPadding" | "align" | "alignOffset" | "side" | "sideOffset"
   >) {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Positioner
+        collisionPadding={collisionPadding}
         align={align}
         alignOffset={alignOffset}
         side={side}

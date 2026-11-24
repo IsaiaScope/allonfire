@@ -1,17 +1,7 @@
-import { LOCAL } from "@allonfire/config/local/addresses";
-import { vitestBrowserConfig } from "@allonfire/config/tests/browser";
-import { stringifyJson } from "@allonfire/core/shared/utils/json";
-import { defineConfig, mergeConfig } from "vitest/config";
+import { aofAppBrowserVitest } from "@allonfire/config/tests/vitest/app";
 import { appViteOptions } from "./vitest.config";
 
-// The App's env module reads process.env, which only Node has: the browser
-// gets the one public var.
-export default mergeConfig(
-  mergeConfig(vitestBrowserConfig, appViteOptions),
-  defineConfig({
-    define: {
-      "process.env": stringifyJson({ NEXT_PUBLIC_API_URL: LOCAL.URL.TEST_API }),
-    },
-    test: { setupFiles: ["./vitest.browser.setup.ts"] },
-  })
-);
+export default aofAppBrowserVitest({
+  appViteOptions,
+  setupFile: "./vitest.browser.setup.ts",
+});

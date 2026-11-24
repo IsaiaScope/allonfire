@@ -43,6 +43,10 @@ model ImageApp {
   app       App
   createdAt DateTime @default(now())
   image     Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  /// Laura's Favorite of this Image (a list: the real guarantee is the primary key on `imageId`).
+  favorites Favorite[]
+  /// Each Laura User's copy of that Favorite.
+  profileFavorites ProfileFavorite[]
 
   @@id([imageId, app])
   @@index([app, imageId])

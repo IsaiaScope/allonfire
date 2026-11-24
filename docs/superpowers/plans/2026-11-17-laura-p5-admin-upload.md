@@ -68,7 +68,7 @@
 | Rows, previews | `AOFPictureRow`: object URL revoked with its row, `AOFImage unoptimized`, tile for an undrawable file, HEIC preview via `heicToJpeg` | Task 8 |
 | Alt per language, access | `AOFImageAltFields`, `AOFImageAccessRow` (`withAOFFieldGroup`) | Task 7 |
 | Form | `useAOFForm` + `useAOFFormAction` + `useActionState` | Task 9, 10 |
-| Server action | `addImages` shared logic, App `serverApi` (Phase 1 `aofCreateApi`), `refusalOf`, `updateTag` | Tasks 5, 14 |
+| Server action | `addImages` shared logic, App `serverApi` (Phase 1 `aofCreateServerApi`), `refusalOf`, `updateTag` | Tasks 5, 14 |
 | Toast then list, refresh | `useToastThenList` (ui `features/data-table/hooks`, Phase 1 Task 5), `invalidateAll` (core, Phase 1 Task 4, made static-aware by Phase 4 Task 1) through Phase 4's `invalidateGallery` | Tasks 10, 14 |
 | Skeleton | `AOFFormSkeleton`, `Bar`, `ink` (Phase 1 Task 4, 15), height test | Tasks 11, 16 |
 | Errors told once | `AOFQueryProvider`, `aofErrorMeta` (no query or mutation here: the action's answer is a value) | n/a, said |
@@ -390,7 +390,7 @@ Data checklist here: points 1 to 6 as in "Data checklist"; the skeleton is point
 
 - [ ] Step 1: test (a `next.config` test beside Phase 3's, or a one-case unit test): the exported config's `experimental.proxyClientMaxBodySize` and `experimental.serverActions.bodySizeLimit` equal `IMAGE.LIMIT.UPLOAD_BODY_BYTES`.
 - [ ] Step 2: fails. Step 3: wrap with `withImageUploads` (inside `AOFWithLocalizedNotFound`, as the Back Office); remove the old `bodySizeLimit: "10mb"` if Phase 3 left it. Step 4: passes.
-- [ ] Step 5: ingress note in `deployment.md` (one line, with the host list): every App that adds Images raises Next's body limit with `withImageUploads` and its ingress must let a body that size through: Traefik sets no body limit, and Cloudflare (which proxies `laura.` like `back-office.`) caps a request body per plan (reconcile: look the current free-plan limit up; it is 100 MB when this was written, below the API's 100 MiB `UPLOAD_BYTES`, so a batch near the cap is refused at Cloudflare before it reaches either App; owner's call whether to lower `IMAGE.LIMIT.UPLOAD_BYTES`). Laura's Traefik labels and host are Phase 7's.
+- [ ] Step 5: ingress note in `deployment.md` (one line, with the host list): every App that adds Images raises Next's body limit with `withImageUploads` and its ingress must let a body that size through: Traefik sets no body limit, and Cloudflare (which proxies `laura.` like `back-office.`) caps a request body per plan (reconcile: look the current free-plan limit up; it is 100 MB when this was written, above the API's former 100 MiB `UPLOAD_BYTES` (now 90 MiB), which a batch near the old cap would have crossed; decided 2026-11-19: `IMAGE.LIMIT.UPLOAD_BYTES` is 90 MiB, under Cloudflare's 100 MB, pinned by `packages/storage/src/features/image/constants/tests/image.test.ts`; this step only writes the ingress note). Laura's Traefik labels and host are Phase 7's.
 
 ### Task 18: e2e (Laura)
 

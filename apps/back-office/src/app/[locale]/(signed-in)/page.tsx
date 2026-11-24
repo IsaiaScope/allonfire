@@ -1,9 +1,8 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { Suspense } from "react";
 import { HomeSection } from "@/features/home/components/home-section";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { StorageOverview } from "@/features/storage/components/storage-overview";
@@ -13,6 +12,7 @@ import { UsersOverview } from "@/features/users/components/users-overview";
 import { UsersOverviewSkeleton } from "@/features/users/components/users-overview-skeleton";
 import { usersOverviewHydration } from "@/features/users/utils/users-overview-hydration";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 // The layout's default title; only the address differs.
 export const generateMetadata = () => pageMetadata(AUTH.PAGE.HOME);
@@ -26,8 +26,8 @@ export const generateMetadata = () => pageMetadata(AUTH.PAGE.HOME);
 // cards. The header's breadcrumb names the page on screen; the page keeps its
 // h1 for screen readers.
 const HomePage = () => (
-  <SectionPage className="gap-6" width="form">
-    <h1 className="sr-only">{BACK_OFFICE.NAME}</h1>
+  <AOFSectionPage className="gap-6" width="form">
+    <h1 className="sr-only">{BACK_OFFICE.name}</h1>
     <HomeSection section={SECTION.USERS}>
       <Suspense fallback={<UsersOverviewSkeleton />}>
         <AOFHydratedBoundary hydration={usersOverviewHydration}>
@@ -42,7 +42,7 @@ const HomePage = () => (
         </AOFHydratedBoundary>
       </Suspense>
     </HomeSection>
-  </SectionPage>
+  </AOFSectionPage>
 );
 
 export default signedInPage(HomePage);

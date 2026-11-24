@@ -8,11 +8,8 @@ import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { imagePageBodySchema } from "@allonfire/storage/features/image/hono/constants/schemas";
 import { expect, type Page, test } from "@playwright/test";
-// Playwright loads specs as ES modules; Next ships no export map for it.
-import IT from "../src/features/i18n/translations/it.json" with {
-  type: "json",
-};
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
+import { AUTH_IT } from "../src/shared/tests/auth-words";
 import { enT, itT } from "../src/shared/tests/translators";
 import { SIGN_IN_URL } from "./pages";
 
@@ -32,7 +29,7 @@ test("sends a signed-out visitor from / to sign-in", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(SIGN_IN_URL);
   await expect(
-    page.getByRole("heading", { name: BACK_OFFICE.NAME })
+    page.getByRole("heading", { name: BACK_OFFICE.name })
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -48,7 +45,7 @@ test("redirects a signed-out visit to home before sending a page", async ({
 test("serves Italian at /it/sign-in", async ({ page }) => {
   await page.goto(`/it${AUTH.PAGE.SIGN_IN}`);
   await expect(
-    page.getByRole("button", { name: IT.SignIn.submit })
+    page.getByRole("button", { name: AUTH_IT.SignIn.submit })
   ).toBeVisible();
 });
 

@@ -3,13 +3,13 @@ import { DATE } from "@allonfire/core/features/i18n/constants/dates";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
+import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { SectionPage } from "@/features/navigation/components/section-page";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { UsersListSkeleton } from "../users-list-skeleton";
 import { UsersTable } from "../users-table";
@@ -34,11 +34,11 @@ const LOAD_TIMEOUT_MS = 4000;
 vi.mock("../../actions/delete-users", () => ({ deleteUsers: vi.fn() }));
 vi.mock(
   "@/features/i18n/navigation",
-  () => import("@/shared/tests/navigation-mock")
+  () => import("@allonfire/ui/shared/tests/navigation-mock")
 );
 vi.mock(
   "@allonfire/ui/shared/components/aof-image",
-  () => import("@/shared/tests/aof-image-mock")
+  () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
 /** A page in a box `height` tall and narrower than the list's columns, as
@@ -55,7 +55,7 @@ const PageBox = ({
     className="flex flex-col overflow-y-auto"
     style={{ height, width: BOX_WIDTH_PX }}
   >
-    <SectionPage>{children}</SectionPage>
+    <AOFSectionPage>{children}</AOFSectionPage>
   </div>
 );
 

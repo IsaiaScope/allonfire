@@ -197,10 +197,26 @@ it("keeps the storage console out of search results, ahead of its login", () => 
   );
 });
 
-it("the prod compose reads no vendor variable and requires the Back Office's public URL", () => {
+it.each([
+  ["api", "allonfire-api"],
+  ["cdn", "allonfire-cdn"],
+])("keeps the %s out of search results", (name, router) => {
+  // A router naming a middleware that is missing from the VPS answers 404, so
+  // noindex.yml must be restored with the Traefik files (vps-security.md).
+  expect(service(name)).toContain(
+    `traefik.http.routers.${router}.middlewares=noindex@file`
+  );
+});
+
+it("the prod compose reads no vendor variable and requires both Apps' public URLs in the Back Office", () => {
   // The storage image's own MINIO_ROOT_* keys stay; what they read is ours.
   expect(COMPOSE).not.toContain(interpolate("MINIO_"));
   expect(service("back-office")).toContain(
     `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}`
+  );
+  // The Back Office's switcher links to Laura; Laura's own service arrives
+  // with the cutover.
+  expect(service("back-office")).toContain(
+    `LAURA_URL=${required("LAURA_URL")}`
   );
 });

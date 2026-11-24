@@ -1,6 +1,6 @@
 import { providerEndpoint } from "@allonfire/core/environment/mail-environment";
 import { sendMail } from "@allonfire/core/features/mail/utils/send-mail";
-import { ServiceType } from "@allonfire/database/enums";
+import { App, ServiceType } from "@allonfire/database/enums";
 import { readUser } from "@allonfire/database/features/auth/user.service";
 import {
   enabledProviders,
@@ -10,10 +10,10 @@ import {
   updateService,
 } from "@allonfire/database/features/service/provider.service";
 import { env } from "../../environment/environment";
+import { adminOf } from "../../shared/utils/admin-of";
 import { logger } from "../logger/logger";
 import { limitTestAddress, mailDeps } from "../mail/mail-deps";
 import { sharedRedis } from "../redis/shared-redis";
-import { canManageUsers } from "../users/user-deps";
 import type { ServicesDeps } from "./utils/deps";
 import { mailKeepAlive, runKeepAlives } from "./utils/keep-alive";
 import { createProviderCheck } from "./utils/provider-check";
@@ -40,7 +40,7 @@ const providerCheck = createProviderCheck({
 
 /** The Services routes on the real stack. */
 export const servicesDeps: ServicesDeps = {
-  canManage: canManageUsers,
+  canManage: adminOf(App.BACK_OFFICE),
   configured: (slot) => providerEndpoint(slot) !== undefined,
   emailOf: async (userId) => (await readUser(userId))?.email ?? null,
   forgetUsage: forgetProviderUsage,

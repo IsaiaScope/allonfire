@@ -29,7 +29,6 @@ export const roleIn = (user: AccessUser, app: App): Role | undefined =>
 /**
  * Whether a User holds at least `min` in `app`: a Membership there whose Role
  * reaches it. `hasRoleIn(user, App.BACK_OFFICE, Role.ADMIN)`.
- * @internal
  */
 export const hasRoleIn = (user: AccessUser, app: App, min: Role): boolean => {
   const role = roleIn(user, app);
@@ -49,11 +48,22 @@ export const isBackOfficeAdmin = (user: AccessUser): boolean =>
 /**
  * Whether a User is allowed into an App: they belong to it and their Role
  * there reaches the App's floor. The API's `requireApp` and sign-in check, a
- * Next App's `canAccess` and the Image module's reads all apply it.
+ * Next App's `canAccess` and the Image module's reads all apply it. `min` is a
+ * Section's own Role (CONTEXT.md, Role): it can only raise the door above the
+ * App's floor, never lower it.
  */
-export const canEnterApp = (user: AccessUser, app: App): boolean => {
+export const canEnterApp = (
+  user: AccessUser,
+  app: App,
+  min?: Role
+): boolean => {
   const settings: AppSettingsTable = ACCESS.APP_SETTINGS;
-  return hasRoleIn(user, app, settings[app].minRole);
+  const floor = settings[app].minRole;
+  return hasRoleIn(
+    user,
+    app,
+    min !== undefined && hasRole(min, floor) ? min : floor
+  );
 };
 
 /**

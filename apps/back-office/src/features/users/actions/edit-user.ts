@@ -4,11 +4,11 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { updateTag } from "next/cache";
 import {
   type ApiRefusalKey,
   refusalOf,
-  textOf,
 } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
@@ -82,7 +82,9 @@ export const editUser = async (
   const { name, password, roles, verification } = parsed.data;
   const verified = verification === USERS.VERIFICATION.VERIFIED;
   const client = await serverApi();
-  const response = await client[API.VERSION.CURRENT].users[":id"].$patch({
+  const response = await client[API.VERSION.CURRENT][
+    API.SEGMENT.BACK_OFFICE
+  ].users[":id"].$patch({
     json: {
       memberships: membershipsOf(roles),
       name,

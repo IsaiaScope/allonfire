@@ -1,4 +1,8 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
+import type {
+  AppSection,
+  AppSubPage,
+} from "@allonfire/ui/features/navigation/types/app-descriptor";
 import {
   IconHome,
   IconMail,
@@ -6,9 +10,8 @@ import {
   IconServer2,
   IconServerCog,
   IconUsers,
-  type TablerIcon,
 } from "@tabler/icons-react";
-import { BACK_OFFICE } from "@/shared/constants/back-office";
+import { BACK_OFFICE_BASE } from "@/shared/constants/back-office-base";
 
 /**
  * A Section's key in `Navigation` (its menu label and page title); `t()`
@@ -20,20 +23,11 @@ type SectionLabel = "home" | "services" | "storage" | "users";
 type SectionPageLabel = "images" | "mail";
 
 /** One of a Section's own pages, listed under it in the sidebar. */
-export type SectionSubPage = {
-  icon: TablerIcon;
-  label: SectionPageLabel;
-  path: string;
-};
+type SectionSubPage = AppSubPage & { label: SectionPageLabel };
 
-export type Section = {
-  icon: TablerIcon;
+/** The Back Office's Section: the shared one with its own keys for labels. */
+export type Section = AppSection & {
   label: SectionLabel;
-  path: string;
-  /**
-   * Its own pages, under its path, in the sidebar's sub-menu; the Section's
-   * row opens the first. None: the Section is one page.
-   */
   pages?: readonly SectionSubPage[];
 };
 
@@ -49,9 +43,13 @@ export const SECTION = {
     icon: IconServerCog,
     label: "services",
     pages: [
-      { icon: IconMail, label: "mail", path: BACK_OFFICE.PAGE.SERVICES_MAIL },
+      {
+        icon: IconMail,
+        label: "mail",
+        path: BACK_OFFICE_BASE.PAGE.SERVICES_MAIL,
+      },
     ],
-    path: BACK_OFFICE.PAGE.SERVICES,
+    path: BACK_OFFICE_BASE.PAGE.SERVICES,
   },
   STORAGE: {
     icon: IconServer2,
@@ -60,12 +58,12 @@ export const SECTION = {
       {
         icon: IconPhoto,
         label: "images",
-        path: BACK_OFFICE.PAGE.STORAGE_IMAGES,
+        path: BACK_OFFICE_BASE.PAGE.STORAGE_IMAGES,
       },
     ],
-    path: BACK_OFFICE.PAGE.STORAGE,
+    path: BACK_OFFICE_BASE.PAGE.STORAGE,
   },
-  USERS: { icon: IconUsers, label: "users", path: BACK_OFFICE.PAGE.USERS },
+  USERS: { icon: IconUsers, label: "users", path: BACK_OFFICE_BASE.PAGE.USERS },
 } as const satisfies Record<string, Section>;
 
 /** The menu's order: an explicit list, since Biome sorts the object's keys. */

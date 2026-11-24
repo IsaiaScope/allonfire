@@ -3,15 +3,15 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import type { App } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
+import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-toast-then-list";
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { AOFReadOnlyField } from "@allonfire/ui/features/form/components/aof-read-only-field";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import { IconDeviceFloppy, IconMail, IconUserEdit } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
-import { FormAlert } from "@/shared/components/form-alert";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { editUser } from "../actions/edit-user";
 import { USERS } from "../constants/users";
 import {
@@ -153,7 +153,9 @@ export const EditUser = ({
             form={form}
           />
           {/* The end of the form: why the last submit failed, in its kept place. */}
-          <FormAlert className="@2xl:col-span-2 mt-4">{errorText}</FormAlert>
+          <AOFFormAlert className="@2xl:col-span-2 mt-4">
+            {errorText}
+          </AOFFormAlert>
         </div>
         <UserFormActions
           pending={pending}

@@ -1,5 +1,6 @@
 "use client";
 
+import type { useBulkDeleteFlow } from "@allonfire/ui/features/data-table/hooks/use-bulk-delete-flow";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
 import { IconTrashX } from "@tabler/icons-react";
@@ -9,7 +10,6 @@ import {
   type ToolbarActionShape,
   toolbarActionClass,
 } from "@/shared/components/toolbar-action";
-import type { useBulkDeleteFlow } from "@/shared/hooks/use-bulk-delete-flow";
 
 /** The words of a feature's `delete` namespace the control shows. */
 export type BulkDeleteControlWords = (

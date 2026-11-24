@@ -34,7 +34,7 @@ const EDGES = {
 } as const satisfies ToasterProps["offset"];
 
 /** Tabler's pictograms, as every AOF component draws, one family: each
- *  kind's sign in a rounded square, like a station's pictogram tile; the
+ *  kind's sign in a rounded square, like a tile; the
  *  spinner stands still for reduced motion. */
 const ICONS = {
   close: <IconX aria-hidden className="size-5" />,
@@ -100,7 +100,7 @@ const CLASS_NAMES = {
   warning: notice({ kind: "warning" }),
 } satisfies NonNullable<ToasterProps["toastOptions"]>["classNames"];
 
-/** What a Design lays behind a kind's words (a kanji), per kind. */
+/** What a Design lays behind a kind's words (a mark), per kind. */
 export type AOFToastBackdrops = Partial<Record<AOFToastKind, ReactNode>>;
 
 /** Each kind's pictogram, with its backdrop behind the toast's words, cut by
@@ -133,7 +133,7 @@ const iconsWith = (backdrops: AOFToastBackdrops | undefined) => ({
 // in packages/shadcn. Every toast Sonner draws (not a custom one, which
 // draws its own) has a close button, named in the page's language, as is
 // the region they are announced in. A Design dresses each kind through
-// `backdrops` (the Back Office lays a brush kanji behind it).
+// `backdrops` (a mark laid behind it).
 export const AOFToaster = ({
   backdrops,
   className,

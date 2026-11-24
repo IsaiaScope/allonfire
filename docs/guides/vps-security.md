@@ -28,7 +28,8 @@ Firewall, SSH, CrowdSec, Traefik gates, Dokploy login, OS updates, Dokploy's env
 - `admin-gate@file`: basic auth for `storage.` and `database-console.`.
 - `panel-auth@file` (`panel-auth.yml`): basic auth for `panel.` (Dokploy); also holds the CI login `deploy.yml` uses (`deployment.md`).
 - `sofia-gate@file`, `sofia-ratelimit@file` (per visitor IP, `ipStrategy.depth: 1` behind Cloudflare), `sofia-noindex@file` (`sofia.yml`): `sofia.` (`vps-agent.md`).
-- `noindex@file`, `security-headers.yml` (HSTS a year with preload, nosniff, frame deny, referrer and permissions policy, strips `Server` and `X-Powered-By`; `security-headers-csp@file` adds the CSP).
+- `noindex@file` (`noindex.yml`: `X-Robots-Tag: noindex, nofollow`): the entrypoint sets no `X-Robots-Tag`, so each router opts in. Every host but `www.` does: `api.`, `cdn.`, `storage.` and `observe.` through their compose labels (`prod-compose.test.ts`), the rest through their Traefik files or Dokploy domain. A router naming a middleware the VPS lacks answers 404, so a rebuilt VPS restores `noindex.yml` with the other Traefik files (`vps-backups.md`) before `api.` and `cdn.` start.
+- `security-headers.yml` (HSTS a year with preload, nosniff, frame deny, referrer and permissions policy, strips `Server` and `X-Powered-By`; `security-headers-csp@file` adds the CSP).
 - Own login, no basic auth: `observe.`, `monitor.`, `board.`, `workflow.` (n8n's login; its `/webhook/` paths stay public, the backup webhook checks a header token).
 - New password for a gate: `htpasswd -nbB <user> <password>` locally, paste the hash into the `users:` list of the dynamic file; Traefik reloads the folder on its own. Never copy a hash into the repo.
 - Files: `/etc/dokploy/traefik/dynamic/` (`vps.md`); they travel in the `traefik-dynamic-config` backup.

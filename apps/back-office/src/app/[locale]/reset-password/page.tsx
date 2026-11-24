@@ -1,10 +1,11 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { ResetPassword } from "@/features/auth/components/reset-password";
-import { pageMetadata } from "@/features/metadata/utils/page-metadata";
+import { AOFResetPassword } from "@allonfire/ui/features/auth/components/aof-reset-password";
+import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
+import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
-  pageMetadata(AUTH.PAGE.RESET_PASSWORD, "ResetPassword.title");
+  pageMetadata(AUTH.PAGE.RESET_PASSWORD, "Common.Auth.ResetPassword.title");
 
-const ResetPasswordPage = () => <ResetPassword />;
+const ResetPasswordPage = () => <AOFResetPassword dressing={AUTH_DRESSING} />;
 
 export default ResetPasswordPage;

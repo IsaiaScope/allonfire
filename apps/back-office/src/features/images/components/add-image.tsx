@@ -3,6 +3,8 @@
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import type { App } from "@allonfire/database/enums";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-toast-then-list";
+import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
 import {
   AOFButton,
@@ -28,13 +30,11 @@ import {
 } from "react";
 import { ActionKanji, kanjiAction } from "@/shared/components/brush-kanji";
 import { CardFrame } from "@/shared/components/card-frame";
-import { FormAlert } from "@/shared/components/form-alert";
 import {
   ToolbarActionBody,
   toolbarActionClass,
 } from "@/shared/components/toolbar-action";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { useToastThenList } from "@/shared/hooks/use-toast-then-list";
 import { type AddImageState, addImage } from "../actions/add-image";
 import { IMAGES } from "../constants/images";
 import {
@@ -141,8 +141,8 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
   const sharedId = useId();
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h1 className="flex items-center gap-2 font-bold text-2xl">
             <IconPhotoPlus aria-hidden className="size-7" />
             {t("Images.add.title")}
@@ -151,6 +151,7 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
             {t("Images.add.pick.hint", {
               files: IMAGE.LIMIT.FILES_PER_UPLOAD,
               size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
+              total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
             })}
           </p>
         </div>
@@ -166,7 +167,7 @@ export const AddImage = ({ apps }: { apps: readonly App[] }) => {
         />
         <AOFButton
           aria-label={t("Images.add.pick.button")}
-          className={toolbarActionClass("labeled")}
+          className={cn("shrink-0", toolbarActionClass("labeled"))}
           onClick={open}
           type="button"
         >
@@ -281,7 +282,7 @@ const Refusal = ({
   }
   const { error } = answer;
   const text = error !== undefined && given.files === files ? t(error) : null;
-  return <FormAlert className="mt-4">{text}</FormAlert>;
+  return <AOFFormAlert className="mt-4">{text}</AOFFormAlert>;
 };
 
 type RowsState = { values: { rows: AddImageRowValues[] } };

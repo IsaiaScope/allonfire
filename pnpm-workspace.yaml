@@ -3,5 +3,3 @@ packages:
   - "packages/*"
   - "!packages/auth-old"
   - "!packages/ui-old"
-  # Paused until it moves to the new Design system (ADR 0010).
-  - "!apps/laura"

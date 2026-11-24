@@ -28,6 +28,10 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/user-form-mocks")
 );
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/user-form-mocks")
+);
 vi.mock("@allonfire/ui/shared/hooks/use-aof-toast", async (original) => ({
   ...(await original<
     typeof import("@allonfire/ui/shared/hooks/use-aof-toast")
@@ -54,7 +58,7 @@ const USER: UserBody = {
   imageBlurDataUrl: null,
   memberships: [
     { app: App.BACK_OFFICE, role: Role.ADMIN },
-    { app: App.LAURA, role: Role.VIEWER },
+    { app: App.LAURA, role: Role.USER },
   ],
   name: NAME,
   version: "version-1",
@@ -108,7 +112,7 @@ describe("EditUser", () => {
     await expect
       .element(
         roleRow(App.LAURA).getByRole("button", {
-          name: EN.Navigation.role[Role.VIEWER],
+          name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.USER],
         })
       )
       .toHaveAttribute("aria-current", "page");

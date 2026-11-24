@@ -22,6 +22,8 @@ const SCRIPTS = new Map(
 const NAMED = /\bpnpm(?: -s)?(?: run)? ([a-z][\w:-]*)/g;
 /** The same in Markdown, only where a code span starts with it: prose says "pnpm from …". */
 const NAMED_IN_DOCS = /`pnpm(?: -s)?(?: run)? ([a-z][\w:-]*)/g;
+/** A root script longer than this belongs in a file under `packages/config/local/`. */
+const MAX_SCRIPT_LENGTH = 120;
 /** A command that waits on a person: a watch, a UI, a headed browser. */
 const INTERACTIVE = /--watch|--ui|headed/;
 /** pnpm's own commands, and `pnpm turbo`, which runs the binary: none names a script. */
@@ -60,8 +62,7 @@ const READERS = execFileSync(
   .filter(
     (path) =>
       path !== "" && !path.split("/").some((part) => part.startsWith("._"))
-  )
-  .filter((path) => !path.startsWith("apps/laura/"));
+  );
 
 describe("the root scripts", () => {
   it("run every Stage, and none of the names they replaced", () => {
@@ -97,10 +98,39 @@ describe("the root scripts", () => {
     }
   );
 
+  it("keep each script a short command: long logic lives in a file", () => {
+    for (const [name, command] of SCRIPTS) {
+      expect(command.length, name).toBeLessThanOrEqual(MAX_SCRIPT_LENGTH);
+    }
+    expect(SCRIPTS.get("dev")).toBe("bash packages/config/local/dev.sh");
+    for (const [name, mode] of [
+      ["dev:tailscale", "on"],
+      ["dev:tailscale:off", "off"],
+    ] as const) {
+      expect(SCRIPTS.get(name)).toBe(
+        `bash packages/config/local/tailscale.sh ${mode}`
+      );
+    }
+  });
+
+  it("hold no script nobody reads", () => {
+    for (const unused of ["docker:down", "docker:build:laura"]) {
+      expect(SCRIPTS.has(unused)).toBe(false);
+    }
+  });
+
+  it("run ShellCheck on every shell script in the repo, not a list of folders", () => {
+    expect(SCRIPTS.get("static:shell")).toContain("git ls-files");
+  });
+
   it("start only the Test services", () => {
     expect(SCRIPTS.get("test:services")).toBe(
       "docker compose -f docker/docker-compose.dev.yml up -d --wait database redis storage image-server cdn"
     );
+  });
+
+  it("runs the Apps' e2e one at a time, since they share the API's and the mail sink's ports", () => {
+    expect(SCRIPTS.get("e2e:run")).toBe("turbo run test:e2e --concurrency=1");
   });
 
   it.each(READERS)("%s names only root scripts that exist", (path) => {

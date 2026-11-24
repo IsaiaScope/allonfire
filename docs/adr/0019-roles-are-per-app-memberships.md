@@ -1,5 +1,8 @@
 # Roles are per App, held in Memberships; App settings live in one table
 
+> Partly superseded by [ADR 0032](0032-laura-admits-no-viewer.md): Laura's
+> floor is User and its Viewers became Users; the Role set is unchanged.
+
 A User carried one Role and a list of Allowed apps, so being an Admin anywhere
 meant being an Admin everywhere they were let in, and the value `ALL` let one
 row reach every App, future ones included. Apps are about to differ: some let

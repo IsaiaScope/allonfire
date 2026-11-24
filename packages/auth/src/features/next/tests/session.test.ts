@@ -9,7 +9,7 @@ import { apiSends } from "./session-request-mocks";
 vi.mock("next/headers", () => import("./session-request-mocks"));
 vi.mock("next-intl/server", () => ({ getLocale: async () => "it" }));
 vi.mock(
-  "@allonfire/core/features/next/api/visitor-headers",
+  "@allonfire/core/features/next/api/utils/visitor-headers",
   () => import("./session-request-mocks")
 );
 vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
@@ -37,6 +37,17 @@ describe("requireAppSession", () => {
     apiSends([{ app: App.LAURA, role: Role.ADMIN }]);
     await expect(requireAppSession()).rejects.toThrow(
       `redirect /it${AUTH.PAGE.SIGN_IN}`
+    );
+  });
+
+  it("sends someone below the Section's minRole Home, and lets a Role that reaches it through", async () => {
+    apiSends([{ app: App.BACK_OFFICE, role: Role.USER }]);
+    await expect(requireAppSession({ minRole: Role.ADMIN })).rejects.toThrow(
+      `redirect /it${AUTH.PAGE.HOME}`
+    );
+    apiSends([{ app: App.BACK_OFFICE, role: Role.ADMIN }]);
+    expect((await requireAppSession({ minRole: Role.ADMIN })).user.email).toBe(
+      "someone@example.com"
     );
   });
 

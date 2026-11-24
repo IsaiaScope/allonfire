@@ -5,7 +5,7 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 ## What the tools enforce
 
 - Biome (`biome.jsonc`): the Ultracite presets (core, react, next, vitest, type-aware) plus `noFloatingPromises`, `noMisusedPromises`, `useExhaustiveSwitchCases`, `noReExportAll`, `noExcessiveLinesPerFile`, `useMaxParams`, `noImplicitCoercions`; `noProcessEnv` is off only in the files its override lists (environment files, tests, e2e).
-- oxlint (`.oxlintrc.json`): only `typescript/no-deprecated`, type-aware; ignores Laura, `*-old` packages and generated shadcn code.
+- oxlint (`.oxlintrc.json`): only `typescript/no-deprecated`, type-aware; ignores `*-old` packages and generated shadcn code.
 - TypeScript (`packages/config/typescript/base.json`): `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noImplicitReturns`, unused locals and parameters as errors.
 
 ## TypeScript
@@ -17,16 +17,16 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 
 ## React
 
-- A component that wraps another takes the wrapped component's props (`ComponentProps<typeof X>`, minus what it sets itself) plus only the few it adds, and spreads the rest (`{...props}`); it never lists `children`, `className`, `disabled` and the like one by one, so its props stay few. Example: `apps/back-office/src/features/auth/components/gate-submit.tsx`.
-- An animation that changes layout (width plus content plus timing) uses Framer Motion (`motion`, `AnimatePresence`, `layout`); CSS transitions are for one property; never coordinate with `setTimeout`. Example: `apps/laura/src/components/motion-provider.tsx`.
+- A component that wraps another takes the wrapped component's props (`ComponentProps<typeof X>`, minus what it sets itself) plus only the few it adds, and spreads the rest (`{...props}`); it never lists `children`, `className`, `disabled` and the like one by one, so its props stay few. Example: `packages/ui/src/features/auth/components/aof-gate-submit.tsx`.
+- Motion is CSS, behind `motion-safe:` where it is not essential; no animation library is installed (Laura dropped `framer-motion`), and an animation is never coordinated with `setTimeout`. Example: `apps/back-office/src/features/navigation/components/section-loading.tsx`.
 - Every `<img>` or `<Image>` gets `width` and `height`, or `fill` inside a sized box, so nothing shifts as it loads. Example: `packages/ui/src/shared/components/aof-image.tsx`.
 
 ## CSS
 
-- A page that must fit the viewport passes height down a `flex-1 flex-col` chain from `body`, never a `100dvh` or `100svh` calc. Example: `apps/laura/src/app/[locale]/(dashboard)/games/memory/page.tsx`.
+- A page that must fit the viewport passes height down a `flex-1 flex-col` chain from `body`, never a `100dvh` or `100svh` calc. Example: `packages/ui/src/features/navigation/components/aof-section-page.tsx`.
 - iOS Safari: set `WebkitBackdropFilter` beside `backdropFilter` (Tailwind's `backdrop-blur` adds no prefix), mix colours `in srgb`, not `oklch`, and do not trust viewport units. Example: `apps/back-office/src/shared/components/torii.tsx`.
 
-- **A class is never a constant.** Tailwind classes are written inline in `cn(...)`, or, when they have states or a second reader, in a `cva` (a skeleton and its live twin, three cards' badge: `cardBadge`, `shared/utils/card-badge`). Never `const BADGE = "sm:h-7 ..."`, never a `className` key in a constants object (`CHART.TICK`), never a class list copied from one component to another. A prop that must be an object holding a class (a chart's `tick`) is built from a `cva`: `const TICK = { className: tickText() }`. Example: `packages/ui/src/features/chart/components/aof-bar-chart.tsx`.
+- **A class is never a constant.** Tailwind classes are written inline in `cn(...)`, or, when they have states or a second reader, in a `cva` (a skeleton and its live twin, three cards' badge: `cardBadge`, `packages/ui/src/features/data-table/utils/card-badge`). Never `const BADGE = "sm:h-7 ..."`, never a `className` key in a constants object (`CHART.TICK`), never a class list copied from one component to another. A prop that must be an object holding a class (a chart's `tick`) is built from a `cva`: `const TICK = { className: tickText() }`. Example: `packages/ui/src/features/chart/components/aof-bar-chart.tsx`.
 
 ## Values on screen
 

@@ -12,7 +12,7 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 # AllOnFire — agent guide
 
 pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
-(Next 16, 3400), `apps/laura` (old Next, until rebuilt). Packages under
+(Next 16, 3400), `apps/laura` (Next 16, 3200). Packages under
 `packages/`, one per concept. Domain words: `CONTEXT.md`; decisions:
 `docs/adr/`.
 
@@ -67,6 +67,7 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 | tests of any layer, the pre-commit hook, oxlint | `testing.md` |
 | Images, Avatars, the image server, signed links | `images.md` |
 | `packages/design`, `packages/ui`, shadcn, Tailwind rewrite | `design-system.md` |
+| iOS Safari: toolbar bands, notch, safe area, `dvh`, fixed elements (`/aof-safari`) | `safari.md` |
 | VPS, Docker services, CI | `deployment.md` |
 | VPS inventory, access, services and history | `vps.md` |
 | VPS firewall, access and security | `vps-security.md` |

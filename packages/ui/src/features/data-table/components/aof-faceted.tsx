@@ -25,6 +25,7 @@ import {
 import { AOFButton } from "../../../shared/components/aof-button";
 import { AOFInputClear } from "../../../shared/components/aof-input-clear";
 import { AOFTooltip } from "../../../shared/components/aof-tooltip";
+import { useSafeAreaPadding } from "../../../shared/hooks/use-safe-area-padding";
 import type { ComponentPropsWithoutChildren } from "../../../shared/types/types";
 import { cn } from "../../../shared/utils/utils";
 import { AOFControlBarSeparator } from "./aof-control-bar";
@@ -149,6 +150,7 @@ export const AOFFaceted = <V extends string>({
     [onValueChange]
   );
   // The search box's text, held here so its cross can empty it.
+  const padding = useSafeAreaPadding();
   const [query, setQuery] = useState("");
   const queryRef = useRef<HTMLInputElement>(null);
   const clearQuery = useCallback(() => {
@@ -212,6 +214,7 @@ export const AOFFaceted = <V extends string>({
       </FacetedTrigger>
       <FacetedContent
         className={popup({ size: fit, tiled: searchIcon !== undefined })}
+        collisionPadding={padding}
       >
         <div className="relative">
           <FacetedInput

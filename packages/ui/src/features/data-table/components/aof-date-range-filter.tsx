@@ -5,11 +5,6 @@ import {
   Calendar,
   CalendarDayButton,
 } from "@allonfire/shadcn/components/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@allonfire/shadcn/components/popover";
 import { IconCalendar, IconCircleX } from "@tabler/icons-react";
 import {
   type ComponentProps,
@@ -19,6 +14,11 @@ import {
   useRef,
 } from "react";
 import { AOFButton } from "../../../shared/components/aof-button";
+import {
+  AOFPopover,
+  AOFPopoverContent,
+  AOFPopoverTrigger,
+} from "../../../shared/components/aof-popover";
 import { AOFTooltip } from "../../../shared/components/aof-tooltip";
 import type { ComponentPropsWithoutChildren } from "../../../shared/types/types";
 import { cn } from "../../../shared/utils/utils";
@@ -140,8 +140,8 @@ export const AOFDateRangeFilter = ({
     ? { from: dateOf(value.from), to: dateOf(value.to) }
     : undefined;
   return (
-    <Popover>
-      <PopoverTrigger
+    <AOFPopover>
+      <AOFPopoverTrigger
         render={
           <AOFButton
             variant="outline"
@@ -179,8 +179,8 @@ export const AOFDateRangeFilter = ({
             </span>
           </>
         ) : null}
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto gap-2 p-0 ring-input">
+      </AOFPopoverTrigger>
+      <AOFPopoverContent align="start" className="w-auto gap-2 p-0 ring-input">
         <Calendar
           captionLayout="dropdown"
           className="p-3 text-base [--cell-size:--spacing(10)] **:data-[slot=button]:text-base [&_button>svg]:size-5"
@@ -199,7 +199,7 @@ export const AOFDateRangeFilter = ({
             </AOFButton>
           </div>
         ) : null}
-      </PopoverContent>
-    </Popover>
+      </AOFPopoverContent>
+    </AOFPopover>
   );
 };

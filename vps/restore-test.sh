@@ -32,6 +32,7 @@ FAILURES=0
 
 log() { echo "[$(date -u +%H:%M:%S)] $*" >&2; }
 
+# shellcheck disable=SC2317,SC2329  # runs from the EXIT trap below (the code is SC2317 in older ShellCheck)
 cleanup() {
   log "Cleaning up ${RESTORE_DIR}..."
   rm -rf "$RESTORE_DIR"

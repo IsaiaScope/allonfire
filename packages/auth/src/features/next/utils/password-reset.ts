@@ -1,29 +1,13 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { forwardedHeaders } from "@allonfire/core/features/next/api/visitor-headers";
+import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { serverLogger } from "@allonfire/core/features/next/logger/server-logger";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { nextAuthEnv } from "../../../environment/next-environment";
 import { AUTH } from "../../../shared/constants/auth";
 import { USER } from "../../users/constants/users";
 import { meetsPasswordRules } from "../../users/utils/password-rules";
 import type { ForgotError, ResetError } from "../constants/api";
+import { appHeaders } from "./app-request";
 import { createApiAuthClient } from "./auth-client";
-
-/** A form field as text; a missing field or a file reads as empty. */
-const text = (value: FormDataEntryValue | null) =>
-  typeof value === "string" ? value.trim() : "";
-
-/**
- * The visitor's forwarded headers, naming this App and the page's language,
- * so the email the API sends wears the App's look and the reader's words.
- */
-const mailHeaders = async (language: string) => {
-  const requestHeaders = new Headers(forwardedHeaders(await headers()));
-  requestHeaders.set(AUTH.HEADER.APP, nextAuthEnv.AUTH_APP);
-  requestHeaders.set(HTTP.HEADER.ACCEPT_LANGUAGE, language);
-  return requestHeaders;
-};
 
 const emailSchema = z.email();
 
@@ -36,14 +20,14 @@ export const requestResetLink = async (
   formData: FormData,
   { language, resetPage }: { language: string; resetPage: string }
 ): Promise<ForgotError | undefined> => {
-  const email = text(formData.get("email"));
+  const email = textOf(formData, "email").trim();
   if (!emailSchema.safeParse(email).success) {
     return AUTH.FORGOT_ERROR.INVALID;
   }
   try {
     const { error } = await createApiAuthClient().requestPasswordReset(
       { email, redirectTo: resetPage },
-      { headers: await mailHeaders(language) }
+      { headers: await appHeaders(language) }
     );
     if (!error) {
       return undefined;
@@ -80,7 +64,7 @@ export const resetWithToken = async (
   try {
     const { error } = await createApiAuthClient().resetPassword(
       { newPassword: password, token },
-      { headers: await mailHeaders(language) }
+      { headers: await appHeaders(language) }
     );
     if (!error) {
       return undefined;

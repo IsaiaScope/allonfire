@@ -15,6 +15,10 @@ vi.mock(
   "@/features/i18n/navigation",
   () => import("../../tests/image-form-mocks")
 );
+vi.mock(
+  "@allonfire/core/features/next/i18n/utils/aof-base-navigation",
+  () => import("../../tests/image-form-mocks")
+);
 
 const FORM = EN.Images.form;
 const START_ACCESS: ImageAccess = ImageAccess.PRIVATE;

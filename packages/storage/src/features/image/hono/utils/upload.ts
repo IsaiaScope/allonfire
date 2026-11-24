@@ -1,7 +1,7 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 
 /**
- * The upload brings its own body limit and time budget (100 MiB, 5 minutes),
+ * The upload brings its own body limit and time budget (90 MiB, 5 minutes),
  * so a host skips its global ones for it. `basePath` is where it mounted the
  * module.
  */
