@@ -1,7 +1,3 @@
-// nuqs/server: the parsers without nuqs' "use client" entry, so a Server
-// Component (the frame's layout) can read them too.
-import { createParser } from "nuqs/server";
-
 /** The frame's own values: its forms and its state in the address. */
 export const NAVIGATION = {
   /** The App itself, before its first Section: the line's start. */
@@ -10,27 +6,10 @@ export const NAVIGATION = {
     /** The account menu's Sign out submits this form, outside its popup. */
     SIGN_OUT: "sign-out",
   },
+  /** The only values the address can hold for the sidebar, each as the state it means. */
+  OPEN: { false: false, true: true } as const satisfies Record<string, boolean>,
   PARAM: {
     /** `false` when the desktop sidebar is collapsed to its icons. */
     SIDEBAR: "sidebar",
   },
 } as const;
-
-/** The only values the address may hold for the sidebar. */
-const OPEN = new Map([
-  [String(true), true],
-  [String(false), false],
-]);
-
-/**
- * Open by default; the default never shows in the address. Only `true` and
- * `false` are read: nuqs's `parseAsBoolean` reads any other value as
- * `false`, so a hand-edited `?sidebar=x` would collapse the menu. Replaces
- * the history entry: toggling the menu is not a step Back should undo.
- */
-export const sidebarParam = createParser({
-  parse: (value) => OPEN.get(value) ?? null,
-  serialize: String,
-})
-  .withDefault(true)
-  .withOptions({ clearOnDefault: true, history: "replace" });

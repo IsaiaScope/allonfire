@@ -1,10 +1,10 @@
 import type { SortItem } from "@allonfire/core/features/search/sort-query";
 import type { DayRange } from "@allonfire/core/features/search/utc-day-range";
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
-import type { Image, Prisma } from "../../../generated/prisma/client";
+import type { Prisma } from "../../../generated/prisma/client";
 import type { App, ImageAccess } from "../../../generated/prisma/enums";
 import { prisma } from "../prisma/client";
-import { type ImageAlt, readAlt } from "./utils/alt";
+import type { ImageAlt } from "./utils/alt";
 import { visibleImages } from "./utils/image-filter";
 import {
   type ImagePlacementsById,
@@ -12,20 +12,16 @@ import {
   placementsById,
 } from "./utils/image-locks";
 import { type ImageSortColumn, imageOrderBy } from "./utils/image-order";
-import { checkImageVersions, imageVersion } from "./utils/image-version";
+import {
+  type ImageRecord,
+  toRecord,
+  withPlacements,
+} from "./utils/image-record";
+import { checkImageVersions } from "./utils/image-version";
 
 export type { ImagePlacementsById } from "./utils/image-locks";
+export type { ImageRecord } from "./utils/image-record";
 
-/**
- * An Image, its access and every App it is placed in, ordered by App
- * (ADR 0020, ADR 0027), and its Version.
- */
-export type ImageRecord = Omit<Image, "alt"> & {
-  alt: ImageAlt;
-  apps: App[];
-  /** Its Version (`imageVersion`): a change must carry it to be written. */
-  version: string;
-};
 /** A new Image: private unless `access` says otherwise. */
 export type NewImage = Omit<
   ImageRecord,
@@ -59,23 +55,6 @@ export class ImageNotFoundError extends Error {
     this.ids = ids;
   }
 }
-
-/** Every read brings the Image's placements, ordered by App. */
-const withPlacements = {
-  apps: { orderBy: { app: "asc" }, select: { app: true } },
-} as const satisfies Prisma.ImageInclude;
-
-type ImageRow = Prisma.ImageGetPayload<{ include: typeof withPlacements }>;
-
-// `alt` is a Json column; parsing narrows it instead of casting.
-const toRecord = (row: ImageRow): ImageRecord => {
-  const record = {
-    ...row,
-    alt: readAlt(row.alt),
-    apps: row.apps.map(({ app }) => app),
-  };
-  return { ...record, version: imageVersion(record) };
-};
 
 /** The Images among `ids` that exist, and the ids that do not; duplicates count once. */
 async function findImages(

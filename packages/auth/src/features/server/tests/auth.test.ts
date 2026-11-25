@@ -39,7 +39,7 @@ describe("createAuth", () => {
       description: AUTH.DOC.JOIN_APP.DESCRIPTION,
       parameters: [{ in: "header", name: AUTH.HEADER.APP, required: true }],
       responses: {
-        "200": {
+        [HTTP.STATUS.OK]: {
           content: {
             [HTTP.CONTENT_TYPE.JSON]: {
               schema: {
@@ -47,6 +47,7 @@ describe("createAuth", () => {
               },
             },
           },
+          description: AUTH.DOC.JOIN_APP.RESPONSE[HTTP.STATUS.OK],
         },
       },
     });

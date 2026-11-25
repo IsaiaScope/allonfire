@@ -2,13 +2,13 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
-  objectEntries,
   objectFromEntries,
   objectValues,
 } from "@allonfire/core/shared/utils/object";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { z } from "zod";
 import type { TranslationKey } from "../../features/i18n/constants/locales";
+import { LAURA } from "../../features/laura/constants/laura";
 import { SERVICES } from "../../features/services/constants/services";
 
 /**
@@ -46,6 +46,7 @@ export type ErrorStatus = z.infer<typeof errorStatusSchema>;
 const ERROR_CODE = {
   ...ERROR.CODE,
   ...IMAGE.ERROR_CODE,
+  ...LAURA.GAMES.ERROR_CODE,
   ...SERVICES.ERROR_CODE,
   ...USER.ERROR_CODE,
 } as const satisfies Record<string, TranslationKey>;
@@ -91,6 +92,7 @@ const ERROR_CODE_STATUS = {
   [ERROR_CODE.FORBIDDEN]: HTTP.STATUS.FORBIDDEN,
   [ERROR_CODE.IMAGE_CHANGED]: HTTP.STATUS.CONFLICT,
   [ERROR_CODE.IMAGE_TOO_LARGE]: HTTP.STATUS.PAYLOAD_TOO_LARGE,
+  [ERROR_CODE.IMPLAUSIBLE_SCORE]: HTTP.STATUS.BAD_REQUEST,
   [ERROR_CODE.INTERNAL_ERROR]: HTTP.STATUS.INTERNAL_SERVER_ERROR,
   [ERROR_CODE.NOT_FOUND]: HTTP.STATUS.NOT_FOUND,
   [ERROR_CODE.PAYLOAD_TOO_LARGE]: HTTP.STATUS.PAYLOAD_TOO_LARGE,
@@ -102,12 +104,6 @@ const ERROR_CODE_STATUS = {
   [ERROR_CODE.UNSUPPORTED_IMAGE]: HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE,
   [ERROR_CODE.VALIDATION_FAILED]: HTTP.STATUS.BAD_REQUEST,
 } as const satisfies Record<ErrorCode, ErrorStatus>;
-
-/** The codes sent with `status`, in `API.ERROR.CODE` order. */
-export const codesFor = (status: ErrorStatus): ErrorCode[] =>
-  objectEntries(ERROR_CODE_STATUS).flatMap(([code, codeStatus]) =>
-    codeStatus === status ? [code] : []
-  );
 
 /**
  * The stable identifier for each problem type, per RFC 9457 §3.1.1.

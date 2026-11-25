@@ -20,7 +20,7 @@ const localeSchema = languageSchema.catch(I18N.DEFAULT_LANGUAGE);
  * layout spreads, each page's link preview and metadata, the layout's whole
  * `Metadata`, and the `Metadata` words read without next-intl's request
  * config (an image file is a Route Handler, where `getTranslations` is not
- * available). The App binds it once (`shared/constants/page-information`).
+ * available). The App binds it once (`features/metadata/utils/page-information`).
  */
 export const aofAppMetadata = ({
   getPathname,

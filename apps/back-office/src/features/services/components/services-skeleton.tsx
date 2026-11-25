@@ -101,7 +101,7 @@ export const ServicesSkeleton = ({ title }: { title: ReactNode }) => {
         <div aria-hidden className={ink({ shape: "service" })} />
       </div>
       <div aria-hidden="true" data-skeleton="card">
-        <CardFrame kanji={SERVICES.CARD_KANJI}>
+        <CardFrame kanji={SERVICES.KANJI.CARD}>
           <AOFCardHeader className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className={ink({ shape: "title" })} />

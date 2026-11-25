@@ -64,7 +64,7 @@ export const addUser = async (
     avatar: pictureOf(avatar),
   });
   if (!parsed.success) {
-    return { error: USERS.ADD_ERROR.INVALID, values };
+    return { error: USERS.ADD.ERROR.INVALID, values };
   }
   const { email, name, password, roles, verification } = parsed.data;
   const client = await serverApi();
@@ -80,11 +80,9 @@ export const addUser = async (
     },
   });
   if (response.status !== HTTP.STATUS.CREATED) {
-    const error = await refusalOf(
-      response,
-      USERS.ADD_ERROR,
-      new Map([[HTTP.STATUS.CONFLICT, USERS.ADD_ERROR.TAKEN]])
-    );
+    const error = await refusalOf(response, USERS.ADD.ERROR, {
+      [HTTP.STATUS.CONFLICT]: USERS.ADD.ERROR.TAKEN,
+    });
     return { error, values };
   }
   const { id, version } = await response.json();
@@ -92,7 +90,7 @@ export const addUser = async (
   // The kept lists lack the new User: dropped, so the list shows them first.
   updateTag(USERS.CACHE.TAG);
   if (sent && !sent.ok) {
-    return { notice: USERS.ADD_NOTICE.AVATAR_FAILED };
+    return { notice: USERS.ADD.NOTICE.AVATAR_FAILED };
   }
   return redirect({ href: BACK_OFFICE.PAGE.USERS, locale: languageOf(locale) });
 };

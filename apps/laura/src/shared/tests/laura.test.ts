@@ -2,9 +2,11 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { LAURA_LOGO } from "@allonfire/design/apps/laura/laura-logo";
 import { BRAND } from "@allonfire/design/brand/aof-monogram";
-import { LAURA, SECTION, SECTIONS } from "@/shared/constants/laura";
+import { SECTION } from "@/features/navigation/constants/sections";
+import { LAURA } from "@/shared/constants/laura";
 
 describe("LAURA", () => {
   it("is Laura's own descriptor", () => {
@@ -14,14 +16,14 @@ describe("LAURA", () => {
   });
 
   it("opens on the Gallery at Home, then Favorites, Memory and Upload", () => {
-    expect(SECTIONS[0].path).toBe(AUTH.PAGE.HOME);
-    expect(SECTIONS.map(({ path }) => path)).toEqual([
+    expect(LAURA.sections[0].path).toBe(AUTH.PAGE.HOME);
+    expect(LAURA.sections.map(({ path }) => path)).toEqual([
       AUTH.PAGE.HOME,
       LAURA.PAGE.FAVORITES,
       LAURA.PAGE.MEMORY,
       LAURA.PAGE.UPLOAD,
     ]);
-    expect(SECTIONS).toEqual([
+    expect(LAURA.sections).toEqual([
       SECTION.GALLERY,
       SECTION.FAVORITES,
       SECTION.MEMORY,
@@ -37,7 +39,7 @@ describe("LAURA", () => {
   });
 
   it("keeps only Upload above the App's floor, for an Admin", () => {
-    const closed = SECTIONS.filter((section) => "minRole" in section);
+    const closed = LAURA.sections.filter((section) => "minRole" in section);
     expect(closed).toEqual([SECTION.UPLOAD]);
     expect(SECTION.UPLOAD.minRole).toBe(Role.ADMIN);
   });
@@ -48,6 +50,10 @@ describe("LAURA", () => {
       mark: { logo: LAURA_LOGO },
       name: LAURA.name,
     });
+  });
+
+  it("reads its switcher's entries from the one definition the Back Office reads too", () => {
+    expect(LAURA.entries).toBe(APP.ENTRY);
   });
 
   it("names itself and the Brand in the share image's alt", () => {

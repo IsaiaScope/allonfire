@@ -1,9 +1,9 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFSignIn } from "@allonfire/ui/features/auth/components/aof-sign-in";
 import { env } from "@/environment/environment";
-import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
+import { AUTH_DRESSING } from "@/features/auth/components/dressing";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(AUTH.PAGE.SIGN_IN, "Common.Auth.SignIn.submit");

@@ -17,7 +17,7 @@ describe("error message localization", () => {
   it("falls back to English when no language is passed", async () => {
     const body = await notFoundIn();
     expect(body.detail).toBe(
-      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE].NOT_FOUND
+      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT.LOCALE].NOT_FOUND
     );
   });
 
@@ -31,7 +31,7 @@ describe("error message localization", () => {
   it("falls back to English for an unsupported language", async () => {
     const body = await notFoundIn({ [HTTP.HEADER.ACCEPT_LANGUAGE]: "ja-JP" });
     expect(body.detail).toBe(
-      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE].NOT_FOUND
+      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT.LOCALE].NOT_FOUND
     );
   });
 

@@ -1,4 +1,4 @@
-import { problemResponses } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponses } from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
 import {
@@ -19,24 +19,24 @@ const refused = problemResponses(
 );
 
 export const listRoute = describeRoute({
-  description: SERVICES.DOC.LIST_DESCRIPTION,
+  description: SERVICES.DOC.LIST.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: json(serviceListBodySchema),
-      description: SERVICES.DOC.LIST_200,
+      description: SERVICES.DOC.LIST.RESPONSE[HTTP.STATUS.OK],
     },
     ...refused,
   },
-  summary: SERVICES.DOC.LIST_SUMMARY,
+  summary: SERVICES.DOC.LIST.SUMMARY,
   tags: [SERVICES.OPENAPI_TAG],
 });
 
 export const serviceRoute = describeRoute({
-  description: SERVICES.DOC.SERVICE_DESCRIPTION,
+  description: SERVICES.DOC.SERVICE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: json(serviceBodySchema),
-      description: SERVICES.DOC.SERVICE_200,
+      description: SERVICES.DOC.SERVICE.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -44,16 +44,16 @@ export const serviceRoute = describeRoute({
       HTTP.STATUS.FORBIDDEN
     ),
   },
-  summary: SERVICES.DOC.SERVICE_SUMMARY,
+  summary: SERVICES.DOC.SERVICE.SUMMARY,
   tags: [SERVICES.OPENAPI_TAG],
 });
 
 export const providerRoute = describeRoute({
-  description: SERVICES.DOC.PROVIDER_DESCRIPTION,
+  description: SERVICES.DOC.PROVIDER.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: json(providerSavedBodySchema),
-      description: SERVICES.DOC.PROVIDER_200,
+      description: SERVICES.DOC.PROVIDER.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -63,16 +63,16 @@ export const providerRoute = describeRoute({
       HTTP.STATUS.CONFLICT
     ),
   },
-  summary: SERVICES.DOC.PROVIDER_SUMMARY,
+  summary: SERVICES.DOC.PROVIDER.SUMMARY,
   tags: [SERVICES.OPENAPI_TAG],
 });
 
 export const testRoute = describeRoute({
-  description: SERVICES.DOC.TEST_DESCRIPTION,
+  description: SERVICES.DOC.TEST.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: json(testSendBodySchema),
-      description: SERVICES.DOC.TEST_200,
+      description: SERVICES.DOC.TEST.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.UNAUTHORIZED,
@@ -80,19 +80,19 @@ export const testRoute = describeRoute({
       HTTP.STATUS.TOO_MANY_REQUESTS
     ),
   },
-  summary: SERVICES.DOC.TEST_SUMMARY,
+  summary: SERVICES.DOC.TEST.SUMMARY,
   tags: [SERVICES.OPENAPI_TAG],
 });
 
 export const keepAliveRoute = describeRoute({
-  description: SERVICES.DOC.KEEP_ALIVE_DESCRIPTION,
+  description: SERVICES.DOC.KEEP_ALIVE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: json(keepAliveBodySchema),
-      description: SERVICES.DOC.KEEP_ALIVE_200,
+      description: SERVICES.DOC.KEEP_ALIVE.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(HTTP.STATUS.UNAUTHORIZED),
   },
-  summary: SERVICES.DOC.KEEP_ALIVE_SUMMARY,
+  summary: SERVICES.DOC.KEEP_ALIVE.SUMMARY,
   tags: [SERVICES.OPENAPI_TAG],
 });

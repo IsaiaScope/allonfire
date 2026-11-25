@@ -21,7 +21,7 @@ database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
 |---|---|---|
 | `auth` | the user base every App shares (Better Auth) | `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App` |
 | `image` | the Images, each placed in one or more Apps, public or private in each ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [ADR 0020](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md)) | `Image`, `ImageApp` |
-| `laura` | Laura | `GameScore`, enum `GameType`; the Profile tables `Profile`, `Favorite`, `ProfileFavorite` ([ADR 0034](../../docs/adr/0034-an-apps-data-about-a-user-lives-in-its-profile.md)) |
+| `laura` | Laura | `MemoryScore` (one typed table per game, ADR 0034); the Profile tables `Profile`, `Favorite`, `ProfileFavorite` ([ADR 0034](../../docs/adr/0034-an-apps-data-about-a-user-lives-in-its-profile.md)) |
 | `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
 
 Foreign keys cross schemas (`image."Image"."uploadedBy"` references
@@ -35,22 +35,25 @@ back-relations, which is why `Membership` in `auth.prisma` lists one line per Ap
 | `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client, on the `pg` driver adapter (no root entry, no barrel) |
 | `@allonfire/database/features/image/image-stats` | `imageStats()`: every Image once (`total`, `totalBytes`) and, per App that has any, its bytes and count by access (`byApp`); an Image in two Apps counts in each; types `ImageStats`, `ImageAppStat` |
 | `@allonfire/database/features/image/image.service` | `createImages`, `listImagesPage` (a numbered page of the Images visible to the Apps the caller enters, narrowed by `app`, any of `apps`, any of `accesses` and `text`, which matches the alt in any language or the file name; with the count and bytes of every Image it matches), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImagePlacementsById`, `AuthorisePlacements`, `ResolveChanges` |
-| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app, min?)` (a Section's `min` Role only raises the door), `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,access,app-settings}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/app-settings` (ADR 0019) |
-| `@allonfire/database/features/apps/laura/game-score.service` | `submitGameScore`, `getLeaderboard`, `getUserBestScore`, `getGlobalBestScore`, `getUserGameStats`, `getGameStats`, type `LeaderboardEntry` |
+| `@allonfire/database/features/image/random-images` | `randomImages({ app, count, enterable })`: some distinct Images placed in an App and visible to someone who enters `enterable`, drawn at random (Laura's Memory deck) |
+| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app, min?)` (a Section's `min` Role only raises the door), `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,access,access-schema}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/access-schema` (ADR 0019) |
+| `@allonfire/database/features/apps/laura/memory-score.service` | `submitMemoryScore` (one score, with its rank and whether it is the Member's or the global best; a User's saves run one after the other, the same moves and time sent again within `MEMORY_SCORE.LIMIT.REPEAT_WINDOW_MS` answer with the game already saved, a game that ends sooner after the User's last save than its `timeMs` is refused as `tooSoon`, and `noProfile` means the Profile is gone; the answer is a `SubmitOutcome`), `memoryLeaderboard` (the best game of each current Member of Laura, fewest moves then the faster time), `memoryStats`, `userMemoryStats`, types `LeaderboardEntry`, `MemoryStats`, `UserMemoryStats`, `SubmittedScore` |
+| `@allonfire/database/features/apps/laura/constants/memory-rule` | `MEMORY_RULE` (`CARDS`, `MOVES.{MAX,MIN}`, `PAIRS`, `TIME.{MAX_MS,MIN_MS_PER_MOVE}`), shared by the API's plausibility check and Laura's deal |
+| `@allonfire/database/features/apps/laura/utils/is-plausible-score` | `isPlausibleScore({ moves, timeMs })`: whether a game could have been played, by `MEMORY_RULE` |
 | `@allonfire/database/features/apps/laura/{profile,favorite,gallery}.service` | `ensureLauraProfile` (first use: the Profile and the copies), `markFavorite` and `unmarkFavorite` (the master and every copy in one transaction), `listGalleryPage` and `listFavoritesPage` (the caller's own copies, by keyset) |
-| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`, `GameType`) with no client attached |
+| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`) with no client attached |
 | `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
 | `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD` (meets the password rules) and `FIXTURE.NEW_PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) and `FIXTURE.FAVORITE` (the one Image the master Favorites hold) |
 | `@allonfire/database/features/seed/utils/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
 | `@allonfire/database/features/test-database/{names,global-setup,local-env}` | The Test database: `global-setup` is the Vitest `globalSetup`, a Test database per run cloned from the template (built when missing, after a sweep of crashed runs), dropped when the run ends; `testDatabaseName` names it; `fillLocalDatabaseEnv()` fills an unset `DATABASE_URL` from `LOCAL`, for a test setup; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
 
 One subpath per service file, no barrel. Raw SQL names the schema:
-`FROM laura."GameScore"`, never `FROM "GameScore"`.
+`FROM laura."MemoryScore"`, never `FROM "MemoryScore"`.
 
 ```ts
-import { getLeaderboard } from "@allonfire/database/features/apps/laura/game-score.service";
+import { memoryLeaderboard } from "@allonfire/database/features/apps/laura/memory-score.service";
 
-const leaderboard = await getLeaderboard("MEMORY", 25);
+const leaderboard = await memoryLeaderboard(25);
 ```
 
 ## Changing the Schema
@@ -222,7 +225,7 @@ packages/database/
       auth/                 access/ (Role, Membership and App settings rules)
       image/                image.service, tests/
       apps/                 one folder per App
-        laura/              game-score.service
+        laura/              memory-score.service
       seed/                 seed.ts, cli.ts (pnpm db:seed), seed-user.ts,
                             upsert-user.ts, tests/
         fixtures/           users.ts, images.ts, seed-fixtures.ts, tests/

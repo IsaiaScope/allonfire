@@ -51,21 +51,21 @@ beforeEach(() => {
 
 describe("addUser", () => {
   it.each([
-    [HTTP.STATUS.CONFLICT, API.ERROR.CODE.EMAIL_TAKEN, USERS.ADD_ERROR.TAKEN],
+    [HTTP.STATUS.CONFLICT, API.ERROR.CODE.EMAIL_TAKEN, USERS.ADD.ERROR.TAKEN],
     // A Session ended or a Role taken away: signing in again might help.
-    [HTTP.STATUS.FORBIDDEN, API.ERROR.CODE.FORBIDDEN, USERS.ADD_ERROR.REFUSED],
+    [HTTP.STATUS.FORBIDDEN, API.ERROR.CODE.FORBIDDEN, USERS.ADD.ERROR.REFUSED],
     [
       HTTP.STATUS.UNAUTHORIZED,
       API.ERROR.CODE.UNAUTHORIZED,
-      USERS.ADD_ERROR.REFUSED,
+      USERS.ADD.ERROR.REFUSED,
     ],
     [
       HTTP.STATUS.INTERNAL_SERVER_ERROR,
       API.ERROR.CODE.INTERNAL_ERROR,
-      USERS.ADD_ERROR.FAILED,
+      USERS.ADD.ERROR.FAILED,
     ],
     // A code no form knows is just a failure, whatever its name.
-    [HTTP.STATUS.INTERNAL_SERVER_ERROR, "constructor", USERS.ADD_ERROR.FAILED],
+    [HTTP.STATUS.INTERNAL_SERVER_ERROR, "constructor", USERS.ADD.ERROR.FAILED],
   ])("maps %i %s to %s, keeping the values", async (status, code, error) => {
     FAKE_API.answers.set(HTTP.METHOD.POST, { code, status });
     const state = await addUser("en", {}, formOf());
@@ -90,7 +90,7 @@ describe("addUser", () => {
 
   it("refuses invalid fields without asking the API", async () => {
     const state = await addUser("en", {}, formOf({ name: " " }));
-    expect(state.error).toBe(USERS.ADD_ERROR.INVALID);
+    expect(state.error).toBe(USERS.ADD.ERROR.INVALID);
     expect(FAKE_API.sent).toEqual([]);
   });
 
@@ -149,7 +149,7 @@ describe("addUser", () => {
       })
     );
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
-    expect(state).toEqual({ notice: USERS.ADD_NOTICE.AVATAR_FAILED });
+    expect(state).toEqual({ notice: USERS.ADD.NOTICE.AVATAR_FAILED });
   });
 
   it("sends the picture once added, and says so when the API refuses it", async () => {
@@ -168,7 +168,7 @@ describe("addUser", () => {
       HTTP.METHOD.POST,
       HTTP.METHOD.PUT,
     ]);
-    expect(state).toEqual({ notice: USERS.ADD_NOTICE.AVATAR_FAILED });
+    expect(state).toEqual({ notice: USERS.ADD.NOTICE.AVATAR_FAILED });
     expect(redirect).not.toHaveBeenCalled();
   });
 });

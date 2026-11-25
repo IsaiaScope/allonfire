@@ -45,8 +45,8 @@ export const ProviderForm = ({ provider }: { provider: ListedProvider }) => {
   // A copy known to be old (changed, removed) is read again, as the action
   // dropped the server's.
   const copyIsOld =
-    error === SERVICES.SAVE_ERROR.CHANGED ||
-    error === SERVICES.SAVE_ERROR.REMOVED;
+    error === SERVICES.SAVE.ERROR.CHANGED ||
+    error === SERVICES.SAVE.ERROR.REMOVED;
   useEffect(() => {
     if (copyIsOld) {
       refresh();
@@ -85,14 +85,14 @@ export const ProviderForm = ({ provider }: { provider: ListedProvider }) => {
           pending={pending}
           pendingChildren={
             <>
-              <ActionKanji kanji={SERVICES.SAVE_KANJI} />
+              <ActionKanji kanji={SERVICES.KANJI.SAVE} />
               <IconLoader2 aria-hidden className="animate-spin" />
               {t("saving")}
             </>
           }
           size="field"
         >
-          <ActionKanji kanji={SERVICES.SAVE_KANJI} />
+          <ActionKanji kanji={SERVICES.KANJI.SAVE} />
           <IconDeviceFloppy aria-hidden />
           {t("save")}
         </AOFSubmitButton>

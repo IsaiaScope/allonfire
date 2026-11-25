@@ -10,6 +10,6 @@ export const createPrismaClient = (url: string): PrismaClient =>
   new PrismaClient({
     adapter: new PrismaPg({
       connectionString: url,
-      connectionTimeoutMillis: DATABASE.CONNECT_TIMEOUT_MS,
+      connectionTimeoutMillis: DATABASE.TIMEOUT.CONNECT_MS,
     }),
   });

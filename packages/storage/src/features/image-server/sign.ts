@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { ImageAccess } from "@allonfire/database/enums";
 import { env } from "../../environment/environment";
 import type { SignedLink } from "../image/constants/schemas";
 import { IMAGE_SERVER } from "./constants/image-server";
@@ -57,7 +58,7 @@ export const pictureLink = ({
 export const privateLinkExpiry = (now: Date): Date =>
   new Date(
     (Math.ceil(now.getTime() / UNIT.MS_PER_HOUR) +
-      IMAGE_SERVER.PRIVATE_LINK_HOURS) *
+      IMAGE_SERVER.LINK.PRIVATE_HOURS) *
       UNIT.MS_PER_HOUR
   );
 
@@ -67,3 +68,17 @@ export const pictureSrcSet = (key: string, expiresAt?: Date): SignedLink[] =>
     url: pictureLink({ expiresAt, key, width }),
     width,
   }));
+
+/**
+ * An Image's `srcset` as it is told at `now`: a private picture's links end
+ * with the hour (`privateLinkExpiry`), a public picture's never do. The one
+ * place that rule is written, so every body that carries a picture agrees.
+ */
+export const signedSrcSet = (
+  { access, key }: { access: ImageAccess; key: string },
+  now: Date
+): SignedLink[] =>
+  pictureSrcSet(
+    key,
+    access === ImageAccess.PRIVATE ? privateLinkExpiry(now) : undefined
+  );

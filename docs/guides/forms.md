@@ -63,7 +63,7 @@ page stays on the server. The server action keeps the last word:
   form hands it `form` and the names it holds them under (`fields`), whatever
   else it holds; their shared copy has its own namespace (`Users.form`). A
   group's `render` is a plain function and calls no hooks. See
-  `apps/back-office/src/features/users/components/user-form-fields.tsx`.
+  `apps/back-office/src/features/users/components/user-form-fields.tsx`, or ui's `AOFImageAccessRow`, which the Back Office and Laura bind alike.
 - A field the user must not change is locked (`aria-disabled` plus `inert`), never `disabled`, which posts nothing: `apps/back-office/src/features/users/components/user-form-parts.tsx`. (`docs/superpowers/specs/2026-10-28-edit-user-design.md`)
 - Password rules are one list, auth's `passwordRules` (at least 12 characters, a lowercase, an uppercase, a digit, a symbol): the API refuses with `meetsPasswordRules`, the form ticks the same list live: `packages/auth/src/features/users/utils/password-rules.ts`. (`docs/superpowers/specs/2026-10-23-password-rules-library-survey.md`)
 

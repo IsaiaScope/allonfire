@@ -4,7 +4,7 @@ import { useQueryStates } from "nuqs";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import type { ReactNode } from "react";
 import { renderHook } from "vitest-browser-react";
-import { usersParams } from "../../constants/users-params";
+import { usersParams } from "../../utils/users-params";
 import { useUsersTableState } from "../use-users-table-state";
 
 const ID = "user-2";

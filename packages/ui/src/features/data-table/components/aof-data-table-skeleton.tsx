@@ -48,6 +48,9 @@ export type AOFDataTableSkeletonColumn = {
 };
 
 export type AOFDataTableSkeletonProps = ComponentPropsWithoutChildren<"div"> & {
+  /** What a card holds, by its place, in place of the generic one: the
+   *  list's own card, at its size, so nothing moves when the rows arrive. */
+  card?: ((index: number) => ReactNode) | undefined;
   /** How many cards a phone gets instead of the table, as `AOFDataTable`
    *  draws with `card`; none, and the table shows at every width. */
   cards?: number | undefined;
@@ -111,6 +114,7 @@ const stepOf = (row: number, column: number) =>
  * `pager`, the pager under it.
  */
 export const AOFDataTableSkeleton = ({
+  card: cardOf,
   cards,
   className,
   columns,
@@ -197,25 +201,29 @@ export const AOFDataTableSkeleton = ({
           aria-hidden="true"
           className={cn(aofDataTableCards(), "overflow-hidden")}
         >
-          {placeholders("card", cards).map((card, index) => (
-            <li
-              className="flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10"
-              data-skeleton="card"
-              key={card}
-            >
-              <div className="flex items-center gap-3">
-                <Skeleton className={ink({ shape: "box" })} />
-                <Skeleton
-                  className={cn(
-                    ink({ shape: "text" }),
-                    width({ step: stepOf(index, 0) })
-                  )}
-                />
-              </div>
-              <Skeleton className={cn(ink({ shape: "text" }), "h-3 w-2/5")} />
-              <Skeleton className={cn(ink({ shape: "text" }), "h-3 w-1/3")} />
-            </li>
-          ))}
+          {placeholders("card", cards).map((card, index) =>
+            cardOf ? (
+              <li key={card}>{cardOf(index)}</li>
+            ) : (
+              <li
+                className="flex flex-col gap-3 rounded-xl bg-card p-4 ring-1 ring-foreground/10"
+                data-skeleton="card"
+                key={card}
+              >
+                <div className="flex items-center gap-3">
+                  <Skeleton className={ink({ shape: "box" })} />
+                  <Skeleton
+                    className={cn(
+                      ink({ shape: "text" }),
+                      width({ step: stepOf(index, 0) })
+                    )}
+                  />
+                </div>
+                <Skeleton className={cn(ink({ shape: "text" }), "h-3 w-2/5")} />
+                <Skeleton className={cn(ink({ shape: "text" }), "h-3 w-1/3")} />
+              </li>
+            )
+          )}
         </ul>
       ) : null}
       {pager ? (

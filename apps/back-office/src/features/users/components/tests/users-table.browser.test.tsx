@@ -11,12 +11,12 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translat
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { delay, HttpResponse, http } from "msw";
 import { NextIntlClientProvider } from "next-intl";
 import type { UrlUpdateEvent } from "nuqs/adapters/testing";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { COPY } from "@/shared/constants/copy";
 import { USERS_PAGE, USERS_URL } from "@/shared/tests/msw/handlers";
 import { renderInApp } from "@/shared/tests/render-in-app";
@@ -34,12 +34,12 @@ const t = EN.Users;
 /** Well past the box's typing rest (WebKit types slower). */
 const WAIT_MS = 3 * UNIT.MS_PER_SECOND;
 /** The first try and the retries a server failure gets. */
-const QUERY_ATTEMPTS = 1 + USERS.RETRIES;
+const QUERY_ATTEMPTS = 1 + USERS.LIMIT.RETRIES;
 /** Inside shadcn's 40px hit area around a 16px checkbox: 12px a side. */
 const HIT_AREA_SLACK_PX = 8;
 /** The words typed into the search box. */
 const TEXT = "isa";
-const LAURA = APP_ENTRY[App.LAURA].name;
+const LAURA = APP.ENTRY[App.LAURA].name;
 /** The search as the address holds it: the words, then with a filter or two. */
 const WORDS = USER.SEARCH.serialize({ text: TEXT });
 const IN_LAURA = USER.SEARCH.serialize({ app: [App.LAURA], text: TEXT });
@@ -154,7 +154,7 @@ describe("UsersTable", () => {
       [
         t.column.email,
         LAURA,
-        APP_ENTRY[App.BACK_OFFICE].name,
+        APP.ENTRY[App.BACK_OFFICE].name,
         t.column.created,
       ].map((header) =>
         expect.element(table.getByText(header, { exact: true })).toBeVisible()
@@ -215,11 +215,13 @@ describe("UsersTable", () => {
     const { button } = copyButtonOfFirst(await renderAt());
     await button.click();
     await expect.poll(tipText).toBe(t.copy.done);
-    await new Promise((resolve) => setTimeout(resolve, COPY.COPIED_MS / 2));
+    await new Promise((resolve) =>
+      setTimeout(resolve, COPY.DELAY.COPIED_MS / 2)
+    );
     await button.click();
     // Past the first copy's end, inside the second's.
     await new Promise((resolve) =>
-      setTimeout(resolve, (COPY.COPIED_MS * 3) / 4)
+      setTimeout(resolve, (COPY.DELAY.COPIED_MS * 3) / 4)
     );
     expect(tipText()).toBe(t.copy.done);
   });
@@ -250,7 +252,7 @@ describe("UsersTable columns", () => {
         : Number.POSITIVE_INFINITY;
     };
     // A heading's words, not the block that holds them.
-    const headings = [LAURA, APP_ENTRY[App.BACK_OFFICE].name].map((name) => {
+    const headings = [LAURA, APP.ENTRY[App.BACK_OFFICE].name].map((name) => {
       const heading = table.getByText(name, { exact: true }).element();
       const words = document.createRange();
       words.selectNodeContents(heading);
@@ -300,7 +302,9 @@ describe("UsersTable controls", () => {
         timeout: WAIT_MS,
       })
       .toBe(WORDS);
-    await new Promise((settle) => setTimeout(settle, USERS.TYPING_REST_MS));
+    await new Promise((settle) =>
+      setTimeout(settle, USERS.LIMIT.TYPING_REST_MS)
+    );
     await expect.element(box).toHaveValue(halfTyped);
   });
 
@@ -391,7 +395,9 @@ describe("UsersTable filters", () => {
       .fill(LAURA.slice(0, 3));
     await expect
       .element(
-        page.getByRole("option", { name: APP_ENTRY[App.BACK_OFFICE].name })
+        page.getByRole("option", {
+          name: APP.ENTRY[App.BACK_OFFICE].name,
+        })
       )
       .not.toBeInTheDocument();
     await page.getByRole("option", { name: LAURA }).click();

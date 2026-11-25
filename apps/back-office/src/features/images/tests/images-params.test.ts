@@ -2,11 +2,11 @@
 
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IMAGES } from "../constants/images";
-import { loadImagesParams, queryOf } from "../constants/images-params";
+import { loadImagesParams, queryOf } from "../utils/images-params";
 
 const DEFAULTS = {
-  [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
-  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
+  [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT.PAGE,
+  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT.PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
   [IMAGES.PARAM.SORT]: "",
   [IMAGES.PARAM.HIDE]: "",
@@ -109,8 +109,8 @@ describe("queryOf", () => {
       [IMAGES.PARAM.SORT]: "size.desc",
     });
     expect(queryOf(params)).toEqual({
-      [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
-      [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
+      [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT.PAGE,
+      [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT.PAGE_SIZE,
       [IMAGES.PARAM.SEARCH]: "input:sea",
       [IMAGES.PARAM.SORT]: "size.desc",
     });

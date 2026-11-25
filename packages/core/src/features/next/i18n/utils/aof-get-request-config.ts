@@ -52,7 +52,7 @@ export const AOFGetRequestConfig = <L extends HostLanguage>({
       notFound();
     }
     return {
-      formats: DATE.FORMATS,
+      formats: DATE.FORMAT.INTL,
       locale: requested,
       messages: {
         ...sharedText[requested],

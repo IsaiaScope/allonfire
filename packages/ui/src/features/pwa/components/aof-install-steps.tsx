@@ -1,4 +1,4 @@
-import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa";
+import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa-schema";
 import type { ComponentType } from "react";
 import { cn } from "../../../shared/utils/utils";
 

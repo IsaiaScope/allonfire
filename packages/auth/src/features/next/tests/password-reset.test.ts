@@ -51,7 +51,7 @@ describe("requestResetLink", () => {
         language: LANGUAGE,
         resetPage: RESET_PAGE,
       })
-    ).resolves.toBe(AUTH.FORGOT_ERROR.UNAVAILABLE);
+    ).resolves.toBe(AUTH.ERROR.FORGOT.UNAVAILABLE);
     expect(logged).toHaveBeenCalledWith(
       { err: failure },
       AUTH.LOG_MESSAGE.RESET_LINK_FAILED
@@ -81,13 +81,13 @@ describe("requestResetLink", () => {
         language: LANGUAGE,
         resetPage: RESET_PAGE,
       })
-    ).resolves.toBe(AUTH.FORGOT_ERROR.INVALID);
+    ).resolves.toBe(AUTH.ERROR.FORGOT.INVALID);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each([
-    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.FORGOT_ERROR.RATE_LIMITED],
-    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.FORGOT_ERROR.UNAVAILABLE],
+    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.ERROR.FORGOT.RATE_LIMITED],
+    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.ERROR.FORGOT.UNAVAILABLE],
   ])("maps the API's %i to %s", async (status, error) => {
     fetchMock.mockResolvedValueOnce(refusedWith(status));
     await expect(
@@ -136,18 +136,18 @@ describe("resetWithToken", () => {
       ),
     ]);
     expect(results).toEqual([
-      AUTH.RESET_ERROR.INVALID,
-      AUTH.RESET_ERROR.INVALID,
-      AUTH.RESET_ERROR.INVALID,
-      AUTH.RESET_ERROR.INVALID,
+      AUTH.ERROR.RESET.INVALID,
+      AUTH.ERROR.RESET.INVALID,
+      AUTH.ERROR.RESET.INVALID,
+      AUTH.ERROR.RESET.INVALID,
     ]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each([
-    [HTTP.STATUS.BAD_REQUEST, AUTH.RESET_ERROR.INVALID_TOKEN],
-    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.RESET_ERROR.RATE_LIMITED],
-    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.RESET_ERROR.UNAVAILABLE],
+    [HTTP.STATUS.BAD_REQUEST, AUTH.ERROR.RESET.INVALID_TOKEN],
+    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.ERROR.RESET.RATE_LIMITED],
+    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.ERROR.RESET.UNAVAILABLE],
   ])("maps the API's %i to %s", async (status, error) => {
     fetchMock.mockResolvedValueOnce(refusedWith(status));
     await expect(
@@ -167,7 +167,7 @@ describe("resetWithToken", () => {
         language: LANGUAGE,
         token: "tok",
       })
-    ).resolves.toBe(AUTH.RESET_ERROR.UNAVAILABLE);
+    ).resolves.toBe(AUTH.ERROR.RESET.UNAVAILABLE);
     expect(logged).toHaveBeenCalledWith(
       { err: failure },
       AUTH.LOG_MESSAGE.PASSWORD_RESET_FAILED

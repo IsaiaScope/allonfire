@@ -1,6 +1,4 @@
 import { columnsQuery } from "@allonfire/core/features/search/columns-query";
-import { UNIT } from "@allonfire/core/shared/constants/units";
-import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import type { StationSignage } from "@/shared/components/station-notice";
 
@@ -22,23 +20,6 @@ const HIDEABLE = [
 
 /** The Back Office's Images page: its tunables, each written once. */
 export const IMAGES = {
-  /** Why adding Images failed, as the form says it. */
-  ADD_ERROR: {
-    FAILED: "failed",
-    INVALID: "invalid",
-    /** No Session, or one the API no longer lets add Images: sign in again. */
-    REFUSED: "refused",
-    /** A file or the request is over the API's size limits (413). */
-    TOO_LARGE: "tooLarge",
-    /** A file the API cannot read as a picture (415 or 400). */
-    UNSUPPORTED: "unsupported",
-  },
-  /** Brushed in the Add button: 写, a photograph (the brush face carries it). */
-  ADD_KANJI: "写",
-  /** What a saved add tells the form to do. */
-  ADD_NOTICE: { ADDED: "added" },
-  /** Brushed in Apply to all pictures: 拡, to spread (the brush face carries it). */
-  APPLY_KANJI: "拡",
   /**
    * The list's rows (`imagesHydration`) and one Image (`imageHydration`), kept in
    * the visitor's browser per address (ADR 0028) until a change to Images
@@ -49,25 +30,24 @@ export const IMAGES = {
    * reach it sooner).
    */
   CACHE: {
-    LIFE: IMAGE_SERVER.LINK_CACHE_LIFE,
+    LIFE: IMAGE_SERVER.LINK.CACHE_LIFE,
     TAG: "images",
   },
-  DEFAULT_PAGE: 1,
-  DEFAULT_PAGE_SIZE: PAGE_SIZES[0],
-  /** Brushed in Delete's button: 消, to erase (the brush face carries it). */
-  DELETE_KANJI: "消",
-  /** Why saving an Image failed, as the form says it. */
-  EDIT_ERROR: {
-    /** Someone changed the Image since the form was opened (the API's 409). */
-    CHANGED: "changed",
-    FAILED: "failed",
-    GONE: "gone",
-    INVALID: "invalid",
-    /** No Session, or one the API no longer lets change Images: sign in again. */
-    REFUSED: "refused",
+  DEFAULT: { PAGE: 1, PAGE_SIZE: PAGE_SIZES[0] },
+  EDIT: {
+    /** Why saving an Image failed, as the form says it. */
+    ERROR: {
+      /** Someone changed the Image since the form was opened (the API's 409). */
+      CHANGED: "changed",
+      FAILED: "failed",
+      GONE: "gone",
+      INVALID: "invalid",
+      /** No Session, or one the API no longer lets change Images: sign in again. */
+      REFUSED: "refused",
+    },
+    /** What a saved edit tells the form to do. */
+    NOTICE: { SAVED: "saved" },
   },
-  /** What a saved edit tells the form to do. */
-  EDIT_NOTICE: { SAVED: "saved" },
   /**
    * Where the Edit form's Image field group finds its fields: the group's
    * names mapped to the form's. The Add form binds each row's group by
@@ -94,6 +74,25 @@ export const IMAGES = {
     /** Typing replaces the history entry: Back should not walk each keystroke. */
     REPLACE: { clearOnDefault: true, history: "replace" },
   },
+  /** Brushed on the buttons (the brush face carries each glyph). */
+  KANJI: {
+    /** The Add button: 写, a photograph. */
+    ADD: "写",
+    /** Apply to all pictures: 拡, to spread. */
+    APPLY: "拡",
+    /** Delete's button: 消, to erase. */
+    DELETE: "消",
+    /** The Filter panel's Reset: 戻, back to the start. */
+    RESET: "戻",
+    /** The Save button: 済, done. */
+    SAVE: "済",
+  },
+  LIMIT: {
+    /** Asks again this many times after a server or network failure. */
+    RETRIES: 1,
+    /** How long typing rests before the address changes. */
+    TYPING_REST_MS: 300,
+  },
   PAGE_SIZES,
   /** The list's address parameters, as the API's query names them. */
   PARAM: {
@@ -106,28 +105,17 @@ export const IMAGES = {
   },
   /** The Images Section's own pages, under its path. */
   PATH: { NEW: "/new" },
-  /** Brushed in the Filter panel's Reset: 戻, back to the start. */
-  RESET_KANJI: "戻",
-  /** Asks again this many times after a server or network failure. */
-  RETRIES: 1,
-  /** Brushed in the Save button: 済, done (the brush face carries it). */
-  SAVE_KANJI: "済",
   /**
    * The list's notice where its rows stand, decoration only: nothing
    * matches (空席, vacant).
    */
   SIGNAGE: {
-    EMPTY: { CODE: "0", KANA: "該当なし", WALL_KANJI: "空席" },
+    EMPTY: { CODE: "0", KANA: "該当なし", KANJI: "空席" },
   } satisfies Record<string, StationSignage>,
+  SIZE: {
+    /** The side in px of a stored picture's tile on each surface, as `sizes` tells next/image. */
+    THUMB_PX: { card: 120, page: 160, row: 48 },
+  },
   /** The columns the Sort tab lists: the plain ones the database orders by. */
   SORTABLE: ["created", "size", "access", "name"] as const,
-  /** The side in px of a stored picture's tile on each surface, as `sizes` tells next/image. */
-  THUMB_PX: { card: 120, page: 160, row: 48 },
-  /** How long typing rests before the address changes. */
-  TYPING_REST_MS: 300,
-  /**
-   * The most a Server Action may be sent (Next's default is 1 MB): the API's
-   * whole upload plus 1 MiB for the multipart parts around it.
-   */
-  UPLOAD_BODY_LIMIT: IMAGE.LIMIT.UPLOAD_BYTES + UNIT.BYTES_PER_MIB,
 } as const;

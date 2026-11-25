@@ -7,7 +7,6 @@ import { QUERY } from "@/shared/constants/query";
 import { STORAGE_OVERVIEW } from "@/shared/tests/msw/handlers";
 import {
   fetchStorageOverview,
-  retryStorageOverview,
   storageOverviewKey,
   storageOverviewQuery,
 } from "../storage-overview-queries";
@@ -35,8 +34,12 @@ describe("storageOverviewQuery", () => {
   });
 });
 
-describe("retryStorageOverview", () => {
-  it("asks once more after a server failure, never after a refusal", () => {
+describe("storageOverviewQuery's retry", () => {
+  it("asks once more after a server failure, never after a refusal (so a member who is not an Admin sees Home at once)", () => {
+    const retryStorageOverview = storageOverviewQuery(api).retry;
+    if (typeof retryStorageOverview !== "function") {
+      throw new Error("no retry");
+    }
     const refused = new DetailedError("403", { statusCode: 403 });
     const broken = new DetailedError("500", { statusCode: 500 });
     expect(retryStorageOverview(0, broken)).toBe(true);

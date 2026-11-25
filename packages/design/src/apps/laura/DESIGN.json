@@ -436,9 +436,9 @@
       "name": "Card Back",
       "kind": "card",
       "refersTo": "card-back",
-      "description": "The Memory game's card: ink in both schemes, an edge in night teal, the Noto octopus in its own colours.",
+      "description": "The Memory game's card, one per scheme: the day's secondary or the night's card, a soft edge in the border, waves and Laura's Li logo.",
       "html": "<div class=\"ds-card-back\" aria-hidden=\"true\"><span class=\"ds-card-back-mark\">?</span></div>",
-      "css": ".ds-card-back { display: flex; align-items: center; justify-content: center; width: 150px; height: 200px; border: 2px solid #4fc3d4; border-radius: 1.05rem; background: #0a2530; color: #e8f2f3; } .ds-card-back-mark { font: 600 2.25rem/1.15 Fraunces, ui-serif, Georgia, serif; }"
+      "css": ".ds-card-back { display: flex; align-items: center; justify-content: center; width: 150px; height: 200px; border: 2px solid #cfdfe0; border-radius: 1.05rem; background: #e1eded; color: #0b6b7c; } .ds-card-back-mark { font: 600 2.25rem/1.15 Fraunces, ui-serif, Georgia, serif; }"
     }
   ],
   "narrative": {
@@ -454,7 +454,7 @@
     "rules": [
       {
         "name": "The Ink Rule",
-        "body": "The card back and any other dark furniture are ink (`#0a2530`, pale text `#e8f2f3`) in both schemes: it does not follow the theme, like a station sign that stays lit.",
+        "body": "Dark furniture (a pill carrying pale text) is ink (`#0a2530`, pale text `#e8f2f3`) in both schemes: it does not follow the theme, like a station sign that stays lit. The Memory card back is not furniture: the owner found the ink too strong by day, so it follows its scheme.",
         "section": "colors"
       },
       {

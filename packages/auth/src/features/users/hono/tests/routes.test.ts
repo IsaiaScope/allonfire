@@ -84,11 +84,11 @@ describe("User module", () => {
     });
   });
 
-  it.each(["0", "-3", "abc", String(USER.MAX_PAGE + 1)])(
+  it.each(["0", "-3", "abc", String(USER.LIMIT.MAX_PAGE + 1)])(
     "falls back to the first page on page=%s",
     async (page) => {
       expect(await listWith(queryOf({ [USER.PARAM.PAGE]: page }))).toEqual({
-        query: expect.objectContaining({ page: USER.DEFAULT_PAGE }),
+        query: expect.objectContaining({ page: USER.DEFAULT.PAGE }),
         status: HTTP.STATUS.OK,
       });
     }
@@ -100,7 +100,7 @@ describe("User module", () => {
       expect(
         await listWith(queryOf({ [USER.PARAM.PER_PAGE]: perPage }))
       ).toEqual({
-        query: expect.objectContaining({ perPage: USER.DEFAULT_PAGE_SIZE }),
+        query: expect.objectContaining({ perPage: USER.DEFAULT.PAGE_SIZE }),
         status: HTTP.STATUS.OK,
       });
     }
@@ -111,8 +111,8 @@ describe("User module", () => {
       await listWith(queryOf({ [USER.PARAM.SEARCH]: "role:boss team:x" }))
     ).toEqual({
       query: {
-        page: USER.DEFAULT_PAGE,
-        perPage: USER.DEFAULT_PAGE_SIZE,
+        page: USER.DEFAULT.PAGE,
+        perPage: USER.DEFAULT.PAGE_SIZE,
         text: "",
       },
       status: HTTP.STATUS.OK,
@@ -122,10 +122,10 @@ describe("User module", () => {
   it("answers the page, the total and how many pages it makes", async () => {
     const { deps } = depsWith();
     const res = await userHost(ADMIN, deps).request(
-      `${LIST}?${queryOf({ [USER.PARAM.PER_PAGE]: String(USER.DEFAULT_PAGE_SIZE) })}`
+      `${LIST}?${queryOf({ [USER.PARAM.PER_PAGE]: String(USER.DEFAULT.PAGE_SIZE) })}`
     );
     expect(userListBodySchema.parse(await res.json())).toEqual({
-      pageCount: Math.ceil(TOTAL / USER.DEFAULT_PAGE_SIZE),
+      pageCount: Math.ceil(TOTAL / USER.DEFAULT.PAGE_SIZE),
       total: TOTAL,
       users: [{ ...USER_ROW, createdAt: USER_ROW.createdAt.toISOString() }],
     });
@@ -149,8 +149,8 @@ describe("User module sort and range", () => {
     );
     expect(query).toEqual({
       created: { from: "2026-11-26", to: "2026-11-28" },
-      page: USER.DEFAULT_PAGE,
-      perPage: USER.DEFAULT_PAGE_SIZE,
+      page: USER.DEFAULT.PAGE,
+      perPage: USER.DEFAULT.PAGE_SIZE,
       text: "isa",
     });
   });

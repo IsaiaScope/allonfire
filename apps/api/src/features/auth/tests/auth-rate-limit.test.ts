@@ -11,7 +11,7 @@ import { RATE_LIMIT } from "../../rate-limit/constants/limits";
 const SIGN_IN_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.SIGN_IN_EMAIL}`;
 const CHANGE_PASSWORD_ROUTE = `${API.PATH.AUTH}${AUTH.PATH.CHANGE_PASSWORD}`;
 /** The auth limiter's counter for a client with no address: every test's. */
-const AUTH_KEY = `${env.AUTH_RATE_LIMIT_KEY_PREFIX}${RATE_LIMIT.UNKNOWN_CLIENT}`;
+const AUTH_KEY = `${env.AUTH_RATE_LIMIT_KEY_PREFIX}${RATE_LIMIT.KEY.UNKNOWN_CLIENT}`;
 const ok = apiAuth({ handler: () => Promise.resolve(new Response("{}")) });
 
 describe("auth bucket", () => {
@@ -42,7 +42,7 @@ describe("auth bucket", () => {
 
     await app.request(SIGN_IN_ROUTE, { method: HTTP.METHOD.POST });
     expect([...store.hits.keys()].sort()).toEqual(
-      [AUTH_KEY, RATE_LIMIT.UNKNOWN_CLIENT].sort()
+      [AUTH_KEY, RATE_LIMIT.KEY.UNKNOWN_CLIENT].sort()
     );
   });
 

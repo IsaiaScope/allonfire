@@ -4,6 +4,7 @@ import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
 import { AOFColumnHeader } from "@allonfire/ui/features/data-table/components/aof-column-header";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
@@ -17,7 +18,6 @@ import { useTranslations } from "next-intl";
 import { type ComponentProps, useMemo } from "react";
 import { Link } from "@/features/i18n/navigation";
 import { CopyText } from "@/shared/components/copy-text";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { useCreated } from "@/shared/utils/use-created";
 import { IMAGES } from "../constants/images";
 import { altFor } from "../utils/image-alt";
@@ -89,7 +89,7 @@ export const ImageThumb = ({
         lcp={size === "page"}
         // The tile paints the blur: the same before and after the picture loads.
         placeholder="empty"
-        sizes={`${IMAGES.THUMB_PX[size]}px`}
+        sizes={`${IMAGES.SIZE.THUMB_PX[size]}px`}
       />
     </span>
   );
@@ -153,7 +153,7 @@ export const AppsOf = ({
   <span className={cn("block", className)}>
     {objectValues(App)
       .filter((app) => apps.includes(app))
-      .map((app) => APP_ENTRY[app].name)
+      .map((app) => APP.ENTRY[app].name)
       .join(SEPARATOR.NAMES)}
   </span>
 );

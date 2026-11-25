@@ -3,7 +3,7 @@ import { requireAppSession } from "@allonfire/auth/features/next/utils/session";
 import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/components/aof-hydrated-boundary";
 import { Role } from "@allonfire/database/enums";
 import type { DehydratedState } from "@tanstack/react-query";
-import type { GallerySource } from "../constants/gallery";
+import type { GallerySource } from "../constants/gallery-schema";
 import { GalleryFeed } from "./gallery-feed";
 
 /**

@@ -309,14 +309,14 @@ describe("POST /images refusals", () => {
     const res = await app(admin, {}).request(STORAGE.PATH.IMAGES, {
       body: "x",
       headers: {
-        [HTTP.HEADER.CONTENT_LENGTH]: String(IMAGE.LIMIT.UPLOAD_BYTES + 1),
+        [HTTP.HEADER.CONTENT_LENGTH]: String(IMAGE.LIMIT.UPLOAD.BYTES + 1),
       },
       method: HTTP.METHOD.POST,
     });
     expect(res.status).toBe(HTTP.STATUS.PAYLOAD_TOO_LARGE);
     const body = await errorOf(res);
     expect(body.code).toBe(ERROR.CODE.PAYLOAD_TOO_LARGE);
-    expect(body.values).toEqual({ limit: IMAGE.LIMIT.UPLOAD_BYTES });
+    expect(body.values).toEqual({ limit: IMAGE.LIMIT.UPLOAD.BYTES });
   });
 
   it("refuses a file over the per-file limit, naming that limit", async () => {
@@ -351,7 +351,7 @@ describe("POST /images refusals", () => {
     expect(res.status).toBe(HTTP.STATUS.PAYLOAD_TOO_LARGE);
     const body = await errorOf(res);
     expect(body.code).toBe(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE);
-    expect(body.values).toEqual({ limit: IMAGE.LIMIT.INPUT_MEGAPIXELS });
+    expect(body.values).toEqual({ limit: IMAGE.LIMIT.INPUT.MEGAPIXELS });
   });
 });
 
@@ -361,13 +361,13 @@ describe("POST /images failures", () => {
     const pending = app(admin, {
       prepare: () => new Promise(() => undefined),
     }).request(STORAGE.PATH.IMAGES, upload(1));
-    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD.TIMEOUT_MS);
     const res = await pending;
     expect(res.status).toBe(HTTP.STATUS.SERVICE_UNAVAILABLE);
     const body = await errorOf(res);
     expect(body.code).toBe(ERROR.CODE.TIMEOUT);
     expect(body.values).toEqual({
-      seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_SECOND,
+      seconds: IMAGE.LIMIT.UPLOAD.TIMEOUT_MS / UNIT.MS_PER_SECOND,
     });
   });
 
@@ -384,7 +384,7 @@ describe("POST /images failures", () => {
         }),
       putObject,
     }).request(STORAGE.PATH.IMAGES, upload(1));
-    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
+    await vi.advanceTimersByTimeAsync(IMAGE.LIMIT.UPLOAD.TIMEOUT_MS);
     expect((await pending).status).toBe(HTTP.STATUS.SERVICE_UNAVAILABLE);
     vi.useRealTimers();
     // The handler finishes preparing after the client already has its 503.

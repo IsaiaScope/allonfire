@@ -4,6 +4,7 @@ import {
   accessUserFrom,
   canManageImage,
 } from "@allonfire/database/features/auth/access/access";
+import { APP } from "@allonfire/design/apps/app";
 
 /**
  * The Apps this user is an Admin of: the only ones they may put an Image in
@@ -26,3 +27,7 @@ export const offeredApps = (
   administered: readonly App[],
   inApps: readonly App[]
 ): App[] => [...new Set([...administered, ...inApps])];
+
+/** The Apps as the Image forms' toggles offer them: each by the name the Back Office draws it with. */
+export const appOptionsOf = (apps: readonly App[]) =>
+  apps.map((app) => ({ label: APP.ENTRY[app].name, value: app }));

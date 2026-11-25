@@ -72,7 +72,7 @@ export const createProviderCheck = (deps: ProviderCheckDeps) => ({
       await messageOf(
         name,
         deps.recipient,
-        TRANSLATION.DEFAULT_LOCALE,
+        TRANSLATION.DEFAULT.LOCALE,
         MAIL.PURPOSE.KEEP_ALIVE
       ),
       { only: providerId, purpose: MAIL.PURPOSE.KEEP_ALIVE }

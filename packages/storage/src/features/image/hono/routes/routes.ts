@@ -1,4 +1,4 @@
-import { problemResponses } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponses } from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
 import { z } from "zod";
@@ -25,37 +25,37 @@ const imagesBody = {
 };
 
 export const listRoute = describeRoute({
-  description: IMAGE.DOC.LIST_DESCRIPTION,
+  description: IMAGE.DOC.LIST.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: imagePageBody,
-      description: IMAGE.DOC.LIST_200,
+      description: IMAGE.DOC.LIST.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(HTTP.STATUS.BAD_REQUEST),
   },
-  summary: IMAGE.DOC.LIST_SUMMARY,
+  summary: IMAGE.DOC.LIST.SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
 });
 
 export const getRoute = describeRoute({
-  description: IMAGE.DOC.GET_DESCRIPTION,
+  description: IMAGE.DOC.GET.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: imageBody,
-      description: IMAGE.DOC.GET_200,
+      description: IMAGE.DOC.GET.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(HTTP.STATUS.NOT_FOUND),
   },
-  summary: IMAGE.DOC.GET_SUMMARY,
+  summary: IMAGE.DOC.GET.SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
 });
 
 export const uploadRoute = describeRoute({
-  description: IMAGE.DOC.UPLOAD_DESCRIPTION,
+  description: IMAGE.DOC.UPLOAD.DESCRIPTION,
   responses: {
     [HTTP.STATUS.CREATED]: {
       content: imagesBody,
-      description: IMAGE.DOC.UPLOAD_201,
+      description: IMAGE.DOC.UPLOAD.RESPONSE[HTTP.STATUS.CREATED],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -66,16 +66,16 @@ export const uploadRoute = describeRoute({
       HTTP.STATUS.SERVICE_UNAVAILABLE
     ),
   },
-  summary: IMAGE.DOC.UPLOAD_SUMMARY,
+  summary: IMAGE.DOC.UPLOAD.SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
 });
 
 export const patchRoute = describeRoute({
-  description: IMAGE.DOC.PATCH_DESCRIPTION,
+  description: IMAGE.DOC.PATCH.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: imagesBody,
-      description: IMAGE.DOC.PATCH_200,
+      description: IMAGE.DOC.PATCH.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -85,16 +85,16 @@ export const patchRoute = describeRoute({
       HTTP.STATUS.CONFLICT
     ),
   },
-  summary: IMAGE.DOC.PATCH_SUMMARY,
+  summary: IMAGE.DOC.PATCH.SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
 });
 
 export const deleteRoute = describeRoute({
-  description: IMAGE.DOC.DELETE_DESCRIPTION,
+  description: IMAGE.DOC.DELETE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: deleteResultBody,
-      description: IMAGE.DOC.DELETE_200,
+      description: IMAGE.DOC.DELETE.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -102,6 +102,6 @@ export const deleteRoute = describeRoute({
       HTTP.STATUS.FORBIDDEN
     ),
   },
-  summary: IMAGE.DOC.DELETE_SUMMARY,
+  summary: IMAGE.DOC.DELETE.SUMMARY,
   tags: [IMAGE.OPENAPI_TAG],
 });

@@ -23,7 +23,7 @@ describe("OfflineNotice", () => {
     const html = render();
     expect(html).toContain(TEXT.title);
     expect(html).toContain(TEXT.description);
-    expect(html).toContain(`>${PWA_SIGNAGE.OFFLINE.WALL_KANJI}<`);
+    expect(html).toContain(`>${PWA_SIGNAGE.OFFLINE.KANJI}<`);
   });
 
   it("offers a retry of the address that failed", () => {

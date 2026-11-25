@@ -38,7 +38,11 @@ export const OPENAPI = {
     },
     {
       name: LAURA.OPENAPI_GROUP,
-      tags: [LAURA.GALLERY.OPENAPI_TAG, LAURA.FAVORITES.OPENAPI_TAG],
+      tags: [
+        LAURA.GALLERY.OPENAPI_TAG,
+        LAURA.FAVORITES.OPENAPI_TAG,
+        LAURA.GAMES.OPENAPI_TAG,
+      ],
     },
   ],
 } as const;

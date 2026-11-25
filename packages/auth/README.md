@@ -56,15 +56,16 @@ lists each App they belong to and their Role there. HTTP statuses and methods co
 | `./features/next/utils/with-provider-pictures` | `withProviderPictures(config)` — lets an App's next/image optimize a sign-in provider's picture (`AUTH.PICTURE_HOSTS`, Google's today, over https), added to the App's own `remotePatterns`; a new provider adds its host there first |
 | `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
 | `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, sections })` (`sections`: the App's Sections as its descriptor lists them, `{ path, minRole? }`: each path after the locale, `""` for Home, is signed-in only; each one with a `minRole` is above the App's floor: a visit by a Session whose Role does not reach it goes Home (307), asked of the API only on those paths) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in or Forgot password by someone the App already lets in (asked of the API) to Home (307); Reset password always renders |
-| `./features/next/constants/api` | `SignInError` (the values of `AUTH.SIGN_IN_ERROR`), `SignInState` |
+| `./features/next/types/auth-state` | `SignInState`, `ForgotState`, `ResetState`: what each action hands back to its form (`useActionState`) |
 | `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession({ minRole }?)` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`) whose Role reaches `minRole` when given (`hasSectionRole`, `hasRoleIn` in `AUTH_APP`), or a redirect: to Sign in for someone kept out, Home for a Role below the Section's |
 | `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
 | `./features/hono/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
 | `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
 | `./features/hono/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
 | `./features/hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
-| `./shared/constants/errors` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `MAIL_UNAVAILABLE`, `PASSWORD_WEAK`, `REGISTRATION_CLOSED`) |
-| `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.SECRET_MIN_LENGTH`, `AUTH.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.ERROR_CODE`, `AUTH.SIGN_IN_ERROR` (an App translates each), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
+| `./shared/utils/auth-error-code` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `MAIL_UNAVAILABLE`, `PASSWORD_WEAK`, `REGISTRATION_CLOSED`) |
+| `./shared/constants/auth-schema` | `SignInError`, `ForgotError`, `ResetError`, `AppPath`: each the `z.infer` of an `AUTH` group (`AUTH.ERROR.*`, `AUTH.PAGE`) |
+| `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.LIMIT.SECRET_MIN_LENGTH`, `AUTH.LIMIT.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.MAIL.PARAM.*` (`ERROR`, `TOKEN`, `VERIFIED`: the query parameters the mail links carry), `AUTH.ERROR_CODE`, `AUTH.ERROR.*` (`SIGN_IN`, `FORGOT`, `RESET`: an App translates each value), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
 | `./features/users/hono/tests/stub-user-deps` | `stubUserDeps(overrides?)`: the User module's deps for a test (no access, writes throw, Avatars quiet); `userHost(session, deps)`, the module on `moduleTestHost` |
 | `./shared/tests/proxy-config` | tests only: `proxyConfig(() => import("./proxy"))` loads an App's `proxy.ts` for its matcher, the Session refresh, the sign-in gate and the locale middleware passed through |
 | `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` (a User in every App by default), `membershipsIn(role)` (that Role in every App), `cookieOf(response)` (the cookies it set, as one `cookie` header), `HOST_AUTH_PATH` |
@@ -87,14 +88,15 @@ src/
       rate-limit/  middleware/auth-limit, tests/
       session/     middleware/session-loader, tests/
     next/        a Next App's side, through the API: actions/{sign-in,sign-out},
-                 constants/{paths,api},
+                 types/{proxy,auth-state},
                  utils/{auth-client,redirect-to,refresh-session,session,
                  with-provider-pictures,with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
     openapi/     openapi (authOpenApi), tests/
     server/      auth (createAuth, toAuthLike), routes/join-app,
                  utils/registration, tests/
   shared/
-    constants/   auth (AUTH), errors (authErrorCodeSchema)
+    constants/   auth (AUTH), auth-schema (SignInError, ForgotError, ResetError, AppPath)
+    utils/       auth-error-code (authErrorCodeSchema), linked-picture
     types/       auth (AuthSession, AuthLike, OpenApi*)
     tests/       proxy-config (proxyConfig), stub-auth (stubAuth, sessionFor, membershipsIn),
                  test-host (moduleTestHost, json, errorOf)

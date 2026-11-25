@@ -1,17 +1,10 @@
 import { API } from "@allonfire/api/shared/constants/api";
-import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
 import { STORAGE } from "../constants/storage";
-
-/**
- * Asks once more after a server or network failure; never after the API
- * refused (a 401 or 403), so a member who is not an Admin sees Home at once.
- * @internal
- */
-export const retryStorageOverview = retryUnlessRefused(STORAGE.RETRIES);
 
 /** The Storage overview, as the API answers an Admin. */
 export const fetchStorageOverview = (client: ApiClient) =>
@@ -44,6 +37,5 @@ export const storageOverviewQuery = (client: ApiClient) =>
   queryOptions({
     queryFn: () => fetchStorageOverview(client),
     queryKey: storageOverviewKey,
-    retry: retryStorageOverview,
-    staleTime: "static",
+    ...staticQuery({ retries: STORAGE.LIMIT.RETRIES }),
   });

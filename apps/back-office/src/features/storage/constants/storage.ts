@@ -31,11 +31,11 @@ export const STORAGE = {
   } as const,
   /** Brushed on the image bucket's card and on the overview while it loads: 写, a photograph. */
   KANJI: { IMAGE: "写" },
+  /** Asks once more after a server or network failure; never after the API refused. */
+  LIMIT: { RETRIES: 1 },
   /**
    * The chart's room: a row for each App, three bars a row (public, private,
    * Avatars). The failed and refused cards keep it, so no state moves the page.
    */
   OVERVIEW: { CHART_HEIGHT_PX: barChartHeight(objectValues(App).length, 3) },
-  /** Asks once more after a server or network failure; never after the API refused. */
-  RETRIES: 1,
 } as const;

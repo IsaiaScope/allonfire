@@ -3,11 +3,13 @@ import type { ColorScheme } from "@allonfire/core/features/metadata/constants/me
 /** A scheme's colours where CSS variables cannot reach. */
 type SchemeColors = {
   background: string;
+  border: string;
   card: string;
   coral: string;
   foreground: string;
   mutedForeground: string;
   primary: string;
+  secondary: string;
 };
 
 /**
@@ -23,21 +25,25 @@ export const OCEAN_IMAGE_COLOR = {
   BANNER: ["#08505e", "#0b6b7c", "#0f7a8b"],
   dark: {
     background: "#0c1b21",
+    border: "#2b4650",
     card: "#142a32",
     coral: "#ff7a72",
     foreground: "#e8f2f3",
     mutedForeground: "#9db8be",
     primary: "#4fc3d4",
+    secondary: "#1f3a44",
   },
-  /** The octopus's own dark: the card back, a pill carrying pale text. */
+  /** The octopus's own dark: a pill carrying pale text. */
   INK: "#0a2530",
   light: {
     background: "#f2f8f8",
+    border: "#cfdfe0",
     card: "#ffffff",
     coral: "#c93d3a",
     foreground: "#0f2a30",
     mutedForeground: "#4a6168",
     primary: "#0b6b7c",
+    secondary: "#e1eded",
   },
 } as const satisfies Record<ColorScheme, SchemeColors> &
   Record<string, unknown>;

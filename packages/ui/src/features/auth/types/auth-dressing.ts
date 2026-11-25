@@ -1,4 +1,4 @@
-import type { AppPath } from "@allonfire/auth/features/next/constants/paths";
+import type { AppPath } from "@allonfire/auth/shared/constants/auth-schema";
 import type { ComponentType, ReactNode } from "react";
 import type { AOFActionDressing } from "../../../shared/types/action-dressing";
 import type { AOFPasswordRulesProps } from "../../form/components/aof-password-rules";

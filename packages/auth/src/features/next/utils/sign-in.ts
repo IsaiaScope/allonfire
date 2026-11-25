@@ -4,7 +4,7 @@ import { BASE_ERROR_CODES } from "better-auth";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";
-import type { SignInError } from "../constants/api";
+import type { SignInError } from "../../../shared/constants/auth-schema";
 import { appHeaders } from "./app-request";
 import { type ApiAuthClient, createApiAuthClient } from "./auth-client";
 import { adoptSetCookies } from "./set-cookie";
@@ -24,18 +24,18 @@ const credentialsSchema = z.object({
 const errorFor = ({ code, status }: { code?: string; status: number }) => {
   if (status === HTTP.STATUS.FORBIDDEN) {
     if (code === BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code) {
-      return AUTH.SIGN_IN_ERROR.UNVERIFIED;
+      return AUTH.ERROR.SIGN_IN.UNVERIFIED;
     }
     return code === AUTH.ERROR_CODE.APP_FORBIDDEN
-      ? AUTH.SIGN_IN_ERROR.FORBIDDEN
-      : AUTH.SIGN_IN_ERROR.UNAVAILABLE;
+      ? AUTH.ERROR.SIGN_IN.FORBIDDEN
+      : AUTH.ERROR.SIGN_IN.UNAVAILABLE;
   }
   if (status === HTTP.STATUS.TOO_MANY_REQUESTS) {
-    return AUTH.SIGN_IN_ERROR.RATE_LIMITED;
+    return AUTH.ERROR.SIGN_IN.RATE_LIMITED;
   }
   return status >= HTTP.STATUS.INTERNAL_SERVER_ERROR
-    ? AUTH.SIGN_IN_ERROR.UNAVAILABLE
-    : AUTH.SIGN_IN_ERROR.INVALID;
+    ? AUTH.ERROR.SIGN_IN.UNAVAILABLE
+    : AUTH.ERROR.SIGN_IN.INVALID;
 };
 
 /**
@@ -51,7 +51,7 @@ export const signInWithEmail = async (
   const email = textOf(formData, "email").trim();
   const password = formData.get("password");
   if (!(email && typeof password === "string" && password)) {
-    return AUTH.SIGN_IN_ERROR.MISSING;
+    return AUTH.ERROR.SIGN_IN.MISSING;
   }
   const callbackURL = textOf(formData, "callbackURL").trim() || undefined;
   const credentials = credentialsSchema.safeParse({
@@ -60,7 +60,7 @@ export const signInWithEmail = async (
     password,
   });
   if (!credentials.success) {
-    return AUTH.SIGN_IN_ERROR.INVALID;
+    return AUTH.ERROR.SIGN_IN.INVALID;
   }
 
   const requestHeaders = await appHeaders();
@@ -74,7 +74,7 @@ export const signInWithEmail = async (
       },
     });
   } catch {
-    return AUTH.SIGN_IN_ERROR.UNAVAILABLE;
+    return AUTH.ERROR.SIGN_IN.UNAVAILABLE;
   }
   if (signedIn.error) {
     return errorFor(signedIn.error);

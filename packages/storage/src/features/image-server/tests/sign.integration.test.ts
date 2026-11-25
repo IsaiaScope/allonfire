@@ -88,7 +88,7 @@ describe("the image server, through signed links", () => {
       (await fetch(link, { headers: AVIF })).headers.get(CACHE_STATUS)
     ).toBe("MISS");
     await new Promise((resolve) =>
-      setTimeout(resolve, IMAGE_SERVER.CACHE_CHECK_SECONDS * UNIT.MS_PER_SECOND)
+      setTimeout(resolve, IMAGE_SERVER.CACHE.CHECK_SECONDS * UNIT.MS_PER_SECOND)
     );
     const later = await fetch(link, { headers: AVIF });
     expect(later.headers.get(CACHE_STATUS)).toBe("REVALIDATED");
@@ -121,7 +121,7 @@ describe("the image server, through signed links", () => {
     await expect
       .poll(async () => (await fetch(link, { headers: AVIF })).status, {
         interval: 250,
-        timeout: LINK_MS + IMAGE_SERVER.GONE_WITHIN_MS,
+        timeout: LINK_MS + IMAGE_SERVER.CACHE.GONE_WITHIN_MS,
       })
       .toBe(HTTP.STATUS.NOT_FOUND);
   }, 10_000);

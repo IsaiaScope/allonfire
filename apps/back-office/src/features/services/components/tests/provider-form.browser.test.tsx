@@ -61,7 +61,7 @@ it("refreshes the Services on screen once the provider is saved", async () => {
     .toHaveBeenCalledWith({ queryKey: QUERY.SERVICES.ALL });
 });
 
-it.each([SERVICES.SAVE_ERROR.CHANGED, SERVICES.SAVE_ERROR.REMOVED])(
+it.each([SERVICES.SAVE.ERROR.CHANGED, SERVICES.SAVE.ERROR.REMOVED])(
   "refreshes the Services on screen when the save is refused as %s, since the copy is old",
   async (error) => {
     vi.mocked(saveProvider).mockResolvedValue({
@@ -78,7 +78,7 @@ it.each([SERVICES.SAVE_ERROR.CHANGED, SERVICES.SAVE_ERROR.REMOVED])(
 
 it("leaves the Services as they are when the save is refused for its own values", async () => {
   vi.mocked(saveProvider).mockResolvedValue({
-    error: SERVICES.SAVE_ERROR.INVALID,
+    error: SERVICES.SAVE.ERROR.INVALID,
     opened: PROVIDER.version,
   });
   await renderForm();

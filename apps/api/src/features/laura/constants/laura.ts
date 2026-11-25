@@ -2,6 +2,7 @@ import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
 import { LAURA_FAVORITES } from "../favorites/constants/favorites";
 import { LAURA_GALLERY } from "../gallery/constants/gallery";
+import { LAURA_GAMES } from "../games/constants/games";
 
 const SEGMENT = ACCESS.APP_SETTINGS[App.LAURA].slug;
 
@@ -11,7 +12,9 @@ export const LAURA = {
   FAVORITES: LAURA_FAVORITES,
   /** The Gallery list's constants. */
   GALLERY: LAURA_GALLERY,
-  /** The docs group Laura's tags (Gallery, Favorites) under this name. */
+  /** The Memory game's constants. */
+  GAMES: LAURA_GAMES,
+  /** The docs group Laura's tags (Gallery, Favorites, Memory) under this name. */
   OPENAPI_GROUP: "Laura",
   PATH: { BASE: `/${SEGMENT}` },
   /** The key under `client.v1`, and the App's folder under `apps/`. */

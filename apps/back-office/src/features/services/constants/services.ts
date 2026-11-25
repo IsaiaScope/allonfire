@@ -26,32 +26,35 @@ export const SERVICES = {
     } as const satisfies Record<ServiceType, CacheLife>,
     TAG: "services",
   },
-  /** Brushed large and faint behind a provider's card: 郵, the post. */
-  CARD_KANJI: "郵",
   /** A switch's two choices, as a Gooey Nav posts them. */
   CHOICE: { OFF: "off", ON: "on" },
-  /** Why saving a provider failed, as the form says it. */
-  SAVE_ERROR: {
-    CHANGED: "changed",
-    FAILED: "failed",
-    INCOMPLETE: "incomplete",
-    INVALID: "invalid",
-    REFUSED: "refused",
-    /** Another Admin deleted the provider. */
-    REMOVED: "removed",
+  /** Brushed on the cards and buttons (the brush face carries each glyph). */
+  KANJI: {
+    /** Large and faint behind a provider's card: 郵, the post. */
+    CARD: "郵",
+    /** 保, keep: set large behind Save. */
+    SAVE: "保",
+    /** 試, test: brushed in Send test email. */
+    TEST: "試",
   },
-  /** 保, keep: set large behind Save. */
-  SAVE_KANJI: "保",
-  /** Why a test could not be asked for. */
-  TEST_ERROR: {
-    FAILED: "failed",
-    RATE_LIMITED: "rateLimited",
-    REMOVED: "removed",
+  SAVE: {
+    /** Why saving a provider failed, as the form says it. */
+    ERROR: {
+      CHANGED: "changed",
+      FAILED: "failed",
+      INCOMPLETE: "incomplete",
+      INVALID: "invalid",
+      REFUSED: "refused",
+      /** Another Admin deleted the provider. */
+      REMOVED: "removed",
+    },
   },
-  /** 試, test: brushed in Send test email. */
-  TEST_KANJI: "試",
+  TEST: {
+    /** Why a test could not be asked for. */
+    ERROR: {
+      FAILED: "failed",
+      RATE_LIMITED: "rateLimited",
+      REMOVED: "removed",
+    },
+  },
 } as const;
-
-/** One Service type's own cache tag, under the one every type's copy also has. */
-export const serviceTag = (type: ServiceType) =>
-  `${SERVICES.CACHE.TAG}:${type}`;

@@ -3,11 +3,11 @@ import { E2E } from "@allonfire/config/tests/e2e/run";
 import { App } from "@allonfire/database/enums";
 import { MAX_ALT_LENGTH } from "@allonfire/database/features/image/utils/alt";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { APP } from "@allonfire/design/apps/app";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { expect, type Page, test } from "@playwright/test";
 import { IMAGES } from "../src/features/images/constants/images";
 import { imageHref } from "../src/features/images/utils/image-href";
-import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT } from "../src/shared/tests/translators";
 import {
@@ -18,6 +18,7 @@ import {
   deleteFromList,
   deleteOpened,
   editForm,
+  fields,
   fillRow,
   idOf,
   imageLink,
@@ -30,10 +31,11 @@ import {
   searchFor,
   submitAdd,
   t,
+  upload,
 } from "./images-flow";
 import { SIGN_IN_URL, signInAsAdmin } from "./pages";
 
-const BACK_OFFICE_NAME = APP_ENTRY[App.BACK_OFFICE].name;
+const BACK_OFFICE_NAME = APP.ENTRY[App.BACK_OFFICE].name;
 /** A file a browser would send as a picture but that no decoder reads. */
 const NOT_A_PICTURE = {
   buffer: Buffer.from("this is not a picture, whatever its name says"),
@@ -55,7 +57,7 @@ const tiny = (name: string) => ({
 /** The row's App toggle for the Back Office, on its `state` ("In" or "Not in"). */
 const backOfficeToggle = (
   row: ReturnType<typeof rowOf>,
-  state: typeof t.form.appIn | typeof t.form.appOut
+  state: typeof fields.appIn | typeof fields.appOut
 ) =>
   row
     .getByRole("radiogroup", { name: BACK_OFFICE_NAME })
@@ -93,7 +95,7 @@ test.describe("Add: what the picker leaves out", () => {
         tiny(`many-${index}.jpg`)
       )
     );
-    await expect(page.getByText(t.form.field.tooManyFiles)).toBeVisible();
+    await expect(page.getByText(upload.field.tooManyFiles)).toBeVisible();
     await expect(rowOf(page, IMAGE.LIMIT.FILES_PER_UPLOAD)).toBeVisible();
     await expect(rowOf(page, IMAGE.LIMIT.FILES_PER_UPLOAD + 1)).toHaveCount(0);
   });
@@ -111,7 +113,7 @@ test.describe("Add: what the picker leaves out", () => {
       },
       tiny("small.jpg"),
     ]);
-    await expect(page.getByText(t.form.field.fileTooLarge)).toBeVisible();
+    await expect(page.getByText(upload.field.fileTooLarge)).toBeVisible();
     await expect(
       rowOf(page, 1).getByText("small.jpg", { exact: true })
     ).toBeVisible();
@@ -130,7 +132,7 @@ test.describe("Add: what the picker leaves out", () => {
 });
 
 /** Past the upload's limit with six pictures, each within the file limit; five fit. */
-const PART_BYTES = Math.ceil(IMAGE.LIMIT.UPLOAD_BYTES / 6) + 1;
+const PART_BYTES = Math.ceil(IMAGE.LIMIT.UPLOAD.BYTES / 6) + 1;
 
 test.describe("Add: the whole upload's size", () => {
   // Six parts of about 17 MiB cross the protocol to the browser: Chromium only.
@@ -151,7 +153,7 @@ test.describe("Add: the whole upload's size", () => {
       await signInAsAdmin(page);
       await openAdd(page);
       await pick(page, parts);
-      await expect(page.getByText(t.form.field.totalTooLarge)).toBeVisible();
+      await expect(page.getByText(upload.field.totalTooLarge)).toBeVisible();
       await expect(rowOf(page, 5)).toBeVisible();
       await expect(rowOf(page, 6)).toHaveCount(0);
     }
@@ -169,7 +171,7 @@ test.describe("Add: what the form checks before it sends", () => {
       "a".repeat(MAX_ALT_LENGTH + 1)
     );
     await submitAdd(page);
-    await expect(page.getByText(t.form.field.altTooLong)).toBeVisible();
+    await expect(page.getByText(upload.field.altTooLong)).toBeVisible();
     await expect(page).toHaveURL(
       new RegExp(`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/new$`)
     );
@@ -179,9 +181,9 @@ test.describe("Add: what the form checks before it sends", () => {
     await signInAsAdmin(page);
     await openAdd(page);
     await pick(page, PHOTO);
-    await backOfficeToggle(rowOf(page, 1), t.form.appOut).click();
+    await backOfficeToggle(rowOf(page, 1), fields.appOut).click();
     await submitAdd(page);
-    await expect(page.getByText(t.form.field.appsRequired)).toBeVisible();
+    await expect(page.getByText(upload.field.appsRequired)).toBeVisible();
     await expect(page).toHaveURL(
       new RegExp(`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/new$`)
     );
@@ -202,21 +204,21 @@ test.describe("Add: what the API refuses", () => {
       await pick(page, [file]);
       await fillRow(page, 1, alt);
       await submitAdd(page);
-      await expect(page.getByText(t.add.error.unsupported)).toBeVisible();
+      await expect(page.getByText(upload.error.unsupported)).toBeVisible();
       await expect(page).toHaveURL(
         new RegExp(`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/new$`)
       );
       await expect(altField(rowOf(page, 1), "English")).toHaveValue(alt);
       // Typing keeps it: the same files are still going to be sent.
       await altField(rowOf(page, 1), "English").fill(`${alt}!`);
-      await expect(page.getByText(t.add.error.unsupported)).toBeVisible();
+      await expect(page.getByText(upload.error.unsupported)).toBeVisible();
       await page
         .getByRole("button", {
-          name: enT("Images.add.row.remove", { name: file.name }),
+          name: enT("Common.ImageUpload.row.remove", { name: file.name }),
         })
         .click();
-      await expect(page.getByText(t.add.pick.none)).toBeVisible();
-      await expect(page.getByText(t.add.error.unsupported)).toHaveCount(0);
+      await expect(page.getByText(upload.pick.none)).toBeVisible();
+      await expect(page.getByText(upload.error.unsupported)).toHaveCount(0);
       await page.goto(BACK_OFFICE.PAGE.STORAGE_IMAGES);
       await expect(imageLink(page, alt)).toHaveCount(0);
     });
@@ -232,7 +234,7 @@ test.describe("Add: what the API refuses", () => {
     // WebKit on a phone sometimes drops this tap. A refused batch adds nothing, so submitting again is safe.
     await expect(async () => {
       await submitAdd(page);
-      await expect(page.getByText(t.add.error.unsupported)).toBeVisible({
+      await expect(page.getByText(upload.error.unsupported)).toBeVisible({
         timeout: REFUSAL_WAIT_MS,
       });
     }).toPass();
@@ -244,7 +246,9 @@ test.describe("Add: what the API refuses", () => {
     await pickGoodAndBroken(page, alts);
     await page
       .getByRole("button", {
-        name: enT("Images.add.row.remove", { name: NOT_A_PICTURE.name }),
+        name: enT("Common.ImageUpload.row.remove", {
+          name: NOT_A_PICTURE.name,
+        }),
       })
       .click();
     await submitAdd(page);
@@ -292,7 +296,7 @@ test.describe("Edit: what a save does", () => {
       })
     ).toHaveAttribute("aria-current", "page");
     await expect(
-      backOfficeToggle(editForm(page), t.form.appIn)
+      backOfficeToggle(editForm(page), fields.appIn)
     ).toHaveAttribute("aria-current", "page");
     await deleteOpened(page);
   });
@@ -308,7 +312,7 @@ test.describe("Edit: what a save does", () => {
       "a".repeat(MAX_ALT_LENGTH + 1)
     );
     await page.getByRole("button", { name: t.edit.submit }).click();
-    await expect(page.getByText(t.form.field.altTooLong)).toBeVisible();
+    await expect(page.getByText(upload.field.altTooLong)).toBeVisible();
     await expect(editForm(page)).toBeVisible();
     await page.goto(BACK_OFFICE.PAGE.STORAGE_IMAGES);
     await deleteFromList(page, alt);
@@ -470,8 +474,8 @@ test.describe("An Image that is also in an App the Admin does not administer", (
     await searchFor(page, SHARED_ALT);
     await openFromList(page, SHARED_ALT);
     await editForm(page)
-      .getByRole("radiogroup", { name: APP_ENTRY[App.LAURA].name })
-      .getByRole("button", { exact: true, name: t.form.appOut })
+      .getByRole("radiogroup", { name: APP.ENTRY[App.LAURA].name })
+      .getByRole("button", { exact: true, name: fields.appOut })
       .click();
     await page.getByRole("button", { name: t.edit.submit }).click();
     await expect(

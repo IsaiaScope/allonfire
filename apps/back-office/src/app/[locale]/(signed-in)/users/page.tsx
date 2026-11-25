@@ -4,16 +4,13 @@ import { HydrationBoundary } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { UsersListSkeleton } from "@/features/users/components/users-list-skeleton";
 import { UsersTable } from "@/features/users/components/users-table";
-import {
-  loadUsersParams,
-  queryOf,
-} from "@/features/users/constants/users-params";
 import { usersHydration } from "@/features/users/utils/users-hydration";
-import { pageMetadata } from "@/shared/constants/page-information";
+import { loadUsersParams, queryOf } from "@/features/users/utils/users-params";
 
 export const generateMetadata = () =>
   pageMetadata(SECTION.USERS.path, `Navigation.${SECTION.USERS.label}`);

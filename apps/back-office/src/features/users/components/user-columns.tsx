@@ -4,6 +4,7 @@ import type { UserBody } from "@allonfire/auth/features/users/hono/constants/sch
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { roleIn } from "@allonfire/database/features/auth/access/access";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFColumnHeader } from "@allonfire/ui/features/data-table/components/aof-column-header";
 import { aofColumnHelper } from "@allonfire/ui/features/data-table/components/aof-data-table";
 import { useAOFIntentPrefetch } from "@allonfire/ui/features/query/hooks/use-aof-intent-prefetch";
@@ -15,8 +16,7 @@ import { useTranslations } from "next-intl";
 import { type ComponentProps, useMemo } from "react";
 import { Link } from "@/features/i18n/navigation";
 import { CopyText } from "@/shared/components/copy-text";
-import { UserAvatar } from "@/shared/components/user-avatar";
-import { APP_ENTRY } from "@/shared/constants/apps";
+import { UserIdentity } from "@/shared/components/user-identity";
 import { useCreated } from "@/shared/utils/use-created";
 import { userHref } from "../utils/user-href";
 
@@ -105,30 +105,26 @@ export const OpenUser = ({
  * copies it) over their name, muted, when they gave one; the picture 36px,
  * centred beside the two lines (20px each).
  */
-const UserIdentity = ({ user }: { user: UserBody }) => (
-  <span className="flex min-w-0 items-center gap-2">
-    <UserAvatar
-      blurDataUrl={user.imageBlurDataUrl}
-      className={user.name ? "size-9" : "size-(--field-tile)"}
-      image={user.image}
-      name={user.name || user.email}
-      side={36}
-    />
-    <span className="flex min-w-0 flex-col">
+const UserCell = ({ user }: { user: UserBody }) => (
+  <UserIdentity
+    avatarProps={{
+      blurDataUrl: user.imageBlurDataUrl,
+      className: user.name ? undefined : "size-(--field-tile)",
+      image: user.image,
+      name: user.name || user.email,
+    }}
+    subtitle={user.name}
+    title={
       <CopyEmail
         className="min-w-0 shrink border-0 leading-5"
         email={user.email}
       />
-      {user.name ? (
-        <span className="truncate text-muted-foreground text-sm leading-5">
-          {user.name}
-        </span>
-      ) : null}
-    </span>
+    }
+  >
     <OpenUser className="absolute inset-0" user={user}>
       <span className="sr-only">{user.name || user.email}</span>
     </OpenUser>
-  </span>
+  </UserIdentity>
 );
 
 /** Where a User has no Membership: a closed barrier that says "not a member"
@@ -189,7 +185,7 @@ export const useUserColumns = () => {
         // over the name: whole up to 480px when there is room, else cut
         // to an ellipsis down to 240px; the copy and the name aloud stay
         // whole.
-        cell: ({ row }) => <UserIdentity user={row.original} />,
+        cell: ({ row }) => <UserCell user={row.original} />,
         enableHiding: false,
         header: ({ column }) => (
           <AOFColumnHeader
@@ -214,7 +210,7 @@ export const useUserColumns = () => {
             <AOFColumnHeader
               centred
               column={column}
-              label={APP_ENTRY[app].name}
+              label={APP.ENTRY[app].name}
               labels={labels}
             />
           ),

@@ -1,7 +1,7 @@
 "use server";
 
 import { AUTH } from "../../../shared/constants/auth";
-import type { ForgotState, ResetState } from "../constants/api";
+import type { ForgotState, ResetState } from "../types/auth-state";
 import { requestResetLink, resetWithToken } from "../utils/password-reset";
 import { languageOf, redirectTo } from "../utils/redirect-to";
 

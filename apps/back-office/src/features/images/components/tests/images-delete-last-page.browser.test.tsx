@@ -16,7 +16,7 @@ import { ImagesTable } from "../images-table";
 
 const t = EN.Images;
 const [TEMPLATE] = IMAGES_PAGE.images;
-const PER_PAGE = IMAGES.DEFAULT_PAGE_SIZE;
+const PER_PAGE = IMAGES.DEFAULT.PAGE_SIZE;
 
 // jscpd:ignore-start
 // vi.mock is hoisted per file, so a test file states its own mocks.
@@ -76,7 +76,7 @@ const WARNINGS = [t.empty.title, t.error.title, t.delete.failed];
 /** The page the address names after its last update (the first when it names none). */
 const pageIn = (updates: UrlUpdateEvent[]) =>
   Number(
-    updates.at(-1)?.searchParams.get(IMAGES.PARAM.PAGE) ?? IMAGES.DEFAULT_PAGE
+    updates.at(-1)?.searchParams.get(IMAGES.PARAM.PAGE) ?? IMAGES.DEFAULT.PAGE
   );
 
 const openLastPage = (updates: UrlUpdateEvent[]) =>

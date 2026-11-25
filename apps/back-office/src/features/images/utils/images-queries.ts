@@ -1,18 +1,19 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
 import { IMAGES } from "../constants/images";
-import type { ImagesQuery } from "../constants/images-params";
+import type { ImagesQuery } from "./images-params";
 
 /**
  * Asks once more after a server or network failure; never after the API
  * refused (a 401, 403 or 400), so the error shows at once.
  */
-const retryImages = retryUnlessRefused(IMAGES.RETRIES);
+const retryImages = retryUnlessRefused(IMAGES.LIMIT.RETRIES);
 
 /** One numbered page of Images from the API, in the sort order asked; an error throws `DetailedError`. */
 export const fetchImages = (client: ApiClient, params: ImagesQuery) =>
@@ -79,6 +80,5 @@ export const imageQuery = (client: ApiClient, id: string) =>
   queryOptions({
     queryFn: () => fetchImage(client, id),
     queryKey: imageKey(id),
-    retry: retryImages,
-    staleTime: "static",
+    ...staticQuery({ retries: IMAGES.LIMIT.RETRIES }),
   });

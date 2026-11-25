@@ -3,7 +3,7 @@ import { ACCESS } from "@allonfire/database/features/auth/access/constants/acces
 import type {
   AppSettingsTable,
   RegistrationRole,
-} from "@allonfire/database/features/auth/access/constants/app-settings";
+} from "@allonfire/database/features/auth/access/constants/access-schema";
 import { appSchema } from "@allonfire/database/features/auth/access/constants/schemas";
 import { APIError } from "better-auth/api";
 import { AUTH } from "../../../shared/constants/auth";

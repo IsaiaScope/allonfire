@@ -17,7 +17,7 @@ const NOTICE = {
   empty: {
     action: "empty.clear",
     icon: IconRefresh,
-    kanji: IMAGES.RESET_KANJI,
+    kanji: IMAGES.KANJI.RESET,
     signage: IMAGES.SIGNAGE.EMPTY,
   },
   error: {

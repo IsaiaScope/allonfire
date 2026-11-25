@@ -4,7 +4,7 @@ import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
 import { IMAGES } from "../constants/images";
-import type { ImagesQuery } from "../constants/images-params";
+import type { ImagesQuery } from "./images-params";
 import {
   fetchImage,
   fetchImages,

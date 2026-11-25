@@ -4,13 +4,13 @@ import { proxyConfig } from "@allonfire/auth/shared/tests/proxy-config";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { proxyMatcherSuite } from "@allonfire/core/features/next/i18n/tests/proxy-matcher-suite";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
-import { LAURA, SECTIONS } from "@/shared/constants/laura";
+import { LAURA } from "@/shared/constants/laura";
 
 const config = await proxyConfig(() => import("./proxy"));
 
 proxyMatcherSuite({
   config,
-  pages: SECTIONS.map(({ path }) => path),
+  pages: LAURA.sections.map(({ path }) => path),
 });
 
 describe("Laura's proxy matcher", () => {

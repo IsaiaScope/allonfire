@@ -2,7 +2,7 @@ import { z } from "zod";
 import { UNIT } from "../../../../shared/constants/units";
 import { stringifyJson } from "../../../../shared/utils/json";
 import { HTTP } from "../../../http/constants/http";
-import { MAIL, USAGE_MONTH_DAYS } from "../../constants/mail";
+import { MAIL } from "../../constants/mail";
 import type { MailDriverImpl, MailEndpoint, MailFetch } from "../../types/mail";
 import { attemptOf, readJson, timeoutSignal } from "../http-attempt";
 
@@ -67,7 +67,7 @@ export const bearerFlat: MailDriverImpl = {
     ),
   usage: async (endpoint, now, fetcher) => {
     const monthStart = new Date(
-      now.getTime() - USAGE_MONTH_DAYS * UNIT.MS_PER_DAY
+      now.getTime() - MAIL.USAGE.MONTH_DAYS * UNIT.MS_PER_DAY
     );
     const [day, month] = await Promise.all([
       sentSince(endpoint, startOfUtcDay(now), fetcher),

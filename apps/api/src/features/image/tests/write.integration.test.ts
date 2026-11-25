@@ -138,7 +138,7 @@ describe("changing Images on the real stack", () => {
     // Dead once the image cache asked imgproxy again.
     await expect
       .poll(async () => (await fetch(publicLink?.url ?? "")).status, {
-        timeout: IMAGE_SERVER.GONE_WITHIN_MS,
+        timeout: IMAGE_SERVER.CACHE.GONE_WITHIN_MS,
       })
       .toBe(HTTP.STATUS.NOT_FOUND);
     const [privateLink] = changed?.srcSet ?? [];

@@ -188,7 +188,7 @@ describe("GalleryFeed when a read goes wrong or a page comes again", () => {
     await expect.element(tiles().nth(0)).toBeVisible();
     expect(keepFresh).toHaveBeenCalledWith({
       queryKey: QUERY.GALLERY.ALL,
-      refreshMs: GALLERY.LINK_REFRESH_MS,
+      refreshMs: GALLERY.LIMIT.LINK_REFRESH_MS,
     });
   });
 });

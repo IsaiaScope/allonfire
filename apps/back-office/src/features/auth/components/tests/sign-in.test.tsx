@@ -6,7 +6,7 @@ import { AOFSignIn } from "@allonfire/ui/features/auth/components/aof-sign-in";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
+import { AUTH_DRESSING } from "@/features/auth/components/dressing";
 import { BrushKanji } from "@/shared/components/brush-kanji";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import en from "../../../i18n/translations/en.json" with { type: "json" };
@@ -28,7 +28,7 @@ const CURRENT_LANGUAGE = new RegExp(
   `<a aria-current="true"[^>]*href="/en${AUTH.PAGE.SIGN_IN}"`
 );
 const ENTER_KANJI = new RegExp(
-  `<span aria-hidden="true"[^>]*lang="ja">${SIGN_IN.ENTER_KANJI}<`
+  `<span aria-hidden="true"[^>]*lang="ja">${SIGN_IN.KANJI.ENTER}<`
 );
 
 const render = (node: ReactNode) =>
@@ -51,7 +51,7 @@ describe("Sign in at the ticket gate", () => {
   // How the brush paints it: BrushKanji's browser test.
   it("stands at the ticket gate: no photograph, its name brushed behind", () => {
     expect(signIn()).toContain(
-      renderToStaticMarkup(<BrushKanji kanji={SIGN_IN.BOARD_KANA} />)
+      renderToStaticMarkup(<BrushKanji kanji={SIGN_IN.KANA.BOARD} />)
     );
   });
 

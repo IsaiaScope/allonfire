@@ -1,13 +1,13 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { expect, type Page, test } from "@playwright/test";
 import { IMAGES } from "../src/features/images/constants/images";
-import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { enT, itT } from "../src/shared/tests/translators";
 import { onPhone, signInAsAdmin, USERS } from "./pages";
 
-const LAURA = APP_ENTRY[App.LAURA].name;
+const LAURA = APP.ENTRY[App.LAURA].name;
 const FIRST_OF_MONTH = /\b1st,/;
 const SECOND_OF_MONTH = /\b2nd,/;
 const SORT_TAB = new RegExp(`^${enT("List.tab.sort")}`);

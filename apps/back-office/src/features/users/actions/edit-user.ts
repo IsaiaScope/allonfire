@@ -6,10 +6,7 @@ import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { textOf } from "@allonfire/core/features/next/api/utils/aof-refusal";
 import { updateTag } from "next/cache";
-import {
-  type ApiRefusalKey,
-  refusalOf,
-} from "@/features/api/utils/api-refusal";
+import { refusalOf } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
 import {
@@ -77,7 +74,7 @@ export const editUser = async (
     avatar: pictureOf(avatar),
   });
   if (!parsed.success) {
-    return { error: USERS.EDIT_ERROR.INVALID, values };
+    return { error: USERS.EDIT.ERROR.INVALID, values };
   }
   const { name, password, roles, verification } = parsed.data;
   const verified = verification === USERS.VERIFICATION.VERIFIED;
@@ -96,15 +93,11 @@ export const editUser = async (
     param: { id },
   });
   if (response.status !== HTTP.STATUS.OK) {
-    const error = await refusalOf(
-      response,
-      USERS.EDIT_ERROR,
-      new Map<ApiRefusalKey, EditUserError>([
-        [HTTP.STATUS.NOT_FOUND, USERS.EDIT_ERROR.GONE],
-        [USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE, USERS.EDIT_ERROR.OWN_ROLE],
-        [ERROR.CODE.RESOURCE_CHANGED, USERS.EDIT_ERROR.CHANGED],
-      ])
-    );
+    const error = await refusalOf(response, USERS.EDIT.ERROR, {
+      [HTTP.STATUS.NOT_FOUND]: USERS.EDIT.ERROR.GONE,
+      [USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE]: USERS.EDIT.ERROR.OWN_ROLE,
+      [ERROR.CODE.RESOURCE_CHANGED]: USERS.EDIT.ERROR.CHANGED,
+    });
     // No `updateTag` on a refusal, `CHANGED` included: it would redraw this
     // form on the newer version under what was typed, and a second Save
     // would overwrite the change the Admin never saw. They reload instead.
@@ -119,7 +112,7 @@ export const editUser = async (
   updateTag(USERS.CACHE.TAG);
   // Deleted by another Admin between the save and their picture.
   if (sent?.status === HTTP.STATUS.NOT_FOUND) {
-    return { error: USERS.EDIT_ERROR.GONE, values };
+    return { error: USERS.EDIT.ERROR.GONE, values };
   }
   // Saved, their picture not; a 409 included (changed by someone else
   // between the save and the picture): the page re-reads them, so a form kept
@@ -128,7 +121,7 @@ export const editUser = async (
   return {
     notice:
       !sent || sent.ok
-        ? USERS.EDIT_NOTICE.SAVED
-        : USERS.EDIT_NOTICE.AVATAR_FAILED,
+        ? USERS.EDIT.NOTICE.SAVED
+        : USERS.EDIT.NOTICE.AVATAR_FAILED,
   };
 };

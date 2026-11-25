@@ -7,6 +7,14 @@ import { useToastThenList } from "@allonfire/ui/features/data-table/hooks/use-to
 import { AOFFormAlert } from "@allonfire/ui/features/form/components/aof-form-alert";
 import { useAOFForm } from "@allonfire/ui/features/form/utils/form";
 import { useAOFFormAction } from "@allonfire/ui/features/form/utils/form-submit";
+import { AOFImageAccessRow } from "@allonfire/ui/features/image/upload/components/aof-image-access-row";
+import { AOFImageAltFields } from "@allonfire/ui/features/image/upload/components/aof-image-alt-fields";
+import { AOFImageAppsRow } from "@allonfire/ui/features/image/upload/components/aof-image-apps-row";
+import {
+  AOFImageFact,
+  AOFImageFacts,
+} from "@allonfire/ui/features/image/upload/components/aof-image-facts";
+import { altValuesOf } from "@allonfire/ui/features/image/upload/utils/image-alt";
 import { IconDeviceFloppy, IconPhotoEdit } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -16,21 +24,15 @@ import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { useCreated } from "@/shared/utils/use-created";
 import { editImage } from "../actions/edit-image";
 import { IMAGES } from "../constants/images";
+import { appOptionsOf } from "../utils/administered-apps";
 import {
   type EditImageValues,
   editImageSchema,
 } from "../utils/edit-image-schema";
-import { altValuesOf } from "../utils/image-alt";
 import { invalidateImages } from "../utils/images-mutations";
 import { DeleteImages } from "./delete-images";
-import { ImageAltFields } from "./image-alt-fields";
 import { CopyName, ImageThumb } from "./image-columns";
-import { ImageFact, ImageFacts } from "./image-facts";
-import {
-  ImageAccessRow,
-  ImageAppsRow,
-  ImageFormActions,
-} from "./image-form-parts";
+import { ImageFormActions } from "./image-form-parts";
 
 /** The form's start: the Image as stored. */
 const fieldsOf = (image: ImageBody): EditImageValues => ({
@@ -50,20 +52,24 @@ const Summary = ({ image }: { image: ImageBody }) => {
       className="flex @2xl:flex-row flex-col @2xl:gap-6 gap-4"
     >
       <ImageThumb image={image} size="page" />
-      <ImageFacts className="w-full @2xl:max-w-xl max-w-sm">
-        <ImageFact className="col-span-2" label={t("column.name")} mono={false}>
+      <AOFImageFacts className="w-full @2xl:max-w-xl max-w-sm">
+        <AOFImageFact
+          className="col-span-2"
+          label={t("column.name")}
+          mono={false}
+        >
           <CopyName className="font-mono font-semibold" name={image.key} wrap />
-        </ImageFact>
-        <ImageFact label={t("column.size")}>
+        </AOFImageFact>
+        <AOFImageFact label={t("column.size")}>
           {formatSize(image.bytes)}
-        </ImageFact>
-        <ImageFact label={t("column.dimensions")}>
+        </AOFImageFact>
+        <AOFImageFact label={t("column.dimensions")}>
           {image.width} × {image.height}
-        </ImageFact>
-        <ImageFact label={t("column.created")}>
+        </AOFImageFact>
+        <AOFImageFact label={t("column.created")}>
           {created(image.createdAt)}
-        </ImageFact>
-      </ImageFacts>
+        </AOFImageFact>
+      </AOFImageFacts>
     </section>
   );
 };
@@ -94,7 +100,7 @@ export const EditImage = ({
     BACK_OFFICE.PAGE.STORAGE_IMAGES,
     notice,
     {
-      [IMAGES.EDIT_NOTICE.SAVED]: {
+      [IMAGES.EDIT.NOTICE.SAVED]: {
         kind: "success",
         message: t("Images.edit.saved"),
       },
@@ -103,7 +109,7 @@ export const EditImage = ({
   );
   // An Image changed elsewhere says so in every App's words (`Common`).
   const errorText =
-    error === IMAGES.EDIT_ERROR.CHANGED
+    error === IMAGES.EDIT.ERROR.CHANGED
       ? t("Common.Request.changed")
       : error && t(`Images.edit.error.${error}`);
   const form = useAOFForm({
@@ -111,8 +117,8 @@ export const EditImage = ({
     // A submit runs the onChange validators too.
     validators: {
       onChange: editImageSchema({
-        altTooLong: t("Images.form.field.altTooLong"),
-        appsRequired: t("Images.form.field.appsRequired"),
+        altTooLong: t("Common.ImageUpload.field.altTooLong"),
+        appsRequired: t("Common.ImageUpload.field.appsRequired"),
       }),
     },
   });
@@ -143,14 +149,21 @@ export const EditImage = ({
       >
         <div className="grid @2xl:grid-cols-2 grid-cols-1 @2xl:gap-x-6">
           <div className="flex flex-col">
-            <ImageAltFields fields={IMAGES.FORM_FIELDS.EDIT} form={form} />
+            <AOFImageAltFields fields={IMAGES.FORM_FIELDS.EDIT} form={form} />
           </div>
           <div className="flex flex-col gap-8">
-            <ImageAccessRow fields={IMAGES.FORM_FIELDS.EDIT} form={form} />
-            <ImageAppsRow
+            <AOFImageAccessRow
               fields={IMAGES.FORM_FIELDS.EDIT}
               form={form}
-              offered={offered}
+              ink={BACK_OFFICE.CHOSEN.INK}
+              pill={BACK_OFFICE.CHOSEN.PILL}
+            />
+            <AOFImageAppsRow
+              fields={IMAGES.FORM_FIELDS.EDIT}
+              form={form}
+              ink={BACK_OFFICE.CHOSEN.INK}
+              options={appOptionsOf(offered)}
+              pill={BACK_OFFICE.CHOSEN.PILL}
             />
           </div>
           <AOFFormAlert className="@2xl:col-span-2 mt-4">
@@ -161,7 +174,7 @@ export const EditImage = ({
           pending={pending}
           submit={{
             icon: <IconDeviceFloppy aria-hidden />,
-            kanji: IMAGES.SAVE_KANJI,
+            kanji: IMAGES.KANJI.SAVE,
             label: t("Images.edit.submit"),
             pendingLabel: t("Images.edit.submitting"),
           }}

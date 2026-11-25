@@ -17,6 +17,7 @@ type AOFGateSubmitProps = Omit<
   /** Which action it is: the Design's mark for it sits behind the label. */
   action: AOFAction;
   actions: AOFActionDressing;
+  /** The form's icon for it, which the Design's own (`actions.icons`) replaces. */
   icon: ReactNode;
   /** What the button says while pending. */
   pendingLabel: string;
@@ -57,7 +58,7 @@ export const AOFGateSubmit = ({
     size="field"
   >
     {actions.marks[action]}
-    {icon}
+    {actions.icons?.[action] ?? icon}
     {children}
   </AOFSubmitButton>
 );

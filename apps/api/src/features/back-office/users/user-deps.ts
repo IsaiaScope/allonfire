@@ -23,7 +23,7 @@ import { forgetBuckets } from "../overview/storage/buckets";
 /** The User module on the real stack. */
 export const userDeps = (log: LeftoverLog): UserDeps => ({
   avatarLink,
-  avatarMaxBytes: AVATAR.INPUT_BYTES,
+  avatarMaxBytes: AVATAR.INPUT.BYTES,
   // The Session's User, its Memberships read for this request.
   canListUsers: isBackOfficeAdmin,
   // Added, edited or deleted by a Back Office Admin, read fresh on a live

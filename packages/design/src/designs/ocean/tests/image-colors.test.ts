@@ -18,6 +18,8 @@ describe("OCEAN_IMAGE_COLOR", () => {
     ["primary", "primary"],
     ["card", "card"],
     ["coral", "coral"],
+    ["secondary", "secondary"],
+    ["border", "border"],
   ] as const)("matches --%s in both themes", (token, key) => {
     expect([OCEAN_IMAGE_COLOR.light[key], OCEAN_IMAGE_COLOR.dark[key]]).toEqual(
       tokenValues(token)

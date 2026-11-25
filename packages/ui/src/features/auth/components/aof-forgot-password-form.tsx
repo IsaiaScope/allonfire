@@ -1,7 +1,7 @@
 "use client";
 
 import { requestPasswordReset } from "@allonfire/auth/features/next/actions/password-reset";
-import type { ForgotState } from "@allonfire/auth/features/next/constants/api";
+import type { ForgotState } from "@allonfire/auth/features/next/types/auth-state";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { IconMail, IconSend } from "@tabler/icons-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -58,7 +58,7 @@ export const AOFForgotPasswordForm = ({
             icon={<IconMail />}
             id="forgot-email"
             inputMode="email"
-            invalid={error === AUTH.FORGOT_ERROR.INVALID}
+            invalid={error === AUTH.ERROR.FORGOT.INVALID}
             label={t("email")}
             // Once the link is sent the address stays, locked, so the form
             // keeps its shape; the sent note takes the alert's place.

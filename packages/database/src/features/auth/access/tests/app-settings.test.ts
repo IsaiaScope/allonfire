@@ -11,7 +11,7 @@ import { ACCESS } from "../constants/access";
 import {
   type AppSettingsTable,
   registrationRoleSchema,
-} from "../constants/app-settings";
+} from "../constants/access-schema";
 
 describe("ACCESS.APP_SETTINGS", () => {
   it("gives every open App's newcomers a Role the App lets in", () => {

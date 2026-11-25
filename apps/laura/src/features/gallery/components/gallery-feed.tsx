@@ -3,11 +3,16 @@
 import { useAOFAltLanguage } from "@allonfire/ui/features/image/hooks/use-aof-alt-language";
 import { AOFInfiniteSentinel } from "@allonfire/ui/features/query/components/aof-infinite-sentinel";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import { IconLoader2, IconPhotoPlus, IconRefresh } from "@tabler/icons-react";
+import {
+  IconLoader2,
+  IconPhotoCirclePlus,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
-import { COMPACT_ACTION } from "@/shared/constants/action-dressing";
-import { GALLERY, type GallerySource } from "../constants/gallery";
+import { COMPACT_ACTION } from "@/shared/components/action-dressing";
+import { GALLERY } from "../constants/gallery";
+import type { GallerySource } from "../constants/gallery-schema";
 import { useGalleryFeed } from "../hooks/use-gallery-feed";
 import { GalleryNotice } from "./gallery-notice";
 import { GalleryFeedSkeleton } from "./gallery-skeleton";
@@ -126,7 +131,7 @@ export const GalleryFeed = ({ canMark, source }: GalleryFeedProps) => {
             {waiting ? (
               <IconLoader2 aria-hidden className="motion-safe:animate-spin" />
             ) : (
-              <IconPhotoPlus aria-hidden />
+              <IconPhotoCirclePlus aria-hidden />
             )}
             {waiting ? more("loading") : more("load")}
           </AOFButton>

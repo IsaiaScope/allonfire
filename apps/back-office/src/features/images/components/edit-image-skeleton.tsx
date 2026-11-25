@@ -1,16 +1,19 @@
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { objectKeys } from "@allonfire/core/shared/utils/object";
+import { APP } from "@allonfire/design/apps/app";
 import {
   AOFFormActionsSkeleton,
   AOFFormAlertSkeleton,
   AOFFormBar,
   AOFFormSkeleton,
 } from "@allonfire/ui/features/form/components/aof-form-skeleton";
+import {
+  AOFImageFact,
+  AOFImageFacts,
+} from "@allonfire/ui/features/image/upload/components/aof-image-facts";
 import { IconPhotoEdit } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
-import { APP_ENTRY } from "@/shared/constants/apps";
-import { ImageFact, ImageFacts } from "./image-facts";
 
 /**
  * The Edit Image page while its Image is read, drawn as the form draws itself
@@ -22,6 +25,7 @@ import { ImageFact, ImageFacts } from "./image-facts";
  */
 export const EditImageSkeleton = () => {
   const t = useTranslations("Images");
+  const fields = useTranslations("Common.ImageFields");
   return (
     <AOFFormSkeleton label={t("loading")}>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -36,8 +40,8 @@ export const EditImageSkeleton = () => {
         className="flex @2xl:flex-row flex-col @2xl:gap-6 gap-4"
       >
         <AOFFormBar className="size-40 shrink-0" part="tile" />
-        <ImageFacts className="w-full @2xl:max-w-xl max-w-sm">
-          <ImageFact
+        <AOFImageFacts className="w-full @2xl:max-w-xl max-w-sm">
+          <AOFImageFact
             className="col-span-2"
             label={t("column.name")}
             mono={false}
@@ -47,17 +51,17 @@ export const EditImageSkeleton = () => {
               <AOFFormBar className="h-6.5 w-full max-w-72" part="label" />
               <AOFFormBar className="@2xl:hidden h-6 w-24" part="label" />
             </div>
-          </ImageFact>
-          <ImageFact label={t("column.size")}>
+          </AOFImageFact>
+          <AOFImageFact label={t("column.size")}>
             <AOFFormBar className="h-6 w-16" part="label" />
-          </ImageFact>
-          <ImageFact label={t("column.dimensions")}>
+          </AOFImageFact>
+          <AOFImageFact label={t("column.dimensions")}>
             <AOFFormBar className="h-6 w-24" part="label" />
-          </ImageFact>
-          <ImageFact label={t("column.created")}>
+          </AOFImageFact>
+          <AOFImageFact label={t("column.created")}>
             <AOFFormBar className="h-6 w-28" part="label" />
-          </ImageFact>
-        </ImageFacts>
+          </AOFImageFact>
+        </AOFImageFacts>
       </section>
       <div className="flex flex-1 flex-col">
         <div
@@ -66,7 +70,7 @@ export const EditImageSkeleton = () => {
         >
           <fieldset className="flex min-w-0 flex-col gap-2">
             <legend className="mb-2 font-bold text-base">
-              {t("form.altGroup")}
+              {fields("altGroup")}
             </legend>
             {I18N.BASE_LANGUAGES.map((language) => (
               <div className="flex flex-col gap-2" key={language}>
@@ -79,7 +83,7 @@ export const EditImageSkeleton = () => {
             ))}
             <div className="flex flex-col gap-2">
               <span className="font-bold text-sm leading-snug">
-                {t("form.addLanguage")}
+                {fields("addLanguage")}
               </span>
               <AOFFormBar part="field" />
               <AOFFormBar part="error" />
@@ -88,19 +92,19 @@ export const EditImageSkeleton = () => {
           <div className="flex flex-col gap-8">
             <fieldset className="flex min-w-0 flex-col">
               <legend className="mb-2 font-bold text-base">
-                {t("form.access")}
+                {fields("access")}
               </legend>
               <div className="flex flex-col gap-2">
-                <span className="font-bold text-sm">{t("form.accessWho")}</span>
+                <span className="font-bold text-sm">{fields("accessWho")}</span>
                 <AOFFormBar part="toggle" />
               </div>
             </fieldset>
             <div className="flex flex-col gap-2">
               <fieldset className="flex min-w-0 flex-col gap-4">
                 <legend className="mb-2 font-bold text-base">
-                  {t("form.apps")}
+                  {fields("apps")}
                 </legend>
-                {objectKeys(APP_ENTRY).map((app) => (
+                {objectKeys(APP.ENTRY).map((app) => (
                   <div className="flex flex-col gap-2" key={app}>
                     <AOFFormBar part="label" />
                     <AOFFormBar part="toggle" />

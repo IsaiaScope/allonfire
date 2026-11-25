@@ -1,7 +1,8 @@
 import { TELEMETRY } from "@allonfire/core/features/telemetry/constants/telemetry";
 import type { Logger } from "pino";
 import { logger as defaultLogger } from "./features/logger/logger";
-import { API, type ShutdownStep } from "./shared/constants/api";
+import { API } from "./shared/constants/api";
+import type { ShutdownStep } from "./shared/utils/shutdown-step";
 
 export type ShutdownDeps = {
   closeServer: () => Promise<void>;

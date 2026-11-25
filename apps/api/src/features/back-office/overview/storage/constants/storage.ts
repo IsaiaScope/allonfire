@@ -1,3 +1,4 @@
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 
 /** The Storage overview: how much the Images' bucket holds, for Back Office Admins. */
@@ -20,10 +21,14 @@ export const OVERVIEW_STORAGE = {
     TTL_MS: 5 * UNIT.MS_PER_MINUTE,
   },
   DOC: {
-    OVERVIEW_200: "The Images' bucket and the Images by App and access",
-    OVERVIEW_DESCRIPTION:
-      "How many objects the Images' bucket holds and their bytes (Avatars included; kept up to 5 minutes, null when the bucket cannot be listed), and the Images by App: the bytes and count of the public ones and of the private ones. Back Office Admins only.",
-    OVERVIEW_SUMMARY: "Read the Storage overview",
+    OVERVIEW: {
+      DESCRIPTION:
+        "How many objects the Images' bucket holds and their bytes (Avatars included; kept up to 5 minutes, null when the bucket cannot be listed), and the Images by App: the bytes and count of the public ones and of the private ones. Back Office Admins only.",
+      RESPONSE: {
+        [HTTP.STATUS.OK]: "The Images' bucket and the Images by App and access",
+      },
+      SUMMARY: "Read the Storage overview",
+    },
   },
   LOG_MESSAGE: {
     AVATARS_UNREADABLE: "storage avatar sizes could not be read",

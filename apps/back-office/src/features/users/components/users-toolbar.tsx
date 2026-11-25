@@ -7,8 +7,8 @@ import { useQueryStates } from "nuqs";
 import { type ReactNode, useCallback } from "react";
 import { SearchToolbar } from "@/shared/components/search-toolbar";
 import { USERS } from "../constants/users";
-import { usersParams } from "../constants/users-params";
 import { newUserHref } from "../utils/user-href";
+import { usersParams } from "../utils/users-params";
 import { UsersFilters } from "./users-filters";
 
 /**
@@ -33,7 +33,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
       add={{
         href: newUserHref(),
         icon: <IconUserPlus aria-hidden />,
-        kanji: USERS.ADD_KANJI,
+        kanji: USERS.KANJI.ADD,
         label: t("add.button"),
       }}
       clearLabel={t("search.clear")}
@@ -41,7 +41,7 @@ export const UsersToolbar = ({ children }: { children?: ReactNode }) => {
       Filters={UsersFilters}
       raw={params[USER.PARAM.SEARCH]}
       searchLabel={t("search.label")}
-      typingRestMs={USERS.TYPING_REST_MS}
+      typingRestMs={USERS.LIMIT.TYPING_REST_MS}
       write={write}
     >
       {children}

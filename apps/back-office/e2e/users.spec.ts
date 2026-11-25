@@ -6,6 +6,7 @@ import { pageTitle } from "@allonfire/core/features/metadata/utils/page-title";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { APP } from "@allonfire/design/apps/app";
 import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import { IMAGE_SERVER } from "@allonfire/storage/features/image-server/constants/image-server";
 import { expect, type Page, test } from "@playwright/test";
@@ -16,7 +17,6 @@ import IT from "../src/features/i18n/translations/it.json" with {
   type: "json",
 };
 import { newUserHref, userHref } from "../src/features/users/utils/user-href";
-import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { AUTH_EN } from "../src/shared/tests/auth-words";
 import { enT } from "../src/shared/tests/translators";
@@ -63,7 +63,7 @@ test("reads a hand-edited page and page size as the defaults", async ({
   await expect(
     page.getByRole("combobox", { name: t.pagination.rowsPerPage })
     // Base UI's select icon adds a glyph after the value.
-  ).toHaveText(new RegExp(`^${USER.DEFAULT_PAGE_SIZE}`));
+  ).toHaveText(new RegExp(`^${USER.DEFAULT.PAGE_SIZE}`));
   await expect(emailOf(page, FIXTURE.USER.NO_MEMBERSHIP.email)).toBeVisible();
 });
 
@@ -158,7 +158,7 @@ test("filters by App through the Filter panel's list", async ({ page }) => {
   await page.goto(USERS);
   await page.getByRole("button", { name: t.filter.button }).click();
   await page.getByRole("button", { name: t.filter.app }).click();
-  const laura = APP_ENTRY[App.LAURA].name;
+  const laura = APP.ENTRY[App.LAURA].name;
   await page
     .getByRole("combobox", { name: t.filter.search })
     .fill(laura.slice(0, 3));
@@ -340,7 +340,7 @@ test("deleting that User removes the picture", async ({ page }, info) => {
   // Dead once the image cache asked imgproxy again.
   await expect
     .poll(async () => (await page.request.get(link ?? "")).status(), {
-      timeout: IMAGE_SERVER.GONE_WITHIN_MS,
+      timeout: IMAGE_SERVER.CACHE.GONE_WITHIN_MS,
     })
     .toBe(HTTP.STATUS.NOT_FOUND);
 });
@@ -369,7 +369,9 @@ test("renames a User and changes their Laura Role; the list shows both", async (
   await form.getByLabel(t.form.name, { exact: true }).fill("Renamed");
   await form
     .getByRole("radiogroup", {
-      name: enT("Users.form.role", { app: APP_ENTRY[App.LAURA].name }),
+      name: enT("Users.form.role", {
+        app: APP.ENTRY[App.LAURA].name,
+      }),
     })
     .getByRole("button", {
       name: SHARED_TRANSLATIONS.en.Common.Navigation.role[Role.USER],
@@ -423,7 +425,9 @@ test("your own page saves your name and keeps your Back Office Role", async ({
   await page.goto(await userPathOf(page, admin.email));
   await expect(
     editForm(page, admin.email).getByText(
-      enT("Users.edit.ownRoleLocked", { app: APP_ENTRY[App.BACK_OFFICE].name })
+      enT("Users.edit.ownRoleLocked", {
+        app: APP.ENTRY[App.BACK_OFFICE].name,
+      })
     )
   ).toBeVisible();
   // The same name: the Fixture stays as other tests know it.

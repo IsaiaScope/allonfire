@@ -2,6 +2,7 @@ import { AOFCreateNextConfig } from "@allonfire/core/features/next/config/utils/
 import { AOFWithLocalizedNotFound } from "@allonfire/core/features/next/config/utils/aof-with-localized-not-found";
 import { App } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
+import { withImageUploads } from "@allonfire/storage/features/next/utils/with-image-uploads";
 import { routing } from "./src/features/i18n/routing";
 
 // Turbopack's file cache stays on (the default). On the exFAT drive macOS writes
@@ -12,8 +13,9 @@ export default AOFCreateNextConfig(
   // default language's 404 instead of Next's bare error shell. Core's own
   // routes are kept already. Laura shows no sign-in provider's picture
   // (nobody registers), and a stored picture never goes through the optimizer
-  // (its signed link).
-  AOFWithLocalizedNotFound({}, { routing }),
+  // (its signed link). An Admin's Upload posts a whole batch through a Server
+  // Action (`withImageUploads` raises both body limits).
+  AOFWithLocalizedNotFound(withImageUploads({}), { routing }),
   {
     indexing: ACCESS.APP_SETTINGS[App.LAURA].indexing,
     // next-intl reads the request config from src/features/i18n, next to the translations.

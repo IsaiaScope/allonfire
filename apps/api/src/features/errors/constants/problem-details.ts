@@ -1,10 +1,10 @@
-import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponseName } from "@allonfire/core/features/errors/utils/openapi";
 import { z } from "zod";
 import {
-  codesFor,
   type ErrorStatus,
   errorCodeSchema,
 } from "../../../shared/constants/error";
+import { codesFor } from "../../../shared/utils/codes-for";
 
 const errorDetailSchema = z.object({
   message: z.string(),

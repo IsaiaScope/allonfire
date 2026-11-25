@@ -2,8 +2,8 @@
 
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { page, userEvent } from "vitest/browser";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import {
   listAsked,
   listControls,
@@ -26,7 +26,7 @@ vi.mock(
   () => import("@allonfire/ui/shared/tests/aof-image-mock")
 );
 
-const LAURA = APP_ENTRY[App.LAURA].name;
+const LAURA = APP.ENTRY[App.LAURA].name;
 const { header } = listControls(/^Filters/);
 const render = (search = "") =>
   renderList({
