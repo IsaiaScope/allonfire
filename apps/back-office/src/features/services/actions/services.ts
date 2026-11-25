@@ -9,19 +9,17 @@ import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import type { ServiceType } from "@allonfire/database/enums";
 import { updateTag } from "next/cache";
 import { z } from "zod";
-import {
-  type ApiRefusalKey,
-  refusalOf,
-} from "@/features/api/utils/api-refusal";
+import { refusalOf } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
-import { SERVICES, serviceTag } from "../constants/services";
+import { SERVICES } from "../constants/services";
 import {
   type ProviderFormValues,
   providerChangeOf,
   providerFormSchema,
 } from "../utils/provider-form-schema";
+import { serviceTag } from "../utils/service-tag";
 
-const saveErrorSchema = z.enum(SERVICES.SAVE_ERROR);
+const saveErrorSchema = z.enum(SERVICES.SAVE.ERROR);
 type SaveProviderError = z.infer<typeof saveErrorSchema>;
 
 /** Why saving failed and what was typed; or saved, the form's new Version. */
@@ -53,7 +51,7 @@ export const saveProvider = async (
   const values = providerFormValuesOf(form);
   const parsed = providerFormSchema().safeParse(values);
   if (!parsed.success) {
-    return { ...state, error: SERVICES.SAVE_ERROR.INVALID, values };
+    return { ...state, error: SERVICES.SAVE.ERROR.INVALID, values };
   }
   const version = state.version ?? state.opened;
   const response = await (await serverApi())[
@@ -63,21 +61,17 @@ export const saveProvider = async (
     param: { id },
   });
   if (response.status !== HTTP.STATUS.OK) {
-    const error = await refusalOf(
-      response,
-      SERVICES.SAVE_ERROR,
-      new Map<ApiRefusalKey, SaveProviderError>([
-        [ERROR.CODE.RESOURCE_CHANGED, SERVICES.SAVE_ERROR.CHANGED],
-        [API.ERROR.CODE.PROVIDER_INCOMPLETE, SERVICES.SAVE_ERROR.INCOMPLETE],
-        [ERROR.CODE.NOT_FOUND, SERVICES.SAVE_ERROR.REMOVED],
-        [ERROR.CODE.VALIDATION_FAILED, SERVICES.SAVE_ERROR.INVALID],
-      ])
-    );
+    const error = await refusalOf(response, SERVICES.SAVE.ERROR, {
+      [ERROR.CODE.RESOURCE_CHANGED]: SERVICES.SAVE.ERROR.CHANGED,
+      [API.ERROR.CODE.PROVIDER_INCOMPLETE]: SERVICES.SAVE.ERROR.INCOMPLETE,
+      [ERROR.CODE.NOT_FOUND]: SERVICES.SAVE.ERROR.REMOVED,
+      [ERROR.CODE.VALIDATION_FAILED]: SERVICES.SAVE.ERROR.INVALID,
+    });
     // A copy known to be old (changed, removed) is dropped; a refusal of
     // the form's own values changed nothing.
     if (
-      error === SERVICES.SAVE_ERROR.CHANGED ||
-      error === SERVICES.SAVE_ERROR.REMOVED
+      error === SERVICES.SAVE.ERROR.CHANGED ||
+      error === SERVICES.SAVE.ERROR.REMOVED
     ) {
       updateTag(SERVICES.CACHE.TAG);
     }
@@ -105,7 +99,7 @@ export const setServiceEnabled = async (
   return response.ok;
 };
 
-const testErrorSchema = z.enum(SERVICES.TEST_ERROR);
+const testErrorSchema = z.enum(SERVICES.TEST.ERROR);
 
 /** What a test send answers: the provider's outcome, or why none was asked. */
 export type TestSendState = {
@@ -128,15 +122,15 @@ export const sendTestEmail = async (id: string): Promise<TestSendState> => {
     }
     if (response.status === HTTP.STATUS.NOT_FOUND) {
       updateTag(SERVICES.CACHE.TAG);
-      return { error: SERVICES.TEST_ERROR.REMOVED };
+      return { error: SERVICES.TEST.ERROR.REMOVED };
     }
     return {
       error:
         response.status === HTTP.STATUS.TOO_MANY_REQUESTS
-          ? SERVICES.TEST_ERROR.RATE_LIMITED
-          : SERVICES.TEST_ERROR.FAILED,
+          ? SERVICES.TEST.ERROR.RATE_LIMITED
+          : SERVICES.TEST.ERROR.FAILED,
     };
   } catch {
-    return { error: SERVICES.TEST_ERROR.FAILED };
+    return { error: SERVICES.TEST.ERROR.FAILED };
   }
 };

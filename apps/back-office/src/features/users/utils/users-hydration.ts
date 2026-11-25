@@ -4,7 +4,7 @@ import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
 import { USERS } from "../constants/users";
-import type { UsersQuery } from "../constants/users-params";
+import type { UsersQuery } from "./users-params";
 import { fetchUser, fetchUsers, userKey, usersPageKey } from "./users-queries";
 
 /**

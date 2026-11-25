@@ -7,6 +7,8 @@
     "./client": "./src/client.ts",
     "./features/services/constants/services": "./src/features/services/constants/services.ts",
     "./features/laura/constants/schemas": "./src/features/laura/constants/schemas.ts",
+    "./features/laura/constants/laura": "./src/features/laura/constants/laura.ts",
+    "./features/laura/games/constants/schemas": "./src/features/laura/games/constants/schemas.ts",
     "./features/back-office/constants/back-office": "./src/features/back-office/constants/back-office.ts",
     "./shared/constants/api": "./src/shared/constants/api.ts"
   },

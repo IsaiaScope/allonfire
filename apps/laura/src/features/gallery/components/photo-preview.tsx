@@ -103,7 +103,7 @@ export const PhotoPreview = ({
     if (
       current !== undefined &&
       canFetchMore &&
-      index >= photos.length - GALLERY.PREFETCH_AHEAD
+      index >= photos.length - GALLERY.LIMIT.PREFETCH_AHEAD
     ) {
       fetchNextPage();
     }

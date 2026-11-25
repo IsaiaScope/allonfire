@@ -1,19 +1,20 @@
 import { API } from "@allonfire/api/shared/constants/api";
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
 import { USERS } from "../constants/users";
-import type { UsersQuery } from "../constants/users-params";
+import type { UsersQuery } from "./users-params";
 
 /**
  * Asks once more after a server or network failure; never after the API
  * refused (a 401, 403 or 400), so the error shows at once.
  */
-export const retryUsers = retryUnlessRefused(USERS.RETRIES);
+export const retryUsers = retryUnlessRefused(USERS.LIMIT.RETRIES);
 
 /** One page of Users from the API; an error throws `DetailedError`. */
 export const fetchUsers = (client: ApiClient, params: UsersQuery) =>
@@ -82,6 +83,5 @@ export const userQuery = (client: ApiClient, id: string) =>
   queryOptions({
     queryFn: () => fetchUser(client, id),
     queryKey: userKey(id),
-    retry: retryUsers,
-    staleTime: "static",
+    ...staticQuery({ retries: USERS.LIMIT.RETRIES }),
   });

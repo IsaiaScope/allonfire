@@ -1,7 +1,7 @@
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { useListView } from "@allonfire/ui/features/data-table/hooks/use-list-view";
 import { USERS } from "../constants/users";
-import { usersParams } from "../constants/users-params";
+import { usersParams } from "../utils/users-params";
 
 /**
  * The Users list's Sort and View, read from and written to its address

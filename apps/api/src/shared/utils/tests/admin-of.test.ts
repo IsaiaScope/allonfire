@@ -1,6 +1,6 @@
 // @module-tag unit
 import { App, Role } from "@allonfire/database/enums";
-import { adminOf } from "../admin-of";
+import { adminOf, memberOf } from "../admin-of";
 
 const IDS = { sessionId: "session-1", userId: "user-1" };
 
@@ -47,5 +47,35 @@ describe("adminOf", () => {
       sessionAlive: async () => true,
     });
     expect(await canManage(IDS)).toBe(false);
+  });
+});
+
+describe("memberOf", () => {
+  const reads = (user: ReturnType<typeof userWith> | null, alive = true) => ({
+    accessUserById: async () => user,
+    sessionAlive: async () => alive,
+  });
+
+  it("lets a Member of the App of any Role, on a live Session", async () => {
+    const canPlay = memberOf(App.LAURA, reads(userWith(App.LAURA, Role.USER)));
+    expect(await canPlay(IDS)).toBe(true);
+  });
+
+  it("refuses a Session that is gone", async () => {
+    const canPlay = memberOf(
+      App.LAURA,
+      reads(userWith(App.LAURA, Role.USER), false)
+    );
+    expect(await canPlay(IDS)).toBe(false);
+  });
+
+  it("refuses an unknown User and a Member of another App", async () => {
+    expect(await memberOf(App.LAURA, reads(null))(IDS)).toBe(false);
+    expect(
+      await memberOf(
+        App.LAURA,
+        reads(userWith(App.BACK_OFFICE, Role.ADMIN))
+      )(IDS)
+    ).toBe(false);
   });
 });

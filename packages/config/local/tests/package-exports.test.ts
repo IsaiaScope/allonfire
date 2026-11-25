@@ -17,9 +17,7 @@ type Package = (typeof PACKAGES)[number];
 const KEPT = {
   auth: [],
   config: [],
-  // Held only by the old Laura scores, which Phase 7 of the Laura rebuild
-  // brings back.
-  database: ["./features/apps/laura/game-score.service"],
+  database: [],
   storage: [],
 } as const satisfies Record<Package, readonly string[]>;
 

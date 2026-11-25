@@ -107,7 +107,7 @@ export const createAuthMail = (deps: AuthMailDeps): AuthMail => {
         return;
       }
       const link = new URL(redirectTo);
-      link.searchParams.set(AUTH.MAIL.TOKEN_PARAM, token);
+      link.searchParams.set(AUTH.MAIL.PARAM.TOKEN, token);
       await deliver(
         email,
         MAIL.PURPOSE.PASSWORD_RESET,

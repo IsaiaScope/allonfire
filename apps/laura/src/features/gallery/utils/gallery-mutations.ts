@@ -92,9 +92,8 @@ export const removePhotoMutation = optimisticMutation({
 
 /**
  * Reads the Gallery and the Favorites again in this browser, after an Image
- * was added or removed (the action cleared the server's copies). Phase 5's
- * upload calls it.
- * @internal Read by Phase 5's upload, not yet written, and by this file's tests.
+ * was added or removed (the action cleared the server's copies). The upload
+ * form calls it after a saved add.
  */
 export const invalidateGallery = (queryClient: QueryClient) =>
   invalidateAll(queryClient, GALLERY_MOVED);

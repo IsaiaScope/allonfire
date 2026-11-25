@@ -10,7 +10,7 @@ export const ERROR_SIGNAGE = {
     /** 見合わせ, suspended: what a board shows when a line has stopped. */
     KANA: "見合わせ",
     /** 運休, service suspended: brushed huge across the wall. */
-    WALL_KANJI: "運休",
+    KANJI: "運休",
   },
   NOT_FOUND: {
     /** The eki stamp's figure: a station the line does not have. */
@@ -18,6 +18,6 @@ export const ERROR_SIGNAGE = {
     /** 回送, not in service: a train that takes no passengers. */
     KANA: "回送",
     /** 迷子, lost: brushed huge across the wall behind the page. */
-    WALL_KANJI: "迷子",
+    KANJI: "迷子",
   },
 } as const;

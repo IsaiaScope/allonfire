@@ -2,7 +2,7 @@
 import { ResourceChangedError } from "@allonfire/core/features/version/utils/resource-changed-error";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { objectValues } from "@allonfire/core/shared/utils/object";
-import { App, GameType, Role } from "../../../../generated/prisma/enums";
+import { App, Role } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { FIXTURE } from "../../seed/fixtures/fixtures";
 import { ACCOUNT } from "../constants/account";
@@ -191,6 +191,8 @@ describe("listUsers", () => {
 const DELETABLE = "delete-users.test";
 const MISSING_ID = "missing-id";
 const SIZE = 1;
+/** Fewest moves that match 12 cards: the least the database accepts. */
+const MOVES = 6;
 
 /** A User holding something in every table a deletion reaches. */
 const holder = (name: string) =>
@@ -200,7 +202,6 @@ const holder = (name: string) =>
         create: { accountId: name, providerId: ACCOUNT.PROVIDER.CREDENTIAL },
       },
       email: `${name}@${DELETABLE}`,
-      gameScores: { create: { gameType: GameType.MEMORY, score: SIZE } },
       images: {
         create: {
           alt: {},
@@ -211,7 +212,17 @@ const holder = (name: string) =>
           width: SIZE,
         },
       },
-      memberships: { create: { app: App.LAURA, role: Role.USER } },
+      memberships: {
+        create: {
+          app: App.LAURA,
+          lauraProfile: {
+            create: {
+              memoryScores: { create: { moves: MOVES, timeMs: SIZE } },
+            },
+          },
+          role: Role.USER,
+        },
+      },
       sessions: {
         create: {
           expiresAt: new Date(Date.now() + UNIT.MS_PER_MINUTE),
@@ -237,7 +248,7 @@ describe("deleteUsers", () => {
     expect(await prisma.membership.count(where)).toBe(0);
     expect(await prisma.session.count(where)).toBe(0);
     expect(await prisma.account.count(where)).toBe(0);
-    expect(await prisma.gameScore.count(where)).toBe(0);
+    expect(await prisma.memoryScore.count(where)).toBe(0);
     const image = await prisma.image.findUnique({
       where: { id: images[0]?.id ?? "" },
     });

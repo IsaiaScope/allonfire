@@ -1,6 +1,6 @@
 import { authOpenApi } from "@allonfire/auth/features/openapi/openapi";
 import type { AuthLike } from "@allonfire/auth/shared/types/auth";
-import { problemResponseName } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponseName } from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
 import { Scalar } from "@scalar/hono-api-reference";

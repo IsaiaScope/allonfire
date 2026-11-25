@@ -13,6 +13,6 @@ describe("StationNoticeFrame", () => {
     ["notFound", ERROR_SIGNAGE.NOT_FOUND],
     ["offline", PWA_SIGNAGE.OFFLINE],
   ] as const)("draws a %s notice with its own wall kanji", (kind, signage) => {
-    expect(wallOf(kind)).toContain(`>${signage.WALL_KANJI}<`);
+    expect(wallOf(kind)).toContain(`>${signage.KANJI}<`);
   });
 });

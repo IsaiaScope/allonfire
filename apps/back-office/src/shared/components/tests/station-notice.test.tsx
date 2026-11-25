@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { StationNotice } from "../station-notice";
 
-const SIGNAGE = { CODE: "404", KANA: "回送", WALL_KANJI: "迷子" };
+const SIGNAGE = { CODE: "404", KANA: "回送", KANJI: "迷子" };
 const HEADING = "Page not found";
 
 const notice = (props: { heading?: string }) =>
@@ -15,7 +15,7 @@ const notice = (props: { heading?: string }) =>
 describe("StationNotice", () => {
   it("brushes the wall kanji and presses the station's stamp", () => {
     const html = notice({});
-    expect(html).toContain(`>${SIGNAGE.WALL_KANJI}<`);
+    expect(html).toContain(`>${SIGNAGE.KANJI}<`);
     expect(html).toContain(`>${SIGNAGE.CODE}<`);
     expect(html).toContain(`>${BACK_OFFICE.name}<`);
   });

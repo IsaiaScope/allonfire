@@ -149,6 +149,66 @@
         },
         "rules": "The password needs"
       }
+    },
+    "ImageFields": {
+      "access": "Access",
+      "accessWho": "Who can see it",
+      "addLanguage": "Add a language",
+      "altGroup": "Alt text",
+      "appIn": "In",
+      "appOut": "Not in",
+      "apps": "Apps",
+      "clearAlt": "Clear the {language} alt text",
+      "languageSearch": "Search a language",
+      "noLanguage": "No language matches",
+      "option": {
+        "PRIVATE": "Private",
+        "PUBLIC": "Public"
+      },
+      "removeLanguage": "Remove {language}"
+    },
+    "ImageUpload": {
+      "cancel": "Cancel",
+      "dropzone": {
+        "choose": "Choose pictures",
+        "drop": "Drop pictures here",
+        "formats": "JPEG, PNG, WebP, AVIF or HEIC",
+        "remove": "Remove",
+        "wrongType": "This file is not a supported picture"
+      },
+      "error": {
+        "failed": "The Images could not be added. Try again.",
+        "invalid": "Check the fields and try again.",
+        "refused": "You can no longer change Images. Sign in again.",
+        "tooLarge": "A picture or the whole upload is too large.",
+        "unsupported": "A file is not a supported picture."
+      },
+      "facts": {
+        "dimensions": "Dimensions",
+        "name": "Name",
+        "size": "Size"
+      },
+      "field": {
+        "altTooLong": "Keep the alt text shorter",
+        "appsRequired": "Choose at least one App",
+        "fileTooLarge": "This picture is too large",
+        "tooManyFiles": "Too many pictures for one upload",
+        "totalTooLarge": "The pictures together are too large"
+      },
+      "pick": {
+        "button": "Pick pictures",
+        "hint": "Up to {files} pictures, {size} MiB each, {total} MiB in all.",
+        "input": "Pictures to add",
+        "none": "No pictures picked yet."
+      },
+      "row": {
+        "remove": "Remove {name}",
+        "title": "Picture {number}"
+      },
+      "shared": {
+        "apply": "Apply to all pictures",
+        "title": "For the pictures you pick next"
+      }
     }
   }
 }

@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { CardFrame } from "@/shared/components/card-frame";
 import { OverviewTitle } from "@/shared/components/overview-card-state";
-import { BUCKET_VIEW } from "../constants/buckets";
+import { BUCKET_VIEW } from "../utils/bucket-view";
 import type {
   StorageAvatars,
   StorageBucket,

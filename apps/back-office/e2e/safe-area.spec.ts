@@ -2,7 +2,7 @@ import { fileURLToPath } from "node:url";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { safeAreaSuite } from "@allonfire/ui/features/app/tests/e2e/safe-area-suite";
 import type { Page } from "@playwright/test";
-import { SECTIONS } from "../src/features/navigation/constants/sections";
+import { SECTION } from "../src/features/navigation/constants/sections";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import { imageLink } from "./images-flow";
 import { rowOf, signInAsAdmin, usersSearchHref } from "./pages";
@@ -34,6 +34,6 @@ safeAreaSuite({
     [`${BACK_OFFICE.PAGE.STORAGE_IMAGES}/[id]`]: imagePath,
   },
   appDir: fileURLToPath(new URL("../src/app", import.meta.url)),
-  firstSection: SECTIONS[0].path,
+  firstSection: SECTION.LIST[0].path,
   signedIn: signInAsAdmin,
 });

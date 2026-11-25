@@ -1,7 +1,5 @@
-import {
-  type InstallStep,
-  PWA,
-} from "@allonfire/core/features/next/pwa/constants/pwa";
+import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
+import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa-schema";
 import { AOFInstallSteps } from "@allonfire/ui/features/pwa/components/aof-install-steps";
 import type { AOFInstallHintCardProps } from "@allonfire/ui/features/pwa/types/install-hint-card";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";

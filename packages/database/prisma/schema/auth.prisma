@@ -35,7 +35,6 @@ model User {
   accounts      Account[]
   memberships   Membership[]
   images        Image[]
-  gameScores    GameScore[]
 
   @@schema("auth")
 }

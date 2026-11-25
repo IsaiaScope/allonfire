@@ -4,12 +4,12 @@ import pkg from "../../../../package.json" with { type: "json" };
 import { API } from "../../../shared/constants/api";
 import { outageLatch } from "../../../shared/utils/outage";
 import { logger as defaultLogger } from "../../logger/logger";
-import {
-  HEALTH,
-  type HealthBody,
-  type ReadyServingBody,
-  type ReadyUnavailableBody,
-} from "../constants/statuses";
+import { HEALTH } from "../constants/statuses";
+import type {
+  HealthBody,
+  ReadyServingBody,
+  ReadyUnavailableBody,
+} from "../utils/health-schema";
 import { checkStatus, type HealthDeps } from "../utils/status";
 
 // `as const satisfies`, never a bare annotation: `satisfies` checks the shape
@@ -19,7 +19,7 @@ import { checkStatus, type HealthDeps } from "../utils/status";
 
 export const healthHandler = (context: Context) => {
   const body = {
-    status: HEALTH.READY_STATUS.OK,
+    status: HEALTH.READY.STATUS.OK,
     uptime: process.uptime(),
     version: pkg.version,
   } as const satisfies HealthBody;
@@ -64,18 +64,18 @@ export const readyHandler = (
     if (!database) {
       const body = {
         checks: {
-          database: HEALTH.CHECK_STATUS.UNREACHABLE,
+          database: HEALTH.CHECK.STATUS.UNREACHABLE,
           redis: checkStatus(redis),
         },
-        status: HEALTH.READY_STATUS.UNAVAILABLE,
+        status: HEALTH.READY.STATUS.UNAVAILABLE,
       } as const satisfies ReadyUnavailableBody;
-      return context.json(body, HEALTH.READY_STATUS_CODE.NOT_READY);
+      return context.json(body, HEALTH.READY.HTTP_STATUS.NOT_READY);
     }
 
     const body = {
-      checks: { database: HEALTH.CHECK_STATUS.OK, redis: checkStatus(redis) },
-      status: redis ? HEALTH.READY_STATUS.OK : HEALTH.READY_STATUS.DEGRADED,
+      checks: { database: HEALTH.CHECK.STATUS.OK, redis: checkStatus(redis) },
+      status: redis ? HEALTH.READY.STATUS.OK : HEALTH.READY.STATUS.DEGRADED,
     } as const satisfies ReadyServingBody;
-    return context.json(body, HEALTH.READY_STATUS_CODE.READY);
+    return context.json(body, HEALTH.READY.HTTP_STATUS.READY);
   };
 };

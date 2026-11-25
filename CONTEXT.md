@@ -131,6 +131,12 @@ languages. App content that shows a picture points to an Image rather than
 holding the picture itself.
 _Avoid_: media, asset, file, picture, photo
 
+**Export**:
+A copy of an Image that a signed-in User asks for to keep or send: a JPEG with
+no location or camera data, made when asked and never stored. It holds no link
+back to the Image, so what is sent stays with whoever received it.
+_Avoid_: download link, share link, file, copy
+
 **Gallery**:
 Laura's feed of the Images placed in the Laura App, newest first. Every
 Member of Laura sees it; only a Laura Admin adds to it.
@@ -145,8 +151,9 @@ placement removes it everywhere.
 _Avoid_: like, heart, bookmark, starred
 
 **Memory game**:
-Laura's card-matching game, the only game it keeps. Each finished game is a
-score of the User who played it, ranked on one leaderboard for all of Laura.
+Laura's card-matching game. Each finished game is a score of the User who
+played it, ranked by fewest moves, then the faster time: the best game of each
+current Member of Laura. A game that no player could have produced is refused.
 _Avoid_: quiz, mini-game
 
 **Avatar**:
@@ -337,6 +344,14 @@ One thing Production runs that ships on its own: the API, an App, or the
 database migration. A change deploys exactly the units it affects, through
 the packages they read.
 _Avoid_: service (the compose word), release.
+
+**Release**:
+What `/iso-push` cuts when work lands on dev: the repo's version (`VERSION`, the
+root `package.json`), its tag, and the new version of every workspace package
+the range changed. A Deploy unit's version moves when anything it is built from
+changed; a library's, only when its own files did. Each App shows its own
+version in the account menu.
+_Avoid_: deploy (a deploy ships a commit, a Release numbers it), build number.
 
 ### Data about usage
 

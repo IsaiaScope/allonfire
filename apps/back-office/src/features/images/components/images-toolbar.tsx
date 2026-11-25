@@ -7,8 +7,8 @@ import { useQueryStates } from "nuqs";
 import { type ReactNode, useCallback } from "react";
 import { SearchToolbar } from "@/shared/components/search-toolbar";
 import { IMAGES } from "../constants/images";
-import { imagesParams } from "../constants/images-params";
 import { newImageHref } from "../utils/image-href";
+import { imagesParams } from "../utils/images-params";
 import { ImagesFilters } from "./images-filters";
 
 /**
@@ -33,7 +33,7 @@ export const ImagesToolbar = ({ children }: { children?: ReactNode }) => {
       add={{
         href: newImageHref(),
         icon: <IconPhotoPlus aria-hidden />,
-        kanji: IMAGES.ADD_KANJI,
+        kanji: IMAGES.KANJI.ADD,
         label: t("add.button"),
       }}
       clearLabel={t("search.clear")}
@@ -41,7 +41,7 @@ export const ImagesToolbar = ({ children }: { children?: ReactNode }) => {
       Filters={ImagesFilters}
       raw={params[IMAGES.PARAM.SEARCH]}
       searchLabel={t("search.label")}
-      typingRestMs={IMAGES.TYPING_REST_MS}
+      typingRestMs={IMAGES.LIMIT.TYPING_REST_MS}
       write={write}
     >
       {children}

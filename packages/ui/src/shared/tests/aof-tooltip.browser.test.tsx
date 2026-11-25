@@ -51,4 +51,23 @@ describe("AOFTooltip", () => {
       ).not.toBeNull()
     );
   });
+
+  // Words only a screen reader reads are not shown: the icon alone is.
+  it("opens its tip over a control whose label is for a screen reader only", async () => {
+    const screen = await render(
+      <AOFTooltip label="Moves">
+        <button type="button">
+          <svg aria-hidden height={16} width={16} />
+          <span className="sr-only">Moves</span>
+          <span>9</span>
+        </button>
+      </AOFTooltip>
+    );
+    await userEvent.hover(screen.getByRole("button"));
+    await vi.waitFor(() =>
+      expect(
+        document.querySelector("[data-slot=tooltip-content]")
+      ).not.toBeNull()
+    );
+  });
 });

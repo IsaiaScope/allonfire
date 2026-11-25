@@ -3,6 +3,7 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, Role } from "@allonfire/database/enums";
 import { entryRoles } from "@allonfire/database/features/auth/access/access";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFChoiceField } from "@allonfire/ui/features/form/components/aof-choice-field";
 import { withAOFFieldGroup } from "@allonfire/ui/features/form/utils/form";
 import { cn } from "@allonfire/ui/shared/utils/utils";
@@ -20,7 +21,6 @@ import {
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { FormActions, type FormSubmit } from "@/shared/components/form-actions";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { USERS } from "../constants/users";
 import {
@@ -49,7 +49,7 @@ const RoleChoiceRow = ({ app, locked }: { app: App; locked: boolean }) => {
       className={cn(locked && "opacity-60")}
       inert={locked || undefined}
       ink={BACK_OFFICE.CHOSEN.INK}
-      label={t("Users.form.role", { app: APP_ENTRY[app].name })}
+      label={t("Users.form.role", { app: APP.ENTRY[app].name })}
       options={[
         {
           icon: ROLE_ICON[USERS.NO_ROLE],
@@ -89,13 +89,15 @@ const RoleRowList = ({
       {objectValues(App).map((app) => (
         <div className="flex flex-col gap-2" key={app}>
           <span aria-hidden className="font-bold text-sm">
-            {APP_ENTRY[app].name}
+            {APP.ENTRY[app].name}
           </span>
           {children(app, <RoleChoiceRow app={app} locked={app === locked} />)}
           {app === locked ? (
             <p className="flex items-center gap-1.5 text-muted-foreground text-sm">
               <IconLock aria-hidden className="size-4" />
-              {t("Users.edit.ownRoleLocked", { app: APP_ENTRY[app].name })}
+              {t("Users.edit.ownRoleLocked", {
+                app: APP.ENTRY[app].name,
+              })}
             </p>
           ) : null}
         </div>

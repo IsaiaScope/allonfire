@@ -27,8 +27,8 @@ export const AOFEmailVerifiedNote = ({
   const t = useTranslations("Common.Auth.EmailVerified");
   const params = useSearchParams();
   const router = useRouter();
-  const failed = params.has(AUTH.MAIL.ERROR_PARAM);
-  const landed = failed || params.has(AUTH.MAIL.VERIFIED_PARAM);
+  const failed = params.has(AUTH.MAIL.PARAM.ERROR);
+  const landed = failed || params.has(AUTH.MAIL.PARAM.VERIFIED);
   useEffect(() => {
     if (!landed) {
       router.replace(AUTH.PAGE.SIGN_IN);

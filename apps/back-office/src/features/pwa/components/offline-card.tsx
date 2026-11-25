@@ -21,7 +21,7 @@ export const OfflineCard = ({ description, title }: AOFOfflineCardProps) => (
         className="ms-2 font-bold text-destructive text-lg leading-none"
         lang="ja"
       >
-        {PWA_SIGNAGE.OFFLINE.WALL_KANJI}
+        {PWA_SIGNAGE.OFFLINE.KANJI}
       </span>
     </div>
   </div>

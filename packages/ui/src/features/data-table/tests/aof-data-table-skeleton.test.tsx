@@ -5,6 +5,7 @@ import { AOFDataTableSkeleton } from "../components/aof-data-table-skeleton";
 const count = (html: string, pattern: RegExp) => html.match(pattern)?.length;
 const CELL = /data-skeleton="cell"/g;
 const HEAD = /data-skeleton="head"/g;
+const mine = (index: number) => <i data-mine={index} />;
 const CHECK = /data-skeleton="check"/g;
 
 describe("AOFDataTableSkeleton", () => {
@@ -50,5 +51,14 @@ describe("AOFDataTableSkeleton", () => {
     );
     expect(count(full, /data-skeleton="card"/g)).toBe(3);
     expect(full).toContain('data-skeleton="pager"');
+  });
+
+  it("draws what a list gives for each card in place of its own", () => {
+    const html = renderToStaticMarkup(
+      <AOFDataTableSkeleton card={mine} cards={2} columns={2} label="Loading" />
+    );
+    expect(html).toContain('data-mine="0"');
+    expect(html).toContain('data-mine="1"');
+    expect(html).not.toContain('data-skeleton="card"');
   });
 });

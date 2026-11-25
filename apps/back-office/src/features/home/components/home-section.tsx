@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { type ReactNode, useId } from "react";
-import type { Section } from "@/features/navigation/constants/sections";
+import type { Section } from "@/features/navigation/types/section";
 
 /**
  * One Section's part of Home: its name with the icon the sidebar gives it,

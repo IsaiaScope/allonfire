@@ -61,6 +61,33 @@ export const MASCOT = {
     EMPTY: "OCTOPUS_CLASSIC",
     FAVORITES_EMPTY: "OCTOPUS_FIREFOX",
   },
+  /**
+   * Memory's moments with nothing to show, each its own picture (a failed
+   * load shows `ERROR`'s): the classic octopus waits for photos to deal, the
+   * Firefox one over a leaderboard no one has played yet.
+   */
+  GAMES: {
+    /**
+     * The badges of a game, full-colour emoji of the Noto set: a trophy for
+     * a record (also the board's best-time badge), a star for a personal
+     * best, the first-place medal for a rank.
+     */
+    BADGE_PERSONAL_BEST: "STAR_NOTO",
+    BADGE_RANK: "MEDAL_NOTO",
+    BADGE_RECORD: "TROPHY_NOTO",
+    /** The leaderboard's headings: the caller's figures, everyone's. */
+    HEADING_EVERYONE: "BUSTS_NOTO",
+    HEADING_YOU: "BUST_NOTO",
+    /** The podium's medals, first to third: the same Noto set (the first is also the rank badge). */
+    MEDAL_BRONZE: "MEDAL_BRONZE_NOTO",
+    MEDAL_FIRST: "MEDAL_NOTO",
+    MEDAL_SILVER: "MEDAL_SILVER_NOTO",
+    NEED_MORE: "OCTOPUS_CLASSIC",
+    NO_SCORES: "OCTOPUS_FIREFOX",
+    /** The podium steps' silver and bronze trophies (the gold is `BADGE_RECORD`). */
+    TROPHY_BRONZE: "TROPHY_BRONZE_NOTO",
+    TROPHY_SILVER: "TROPHY_SILVER_NOTO",
+  },
   /** The signed-out card's band: the forms' octopus, the owner's pick. */
   GATE: "OCTOPUS_NOTO",
   /** The Install hint's card. */
@@ -73,6 +100,8 @@ export const MASCOT = {
   OFFLINE: "JELLYFISH_NOTO",
   /** The picture faint behind the act that removes a photo: a crab pinches it away. */
   REMOVE: "CRAB_MONO",
+  /** The picture faint behind a row of the Upload form's Remove: an octopus lets go of it. */
+  REMOVE_ROW: "OCTOPUS_MONO",
   /** What peeks in at the end of a toast, per kind. */
   TOAST: {
     ERROR: "OCTOPUS_NOTO",

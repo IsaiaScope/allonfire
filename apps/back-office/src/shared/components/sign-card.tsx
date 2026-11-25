@@ -23,10 +23,8 @@ export const SignCard = ({
   kanji: string;
 }) => (
   <AOFCard
-    className={cn(
-      "relative isolate gap-3 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-line/50",
-      className
-    )}
+    className={cn("gap-3 after:bg-line/50", className)}
+    foot
     size="sm"
     {...props}
   >

@@ -27,7 +27,7 @@ export const DeleteImages = ({
     <BulkDeleteControl
       count={selectedIds.length}
       flow={flow}
-      kanji={IMAGES.DELETE_KANJI}
+      kanji={IMAGES.KANJI.DELETE}
       shape={shape}
       t={t}
     />

@@ -27,7 +27,7 @@ import { TestSend } from "./test-send";
 const MailProviderCard = ({ provider }: { provider: ListedProvider }) => {
   const t = useTranslations("Services");
   return (
-    <CardFrame kanji={SERVICES.CARD_KANJI}>
+    <CardFrame kanji={SERVICES.KANJI.CARD}>
       {/* The name and its slot, under them whether its key is set; the test
           send on the right. */}
       <AOFCardHeader className="flex flex-wrap items-start justify-between gap-4">

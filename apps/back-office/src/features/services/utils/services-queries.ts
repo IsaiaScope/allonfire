@@ -1,4 +1,5 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import type { ServiceType } from "@allonfire/database/enums";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -32,5 +33,5 @@ export const servicesQuery = (client: ApiClient, type: ServiceType) =>
   queryOptions({
     queryFn: () => fetchServices(client, type),
     queryKey: servicesListKey(type),
-    staleTime: "static",
+    ...staticQuery(),
   });

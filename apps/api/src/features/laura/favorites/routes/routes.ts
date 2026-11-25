@@ -1,4 +1,4 @@
-import { problemResponses } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponses } from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
 import { LAURA } from "../../constants/laura";
@@ -8,13 +8,13 @@ import {
 } from "../../constants/schemas";
 
 export const favoritesRoute = describeRoute({
-  description: LAURA.FAVORITES.DOC.GET_DESCRIPTION,
+  description: LAURA.FAVORITES.DOC.GET.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: {
         [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(galleryPageBodySchema) },
       },
-      description: LAURA.FAVORITES.DOC.GET_200,
+      description: LAURA.FAVORITES.DOC.GET.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -22,7 +22,7 @@ export const favoritesRoute = describeRoute({
       HTTP.STATUS.FORBIDDEN
     ),
   },
-  summary: LAURA.FAVORITES.DOC.GET_SUMMARY,
+  summary: LAURA.FAVORITES.DOC.GET.SUMMARY,
   tags: [LAURA.FAVORITES.OPENAPI_TAG],
 });
 
@@ -31,11 +31,11 @@ const favoriteBody = {
 };
 
 export const markRoute = describeRoute({
-  description: LAURA.FAVORITES.DOC.PUT_DESCRIPTION,
+  description: LAURA.FAVORITES.DOC.PUT.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: favoriteBody,
-      description: LAURA.FAVORITES.DOC.PUT_200,
+      description: LAURA.FAVORITES.DOC.PUT.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -44,16 +44,16 @@ export const markRoute = describeRoute({
       HTTP.STATUS.NOT_FOUND
     ),
   },
-  summary: LAURA.FAVORITES.DOC.PUT_SUMMARY,
+  summary: LAURA.FAVORITES.DOC.PUT.SUMMARY,
   tags: [LAURA.FAVORITES.OPENAPI_TAG],
 });
 
 export const unmarkRoute = describeRoute({
-  description: LAURA.FAVORITES.DOC.DELETE_DESCRIPTION,
+  description: LAURA.FAVORITES.DOC.DELETE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: favoriteBody,
-      description: LAURA.FAVORITES.DOC.DELETE_200,
+      description: LAURA.FAVORITES.DOC.DELETE.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -61,6 +61,6 @@ export const unmarkRoute = describeRoute({
       HTTP.STATUS.FORBIDDEN
     ),
   },
-  summary: LAURA.FAVORITES.DOC.DELETE_SUMMARY,
+  summary: LAURA.FAVORITES.DOC.DELETE.SUMMARY,
   tags: [LAURA.FAVORITES.OPENAPI_TAG],
 });

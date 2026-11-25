@@ -1,6 +1,7 @@
 // @module-tag unit
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { UNIT } from "@allonfire/core/shared/constants/units";
+import { ImageAccess } from "@allonfire/database/enums";
 import { env } from "../../../environment/environment";
 import { IMAGE } from "../../image/constants/image";
 import { IMAGE_SERVER } from "../constants/image-server";
@@ -8,6 +9,7 @@ import {
   pictureLink,
   pictureSrcSet,
   privateLinkExpiry,
+  signedSrcSet,
   signPath,
 } from "../sign";
 
@@ -88,5 +90,25 @@ describe("pictureSrcSet", () => {
     expect(pictureSrcSet(KEY).map(({ width }) => width)).toEqual([
       ...IMAGE_SERVER.WIDTHS,
     ]);
+  });
+});
+
+describe("signedSrcSet", () => {
+  const NOW = new Date("2026-10-28T10:05:00Z");
+  const urls = (access: ImageAccess) =>
+    signedSrcSet({ access, key: KEY }, NOW).map(({ url }) => url);
+
+  it("ends a private picture's links at the hour's end", () => {
+    const expiry = IN_AN_HOUR.getTime() / UNIT.MS_PER_SECOND;
+    expect(
+      urls(ImageAccess.PRIVATE).every((url) => url.includes(`/exp:${expiry}/`))
+    ).toBe(true);
+  });
+
+  it("leaves a public picture's links open, one per width", () => {
+    expect(urls(ImageAccess.PUBLIC).some((url) => url.includes("/exp:"))).toBe(
+      false
+    );
+    expect(urls(ImageAccess.PUBLIC)).toHaveLength(IMAGE_SERVER.WIDTHS.length);
   });
 });

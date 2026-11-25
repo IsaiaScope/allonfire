@@ -14,3 +14,11 @@ describe("API.PATH", () => {
 it("listens where the Local stack expects the API", () => {
   expect(API.DEFAULT.PORT).toBe(LOCAL.PORT.API);
 });
+
+describe("API.PROBE", () => {
+  it("holds the unversioned probe paths, and nothing else", () => {
+    expect([...API.PROBE.PATHS].sort()).toEqual(
+      [API.PATH.HEALTH, API.PATH.READY].sort()
+    );
+  });
+});

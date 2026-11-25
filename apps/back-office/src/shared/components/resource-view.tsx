@@ -4,7 +4,7 @@ import { AOFResourceQueryView } from "@allonfire/ui/features/query/components/ao
 import type { ComponentProps } from "react";
 import { StationNoticeFrame } from "@/features/errors/components/station-notice-frame";
 import { SectionLoading } from "@/features/navigation/components/section-loading";
-import { ACTION_DRESSING } from "@/shared/constants/action-dressing";
+import { ACTION_DRESSING } from "@/shared/components/action-dressing";
 
 const LOADING = <SectionLoading />;
 

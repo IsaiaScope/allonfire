@@ -6,6 +6,7 @@ import { FORM_WIDTHS } from "@allonfire/ui/shared/tests/height-at";
 import { page } from "vitest/browser";
 import { heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
+import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
 import { imageBody } from "../../tests/image-body";
 import { replace } from "../../tests/image-form-mocks";
@@ -54,7 +55,7 @@ describe("AddImageSkeleton", () => {
     async (_, width) => {
       const real = await heightAt(width, <AddImage apps={BOTH} />);
       await expect
-        .element(page.getByText(EN.Images.add.pick.none))
+        .element(page.getByText(enT("Common.ImageUpload.pick.none")))
         .toBeVisible();
       const skeleton = await heightAt(width, <AddImageSkeleton />);
       expect(skeleton).toBeCloseTo(real ?? 0, 0);

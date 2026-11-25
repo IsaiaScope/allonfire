@@ -12,7 +12,7 @@ const LOADING_SIGNAGE = {
   /** 接近中, approaching: what a platform board shows as a train comes in. */
   KANA: "接近中",
   /** 到着, arrival: brushed huge across the wall behind the page. */
-  WALL_KANJI: "到着",
+  KANJI: "到着",
 } as const satisfies StationSignage;
 
 /** The board's lamps after the status, lit one after the other: its ellipsis. */

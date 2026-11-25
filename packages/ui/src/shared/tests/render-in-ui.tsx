@@ -54,7 +54,7 @@ export const renderInUi = ({
         searchParams={search}
       >
         <NextIntlClientProvider
-          formats={DATE.FORMATS}
+          formats={DATE.FORMAT.INTL}
           locale={language}
           messages={aofMessages(language, messages)}
           timeZone={DATE.TIME_ZONE}

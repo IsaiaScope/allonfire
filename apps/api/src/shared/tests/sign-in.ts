@@ -1,6 +1,6 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { authErrorCodeSchema } from "@allonfire/auth/shared/constants/errors";
 import { cookieOf } from "@allonfire/auth/shared/tests/stub-auth";
+import { authErrorCodeSchema } from "@allonfire/auth/shared/utils/auth-error-code";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";

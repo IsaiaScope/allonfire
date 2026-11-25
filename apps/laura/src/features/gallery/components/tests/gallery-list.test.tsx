@@ -2,34 +2,23 @@
 // @vitest-environment node
 import { Role } from "@allonfire/database/enums";
 import { renderToStaticMarkup } from "react-dom/server";
+import { hasSectionRole } from "@/shared/tests/mocks/section-role";
+import { requireAppSession } from "@/shared/tests/mocks/section-session";
 import { GALLERY } from "../../constants/gallery";
 import { GalleryList } from "../gallery-list";
 
-const requireAppSession = vi.hoisted(() => vi.fn());
-const hasSectionRole = vi.hoisted(() => vi.fn());
-vi.mock("@allonfire/auth/features/next/utils/session", () => ({
-  requireAppSession,
-}));
-vi.mock("@allonfire/auth/features/next/utils/has-section-role", () => ({
-  hasSectionRole,
-}));
+vi.mock(
+  "@allonfire/auth/features/next/utils/session",
+  () => import("@/shared/tests/mocks/section-session")
+);
+vi.mock(
+  "@allonfire/auth/features/next/utils/has-section-role",
+  () => import("@/shared/tests/mocks/section-role")
+);
 // The boundary reads the page's hydration; the feed is a client leaf.
 vi.mock(
   "@allonfire/core/features/next/query/components/aof-hydrated-boundary",
-  () => ({
-    AOFHydratedBoundary: ({
-      children,
-      hydration: read,
-      onlyMissing,
-    }: {
-      children: React.ReactNode;
-      hydration: () => unknown;
-      onlyMissing?: boolean;
-    }) => {
-      read();
-      return <div data-only-missing={onlyMissing}>{children}</div>;
-    },
-  })
+  () => import("@/shared/tests/mocks/hydrated-boundary")
 );
 vi.mock("../gallery-feed", () => ({
   GalleryFeed: ({ canMark, source }: { canMark: boolean; source: string }) => (

@@ -7,7 +7,7 @@ import { readdirSync, readFileSync } from "node:fs";
 // WCAG 2.2 AA for normal text; PRODUCT.md makes it a hard requirement.
 export const AA = 4.5;
 // WCAG 1.4.11: a bar or a ring against the surface it is drawn on.
-export const GRAPHIC = 3;
+const GRAPHIC = 3;
 export const HEX = /^#[0-9a-f]{6}$/i;
 
 const CHART_TOKENS = [

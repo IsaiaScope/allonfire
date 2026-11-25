@@ -8,11 +8,11 @@ import {
 } from "./user-form-schema";
 
 /** Why the Edit a User action refused. */
-const editUserErrorSchema = z.enum(USERS.EDIT_ERROR);
+const editUserErrorSchema = z.enum(USERS.EDIT.ERROR);
 export type EditUserError = z.infer<typeof editUserErrorSchema>;
 
 /** What the Edit a User action says once the User is saved. */
-const editUserNoticeSchema = z.enum(USERS.EDIT_NOTICE);
+const editUserNoticeSchema = z.enum(USERS.EDIT.NOTICE);
 export type EditUserNotice = z.infer<typeof editUserNoticeSchema>;
 
 /**

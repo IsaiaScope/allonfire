@@ -2,11 +2,11 @@
 
 import { USER } from "@allonfire/auth/features/users/constants/users";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { page, userEvent } from "vitest/browser";
 import { ImagesTable } from "@/features/images/components/images-table";
 import { IMAGES } from "@/features/images/constants/images";
 import { UsersTable } from "@/features/users/components/users-table";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import {
   addressOf,
   CELLS,
@@ -65,7 +65,7 @@ const CASES = [
     answer: USERS_PAGE,
     children: <UsersTable selfId="" />,
     filter: "app:laura",
-    hidden: { id: App.LAURA, label: APP_ENTRY[App.LAURA].name },
+    hidden: { id: App.LAURA, label: APP.ENTRY[App.LAURA].name },
     hiddenSort: { id: "created", label: enT("Users.column.created") },
     linkColumn: "created",
     list: enT("Users.list"),

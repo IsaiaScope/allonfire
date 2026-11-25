@@ -71,18 +71,18 @@ export const EditUser = ({
   // The User was saved: a toast (a warning when their picture was not),
   // then the list.
   useToastThenList(BACK_OFFICE.PAGE.USERS, notice, {
-    [USERS.EDIT_NOTICE.AVATAR_FAILED]: {
+    [USERS.EDIT.NOTICE.AVATAR_FAILED]: {
       kind: "warning",
       message: t("Users.edit.avatarFailed"),
     },
-    [USERS.EDIT_NOTICE.SAVED]: {
+    [USERS.EDIT.NOTICE.SAVED]: {
       kind: "success",
       message: t("Users.edit.saved"),
     },
   });
   // A User changed elsewhere says so in every App's words (`Common`).
   const errorText =
-    error === USERS.EDIT_ERROR.CHANGED
+    error === USERS.EDIT.ERROR.CHANGED
       ? t("Common.Request.changed")
       : error && t(`Users.edit.error.${error}`);
   const fieldMessages = useUserFieldMessages();
@@ -161,7 +161,7 @@ export const EditUser = ({
           pending={pending}
           submit={{
             icon: <IconDeviceFloppy aria-hidden />,
-            kanji: USERS.SAVE_KANJI,
+            kanji: USERS.KANJI.SAVE,
             label: t("Users.edit.submit"),
             pendingLabel: t("Users.edit.submitting"),
           }}

@@ -21,7 +21,7 @@ const renderLink = () => {
   }
   return render(
     <NextIntlClientProvider
-      formats={DATE.FORMATS}
+      formats={DATE.FORMAT.INTL}
       locale={I18N.DEFAULT_LANGUAGE}
       messages={EN}
       timeZone={DATE.TIME_ZONE}
@@ -43,7 +43,7 @@ describe("OpenUser", () => {
     expect(
       renderToStaticMarkup(
         <NextIntlClientProvider
-          formats={DATE.FORMATS}
+          formats={DATE.FORMAT.INTL}
           locale={I18N.DEFAULT_LANGUAGE}
           messages={EN}
           timeZone={DATE.TIME_ZONE}

@@ -33,8 +33,8 @@ vi.mock(
 );
 
 const PARAMS = {
-  [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
-  [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
+  [USER.PARAM.PAGE]: USER.DEFAULT.PAGE,
+  [USER.PARAM.PER_PAGE]: USER.DEFAULT.PAGE_SIZE,
   [USER.PARAM.SEARCH]: "",
   [USER.PARAM.SORT]: "",
 };
@@ -53,7 +53,7 @@ describe("usersHydration", () => {
     expect(cacheLife).toHaveBeenCalledWith(USERS.CACHE.LIFE);
     // The rows hold Avatar links signed for an hour: never kept longer.
     expect(USERS.CACHE.LIFE.expire).toBeLessThanOrEqual(
-      IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR
+      IMAGE_SERVER.LINK.PRIVATE_HOURS * UNIT.SECONDS_PER_HOUR
     );
     expect(sentCookie(fetch)).toBe(SESSION_COOKIE);
   });

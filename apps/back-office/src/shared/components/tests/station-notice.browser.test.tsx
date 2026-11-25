@@ -8,7 +8,7 @@ import {
 import { render } from "vitest-browser-react";
 import { StationNotice } from "../station-notice";
 
-const SIGNAGE = { CODE: "404", KANA: "回送", WALL_KANJI: "迷子" };
+const SIGNAGE = { CODE: "404", KANA: "回送", KANJI: "迷子" };
 const HEADING = "Page not found";
 const ACTION = "Back";
 

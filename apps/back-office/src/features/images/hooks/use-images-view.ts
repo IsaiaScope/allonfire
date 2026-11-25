@@ -1,7 +1,7 @@
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { useListView } from "@allonfire/ui/features/data-table/hooks/use-list-view";
 import { IMAGES } from "../constants/images";
-import { imagesParams } from "../constants/images-params";
+import { imagesParams } from "../utils/images-params";
 
 /**
  * The Images list's Sort and View, read from and written to its address

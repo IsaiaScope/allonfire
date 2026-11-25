@@ -1,6 +1,6 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
-import { iconImage } from "@/shared/constants/page-information";
+import { iconImage } from "@/features/metadata/utils/page-information";
 
 // jscpd:ignore-start
 // Next reads `size`, `contentType` and the default export from the icon file, so the Back Office's holds the same lines over its own logo.

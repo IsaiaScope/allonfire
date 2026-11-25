@@ -34,7 +34,7 @@ export type StationSignage = {
   /** The stamp's kana. */
   KANA: string;
   /** Brushed huge across the wall behind the page. */
-  WALL_KANJI: string;
+  KANJI: string;
 };
 
 /**
@@ -73,7 +73,7 @@ export const StationNotice = ({
       {heading && scope === "page" ? (
         <AOFNoticeTitle>{pageTitle(heading, BACK_OFFICE.name)}</AOFNoticeTitle>
       ) : null}
-      <BrushKanji kanji={signage.WALL_KANJI} />
+      <BrushKanji kanji={signage.KANJI} />
       <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
         <EkiStamp
           code={signage.CODE}

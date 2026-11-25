@@ -39,6 +39,10 @@ const REDACT_PATHS = [
  * what pino redacts, and the transports a line can leave through.
  */
 export const LOG = {
+  /** File descriptors a Host writes its lines to. */
+  FD: {
+    STDOUT: 1,
+  },
   LEVEL,
   /** What a Host logs in its own words, the same in every Host. */
   MESSAGE: {
@@ -49,8 +53,6 @@ export const LOG = {
     CENSOR: "[Redacted]",
     PATHS: REDACT_PATHS,
   },
-  /** The file descriptor a Host writes its lines to. */
-  STDOUT_FD: 1,
   /** pino transport targets, resolved by pino from the logger's own package. */
   TRANSPORT: {
     /** Ships every line to the OTLP collector. */

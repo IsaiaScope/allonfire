@@ -25,10 +25,10 @@ export class UnsupportedImageError extends Error {
   }
 }
 
-/** More than `IMAGE.LIMIT.INPUT_PIXELS`, read from the header before any decode. */
+/** More than `IMAGE.LIMIT.INPUT.PIXELS`, read from the header before any decode. */
 export class ImageTooLargeError extends Error {
   constructor() {
-    super(`Image over ${IMAGE.LIMIT.INPUT_MEGAPIXELS} megapixels`);
+    super(`Image over ${IMAGE.LIMIT.INPUT.MEGAPIXELS} megapixels`);
     this.name = "ImageTooLargeError";
   }
 }
@@ -46,7 +46,7 @@ const isAccepted = (metadata: Metadata): boolean =>
 
 const SHARP_OPTIONS = {
   failOn: "truncated",
-  limitInputPixels: IMAGE.LIMIT.INPUT_PIXELS,
+  limitInputPixels: IMAGE.LIMIT.INPUT.PIXELS,
 } as const;
 
 /**
@@ -82,7 +82,7 @@ async function readMetadata(input: Buffer): Promise<Metadata> {
 
 /**
  * `input` checked and ready to transform: an accepted format (else
- * `UnsupportedImageError`) within `IMAGE.LIMIT.INPUT_PIXELS` (else
+ * `UnsupportedImageError`) within `IMAGE.LIMIT.INPUT.PIXELS` (else
  * `ImageTooLargeError`), read from the header before any decode, upright
  * (`.rotate()` applies the EXIF orientation; sharp writes no metadata unless
  * asked, so GPS and camera data never reach the bucket). An Image and an
@@ -95,7 +95,7 @@ export async function decodeUpright(input: Buffer): Promise<Sharp> {
   }
   if (
     (metadata.width ?? 0) * (metadata.height ?? 0) >
-    IMAGE.LIMIT.INPUT_PIXELS
+    IMAGE.LIMIT.INPUT.PIXELS
   ) {
     throw new ImageTooLargeError();
   }

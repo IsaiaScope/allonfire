@@ -1,4 +1,4 @@
-import { problemResponses } from "@allonfire/core/features/errors/constants/openapi";
+import { problemResponses } from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { describeRoute, resolver } from "hono-openapi";
 import { USER } from "../../constants/users";
@@ -18,28 +18,28 @@ const refused = problemResponses(
 );
 
 export const listRoute = describeRoute({
-  description: USER.DOC.LIST_DESCRIPTION,
+  description: USER.DOC.LIST.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: {
         [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(userListBodySchema) },
       },
-      description: USER.DOC.LIST_200,
+      description: USER.DOC.LIST.RESPONSE[HTTP.STATUS.OK],
     },
     ...refused,
   },
-  summary: USER.DOC.LIST_SUMMARY,
+  summary: USER.DOC.LIST.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
 export const deleteRoute = describeRoute({
-  description: USER.DOC.DELETE_DESCRIPTION,
+  description: USER.DOC.DELETE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: {
         [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(userDeleteBodySchema) },
       },
-      description: USER.DOC.DELETE_200,
+      description: USER.DOC.DELETE.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -47,18 +47,18 @@ export const deleteRoute = describeRoute({
       HTTP.STATUS.FORBIDDEN
     ),
   },
-  summary: USER.DOC.DELETE_SUMMARY,
+  summary: USER.DOC.DELETE.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
 export const createRoute = describeRoute({
-  description: USER.DOC.CREATE_DESCRIPTION,
+  description: USER.DOC.CREATE.DESCRIPTION,
   responses: {
     [HTTP.STATUS.CREATED]: {
       content: {
         [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(userCreatedBodySchema) },
       },
-      description: USER.DOC.CREATE_201,
+      description: USER.DOC.CREATE.RESPONSE[HTTP.STATUS.CREATED],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -67,18 +67,18 @@ export const createRoute = describeRoute({
       HTTP.STATUS.CONFLICT
     ),
   },
-  summary: USER.DOC.CREATE_SUMMARY,
+  summary: USER.DOC.CREATE.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
 export const avatarPutRoute = describeRoute({
-  description: USER.DOC.AVATAR_PUT_DESCRIPTION,
+  description: USER.DOC.AVATAR_PUT.DESCRIPTION,
   responses: {
     [HTTP.STATUS.OK]: {
       content: {
         [HTTP.CONTENT_TYPE.JSON]: { schema: resolver(userAvatarBodySchema) },
       },
-      description: USER.DOC.AVATAR_PUT_200,
+      description: USER.DOC.AVATAR_PUT.RESPONSE[HTTP.STATUS.OK],
     },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
@@ -90,14 +90,16 @@ export const avatarPutRoute = describeRoute({
       HTTP.STATUS.UNSUPPORTED_MEDIA_TYPE
     ),
   },
-  summary: USER.DOC.AVATAR_PUT_SUMMARY,
+  summary: USER.DOC.AVATAR_PUT.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
 export const avatarDeleteRoute = describeRoute({
-  description: USER.DOC.AVATAR_DELETE_DESCRIPTION,
+  description: USER.DOC.AVATAR_DELETE.DESCRIPTION,
   responses: {
-    [HTTP.STATUS.NO_CONTENT]: { description: USER.DOC.AVATAR_DELETE_204 },
+    [HTTP.STATUS.NO_CONTENT]: {
+      description: USER.DOC.AVATAR_DELETE.RESPONSE[HTTP.STATUS.NO_CONTENT],
+    },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
@@ -106,7 +108,7 @@ export const avatarDeleteRoute = describeRoute({
       HTTP.STATUS.CONFLICT
     ),
   },
-  summary: USER.DOC.AVATAR_DELETE_SUMMARY,
+  summary: USER.DOC.AVATAR_DELETE.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
@@ -115,23 +117,29 @@ const userBody = {
 };
 
 export const readRoute = describeRoute({
-  description: USER.DOC.READ_DESCRIPTION,
+  description: USER.DOC.READ.DESCRIPTION,
   responses: {
-    [HTTP.STATUS.OK]: { ...userBody, description: USER.DOC.READ_200 },
+    [HTTP.STATUS.OK]: {
+      ...userBody,
+      description: USER.DOC.READ.RESPONSE[HTTP.STATUS.OK],
+    },
     ...problemResponses(
       HTTP.STATUS.UNAUTHORIZED,
       HTTP.STATUS.FORBIDDEN,
       HTTP.STATUS.NOT_FOUND
     ),
   },
-  summary: USER.DOC.READ_SUMMARY,
+  summary: USER.DOC.READ.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });
 
 export const updateRoute = describeRoute({
-  description: USER.DOC.UPDATE_DESCRIPTION,
+  description: USER.DOC.UPDATE.DESCRIPTION,
   responses: {
-    [HTTP.STATUS.OK]: { ...userBody, description: USER.DOC.UPDATE_200 },
+    [HTTP.STATUS.OK]: {
+      ...userBody,
+      description: USER.DOC.UPDATE.RESPONSE[HTTP.STATUS.OK],
+    },
     ...problemResponses(
       HTTP.STATUS.BAD_REQUEST,
       HTTP.STATUS.UNAUTHORIZED,
@@ -140,6 +148,6 @@ export const updateRoute = describeRoute({
       HTTP.STATUS.CONFLICT
     ),
   },
-  summary: USER.DOC.UPDATE_SUMMARY,
+  summary: USER.DOC.UPDATE.SUMMARY,
   tags: [USER.OPENAPI_TAG],
 });

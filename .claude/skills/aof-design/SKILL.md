@@ -356,8 +356,8 @@ to it.
   day, deep water by night, one coral. Fraunces for page headings
   (`--font-heading`), Nunito for text and for generated images (Satori reads
   no variable or WOFF2 fonts), soft corners (`--radius` 0.75rem).
-- **The Ink Rule.** The card back and any other dark furniture are ink in both
-  schemes.
+- **The Ink Rule.** Dark furniture (a pill carrying pale text) is ink in both
+  schemes; the Memory card back is not furniture and follows its scheme.
 - **The Coral Rule.** Coral marks a Favorite and nothing else; never text on
   the ground, never a state, never a tint on the mascot art.
 - **The Floating Frame Rule.** Only the floating frame and floating controls

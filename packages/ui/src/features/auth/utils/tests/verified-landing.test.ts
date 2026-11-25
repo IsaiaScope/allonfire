@@ -7,6 +7,6 @@ describe("verifiedLanding", () => {
     const landing = new URL(verifiedLanding("https://back-office.test", "it"));
     expect(landing.origin).toBe("https://back-office.test");
     expect(landing.pathname).toBe(`/it${AUTH.PAGE.EMAIL_VERIFIED}`);
-    expect(landing.searchParams.has(AUTH.MAIL.VERIFIED_PARAM)).toBe(true);
+    expect(landing.searchParams.has(AUTH.MAIL.PARAM.VERIFIED)).toBe(true);
   });
 });

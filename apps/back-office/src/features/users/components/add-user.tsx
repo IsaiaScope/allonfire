@@ -49,7 +49,7 @@ export const AddUser = () => {
   // The User was added but their picture was not saved: the list, where
   // they show with their initial.
   useToastThenList(BACK_OFFICE.PAGE.USERS, notice, {
-    [USERS.ADD_NOTICE.AVATAR_FAILED]: {
+    [USERS.ADD.NOTICE.AVATAR_FAILED]: {
       kind: "warning",
       message: t("Users.add.avatarFailed"),
     },
@@ -93,7 +93,7 @@ export const AddUser = () => {
                   autoComplete="off"
                   icon={<IconMail />}
                   inputMode="email"
-                  invalid={error === USERS.ADD_ERROR.TAKEN}
+                  invalid={error === USERS.ADD.ERROR.TAKEN}
                   label={t("Users.add.email")}
                   required
                   spellCheck={false}
@@ -125,7 +125,7 @@ export const AddUser = () => {
           pending={pending}
           submit={{
             icon: <IconUserPlus aria-hidden />,
-            kanji: USERS.ADD_KANJI,
+            kanji: USERS.KANJI.ADD,
             label: t("Users.add.submit"),
             pendingLabel: t("Users.add.submitting"),
           }}

@@ -22,10 +22,8 @@ export const CardFrame = ({
   kanji: string;
 }) => (
   <AOFCard
-    className={cn(
-      "@container relative isolate after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-line/50",
-      className
-    )}
+    className={cn("@container after:bg-line/50", className)}
+    foot
     {...props}
   >
     <BrushKanji

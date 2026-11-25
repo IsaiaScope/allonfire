@@ -103,10 +103,6 @@
     "packages/design/src/designs/ocean/sea-emoji.ts": ["exports"],
     // Held only by the games and uploads Phases 6 and 7 rebuild.
     "packages/core/src/features/errors/format-error-message.ts": ["exports"],
-    "packages/database/src/features/apps/laura/game-score.service.ts": [
-      "exports",
-      "types"
-    ],
     // Read by the Apps' playwright.config.ts, which production mode leaves
     // out.
     "packages/config/tests/e2e/playwright.config.ts": ["exports"],
@@ -116,6 +112,13 @@
     // Thrown by the service; the API's route tests and the service's own
     // tests import it, production mode leaves tests out.
     "packages/database/src/features/service/provider.service.ts": ["exports"],
+    // Exported for their own tests; production mode leaves tests out.
+    "apps/api/src/features/laura/games/constants/schemas.ts": ["exports"],
+    "apps/back-office/src/features/users/utils/users-queries.ts": ["exports"],
+    "packages/storage/src/features/image-server/sign.ts": ["exports"],
+    "packages/ui/src/features/image/components/aof-user-identity.tsx": [
+      "exports"
+    ],
     // Kept for the Images page.
     "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
     // Held only by Laura's feed and preview (Phase 4, Tasks 12 to 15) until they land; delete these entries then.
@@ -136,6 +139,9 @@
       "exports"
     ],
     "packages/core/src/features/next/config/utils/aof-with-localized-not-found.ts": [
+      "exports"
+    ],
+    "packages/storage/src/features/next/utils/with-image-uploads.ts": [
       "exports"
     ],
     // Test helpers and test setup other packages' tests import, through
@@ -173,6 +179,9 @@
     "packages/ui/src/shared/tests/toast-timing.ts": ["exports"],
     "packages/ui/src/shared/tests/link-mock.tsx": ["exports"],
     "packages/ui/src/shared/tests/navigation-mock.tsx": ["exports"],
+    "packages/ui/src/features/image/upload/tests/add-image-answers.ts": [
+      "exports"
+    ],
     "packages/ui/src/shared/tests/next-cache-mock.ts": ["exports"],
     "packages/ui/src/shared/tests/session-cookie-mock.ts": ["exports"],
     "packages/ui/src/shared/tests/image-mock.tsx": ["exports"],

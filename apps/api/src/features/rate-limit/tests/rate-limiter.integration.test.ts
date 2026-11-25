@@ -1,8 +1,8 @@
 // @module-tag integration
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { awaitReady, createRedis } from "../../redis/redis";
-import { rateLimitKey } from "../constants/limits";
 import { createRedisStore } from "../middleware/rate-limiter";
+import { rateLimitKey } from "../utils/rate-limit-key";
 
 const url = process.env.API_REDIS_URL ?? LOCAL.URL.REDIS;
 const redis = createRedis(url);

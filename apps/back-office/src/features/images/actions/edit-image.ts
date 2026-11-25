@@ -5,11 +5,9 @@ import { API } from "@allonfire/api/shared/constants/api";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { editValuesOf } from "@allonfire/ui/features/image/upload/utils/image-form-data";
 import { updateTag } from "next/cache";
-import {
-  type ApiRefusalKey,
-  refusalOf,
-} from "@/features/api/utils/api-refusal";
+import { refusalOf } from "@/features/api/utils/api-refusal";
 import { serverApi } from "@/features/api/utils/server-api";
 import { STORAGE } from "@/features/storage/constants/storage";
 // jscpd:ignore-end
@@ -19,7 +17,6 @@ import {
   type EditImageNotice,
   editImageSchema,
 } from "../utils/edit-image-schema";
-import { editValuesOf } from "../utils/image-form-data";
 
 /** Why saving failed, or, the Image saved, that it was (`notice`). */
 export type EditImageState = {
@@ -42,7 +39,7 @@ export const editImage = async (
 ): Promise<EditImageState> => {
   const parsed = editImageSchema().safeParse(editValuesOf(form));
   if (!parsed.success) {
-    return { error: IMAGES.EDIT_ERROR.INVALID };
+    return { error: IMAGES.EDIT.ERROR.INVALID };
   }
   const { access, alt, apps } = parsed.data;
   const client = await serverApi();
@@ -50,20 +47,16 @@ export const editImage = async (
     json: [{ access, alt, apps, id, version }],
   });
   if (response.status !== HTTP.STATUS.OK) {
-    const error = await refusalOf(
-      response,
-      IMAGES.EDIT_ERROR,
-      new Map<ApiRefusalKey, EditImageError>([
-        [HTTP.STATUS.NOT_FOUND, IMAGES.EDIT_ERROR.GONE],
-        [ERROR.CODE.RESOURCE_CHANGED, IMAGES.EDIT_ERROR.CHANGED],
-        [IMAGE.ERROR_CODE.IMAGE_CHANGED, IMAGES.EDIT_ERROR.CHANGED],
-      ])
-    );
+    const error = await refusalOf(response, IMAGES.EDIT.ERROR, {
+      [HTTP.STATUS.NOT_FOUND]: IMAGES.EDIT.ERROR.GONE,
+      [ERROR.CODE.RESOURCE_CHANGED]: IMAGES.EDIT.ERROR.CHANGED,
+      [IMAGE.ERROR_CODE.IMAGE_CHANGED]: IMAGES.EDIT.ERROR.CHANGED,
+    });
     // No `updateTag` on a refusal, `CHANGED` included: it would redraw this
     // form on the newer version under what was typed (see `editUser`).
     return { error };
   }
   updateTag(IMAGES.CACHE.TAG);
   updateTag(STORAGE.CACHE.TAG);
-  return { notice: IMAGES.EDIT_NOTICE.SAVED };
+  return { notice: IMAGES.EDIT.NOTICE.SAVED };
 };

@@ -5,7 +5,7 @@ import {
   type AOFErrorNoticeProps,
 } from "@allonfire/ui/features/feedback/components/aof-error-notice";
 import { aofErrorPages } from "@allonfire/ui/features/feedback/utils/aof-error-pages";
-import { ACTION_DRESSING } from "@/shared/constants/action-dressing";
+import { ACTION_DRESSING } from "@/shared/components/action-dressing";
 import { StationNoticeFrame } from "./station-notice-frame";
 
 /**

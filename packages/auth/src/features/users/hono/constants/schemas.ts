@@ -20,13 +20,13 @@ export const listQuerySchema = z.object({
   [USER.PARAM.PAGE]: z.coerce
     .number()
     .int()
-    .min(USER.DEFAULT_PAGE)
-    .max(USER.MAX_PAGE)
-    .catch(USER.DEFAULT_PAGE),
+    .min(USER.DEFAULT.PAGE)
+    .max(USER.LIMIT.MAX_PAGE)
+    .catch(USER.DEFAULT.PAGE),
   [USER.PARAM.PER_PAGE]: z.coerce
     .number()
     .pipe(z.literal(USER.PAGE_SIZES))
-    .catch(USER.DEFAULT_PAGE_SIZE),
+    .catch(USER.DEFAULT.PAGE_SIZE),
   [USER.PARAM.SEARCH]: z.string().catch(""),
   /** `email.asc,created.desc` (ADR 0031). Blank, too long or not a string reads as none. */
   [USER.PARAM.SORT]: z.string().trim().max(USER.LIMIT.SORT_MAX).catch(""),
@@ -126,7 +126,7 @@ export type UserCreatedBody = z.infer<typeof userCreatedBodySchema>;
 
 /** A deletion's body: the Users to delete, at most a page of them. */
 export const userDeleteRequestSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1).max(USER.MAX_DELETE),
+  ids: z.array(z.string().min(1)).min(1).max(USER.LIMIT.MAX_DELETE),
 });
 
 export const userDeleteBodySchema = z

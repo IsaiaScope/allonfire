@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { UNIT } from "../../../../shared/constants/units";
 
 /** Where an App serves the PWA's files. */
@@ -74,10 +73,3 @@ export const PWA = {
     OFFLINE: "aof-offline",
   },
 } as const;
-
-const installPlatformSchema = z.enum(PLATFORM);
-export type InstallPlatform = z.infer<typeof installPlatformSchema>;
-const installStepSchema = z.enum(STEP);
-export type InstallStep = z.infer<typeof installStepSchema>;
-const installStatusSchema = z.enum(INSTALL_STATUS);
-export type InstallStatus = z.infer<typeof installStatusSchema>;

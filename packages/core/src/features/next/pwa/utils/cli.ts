@@ -20,7 +20,7 @@ if (!values.app) {
   throw new Error("pwa:build needs --app <the App's folder>");
 }
 const appDir = resolve(values.app);
-const buildId = (await readFile(join(appDir, NEXT.BUILD_ID), "utf8")).trim();
+const buildId = (await readFile(join(appDir, NEXT.BUILD.ID), "utf8")).trim();
 // The default language comes first: BASE_LANGUAGES starts with it.
 const languages = values.languages?.split(",") ?? [...I18N.BASE_LANGUAGES];
 await buildServiceWorker({ appDir, buildId, languages });

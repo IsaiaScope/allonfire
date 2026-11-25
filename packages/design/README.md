@@ -35,13 +35,15 @@ src/designs/<name>/     DESIGN.md, DESIGN.json, theme.css, fonts/ (the source),
 src/designs/shared/     what every Design's tests and loaders share
                         (the contract test, contrast helpers, font reader)
 src/apps/<app>/         PRODUCT.md, styles.css, DESIGN.md + DESIGN.json
-                        (generated copies)
+                        (generated copies), <app>-logo.ts
+src/apps/app.ts         APP: how every App is drawn, read by each App's switcher
 ```
 
 ## Exports
 
 | Export | Contents |
 |--------|----------|
+| `./apps/app` | `APP.ENTRY` (each App's name and mark, keyed by the `App` enum's values) and `APP.OPTIONS` (the same Apps as a filter's options): the one definition every App's `entries` reads |
 | `./apps/back-office/styles.css` | the worn Design's tokens and the App's own rules, imported after ui's base |
 | `./brand/aof-monogram` | `BRAND`: the brand's name, the monogram as markup, SVG and data URL, its dark ground and letter colour |
 | `./brand/aof-logo` | `aofLogoSvg` (an App's logo as SVG: square or horizontal, dark, light or `auto`), `AOF_LOGO` geometry, `AppLogo` |

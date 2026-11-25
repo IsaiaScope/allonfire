@@ -24,7 +24,7 @@ const candidateFor = (pixels: number) =>
 describe("a stored picture's tile", () => {
   // A tile whose width has no small link silently loads a 640 wide file instead.
   it.each(
-    objectValues(IMAGES.THUMB_PX).flatMap((side) =>
+    objectValues(IMAGES.SIZE.THUMB_PX).flatMap((side) =>
       DENSITIES.map((density) => ({ density, side }))
     )
   )(

@@ -59,7 +59,7 @@ const UNBROKEN = "Superlongunbrokenstring".repeat(8);
 const renderCard = (image: ImageBody = IMAGE) =>
   render(
     <NextIntlClientProvider
-      formats={DATE.FORMATS}
+      formats={DATE.FORMAT.INTL}
       locale={I18N.DEFAULT_LANGUAGE}
       messages={aofMessages(I18N.DEFAULT_LANGUAGE, EN)}
       timeZone={DATE.TIME_ZONE}
@@ -74,7 +74,7 @@ const renderCard = (image: ImageBody = IMAGE) =>
 const renderNoAlt = () =>
   render(
     <NextIntlClientProvider
-      formats={DATE.FORMATS}
+      formats={DATE.FORMAT.INTL}
       locale={I18N.DEFAULT_LANGUAGE}
       messages={aofMessages(I18N.DEFAULT_LANGUAGE, EN)}
       timeZone={DATE.TIME_ZONE}

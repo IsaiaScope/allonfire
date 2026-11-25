@@ -92,6 +92,6 @@ export function translateCode(
     return typeof parts === "string" ? parts : parts.join("");
   } catch (err) {
     logger.warn({ code: key, err, locale }, API.LOG_MESSAGE.TRANSLATION_FAILED);
-    return TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][key];
+    return TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT.LOCALE][key];
   }
 }

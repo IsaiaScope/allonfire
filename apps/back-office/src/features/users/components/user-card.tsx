@@ -3,19 +3,18 @@
 import type { UserBody } from "@allonfire/auth/features/users/hono/constants/schemas";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFAppTile } from "@allonfire/ui/features/navigation/components/aof-app-tile";
 import {
   type AOFCard,
   AOFCardContent,
   AOFCardHeader,
-  AOFCardTitle,
 } from "@allonfire/ui/shared/components/aof-card";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { SignCard, SignCardFoot } from "@/shared/components/sign-card";
-import { UserAvatar } from "@/shared/components/user-avatar";
-import { APP_ENTRY } from "@/shared/constants/apps";
+import { UserIdentity } from "@/shared/components/user-identity";
 import { USERS } from "../constants/users";
 import { CopyEmail, OpenUser, RoleIn } from "./user-columns";
 
@@ -42,28 +41,25 @@ export const UserCard = ({
 }: UserCardProps) => {
   const t = useTranslations("Users.column");
   return (
-    <SignCard className={className} kanji={USERS.CARD_KANJI} {...props}>
+    <SignCard className={className} kanji={USERS.KANJI.CARD} {...props}>
       <AOFCardHeader className="flex min-h-(--field-tile) items-center gap-3">
-        {/* As tall as the two lines beside it (20px each and 2px between),
-            so its edges meet the email's top and the name's foot. */}
-        <UserAvatar
-          blurDataUrl={user.imageBlurDataUrl}
-          className="size-10.5 text-lg"
-          image={user.image}
-          name={user.name || user.email}
-          side={42}
+        <UserIdentity
+          avatarProps={{
+            blurDataUrl: user.imageBlurDataUrl,
+            className: "text-lg",
+            image: user.image,
+            name: user.name || user.email,
+          }}
+          className="min-w-0 flex-1"
+          size="card"
+          subtitle={user.name}
+          title={
+            <CopyEmail
+              className="border-0 font-bold leading-5"
+              email={user.email}
+            />
+          }
         />
-        <AOFCardTitle className="flex min-w-0 flex-col gap-0.5">
-          <CopyEmail
-            className="border-0 font-bold leading-5"
-            email={user.email}
-          />
-          {user.name ? (
-            <span className="truncate font-normal text-muted-foreground text-sm leading-5">
-              {user.name}
-            </span>
-          ) : null}
-        </AOFCardTitle>
         <OpenUser user={user} />
       </AOFCardHeader>
       <AOFCardContent className="flex flex-col gap-3">
@@ -74,8 +70,8 @@ export const UserCard = ({
               key={app}
             >
               <dt className="flex min-w-0 items-center gap-2 text-base">
-                <AOFAppTile entry={APP_ENTRY[app]} size="sm" />
-                <span className="truncate">{APP_ENTRY[app].name}</span>
+                <AOFAppTile entry={APP.ENTRY[app]} size="sm" />
+                <span className="truncate">{APP.ENTRY[app].name}</span>
               </dt>
               <dd className="shrink-0">
                 <RoleIn app={app} user={user} />

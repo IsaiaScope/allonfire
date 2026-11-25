@@ -207,7 +207,7 @@ describe("createRateLimiter keyPrefix", () => {
     await app.request("/");
 
     expect([...store.hits.keys()]).toEqual([
-      `sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`,
+      `sign-in:${RATE_LIMIT.KEY.UNKNOWN_CLIENT}`,
     ]);
   });
 });
@@ -240,8 +240,8 @@ describe("one store behind several limiters", () => {
 
     expect(windows).toEqual(
       new Map([
-        [RATE_LIMIT.UNKNOWN_CLIENT, UNIT.MS_PER_MINUTE],
-        [`sign-in:${RATE_LIMIT.UNKNOWN_CLIENT}`, 900_000],
+        [RATE_LIMIT.KEY.UNKNOWN_CLIENT, UNIT.MS_PER_MINUTE],
+        [`sign-in:${RATE_LIMIT.KEY.UNKNOWN_CLIENT}`, 900_000],
       ])
     );
   });

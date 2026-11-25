@@ -196,8 +196,8 @@ describe("AOFAvatarField", () => {
     expect(["image/webp", "image/jpeg"]).toContain(held?.type);
     const bitmap = await createImageBitmap(held ?? new Blob());
     expect([bitmap.width, bitmap.height]).toEqual([
-      AVATAR.CROP_SIZE,
-      AVATAR.CROP_SIZE,
+      AVATAR.SIZE.CROP,
+      AVATAR.SIZE.CROP,
     ]);
     await expect
       .element(page.getByRole("button", { name: LABELS.change }))
