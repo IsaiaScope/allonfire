@@ -1,13 +1,16 @@
+import {
+  type ImageFieldMessages,
+  imageFields,
+} from "@allonfire/ui/features/image/upload/utils/image-form-schema";
 import { z } from "zod";
 import { IMAGES } from "../constants/images";
-import { type ImageFieldMessages, imageFields } from "./image-form-schema";
 
 /** Why the Edit Image action refused. */
-const editImageErrorSchema = z.enum(IMAGES.EDIT_ERROR);
+const editImageErrorSchema = z.enum(IMAGES.EDIT.ERROR);
 export type EditImageError = z.infer<typeof editImageErrorSchema>;
 
 /** What the Edit Image action says once the Image is saved. */
-const editImageNoticeSchema = z.enum(IMAGES.EDIT_NOTICE);
+const editImageNoticeSchema = z.enum(IMAGES.EDIT.NOTICE);
 export type EditImageNotice = z.infer<typeof editImageNoticeSchema>;
 
 /**

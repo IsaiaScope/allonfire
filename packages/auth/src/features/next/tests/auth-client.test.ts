@@ -15,7 +15,7 @@ it("gives up on an API that accepts the call and never answers", async () => {
   createApiAuthClient()
     .getSession()
     .catch(() => undefined);
-  await vi.advanceTimersByTimeAsync(AUTH.API_TIMEOUT_MS - 1);
+  await vi.advanceTimersByTimeAsync(AUTH.LIMIT.API_TIMEOUT_MS - 1);
   expect(signal?.aborted).toBe(false);
   await vi.advanceTimersByTimeAsync(1);
   expect(signal?.aborted).toBe(true);

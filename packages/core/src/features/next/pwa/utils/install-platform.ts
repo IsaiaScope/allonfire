@@ -1,4 +1,5 @@
-import { type InstallPlatform, PWA } from "../constants/pwa";
+import { PWA } from "../constants/pwa";
+import type { InstallPlatform } from "../constants/pwa-schema";
 
 /** In-app browsers (Instagram, Facebook, LINE) install nothing. */
 const IN_APP = /Instagram|FBAN|FBAV|Line\//;

@@ -5,8 +5,6 @@ import { UNIT } from "@allonfire/core/shared/constants/units";
 
 /** The Test databases' own values: their names, their template and their Docker runs. */
 export const TEST_DATABASE = {
-  /** Liquibase runs in Docker; the first build pulls the image. */
-  DOCKER_TIMEOUT_MS: 5 * UNIT.MS_PER_MINUTE,
   /** The database package's folder: Liquibase runs there, the template's sources sit under it. */
   PACKAGE_ROOT: resolve(REPO.PACKAGES, "database"),
   TEMPLATE: {
@@ -20,5 +18,9 @@ export const TEST_DATABASE = {
      * The db-migrate image (`liquibase/`) runs the changelog, so it counts too.
      */
     SOURCES: ["changelog", "liquibase", "src/features/seed"],
+  },
+  TIMEOUT: {
+    /** Liquibase runs in Docker; the first build pulls the image. */
+    DOCKER_MS: 5 * UNIT.MS_PER_MINUTE,
   },
 } as const;

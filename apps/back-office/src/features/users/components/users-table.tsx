@@ -10,10 +10,10 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
-import { queryOf } from "../constants/users-params";
 import { useSelectableUsers } from "../hooks/use-selectable-users";
 import { useUsersTableState } from "../hooks/use-users-table-state";
 import { userRow } from "../utils/user-row";
+import { queryOf } from "../utils/users-params";
 import { usersQuery } from "../utils/users-queries";
 import { DeleteUsers } from "./delete-users";
 import { UsersRowsSkeleton } from "./users-list-skeleton";
@@ -51,7 +51,7 @@ export const UsersTable = ({ selfId }: { selfId: string }) => {
   // A page past the last one (its Users all deleted, or an edited address)
   // steps back; until it has, the skeleton stands in, not "nobody matches".
   const status = useStepBackPastEnd({
-    firstPage: USER.DEFAULT_PAGE,
+    firstPage: USER.DEFAULT.PAGE,
     page: params[USER.PARAM.PAGE],
     query: pageQuery,
     rows: pageQuery.data?.users.length,

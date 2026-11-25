@@ -8,7 +8,10 @@ import { objectKeys } from "@allonfire/core/shared/utils/object";
 import { ServiceType } from "@allonfire/database/enums";
 import type { listServices } from "@allonfire/database/features/service/provider.service";
 import { z } from "zod";
-import { keepAliveResultSchema } from "./services";
+import { SERVICES } from "./services";
+
+const keepAliveResultSchema = z.enum(SERVICES.KEEP_ALIVE_RESULT);
+export type KeepAliveResult = z.infer<typeof keepAliveResultSchema>;
 
 /** A Service as the path names it. */
 export const serviceTypeParamSchema = z.object({ type: z.enum(ServiceType) });

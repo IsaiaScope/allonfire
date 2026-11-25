@@ -23,6 +23,6 @@ export const authEnvSchema = {
     .int()
     .positive()
     .default(AUTH.RATE_LIMIT.DEFAULT.WINDOW_MS),
-  AUTH_SECRET: z.string().min(AUTH.SECRET_MIN_LENGTH),
+  AUTH_SECRET: z.string().min(AUTH.LIMIT.SECRET_MIN_LENGTH),
   AUTH_URL: z.url(),
 };

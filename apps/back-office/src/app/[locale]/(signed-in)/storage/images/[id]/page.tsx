@@ -8,8 +8,8 @@ import { ImageEditor } from "@/features/images/components/image-editor";
 import { administeredApps } from "@/features/images/utils/administered-apps";
 import { imageHref } from "@/features/images/utils/image-href";
 import { imageHydration } from "@/features/images/utils/images-hydration";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 type ImagePageProps = { params: Promise<{ id: string }> };
 

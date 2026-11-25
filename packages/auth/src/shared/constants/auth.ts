@@ -35,11 +35,6 @@ const SEND_VERIFICATION_EMAIL = "/send-verification-email";
 
 /** Everything the Auth module fixes for every host: its paths, cookies, header and limits. */
 export const AUTH = {
-  /**
-   * How long an App's server waits for the API's auth routes. An API that
-   * accepts the call and never answers must not hold every page behind it.
-   */
-  API_TIMEOUT_MS: 10 * UNIT.MS_PER_SECOND,
   COOKIE: {
     MARKER: COOKIE_MARKER,
     /** What Better Auth puts before every cookie name on https. */
@@ -65,19 +60,52 @@ export const AUTH = {
     JOIN_APP: {
       APP_HEADER: "The App to join, by its enum key",
       DESCRIPTION: `Any signed-in User. Adds a Membership in the App \`${APP_HEADER}\` names, at the Role its Registration gives. An App closed to Registration, an unknown name or no header answers 403 \`${ERROR_CODE.REGISTRATION_CLOSED}\`. A Membership already there keeps its Role, so joining never lowers one.`,
-      OK: "The App joined",
+      RESPONSE: { [HTTP.STATUS.OK]: "The App joined" },
+    },
+  },
+  /** Why a form's action failed; each page translates every one (camelCase: they are translation keys). */
+  ERROR: {
+    /** Why asking for a reset link failed; a known or unknown address alike never fails. */
+    FORGOT: {
+      /** The email was left empty or is not one. */
+      INVALID: "invalid",
+      RATE_LIMITED: "rateLimited",
+      /** The API or its mail cannot answer now. */
+      UNAVAILABLE: "unavailable",
+    },
+    /** Why setting a new password through a reset link failed. */
+    RESET: {
+      /** A field was left empty or the password breaks the rules. */
+      INVALID: "invalid",
+      /** The link expired, was used already, or never was one. */
+      INVALID_TOKEN: "invalidToken",
+      RATE_LIMITED: "rateLimited",
+      UNAVAILABLE: "unavailable",
+    },
+    /** Why a sign in failed; an App translates each one. */
+    SIGN_IN: {
+      /** The API refused: this User has no Membership in the App, or a Role under its floor. */
+      FORBIDDEN: "forbidden",
+      INVALID: "invalid",
+      /** The email or the password was left empty. */
+      MISSING: "missing",
+      RATE_LIMITED: "rateLimited",
+      UNAVAILABLE: "unavailable",
+      /** The password was right but the email is not verified: a link was sent. */
+      UNVERIFIED: "unverified",
     },
   },
   ERROR_CODE,
-  /** Why asking for a reset link failed; a known or unknown address alike never fails. */
-  FORGOT_ERROR: {
-    /** The email was left empty or is not one. */
-    INVALID: "invalid",
-    RATE_LIMITED: "rateLimited",
-    /** The API or its mail cannot answer now. */
-    UNAVAILABLE: "unavailable",
-  },
   HEADER: { APP: APP_HEADER },
+  LIMIT: {
+    /**
+     * How long an App's server waits for the API's auth routes. An API that
+     * accepts the call and never answers must not hold every page behind it.
+     */
+    API_TIMEOUT_MS: 10 * UNIT.MS_PER_SECOND,
+    /** Better Auth signs cookies with this secret; 32 chars is its own minimum advice. */
+    SECRET_MIN_LENGTH: 32,
+  },
   /**
    * Every route where Better Auth checks or hashes a password. Hosts
    * rate-limit these harder than anything else: each request is a guess or a
@@ -97,20 +125,23 @@ export const AUTH = {
     SESSION_REFRESH_FAILED: "session refresh failed, cookies left as they are",
     SIGN_OUT_FAILED: "sign out on the API failed, cookies cleared here",
   },
-  /** Methods Better Auth's handler answers. */
   /** The emails the module asks its host to send. */
   MAIL: {
-    /** The query parameter Better Auth adds to a verification link's callback on failure. */
-    ERROR_PARAM: "error",
     /** How long a verification or reset link works; the copy never says so. */
     LINK_EXPIRES_IN_S: UNIT.SECONDS_PER_HOUR,
+    /** The query parameters the links carry. */
+    PARAM: {
+      /** Added by Better Auth to a verification link's callback on failure. */
+      ERROR: "error",
+      /** A reset link carries its token in it, to the App's page. */
+      TOKEN: "token",
+      /** The App puts it on a verification link's callback, so only a link that worked lands as verified. */
+      VERIFIED: "verified",
+    },
     /** The routes that send an email on their own, refused while the limit cannot count. */
     SENDING_PATHS: [REQUEST_PASSWORD_RESET, SEND_VERIFICATION_EMAIL],
-    /** The query parameter a reset link carries its token in, to the App's page. */
-    TOKEN_PARAM: "token",
-    /** The query parameter the App puts on a verification link's callback, so only a link that worked lands as verified. */
-    VERIFIED_PARAM: "verified",
   },
+  /** Methods Better Auth's handler answers. */
   METHODS: [HTTP.METHOD.GET, HTTP.METHOD.POST],
   /** Tag every Better Auth operation carries in a host's OpenAPI document. */
   OPENAPI_TAG: "Auth",
@@ -119,12 +150,12 @@ export const AUTH = {
    * (`/it` + path): home is the locale's root, so it adds nothing.
    */
   PAGE: {
-    /** Where a verification link lands, signed in or not: it worked (`VERIFIED_PARAM`), or `ERROR_PARAM` says it did not; with neither it was opened by hand. */
+    /** Where a verification link lands, signed in or not: it worked (`MAIL.PARAM.VERIFIED`), or `MAIL.PARAM.ERROR` says it did not; with neither it was opened by hand. */
     EMAIL_VERIFIED: "/email-verified",
     /** Asks for a reset link; answers the same for any address. */
     FORGOT_PASSWORD: "/forgot-password",
     HOME: "",
-    /** Where a reset link lands, its token in the query (`AUTH.MAIL.TOKEN_PARAM`). */
+    /** Where a reset link lands, its token in the query (`AUTH.MAIL.PARAM.TOKEN`). */
     RESET_PASSWORD: "/reset-password",
     SIGN_IN: "/sign-in",
   },
@@ -184,17 +215,6 @@ export const AUTH = {
       WINDOW_MS: 15 * UNIT.MS_PER_MINUTE,
     },
   },
-  /** Why setting a new password through a reset link failed. */
-  RESET_ERROR: {
-    /** A field was left empty or the password breaks the rules. */
-    INVALID: "invalid",
-    /** The link expired, was used already, or never was one. */
-    INVALID_TOKEN: "invalidToken",
-    RATE_LIMITED: "rateLimited",
-    UNAVAILABLE: "unavailable",
-  },
-  /** Better Auth signs cookies with this secret; 32 chars is its own minimum advice. */
-  SECRET_MIN_LENGTH: 32,
   SESSION: {
     /** How long a signed session copy in the cookie spares a Postgres read. */
     COOKIE_CACHE_MAX_AGE_S: 5 * UNIT.SECONDS_PER_MINUTE,
@@ -213,18 +233,6 @@ export const AUTH = {
     PAGE_CHECK_STALE_S: 30 * UNIT.SECONDS_PER_MINUTE,
     /** How often a visit extends the Session: one database write a day at most. */
     UPDATE_AGE_S: UNIT.SECONDS_PER_DAY,
-  },
-  /** Why a sign in failed; an App translates each one. */
-  SIGN_IN_ERROR: {
-    /** The API refused: this User has no Membership in the App, or a Role under its floor. */
-    FORBIDDEN: "forbidden",
-    INVALID: "invalid",
-    /** The email or the password was left empty. */
-    MISSING: "missing",
-    RATE_LIMITED: "rateLimited",
-    UNAVAILABLE: "unavailable",
-    /** The password was right but the email is not verified: a link was sent. */
-    UNVERIFIED: "unverified",
   },
   /** Context keys the Hono adapter sets; a host's bindings include `AuthVariables`. */
   VAR: {

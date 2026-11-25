@@ -13,8 +13,15 @@ export const MAIL = {
     REJECTED: "rejected",
     UNCERTAIN: "uncertain",
   },
-  /** The account plan whose credits are the day's remaining allowance. */
-  DAILY_PLAN_TYPE: "free",
+  /** What `KEY_HEADER_ENVELOPE` calls a plan's credits, and answers when none are left. */
+  CREDITS: {
+    /** The account plan whose credits are the day's remaining allowance. */
+    DAILY_PLAN_TYPE: "free",
+    /** The code of the answer when the account has no credits left. */
+    QUOTA_CODE: "not_enough_credits",
+    /** The credits type that counts sends. */
+    SEND_TYPE: "sendLimit",
+  },
   /** The API shapes the drivers speak, named for the shape, never a vendor. */
   DRIVER: {
     /** `Authorization: Bearer`, a flat `from`, `html` and `text`. */
@@ -91,14 +98,11 @@ export const MAIL = {
     TEST: "test",
     VERIFICATION: "verification",
   },
-  /** What `KEY_HEADER_ENVELOPE` answers when the account has no credits left. */
-  QUOTA_CODE: "not_enough_credits",
-  /** The credits that count sends. */
-  SEND_CREDITS: "sendLimit",
+  USAGE: {
+    /** The window the page's "last month" ring covers, in days. */
+    MONTH_DAYS: 31,
+  },
 } as const;
-
-/** The window the page's "last month" ring covers, in days. */
-export const USAGE_MONTH_DAYS = 31;
 
 export const mailDriverSchema = z.enum(MAIL.DRIVER);
 export type MailDriver = z.infer<typeof mailDriverSchema>;

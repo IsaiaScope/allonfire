@@ -30,9 +30,9 @@ describe("createPrismaClient", () => {
         await client.$disconnect();
       }
       expect(Date.now() - started).toBeLessThan(
-        DATABASE.CONNECT_TIMEOUT_MS + MARGIN_MS
+        DATABASE.TIMEOUT.CONNECT_MS + MARGIN_MS
       );
     },
-    DATABASE.CONNECT_TIMEOUT_MS + 2 * MARGIN_MS
+    DATABASE.TIMEOUT.CONNECT_MS + 2 * MARGIN_MS
   );
 });

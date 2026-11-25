@@ -133,7 +133,7 @@ describe("editUser", () => {
       {},
       formOf({ name: " " })
     );
-    expect(state.error).toBe(USERS.EDIT_ERROR.INVALID);
+    expect(state.error).toBe(USERS.EDIT.ERROR.INVALID);
     expect(state.values?.name).toBe(" ");
     expect(FAKE_API.sent).toEqual([]);
   });
@@ -142,27 +142,27 @@ describe("editUser", () => {
     [
       HTTP.STATUS.FORBIDDEN,
       USER.ERROR_CODE.CANNOT_CHANGE_OWN_ROLE,
-      USERS.EDIT_ERROR.OWN_ROLE,
+      USERS.EDIT.ERROR.OWN_ROLE,
     ],
     // A Session ended (a new password) or a Role taken away: trying again
     // never works, signing in again might.
-    [HTTP.STATUS.FORBIDDEN, API.ERROR.CODE.FORBIDDEN, USERS.EDIT_ERROR.REFUSED],
+    [HTTP.STATUS.FORBIDDEN, API.ERROR.CODE.FORBIDDEN, USERS.EDIT.ERROR.REFUSED],
     [
       HTTP.STATUS.UNAUTHORIZED,
       API.ERROR.CODE.UNAUTHORIZED,
-      USERS.EDIT_ERROR.REFUSED,
+      USERS.EDIT.ERROR.REFUSED,
     ],
-    [HTTP.STATUS.NOT_FOUND, API.ERROR.CODE.NOT_FOUND, USERS.EDIT_ERROR.GONE],
+    [HTTP.STATUS.NOT_FOUND, API.ERROR.CODE.NOT_FOUND, USERS.EDIT.ERROR.GONE],
     // Changed by someone else since the form was opened.
     [
       HTTP.STATUS.CONFLICT,
       API.ERROR.CODE.RESOURCE_CHANGED,
-      USERS.EDIT_ERROR.CHANGED,
+      USERS.EDIT.ERROR.CHANGED,
     ],
     [
       HTTP.STATUS.INTERNAL_SERVER_ERROR,
       API.ERROR.CODE.INTERNAL_ERROR,
-      USERS.EDIT_ERROR.FAILED,
+      USERS.EDIT.ERROR.FAILED,
     ],
   ])("maps %i %s to %s, keeping the values", async (status, code, error) => {
     FAKE_API.answers.set(HTTP.METHOD.PATCH, { code, status });
@@ -237,7 +237,7 @@ describe("editUser, once saved", () => {
     // The save landed and the page re-reads the User: a form kept on screen
     // would bind the newer Version under what was typed, so a second Save
     // could overwrite the change that refused the picture.
-    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.AVATAR_FAILED });
+    expect(state).toEqual({ notice: USERS.EDIT.NOTICE.AVATAR_FAILED });
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
   });
 
@@ -254,7 +254,7 @@ describe("editUser, once saved", () => {
       `${HTTP.METHOD.DELETE} ${API.PATH.BACK_OFFICE.USERS}${fillPath(USER.PATH.AVATAR, { id: ID })}`,
     ]);
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
-    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.SAVED });
+    expect(state).toEqual({ notice: USERS.EDIT.NOTICE.SAVED });
   });
 
   it("says so when the picture's call never reaches the API, the list still dropped", async () => {
@@ -267,7 +267,7 @@ describe("editUser, once saved", () => {
       })
     );
     expect(updateTag).toHaveBeenCalledWith(USERS.CACHE.TAG);
-    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.AVATAR_FAILED });
+    expect(state).toEqual({ notice: USERS.EDIT.NOTICE.AVATAR_FAILED });
   });
 
   it("sends a new picture, and says so when the API refuses it", async () => {
@@ -286,7 +286,7 @@ describe("editUser, once saved", () => {
       HTTP.METHOD.PATCH,
       HTTP.METHOD.PUT,
     ]);
-    expect(state).toEqual({ notice: USERS.EDIT_NOTICE.AVATAR_FAILED });
+    expect(state).toEqual({ notice: USERS.EDIT.NOTICE.AVATAR_FAILED });
   });
 
   it("says the User is gone when they were deleted before their picture was sent", async () => {
@@ -299,7 +299,7 @@ describe("editUser, once saved", () => {
       {},
       formOf({ [REMOVAL.name]: REMOVAL.value })
     );
-    expect(state.error).toBe(USERS.EDIT_ERROR.GONE);
+    expect(state.error).toBe(USERS.EDIT.ERROR.GONE);
     expect(state.values?.name).toBe("Edited");
   });
 });

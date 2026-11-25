@@ -32,8 +32,8 @@ vi.mock(
 );
 
 const PARAMS = {
-  [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT_PAGE,
-  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
+  [IMAGES.PARAM.PAGE]: IMAGES.DEFAULT.PAGE,
+  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT.PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
   [IMAGES.PARAM.SORT]: "",
 };
@@ -49,7 +49,7 @@ describe("imagesHydration", () => {
     expect(cacheLife).toHaveBeenCalledWith(IMAGES.CACHE.LIFE);
     // The rows hold private links signed for an hour: never kept longer.
     expect(IMAGES.CACHE.LIFE.expire).toBeLessThanOrEqual(
-      IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR
+      IMAGE_SERVER.LINK.PRIVATE_HOURS * UNIT.SECONDS_PER_HOUR
     );
     expect(IMAGES.CACHE.LIFE.stale).toBeGreaterThanOrEqual(
       5 * UNIT.SECONDS_PER_MINUTE

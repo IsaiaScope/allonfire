@@ -13,6 +13,7 @@
   "PAYLOAD_TOO_LARGE": "Payload too large. Maximum {limit, number} bytes",
   "UNSUPPORTED_IMAGE": "Unsupported image. Send JPEG, PNG, WebP, AVIF or HEIC",
   "IMAGE_CHANGED": "The image changed meanwhile. Try again",
+  "IMPLAUSIBLE_SCORE": "That game could not have been played, so its score was not saved",
   "PROVIDER_INCOMPLETE": "An enabled provider needs a sender",
   "IMAGE_TOO_LARGE": "Image too large. Send at most {limit, number} megapixels",
   "INTERNAL_ERROR": "Internal server error",

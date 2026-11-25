@@ -5,7 +5,8 @@ import { sessionOf } from "@allonfire/auth/features/next/tests/session-request-m
 import { hasSectionRole } from "@allonfire/auth/features/next/utils/has-section-role";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { App, Role } from "@allonfire/database/enums";
-import { SECTION, SECTIONS } from "@/shared/constants/laura";
+import { SECTION } from "@/features/navigation/constants/sections";
+import { LAURA } from "@/shared/constants/laura";
 
 vi.mock("@allonfire/auth/features/next/components/with-app-session", () => ({
   withAppSession: vi.fn(() => () => null),
@@ -13,6 +14,12 @@ vi.mock("@allonfire/auth/features/next/components/with-app-session", () => ({
 // The Role is read for the App auth serves: Laura.
 vi.mock("@allonfire/auth/environment/next-environment", () => ({
   nextAuthEnv: { AUTH_APP: "LAURA" },
+}));
+// The gate is what the page tells `withAppSession`; the form and its skeleton
+// are a heavy module graph that only slows the import under a loaded run.
+vi.mock("@/features/upload/components/upload", () => ({ Upload: () => null }));
+vi.mock("@/features/upload/components/upload-skeleton", () => ({
+  UploadSkeleton: () => null,
 }));
 // The env is read at import and a unit test lacks it.
 vi.mock("@/environment/environment", () => ({
@@ -32,7 +39,7 @@ const callOf = async (load: () => Promise<unknown>) => {
 
 describe("the Upload gate", () => {
   it("holds Upload alone to the Admin Role, in the one list the proxy reads", () => {
-    const closed = SECTIONS.filter((section) => "minRole" in section);
+    const closed = LAURA.sections.filter((section) => "minRole" in section);
     expect(closed).toEqual([SECTION.UPLOAD]);
     expect(SECTION.UPLOAD.minRole).toBe(Role.ADMIN);
   });

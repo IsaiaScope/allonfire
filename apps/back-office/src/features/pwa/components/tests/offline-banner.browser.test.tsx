@@ -35,7 +35,7 @@ describe("Offline banner", () => {
     const screen = await render(banner());
     await expect.element(screen.getByText(TEXT.banner.title)).toBeVisible();
     await expect
-      .element(screen.getByText(PWA_SIGNAGE.OFFLINE.WALL_KANJI))
+      .element(screen.getByText(PWA_SIGNAGE.OFFLINE.KANJI))
       .toBeInTheDocument();
     offline.value = false;
     screen.rerender(banner());

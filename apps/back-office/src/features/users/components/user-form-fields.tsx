@@ -61,7 +61,7 @@ const avatarLabelsOf = (t: FormWords): AOFAvatarFieldLabels => ({
   dialogTitle: t("avatar.dialogTitle"),
   drop: t("avatar.drop"),
   formats: t("avatar.formats", {
-    size: AVATAR.INPUT_BYTES / UNIT.BYTES_PER_MIB,
+    size: AVATAR.INPUT.BYTES / UNIT.BYTES_PER_MIB,
   }),
   remove: t("avatar.remove"),
   tooLarge: t("avatar.tooLarge"),
@@ -98,22 +98,22 @@ const AVATAR_DRESS = {
       variant: "destructive",
     },
     titleProps: {
-      decoration: <BrushKanji kanji={USERS.CROP_KANJI} placement="title" />,
+      decoration: <BrushKanji kanji={USERS.KANJI.CROP} placement="title" />,
     },
     useProps: {
       className: kanjiAction(),
-      decoration: <ActionKanji kanji={USERS.CROP_USE_KANJI} />,
+      decoration: <ActionKanji kanji={USERS.KANJI.CROP_USE} />,
       size: "field",
     },
     // Icon buttons with the toolbar's kanji, at the title's right end.
-    zoomInProps: zoomDress(USERS.ZOOM_IN_KANJI),
-    zoomOutProps: zoomDress(USERS.ZOOM_OUT_KANJI),
+    zoomInProps: zoomDress(USERS.KANJI.ZOOM_IN),
+    zoomOutProps: zoomDress(USERS.KANJI.ZOOM_OUT),
   },
   triggerProps: {
     // The smaller kanji action: inside the drop area, not a form's last row.
     className: cn(kanjiAction({ tone: "green" }), "min-w-0 pr-10"),
     decoration: (
-      <ActionKanji className="text-4xl" kanji={USERS.PICTURE_KANJI} />
+      <ActionKanji className="text-4xl" kanji={USERS.KANJI.PICTURE} />
     ),
     // Filled, so no outline's dark-theme ground shows over the green.
     variant: "default",

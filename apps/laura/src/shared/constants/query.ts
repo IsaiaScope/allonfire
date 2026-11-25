@@ -1,4 +1,5 @@
 const GALLERY = "gallery";
+const GAMES = "games";
 
 /**
  * Laura's TanStack Query keys, every feature's in one place: a page that
@@ -17,5 +18,16 @@ export const QUERY = {
     ALL: [GALLERY],
     /** The Gallery, page after page. */
     FEED: [GALLERY, "feed"],
+  },
+  GAMES: {
+    /** The prefix of what a score changes: the leaderboard. */
+    ALL: [GAMES],
+    /**
+     * One draw of Memory's deck. Outside `ALL` on purpose: `ALL` is what a
+     * change refreshes, and a score never redraws a board under the player.
+     */
+    DECK: (round: number) => ["memory-deck", round] as const,
+    /** The leaderboard, the caller's place and the totals: one body. */
+    LEADERBOARD: [GAMES, "leaderboard"],
   },
 } as const;

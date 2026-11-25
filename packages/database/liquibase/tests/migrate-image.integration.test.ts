@@ -57,7 +57,7 @@ describe("scripts/liquibase.sh under parallel callers", () => {
         )
       ).toEqual([]);
     },
-    TEST_DATABASE.DOCKER_TIMEOUT_MS
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 
   it(
@@ -67,6 +67,6 @@ describe("scripts/liquibase.sh under parallel callers", () => {
       liquibase(throwawayUrl(DATABASES[0] ?? ""), "status");
       expect(tags()).toEqual(before);
     },
-    TEST_DATABASE.DOCKER_TIMEOUT_MS
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 });

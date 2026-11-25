@@ -24,6 +24,7 @@ import {
 import { healthRoutes } from "./features/health/routes";
 import type { HealthDeps } from "./features/health/utils/status";
 import { localeResolver } from "./features/i18n/middleware/locale-resolver";
+import { scoreRateLimit } from "./features/laura/games/middleware/score-rate-limit";
 import { lauraRoutes } from "./features/laura/routes";
 import type { LauraDeps } from "./features/laura/utils/deps";
 import { requestLogger } from "./features/logger/middleware/request-logger";
@@ -95,6 +96,8 @@ export const createApp = (deps: AppDeps) => {
     .route(API.PATH.ROOT, authRoutes(deps.auth))
     // After the limiters, so a flood of requests never reaches the Session read.
     .use(sessionLoader(deps.auth))
+    // Counted by User, so after the Session is read.
+    .use(API.PATH.LAURA.GAMES.SCORES, scoreRateLimit(store))
     .route(API.PATH.IMAGES, imageRoutes(deps.images))
     .route(API.PATH.LAURA.BASE, lauraRoutes(deps.laura))
     .route(API.PATH.BACK_OFFICE.BASE, backOfficeRoutes(deps))

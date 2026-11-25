@@ -14,7 +14,7 @@ import { ActionKanji, BrushKanji, kanjiAction } from "./brush-kanji";
 /** The alert's signage, decoration only (the brush face carries each). */
 const SIGNAGE = {
   /** Brushed faint across the body: 注意, a station's caution sign. */
-  WALL_KANJI: "注意",
+  KANJI: "注意",
 } as const;
 
 export type StationAlertProps = Omit<
@@ -64,7 +64,7 @@ export const StationAlert = ({
       {/* Behind the text, cut by the dialog's right edge. */}
       <BrushKanji
         className="top-16 -right-2 -z-10 text-7xl"
-        kanji={SIGNAGE.WALL_KANJI}
+        kanji={SIGNAGE.KANJI}
         placement="header"
       />
     </>

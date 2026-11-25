@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { parseJsonWith, stringifyJson } from "../../../../shared/utils/json";
 import { HTTP } from "../../../http/constants/http";
-import { MAIL, type MailAttempt, USAGE_MONTH_DAYS } from "../../constants/mail";
+import { MAIL, type MailAttempt } from "../../constants/mail";
 import type { MailDriverImpl, MailEndpoint, MailFetch } from "../../types/mail";
 import { attemptOf, readJson, timeoutSignal } from "../http-attempt";
 
@@ -30,7 +30,7 @@ const refusalOf = async (response: Response): Promise<MailAttempt> => {
   }
   try {
     const { code } = parseJsonWith(await response.text(), refusalSchema);
-    return code === MAIL.QUOTA_CODE
+    return code === MAIL.CREDITS.QUOTA_CODE
       ? MAIL.ATTEMPT.QUOTA
       : MAIL.ATTEMPT.REJECTED;
   } catch {
@@ -74,7 +74,8 @@ const dailyCreditsLeft = async (
   return (
     account?.plan.find(
       ({ creditsType, type }) =>
-        creditsType === MAIL.SEND_CREDITS && type === MAIL.DAILY_PLAN_TYPE
+        creditsType === MAIL.CREDITS.SEND_TYPE &&
+        type === MAIL.CREDITS.DAILY_PLAN_TYPE
     )?.credits ?? null
   );
 };
@@ -117,7 +118,7 @@ export const keyHeaderEnvelope: MailDriverImpl = {
     const today = utcDate(now);
     const [reported, month, creditsLeft] = await Promise.all([
       requestsIn(endpoint, { endDate: today, startDate: today }, fetcher),
-      requestsIn(endpoint, { days: String(USAGE_MONTH_DAYS) }, fetcher),
+      requestsIn(endpoint, { days: String(MAIL.USAGE.MONTH_DAYS) }, fetcher),
       dailyCreditsLeft(endpoint, fetcher),
     ]);
     if (reported === null || month === null) {

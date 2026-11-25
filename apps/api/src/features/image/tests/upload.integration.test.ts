@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
-import { App } from "@allonfire/database/enums";
+import { App, ImageAccess } from "@allonfire/database/enums";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
@@ -16,6 +16,7 @@ import {
   imageTestApp,
   jpeg,
   keyOf,
+  listKeys,
   served,
   upload,
   uploaded,
@@ -111,6 +112,21 @@ describe("uploading Images on the real stack", () => {
       status: HTTP.STATUS.FORBIDDEN,
       user: FIXTURE.USER.BACK_OFFICE.ADMIN,
     },
+    {
+      into: [App.LAURA],
+      status: HTTP.STATUS.FORBIDDEN,
+      user: FIXTURE.USER.LAURA.USER,
+    },
+    {
+      into: [App.BACK_OFFICE],
+      status: HTTP.STATUS.FORBIDDEN,
+      user: FIXTURE.USER.LAURA.ADMIN,
+    },
+    {
+      into: [App.LAURA, App.BACK_OFFICE],
+      status: HTTP.STATUS.FORBIDDEN,
+      user: FIXTURE.USER.LAURA.ADMIN,
+    },
   ])(
     "refuses $user.email uploading into $into: $status",
     async ({ into, status, user }) => {
@@ -122,4 +138,33 @@ describe("uploading Images on the real stack", () => {
       expect(res.status).toBe(status);
     }
   );
+
+  it("takes a Laura Admin's upload into Laura only: private, shown to a Laura User, not to a visitor", async () => {
+    const admin = await cookieFor(app, FIXTURE.USER.LAURA.ADMIN);
+    const [image] = await uploaded(
+      await upload(app, admin, { apps: [App.LAURA], files: [jpeg()] })
+    );
+    const row = await prisma.image.findUniqueOrThrow({
+      include: { apps: true },
+      where: { id: image?.id ?? "" },
+    });
+    expect(row.access).toBe(ImageAccess.PRIVATE);
+    expect(row.apps.map(({ app: placed }) => placed)).toEqual([App.LAURA]);
+    const user = await cookieFor(app, FIXTURE.USER.LAURA.USER);
+    expect(await listKeys(app, user, { app: App.LAURA })).toContain(row.key);
+    expect(await listKeys(app)).not.toContain(row.key);
+  });
+
+  it("takes an iPhone picture from a Laura Admin as it is and stores it as AVIF", async () => {
+    const admin = await cookieFor(app, FIXTURE.USER.LAURA.ADMIN);
+    const [image] = await uploaded(
+      await upload(app, admin, {
+        apps: [App.LAURA],
+        files: [fixtureFile(IMAGE_FIXTURE.FILE.HEIC)],
+      })
+    );
+    expect(
+      (await keyOf(image?.id ?? "")).endsWith(IMAGE.FORMAT.EXTENSION)
+    ).toBe(true);
+  });
 });

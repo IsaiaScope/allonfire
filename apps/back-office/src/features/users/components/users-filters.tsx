@@ -3,6 +3,7 @@
 import type { USER } from "@allonfire/auth/features/users/constants/users";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { type App, Role } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
 import { useRangePicker } from "@allonfire/ui/features/data-table/hooks/use-range-picker";
 import { useTranslations } from "next-intl";
@@ -11,7 +12,6 @@ import {
   ListFilterPanel,
   SearchTile,
 } from "@/shared/components/list-filter-panel";
-import { APP_ENTRY, APP_OPTIONS } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
 import { useUsersView } from "../hooks/use-users-view";
 
@@ -68,13 +68,13 @@ export const UsersFilters = ({
       count={apps.length + chosenRoles.length + (search.created ? 1 : 0)}
       hideColumns={USERS.HIDEABLE.map((id) => ({
         id,
-        label: id === "created" ? tColumn("created") : APP_ENTRY[id].name,
+        label: id === "created" ? tColumn("created") : APP.ENTRY[id].name,
       }))}
       onRangeChange={pickRange}
       range={search.created ?? null}
       rangeLabel={tColumn("created")}
       resetFilters={reset}
-      resetKanji={USERS.RESET_KANJI}
+      resetKanji={USERS.KANJI.RESET}
       resetLabel={t("Users.filter.resetAll")}
       sortColumns={USERS.SORTABLE.map((id) => ({
         id,
@@ -83,7 +83,7 @@ export const UsersFilters = ({
       view={view}
     >
       <AOFFaceted
-        items={APP_OPTIONS}
+        items={APP.OPTIONS}
         labels={{ ...list, trigger: t("Users.filter.app") }}
         onValueChange={pickApps}
         searchIcon={<SearchTile />}

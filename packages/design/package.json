@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./apps/app": "./src/apps/app.ts",
     "./apps/back-office/back-office-logo": "./src/apps/back-office/back-office-logo.ts",
     "./apps/back-office/styles.css": "./src/apps/back-office/styles.css",
     "./apps/laura/laura-logo": "./src/apps/laura/laura-logo.ts",
@@ -17,6 +18,7 @@
     "./designs/japan/share-card-look": "./src/designs/japan/share-card-look.ts",
     "./designs/japan/theme.css": "./src/designs/japan/theme.css",
     "./designs/ocean/card-back": "./src/designs/ocean/card-back.ts",
+    "./designs/ocean/li-mark": "./src/designs/ocean/li-mark.ts",
     "./designs/ocean/email-look": "./src/designs/ocean/email-look.ts",
     "./designs/ocean/image-colors": "./src/designs/ocean/image-colors.ts",
     "./designs/ocean/image-font": "./src/designs/ocean/image-font.ts",

@@ -1,9 +1,10 @@
 import { API } from "@allonfire/api/shared/constants/api";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import { queryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
-import { retryUsers } from "./users-queries";
+import { USERS } from "../constants/users";
 
 /** The Users overview, as the API answers an Admin. */
 export const fetchUsersOverview = (client: ApiClient) =>
@@ -33,6 +34,5 @@ export const usersOverviewQuery = (client: ApiClient) =>
   queryOptions({
     queryFn: () => fetchUsersOverview(client),
     queryKey: usersOverviewKey,
-    retry: retryUsers,
-    staleTime: "static",
+    ...staticQuery({ retries: USERS.LIMIT.RETRIES }),
   });

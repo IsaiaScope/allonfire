@@ -22,7 +22,7 @@ import {
 const SERVER = env.DATABASE_URL;
 const EPOCH = Math.floor(Date.now() / UNIT.MS_PER_SECOND);
 
-describe("Test databases", { timeout: TEST_DATABASE.DOCKER_TIMEOUT_MS }, () => {
+describe("Test databases", { timeout: TEST_DATABASE.TIMEOUT.DOCKER_MS }, () => {
   it("names the template by its fingerprint and builds it once when two runs ask at once", async () => {
     const [first, second] = await Promise.all([
       ensureTemplate(SERVER),

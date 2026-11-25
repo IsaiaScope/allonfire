@@ -1,6 +1,11 @@
 // @module-tag unit
 import { App, Role } from "@allonfire/database/enums";
-import { administeredApps, offeredApps } from "../administered-apps";
+import { APP } from "@allonfire/design/apps/app";
+import {
+  administeredApps,
+  appOptionsOf,
+  offeredApps,
+} from "../administered-apps";
 
 describe("administeredApps", () => {
   it("lists the Apps the user is an Admin of", () => {
@@ -38,5 +43,17 @@ describe("offeredApps", () => {
 
   it("offers an App the Image is in that the visitor does not administer", () => {
     expect(offeredApps([], [App.LAURA])).toEqual([App.LAURA]);
+  });
+});
+
+describe("appOptionsOf", () => {
+  it("names each App as the Back Office draws it, in the order given", () => {
+    expect(appOptionsOf([App.LAURA, App.BACK_OFFICE])).toEqual([
+      { label: APP.ENTRY[App.LAURA].name, value: App.LAURA },
+      {
+        label: APP.ENTRY[App.BACK_OFFICE].name,
+        value: App.BACK_OFFICE,
+      },
+    ]);
   });
 });

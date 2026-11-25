@@ -13,6 +13,7 @@
   "PAYLOAD_TOO_LARGE": "Contenuto troppo grande. Massimo {limit, number} byte",
   "UNSUPPORTED_IMAGE": "Immagine non supportata. Invia JPEG, PNG, WebP, AVIF o HEIC",
   "IMAGE_CHANGED": "L'immagine è cambiata nel frattempo. Riprova",
+  "IMPLAUSIBLE_SCORE": "Quella partita non può essere stata giocata, quindi il punteggio non è stato salvato",
   "PROVIDER_INCOMPLETE": "Un provider attivo richiede un mittente",
   "IMAGE_TOO_LARGE": "Immagine troppo grande. Invia al massimo {limit, number} megapixel",
   "INTERNAL_ERROR": "Errore interno del server",

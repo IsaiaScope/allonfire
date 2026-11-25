@@ -58,7 +58,7 @@ describe("the Image module inside the API", () => {
     expect(body.code).toBe(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE);
     expect(body.detail).toBe(
       translate(IMAGE.ERROR_CODE.IMAGE_TOO_LARGE, I18N.LOCALE.IT_IT, {
-        limit: IMAGE.LIMIT.INPUT_MEGAPIXELS,
+        limit: IMAGE.LIMIT.INPUT.MEGAPIXELS,
       })
     );
   });

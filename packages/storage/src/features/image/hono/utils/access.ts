@@ -64,7 +64,7 @@ const assertManagesEverywhere = (
 
 /**
  * 403 unless the User is an Admin in some App. Nobody else adds an Image, so
- * the upload is refused before its body (up to `IMAGE.LIMIT.UPLOAD_BYTES`) is
+ * the upload is refused before its body (up to `IMAGE.LIMIT.UPLOAD.BYTES`) is
  * read into memory.
  */
 export const authoriseUploader = (user: AccessUser) => {

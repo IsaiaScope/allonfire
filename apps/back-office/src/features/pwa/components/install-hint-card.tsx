@@ -1,7 +1,5 @@
-import {
-  type InstallStep,
-  PWA,
-} from "@allonfire/core/features/next/pwa/constants/pwa";
+import { PWA } from "@allonfire/core/features/next/pwa/constants/pwa";
+import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa-schema";
 import { AOFInstallSteps } from "@allonfire/ui/features/pwa/components/aof-install-steps";
 import type { AOFInstallHintCardProps } from "@allonfire/ui/features/pwa/types/install-hint-card";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
@@ -85,7 +83,7 @@ export const InstallHintCard = ({
         className="col-start-1 row-start-1 font-bold text-lg text-line leading-none"
         lang="ja"
       >
-        {PWA_SIGNAGE.INSTALL_KANJI}
+        {PWA_SIGNAGE.INSTALL.KANJI}
       </span>
       <p className="col-start-2 row-start-1 min-w-0 font-medium text-sm">
         {cta}

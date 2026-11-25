@@ -5,6 +5,12 @@ import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { IconCrop, IconPhotoSquareRounded } from "@tabler/icons-react";
 import { useCallback, useId, useState } from "react";
 import { AOFButton } from "../../../../shared/components/aof-button";
+import {
+  AOFFileUpload,
+  type AOFFileUploadItem,
+  type AOFFileUploadLabels,
+  type AOFFileUploadProps,
+} from "../../../../shared/components/aof-file-upload";
 import { AOFField } from "../../components/aof-field";
 import {
   AOFFieldErrorLine,
@@ -23,12 +29,6 @@ import {
   type AOFAvatarCropDialogProps,
   type AOFAvatarCropLabels,
 } from "./aof-avatar-crop-dialog";
-import {
-  AOFFileUpload,
-  type AOFFileUploadItem,
-  type AOFFileUploadLabels,
-  type AOFFileUploadProps,
-} from "./aof-file-upload";
 
 /**
  * The field's words, in the page's language: the drop area's own (`busy`
@@ -226,7 +226,7 @@ export const AOFAvatarField = ({
         items={items}
         label={label}
         labels={labels}
-        maxBytes={AVATAR.INPUT_BYTES}
+        maxBytes={AVATAR.INPUT.BYTES}
         onFileAccept={accept}
         onFileReject={refuse}
         onRemove={remove}

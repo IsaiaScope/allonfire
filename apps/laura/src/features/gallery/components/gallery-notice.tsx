@@ -4,9 +4,10 @@ import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { IconRefresh } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { OceanNotice } from "@/features/errors/components/ocean-notice-frame";
-import { ACTION_DRESSING } from "@/shared/constants/action-dressing";
+import { ACTION_DRESSING } from "@/shared/components/action-dressing";
 import { MASCOT } from "@/shared/constants/mascots";
-import { GALLERY, type GallerySource } from "../constants/gallery";
+import { GALLERY } from "../constants/gallery";
+import type { GallerySource } from "../constants/gallery-schema";
 
 export type GalleryNoticeProps = {
   /** An Admin's empty words point to Upload (or the heart); a User's say what will come. */

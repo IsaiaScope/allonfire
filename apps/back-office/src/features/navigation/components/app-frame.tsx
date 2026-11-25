@@ -6,7 +6,7 @@ import { cva } from "class-variance-authority";
 import type { ReactNode } from "react";
 import { Torii } from "@/shared/components/torii";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { sectionRow } from "../constants/section-row";
+import { sectionRow } from "../utils/section-row";
 import { FrameBreadcrumb } from "./frame-breadcrumb";
 import { HeaderKanji } from "./header-kanji";
 import { SidebarKanji } from "./sidebar-kanji";

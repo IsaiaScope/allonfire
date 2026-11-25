@@ -33,7 +33,7 @@ describe("AOFGetRequestConfig", () => {
 
   it("prints dates in one time zone and the shared formats, server and browser alike", async () => {
     await expect(config("en")).resolves.toMatchObject({
-      formats: DATE.FORMATS,
+      formats: DATE.FORMAT.INTL,
       timeZone: DATE.TIME_ZONE,
     });
   });

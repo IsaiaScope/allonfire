@@ -2,7 +2,8 @@
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { sectionHref } from "@allonfire/ui/features/navigation/utils/sections";
 import { page } from "vitest/browser";
-import { LAURA, SECTION } from "@/shared/constants/laura";
+import { SECTION } from "@/features/navigation/constants/sections";
+import { LAURA } from "@/shared/constants/laura";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
 import { FrameBreadcrumb } from "../frame-breadcrumb";

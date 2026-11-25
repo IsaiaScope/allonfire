@@ -10,7 +10,8 @@ import {
 } from "@allonfire/ui/shared/tests/fetch-stub";
 import { SESSION_COOKIE } from "@allonfire/ui/shared/tests/session-cookie-mock";
 import { cacheLife, cacheTag } from "next/cache";
-import { SERVICES, serviceTag } from "../../constants/services";
+import { SERVICES } from "../../constants/services";
+import { serviceTag } from "../service-tag";
 import { servicesHydration } from "../services-hydration";
 import { servicesListKey } from "../services-queries";
 

@@ -62,7 +62,7 @@ describe("createAuthMail", () => {
       })
     );
     expect(one?.message.text).toContain(
-      `${RESET_PAGE}?${AUTH.MAIL.TOKEN_PARAM}=tok-1`
+      `${RESET_PAGE}?${AUTH.MAIL.PARAM.TOKEN}=tok-1`
     );
     expect(one?.message.text).toContain(
       translate("EMAIL_LINK_EXPIRY", I18N.LOCALE.IT_IT, {

@@ -61,7 +61,7 @@ export const ImageCard = ({
 }: ImageCardProps) => {
   const t = useTranslations("Images.column");
   return (
-    <SignCard className={className} kanji={IMAGES.ADD_KANJI} {...props}>
+    <SignCard className={className} kanji={IMAGES.KANJI.ADD} {...props}>
       <AOFCardContent className="flex flex-col gap-2.5">
         <div className="flex gap-4">
           <ImageThumb image={image} size="card" />

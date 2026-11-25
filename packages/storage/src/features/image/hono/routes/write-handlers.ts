@@ -66,9 +66,9 @@ export const uploadHandlers = (deps: ImageDeps) =>
     },
     uploadTimeout,
     bodyLimit({
-      maxSize: IMAGE.LIMIT.UPLOAD_BYTES,
+      maxSize: IMAGE.LIMIT.UPLOAD.BYTES,
       onError: () => {
-        throw payloadTooLarge(IMAGE.LIMIT.UPLOAD_BYTES);
+        throw payloadTooLarge(IMAGE.LIMIT.UPLOAD.BYTES);
       },
     }),
     // `meta` is JSON text on the wire; the docs show what it holds.

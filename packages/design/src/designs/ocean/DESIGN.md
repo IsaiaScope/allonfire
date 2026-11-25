@@ -151,9 +151,10 @@ The palette is teal water with one warm accent. Every value lives in
   is filled in a deeper step of each, white on it, the same in both schemes.
 
 ### Named Rules
-**The Ink Rule.** The card back and any other dark furniture are ink
+**The Ink Rule.** Dark furniture (a pill carrying pale text) is ink
 (`#0a2530`, pale text `#e8f2f3`) in both schemes: it does not follow the
-theme, like a station sign that stays lit.
+theme, like a station sign that stays lit. The Memory card back is not
+furniture: the owner found the ink too strong by day, so it follows its scheme.
 
 **The Coral Rule.** Coral marks a Favorite and nothing else. It is never text
 on the ground and never a state (success, warning and failure have their own
@@ -199,8 +200,11 @@ Soft: `--radius` is 0.75rem; cards step to `xl` (1.05rem) and the frame to
 - **Card.** Foam on Sea Glass, `xl`; at night Night Card on Night Water.
 - **Floating frame.** The sidebar as a card with a gap round it.
 - **Favorite mark.** Coral, 24px.
-- **Card back.** The Memory game's card: ink, an edge in the night teal, two
-  rows of waves, the Noto octopus in its own colours.
+- **Card back.** The Memory game's card, one per scheme (`card-back.ts`): the
+  day's secondary or the night's card to the very edge (the page's card clips
+  the corners and draws the soft border), two rows of waves running its whole
+  width and Laura's own Li logo (`li-mark.ts`) centred, navy by day and gold by
+  night.
 - **Sea line.** One wave (`sea-wave.ts`): the share card's foot, a divider.
 - **Sea icons.** Solid and single-colour: crab, jellyfish, lighthouse
   (`sea-icons.ts`, credits in `SOURCES.md`).

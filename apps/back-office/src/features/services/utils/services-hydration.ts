@@ -4,7 +4,8 @@ import type { ServiceType } from "@allonfire/database/enums";
 import { dehydrate } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { sessionApi } from "@/features/api/utils/server-api";
-import { SERVICES, serviceTag } from "../constants/services";
+import { SERVICES } from "../constants/services";
+import { serviceTag } from "./service-tag";
 import { fetchServices, servicesListKey } from "./services-queries";
 
 /**

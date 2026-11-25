@@ -1,9 +1,9 @@
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFBarChart } from "@allonfire/ui/features/chart/components/aof-bar-chart";
 import { useTranslations } from "next-intl";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { STORAGE } from "../constants/storage";
 import type {
   StorageAvatars,
@@ -36,7 +36,7 @@ export const StorageChart = ({
     return image || avatar
       ? [
           {
-            app: APP_ENTRY[app].name,
+            app: APP.ENTRY[app].name,
             [ImageAccess.PRIVATE]: image?.privateBytes ?? 0,
             [ImageAccess.PUBLIC]: image?.publicBytes ?? 0,
             [STORAGE.AVATARS_KEY]: avatar?.bytes ?? 0,

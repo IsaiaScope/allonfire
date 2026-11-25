@@ -2,15 +2,13 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import {
-  NAVIGATION,
-  sidebarParam,
-} from "../../../navigation/constants/navigation";
+import { NAVIGATION } from "../../../navigation/constants/navigation";
 import type {
   AppDescriptor,
   AppSection,
 } from "../../../navigation/types/app-descriptor";
 import { sectionHref } from "../../../navigation/utils/sections";
+import { sidebarParam } from "../../../navigation/utils/sidebar-param";
 import { aofAppPages } from "./app-pages";
 
 const common = SHARED_TRANSLATIONS.en.Common.Navigation;

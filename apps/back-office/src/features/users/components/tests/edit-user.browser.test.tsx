@@ -7,11 +7,11 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translat
 import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-translators";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { enT } from "@/shared/tests/translators";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
@@ -65,16 +65,16 @@ const USER: UserBody = {
 };
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: enT("Users.form.role", { app: APP_ENTRY[app].name }),
+    name: enT("Users.form.role", { app: APP.ENTRY[app].name }),
   });
 const lockedNote = enT("Users.edit.ownRoleLocked", {
-  app: APP_ENTRY[App.BACK_OFFICE].name,
+  app: APP.ENTRY[App.BACK_OFFICE].name,
 });
 
 const renderForm = (user = USER) =>
   render(
     <NextIntlClientProvider
-      formats={DATE.FORMATS}
+      formats={DATE.FORMAT.INTL}
       locale={I18N.DEFAULT_LANGUAGE}
       messages={aofMessages("en", EN)}
       timeZone={DATE.TIME_ZONE}
@@ -173,7 +173,7 @@ describe("EditUser", () => {
   });
 
   it("a SAVED answer toasts and opens the list", async () => {
-    const saved: EditUserState = { notice: USERS.EDIT_NOTICE.SAVED };
+    const saved: EditUserState = { notice: USERS.EDIT.NOTICE.SAVED };
     vi.mocked(editUser).mockResolvedValue(saved);
     await renderForm();
     await save();
@@ -183,7 +183,7 @@ describe("EditUser", () => {
   });
 
   it("a picture refused toasts a warning and opens the list", async () => {
-    const failed: EditUserState = { notice: USERS.EDIT_NOTICE.AVATAR_FAILED };
+    const failed: EditUserState = { notice: USERS.EDIT.NOTICE.AVATAR_FAILED };
     vi.mocked(editUser).mockResolvedValue(failed);
     await renderForm();
     await save();
@@ -192,7 +192,7 @@ describe("EditUser", () => {
   });
 
   it("a CHANGED answer shows every App's changed-elsewhere alert and stays", async () => {
-    const changed: EditUserState = { error: USERS.EDIT_ERROR.CHANGED };
+    const changed: EditUserState = { error: USERS.EDIT.ERROR.CHANGED };
     vi.mocked(editUser).mockResolvedValue(changed);
     await renderForm();
     await save();
@@ -203,7 +203,7 @@ describe("EditUser", () => {
   });
 
   it("a GONE answer shows the alert and stays", async () => {
-    const gone: EditUserState = { error: USERS.EDIT_ERROR.GONE };
+    const gone: EditUserState = { error: USERS.EDIT.ERROR.GONE };
     vi.mocked(editUser).mockResolvedValue(gone);
     await renderForm();
     await save();

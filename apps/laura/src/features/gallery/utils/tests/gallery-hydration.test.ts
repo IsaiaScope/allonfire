@@ -58,7 +58,7 @@ describe.each([
   it("never keeps a photo's link longer than it lives", () => {
     // The rows hold private links signed for an hour.
     expect(GALLERY.CACHE.LIFE.expire).toBeLessThanOrEqual(
-      IMAGE_SERVER.PRIVATE_LINK_HOURS * UNIT.SECONDS_PER_HOUR
+      IMAGE_SERVER.LINK.PRIVATE_HOURS * UNIT.SECONDS_PER_HOUR
     );
     expect(GALLERY.CACHE.LIFE.stale).toBeGreaterThanOrEqual(
       5 * UNIT.SECONDS_PER_MINUTE

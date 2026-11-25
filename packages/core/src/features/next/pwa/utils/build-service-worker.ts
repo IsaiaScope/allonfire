@@ -35,14 +35,14 @@ const serviceWorkerOptions = ({
   cleanupOutdatedCaches: true,
   clientsClaim: true,
   // Next's hashed files: what the worker precaches.
-  globDirectory: join(appDir, NEXT.STATIC_DIR),
+  globDirectory: join(appDir, NEXT.STATIC.DIR),
   // A TTF under static/ is a generated image's font (Satori, on the server):
   // no page loads one, so no visitor downloads it.
   globIgnores: ["**/._*", "**/*.ttf"],
   globPatterns: ["**/*"],
   inlineWorkboxRuntime: true,
   maximumFileSizeToCacheInBytes: LARGEST_PRECACHED,
-  modifyURLPrefix: { "": NEXT.STATIC_URL },
+  modifyURLPrefix: { "": NEXT.STATIC.URL },
   // Starts a page load's request while a sleeping worker wakes up.
   navigationPreload: true,
   runtimeCaching: [

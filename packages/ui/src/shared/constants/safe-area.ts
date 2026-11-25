@@ -4,5 +4,5 @@
  * the home indicator reaches further (`useSafeAreaPadding`).
  */
 export const SAFE_AREA = {
-  POPUP_EDGE_PX: 5,
+  POPUP: { EDGE_PX: 5 },
 } as const;

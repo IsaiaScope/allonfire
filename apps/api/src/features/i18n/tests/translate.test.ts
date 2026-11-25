@@ -129,7 +129,7 @@ describe("translate — resilience", () => {
     );
 
     expect(rendered).toBe(
-      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT_LOCALE][ERROR.CODE.RATE_LIMITED]
+      TRANSLATION.CATALOGUE[TRANSLATION.DEFAULT.LOCALE][ERROR.CODE.RATE_LIMITED]
     );
     expect(lines).toEqual([
       expect.objectContaining({

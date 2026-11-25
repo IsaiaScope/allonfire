@@ -114,7 +114,7 @@ export const verifyIssuedLink: UpdateBefore = async (data, ctx) => {
     // Spelled as Better Auth spells its own, a relative callback included.
     const joiner = callbackURL.includes("?") ? "&" : "?";
     throw ctx.redirect(
-      `${callbackURL}${joiner}${AUTH.MAIL.ERROR_PARAM}=${BASE_ERROR_CODES.INVALID_TOKEN.code}`
+      `${callbackURL}${joiner}${AUTH.MAIL.PARAM.ERROR}=${BASE_ERROR_CODES.INVALID_TOKEN.code}`
     );
   }
   throw new APIError("UNAUTHORIZED", {

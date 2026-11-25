@@ -24,7 +24,7 @@ export type CopyLabels = {
  * ellipsis when it is long (the whole value is what it copies). Above a row's
  * link, which covers the rest of the row. Its tip says it copies; after a
  * click, a tap or a key, it opens on its own to say it copied (aloud too) for
- * `COPY.COPIED_MS`, since a touch never hovers. `wrap` lets the value run over
+ * `COPY.DELAY.COPIED_MS`, since a touch never hovers. `wrap` lets the value run over
  * two lines, wherever it breaks, before the ellipsis (a table keeps one line).
  */
 export const CopyText = ({
@@ -54,7 +54,7 @@ export const CopyText = ({
     if (!copy) {
       return;
     }
-    const timer = setTimeout(() => setCopy(null), COPY.COPIED_MS);
+    const timer = setTimeout(() => setCopy(null), COPY.DELAY.COPIED_MS);
     return () => clearTimeout(timer);
   }, [copy]);
   const open = hovered || copied !== null;

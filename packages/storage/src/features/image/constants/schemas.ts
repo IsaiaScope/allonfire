@@ -47,3 +47,17 @@ export const imageBodySchema = z
   })
   .meta({ ref: "Image" });
 export type ImageBody = z.infer<typeof imageBodySchema>;
+
+/**
+ * An Image as a screen draws it: what is seen, none of what only a manager
+ * reads (its access, apps, size, key or Version). Laura's cards and Gallery
+ * items are this shape.
+ */
+export const pictureBodySchema = imageBodySchema.pick({
+  alt: true,
+  blurDataUrl: true,
+  height: true,
+  id: true,
+  srcSet: true,
+  width: true,
+});

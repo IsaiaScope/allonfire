@@ -2,7 +2,6 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { UNIT } from "@allonfire/core/shared/constants/units";
 import { STORAGE } from "@allonfire/storage/shared/constants/paths";
-import { z } from "zod";
 import { BACK_OFFICE } from "../../features/back-office/constants/back-office";
 import { LAURA } from "../../features/laura/constants/laura";
 import { SERVICES } from "../../features/services/constants/services";
@@ -20,8 +19,10 @@ const BACK_OFFICE_PATH = `${VERSION_PATH}${BACK_OFFICE.PATH.BASE}` as const;
 const OVERVIEW_PATH =
   `${BACK_OFFICE_PATH}${BACK_OFFICE.OVERVIEW.PATH.BASE}` as const;
 /** Unversioned: orchestrators pin the probes, so they never move under the version. */
-const HEALTH = "/health";
-const READY = "/ready";
+const HEALTH_PATH = "/health";
+const READY_PATH = "/ready";
+/** Derived from the paths the health router serves, so it cannot drift from them. */
+const PROBE_PATHS: ReadonlySet<string> = new Set([HEALTH_PATH, READY_PATH]);
 
 /**
  * Everything about the API that is the same wherever the process runs: its
@@ -97,7 +98,7 @@ export const API = {
       /** Where the User module mounts. */
       USERS: `${BACK_OFFICE_PATH}${USER.PATH.BASE}`,
     },
-    HEALTH,
+    HEALTH: HEALTH_PATH,
     /** Where the Image module mounts. */
     IMAGES: `${VERSION_PATH}${STORAGE.PATH.IMAGES}`,
     /** Laura's own routes (ADR 0035): its prefix, the Favorites list and the Gallery list. */
@@ -107,10 +108,16 @@ export const API = {
       FAVORITES: `${LAURA_PATH}${LAURA.FAVORITES.PATH.BASE}`,
       /** The Gallery list. */
       GALLERY: `${LAURA_PATH}${LAURA.GALLERY.PATH.BASE}`,
+      /** Memory: the deck draw, the score write and the leaderboard read. */
+      GAMES: {
+        DECK: `${LAURA_PATH}${LAURA.GAMES.PATH.BASE}${LAURA.GAMES.PATH.DECK}`,
+        LEADERBOARD: `${LAURA_PATH}${LAURA.GAMES.PATH.BASE}${LAURA.GAMES.PATH.LEADERBOARD}`,
+        SCORES: `${LAURA_PATH}${LAURA.GAMES.PATH.BASE}${LAURA.GAMES.PATH.SCORES}`,
+      },
     },
     /** The OpenAPI document, and the URL the reference page fetches. */
     OPENAPI: "/openapi.json",
-    READY,
+    READY: READY_PATH,
     REFERENCE: "/reference",
     /** Where sub-routers mount onto the base app. */
     ROOT: "/",
@@ -119,6 +126,8 @@ export const API = {
     /** The version prefix every domain route mounts under. */
     VERSION: VERSION_PATH,
   },
+  /** What tracing, rate limiting and info-level logging skip: the probes' own traffic. */
+  PROBE: { PATHS: PROBE_PATHS },
   /** The key of each mount under `client.v1`, for a typed client that reads it as a property. */
   SEGMENT: { BACK_OFFICE: BACK_OFFICE.SEGMENT, LAURA: LAURA.SEGMENT },
   SHUTDOWN: {
@@ -136,9 +145,3 @@ export const API = {
   },
   VERSION: { CURRENT: CURRENT_VERSION },
 } as const;
-
-const shutdownStepSchema = z.enum(API.SHUTDOWN.STEP);
-export type ShutdownStep = z.infer<typeof shutdownStepSchema>;
-
-/** Derived from the paths the health router serves, so it cannot drift from them. */
-export const PROBE_PATHS: ReadonlySet<string> = new Set([HEALTH, READY]);

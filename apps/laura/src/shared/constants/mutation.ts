@@ -9,4 +9,8 @@ export const MUTATION = {
     /** Removes a photo from Laura. */
     REMOVE: [...QUERY.GALLERY.ALL, "remove"] as const,
   },
+  GAMES: {
+    /** Saves a finished game. */
+    SUBMIT_SCORE: [...QUERY.GAMES.ALL, "submit-score"] as const,
+  },
 } as const;

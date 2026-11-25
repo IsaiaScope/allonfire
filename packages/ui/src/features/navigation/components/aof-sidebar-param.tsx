@@ -2,7 +2,8 @@
 
 import { useQueryState } from "nuqs";
 import { useEffect, useRef } from "react";
-import { NAVIGATION, sidebarParam } from "../constants/navigation";
+import { NAVIGATION } from "../constants/navigation";
+import { sidebarParam } from "../utils/sidebar-param";
 import { useAOFSidebar } from "./aof-sidebar";
 
 /**

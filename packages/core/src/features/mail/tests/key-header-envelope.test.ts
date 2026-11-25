@@ -78,7 +78,7 @@ describe("keyHeaderEnvelope.send", () => {
 
   it("answers quota for a 400 saying the credits are spent", async () => {
     const { fetch } = fakeFetch(
-      jsonResponse({ code: MAIL.QUOTA_CODE }, HTTP.STATUS.BAD_REQUEST)
+      jsonResponse({ code: MAIL.CREDITS.QUOTA_CODE }, HTTP.STATUS.BAD_REQUEST)
     );
     expect(await keyHeaderEnvelope.send(ENDPOINT, MESSAGE, fetch)).toBe(
       MAIL.ATTEMPT.QUOTA
@@ -117,8 +117,8 @@ describe("keyHeaderEnvelope.usage", () => {
     ...plan: { type: string; credits: number; creditsType: string }[]
   ) => jsonResponse({ plan });
   const freePlan = {
-    creditsType: MAIL.SEND_CREDITS,
-    type: MAIL.DAILY_PLAN_TYPE,
+    creditsType: MAIL.CREDITS.SEND_TYPE,
+    type: MAIL.CREDITS.DAILY_PLAN_TYPE,
   };
   /** The daily limit an Admin set on the provider's card. */
   const LIMITS = { dailyLimit: 300 };
@@ -145,7 +145,9 @@ describe("keyHeaderEnvelope.usage", () => {
     const [day, month] = seen;
     expect(day?.url.searchParams.get("startDate")).toBe("2026-11-09");
     expect(day?.url.searchParams.get("endDate")).toBe("2026-11-09");
-    expect(month?.url.searchParams.get("days")).toBe("31");
+    expect(month?.url.searchParams.get("days")).toBe(
+      String(MAIL.USAGE.MONTH_DAYS)
+    );
     expect(day?.headers.get(MAIL.HEADER.API_KEY)).toBe(ENDPOINT.key);
     expect(seen[2]?.url.pathname).toBe(
       `/v3${MAIL.PATH.KEY_HEADER_ENVELOPE.ACCOUNT}`
@@ -189,7 +191,7 @@ describe("keyHeaderEnvelope.usage", () => {
       report(40),
       account({
         credits: 5000,
-        creditsType: MAIL.SEND_CREDITS,
+        creditsType: MAIL.CREDITS.SEND_TYPE,
         type: "subscription",
       })
     );

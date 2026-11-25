@@ -23,7 +23,7 @@ vi.mock("next/navigation", async (importOriginal) => ({
   useSearchParams: () => new URLSearchParams(query.search),
 }));
 
-const open = (search: string = AUTH.MAIL.VERIFIED_PARAM) => {
+const open = (search: string = AUTH.MAIL.PARAM.VERIFIED) => {
   query.search = search;
   return render(
     <NextIntlClientProvider locale="en" messages={STUB_MESSAGES}>
@@ -44,7 +44,7 @@ it("says the email is verified and leads back to Sign in, in the Design's dress"
 });
 
 it("says the link no longer works when Better Auth sent an error, still leading back", async () => {
-  const screen = await open(`${AUTH.MAIL.ERROR_PARAM}=invalid_token`);
+  const screen = await open(`${AUTH.MAIL.PARAM.ERROR}=invalid_token`);
   await expect.element(screen.getByText(t.failed)).toBeVisible();
   expect(screen.getByText(t.verified).query()).toBeNull();
   await expect

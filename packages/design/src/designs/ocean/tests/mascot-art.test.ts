@@ -38,10 +38,23 @@ const SECONDARY = [
   "WHALE_NOTO",
 ] as const;
 
+/** The badges' pictures: the end of a Memory game (a record, a best, a rank) and the leaderboard's podium and headings. */
+const BADGES = [
+  "TROPHY_NOTO",
+  "STAR_NOTO",
+  "MEDAL_NOTO",
+  "MEDAL_SILVER_NOTO",
+  "MEDAL_BRONZE_NOTO",
+  "BUST_NOTO",
+  "BUSTS_NOTO",
+  "TROPHY_SILVER_NOTO",
+  "TROPHY_BRONZE_NOTO",
+] as const;
+
 describe("OCEAN_ART", () => {
   it("holds the owner's pool and nothing else", () => {
     expect(new Set(objectKeys(OCEAN_ART))).toEqual(
-      new Set([...PRIMARY, ...SECONDARY])
+      new Set([...PRIMARY, ...SECONDARY, ...BADGES])
     );
   });
 

@@ -68,15 +68,15 @@ verifies this table before the cutover.
 | `src/components/animated-page.tsx`, `src/components/motion-provider.tsx`, `src/lib/animation-variants.ts` | deleted | `framer-motion` is dropped; motion is CSS behind `motion-safe:` where the Design needs it |
 | `src/components/user-role-provider.tsx` | deleted | the Role is read on the server from the Session (`AOFRoleGatedSection`, the account menu); there is no client Role context, and Viewer is gone |
 | `src/lib/blur-placeholder.ts` | replaced | the API's `blurDataUrl` with `AOFStorageImage placeholder="blur"` (Phase 4) |
-| `src/lib/convert-heic.ts` | replaced | `heicToJpeg` and `isHeic` in `@allonfire/ui/shared/utils/heic-to-jpeg` (`heic-to`; Phase 5) |
-| `src/lib/file-validation.ts` | replaced | the Image module's `IMAGE.LIMIT.*` and ui's file field (Phase 5) |
+| `src/lib/convert-heic.ts` | replaced | `heicToJpeg` and `isHeic` in `@allonfire/ui/shared/utils/heic-to-jpeg` (`heic-to`), for the preview only: the original file is sent (Phase 5, done) |
+| `src/lib/file-validation.ts` | replaced | `acceptFiles` over the Image module's `IMAGE.LIMIT.*`, and the API's limits (Phase 5, done) |
 | `src/features/gallery/**` | kept (rewritten: Phase 4) | Phase 4 `features/gallery`: private-cache hydration, `useInfiniteQuery`, an `optimisticMutation` favorite, `AOFStorageImage`; `use-heart-animation.ts` and its heart are not carried (a Favorite is a static mark for a User) |
 | `src/features/games/**/quiz*`, `src/features/games/hooks/use-quiz-game.ts`, `src/features/games/components/game-hub.tsx` | deleted | Quiz is removed completely (spec); the hub listed games and Memory is the only one |
-| `src/features/games/utils/format-time.ts` | replaced | the Phase 6 timer helper |
-| `src/features/games/**` | replaced | Phase 6 `features/memory` (the Memory board, leaderboard and score actions) |
+| `src/features/games/utils/format-time.ts` | replaced | `formatTime` (`m:ss`) in core's `shared/utils/format-time`, over its `UNIT` (Phase 6) |
+| `src/features/games/**` | kept (rewritten: Phase 6) | the same folder, rebuilt as the Memory board, leaderboard and score action (the Quiz and the hub are gone) |
 | `src/features/layout/hooks/use-auto-hide-navbar.ts` | deleted | a sidebar frame has no navbar to hide |
 | `src/features/layout/**` | replaced | `AOFAppFrame`, `AOFSidebarSectionLink` and `AOFFrameBreadcrumb` in ui, bound in `src/features/navigation` (Task 10) |
-| `src/features/upload/**` | replaced | Phase 5 `features/upload`: the shared dropzone and preview grid, all-or-nothing `POST /images` |
+| `src/features/upload/**` | kept (rewritten: Phase 5, done) | the same folder, binding `AOFImageDropzone`, `AOFPictureRow` and the one all-or-nothing `POST /images` (the sequential loop is gone) |
 | `src/features/*/CLAUDE.md`, `src/features/*/README.md` | deleted | the old feature docs describe deleted code; later phases write their own |
 
 ## Libraries
@@ -87,7 +87,7 @@ verifies this table before the cutover.
 | `lucide-react` | replaced | `@tabler/icons-react` |
 | `react-hook-form` | replaced | `useAOFForm` (`@allonfire/ui/features/form/utils/form`) |
 | `sonner` | replaced | `AOFToaster` and `useAOFToast` (ui); sonner stays inside ui |
-| `heic2any` | replaced | `heic-to` through ui's `heic-to-jpeg` |
+| `heic2any` | replaced | `heic-to` through ui's `heic-to-jpeg` (the dependency is removed) |
 | `@t3-oss/env-nextjs` | kept | `createEnv`, as the Back Office |
 | `better-auth`, `@better-auth/prisma-adapter` | deleted | auth runs in the API |
 | `@allonfire/database` | kept | enums, `ACCESS` and fixtures only; no Prisma client or service import (Task 1's guard) |

@@ -3,7 +3,7 @@ import {
   I18N,
 } from "@allonfire/core/features/i18n/constants/locales";
 import { redirect } from "next/navigation";
-import type { AppPath } from "../constants/paths";
+import type { AppPath } from "../../../shared/constants/auth-schema";
 
 /**
  * The locale a form bound to its action (`action.bind(null, locale)`).

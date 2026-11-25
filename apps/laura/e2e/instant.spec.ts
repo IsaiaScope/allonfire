@@ -3,7 +3,8 @@ import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translat
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { instant } from "@next/playwright";
 import { expect, type Page, test } from "@playwright/test";
-import { LAURA, SECTION } from "../src/shared/constants/laura";
+import { SECTION } from "../src/features/navigation/constants/sections";
+import { LAURA } from "../src/shared/constants/laura";
 import { enT } from "../src/shared/tests/translators";
 import { signInAsUser, tapSidebarLink } from "./pages";
 import { gridOf, tileOf } from "./photos";

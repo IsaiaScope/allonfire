@@ -31,8 +31,9 @@ apps/api/
     │   ├── docs/         routes/{index,handlers}, constants/openapi,
     │   │                 utils/enabled (isDocsEnabled), utils/merge
     │   │                 (mergeOpenApi) — /openapi.json, /reference
-    │   ├── health/       routes/{index,routes,handlers}, constants/statuses,
-    │   │                 utils/status (HealthDeps, status mapping) — /health, /ready
+    │   ├── health/       routes/{index,routes,handlers}, constants/{statuses,statuses-schema},
+    │   │                 utils/{status (HealthDeps, status mapping), health-schema (the bodies)}
+    │   │                 — /health, /ready
     │   ├── auth/         auth (instance), middleware/auth-rate-limit (the
     │   │                 API's limiter wrapped in the module's authLimit)
     │   ├── errors/       constants/problem-details,
@@ -49,7 +50,7 @@ apps/api/
     │   ├── logger/       logger (core's createLogger with the API's env),
     │   │                 constants/request-log (REQUEST_LOG),
     │   │                 middleware/request-logger
-    │   ├── rate-limit/   constants/limits, middleware/rate-limiter
+    │   ├── rate-limit/   constants/limits, utils/rate-limit-key, middleware/rate-limiter
     │   ├── redis/        redis, constants/redis (REDIS)
     │   ├── services/     routes/ (`/v1/services`: an Admin's list and edits,
     │   │                 a provider's test send; the workflow service's
@@ -65,7 +66,8 @@ apps/api/
         ├── tests/        app-deps, sign-in, seed-user, problem-of, capture,
         │                 memory-store — helpers more than one feature's tests read
         ├── types/        bindings (AppBindings)
-        └── utils/        outage (outageLatch), probe (isProbe)
+        └── utils/        outage (outageLatch), probe (isProbe), codes-for (codesFor),
+                          shutdown-step (ShutdownStep)
 ```
 
 A constant belongs in `features/<topic>/constants/` unless more than one
@@ -77,9 +79,9 @@ redaction list, `ENV.BOOLEAN`, `SEPARATOR`, `PATTERN.TRAILING_SLASHES`, `UNIT` (
 in `shared/constants/error.ts`. An error code is never a string literal, tests included; only core's own test types them, as the contract clients switch on. A constant's type always comes from zod:
 `export const xSchema = z.enum(X)` (or `z.literal(TUPLE)`), then
 `export type X = z.infer<typeof xSchema>`. A lookup table is `as const satisfies
-Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `API.PATH` nests as the routes do: an App's group is an object with its own `BASE` and its mounts (`API.PATH.LAURA.GALLERY`, `API.PATH.BACK_OFFICE.OVERVIEW.STORAGE`); an App's constants are one root named after it (`LAURA`, `BACK_OFFICE`, in the API; each App's own descriptor of the same name is aliased where both are imported) whose keys are its folders (`LAURA.FAVORITES`, `BACK_OFFICE.OVERVIEW.STORAGE`), built from each child folder's own object (`LAURA_FAVORITES`, `OVERVIEW_STORAGE`), which only its parent imports; a feature's constants are named after its folder path (`LAURA_GALLERY` in `laura/gallery`, `OVERVIEW_STORAGE` in `back-office/overview/storage`, its files `constants/storage` and `storage-deps`), never after what it holds. `API.PATH` is
+Record<K, V>`, never annotated `: Record<K, V>`, which widens every lookup to `V`. `API.PATH` nests as the routes do: an App's group is an object with its own `BASE` and its mounts (`API.PATH.LAURA.GALLERY`, `API.PATH.BACK_OFFICE.OVERVIEW.STORAGE`); an App's constants are one root named after it (`LAURA`, `BACK_OFFICE`, in the API; each App's own descriptor of the same name is aliased where both are imported) whose keys are its folders (`LAURA.FAVORITES`, `BACK_OFFICE.OVERVIEW.STORAGE`), built from each child folder's own object (`LAURA_FAVORITES`, `OVERVIEW_STORAGE`), which only its parent imports; a route module (a sub-feature with its own routes: `laura/gallery`, `laura/favorites`, `back-office/overview/storage`) keeps its constants in its own folder, named after its folder path (`LAURA_GALLERY`, `OVERVIEW_STORAGE`, its files `constants/storage` and `storage-deps`), never after what it holds; every other sub-feature's constants merge into the parent's file (`conventions.md`, Constants). `API.PATH` is
 shared too: the health routes serve its probes, and telemetry, the request logger and
-the rate limiter skip the `PROBE_PATHS` derived from them. `HEALTH`, `OPENAPI`,
+the rate limiter skip `API.PROBE.PATHS`, derived from them. `HEALTH`, `OPENAPI`,
 `RATE_LIMIT`, `REDIS` and `TELEMETRY` (span attributes, the default service
 name, Prisma's startup spans) belong to the feature that owns them. How telemetry
 ships (signal paths, the `TELEMETRY_*` env patterns, resource attributes, the
@@ -124,7 +126,7 @@ many, and `middlewares/` reads wrong.
 - **Every documented body comes from its zod schema**: `content: { [HTTP.CONTENT_TYPE.JSON]:
   { schema: resolver(bodySchema) } }` in `describeRoute`, the same schema the
   handler `satisfies`. An error response is `...problemResponses(status)`
-  (`@allonfire/core/features/errors/constants/openapi`): `features/docs/routes/handlers.ts`
+  (`@allonfire/core/features/errors/utils/openapi`): `features/docs/routes/handlers.ts`
   registers one `Problem<status>` per `API.ERROR.STATUS`, listing only that status's
   codes (`API.ERROR.STATUS_OF_CODE`). Never
   `@hono/zod-openapi`: `hono-openapi` keeps routes plain chained Hono.
@@ -138,6 +140,7 @@ many, and `middlewares/` reads wrong.
 
 ## Guards, env, Redis, i18n
 
+- **Laura's games** (`features/laura/games`, ADR 0035) sit under `/v1/laura/games/<game>/`: the Memory deck (`GET .../memory/deck`) is a random draw, so it is never cached (`no-cache`, a client draw); a score's write (`POST .../memory/scores`) asks the Session fresh through `canPlay` (`manageGuard(deps.canPlay)`) and refuses a game no player could have produced with the coded error `IMPLAUSIBLE_SCORE`; the leaderboard is read by any Member of Laura.
 - **Auth guards** come from `@allonfire/auth/features/hono/guards/middleware/*` and throw
   `HTTPException`; never build a 401/403 by hand. `guard(allows)` may await `allows`: a
   route that changes Users reads the caller fresh, as the User module's `POST`, `PATCH`,
@@ -170,7 +173,7 @@ many, and `middlewares/` reads wrong.
   there is the explicit preference order `match()` sees, main variant of each
   language first; `packages/core/src/features/i18n/tests/locales.test-d.ts` fails if a locale is
   missing from it or speaks a language outside `I18N.BASE_LANGUAGES`. The API's
-  `features/i18n/constants/locales.ts` keeps `TRANSLATION.DEFAULT_LOCALE` and the catalogue.
+  `features/i18n/constants/locales.ts` keeps `TRANSLATION.DEFAULT.LOCALE` and the catalogue.
   `TRANSLATION.CATALOGUE` uses computed `[I18N.LOCALE.X]` keys
   so no tag is typed twice, and `satisfies Record<Locale, Translations>` fails if a
   locale has no messages. `Translations` is `typeof EN`, derived rather than

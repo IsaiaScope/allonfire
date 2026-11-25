@@ -1,4 +1,4 @@
-import type { AppPath } from "@allonfire/auth/features/next/constants/paths";
+import type { AppPath } from "@allonfire/auth/shared/constants/auth-schema";
 import { AOFGateFrame } from "@allonfire/ui/features/auth/components/aof-gate-frame";
 import { cva } from "class-variance-authority";
 import { useTranslations } from "next-intl";
@@ -45,9 +45,9 @@ export const TicketGate = ({
       header={
         <DepartureBoard
           className="motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:animate-in motion-safe:duration-500"
-          kana={SIGN_IN.BOARD_KANA}
+          kana={SIGN_IN.KANA.BOARD}
           notice={{
-            kana: SIGN_IN.NOTICE_KANA,
+            kana: SIGN_IN.KANA.NOTICE,
             pauseLabel: t("pauseNotice"),
             text: t("notice"),
           }}
@@ -62,7 +62,7 @@ export const TicketGate = ({
       page={page}
       wall={
         /* The gate's name, painted huge across the wall behind the card. */
-        <BrushKanji kanji={SIGN_IN.BOARD_KANA} />
+        <BrushKanji kanji={SIGN_IN.KANA.BOARD} />
       }
     >
       <StationSign seal={<Hanko seal={SIGN_IN.SEAL} />} status={status}>

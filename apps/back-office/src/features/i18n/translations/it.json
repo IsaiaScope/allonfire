@@ -14,28 +14,7 @@
     "add": {
       "added": "{count, plural, one {# immagine aggiunta} other {# immagini aggiunte}}",
       "button": "Aggiungi",
-      "error": {
-        "failed": "Impossibile aggiungere le immagini. Riprova.",
-        "invalid": "Controlla i campi e riprova.",
-        "refused": "Non puoi più modificare le immagini. Accedi di nuovo.",
-        "tooLarge": "Un'immagine o l'intero invio è troppo grande.",
-        "unsupported": "Un file non è un'immagine supportata."
-      },
       "page": "Aggiungi immagini",
-      "pick": {
-        "button": "Scegli le immagini",
-        "hint": "Fino a {files} immagini, {size} MiB ciascuna, {total} MiB in tutto.",
-        "input": "Immagini da aggiungere",
-        "none": "Nessuna immagine scelta."
-      },
-      "row": {
-        "remove": "Rimuovi {name}",
-        "title": "Immagine {number}"
-      },
-      "shared": {
-        "apply": "Applica a tutte le immagini",
-        "title": "Per le prossime immagini scelte"
-      },
       "submit": "Aggiungi immagini",
       "submitting": "Aggiunta",
       "title": "Aggiungi immagini"
@@ -121,25 +100,7 @@
       "title": "Modifica immagine"
     },
     "form": {
-      "access": "Accesso",
-      "accessWho": "Chi può vederla",
-      "addLanguage": "Aggiungi una lingua",
-      "altGroup": "Testo alternativo",
-      "appIn": "Inclusa",
-      "appOut": "Non inclusa",
-      "apps": "App",
-      "cancel": "Annulla",
-      "clearAlt": "Cancella il testo alternativo: {language}",
-      "field": {
-        "altTooLong": "Accorcia il testo alternativo",
-        "appsRequired": "Scegli almeno un'App",
-        "fileTooLarge": "Questa immagine è troppo grande",
-        "tooManyFiles": "Troppe immagini per un solo invio",
-        "totalTooLarge": "Le immagini insieme sono troppo grandi"
-      },
-      "languageSearch": "Cerca una lingua",
-      "noLanguage": "Nessuna lingua trovata",
-      "removeLanguage": "Rimuovi {language}"
+      "cancel": "Annulla"
     }
   },
   "List": {

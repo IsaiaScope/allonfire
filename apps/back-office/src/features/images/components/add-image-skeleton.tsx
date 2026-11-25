@@ -1,101 +1,25 @@
-import { UNIT } from "@allonfire/core/shared/constants/units";
-import { objectKeys } from "@allonfire/core/shared/utils/object";
-import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import {
-  AOFFormActionsSkeleton,
-  AOFFormAlertSkeleton,
-  AOFFormBar,
-  AOFFormSkeleton,
-} from "@allonfire/ui/features/form/components/aof-form-skeleton";
-import {
-  AOFCardContent,
-  AOFCardHeader,
-} from "@allonfire/ui/shared/components/aof-card";
-import { cn } from "@allonfire/ui/shared/utils/utils";
-import { IconPhotoPlus } from "@tabler/icons-react";
+"use client";
+
+import { APP } from "@allonfire/design/apps/app";
+import { AOFAddImagesSkeleton } from "@allonfire/ui/features/image/upload/components/aof-add-images-skeleton";
 import { useTranslations } from "next-intl";
-import { CardFrame } from "@/shared/components/card-frame";
-import { APP_ENTRY } from "@/shared/constants/apps";
-import { IMAGES } from "../constants/images";
-import { sharedSet } from "../utils/add-image-layout";
+import { ADD_IMAGE_DRESSING } from "./add-image-dressing";
+
+const APPS = { kind: "options", options: APP.OPTIONS } as const;
 
 /**
- * The Add Images page while it waits for its Session, drawn as the empty form
- * draws itself so nothing moves when it arrives: the words that never change
- * stand as they are (the title, the limits, each fieldset's name), and every
- * control is a bar at its real size. A page of this kind keeps a browser test
- * that sets its height against the real form's, at a wide and a phone width,
- * so a change to the form that skips this turns that test red.
+ * The Add Images page while it waits for its Session: the shared skeleton in
+ * the Back Office's Design, one Apps toggle for each App. A browser test sets
+ * its height against the real form's, at a wide and a phone width.
  */
 export const AddImageSkeleton = () => {
   const t = useTranslations("Images");
   return (
-    <AOFFormSkeleton label={t("loading")}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h1 className="flex items-center gap-2 font-bold text-2xl">
-            <IconPhotoPlus aria-hidden className="size-7" />
-            {t("add.title")}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {t("add.pick.hint", {
-              files: IMAGE.LIMIT.FILES_PER_UPLOAD,
-              size: IMAGE.LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB,
-              total: IMAGE.LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB,
-            })}
-          </p>
-        </div>
-        <AOFFormBar className="w-44 shrink-0" part="button" tone="primary" />
-      </div>
-      <div className="flex flex-1 flex-col gap-8">
-        <CardFrame kanji={IMAGES.ADD_KANJI}>
-          <AOFCardHeader>
-            <AOFFormBar className="h-7 w-56" part="label" />
-          </AOFCardHeader>
-          <AOFCardContent>
-            <div aria-hidden className={sharedSet({ part: "grid" })}>
-              <fieldset className="flex min-w-0 flex-col">
-                <legend className="mb-2 font-bold text-base">
-                  {t("form.access")}
-                </legend>
-                <div className="flex flex-col gap-2">
-                  <span className="font-bold text-sm">
-                    {t("form.accessWho")}
-                  </span>
-                  <AOFFormBar part="toggle" />
-                </div>
-              </fieldset>
-              <div
-                className={cn(
-                  sharedSet({ part: "apps" }),
-                  "flex flex-col gap-2"
-                )}
-              >
-                <fieldset className="flex min-w-0 flex-col gap-4">
-                  <legend className="mb-2 font-bold text-base">
-                    {t("form.apps")}
-                  </legend>
-                  {objectKeys(APP_ENTRY).map((app) => (
-                    <div className="flex flex-col gap-2" key={app}>
-                      <AOFFormBar part="label" />
-                      <AOFFormBar part="toggle" />
-                    </div>
-                  ))}
-                </fieldset>
-                <AOFFormBar part="error" />
-              </div>
-              <AOFFormBar
-                className={sharedSet({ part: "apply" })}
-                part="button"
-                tone="primary"
-              />
-            </div>
-          </AOFCardContent>
-        </CardFrame>
-        <p className="text-muted-foreground">{t("add.pick.none")}</p>
-        <AOFFormAlertSkeleton className="mt-4" />
-        <AOFFormActionsSkeleton />
-      </div>
-    </AOFFormSkeleton>
+    <AOFAddImagesSkeleton
+      apps={APPS}
+      dressing={ADD_IMAGE_DRESSING}
+      loading={t("loading")}
+      title={t("add.title")}
+    />
   );
 };

@@ -31,7 +31,7 @@ export const AOFSelectContent = (
   const padding = useSafeAreaPadding();
   const clear =
     Math.max(padding.top, padding.right, padding.bottom, padding.left) ===
-    SAFE_AREA.POPUP_EDGE_PX;
+    SAFE_AREA.POPUP.EDGE_PX;
   return (
     <SelectContent
       alignItemWithTrigger={clear}

@@ -58,7 +58,7 @@ const USER: UserBody = {
 const renderIn = (children: ReactNode) =>
   render(
     <NextIntlClientProvider
-      formats={DATE.FORMATS}
+      formats={DATE.FORMAT.INTL}
       locale={I18N.DEFAULT_LANGUAGE}
       messages={aofMessages("en", EN)}
       timeZone={DATE.TIME_ZONE}

@@ -8,13 +8,13 @@ import { aofMessages } from "@allonfire/core/features/next/i18n/utils/aof-transl
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App, Role } from "@allonfire/database/enums";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { APP } from "@allonfire/design/apps/app";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { NextIntlClientProvider } from "next-intl";
 import { Activity, type ReactNode } from "react";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import { AUTH_EN } from "@/shared/tests/auth-words";
 import { enT } from "@/shared/tests/translators";
@@ -53,7 +53,7 @@ const t = EN.Users.add;
 const FORM = EN.Users.form;
 const roleRow = (app: App) =>
   page.getByRole("radiogroup", {
-    name: enT("Users.form.role", { app: APP_ENTRY[app].name }),
+    name: enT("Users.form.role", { app: APP.ENTRY[app].name }),
   });
 const NEW = {
   email: "new@add-user.test",
@@ -63,7 +63,7 @@ const NEW = {
 
 const Providers = ({ children }: { children: ReactNode }) => (
   <NextIntlClientProvider
-    formats={DATE.FORMATS}
+    formats={DATE.FORMAT.INTL}
     locale={I18N.DEFAULT_LANGUAGE}
     messages={aofMessages("en", EN)}
     timeZone={DATE.TIME_ZONE}
@@ -199,7 +199,7 @@ describe("AddUser", () => {
   });
 
   it("a taken email marks the email field and keeps what was typed", async () => {
-    const taken: AddUserState = { error: USERS.ADD_ERROR.TAKEN };
+    const taken: AddUserState = { error: USERS.ADD.ERROR.TAKEN };
     vi.mocked(addUser).mockResolvedValue(taken);
     await renderForm();
     await fill();
@@ -214,7 +214,7 @@ describe("AddUser", () => {
   });
 
   it("any other refusal shows one message over the form", async () => {
-    const refused: AddUserState = { error: USERS.ADD_ERROR.INVALID };
+    const refused: AddUserState = { error: USERS.ADD.ERROR.INVALID };
     vi.mocked(addUser).mockResolvedValue(refused);
     await renderForm();
     await fill();
@@ -274,7 +274,7 @@ describe("AddUser's picture", () => {
   });
 
   it("a picture that was not saved says so and goes to the list: the User was added", async () => {
-    const notSaved: AddUserState = { notice: USERS.ADD_NOTICE.AVATAR_FAILED };
+    const notSaved: AddUserState = { notice: USERS.ADD.NOTICE.AVATAR_FAILED };
     vi.mocked(addUser).mockResolvedValue(notSaved);
     await renderForm();
     await fill();

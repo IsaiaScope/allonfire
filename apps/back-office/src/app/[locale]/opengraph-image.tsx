@@ -1,7 +1,7 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { routing } from "@/features/i18n/routing";
-import { shareImage } from "@/shared/constants/page-information";
+import { shareImage } from "@/features/metadata/utils/page-information";
 
 // Next reads each metadata file's exports from that file, so this one and
 // its twin (Open Graph, X) hold the same lines over one shared card.

@@ -23,7 +23,7 @@ describe("documentation routes", () => {
       .parse(await res.json());
     expect(spec.paths[API.PATH.HEALTH]).toBeDefined();
     expect(spec.paths[API.PATH.HEALTH].get.summary).toBe(
-      HEALTH.PROBE_DESCRIPTION.HEALTH_SUMMARY
+      HEALTH.PROBE_DESCRIPTION.HEALTH.SUMMARY
     );
   });
 

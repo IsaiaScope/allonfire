@@ -1,5 +1,5 @@
 import type { AUTH } from "@allonfire/auth/shared/constants/auth";
-import { rateLimitKey } from "../../../features/rate-limit/constants/limits";
+import { rateLimitKey } from "../../../features/rate-limit/utils/rate-limit-key";
 import { API } from "../api";
 
 // A literal, not `string`: the Apps compose their addresses from it.

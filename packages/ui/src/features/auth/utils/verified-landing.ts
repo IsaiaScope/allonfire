@@ -7,4 +7,4 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
  * page someone opened by hand.
  */
 export const verifiedLanding = (appUrl: string, locale: string) =>
-  `${appUrl}/${locale}${AUTH.PAGE.EMAIL_VERIFIED}?${AUTH.MAIL.VERIFIED_PARAM}=1`;
+  `${appUrl}/${locale}${AUTH.PAGE.EMAIL_VERIFIED}?${AUTH.MAIL.PARAM.VERIFIED}=1`;

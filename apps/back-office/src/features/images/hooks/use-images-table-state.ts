@@ -7,7 +7,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { useCallback } from "react";
 import { IMAGES } from "../constants/images";
-import { imagesParams, queryOf } from "../constants/images-params";
+import { imagesParams, queryOf } from "../utils/images-params";
 import { useImagesView } from "./use-images-view";
 
 /**

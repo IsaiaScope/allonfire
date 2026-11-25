@@ -8,7 +8,8 @@ import {
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { safeAreaSuite } from "@allonfire/ui/features/app/tests/e2e/safe-area-suite";
 import { expect, test } from "@playwright/test";
-import { SECTION, SECTIONS } from "../src/shared/constants/laura";
+import { SECTION } from "../src/features/navigation/constants/sections";
+import { LAURA } from "../src/shared/constants/laura";
 import { signInAsAdmin } from "./pages";
 import { gridOf, previewOf } from "./photos";
 
@@ -17,7 +18,7 @@ safeAreaSuite({
   // Laura has no page with a param yet: only the catch-all.
   address: { "/[...rest]": () => "/no-such-page" },
   appDir: fileURLToPath(new URL("../src/app", import.meta.url)),
-  firstSection: SECTIONS[0].path,
+  firstSection: LAURA.sections[0].path,
   signedIn: signInAsAdmin,
 });
 

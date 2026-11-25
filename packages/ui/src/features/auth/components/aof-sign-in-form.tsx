@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "@allonfire/auth/features/next/actions/sign-in";
-import type { SignInState } from "@allonfire/auth/features/next/constants/api";
+import type { SignInState } from "@allonfire/auth/features/next/types/auth-state";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { aofBaseNavigation } from "@allonfire/core/features/next/i18n/utils/aof-base-navigation";
 import { IconKey, IconMail, IconNfc } from "@tabler/icons-react";
@@ -59,9 +59,9 @@ export const AOFSignInForm = ({
   const formProps = useAOFFormAction(form, action);
   // A server-side refusal or outage is not the fields' fault.
   const invalid =
-    error === AUTH.SIGN_IN_ERROR.INVALID ||
-    error === AUTH.SIGN_IN_ERROR.MISSING;
-  const unverified = error === AUTH.SIGN_IN_ERROR.UNVERIFIED;
+    error === AUTH.ERROR.SIGN_IN.INVALID ||
+    error === AUTH.ERROR.SIGN_IN.MISSING;
+  const unverified = error === AUTH.ERROR.SIGN_IN.UNVERIFIED;
 
   return (
     <form

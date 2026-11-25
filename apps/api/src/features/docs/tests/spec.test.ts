@@ -6,7 +6,7 @@ import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import {
   problemResponseName,
   problemResponses,
-} from "@allonfire/core/features/errors/constants/openapi";
+} from "@allonfire/core/features/errors/utils/openapi";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import {
   objectFromEntries,
@@ -286,6 +286,7 @@ describe("GET /openapi.json: tags and their groups", () => {
     expect(groupNamed(document, LAURA.OPENAPI_GROUP)).toEqual([
       LAURA.GALLERY.OPENAPI_TAG,
       LAURA.FAVORITES.OPENAPI_TAG,
+      LAURA.GAMES.OPENAPI_TAG,
     ]);
   });
 
@@ -315,7 +316,11 @@ describe("GET /openapi.json: tags and their groups", () => {
       new Set([USER.OPENAPI_TAG, BACK_OFFICE.OVERVIEW.OPENAPI_TAG])
     );
     expect(tagsUnder(API.PATH.LAURA.BASE)).toEqual(
-      new Set([LAURA.GALLERY.OPENAPI_TAG, LAURA.FAVORITES.OPENAPI_TAG])
+      new Set([
+        LAURA.GALLERY.OPENAPI_TAG,
+        LAURA.FAVORITES.OPENAPI_TAG,
+        LAURA.GAMES.OPENAPI_TAG,
+      ])
     );
   });
 });
@@ -429,6 +434,53 @@ const problemDocument = async () => problemSpecSchema.parse(await fullSpec());
 const problemRefOf = <S extends number>(status: S) =>
   problemResponses(status)[status];
 
+describe("GET /openapi.json: Laura games", () => {
+  it("documents the three Memory operations with the problem responses and their models", async () => {
+    const document = z
+      .object({
+        components: z.object({ schemas: z.record(z.string(), z.unknown()) }),
+        paths: z.record(
+          z.string(),
+          z.record(
+            z.string(),
+            z.object({
+              responses: z.record(z.string(), z.unknown()),
+              tags: z.array(z.string()),
+            })
+          )
+        ),
+      })
+      .parse(await fullSpec());
+    const { DECK, LEADERBOARD, SCORES } = API.PATH.LAURA.GAMES;
+    const operations = [
+      [document.paths[DECK]?.get, HTTP.STATUS.OK],
+      [document.paths[LEADERBOARD]?.get, HTTP.STATUS.OK],
+      [document.paths[SCORES]?.post, HTTP.STATUS.CREATED],
+    ] as const;
+    for (const [operation, success] of operations) {
+      expect(operation?.tags).toEqual([LAURA.GAMES.OPENAPI_TAG]);
+      expect(objectKeys(operation?.responses ?? {})).toEqual(
+        expect.arrayContaining([
+          String(success),
+          String(HTTP.STATUS.UNAUTHORIZED),
+          String(HTTP.STATUS.FORBIDDEN),
+        ])
+      );
+    }
+    expect(objectKeys(document.paths[SCORES]?.post?.responses ?? {})).toContain(
+      String(HTTP.STATUS.BAD_REQUEST)
+    );
+    expect(objectKeys(document.components.schemas)).toEqual(
+      expect.arrayContaining([
+        "MemoryDeck",
+        "MemoryLeaderboard",
+        "MemoryScore",
+        "MemoryScoreInput",
+      ])
+    );
+  });
+});
+
 describe("GET /openapi.json error responses", () => {
   it("documents the Image reads with no sign-in errors, the writes with them", async () => {
     const { paths } = await problemDocument();
@@ -460,6 +512,7 @@ describe("GET /openapi.json error responses", () => {
         ?.properties.code.enum
     ).toEqual([
       ERROR.CODE.BAD_REQUEST,
+      LAURA.GAMES.ERROR_CODE.IMPLAUSIBLE_SCORE,
       SERVICES.ERROR_CODE.PROVIDER_INCOMPLETE,
       ERROR.CODE.VALIDATION_FAILED,
     ]);

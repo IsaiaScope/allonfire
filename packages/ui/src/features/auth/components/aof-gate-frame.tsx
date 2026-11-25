@@ -1,4 +1,4 @@
-import type { AppPath } from "@allonfire/auth/features/next/constants/paths";
+import type { AppPath } from "@allonfire/auth/shared/constants/auth-schema";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { cn } from "../../../shared/utils/utils";

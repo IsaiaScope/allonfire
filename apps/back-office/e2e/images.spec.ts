@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import { expect, test } from "@playwright/test";
 import { newImageHref } from "../src/features/images/utils/image-href";
-import { APP_ENTRY } from "../src/shared/constants/apps";
 import { BACK_OFFICE } from "../src/shared/constants/back-office";
 import {
   addLanguage,
@@ -11,6 +11,7 @@ import {
   deleteFromList,
   deleteOpened,
   editForm,
+  fields,
   fillRow,
   imageLink,
   openAdd,
@@ -20,6 +21,7 @@ import {
   rowOf,
   submitAdd,
   t,
+  upload,
 } from "./images-flow";
 import { signInAsAdmin } from "./pages";
 
@@ -59,9 +61,11 @@ test("the Add page starts the shared set on an App the Admin administers", async
   await page.goto(newImageHref());
   await expect(
     page
-      .getByRole("group", { name: t.add.shared.title })
-      .getByRole("radiogroup", { name: APP_ENTRY[App.BACK_OFFICE].name })
-      .getByRole("button", { exact: true, name: t.form.appIn })
+      .getByRole("group", { name: upload.shared.title })
+      .getByRole("radiogroup", {
+        name: APP.ENTRY[App.BACK_OFFICE].name,
+      })
+      .getByRole("button", { exact: true, name: fields.appIn })
   ).toHaveAttribute("aria-current", "page");
 });
 

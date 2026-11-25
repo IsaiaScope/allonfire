@@ -16,21 +16,21 @@ const AVATAR_FIELD = "avatar";
 
 /** The Back Office's Users list: its tunables, each written once. */
 export const USERS = {
-  /** Why the Add a User action refused, each with its message over the form. */
-  ADD_ERROR: {
-    FAILED: "failed",
-    INVALID: "invalid",
-    /** No Session, or one the API no longer lets change Users: sign in again. */
-    REFUSED: "refused",
-    TAKEN: "taken",
+  ADD: {
+    /** Why the Add a User action refused, each with its message over the form. */
+    ERROR: {
+      FAILED: "failed",
+      INVALID: "invalid",
+      /** No Session, or one the API no longer lets change Users: sign in again. */
+      REFUSED: "refused",
+      TAKEN: "taken",
+    },
+    /**
+     * What the Add a User action tells beside a refusal: the User was added,
+     * their picture was not saved (the form toasts it and opens the list).
+     */
+    NOTICE: { AVATAR_FAILED: "avatarFailed" },
   },
-  /** Brushed in the Add button: 乗, to board (the brush face carries it). */
-  ADD_KANJI: "乗",
-  /**
-   * What the Add a User action tells beside a refusal: the User was added,
-   * their picture was not saved (the form toasts it and opens the list).
-   */
-  ADD_NOTICE: { AVATAR_FAILED: "avatarFailed" },
   /**
    * The picture field's name in both User forms; its removal posts under
    * `avatarRemoval(AVATAR_FIELD)` (ui's `avatar-change`).
@@ -46,36 +46,27 @@ export const USERS = {
    * nothing can reach it sooner).
    */
   CACHE: {
-    LIFE: IMAGE_SERVER.LINK_CACHE_LIFE,
+    LIFE: IMAGE_SERVER.LINK.CACHE_LIFE,
     TAG: "users",
   },
-  /** Brushed faint behind a User's card: 乗, a passenger (the brush face
-   *  carries it). */
-  CARD_KANJI: "乗",
-  /** Brushed after the crop dialog's title: 切, to cut (the brush face
-   *  carries it). */
-  CROP_KANJI: "切",
-  /** Brushed in the crop dialog's Use: 決, to decide (the brush face
-   *  carries it). */
-  CROP_USE_KANJI: "決",
-  /** Brushed in Delete's button: 消, to erase (the brush face carries it). */
-  DELETE_KANJI: "消",
-  /** Why the Edit a User action refused, each with its message over the form. */
-  EDIT_ERROR: {
-    /** Someone changed the User since the form was opened (the API's 409). */
-    CHANGED: "changed",
-    FAILED: "failed",
-    GONE: "gone",
-    INVALID: "invalid",
-    OWN_ROLE: "ownRole",
-    /** No Session, or one the API no longer lets change Users: sign in again. */
-    REFUSED: "refused",
+  EDIT: {
+    /** Why the Edit a User action refused, each with its message over the form. */
+    ERROR: {
+      /** Someone changed the User since the form was opened (the API's 409). */
+      CHANGED: "changed",
+      FAILED: "failed",
+      GONE: "gone",
+      INVALID: "invalid",
+      OWN_ROLE: "ownRole",
+      /** No Session, or one the API no longer lets change Users: sign in again. */
+      REFUSED: "refused",
+    },
+    /**
+     * What the Edit a User action answers once the User is saved: all of it,
+     * or all but their picture. The form toasts either and opens the list.
+     */
+    NOTICE: { AVATAR_FAILED: "avatarFailed", SAVED: "saved" },
   },
-  /**
-   * What the Edit a User action answers once the User is saved: all of it,
-   * or all but their picture. The form toasts either and opens the list.
-   */
-  EDIT_NOTICE: { AVATAR_FAILED: "avatarFailed", SAVED: "saved" },
   /**
    * Where each part both User forms share (`user-form-parts`) finds its
    * fields: the part's names mapped to the form's, the same in both forms.
@@ -99,6 +90,35 @@ export const USERS = {
     PAGE: { clearOnDefault: true, history: "push" },
     SEARCH: { clearOnDefault: true, history: "replace" },
   },
+  /** Brushed on the buttons and cards (the brush face carries each glyph). */
+  KANJI: {
+    /** The Add button: 乗, to board. */
+    ADD: "乗",
+    /** Faint behind a User's card: 乗, a passenger. */
+    CARD: "乗",
+    /** After the crop dialog's title: 切, to cut. */
+    CROP: "切",
+    /** The crop dialog's Use: 決, to decide. */
+    CROP_USE: "決",
+    /** Delete's button: 消, to erase. */
+    DELETE: "消",
+    /** The picture field's choose button: 写, a photograph. */
+    PICTURE: "写",
+    /** The Filter panel's Reset: 戻, back to the start. */
+    RESET: "戻",
+    /** Save: 済, settled. */
+    SAVE: "済",
+    /** The crop dialog's Zoom in: 拡, to enlarge. */
+    ZOOM_IN: "拡",
+    /** Its Zoom out: 縮, to shrink. */
+    ZOOM_OUT: "縮",
+  },
+  LIMIT: {
+    /** Asks again this many times after a server or network failure. */
+    RETRIES: 1,
+    /** How long typing rests before the address changes. */
+    TYPING_REST_MS: 300,
+  },
   /** A Role row's choice for an App the new User is not in. */
   NO_ROLE: "none",
   /**
@@ -115,36 +135,19 @@ export const USERS = {
   },
   /** The Users Section's own pages, under its path. */
   PATH: { NEW: "/new" },
-  /** Brushed in the picture field's choose button: 写, a photograph
-   *  (the brush face carries it). */
-  PICTURE_KANJI: "写",
-  /** Brushed in the Filter panel's Reset: 戻, back to the start (the brush
-   *  face carries it). */
-  RESET_KANJI: "戻",
-  /** Asks again this many times after a server or network failure. */
-  RETRIES: 1,
-  /** Brushed in Save: 済, settled (the brush face carries it). */
-  SAVE_KANJI: "済",
   /**
    * The list's notices where its rows stand, decoration only (the brush face
    * carries each wall kanji): nobody matches, the stamp reads 0 and 該当なし
    * (no match) over 空席 (vacant seats).
    */
   SIGNAGE: {
-    EMPTY: { CODE: "0", KANA: "該当なし", WALL_KANJI: "空席" },
+    EMPTY: { CODE: "0", KANA: "該当なし", KANJI: "空席" },
   } satisfies Record<string, StationSignage>,
   /** The columns the Sort tab lists: the plain ones the database orders by. */
   SORTABLE: ["email", "created"] as const,
-  /** How long typing rests before the address changes. */
-  TYPING_REST_MS: 300,
   /**
    * The verification row's choices: the email counts as verified (an Admin
    * vouches), or the User verifies it at their next sign-in.
    */
   VERIFICATION: { REQUIRED: "required", VERIFIED: "verified" },
-  /** Brushed in the crop dialog's Zoom in: 拡, to enlarge (the brush face
-   *  carries it). */
-  ZOOM_IN_KANJI: "拡",
-  /** Brushed in its Zoom out: 縮, to shrink (the brush face carries it). */
-  ZOOM_OUT_KANJI: "縮",
 } as const;

@@ -1,5 +1,6 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import {
   AOFFormActionsSkeleton,
   AOFFormAlertSkeleton,
@@ -9,7 +10,6 @@ import {
 import { IconServerCog, IconUserShield } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
-import { APP_ENTRY } from "@/shared/constants/apps";
 
 /** A field as the form draws it: its label stands, its input and its error line are bars. */
 const FieldSkeleton = ({
@@ -63,7 +63,7 @@ export const EditUserSkeleton = () => {
             </legend>
             {objectValues(App).map((app) => (
               <div className="flex flex-col gap-2" key={app}>
-                <span className="font-bold text-sm">{APP_ENTRY[app].name}</span>
+                <span className="font-bold text-sm">{APP.ENTRY[app].name}</span>
                 <AOFFormBar part="toggle" />
               </div>
             ))}

@@ -33,7 +33,7 @@ const prettyTarget = {
 
 /** Plain JSON to stdout, as `pino()` writes without a transport. */
 const stdoutTarget = {
-  options: { destination: LOG.STDOUT_FD },
+  options: { destination: LOG.FD.STDOUT },
   target: LOG.TRANSPORT.STDOUT,
 } as const;
 

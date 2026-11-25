@@ -11,7 +11,8 @@ import {
 import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { ServiceType } from "@allonfire/database/enums";
 import { refresh, updateTag } from "next/cache";
-import { SERVICES, serviceTag } from "../../constants/services";
+import { SERVICES } from "../../constants/services";
+import { serviceTag } from "../../utils/service-tag";
 import { saveProvider, sendTestEmail, setServiceEnabled } from "../services";
 
 vi.mock(
@@ -61,14 +62,14 @@ it("saves on the opened Version and carries the new one", async () => {
 
 it("refuses an invalid form before any request", async () => {
   const state = await save(formOf({ dailyLimit: "many" }));
-  expect(state.error).toBe(SERVICES.SAVE_ERROR.INVALID);
+  expect(state.error).toBe(SERVICES.SAVE.ERROR.INVALID);
   expect(FAKE_API.sent).toHaveLength(0);
 });
 
 it.each([
-  [API.ERROR.CODE.PROVIDER_INCOMPLETE, SERVICES.SAVE_ERROR.INCOMPLETE],
-  [ERROR.CODE.RESOURCE_CHANGED, SERVICES.SAVE_ERROR.CHANGED],
-  [ERROR.CODE.VALIDATION_FAILED, SERVICES.SAVE_ERROR.INVALID],
+  [API.ERROR.CODE.PROVIDER_INCOMPLETE, SERVICES.SAVE.ERROR.INCOMPLETE],
+  [ERROR.CODE.RESOURCE_CHANGED, SERVICES.SAVE.ERROR.CHANGED],
+  [ERROR.CODE.VALIDATION_FAILED, SERVICES.SAVE.ERROR.INVALID],
 ])("answers the API's %s as %s, keeping the values", async (code, error) => {
   FAKE_API.answers.set(HTTP.METHOD.PATCH, {
     code,
@@ -88,13 +89,13 @@ it("answers a provider another Admin removed, dropping the copy", async () => {
     code: ERROR.CODE.NOT_FOUND,
     status: HTTP.STATUS.NOT_FOUND,
   });
-  expect((await save()).error).toBe(SERVICES.SAVE_ERROR.REMOVED);
+  expect((await save()).error).toBe(SERVICES.SAVE.ERROR.REMOVED);
   expect(updateTag).toHaveBeenCalledWith(SERVICES.CACHE.TAG);
 });
 
 it("answers a Session that may no longer change Services as refused", async () => {
   FAKE_API.answers.set(HTTP.METHOD.PATCH, { status: HTTP.STATUS.FORBIDDEN });
-  expect((await save()).error).toBe(SERVICES.SAVE_ERROR.REFUSED);
+  expect((await save()).error).toBe(SERVICES.SAVE.ERROR.REFUSED);
 });
 
 describe("sendTestEmail", () => {
@@ -114,7 +115,7 @@ describe("sendTestEmail", () => {
       status: HTTP.STATUS.NOT_FOUND,
     });
     expect(await sendTestEmail(ID)).toEqual({
-      error: SERVICES.TEST_ERROR.REMOVED,
+      error: SERVICES.TEST.ERROR.REMOVED,
     });
     expect(updateTag).toHaveBeenCalledWith(SERVICES.CACHE.TAG);
   });
@@ -124,7 +125,7 @@ describe("sendTestEmail", () => {
       status: HTTP.STATUS.TOO_MANY_REQUESTS,
     });
     expect(await sendTestEmail(ID)).toEqual({
-      error: SERVICES.TEST_ERROR.RATE_LIMITED,
+      error: SERVICES.TEST.ERROR.RATE_LIMITED,
     });
     expect(updateTag).not.toHaveBeenCalled();
   });

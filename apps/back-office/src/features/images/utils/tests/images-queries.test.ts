@@ -9,7 +9,7 @@ import { hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { IMAGES_PAGE } from "@/shared/tests/msw/handlers";
 import { IMAGES } from "../../constants/images";
-import { queryOf } from "../../constants/images-params";
+import { queryOf } from "../images-params";
 import {
   fetchImages,
   imageKey,
@@ -21,7 +21,7 @@ import {
 const api = hc<ApiType>(LOCAL.URL.TEST_API);
 const PARAMS = {
   [IMAGES.PARAM.PAGE]: 2,
-  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT_PAGE_SIZE,
+  [IMAGES.PARAM.PER_PAGE]: IMAGES.DEFAULT.PAGE_SIZE,
   [IMAGES.PARAM.SEARCH]: "",
   [IMAGES.PARAM.SORT]: "",
 };
@@ -59,7 +59,7 @@ describe("fetchImages", () => {
     expect(await fetchImages(client, PARAMS)).toEqual(IMAGES_PAGE);
     expect(objectFromEntries(seen[0]?.searchParams ?? [])).toEqual({
       page: "2",
-      perPage: String(IMAGES.DEFAULT_PAGE_SIZE),
+      perPage: String(IMAGES.DEFAULT.PAGE_SIZE),
       search: "",
       sort: "",
     });
