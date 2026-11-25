@@ -4,12 +4,12 @@ import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof
 import { IconMail } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { ServiceProviders } from "@/features/services/components/service-providers";
 import { ServicesSkeleton } from "@/features/services/components/services-skeleton";
 import { servicesHydration } from "@/features/services/utils/services-hydration";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(BACK_OFFICE.PAGE.SERVICES_MAIL, "Navigation.mail");

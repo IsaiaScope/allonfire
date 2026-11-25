@@ -1,5 +1,5 @@
 // @module-tag unit
-import { SECTIONS } from "@/shared/constants/laura";
+import { LAURA } from "@/shared/constants/laura";
 import { MASCOT } from "@/shared/constants/mascots";
 import { crumbArt } from "../crumb-art";
 
@@ -10,7 +10,7 @@ describe("crumbArt", () => {
   });
 
   it("gives every Section and page of Laura its own picture", () => {
-    const labels = SECTIONS.flatMap((section) => [
+    const labels = LAURA.sections.flatMap((section) => [
       section.label,
       ...("pages" in section ? section.pages.map(({ label }) => label) : []),
     ]);

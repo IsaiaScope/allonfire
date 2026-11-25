@@ -9,10 +9,10 @@ import { useTranslations } from "next-intl";
 import { api } from "@/features/api/utils/api";
 import { ListTable } from "@/shared/components/list-table";
 import { IMAGES } from "../constants/images";
-import { queryOf } from "../constants/images-params";
 import { useImagesTableState } from "../hooks/use-images-table-state";
 import { useSelectableImages } from "../hooks/use-selectable-images";
 import { imageRow } from "../utils/image-row";
+import { queryOf } from "../utils/images-params";
 import { imagesQuery } from "../utils/images-queries";
 import { DeleteImages } from "./delete-images";
 import { ImagesRowsSkeleton } from "./images-list-skeleton";
@@ -46,7 +46,7 @@ export const ImagesTable = () => {
   // A page past the last one (its Images all deleted, or an edited address)
   // steps back; until it has, the skeleton stands in, not "no Image matches".
   const status = useStepBackPastEnd({
-    firstPage: IMAGES.DEFAULT_PAGE,
+    firstPage: IMAGES.DEFAULT.PAGE,
     page: params[IMAGES.PARAM.PAGE],
     query: pageQuery,
     rows: pageQuery.data?.images.length,

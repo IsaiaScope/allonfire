@@ -1,4 +1,4 @@
-import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa";
+import type { InstallStep } from "@allonfire/core/features/next/pwa/constants/pwa-schema";
 import type { ComponentProps } from "react";
 import type { AOFButton } from "../../../shared/components/aof-button";
 import type { ComponentPropsWithoutChildren } from "../../../shared/types/types";

@@ -7,7 +7,7 @@ import { App } from "@allonfire/database/enums";
 import { DetailedError, hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { USERS } from "../constants/users";
-import { loadUsersParams, queryOf } from "../constants/users-params";
+import { loadUsersParams, queryOf } from "../utils/users-params";
 import { retryUsers, usersQuery } from "../utils/users-queries";
 
 // A client of its own: the App's `api` reads the env, which a unit test lacks.
@@ -16,8 +16,8 @@ const api = hc<ApiType>(LOCAL.URL.TEST_API);
 const SOME_PAGE = 3;
 const TEXT = "isa";
 const QUERY_DEFAULTS = {
-  [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
-  [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
+  [USER.PARAM.PAGE]: USER.DEFAULT.PAGE,
+  [USER.PARAM.PER_PAGE]: USER.DEFAULT.PAGE_SIZE,
   [USER.PARAM.SEARCH]: "",
   [USER.PARAM.SORT]: "",
 };
@@ -28,7 +28,7 @@ describe("loadUsersParams", () => {
     expect(loadUsersParams({})).toEqual(DEFAULTS);
   });
 
-  it.each(["0", "-3", "abc", "1.5", String(USER.MAX_PAGE + 1)])(
+  it.each(["0", "-3", "abc", "1.5", String(USER.LIMIT.MAX_PAGE + 1)])(
     "reads page=%s as the first page",
     (page) => {
       expect(loadUsersParams({ [USER.PARAM.PAGE]: page })).toEqual(DEFAULTS);
@@ -95,7 +95,9 @@ describe("retryUsers", () => {
       )
     ).toBe(true);
     expect(retryUsers(0, new TypeError("offline"))).toBe(true);
-    expect(retryUsers(USERS.RETRIES, new TypeError("offline"))).toBe(false);
+    expect(retryUsers(USERS.LIMIT.RETRIES, new TypeError("offline"))).toBe(
+      false
+    );
   });
 
   it("is what the list retries with", () => {

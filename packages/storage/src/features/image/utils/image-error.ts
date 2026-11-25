@@ -18,7 +18,7 @@ export const asImageError = (error: unknown): never => {
       {
         code: IMAGE.ERROR_CODE.IMAGE_TOO_LARGE,
         status: HTTP.STATUS.PAYLOAD_TOO_LARGE,
-        values: { limit: IMAGE.LIMIT.INPUT_MEGAPIXELS },
+        values: { limit: IMAGE.LIMIT.INPUT.MEGAPIXELS },
       },
       { cause: error }
     );

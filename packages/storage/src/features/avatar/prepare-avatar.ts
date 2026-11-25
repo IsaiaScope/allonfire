@@ -9,7 +9,7 @@ import { AVATAR } from "./constants/avatar";
 export type PreparedAvatar = { buffer: Buffer; blurDataUrl: string };
 
 /**
- * A picture as an Avatar: its centre square at `AVATAR.SIZE`, upright,
+ * A picture as an Avatar: its centre square at `AVATAR.SIZE.STORED`, upright,
  * metadata-free AVIF, with its blur as an Image has (`blurDataUrlOf`). Throws
  * `UnsupportedImageError` or `ImageTooLargeError` as an Image's upload does
  * (`asImageError` answers them).
@@ -19,9 +19,9 @@ export const prepareAvatar = async (input: Buffer): Promise<PreparedAvatar> => {
     quality: AVATAR.QUALITY,
     resize: {
       fit: "cover",
-      height: AVATAR.SIZE,
+      height: AVATAR.SIZE.STORED,
       position: "centre",
-      width: AVATAR.SIZE,
+      width: AVATAR.SIZE.STORED,
     },
   });
   return { blurDataUrl: await blurDataUrlOf(data), buffer: data };

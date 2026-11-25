@@ -63,3 +63,20 @@ it("drops the row-filling width for the className it is given, which would squas
   const { height } = (await button.element()).getBoundingClientRect();
   expect(height).toBeGreaterThanOrEqual(36);
 });
+
+it("draws the Design's own icon for the action in place of the form's", async () => {
+  await renderGate({
+    actions: {
+      ...STUB_DRESSING.actions,
+      icons: { enter: <svg aria-hidden data-testid="design-icon" /> },
+    },
+    icon: <svg aria-hidden data-testid="form-icon" />,
+  });
+  await expect.element(page.getByTestId("design-icon")).toBeInTheDocument();
+  await expect.element(page.getByTestId("form-icon")).not.toBeInTheDocument();
+});
+
+it("keeps the form's icon when the Design has none for the action", async () => {
+  await renderGate({ icon: <svg aria-hidden data-testid="form-icon" /> });
+  await expect.element(page.getByTestId("form-icon")).toBeInTheDocument();
+});

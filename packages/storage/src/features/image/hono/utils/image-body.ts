@@ -1,6 +1,5 @@
-import { ImageAccess } from "@allonfire/database/enums";
 import type { ImageRecord } from "@allonfire/database/features/image/image.service";
-import { pictureSrcSet, privateLinkExpiry } from "../../../image-server/sign";
+import { signedSrcSet } from "../../../image-server/sign";
 import type { ImageBody } from "../../constants/schemas";
 
 /** An Image as the API answers it at `now`: its links signed for that moment. */
@@ -14,10 +13,7 @@ export const toImageBody = (image: ImageRecord, now: Date): ImageBody => ({
   height: image.height,
   id: image.id,
   key: image.key,
-  srcSet: pictureSrcSet(
-    image.key,
-    image.access === ImageAccess.PRIVATE ? privateLinkExpiry(now) : undefined
-  ),
+  srcSet: signedSrcSet(image, now),
   version: image.version,
   width: image.width,
 });

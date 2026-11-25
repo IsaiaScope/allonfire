@@ -33,7 +33,7 @@ export const joinApp = {
               },
             ],
             responses: {
-              "200": {
+              [HTTP.STATUS.OK]: {
                 content: {
                   [HTTP.CONTENT_TYPE.JSON]: {
                     schema: {
@@ -45,7 +45,7 @@ export const joinApp = {
                     },
                   },
                 },
-                description: AUTH.DOC.JOIN_APP.OK,
+                description: AUTH.DOC.JOIN_APP.RESPONSE[HTTP.STATUS.OK],
               },
             },
           },

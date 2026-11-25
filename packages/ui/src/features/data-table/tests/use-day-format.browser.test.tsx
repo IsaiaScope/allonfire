@@ -7,7 +7,7 @@ import { useDayFormat } from "../hooks/use-day-format";
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <NextIntlClientProvider
-    formats={DATE.FORMATS}
+    formats={DATE.FORMAT.INTL}
     locale="en"
     timeZone={DATE.TIME_ZONE}
   >

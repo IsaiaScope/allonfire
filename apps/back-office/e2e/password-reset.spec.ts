@@ -25,7 +25,7 @@ test("Sign in leads to Forgot password, which answers the same for any address",
 
 test("a reset link that no longer works offers a new one", async ({ page }) => {
   await page.goto(
-    `${AUTH.PAGE.RESET_PASSWORD}?${AUTH.MAIL.TOKEN_PARAM}=not-a-token`
+    `${AUTH.PAGE.RESET_PASSWORD}?${AUTH.MAIL.PARAM.TOKEN}=not-a-token`
   );
   const reset = AUTH_EN.ResetPassword;
   await page

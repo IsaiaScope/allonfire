@@ -2,13 +2,14 @@
 
 import type { ApiType } from "@allonfire/api/client";
 import { LOCAL } from "@allonfire/config/local/addresses";
-import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { answeringApi } from "@allonfire/core/features/next/api/tests/answering-api";
 import { objectFromEntries } from "@allonfire/core/shared/utils/object";
-import { DetailedError, hc } from "hono/client";
+import { hc } from "hono/client";
 import { QUERY } from "@/shared/constants/query";
 import { GALLERY_PAGE, GALLERY_PAGE_TWO } from "@/shared/tests/msw/handlers";
-import { GALLERY, type GallerySource } from "../../constants/gallery";
+import { ONLY_SERVER_FAILURES, retryAnswers } from "@/shared/tests/retry-rule";
+import { GALLERY } from "../../constants/gallery";
+import type { GallerySource } from "../../constants/gallery-schema";
 import {
   favoritesFeedQuery,
   feedQueryFor,
@@ -48,19 +49,9 @@ describe.each([
   });
 
   it("does not ask again after the API refused, and asks once more after a server failure", () => {
-    const { retry } = feedQuery(api);
-    if (typeof retry !== "function") {
-      throw new TypeError("retry is a function");
-    }
-    const refused = new DetailedError("refused", {
-      statusCode: HTTP.STATUS.UNAUTHORIZED,
-    });
-    const broken = new DetailedError("broken", {
-      statusCode: HTTP.STATUS.INTERNAL_SERVER_ERROR,
-    });
-    expect(retry(0, refused)).toBe(false);
-    expect(retry(0, broken)).toBe(true);
-    expect(retry(GALLERY.RETRIES, broken)).toBe(false);
+    expect(retryAnswers(feedQuery(api).retry, GALLERY.LIMIT.RETRIES)).toEqual(
+      ONLY_SERVER_FAILURES
+    );
   });
 });
 
@@ -72,7 +63,7 @@ describe.each([
     const { client, seen } = answering(GALLERY_PAGE);
     expect(await fetchPage(client, null)).toEqual(GALLERY_PAGE);
     expect(objectFromEntries(seen[0]?.searchParams ?? [])).toEqual({
-      limit: String(GALLERY.PAGE_SIZE),
+      limit: String(GALLERY.DEFAULT.PAGE_SIZE),
     });
   });
 
@@ -81,7 +72,7 @@ describe.each([
     await fetchPage(client, "c1");
     expect(objectFromEntries(seen[0]?.searchParams ?? [])).toEqual({
       cursor: "c1",
-      limit: String(GALLERY.PAGE_SIZE),
+      limit: String(GALLERY.DEFAULT.PAGE_SIZE),
     });
   });
 });

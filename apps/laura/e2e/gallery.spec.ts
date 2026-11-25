@@ -1,7 +1,8 @@
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { expect, test } from "@playwright/test";
-import { LAURA, SECTION } from "../src/shared/constants/laura";
+import { SECTION } from "../src/features/navigation/constants/sections";
+import { LAURA } from "../src/shared/constants/laura";
 import { enT } from "../src/shared/tests/translators";
 import { signInAsUser } from "./pages";
 import {

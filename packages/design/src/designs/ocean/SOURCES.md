@@ -7,6 +7,12 @@ taken through Iconify and kept as the SVG document it came as. The sea line
 single paths from open icon sets, kept as path data and shared with
 `mascot-art.ts`.
 
+## Laura's logo
+
+`li-mark.ts` holds the "Li" monogram, the owner's own mark (the old Laura's
+`laura-logo.png` and Memory card back), as a small PNG. It is the owner's, not
+taken from a set: no licence applies.
+
 ## The pool and the details
 
 Each row is a key of `OCEAN_ART`. The first six are the pool the pages show
@@ -30,6 +36,15 @@ one of the six.
 | `SHARK_NOTO` | shark | Noto Emoji, `noto/shark` | Apache 2.0 |
 | `LIGHTHOUSE_NOTO` | lighthouse | Noto Emoji, `noto/lighthouse` | Apache 2.0 |
 | `WHALE_NOTO` | whale | Noto Emoji, `noto/whale` | Apache 2.0 |
+| `TROPHY_NOTO` | trophy | Noto Emoji, `noto/trophy` | Apache 2.0 |
+| `TROPHY_SILVER_NOTO` | trophy, silver | Noto Emoji, `noto/trophy` with its golds recoloured silver | Apache 2.0 |
+| `TROPHY_BRONZE_NOTO` | trophy, bronze | Noto Emoji, `noto/trophy` with its golds recoloured bronze | Apache 2.0 |
+| `MEDAL_NOTO` | first place medal | Noto Emoji, `noto/1st-place-medal` | Apache 2.0 |
+| `MEDAL_SILVER_NOTO` | second place medal | Noto Emoji, `noto/2nd-place-medal` | Apache 2.0 |
+| `MEDAL_BRONZE_NOTO` | third place medal | Noto Emoji, `noto/3rd-place-medal` | Apache 2.0 |
+| `STAR_NOTO` | star | Noto Emoji, `noto/star` | Apache 2.0 |
+| `BUST_NOTO` | bust in silhouette | Noto Emoji, `noto/bust-in-silhouette` | Apache 2.0 |
+| `BUSTS_NOTO` | busts in silhouette | Noto Emoji, `noto/busts-in-silhouette` | Apache 2.0 |
 
 The two CC BY 3.0 pictures (the game-icons.net octopus and crab) ask for
 credit: keep this file shipped with the Design, and show it wherever the App

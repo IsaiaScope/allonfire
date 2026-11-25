@@ -15,7 +15,7 @@ import { cdp, page, server, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { SECTION, SECTIONS } from "../../constants/sections";
+import { SECTION } from "../../constants/sections";
 import { AppFrame } from "../app-frame";
 
 const t = EN.Navigation;
@@ -149,7 +149,7 @@ describe("AppFrame", () => {
     );
     const menu = page.getByRole("navigation", { name: common.menu });
     await Promise.all(
-      SECTIONS.map(({ label }) =>
+      SECTION.LIST.map(({ label }) =>
         expect
           .element(menu.getByRole("link", { name: t[label] }))
           .toBeInTheDocument()

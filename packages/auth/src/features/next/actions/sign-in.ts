@@ -1,7 +1,7 @@
 "use server";
 
 import { AUTH } from "../../../shared/constants/auth";
-import type { SignInState } from "../constants/api";
+import type { SignInState } from "../types/auth-state";
 import { redirectTo } from "../utils/redirect-to";
 import { signInWithEmail } from "../utils/sign-in";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { resetPassword } from "@allonfire/auth/features/next/actions/password-reset";
-import type { ResetState } from "@allonfire/auth/features/next/constants/api";
+import type { ResetState } from "@allonfire/auth/features/next/types/auth-state";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { aofBaseNavigation } from "@allonfire/core/features/next/i18n/utils/aof-base-navigation";
 import { IconKey, IconMailPlus, IconPassword } from "@tabler/icons-react";
@@ -78,7 +78,7 @@ export const AOFResetPasswordForm = ({
 }) => {
   const t = useTranslations("Common.Auth.ResetPassword");
   const locale = useLocale();
-  const token = useSearchParams().get(AUTH.MAIL.TOKEN_PARAM) ?? "";
+  const token = useSearchParams().get(AUTH.MAIL.PARAM.TOKEN) ?? "";
   const [{ error }, action, pending] = useActionState(
     resetPassword.bind(null, locale, token),
     initialState
@@ -93,7 +93,7 @@ export const AOFResetPasswordForm = ({
     },
   });
   const formProps = useAOFFormAction(form, action);
-  if (!token || error === AUTH.RESET_ERROR.INVALID_TOKEN) {
+  if (!token || error === AUTH.ERROR.RESET.INVALID_TOKEN) {
     return <AskAgain actions={actions} back={back} />;
   }
   return (

@@ -7,7 +7,7 @@ import {
 } from "@allonfire/ui/features/data-table/utils/table-pagination";
 import { useQueryStates } from "nuqs";
 import { useCallback } from "react";
-import { queryOf, usersParams } from "../constants/users-params";
+import { queryOf, usersParams } from "../utils/users-params";
 import { useUsersView } from "./use-users-view";
 
 /**

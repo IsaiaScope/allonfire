@@ -2,14 +2,14 @@ import { withSessionRefresh } from "@allonfire/auth/features/next/utils/with-ses
 import { withSignInGate } from "@allonfire/auth/features/next/utils/with-sign-in-gate";
 import { AOFCreateMiddleware } from "@allonfire/core/features/next/i18n/utils/aof-create-middleware";
 import { routing } from "./features/i18n/routing";
-import { SECTIONS } from "./shared/constants/laura";
+import { LAURA } from "./shared/constants/laura";
 
 // Routes the locale, renews the Session cookies, and sends a signed-out visit
 // to a Section to Sign in before anything renders.
 export default withSessionRefresh(
   withSignInGate(AOFCreateMiddleware(routing), {
     locales: routing.locales,
-    sections: SECTIONS,
+    sections: LAURA.sections,
   })
 );
 

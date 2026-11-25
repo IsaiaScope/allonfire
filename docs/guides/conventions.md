@@ -12,6 +12,9 @@ type. `objectFromEntries` is the one that matters: `Object.fromEntries` returns
 `{ [k: string]: V }`, so `as Record<Union, V>` at the call site is unchecked and
 compiles against entries covering none of the union.
 
+A lookup keyed by text from outside (an error code the API sent) is read with
+`objectHas(obj, key)` first, so `constructor` and `__proto__` find nothing.
+
 The type-level counterparts live in the same file and mean the same thing one
 level up: `KeyOf<T>`, `ValueOf<T>`, `EntryOf<T>`, plus `ElementOf<T>` for a
 `readonly [...] as const` tuple (`ValueOf` on a tuple would also pick up
@@ -54,12 +57,12 @@ server packages (auth, storage) are not covered, they run on Node.
 
 - **Constants are one nested object per owner**, named so the first word says where a
   value comes from, never a flat `X_Y_Z` beside its siblings and never a name that
-  carries its value (`VERSION.CURRENT`, not `V1`): `API` (`PATH`, `VERSION`, `LIMIT`,
+  carries its value (`VERSION.CURRENT`, not `V1`): `API` (`PATH`, `PROBE`, `VERSION`, `LIMIT`,
   `DEFAULT`, `CONTEXT_VAR`, `ERROR`, `EXIT_CODE`, `LOG_MESSAGE`, `SHUTDOWN`;
   `apps/api/src/shared/constants/api.ts`) and each API feature's own (`HEALTH`,
   `OPENAPI`, `RATE_LIMIT`, `REDIS`, `TELEMETRY`); `AUTH` (`PATH` the module's routes,
-  `PAGE` an App's pages, `LIMITED_PATHS`, `API_TIMEOUT_MS`, `COOKIE`, `HEADER`, `SESSION`, `RATE_LIMIT`,
-  `ERROR_CODE`, `SIGN_IN_ERROR`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
+  `PAGE` an App's pages, `LIMITED_PATHS`, `LIMIT` (`API_TIMEOUT_MS`, `SECRET_MIN_LENGTH`), `COOKIE`, `HEADER`, `SESSION`, `RATE_LIMIT`,
+  `ERROR_CODE`, `ERROR` (`SIGN_IN`, `FORGOT`, `RESET`), `MAIL.PARAM`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
   `@allonfire/auth/shared/constants/auth`); `IMAGE` (`BUCKET`, `CACHE`, `FORMAT`, `LIMIT`,
   `ERROR_CODE`, `DOC`, `OPENAPI_TAG`, `VAR`;
   `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `IMAGES`, `LIST`, `ONE`); core's `HTTP`
@@ -68,7 +71,7 @@ server packages (auth, storage) are not covered, they run on Node.
   config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`) and `REPO`; the database's `ACCESS`
   (`APP_SETTINGS`, `ROLE_RANK`; `features/auth/access/constants/access`) and `FIXTURE`
   (`USER`, `USERS`, `PASSWORD`, `NEW_PASSWORD`, `IMAGE`; `features/seed/fixtures/fixtures`); the API's
-  `TRANSLATION` (`CATALOGUE`, `DEFAULT_LOCALE`). Core also holds `UNIT` (`MS_PER_SECOND`,
+  `TRANSLATION` (`CATALOGUE`, `DEFAULT.LOCALE`). Core also holds `UNIT` (`MS_PER_SECOND`,
   `BYTES_PER_MIB`, …), `SEPARATOR` and `ERROR` (`CODE`, the standard error codes): what
   is most generic carries no owner's name. A regular expression lives in core's `PATTERN`
   (`shared/constants/patterns.ts`), grouped by its use (`PATTERN.TELEMETRY`), never in an
@@ -83,10 +86,10 @@ server packages (auth, storage) are not covered, they run on Node.
   `packages/ui/src/features/chart/constants/chart`) all sit in their owner's
   nested object, in its `constants/` folder, never in a component file (a
   component file exports components). Before adding one, search for its value:
-  an option list built twice (`APP_OPTIONS`, `shared/constants/apps`) or a
+  an option list built twice (`APP.OPTIONS`, `@allonfire/design/apps/app`, which also holds `APP.ENTRY` for both Apps' switchers) or a
   glyph copied between features is one constant read by both. The same glyph
-  or number for two different meanings stays two constants (`IMAGES.ADD_KANJI`
-  and `USERS.PICTURE_KANJI` are both 写, for different actions). What may stay
+  or number for two different meanings stays two constants (`IMAGES.KANJI.ADD`
+  and `USERS.KANJI.PICTURE` are both 写, for different actions). What may stay
   file-local: a lookup keyed by one component's own props that holds components
   or icons (`DETAILS`, `NOTICE`), a value derived from a `cva`, and a number
   used once inside one pure helper (`DECIMALS` in `formatSize`). A class list is
@@ -102,6 +105,15 @@ server packages (auth, storage) are not covered, they run on Node.
   `@allonfire/api/shared/constants/api`: an App's tests and its `playwright.config.ts` import it
   and hand it to config's `aofPlaywrightConfig` (`apiPath`), since config, a leaf package,
   imports nothing.
+
+- **The shape of an owner's object** (one rule each, the API's constants are the model):
+  - **A lookup is a keyed record**, `as const satisfies Record<K, V>`, never a tuple array of pairs (`API.ERROR.STATUS_OF_CODE`: the status of each code, read by key).
+  - **Sibling keys with a shared prefix nest.** `ADD_KANJI` and `EDIT_KANJI` are `KANJI.ADD` and `KANJI.EDIT`, `EDIT_ERROR` is `EDIT.ERROR`, `GET_SUMMARY` is `GET.SUMMARY` (`API.LIMIT`, `LAURA.GALLERY`, a route's `DOC.<VERB>.{DESCRIPTION,SUMMARY,RESPONSE}`).
+  - **A unit is a key inside a group, never at the owner's top**: ceilings and counts in `LIMIT` (`API.LIMIT.REQUEST_TIMEOUT_MS`), fall-backs in `DEFAULT` (`API.DEFAULT.DRAIN_TIMEOUT_MS`), waits in `DELAY` or `TIMEOUT`, pixel sizes in `SIZE`; keys sorted A to Z.
+  - **In doubt, nest, and expand the owner that already exists** instead of adding a sibling. A constant one package reads expands that package's owner (`IMAGE.UPLOAD` in `packages/ui`); one several packages read expands the parent owner.
+  - **A sub-feature's constants merge into its parent owner's file**, unless the file passes 300 lines or the sub-feature is a route or package module of its own. A route module keeps its own file and its own object (`LAURA_GALLERY` in `laura/gallery`, `OVERVIEW_STORAGE` in `back-office/overview/storage`), and its parent composes it (`LAURA.GALLERY`, `BACK_OFFICE.OVERVIEW.STORAGE`, `api.md`).
+  - **Only constants live in `constants/`.** JSX, `cva`, helpers and schemas sit next to their user (`components/`, `utils/`); a schema stays beside its owner's file as `*-schema.ts` only where a `z.infer` of the constant's type needs it.
+  - **An error value follows its data format, a key follows the constant rule**: a form error that is a translation key stays camelCase (`TOO_LARGE: "tooLarge"`).
 
 ## Schemas
 

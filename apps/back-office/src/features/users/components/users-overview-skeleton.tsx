@@ -34,7 +34,7 @@ export const UsersOverviewSkeleton = () => {
       <p className="sr-only" role="status">
         {t("title")}
       </p>
-      <CardFrame kanji={USERS.CARD_KANJI}>
+      <CardFrame kanji={USERS.KANJI.CARD}>
         <AOFCardHeader>
           <div aria-hidden className={ink({ shape: "title" })} />
           <AOFCardAction aria-hidden className="self-center">

@@ -3,9 +3,9 @@ import { GalleryList } from "@/features/gallery/components/gallery-list";
 import { GalleryPage } from "@/features/gallery/components/gallery-page";
 import { GALLERY } from "@/features/gallery/constants/gallery";
 import { favoritesHydration } from "@/features/gallery/utils/favorites-hydration";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
+import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-import { SECTION } from "@/shared/constants/laura";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(SECTION.FAVORITES.path, `Navigation.${SECTION.FAVORITES.label}`);

@@ -8,16 +8,24 @@ import { IMAGE } from "../image";
 const CLOUDFLARE_BODY_BYTES = 100_000_000;
 const FRAMING_MARGIN_BYTES = 1_000_000;
 
-describe("IMAGE.LIMIT.UPLOAD_BYTES", () => {
+describe("IMAGE.LIMIT.UPLOAD.BYTES", () => {
   it("fits through Cloudflare's request body limit with room for framing", () => {
-    expect(IMAGE.LIMIT.UPLOAD_BYTES + FRAMING_MARGIN_BYTES).toBeLessThan(
+    expect(IMAGE.LIMIT.UPLOAD.BYTES + FRAMING_MARGIN_BYTES).toBeLessThan(
       CLOUDFLARE_BODY_BYTES
     );
   });
 
   it("still holds one file of the largest size", () => {
-    expect(IMAGE.LIMIT.UPLOAD_BYTES).toBeGreaterThanOrEqual(
+    expect(IMAGE.LIMIT.UPLOAD.BYTES).toBeGreaterThanOrEqual(
       IMAGE.LIMIT.FILE_BYTES
+    );
+  });
+});
+
+describe("IMAGE.LIMIT.INPUT", () => {
+  it("counts its pixels from its megapixels", () => {
+    expect(IMAGE.LIMIT.INPUT.PIXELS).toBe(
+      IMAGE.LIMIT.INPUT.MEGAPIXELS * 1_000_000
     );
   });
 });

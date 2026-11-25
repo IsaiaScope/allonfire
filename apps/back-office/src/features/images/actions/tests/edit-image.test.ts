@@ -10,11 +10,11 @@ import { objectEntries } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import { MAX_ALT_LENGTH } from "@allonfire/database/features/image/utils/alt";
 import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { imageNames } from "@allonfire/ui/features/image/upload/utils/image-form-data";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { STORAGE } from "@/features/storage/constants/storage";
 import { IMAGES } from "../../constants/images";
-import { imageNames } from "../../utils/image-form-data";
 import { editImage } from "../edit-image";
 
 const THE_IMAGE = { id: "image-1", version: "version-1" };
@@ -61,7 +61,7 @@ describe("editImage", () => {
       {},
       formOf({ ...BASE, fr: "La mer" })
     );
-    expect(state).toEqual({ notice: IMAGES.EDIT_NOTICE.SAVED });
+    expect(state).toEqual({ notice: IMAGES.EDIT.NOTICE.SAVED });
     expect(FAKE_API.sent[0]?.body).toEqual([
       {
         access: ImageAccess.PRIVATE,
@@ -91,7 +91,7 @@ describe("editImage", () => {
         {},
         formOf({ en: "x".repeat(MAX_ALT_LENGTH + 1), it: "Il mare" })
       )
-    ).toEqual({ error: IMAGES.EDIT_ERROR.INVALID });
+    ).toEqual({ error: IMAGES.EDIT.ERROR.INVALID });
     expect(FAKE_API.sent).toEqual([]);
   });
 
@@ -99,16 +99,16 @@ describe("editImage", () => {
     [
       HTTP.STATUS.CONFLICT,
       ERROR.CODE.RESOURCE_CHANGED,
-      IMAGES.EDIT_ERROR.CHANGED,
+      IMAGES.EDIT.ERROR.CHANGED,
     ],
     [
       HTTP.STATUS.CONFLICT,
       IMAGE.ERROR_CODE.IMAGE_CHANGED,
-      IMAGES.EDIT_ERROR.CHANGED,
+      IMAGES.EDIT.ERROR.CHANGED,
     ],
-    [HTTP.STATUS.NOT_FOUND, ERROR.CODE.NOT_FOUND, IMAGES.EDIT_ERROR.GONE],
-    [HTTP.STATUS.FORBIDDEN, ERROR.CODE.FORBIDDEN, IMAGES.EDIT_ERROR.REFUSED],
-    [HTTP.STATUS.INTERNAL_SERVER_ERROR, undefined, IMAGES.EDIT_ERROR.FAILED],
+    [HTTP.STATUS.NOT_FOUND, ERROR.CODE.NOT_FOUND, IMAGES.EDIT.ERROR.GONE],
+    [HTTP.STATUS.FORBIDDEN, ERROR.CODE.FORBIDDEN, IMAGES.EDIT.ERROR.REFUSED],
+    [HTTP.STATUS.INTERNAL_SERVER_ERROR, undefined, IMAGES.EDIT.ERROR.FAILED],
   ])("answers %s %s as %s and clears no tag", async (status, code, error) => {
     refused(status, code);
     expect(await editImage(THE_IMAGE, {}, formOf(BASE))).toEqual({ error });

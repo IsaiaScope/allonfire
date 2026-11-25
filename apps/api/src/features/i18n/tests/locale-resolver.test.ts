@@ -49,13 +49,13 @@ describe("resolveLocale — bare language falls back to a variant", () => {
 
 describe("resolveLocale — fallback", () => {
   it("defaults when the header is absent or empty", () => {
-    expect(resolveLocale(undefined)).toBe(TRANSLATION.DEFAULT_LOCALE);
-    expect(resolveLocale("")).toBe(TRANSLATION.DEFAULT_LOCALE);
+    expect(resolveLocale(undefined)).toBe(TRANSLATION.DEFAULT.LOCALE);
+    expect(resolveLocale("")).toBe(TRANSLATION.DEFAULT.LOCALE);
   });
 
   it("defaults when no requested language is supported", () => {
-    expect(resolveLocale("ja-JP")).toBe(TRANSLATION.DEFAULT_LOCALE);
-    expect(resolveLocale("de-DE,fr-FR,ja")).toBe(TRANSLATION.DEFAULT_LOCALE);
+    expect(resolveLocale("ja-JP")).toBe(TRANSLATION.DEFAULT.LOCALE);
+    expect(resolveLocale("de-DE,fr-FR,ja")).toBe(TRANSLATION.DEFAULT.LOCALE);
   });
 
   it("defaults on a malformed header rather than throwing", () => {
@@ -102,7 +102,7 @@ describe("error catalogue", () => {
       );
     for (const locale of I18N.SUPPORTED_LOCALES) {
       expect(sortedCodes(locale)).toEqual(
-        sortedCodes(TRANSLATION.DEFAULT_LOCALE)
+        sortedCodes(TRANSLATION.DEFAULT.LOCALE)
       );
     }
   });

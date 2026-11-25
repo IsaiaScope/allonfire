@@ -49,7 +49,7 @@ describe("AOFWithLocalizedNotFound", () => {
     "/it/any-page",
     "/it/file.png",
     `/${I18N.DEFAULT_LANGUAGE}/any-page`,
-    `${NEXT.STATIC_URL}chunk.js`,
+    `${NEXT.STATIC.URL}chunk.js`,
     `${KEPT}/any-screen.png`,
   ])("leaves %s to the route that serves it", async (path) => {
     expect(await rewrittenPath(path)).toBeNull();

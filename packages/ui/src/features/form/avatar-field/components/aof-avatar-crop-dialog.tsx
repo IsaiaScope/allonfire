@@ -51,7 +51,7 @@ export type AOFAvatarCropDialogProps = {
   src: string;
   labels: AOFAvatarCropLabels;
   onCancel: () => void;
-  /** The square chosen, drawn at `AVATAR.CROP_SIZE` (`avatar.webp`, or JPEG in Safari). */
+  /** The square chosen, drawn at `AVATAR.SIZE.CROP` (`avatar.webp`, or JPEG in Safari). */
   onUse: (file: File) => void;
   /** The title, dressed by the App: a `decoration` after its words. */
   titleProps?:
@@ -131,7 +131,7 @@ export const AOFAvatarCropDialog = ({
     }
     // Drawn from the cropper's own image, already decoded.
     startTransition(async () => {
-      onUse(await cropToSquare(picture, area, AVATAR.CROP_SIZE, "avatar"));
+      onUse(await cropToSquare(picture, area, AVATAR.SIZE.CROP, "avatar"));
     });
   }, [area, onUse]);
 

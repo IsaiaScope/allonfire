@@ -4,9 +4,9 @@ import { GalleryList } from "@/features/gallery/components/gallery-list";
 import { GalleryPage } from "@/features/gallery/components/gallery-page";
 import { GALLERY } from "@/features/gallery/constants/gallery";
 import { galleryHydration } from "@/features/gallery/utils/gallery-hydration";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
+import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-import { SECTION } from "@/shared/constants/laura";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 // The layout's default title; only the address differs.
 export const generateMetadata = () => pageMetadata(AUTH.PAGE.HOME);

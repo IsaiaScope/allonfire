@@ -3,6 +3,7 @@ import { AOFHydratedBoundary } from "@allonfire/core/features/next/query/compone
 import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { Suspense } from "react";
 import { HomeSection } from "@/features/home/components/home-section";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { StorageOverview } from "@/features/storage/components/storage-overview";
@@ -12,7 +13,6 @@ import { UsersOverview } from "@/features/users/components/users-overview";
 import { UsersOverviewSkeleton } from "@/features/users/components/users-overview-skeleton";
 import { usersOverviewHydration } from "@/features/users/utils/users-overview-hydration";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 // The layout's default title; only the address differs.
 export const generateMetadata = () => pageMetadata(AUTH.PAGE.HOME);

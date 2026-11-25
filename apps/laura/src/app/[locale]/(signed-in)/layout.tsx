@@ -1,7 +1,8 @@
 import { AOFSignedInFrame } from "@allonfire/ui/features/navigation/components/aof-signed-in-frame";
 import type { ReactNode } from "react";
 import { FrameBreadcrumb } from "@/features/navigation/components/frame-breadcrumb";
-import { sectionRow } from "@/features/navigation/constants/section-row";
+import { sectionRow } from "@/features/navigation/utils/section-row";
+import { LauraMark } from "@/shared/components/laura-mark";
 import { LAURA } from "@/shared/constants/laura";
 
 // The frame is static and holds no data; each page checks the Session
@@ -16,6 +17,7 @@ const SignedInLayout = ({ children }: { children: ReactNode }) => (
       current: sectionRow({ current: true }),
       idle: sectionRow({ current: false }),
     }}
+    slots={{ headerEnd: <LauraMark /> }}
     variant="floating"
   >
     {children}

@@ -18,6 +18,7 @@ export type TranslationValues = {
   UNSUPPORTED_IMAGE: never;
   IMAGE_TOO_LARGE: { limit: number };
   IMAGE_CHANGED: never;
+  IMPLAUSIBLE_SCORE: never;
   PROVIDER_INCOMPLETE: never;
   INTERNAL_ERROR: never;
   EMAIL_FOOTNOTE: never;

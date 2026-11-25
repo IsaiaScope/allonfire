@@ -4,8 +4,8 @@ import {
 } from "@allonfire/core/features/mail/constants/mail";
 import type { SendResult } from "@allonfire/core/features/mail/types/mail";
 import { ServiceType } from "@allonfire/database/enums";
-import type { KeepAliveBody } from "../constants/schemas";
-import { type KeepAliveResult, SERVICES } from "../constants/services";
+import type { KeepAliveBody, KeepAliveResult } from "../constants/schemas";
+import { SERVICES } from "../constants/services";
 
 /** The keep-alive endpoint's answer. */
 export type KeepAliveReport = KeepAliveBody;
@@ -65,7 +65,7 @@ export const mailKeepAlive = (deps: MailKeepAliveDeps): ServiceKeepAlive => ({
         async ({ id, lastAcceptedAt, name, slot }) => {
           const idle =
             lastAcceptedAt === null ||
-            now.getTime() - lastAcceptedAt.getTime() >= SERVICES.IDLE_MS;
+            now.getTime() - lastAcceptedAt.getTime() >= SERVICES.LIMIT.IDLE_MS;
           const result = idle
             ? await sentResult(deps, { id, name })
             : SERVICES.KEEP_ALIVE_RESULT.SKIPPED;

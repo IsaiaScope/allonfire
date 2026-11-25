@@ -4,12 +4,12 @@ import { App } from "@allonfire/database/enums";
 import { AOFSectionPage } from "@allonfire/ui/features/navigation/components/aof-section-page";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { Suspense } from "react";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { EditUserSkeleton } from "@/features/users/components/edit-user-skeleton";
 import { UserEditor } from "@/features/users/components/user-editor";
 import { userHref } from "@/features/users/utils/user-href";
 import { userHydration } from "@/features/users/utils/users-hydration";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 type UserPageProps = { params: Promise<{ id: string }> };
 

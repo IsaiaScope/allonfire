@@ -62,3 +62,16 @@ export function objectFromEntries<K extends PropertyKey, V>(
 ): Record<K, V> {
   return Object.fromEntries(entries) as Record<K, V>;
 }
+
+/**
+ * Whether `obj` holds `key` itself, never one it only inherits: a lookup keyed
+ * by outside text (an error code the API sent) finds nothing for `constructor`
+ * or `__proto__`, which every object answers to. A guard, so `obj[key]` reads
+ * typed after it.
+ */
+export function objectHas<T extends object>(
+  obj: T,
+  key: PropertyKey
+): key is keyof T {
+  return Object.hasOwn(obj, key);
+}

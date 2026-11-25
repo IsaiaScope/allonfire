@@ -45,7 +45,7 @@ describe("backup", () => {
     docker("volume", "rm", "--force", VOLUME);
     await recreateDatabase(DATABASE);
     liquibase(url, "update");
-  }, TEST_DATABASE.DOCKER_TIMEOUT_MS);
+  }, TEST_DATABASE.TIMEOUT.DOCKER_MS);
 
   afterAll(async () => {
     docker("volume", "rm", "--force", VOLUME);
@@ -68,7 +68,7 @@ describe("backup", () => {
       }
       expect(files).toEqual(written.slice(-KEEP));
     },
-    TEST_DATABASE.DOCKER_TIMEOUT_MS
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 
   it(
@@ -86,10 +86,10 @@ describe("backup", () => {
         `/b/${newest}`
       );
       expect(contents).toContain("TABLE DATA auth User");
-      expect(contents).toContain("TABLE DATA laura GameScore");
+      expect(contents).toContain("TABLE DATA laura MemoryScore");
       expect(contents).toContain("TABLE DATA image Image");
     },
-    TEST_DATABASE.DOCKER_TIMEOUT_MS
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 
   it(
@@ -101,6 +101,6 @@ describe("backup", () => {
       ).toThrow();
       expect(backups()).toEqual(before);
     },
-    TEST_DATABASE.DOCKER_TIMEOUT_MS
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 });

@@ -5,14 +5,14 @@ import type { SearchParams } from "nuqs/server";
 import { Suspense } from "react";
 import { ImagesListSkeleton } from "@/features/images/components/images-list-skeleton";
 import { ImagesTable } from "@/features/images/components/images-table";
+import { imagesHydration } from "@/features/images/utils/images-hydration";
 import {
   loadImagesParams,
   queryOf,
-} from "@/features/images/constants/images-params";
-import { imagesHydration } from "@/features/images/utils/images-hydration";
+} from "@/features/images/utils/images-params";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(BACK_OFFICE.PAGE.STORAGE_IMAGES, "Navigation.images");

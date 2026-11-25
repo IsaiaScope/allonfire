@@ -10,8 +10,8 @@ import { USERS } from "../../constants/users";
 import { fetchUsers, userKey, userQuery, usersQuery } from "../users-queries";
 
 const PARAMS = {
-  [USER.PARAM.PAGE]: USER.DEFAULT_PAGE,
-  [USER.PARAM.PER_PAGE]: USER.DEFAULT_PAGE_SIZE,
+  [USER.PARAM.PAGE]: USER.DEFAULT.PAGE,
+  [USER.PARAM.PER_PAGE]: USER.DEFAULT.PAGE_SIZE,
   [USER.PARAM.SEARCH]: "",
   [USER.PARAM.SORT]: "",
 };

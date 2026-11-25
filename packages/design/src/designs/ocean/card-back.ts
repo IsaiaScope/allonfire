@@ -1,48 +1,50 @@
 import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
 import { OCEAN_IMAGE_COLOR } from "./image-colors";
-import { OCEAN_ART } from "./mascot-art";
+import { LI_MARK, liMarkDataUrl } from "./li-mark";
 import { oceanWavePath } from "./sea-wave";
 
 const WIDTH = 300;
 const HEIGHT = 400;
-const CORNER = 24;
-const EDGE_WIDTH = 3;
-const MARK = 128;
-/** The Noto octopus is drawn in its own square: a nested SVG places and scales it. */
-const MARK_TAG = `<svg x="${(WIDTH - MARK) / 2}" y="${(HEIGHT - MARK) / 2}" width="${MARK}" height="${MARK}" `;
-const WAVE_OPACITY = 0.35;
-
-const { dark, INK } = OCEAN_IMAGE_COLOR;
-
+/** The mark's share of the card's width. */
+const MARK_SHARE = 0.72;
+const MARK_WIDTH = WIDTH * MARK_SHARE;
+const MARK_HEIGHT = Math.round((MARK_WIDTH * LI_MARK.HEIGHT) / LI_MARK.WIDTH);
+const WAVE_OPACITY = 0.3;
 const WAVE_RISE = 18;
+/** Three whole waves across the card, edge to edge. */
+const WAVE_PERIOD = 100;
+/** How far a row of waves sits from the card's top and bottom. */
+const WAVE_MARGIN = 38;
 
-const WAVE_PERIOD = 120;
-const WAVE_WIDTH = 240;
-/** Centres the row's width on the card. */
-const WAVE_INSET = (WIDTH - WAVE_WIDTH) / 2;
+type Scheme = keyof typeof LI_MARK.PNG_BASE64;
 
-/** A row of waves at height `y`. */
-const wave = (y: number) =>
-  `<path transform="translate(${WAVE_INSET} 0)" d="${oceanWavePath({ amplitude: WAVE_RISE, period: WAVE_PERIOD, width: WAVE_WIDTH, y })}" fill="none" stroke="${dark.primary}" stroke-opacity="${WAVE_OPACITY}" stroke-width="3" stroke-linecap="round"/>`;
+/** A row of waves at height `y`, in the scheme's primary. */
+const wave = (y: number, stroke: string) =>
+  `<path d="${oceanWavePath({ amplitude: WAVE_RISE, period: WAVE_PERIOD, width: WIDTH, y })}" fill="none" stroke="${stroke}" stroke-opacity="${WAVE_OPACITY}" stroke-width="3" stroke-linecap="round"/>`;
 
 /**
- * The back of a Memory game card, the same for both schemes (the ink is
- * furniture, like Japan's): the ink with an edge in the dark primary, two
- * rows of waves and the Noto octopus in its own full colour (a picture, so it
- * needs no contrast of its own: it reads on the ink). 3:1 on the edge keeps
- * the card visible on the dark ground, where the ink alone is 1.11:1. 3:4, so
- * a board lays it in a grid.
+ * The back of a Memory game card in one scheme: its own ground (the light's
+ * secondary, the dark's card) to the very edge, two rows of waves in its
+ * primary running the card's whole width and Laura's Li logo centred, navy by
+ * day and gold by night (a picture, so it needs no contrast of its own). The
+ * page's card clips the corners and draws the edge. 3:4, so a board lays it in
+ * a grid.
  */
-const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}">
-<rect x="${EDGE_WIDTH / 2}" y="${EDGE_WIDTH / 2}" width="${WIDTH - EDGE_WIDTH}" height="${HEIGHT - EDGE_WIDTH}" rx="${CORNER - EDGE_WIDTH / 2}" fill="${INK}" stroke="${dark.primary}" stroke-width="${EDGE_WIDTH}"/>
-${wave(84)}
-${wave(HEIGHT - 84)}
-${OCEAN_ART.OCTOPUS_NOTO.SVG.replace("<svg ", MARK_TAG)}
+const back = (scheme: Scheme) => {
+  const colors = OCEAN_IMAGE_COLOR[scheme === "LIGHT" ? "light" : "dark"];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}">
+<rect width="${WIDTH}" height="${HEIGHT}" fill="${scheme === "LIGHT" ? colors.secondary : colors.card}"/>
+${wave(WAVE_MARGIN, colors.primary)}
+${wave(HEIGHT - WAVE_MARGIN, colors.primary)}
+<image x="${(WIDTH - MARK_WIDTH) / 2}" y="${(HEIGHT - MARK_HEIGHT) / 2}" width="${MARK_WIDTH}" height="${MARK_HEIGHT}" href="${liMarkDataUrl(scheme)}"/>
 </svg>`;
+  return { DATA_URL: svgDataUrl(svg), SVG: svg };
+};
 
+/** The card back of each scheme: a board shows the one its scheme wears. */
 export const OCEAN_CARD_BACK = {
-  DATA_URL: svgDataUrl(SVG),
+  DARK: back("DARK"),
   HEIGHT,
-  SVG,
+  LIGHT: back("LIGHT"),
   WIDTH,
 } as const;

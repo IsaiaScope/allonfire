@@ -1,24 +1,17 @@
-import { ImageAccess } from "@allonfire/database/enums";
 import type { GalleryRecord } from "@allonfire/database/features/apps/laura/gallery.service";
-import {
-  pictureSrcSet,
-  privateLinkExpiry,
-} from "@allonfire/storage/features/image-server/sign";
+import { signedSrcSet } from "@allonfire/storage/features/image-server/sign";
 import type { GalleryItemBody } from "../constants/schemas";
 
 /** A record as the API answers it at `now`: a private picture's links end within the hour. */
 export const toGalleryItem = (
-  { access, alt, blurDataUrl, favorite, height, id, key, width }: GalleryRecord,
+  record: GalleryRecord,
   now: Date
 ): GalleryItemBody => ({
-  alt,
-  blurDataUrl,
-  favorite,
-  height,
-  id,
-  srcSet: pictureSrcSet(
-    key,
-    access === ImageAccess.PRIVATE ? privateLinkExpiry(now) : undefined
-  ),
-  width,
+  alt: record.alt,
+  blurDataUrl: record.blurDataUrl,
+  favorite: record.favorite,
+  height: record.height,
+  id: record.id,
+  srcSet: signedSrcSet(record, now),
+  width: record.width,
 });

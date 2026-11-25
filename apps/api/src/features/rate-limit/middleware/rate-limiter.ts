@@ -16,7 +16,8 @@ import { problemResponse } from "../../errors/middleware/error-handler";
 import { localeOf } from "../../i18n/middleware/locale-resolver";
 import { translate } from "../../i18n/translate";
 import { logger as defaultLogger } from "../../logger/logger";
-import { RATE_LIMIT, rateLimitKey } from "../constants/limits";
+import { RATE_LIMIT } from "../constants/limits";
+import { rateLimitKey } from "../utils/rate-limit-key";
 
 /**
  * The library's own `Store` contract, narrowed to the calls it makes on ours,
@@ -83,7 +84,7 @@ function clientKey(context: Context, trustedHops: number): string {
     }
   }
 
-  return remoteAddress(context) ?? RATE_LIMIT.UNKNOWN_CLIENT;
+  return remoteAddress(context) ?? RATE_LIMIT.KEY.UNKNOWN_CLIENT;
 }
 
 function remoteAddress(context: Context): string | undefined {
@@ -137,6 +138,8 @@ export function createRateLimiter(opts: {
   windowMs: number;
   limit: number;
   trustedHops: number;
+  /** Whom a request counts against: its client's address unless this says otherwise (a User's id). */
+  keyOf?: (context: Context) => string;
   /** Separates this limiter's counters from another sharing the store's namespace. */
   keyPrefix?: string;
 }): MiddlewareHandler {
@@ -149,7 +152,7 @@ export function createRateLimiter(opts: {
     handler: (context) => {
       // The time left in the window, which is what the library already put in
       // `Retry-After`. The full window only when the store has no reset time.
-      const resetTime = context.get(RATE_LIMIT.INFO)?.resetTime;
+      const resetTime = context.get(RATE_LIMIT.CONTEXT_VAR.INFO)?.resetTime;
       const retryAfter = resetTime
         ? Math.max(
             0,
@@ -166,10 +169,10 @@ export function createRateLimiter(opts: {
       });
     },
     keyGenerator: (context) =>
-      `${opts.keyPrefix ?? ""}${clientKey(context, opts.trustedHops)}`,
+      `${opts.keyPrefix ?? ""}${opts.keyOf?.(context) ?? clientKey(context, opts.trustedHops)}`,
     limit: opts.limit,
-    requestPropertyName: RATE_LIMIT.INFO,
-    standardHeaders: RATE_LIMIT.HEADER_SPEC,
+    requestPropertyName: RATE_LIMIT.CONTEXT_VAR.INFO,
+    standardHeaders: RATE_LIMIT.HEADER.SPEC,
     store,
     windowMs: opts.windowMs,
   });

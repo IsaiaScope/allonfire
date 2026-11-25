@@ -1,3 +1,4 @@
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { searchQuery } from "@allonfire/core/features/search/search-query";
 import { sortQuery } from "@allonfire/core/features/search/sort-query";
 import { UNIT } from "@allonfire/core/shared/constants/units";
@@ -32,6 +33,11 @@ const SEARCH = searchQuery(
 const SORT = sortQuery(["created", "size", "access", "name"] as const);
 
 /** Every limit an Image meets, from the upload to the stored file. */
+/** One upload request, every file and the meta part together. */
+const UPLOAD_BYTES = 90 * UNIT.BYTES_PER_MIB;
+/** What a multipart body adds to its files: boundaries and the meta part. */
+const FORM_FRAMING_BYTES = UNIT.BYTES_PER_MIB;
+
 const LIMIT = {
   /** Items in one PATCH or DELETE. */
   BATCH: 100,
@@ -40,8 +46,11 @@ const LIMIT = {
   /** One file; larger is a 413 naming this limit. */
   FILE_BYTES: 20 * UNIT.BYTES_PER_MIB,
   FILES_PER_UPLOAD: 20,
-  INPUT_MEGAPIXELS,
-  INPUT_PIXELS: INPUT_MEGAPIXELS * PIXELS_PER_MEGAPIXEL,
+  /** What a picture is allowed to hold before it is decoded. */
+  INPUT: {
+    MEGAPIXELS: INPUT_MEGAPIXELS,
+    PIXELS: INPUT_MEGAPIXELS * PIXELS_PER_MEGAPIXEL,
+  },
   /** Images on one page of a listing. */
   LIST: { DEFAULT: 25, MAX: 100 },
   /** The last numbered page a listing answers for. */
@@ -50,18 +59,25 @@ const LIMIT = {
   SEARCH_MAX: 200,
   /** The longest `sort` the API reads, `name.asc,size.desc,created.desc` and room to spare. */
   SORT_MAX: 200,
-  /**
-   * One upload request, every file and the meta part together. Kept under
-   * Cloudflare's 100 MB request body limit (free plan), which sits in front of
-   * every App: 100 MiB would be refused there with a 413 before reaching us.
-   */
-  UPLOAD_BYTES: 90 * UNIT.BYTES_PER_MIB,
-  /**
-   * The upload's own time budget, in place of the API-wide 30 s: a 503 there
-   * would not stop the handler, so the batch would still land and a retry
-   * would store it twice.
-   */
-  UPLOAD_TIMEOUT_MS: 5 * UNIT.MS_PER_MINUTE,
+  UPLOAD: {
+    /**
+     * The body an App's Server Action and proxy take for an upload: the whole
+     * request plus 1 MiB of form framing (`withImageUploads`).
+     */
+    BODY_BYTES: UPLOAD_BYTES + FORM_FRAMING_BYTES,
+    /**
+     * One upload request, every file and the meta part together. Kept under
+     * Cloudflare's 100 MB request body limit (free plan), which sits in front of
+     * every App: 100 MiB would be refused there with a 413 before reaching us.
+     */
+    BYTES: UPLOAD_BYTES,
+    /**
+     * The upload's own time budget, in place of the API-wide 30 s: a 503 there
+     * would not stop the handler, so the batch would still land and a retry
+     * would store it twice.
+     */
+    TIMEOUT_MS: 5 * UNIT.MS_PER_MINUTE,
+  },
 } as const;
 
 /** Everything fixed about Images: where they live, how they are stored and served, and their limits. */
@@ -94,24 +110,38 @@ export const IMAGE = {
    * enforces it, so the text cannot promise a limit the route does not keep.
    */
   DOC: {
-    DELETE_200:
-      "How many were taken out of `app`, or deleted: fewer than named when some were already gone",
-    DELETE_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} ids. With \`app\`: takes the Images out of that App (Admin there; each must be in it) and deletes the ones left in no App. Without: deletes them everywhere (Admin in every App each is in). An id that is not there, or that the User cannot see, is skipped as already gone (the answer's \`deleted\` counts the rest, so a retry is safe). An Image the User can see but may not delete answers 403 for the whole batch. All or nothing; the stored files go after the rows.`,
-    DELETE_SUMMARY: "Take Images out of an App, or delete them",
-    GET_200: "The Image",
-    GET_DESCRIPTION:
-      "No sign-in needed. A public Image, or a private one in an App the User enters; any other answers 404, not 403, so its id stays hidden. Its picture comes as signed links, one per width (`srcSet`): a public Image's never expire, a private one's within the hour.",
-    GET_SUMMARY: "Get an Image",
-    LIST_200:
-      "One page of Images, with the `page`, `pageCount`, `total` and `totalBytes` (of every visible Image, not just the page)",
-    LIST_DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first unless \`sort\` says otherwise (\`created.desc,size.asc\`: a column and a direction in order, at most three, from \`created\`, \`size\`, \`access\` and \`name\`; an unknown one is dropped), a numbered page of \`perPage\` Images (default ${LIMIT.LIST.DEFAULT}, up to ${LIMIT.LIST.MAX}), \`page\` from 1 to ${LIMIT.MAX_PAGE}. \`search\` is the filters and the text in one string (ADR 0026), as in \`access:public app:laura sea\`: \`access\` keeps only the public, or only the private, Images, and the text keeps the Images whose alt text or file name holds it, in any language, ignoring case. \`created\` keeps the Images uploaded in a range of whole UTC days, both ends included (\`created:2026-11-26..2026-11-28\`, or one day as \`created:2026-11-26\`).`,
-    LIST_SUMMARY: "List Images",
-    PATCH_200: "The updated Images",
-    PATCH_DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. Each change carries the \`version\` it was made on (\`Image.version\`): an Image changed since, or one the batch would leave in no App, answers 409 \`RESOURCE_CHANGED\`. All or nothing.`,
-    PATCH_SUMMARY: "Place Images in Apps or change their alt",
-    UPLOAD_201: "The new Images, in file order",
-    UPLOAD_DESCRIPTION: `Signed in, Admin in every App named. multipart/form-data: up to ${LIMIT.FILES_PER_UPLOAD} \`file\` parts and one \`meta\` JSON part, \`[{ apps: [App], alt, access? }]\` in file order, at least one App each, each App once, private when \`access\` is left out. JPEG, PNG, WebP, AVIF or HEIC in; each file is stored as AVIF with a blur placeholder. Limits: ${LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB} MiB a file, ${LIMIT.UPLOAD_BYTES / UNIT.BYTES_PER_MIB} MiB a request, ${LIMIT.INPUT_MEGAPIXELS} megapixels, ${LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_MINUTE} minutes. All or nothing: one bad file rejects the batch.`,
-    UPLOAD_SUMMARY: "Upload Images",
+    DELETE: {
+      DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} ids. With \`app\`: takes the Images out of that App (Admin there; each must be in it) and deletes the ones left in no App. Without: deletes them everywhere (Admin in every App each is in). An id that is not there, or that the User cannot see, is skipped as already gone (the answer's \`deleted\` counts the rest, so a retry is safe). An Image the User can see but may not delete answers 403 for the whole batch. All or nothing; the stored files go after the rows.`,
+      RESPONSE: {
+        [HTTP.STATUS.OK]:
+          "How many were taken out of `app`, or deleted: fewer than named when some were already gone",
+      },
+      SUMMARY: "Take Images out of an App, or delete them",
+    },
+    GET: {
+      DESCRIPTION:
+        "No sign-in needed. A public Image, or a private one in an App the User enters; any other answers 404, not 403, so its id stays hidden. Its picture comes as signed links, one per width (`srcSet`): a public Image's never expire, a private one's within the hour.",
+      RESPONSE: { [HTTP.STATUS.OK]: "The Image" },
+      SUMMARY: "Get an Image",
+    },
+    LIST: {
+      DESCRIPTION: `No sign-in needed. The Images visible in \`app\` (in any App when it is left out): placed there, and public or in an App the User enters (ADR 0027). Never 403: someone who cannot enter \`app\` gets its public Images. Newest upload first unless \`sort\` says otherwise (\`created.desc,size.asc\`: a column and a direction in order, at most three, from \`created\`, \`size\`, \`access\` and \`name\`; an unknown one is dropped), a numbered page of \`perPage\` Images (default ${LIMIT.LIST.DEFAULT}, up to ${LIMIT.LIST.MAX}), \`page\` from 1 to ${LIMIT.MAX_PAGE}. \`search\` is the filters and the text in one string (ADR 0026), as in \`access:public app:laura sea\`: \`access\` keeps only the public, or only the private, Images, and the text keeps the Images whose alt text or file name holds it, in any language, ignoring case. \`created\` keeps the Images uploaded in a range of whole UTC days, both ends included (\`created:2026-11-26..2026-11-28\`, or one day as \`created:2026-11-26\`).`,
+      RESPONSE: {
+        [HTTP.STATUS.OK]:
+          "One page of Images, with the `page`, `pageCount`, `total` and `totalBytes` (of every visible Image, not just the page)",
+      },
+      SUMMARY: "List Images",
+    },
+    PATCH: {
+      DESCRIPTION: `Signed in. Up to ${LIMIT.BATCH} changes, each Image once, each an \`id\` with \`apps\` (the full new list, each App once), \`alt\`, \`access\` or any of them. An App added or removed needs the Admin Role in it; \`alt\` and \`access\`, which every App shows, need it in every App the Image is in. Making a public Image private moves it to a new file, so its public links stop at once; \`alt\` needs every language. An Image the User cannot see answers 404, checked across the whole batch before any 403. Each change carries the \`version\` it was made on (\`Image.version\`): an Image changed since, or one the batch would leave in no App, answers 409 \`RESOURCE_CHANGED\`. All or nothing.`,
+      RESPONSE: { [HTTP.STATUS.OK]: "The updated Images" },
+      SUMMARY: "Place Images in Apps or change their alt",
+    },
+    UPLOAD: {
+      DESCRIPTION: `Signed in, Admin in every App named. multipart/form-data: up to ${LIMIT.FILES_PER_UPLOAD} \`file\` parts and one \`meta\` JSON part, \`[{ apps: [App], alt, access? }]\` in file order, at least one App each, each App once, private when \`access\` is left out. JPEG, PNG, WebP, AVIF or HEIC in; each file is stored as AVIF with a blur placeholder. Limits: ${LIMIT.FILE_BYTES / UNIT.BYTES_PER_MIB} MiB a file, ${LIMIT.UPLOAD.BYTES / UNIT.BYTES_PER_MIB} MiB a request, ${LIMIT.INPUT.MEGAPIXELS} megapixels, ${LIMIT.UPLOAD.TIMEOUT_MS / UNIT.MS_PER_MINUTE} minutes. All or nothing: one bad file rejects the batch.`,
+      RESPONSE: { [HTTP.STATUS.CREATED]: "The new Images, in file order" },
+      SUMMARY: "Upload Images",
+    },
   },
   /**
    * The codes only this module throws, beside the standard ones it throws

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { type InstallStatus, type InstallStep, PWA } from "../constants/pwa";
+import { PWA } from "../constants/pwa";
+import type { InstallStatus, InstallStep } from "../constants/pwa-schema";
 import { dismissHint, hintMayShow } from "../utils/install-hint-state";
 import { installPlatform, type Visitor } from "../utils/install-platform";
 import { installPrompt, subscribeInstallPrompt } from "../utils/install-prompt";

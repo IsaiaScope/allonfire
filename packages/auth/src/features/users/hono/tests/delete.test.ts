@@ -56,7 +56,7 @@ describe("User module: DELETE", () => {
     const { deleted, deps } = depsWith();
     const host = userHost(ADMIN, deps);
     const tooMany = Array.from(
-      { length: USER.MAX_DELETE + 1 },
+      { length: USER.LIMIT.MAX_DELETE + 1 },
       (_, index) => `user-${index + 2}`
     );
     const statuses = await Promise.all(

@@ -2,26 +2,21 @@
 
 // ============ Games ============
 
-enum GameType {
-  MEMORY
-  QUIZ
-
-  @@schema("laura")
-}
-
-model GameScore {
-  id        String   @id @default(cuid(2))
+/// One finished game of Memory, Laura's only game. Each game gets its own
+/// typed table under the Profile (ADR 0034): never a shared score table.
+model MemoryScore {
+  id        String       @id @default(cuid(2))
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gameType  GameType
-  timeMs    Int?
-  score     Int?
-  metadata  Json?
-  createdAt DateTime @default(now())
+  /// Always LAURA (a CHECK in the changeset): the Profile's key needs it.
+  app       App          @default(LAURA)
+  profile   LauraProfile @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)
+  /// Moves (two cards turned) it took to match every pair; fewer is better.
+  moves     Int          @map("score")
+  timeMs    Int
+  createdAt DateTime     @default(now())
 
-  @@index([gameType, timeMs])
-  @@index([gameType, score])
-  @@index([userId, gameType])
+  @@index([moves, timeMs])
+  @@index([userId, moves, timeMs])
   @@schema("laura")
 }
 
@@ -49,6 +44,7 @@ model LauraProfile {
   createdAt  DateTime          @default(now())
   membership Membership        @relation(fields: [userId, app], references: [userId, app], onDelete: Cascade)
   favorites  ProfileFavorite[]
+  memoryScores MemoryScore[]
 
   @@id([userId, app])
   @@map("Profile")

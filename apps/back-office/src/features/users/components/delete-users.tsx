@@ -25,7 +25,7 @@ export const DeleteUsers = ({
     <BulkDeleteControl
       count={selectedIds.length}
       flow={flow}
-      kanji={USERS.DELETE_KANJI}
+      kanji={USERS.KANJI.DELETE}
       t={t}
     />
   );

@@ -57,7 +57,7 @@ const askForLink = async () => {
 
 /** Opens Reset password at a link with a token and types `password` twice. */
 const typeNewPassword = async (password: string) => {
-  query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+  query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
   const screen = await inEnglish(
     <AOFResetPasswordForm actions={actions} back={backLink} />
   );
@@ -114,7 +114,7 @@ describe("AOFForgotPasswordForm", () => {
   });
 
   it("explains Reset password with a link", async () => {
-    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
     const screen = await inEnglish(
       <AOFResetPasswordForm actions={actions} back={backLink} />
     );
@@ -140,7 +140,7 @@ describe("AOFForgotPasswordForm", () => {
   });
 
   it("leaves the page's title to the gate: Reset password has none, nor has the dead-link notice", async () => {
-    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
     const screen = await inEnglish(
       <AOFResetPasswordForm actions={actions} back={backLink} />
     );
@@ -187,7 +187,7 @@ describe("AOFForgotPasswordForm", () => {
 
   it("says when links cannot be sent now", async () => {
     vi.mocked(requestPasswordReset).mockResolvedValue({
-      error: AUTH.FORGOT_ERROR.UNAVAILABLE,
+      error: AUTH.ERROR.FORGOT.UNAVAILABLE,
     });
     const screen = await askForLink();
     await expect
@@ -252,7 +252,7 @@ describe("AOFResetPasswordForm", () => {
 
   it("offers a new link once the API says the link no longer works", async () => {
     vi.mocked(resetPassword).mockResolvedValue({
-      error: AUTH.RESET_ERROR.INVALID_TOKEN,
+      error: AUTH.ERROR.RESET.INVALID_TOKEN,
     });
     const screen = await typeNewPassword(FIXTURE.NEW_PASSWORD);
     await screen.getByRole("button", { name: reset.submit }).click();
@@ -298,7 +298,7 @@ describe("the way back to Sign in the Design gives", () => {
   });
 
   it("sits left of the save button on Reset password too", async () => {
-    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
     const screen = await inEnglish(
       <AOFResetPasswordForm actions={actions} back={backLink} />
     );
@@ -319,7 +319,7 @@ describe("a state to start from", () => {
       <AOFForgotPasswordForm
         actions={actions}
         back={backLink}
-        initialState={{ error: AUTH.FORGOT_ERROR.RATE_LIMITED }}
+        initialState={{ error: AUTH.ERROR.FORGOT.RATE_LIMITED }}
         resetPage={RESET_PAGE}
       />
     );
@@ -346,12 +346,12 @@ describe("a state to start from", () => {
   });
 
   it("shows the error Reset password already knows above its button", async () => {
-    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
     const screen = await inEnglish(
       <AOFResetPasswordForm
         actions={actions}
         back={backLink}
-        initialState={{ error: AUTH.RESET_ERROR.UNAVAILABLE }}
+        initialState={{ error: AUTH.ERROR.RESET.UNAVAILABLE }}
       />
     );
     await expect
@@ -360,12 +360,12 @@ describe("a state to start from", () => {
   });
 
   it("starts Reset password on the dead-link page when the link is known to be dead", async () => {
-    query.search = `${AUTH.MAIL.TOKEN_PARAM}=tok-1`;
+    query.search = `${AUTH.MAIL.PARAM.TOKEN}=tok-1`;
     const screen = await inEnglish(
       <AOFResetPasswordForm
         actions={actions}
         back={backLink}
-        initialState={{ error: AUTH.RESET_ERROR.INVALID_TOKEN }}
+        initialState={{ error: AUTH.ERROR.RESET.INVALID_TOKEN }}
       />
     );
     await expect

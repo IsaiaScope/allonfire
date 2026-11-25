@@ -12,10 +12,7 @@ const { refusalOf } = aofRefusal({
 
 const answer = (status: number, body: unknown = {}) =>
   Response.json(body, { status });
-type Key = (typeof CODES)[keyof typeof CODES] | typeof HTTP.STATUS.CONFLICT;
-const known = new Map<Key, typeof TAKEN_MESSAGE>([
-  [CODES.TAKEN, TAKEN_MESSAGE],
-]);
+const known = { [CODES.TAKEN]: TAKEN_MESSAGE } as const;
 
 describe("aofRefusal", () => {
   it("answers the message a known code maps to", async () => {
@@ -29,14 +26,14 @@ describe("aofRefusal", () => {
   });
 
   it("falls back to the status the API answers with a problem", async () => {
-    const byStatus = new Map([[HTTP.STATUS.CONFLICT, MESSAGES.FAILED]]);
+    const byStatus = { [HTTP.STATUS.CONFLICT]: MESSAGES.FAILED } as const;
     expect(
       await refusalOf(answer(HTTP.STATUS.CONFLICT), MESSAGES, byStatus)
     ).toBe(MESSAGES.FAILED);
   });
 
   it("answers REFUSED to a 403 whose code is unknown, and FAILED to a 500", async () => {
-    const none = new Map<Key, string>();
+    const none = {};
     expect(
       await refusalOf(
         answer(HTTP.STATUS.FORBIDDEN, { code: "unheard_of" }),
@@ -50,7 +47,7 @@ describe("aofRefusal", () => {
   });
 
   it("finds nothing for a code every object has: `constructor`", async () => {
-    const none = new Map<Key, string>();
+    const none = {};
     expect(
       await refusalOf(
         answer(HTTP.STATUS.BAD_REQUEST, { code: "constructor" }),
@@ -61,7 +58,7 @@ describe("aofRefusal", () => {
   });
 
   it("answers FAILED when the body is not JSON", async () => {
-    const none = new Map<Key, string>();
+    const none = {};
     expect(
       await refusalOf(
         new Response("<html>", { status: HTTP.STATUS.BAD_GATEWAY }),

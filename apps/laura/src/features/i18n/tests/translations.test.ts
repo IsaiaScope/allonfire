@@ -9,13 +9,13 @@ import { LAURA } from "@/shared/constants/laura";
 import { enT, itT } from "@/shared/tests/translators";
 
 /** Every message a toast shows (`aofToast`), by its key. A new toast's key goes in this list. */
-const TOAST_KEYS = [] as const;
+const TOAST_KEYS = ["Upload.added"] as const;
 
 translationsSuite({
   en: aofMessages("en", EN),
   it: aofMessages("it", IT),
   names: [LAURA.name, BRAND.NAME, LAURA.shareImageAlt],
-  sample: {},
+  sample: { count: 2 },
   toastKeys: TOAST_KEYS,
   translate: (locale, key) => (locale === "en" ? enT : itT)(key),
 });

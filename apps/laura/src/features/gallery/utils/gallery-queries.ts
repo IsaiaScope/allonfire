@@ -1,10 +1,11 @@
 import { API } from "@allonfire/api/shared/constants/api";
-import { retryUnlessRefused } from "@allonfire/core/features/next/query/utils/retry";
+import { staticQuery } from "@allonfire/core/features/next/query/utils/static-query";
 import { type InfiniteData, infiniteQueryOptions } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import type { ApiClient } from "@/features/api/utils/api";
 import { QUERY } from "@/shared/constants/query";
-import { GALLERY, type GallerySource } from "../constants/gallery";
+import { GALLERY } from "../constants/gallery";
+import type { GallerySource } from "../constants/gallery-schema";
 
 /** Where a page starts: the `nextCursor` of the page before, `null` for the first. */
 export type GalleryCursor = string | null;
@@ -14,7 +15,7 @@ const FIRST_PAGE: GalleryCursor = GALLERY.FIRST_PAGE;
 
 /** What a page's request asks: its size, and where it starts. */
 const pageQuery = (cursor: GalleryCursor) => ({
-  limit: String(GALLERY.PAGE_SIZE),
+  limit: String(GALLERY.DEFAULT.PAGE_SIZE),
   ...(cursor === null ? {} : { cursor }),
 });
 
@@ -41,18 +42,13 @@ export type GalleryPage = Awaited<ReturnType<typeof fetchGalleryPage>>;
 export type GalleryFeed = InfiniteData<GalleryPage, GalleryCursor>;
 
 /**
- * Asks once more after a server or network failure; never after the API
- * refused (a 401, 403 or 400), so the error shows at once. A failed first
- * load has no data, so the provider never toasts it; a failed later page
- * toasts by itself.
- */
-const retryFeed = retryUnlessRefused(GALLERY.RETRIES);
-
-/**
  * A list read page after page. Never stale (`staleTime: "static"`: it never
  * reads the clock at render), so it is asked again only by `invalidateAll`'s
  * `invalidateStatic` or the link refresh. The key is tagged with the feed it
- * holds, so a hydration under it cannot hold a wrong body.
+ * holds, so a hydration under it cannot hold a wrong body. It asks once more
+ * after a server or network failure, never after a refusal; a failed first
+ * load has no data, so the provider never toasts it, and a failed later page
+ * toasts by itself.
  */
 const feedQuery =
   (
@@ -69,8 +65,7 @@ const feedQuery =
       initialPageParam: FIRST_PAGE,
       queryFn: ({ pageParam }) => fetchPage(client, pageParam),
       queryKey,
-      retry: retryFeed,
-      staleTime: "static",
+      ...staticQuery({ retries: GALLERY.LIMIT.RETRIES }),
     });
 
 /** The Gallery, page after page. */

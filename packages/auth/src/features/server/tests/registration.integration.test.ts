@@ -5,7 +5,7 @@ import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { stringifyJson } from "@allonfire/core/shared/utils/json";
 import { App, Role } from "@allonfire/database/enums";
 import { ACCESS } from "@allonfire/database/features/auth/access/constants/access";
-import type { AppSettingsTable } from "@allonfire/database/features/auth/access/constants/app-settings";
+import type { AppSettingsTable } from "@allonfire/database/features/auth/access/constants/access-schema";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { z } from "zod";
 import { AUTH } from "../../../shared/constants/auth";

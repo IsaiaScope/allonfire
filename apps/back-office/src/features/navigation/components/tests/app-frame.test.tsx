@@ -8,7 +8,7 @@ import { sectionEntry } from "@allonfire/ui/features/navigation/utils/sections";
 import { NextIntlClientProvider } from "next-intl";
 import { renderToStaticMarkup } from "react-dom/server";
 import EN from "../../../i18n/translations/en.json" with { type: "json" };
-import { SECTIONS } from "../../constants/sections";
+import { SECTION } from "../../constants/sections";
 import { AppFrame } from "../app-frame";
 
 // The frame's gated rows read the Session; the Back Office has none gated.
@@ -63,7 +63,7 @@ describe("AppFrame", () => {
       )
     ).toBe(1);
     // A Section with its own pages is reached through the first.
-    for (const section of SECTIONS) {
+    for (const section of SECTION.LIST) {
       expect(
         count(html, `href="${sectionEntry(section)}"`)
       ).toBeGreaterThanOrEqual(1);

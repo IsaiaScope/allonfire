@@ -7,6 +7,18 @@ import { AOFImage } from "@allonfire/ui/shared/components/aof-image";
 import type { ComponentPropsWithoutChildren } from "@allonfire/ui/shared/types/types";
 import { cn } from "@allonfire/ui/shared/utils/utils";
 
+/** Each picture's data URL, built once: it is the same string on every render and for every use. */
+const URLS = new Map<OceanArtKey, string>();
+const urlOf = (art: OceanArtKey, svg: string) => {
+  const kept = URLS.get(art);
+  if (kept) {
+    return kept;
+  }
+  const built = svgDataUrl(svg);
+  URLS.set(art, built);
+  return built;
+};
+
 /** The square an image is declared in: it is drawn at the caller's size, `object-contain`. */
 const EDGE = 128;
 
@@ -24,7 +36,7 @@ export type OceanArtProps = ComponentPropsWithoutChildren<"span"> & {
  */
 export const OceanArt = ({ art, className, ...props }: OceanArtProps) => {
   const picture = OCEAN_ART[art];
-  const src = svgDataUrl(picture.SVG);
+  const src = urlOf(art, picture.SVG);
   if ("MONO" in picture) {
     return (
       <span

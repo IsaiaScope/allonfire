@@ -146,7 +146,7 @@ export const serverLoggerOptions = (
 export const buildServerLogger = ({
   level,
   otlp,
-  destination = pino.destination(LOG.STDOUT_FD),
+  destination = pino.destination(LOG.FD.STDOUT),
 }: ServerLoggerOptions): Logger =>
   createLogger({
     destination: otlp

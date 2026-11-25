@@ -2,6 +2,7 @@
 
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { type App, ImageAccess } from "@allonfire/database/enums";
+import { APP } from "@allonfire/design/apps/app";
 import type { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { AOFFaceted } from "@allonfire/ui/features/data-table/components/aof-faceted";
 import { useRangePicker } from "@allonfire/ui/features/data-table/hooks/use-range-picker";
@@ -11,7 +12,6 @@ import {
   ListFilterPanel,
   SearchTile,
 } from "@/shared/components/list-filter-panel";
-import { APP_OPTIONS } from "@/shared/constants/apps";
 import { IMAGES } from "../constants/images";
 import { useImagesView } from "../hooks/use-images-view";
 
@@ -74,7 +74,7 @@ export const ImagesFilters = ({
       range={search.created ?? null}
       rangeLabel={tColumn("created")}
       resetFilters={reset}
-      resetKanji={IMAGES.RESET_KANJI}
+      resetKanji={IMAGES.KANJI.RESET}
       resetLabel={t("resetAll")}
       sortColumns={IMAGES.SORTABLE.map((id) => ({
         id,
@@ -83,7 +83,7 @@ export const ImagesFilters = ({
       view={view}
     >
       <AOFFaceted
-        items={APP_OPTIONS}
+        items={APP.OPTIONS}
         labels={{ ...list, trigger: t("app") }}
         onValueChange={pickApps}
         searchIcon={<SearchTile />}

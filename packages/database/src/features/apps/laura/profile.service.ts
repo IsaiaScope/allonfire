@@ -1,16 +1,7 @@
-import { Prisma } from "../../../../generated/prisma/client";
 import { App } from "../../../../generated/prisma/enums";
 import { prisma } from "../../prisma/client";
 import { lockFavorites } from "./utils/lock-favorites";
-
-/** Postgres' code for a foreign key that points at nothing. */
-const FOREIGN_KEY_VIOLATION = "23503";
-
-/** A raw statement that failed on a foreign key (Prisma reports it as `P2010` with Postgres' code). */
-const refusedByForeignKey = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === "P2003" ||
-    (error.code === "P2010" && error.meta?.code === FOREIGN_KEY_VIOLATION));
+import { refusedByForeignKey } from "./utils/refused-by-foreign-key";
 
 // `app` is left to its default (the database's own spelling of Laura, which
 // Prisma's `App.LAURA` is not).

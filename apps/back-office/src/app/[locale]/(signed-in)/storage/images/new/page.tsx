@@ -6,8 +6,8 @@ import { AddImage } from "@/features/images/components/add-image";
 import { AddImageSkeleton } from "@/features/images/components/add-image-skeleton";
 import { administeredApps } from "@/features/images/utils/administered-apps";
 import { newImageHref } from "@/features/images/utils/image-href";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 import { signedInPage } from "@/features/navigation/utils/signed-in-page";
-import { pageMetadata } from "@/shared/constants/page-information";
 
 /** Its own title and link preview, not the Images list's. */
 export const generateMetadata = () =>

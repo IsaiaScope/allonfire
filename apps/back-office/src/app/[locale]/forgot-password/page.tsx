@@ -1,8 +1,8 @@
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { AOFForgotPassword } from "@allonfire/ui/features/auth/components/aof-forgot-password";
 import { env } from "@/environment/environment";
-import { AUTH_DRESSING } from "@/features/auth/constants/dressing";
-import { pageMetadata } from "@/shared/constants/page-information";
+import { AUTH_DRESSING } from "@/features/auth/components/dressing";
+import { pageMetadata } from "@/features/metadata/utils/page-information";
 
 export const generateMetadata = () =>
   pageMetadata(AUTH.PAGE.FORGOT_PASSWORD, "Common.Auth.ForgotPassword.title");

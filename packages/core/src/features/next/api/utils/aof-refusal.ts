@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { objectHas } from "../../../../shared/utils/object";
 import { HTTP } from "../../../http/constants/http";
 
 /** A posted field's text; none when missing or a file. */
@@ -17,9 +18,10 @@ const problemSchema = z.object({ code: z.string() }).catch({ code: "" });
  * code, else for the status. Past those, a 401 or a 403 means the Session is
  * gone or no longer lets the visitor make the change (a new password ended
  * it, a Role was taken away): trying again never works, signing in again
- * might (`REFUSED`); anything else is `FAILED`. A Map, so a code that names
- * something every object has (`constructor`) finds nothing; keyed by the
- * API's own codes and statuses, so one it never answers with does not compile.
+ * might (`REFUSED`); anything else is `FAILED`. `known` is a record read with
+ * `objectHas`, so a code that names something every object has (`constructor`)
+ * finds nothing; keyed by the API's own codes and statuses, so one it never
+ * answers with does not compile.
  */
 export const aofRefusal = <
   const Codes extends Record<string, string>,
@@ -37,14 +39,16 @@ export const aofRefusal = <
     refusalOf: async <E extends string>(
       res: Response,
       { FAILED, REFUSED }: { FAILED: E; REFUSED: E },
-      known: ReadonlyMap<Codes[keyof Codes] | Statuses[number], E>
+      known: Readonly<Partial<Record<Codes[keyof Codes] | Statuses[number], E>>>
     ): Promise<E> => {
+      const answerOf = (key: Codes[keyof Codes] | Statuses[number]) =>
+        objectHas(known, key) ? known[key] : undefined;
       const { code } = problemSchema.parse(await res.json().catch(() => null));
       const byCode = codeSchema.safeParse(code);
       const byStatus = statusSchema.safeParse(res.status);
       const answer =
-        (byCode.success ? known.get(byCode.data) : undefined) ??
-        (byStatus.success ? known.get(byStatus.data) : undefined);
+        (byCode.success ? answerOf(byCode.data) : undefined) ??
+        (byStatus.success ? answerOf(byStatus.data) : undefined);
       if (answer) {
         return answer;
       }

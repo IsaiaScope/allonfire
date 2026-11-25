@@ -26,9 +26,9 @@ const TEST_TOAST = {
   [MAIL.OUTCOME.REJECTED]: "error",
   [MAIL.OUTCOME.UNAVAILABLE]: "warning",
   [MAIL.OUTCOME.UNCERTAIN]: "warning",
-  [SERVICES.TEST_ERROR.FAILED]: "error",
-  [SERVICES.TEST_ERROR.RATE_LIMITED]: "warning",
-  [SERVICES.TEST_ERROR.REMOVED]: "error",
+  [SERVICES.TEST.ERROR.FAILED]: "error",
+  [SERVICES.TEST.ERROR.RATE_LIMITED]: "warning",
+  [SERVICES.TEST.ERROR.REMOVED]: "error",
 } as const satisfies Record<
   NonNullable<TestSendState["outcome"] | TestSendState["error"]>,
   AOFToastKind
@@ -47,7 +47,7 @@ export const TestSend = ({ providerId }: { providerId: string }) => {
   const send = () =>
     startTransition(async () => {
       const result = await sendTestEmail(providerId);
-      const said = result.outcome ?? result.error ?? SERVICES.TEST_ERROR.FAILED;
+      const said = result.outcome ?? result.error ?? SERVICES.TEST.ERROR.FAILED;
       aofToast(t(said), TEST_TOAST[said]);
       // A send used quota, accepted or not: the rings are read again.
       refresh();
@@ -71,7 +71,7 @@ export const TestSend = ({ providerId }: { providerId: string }) => {
                 <IconSend aria-hidden />
               )
             }
-            kanjiProps={{ kanji: SERVICES.TEST_KANJI }}
+            kanjiProps={{ kanji: SERVICES.KANJI.TEST }}
             label={pending ? t("sending") : t("button")}
             shape="card"
           />

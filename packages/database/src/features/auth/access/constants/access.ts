@@ -1,6 +1,6 @@
 import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import { App, Role } from "../../../../../generated/prisma/enums";
-import type { AppSettingsTable } from "./app-settings";
+import type { AppSettingsTable } from "./access-schema";
 
 /**
  * How far each Role reaches; a higher rank holds every right of a lower one.

@@ -1,7 +1,7 @@
 import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App, ImageAccess, Role } from "../../../../generated/prisma/enums";
 import { ACCESS } from "./constants/access";
-import type { AppSettingsTable } from "./constants/app-settings";
+import type { AppSettingsTable } from "./constants/access-schema";
 import { appSchema, roleSchema } from "./constants/schemas";
 
 /**

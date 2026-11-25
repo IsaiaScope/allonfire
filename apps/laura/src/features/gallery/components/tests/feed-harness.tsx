@@ -8,7 +8,8 @@ import { page } from "vitest/browser";
 import { QUERY } from "@/shared/constants/query";
 import { GALLERY_PAGE, GALLERY_URL } from "@/shared/tests/msw/handlers";
 import { enT } from "@/shared/tests/translators";
-import { GALLERY, type GallerySource } from "../../constants/gallery";
+import { GALLERY } from "../../constants/gallery";
+import type { GallerySource } from "../../constants/gallery-schema";
 import { GalleryFeed } from "../gallery-feed";
 
 export const ONLY_PAGE = { ...GALLERY_PAGE, nextCursor: null };

@@ -72,12 +72,12 @@ export const uploadTimeout = createMiddleware<{
           code: ERROR.CODE.TIMEOUT,
           status: HTTP.STATUS.SERVICE_UNAVAILABLE,
           values: {
-            seconds: IMAGE.LIMIT.UPLOAD_TIMEOUT_MS / UNIT.MS_PER_SECOND,
+            seconds: IMAGE.LIMIT.UPLOAD.TIMEOUT_MS / UNIT.MS_PER_SECOND,
           },
         })
       );
       reject(budget.signal.reason);
-    }, IMAGE.LIMIT.UPLOAD_TIMEOUT_MS);
+    }, IMAGE.LIMIT.UPLOAD.TIMEOUT_MS);
   });
   try {
     await Promise.race([next(), expired]);

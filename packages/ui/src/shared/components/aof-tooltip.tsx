@@ -10,6 +10,19 @@ import { useSafeAreaPadding } from "../hooks/use-safe-area-padding";
 import type { ComponentPropsWithoutChildren } from "../types/types";
 import { cn } from "../utils/utils";
 
+/**
+ * What the eye reads on a control: `innerText` leaves out what CSS hides, and
+ * the words only a screen reader reads (`sr-only`, laid out but clipped to a
+ * pixel) are taken out too, since the tip is for those who see the icon alone.
+ */
+const shownText = (control: HTMLElement) => {
+  let text = control.innerText;
+  for (const hidden of control.querySelectorAll<HTMLElement>(".sr-only")) {
+    text = text.replace(hidden.innerText, "");
+  }
+  return text;
+};
+
 /** Base UI's tooltip root (`open`, `onOpenChange`, ...), plus the tip. */
 export type AOFTooltipProps = ComponentPropsWithoutChildren<typeof Tooltip> & {
   /** The control the tip names; it keeps its own accessible name. */
@@ -40,11 +53,10 @@ export const AOFTooltip = ({
 }: AOFTooltipProps) => {
   const padding = useSafeAreaPadding();
   const open: AOFTooltipProps["onOpenChange"] = (next, details) => {
-    // `innerText` leaves out what CSS hides, so it is what the eye reads.
     if (
       next &&
       details.trigger instanceof HTMLElement &&
-      details.trigger.innerText.includes(label)
+      shownText(details.trigger).includes(label)
     ) {
       details.cancel();
       return;

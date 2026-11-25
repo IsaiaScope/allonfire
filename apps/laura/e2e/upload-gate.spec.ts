@@ -2,7 +2,7 @@ import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { LOCAL } from "@allonfire/config/local/addresses";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { expect, test } from "@playwright/test";
-import { SECTION } from "../src/shared/constants/laura";
+import { SECTION } from "../src/features/navigation/constants/sections";
 import { enT } from "../src/shared/tests/translators";
 import {
   menuOf,

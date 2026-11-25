@@ -21,7 +21,7 @@ database: the host hands `sendMail` a `MailStore` (the API's is
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `MAIL` (`constants/mail`) | Constant | The drivers (`DRIVER`, named for the API's shape), what a driver's send made of a handoff (`ATTEMPT`), the outcomes (`accepted`, `rejected`, `uncertain`, `unavailable`), the purposes (`PURPOSE`, a log field), the environment's names (`ENV`), the driver paths and timeouts |
+| `MAIL` (`constants/mail`) | Constant | The drivers (`DRIVER`, named for the API's shape), what a driver's send made of a handoff (`ATTEMPT`), the outcomes (`accepted`, `rejected`, `uncertain`, `unavailable`), the purposes (`PURPOSE`, a log field), the environment's names (`ENV`), the driver paths and timeouts, the usage window (`USAGE.MONTH_DAYS`) |
 | `sendMail(message, { purpose, only }, deps)` (`utils/send-mail`) | Function | Enabled providers in slot order, each handed the message by its driver; one with no room or that refuses is skipped for the next; an uncertain outcome stops the send; `only` sends through one provider, never failing over |
 | `MAIL_DRIVERS` (`utils/drivers`) | `Record<MailDriver, MailDriverImpl>` | Each driver's `send` (an attempt: accepted, quota, rejected, uncertain) and `usage` (what the provider's API says it sent today and in 31 days, and the limits it reports) over `fetch`, https only |
 | `MailStore`, `MailDeps`, `MailUsage`, `SendResult` (`types/mail`) | Types | What a host provides: the providers and a last-acceptance stamp, the endpoint of a slot, `fetch` |
@@ -36,6 +36,13 @@ database: the host hands `sendMail` a `MailStore` (the API's is
 | `validationError(issues)` | Function | Standard Schema issues as a 400 `CodedError` coded `ERROR.CODE.VALIDATION_FAILED`, paths joined with `.` |
 | `invalidHook` | Function | A validator hook (`sValidator`, hono-openapi) that throws `validationError` on a failed parse |
 | `StandardIssue` | Type | The part of a Standard Schema issue those read |
+
+### `./features/errors/utils/openapi`
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `problemResponseName(status)` | Function | The OpenAPI response name of an error status (`Problem<status>`) |
+| `problemResponses(...statuses)` | Function | A route's error responses, one `$ref` per status |
 
 ### `./features/errors/constants/error-codes`
 
@@ -99,6 +106,7 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 |--------|------|-------------|
 | `objectKeys(obj)` | Function | Type-safe `Object.keys()` — returns `(keyof T & string)[]` |
 | `objectEntries(obj)` | Function | Type-safe `Object.entries()` — returns `[keyof T & string, T[keyof T]][]` |
+| `objectHas(obj, key)` | Function | Whether `obj` holds `key` itself, never one it inherits (`constructor`): a guard for a lookup keyed by outside text, as `aofRefusal`'s `known` |
 | `formatErrorMessage(error, fallback)` | Function | Extracts message from `Error` instances, returns fallback for unknown errors |
 
 ### `./environment/environment`
@@ -143,6 +151,7 @@ CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `a
 |--------|------|-------------|
 | `LOG.LEVEL`, `logLevelSchema`, `LogLevel` | const / zod / type | pino's levels plus `silent` |
 | `LOG.REDACT.PATHS`, `LOG.REDACT.CENSOR` | const | What pino scrubs before a transport sees it, and what it writes instead |
+| `LOG.FD.STDOUT` | const | The file descriptor a Host writes its lines to |
 
 ### `./shared/constants/units`
 
@@ -210,7 +219,8 @@ imports these.
 | `./features/next/pwa/utils/install-platform` | — | `installPlatform({ installable, standalone, touch, userAgent })`: `installable` where the browser offered its install dialog, `ios` or `mac-safari` for steps, or null |
 | `./features/next/pwa/utils/install-prompt` | — | holds Chrome's `beforeinstallprompt` from module load (`installPrompt`, `subscribeInstallPrompt`, for `useSyncExternalStore`), cleared on `appinstalled` |
 | `./features/next/pwa/hooks/use-install-hint` | — | `useInstallHint()`: after mount, `{ dismiss, install: { onInstall, installing, failed } }` where the browser offers its dialog, else `{ dismiss, steps }`, or null; never on a first visit, a year away once dismissed (`install-hint-state`, kept through `storageItem`) |
-| `./features/next/pwa/constants/pwa` | — | `PWA` (`PATH.OFFLINE`, `PATH.SERVICE_WORKER`, `OUTPUT`, `INSTALL_HINT` with each platform's `STEPS`, `PLATFORM`, `TOAST` ids), `InstallPlatform`, `InstallStep`, `InstallStatus` (the hook's own) |
+| `./features/next/pwa/constants/pwa` | — | `PWA` (`PATH.OFFLINE`, `PATH.SERVICE_WORKER`, `OUTPUT`, `INSTALL_HINT` with each platform's `STEPS`, `PLATFORM`, `TOAST` ids) |
+| `./features/next/pwa/constants/pwa-schema` | `zod` | `InstallPlatform`, `InstallStep`, `InstallStatus` (the hook's own), each the `z.infer` of a `PWA` group |
 | `./features/next/config/utils/aof-create-next-config` | `NextConfig` | base config, security headers, next-intl plugin |
 
 An App composes the providers in its `[locale]/layout.tsx` and drops any it does

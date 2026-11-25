@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
 import { IMAGE_FIXTURE } from "@allonfire/storage/features/image/fixtures/constants/files";
 import {
@@ -17,6 +18,9 @@ import { otherVisitor } from "./pages";
 
 /** The Images words every Images spec reads. */
 export const t = EN.Images;
+/** The words every App's Image forms share (core's `Common`). */
+export const upload = SHARED_TRANSLATIONS.en.Common.ImageUpload;
+export const fields = SHARED_TRANSLATIONS.en.Common.ImageFields;
 
 export const PHOTO = resolve(IMAGE_FIXTURE.DIR, IMAGE_FIXTURE.FILE.PHOTO);
 
@@ -32,7 +36,7 @@ export const editForm = (page: Page) =>
 /** The Add page's picture row `number`. */
 export const rowOf = (page: Page, number: number) =>
   addForm(page).getByRole("group", {
-    name: enT("Images.add.row.title", { number }),
+    name: enT("Common.ImageUpload.row.title", { number }),
   });
 
 /** WebKit capitalises a language's own name ("Italiano"), Chrome does not. */
@@ -69,7 +73,7 @@ export type PickedFile = { buffer: Buffer; mimeType: string; name: string };
 
 /** Picks `files` (paths or in-memory files) with the Add page's picker. */
 export const pick = (page: Page, files: string | string[] | PickedFile[]) =>
-  page.getByLabel(t.add.pick.input).setInputFiles(files);
+  page.getByLabel(upload.pick.input).setInputFiles(files);
 
 /**
  * Adds `language` to a row's alt, and waits for the picker's popup to leave.
@@ -81,7 +85,7 @@ export const addLanguage = async (
   row: Locator,
   language: string
 ) => {
-  await row.getByRole("combobox", { name: t.form.addLanguage }).fill(language);
+  await row.getByRole("combobox", { name: fields.addLanguage }).fill(language);
   await page.getByRole("option", { name: language }).click();
   await expect(page.locator('[data-slot="combobox-content"]')).toHaveCount(0);
 };

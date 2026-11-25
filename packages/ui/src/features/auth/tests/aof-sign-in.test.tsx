@@ -88,20 +88,20 @@ describe("AOFSignInForm", () => {
   });
 
   it("shows an error as an alert and marks both fields", () => {
-    const html = form({ initialState: { error: AUTH.SIGN_IN_ERROR.INVALID } });
+    const html = form({ initialState: { error: AUTH.ERROR.SIGN_IN.INVALID } });
     expect(html).toMatch(ERROR_ALERT);
     expect(html.match(INVALID_FIELD)).toHaveLength(2);
   });
 
   it("names the App in a refusal that is about it", () => {
     expect(
-      form({ initialState: { error: AUTH.SIGN_IN_ERROR.FORBIDDEN } })
+      form({ initialState: { error: AUTH.ERROR.SIGN_IN.FORBIDDEN } })
     ).toContain(forbidden);
   });
 
   it("leaves the fields alone when the API, not the visitor, failed", () => {
     const html = form({
-      initialState: { error: AUTH.SIGN_IN_ERROR.UNAVAILABLE },
+      initialState: { error: AUTH.ERROR.SIGN_IN.UNAVAILABLE },
     });
     expect(html).toContain('role="alert"');
     expect(html).not.toMatch(INVALID_FIELD);
@@ -115,15 +115,15 @@ describe("AOFSignInForm", () => {
   });
 
   it.each(
-    objectValues(AUTH.SIGN_IN_ERROR).filter(
-      (error) => error !== AUTH.SIGN_IN_ERROR.UNVERIFIED
+    objectValues(AUTH.ERROR.SIGN_IN).filter(
+      (error) => error !== AUTH.ERROR.SIGN_IN.UNVERIFIED
     )
   )("has an error translation for %s", (error) => {
     expect(t.error).toHaveProperty(error);
   });
 
   it("says unverified as a note: a link went out, nothing failed", () => {
-    expect(t.note).toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
-    expect(t.error).not.toHaveProperty(AUTH.SIGN_IN_ERROR.UNVERIFIED);
+    expect(t.note).toHaveProperty(AUTH.ERROR.SIGN_IN.UNVERIFIED);
+    expect(t.error).not.toHaveProperty(AUTH.ERROR.SIGN_IN.UNVERIFIED);
   });
 });

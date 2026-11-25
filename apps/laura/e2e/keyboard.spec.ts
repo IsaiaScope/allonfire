@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { SECTION } from "../src/shared/constants/laura";
+import { SECTION } from "../src/features/navigation/constants/sections";
 import { enT } from "../src/shared/tests/translators";
 import { signInAsAdmin } from "./pages";
 import { gridOf, previewOf, tileAlts } from "./photos";

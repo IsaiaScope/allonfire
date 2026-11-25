@@ -7,10 +7,10 @@ const SIDES = ["top", "right", "bottom", "left"] as const;
 
 /** Base UI's own gap on every side: what the server and a screen with no inset give. */
 const DEFAULT: Padding = {
-  bottom: SAFE_AREA.POPUP_EDGE_PX,
-  left: SAFE_AREA.POPUP_EDGE_PX,
-  right: SAFE_AREA.POPUP_EDGE_PX,
-  top: SAFE_AREA.POPUP_EDGE_PX,
+  bottom: SAFE_AREA.POPUP.EDGE_PX,
+  left: SAFE_AREA.POPUP.EDGE_PX,
+  right: SAFE_AREA.POPUP.EDGE_PX,
+  top: SAFE_AREA.POPUP.EDGE_PX,
 };
 
 // One probe and one listener for the whole page, however many popups read it
@@ -46,7 +46,7 @@ const subscribe = (listener: () => void) => {
     probe.setAttribute("aria-hidden", "true");
     probe.style.cssText = `position:fixed;visibility:hidden;pointer-events:none;${SIDES.map(
       (side) =>
-        `padding-${side}:max(${SAFE_AREA.POPUP_EDGE_PX}px,env(safe-area-inset-${side},0px))`
+        `padding-${side}:max(${SAFE_AREA.POPUP.EDGE_PX}px,env(safe-area-inset-${side},0px))`
     ).join(";")}`;
     document.body.append(probe);
     window.addEventListener("resize", measure);
@@ -64,7 +64,7 @@ const subscribe = (listener: () => void) => {
 };
 
 /**
- * The padding (px) a popup keeps from each screen edge: `POPUP_EDGE_PX`, or
+ * The padding (px) a popup keeps from each screen edge: `SAFE_AREA.POPUP.EDGE_PX`, or
  * that side's safe-area inset when it is larger. Base UI's `collisionPadding`
  * takes numbers, and `env()` is CSS only, so a hidden probe element padded by
  * `max(edge, env(...))` lets the browser resolve it, again on every resize (a

@@ -1,6 +1,6 @@
 # Code style
 
-TypeScript, React and CSS rules that no linter enforces. Helpers and constants: `conventions.md`. Folders and exports: `package-layout.md`. Components and classes: `design-system.md`.
+TypeScript, React and CSS rules that no linter enforces. Helpers and constants (the shape of a constants object: keyed records, nested groups, units in a group): `conventions.md`. Folders and exports: `package-layout.md`. Components and classes: `design-system.md`.
 
 ## What the tools enforce
 
@@ -32,3 +32,4 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants: 
 
 - Never join values with a middle dot (`·`) or any separator character (`0.01 MB · 800 × 1200`). Each value sits under its own small label in a `dl` grid (label muted, `text-xs uppercase`; value `font-semibold`, `font-mono tabular-nums` for numbers), and a list of names is joined with `SEPARATOR.NAMES` (a comma). Example: `apps/back-office/src/features/images/components/image-card.tsx`.
 - A size is always `formatSize` from core (`@allonfire/core/shared/utils/format-size`): MB, then GB and TB, two decimals; never a hand-written unit.
+- A game's or any duration is `formatTime` (`s.cc` under a minute, else `m:ss.cc`) or `formatClock` (always `m:ss.cc`) from core (`@allonfire/core/shared/utils/format-time`), never rebuilt in an App.

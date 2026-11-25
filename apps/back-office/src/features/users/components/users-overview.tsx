@@ -1,5 +1,6 @@
 "use client";
 
+import { APP } from "@allonfire/design/apps/app";
 import { AOFBarChart } from "@allonfire/ui/features/chart/components/aof-bar-chart";
 import { cardBadge } from "@allonfire/ui/features/data-table/utils/card-badge";
 import { AOFBadge } from "@allonfire/ui/shared/components/aof-badge";
@@ -15,7 +16,6 @@ import { api } from "@/features/api/utils/api";
 import { CardFrame } from "@/shared/components/card-frame";
 import { OverviewTitle } from "@/shared/components/overview-card-state";
 import { OverviewQueryView } from "@/shared/components/overview-query-view";
-import { APP_ENTRY } from "@/shared/constants/apps";
 import { USERS } from "../constants/users";
 import { usersOverviewQuery } from "../utils/users-overview-queries";
 import { UsersOverviewSkeleton } from "./users-overview-skeleton";
@@ -31,7 +31,7 @@ export const UsersOverview = () => {
   const overview = useQuery(usersOverviewQuery(api));
   const card = {
     height: USERS.OVERVIEW.CHART_HEIGHT_PX,
-    kanji: USERS.CARD_KANJI,
+    kanji: USERS.KANJI.CARD,
     title: (
       <OverviewTitle
         icon={<IconUsers aria-hidden className="size-5" />}
@@ -51,7 +51,7 @@ export const UsersOverview = () => {
       }}
     >
       {({ byApp, total }) => (
-        <CardFrame kanji={USERS.CARD_KANJI}>
+        <CardFrame kanji={USERS.KANJI.CARD}>
           <AOFCardHeader>
             <OverviewTitle
               icon={<IconUsers aria-hidden className="size-5" />}
@@ -68,7 +68,7 @@ export const UsersOverview = () => {
               aria-label={t("chart.label")}
               category="app"
               data={byApp.map(({ admins, app, count }) => ({
-                app: APP_ENTRY[app].name,
+                app: APP.ENTRY[app].name,
                 [USERS.OVERVIEW.ADMINS_KEY]: admins,
                 [USERS.OVERVIEW.USERS_KEY]: count,
               }))}

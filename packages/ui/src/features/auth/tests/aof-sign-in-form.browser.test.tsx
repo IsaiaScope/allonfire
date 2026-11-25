@@ -58,7 +58,7 @@ describe("AOFSignInForm", () => {
 
   it("says a link was sent, never as a failure, when the email is not verified", async () => {
     vi.mocked(signIn).mockResolvedValue({
-      error: AUTH.SIGN_IN_ERROR.UNVERIFIED,
+      error: AUTH.ERROR.SIGN_IN.UNVERIFIED,
     });
     const screen = await renderForm();
     const form = screen.getByRole("form", { name: t.submit });
@@ -73,7 +73,7 @@ describe("AOFSignInForm", () => {
   });
 
   it("posts where a verification link should land, and links to Forgot password", async () => {
-    vi.mocked(signIn).mockResolvedValue({ error: AUTH.SIGN_IN_ERROR.INVALID });
+    vi.mocked(signIn).mockResolvedValue({ error: AUTH.ERROR.SIGN_IN.INVALID });
     const landing = "https://back-office.test/en/email-verified";
     const screen = await renderForm({ callbackURL: landing });
     await expect
@@ -92,7 +92,7 @@ describe("AOFSignInForm", () => {
 
   it("shows the action's refusal as an alert", async () => {
     vi.mocked(signIn).mockResolvedValue({
-      error: AUTH.SIGN_IN_ERROR.FORBIDDEN,
+      error: AUTH.ERROR.SIGN_IN.FORBIDDEN,
     });
     const screen = await renderForm();
     await fill(screen, FIXTURE.USER.BACK_OFFICE.USER.email, FIXTURE.PASSWORD);
@@ -104,7 +104,7 @@ describe("AOFSignInForm", () => {
   });
 
   it("marks both fields wrong when the credentials are", async () => {
-    vi.mocked(signIn).mockResolvedValue({ error: AUTH.SIGN_IN_ERROR.INVALID });
+    vi.mocked(signIn).mockResolvedValue({ error: AUTH.ERROR.SIGN_IN.INVALID });
     const screen = await renderForm();
     await fill(screen, FIXTURE.USER.BACK_OFFICE.ADMIN.email, "wrong-password");
     await expect

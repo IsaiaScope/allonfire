@@ -30,8 +30,8 @@ describe("prepareAvatar", () => {
       const { format, height, width } = await sharp(buffer).metadata();
       expect({ format, height, width }).toEqual({
         format: "heif",
-        height: AVATAR.SIZE,
-        width: AVATAR.SIZE,
+        height: AVATAR.SIZE.STORED,
+        width: AVATAR.SIZE.STORED,
       });
     }
   );

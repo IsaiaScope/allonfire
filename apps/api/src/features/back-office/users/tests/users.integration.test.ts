@@ -365,7 +365,7 @@ const linkSchema = z.object({
 });
 /** A deleted file's link is dead once the image cache asked imgproxy again. */
 const UNTIL_CACHE_CHECKED = {
-  timeout: IMAGE_SERVER.GONE_WITHIN_MS,
+  timeout: IMAGE_SERVER.CACHE.GONE_WITHIN_MS,
 };
 
 describe("a User's Avatar", () => {

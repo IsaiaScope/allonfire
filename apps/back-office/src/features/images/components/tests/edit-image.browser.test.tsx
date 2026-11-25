@@ -4,6 +4,7 @@ import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { formatSize } from "@allonfire/core/shared/utils/format-size";
 import { App, ImageAccess } from "@allonfire/database/enums";
 import type { ImageBody } from "@allonfire/storage/features/image/constants/schemas";
+import { imageNames } from "@allonfire/ui/features/image/upload/utils/image-form-data";
 import { aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { page } from "vitest/browser";
 import { BACK_OFFICE } from "@/shared/constants/back-office";
@@ -15,7 +16,6 @@ import { type EditImageState, editImage } from "../../actions/edit-image";
 import { IMAGES } from "../../constants/images";
 import { imageBody } from "../../tests/image-body";
 import { replace } from "../../tests/image-form-mocks";
-import { imageNames } from "../../utils/image-form-data";
 import { EditImage } from "../edit-image";
 
 vi.mock("../../actions/edit-image", () => ({ editImage: vi.fn() }));
@@ -193,7 +193,7 @@ describe("EditImage", () => {
   });
 
   it("toasts Saved and opens the list", async () => {
-    answers({ notice: IMAGES.EDIT_NOTICE.SAVED });
+    answers({ notice: IMAGES.EDIT.NOTICE.SAVED });
     renderEdit();
     await save();
     await expect
@@ -205,7 +205,7 @@ describe("EditImage", () => {
 
 describe("EditImage refusals", () => {
   it("says someone changed the Image meanwhile", async () => {
-    answers({ error: IMAGES.EDIT_ERROR.CHANGED });
+    answers({ error: IMAGES.EDIT.ERROR.CHANGED });
     renderEdit();
     await save();
     await expect.element(page.getByText(CHANGED)).toBeVisible();
@@ -213,7 +213,7 @@ describe("EditImage refusals", () => {
   });
 
   it("says the Image is gone", async () => {
-    answers({ error: IMAGES.EDIT_ERROR.GONE });
+    answers({ error: IMAGES.EDIT.ERROR.GONE });
     renderEdit();
     await save();
     await expect

@@ -74,7 +74,7 @@ describe("signInWithEmail", () => {
       refusedWith(403, AUTH.ERROR_CODE.APP_FORBIDDEN)
     );
     await expect(signInWithEmail(form())).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.FORBIDDEN
+      AUTH.ERROR.SIGN_IN.FORBIDDEN
     );
     expect(sentCookies()).toEqual([]);
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -85,7 +85,7 @@ describe("signInWithEmail", () => {
       refusedWith(403, BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code)
     );
     await expect(signInWithEmail(form())).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.UNVERIFIED
+      AUTH.ERROR.SIGN_IN.UNVERIFIED
     );
   });
 
@@ -104,14 +104,14 @@ describe("signInWithEmail", () => {
       refusedWith(403, BASE_ERROR_CODES.INVALID_ORIGIN.code)
     );
     await expect(signInWithEmail(form())).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.UNAVAILABLE
+      AUTH.ERROR.SIGN_IN.UNAVAILABLE
     );
   });
 
   it.each([
-    [HTTP.STATUS.UNAUTHORIZED, AUTH.SIGN_IN_ERROR.INVALID],
-    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.SIGN_IN_ERROR.RATE_LIMITED],
-    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.SIGN_IN_ERROR.UNAVAILABLE],
+    [HTTP.STATUS.UNAUTHORIZED, AUTH.ERROR.SIGN_IN.INVALID],
+    [HTTP.STATUS.TOO_MANY_REQUESTS, AUTH.ERROR.SIGN_IN.RATE_LIMITED],
+    [HTTP.STATUS.SERVICE_UNAVAILABLE, AUTH.ERROR.SIGN_IN.UNAVAILABLE],
   ])("maps the API's %i to %s", async (status, error) => {
     fetchMock.mockResolvedValueOnce(refusedWith(status));
     await expect(signInWithEmail(form())).resolves.toBe(error);
@@ -121,16 +121,16 @@ describe("signInWithEmail", () => {
   it("answers unavailable when the API cannot be reached", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
     await expect(signInWithEmail(form())).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.UNAVAILABLE
+      AUTH.ERROR.SIGN_IN.UNAVAILABLE
     );
   });
 
   it("asks nothing of the API for an empty field or a malformed email", async () => {
     await expect(signInWithEmail(form(" ", "secret"))).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.MISSING
+      AUTH.ERROR.SIGN_IN.MISSING
     );
     await expect(signInWithEmail(form("not-an-email"))).resolves.toBe(
-      AUTH.SIGN_IN_ERROR.INVALID
+      AUTH.ERROR.SIGN_IN.INVALID
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
