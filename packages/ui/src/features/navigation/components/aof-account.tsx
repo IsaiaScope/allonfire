@@ -20,13 +20,14 @@ import {
  * per request), which redirects a visitor the App keeps out. Sign out
  * submits the layout's form (`NAVIGATION.FORM.SIGN_OUT`, `AOFSignOutForm`),
  * outside the menu's popup. `seal` is the App's own mark for a Role; none,
- * and the menu shows the Role's name alone.
+ * and the menu shows the Role's name alone. `app.version` is the App's own
+ * release, badged at the menu's foot.
  */
 export const AOFAccount = async ({
   app,
   seal,
 }: {
-  app: Pick<AppDescriptor, "app">;
+  app: Pick<AppDescriptor, "app" | "version">;
   seal?: (role: Role) => ReactNode;
 }) => {
   const [session, t] = await Promise.all([
@@ -49,6 +50,7 @@ export const AOFAccount = async ({
       name={session.user.name}
       role={role ? t(`role.${role}`) : ""}
       seal={role && seal ? seal(role) : undefined}
+      version={app.version}
     />
   );
 };

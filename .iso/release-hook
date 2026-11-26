@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# /iso-push's release hook: `release-hook <previous> <next> <range-from-sha>`,
+# run in the release worktree before its commit. It moves the version of every
+# workspace package the Release changed (core's `ci:release-versions`) and
+# prints the manifests it edited, one per line, for /iso-push to commit.
+#
+# The release worktree has no node_modules, so the script runs from the main
+# checkout (`--git-common-dir` points at it) and edits the worktree (`--root`).
+# That checkout's rules must be the release's own: when they differ (it is
+# behind the base, or holds uncommitted rules), the hook stops the release.
+set -euo pipefail
+
+previous="${1:?release-hook <previous> <next> <range-from-sha>}"
+next="${2:?release-hook <previous> <next> <range-from-sha>}"
+from="${3-}"
+
+main=$(cd "$(git rev-parse --path-format=absolute --git-common-dir)/.." && pwd)
+
+# Standard output is the list /iso-push commits, so the reason goes to stderr.
+# The rules and the shared code they import.
+for rules in packages/core/src/features/ci packages/core/src/shared; do
+  if ! diff -r -q -x tests -x '._*' -x .DS_Store "$main/$rules" "$PWD/$rules" >&2; then
+    printf 'release-hook: %s in %s is not what is being released. Bring that checkout up to date, then release again.\n' \
+      "$rules" "$main" >&2
+    exit 1
+  fi
+done
+
+exec pnpm -s --dir "$main" ci:release-versions \
+  --root "$PWD" --previous "$previous" --next "$next" --from "$from"

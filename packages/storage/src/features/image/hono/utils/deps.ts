@@ -1,3 +1,4 @@
+import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import type {
   createImages,
   deleteImages,
@@ -6,11 +7,13 @@ import type {
   removeImagesFromApp,
   updateImages,
 } from "@allonfire/database/features/image/image.service";
+import type { MiddlewareHandler } from "hono";
 import type { LeftoverLog } from "../../objects/utils/delete-leftovers";
 import type {
   copyImageObject,
   deleteImageObjects,
   putImageObject,
+  readImageObject,
 } from "../../objects/utils/image-objects";
 import type { prepareImage } from "../../prepare/prepare-image";
 
@@ -18,6 +21,14 @@ import type { prepareImage } from "../../prepare/prepare-image";
 export type ImageDeps = {
   prepare: typeof prepareImage;
   putObject: typeof putImageObject;
+  /**
+   * The host's limiter for the Export route, which runs it before anything
+   * else (ADR 0036: a decode costs the server). The host owns its store, whom
+   * it counts, 429 body and the `STORAGE_EXPORT_RATE_LIMIT_*` values.
+   */
+  limitExport: MiddlewareHandler<AuthEnv>;
+  /** A stored Image's file, for its Export. */
+  readObject: typeof readImageObject;
   deleteObjects: typeof deleteImageObjects;
   /** A copy under a new name: a public Image made private moves to it. */
   copyObject: typeof copyImageObject;

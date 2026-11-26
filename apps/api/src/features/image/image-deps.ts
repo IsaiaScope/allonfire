@@ -11,12 +11,15 @@ import {
   copyImageObject,
   deleteImageObjects,
   putImageObject,
+  readImageObject,
 } from "@allonfire/storage/features/image/objects/utils/image-objects";
 import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
 import { forgetBuckets } from "../back-office/overview/storage/buckets";
 
 /** The Image module on the real stack: Prisma, sharp and MinIO. */
-export const imageDeps = (log: ImageDeps["log"]): ImageDeps => ({
+export const imageDeps = (
+  log: ImageDeps["log"]
+): Omit<ImageDeps, "limitExport"> => ({
   changed: forgetBuckets,
   copyObject: copyImageObject,
   createImages,
@@ -27,6 +30,7 @@ export const imageDeps = (log: ImageDeps["log"]): ImageDeps => ({
   log,
   prepare: prepareImage,
   putObject: putImageObject,
+  readObject: readImageObject,
   removeImagesFromApp,
   updateImages,
 });

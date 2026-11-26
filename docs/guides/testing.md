@@ -53,7 +53,13 @@ the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no t
 checks them and nothing executes. Three layers: unit and integration tests run
 in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `integration`) render one client component in real Chromium and WebKit through
-`vitest.browser.config.ts`. Both Apps and `packages/ui` have them. An
+`vitest.browser.config.ts`. Both Apps and `packages/ui` have them. Each
+browser runs at most `VITEST.BROWSER_MAX_WORKERS` test files at once, and
+`pnpm e2e:browser` runs one package at a time: with Vitest's default (cores
+minus one, per browser) and the packages side by side, a many-core Mac timed
+tests out. A test that times out only in a full run points at load, so check what
+else is running (`pnpm dev` also runs the test watcher) before raising a
+time limit. An
 App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
 Design's `theme.css` (`src/shared/tests/browser.css`), never an App's. A
 look a visitor sees (a corner, a height, padding, an overflow axis, a
@@ -130,3 +136,16 @@ it; a deprecated name a library's own type still requires goes in the rule's
 - The Vitest preset's options, the root test scripts (`test:unit` needs no Docker, `test:integration`, `test:coverage`, `test:ui`), the e2e projects and the headed scripts: `packages/config/README.md`.
 - The `static` Stage also runs ShellCheck on every shell script (Liquibase, database, config, the VPS's), `docker build --check` on the `db-migrate` image and actionlint on the workflows (a Mac without the binary skips the tool; CI has them all); the `test` Stage checks the changelog against the Prisma schema on the Test template (`pnpm test:drift`): `packages/config/stages/stages.ts`.
 - The `static` Stage runs `pnpm static:knip`, `pnpm static:knip-production` and `pnpm static:dupes` in the hook and on every PR, over the whole workspace (no affected-filter): an unused export or file, code only tests use, or a clone fails it wherever it sits. Fix the hit, or accept it with a reason (`tooling.md`, knip and jscpd): `.github/workflows/ci.yml`.
+
+## Device runs (Export, 2026-11-25)
+
+The Web Share API and downloads behave differently on a phone than in
+Playwright, so the Export's Download and Share were run by hand on the iOS and
+Android simulators (T3's device tools, `agent-device`), the dev Apps reached
+as Tailscale Services (ADR 0021): Laura at `laura.<tailnet>.ts.net`, the API at
+`api.<tailnet>.ts.net`. Dev holds no Fixture Users: a run adds one throwaway
+Laura Admin to the dev database and deletes it after. The record is in
+`docs/superpowers/plans/2026-11-25-feat-laura-photo-download-share.md`
+(Implementation Log). Tips: in Safari, `fill` leaves a React field empty, so
+`press` the field and `type`; a context menu is pressed by its coordinates
+(points on iOS, pixels on Android), since its refs go stale.

@@ -169,6 +169,9 @@
     "packages/storage/src/features/image/hono/tests/stub-image-deps.ts": [
       "exports"
     ],
+    "packages/storage/src/features/image/tests/exif-image.ts": ["exports"],
+    "packages/storage/src/features/image/tests/jpeg-signature.ts": ["exports"],
+    "packages/ui/src/features/image/tests/stub-share.ts": ["exports"],
     "packages/ui/src/features/navigation/tests/section-guards.ts": ["exports"],
     "packages/ui/src/shared/tests/computed-style.ts": ["exports"],
     "packages/ui/src/shared/tests/emulated-media.ts": ["exports"],
@@ -280,6 +283,7 @@
     "packages/core": {
       "entry": [
         "src/**/*.test-d.ts",
+        "src/features/ci/apply-release-versions.ts!",
         "src/features/ci/print-affected.ts!",
         "src/features/next/pwa/utils/cli.ts!",
         "src/features/tailwind/canonicalize.ts!",

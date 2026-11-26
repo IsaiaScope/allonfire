@@ -3,24 +3,24 @@
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { useCallback } from "react";
 import { useController, useNavigationState } from "yet-another-react-lightbox";
-import { AOFButton } from "../../../shared/components/aof-button";
-import { AOFTooltip } from "../../../shared/components/aof-tooltip";
 import { cn } from "../../../shared/utils/utils";
 import {
   AOFControlBar,
   type AOFControlBarProps,
 } from "../../data-table/components/aof-control-bar";
+import { AOFLightboxButton } from "./aof-lightbox-button";
 
 const ARROW = {
+  // Each arrow's tip opens towards the picture.
   next: {
     className: "right-(--gutter-right)",
     Icon: IconChevronRight,
-    side: "left",
+    tip: { side: "left" },
   },
   prev: {
     className: "left-(--gutter-left)",
     Icon: IconChevronLeft,
-    side: "right",
+    tip: { side: "right" },
   },
 } as const;
 
@@ -43,7 +43,7 @@ export const AOFLightboxArrow = ({
 }: AOFLightboxArrowProps) => {
   const { next, prev } = useController();
   const { nextDisabled, prevDisabled } = useNavigationState();
-  const { Icon, className: edge, side } = ARROW[direction];
+  const { Icon, className: edge, tip } = ARROW[direction];
   const disabled = direction === "next" ? nextDisabled : prevDisabled;
   const step = useCallback(() => {
     if (direction === "next") {
@@ -61,17 +61,14 @@ export const AOFLightboxArrow = ({
       )}
       {...props}
     >
-      <AOFTooltip contentProps={{ side }} label={label}>
-        <AOFButton
-          aria-label={label}
-          disabled={disabled}
-          onClick={step}
-          size="icon"
-          variant="ghost"
-        >
-          <Icon aria-hidden className="size-6" />
-        </AOFButton>
-      </AOFTooltip>
+      <AOFLightboxButton
+        disabled={disabled}
+        label={label}
+        onClick={step}
+        tooltipProps={tip}
+      >
+        <Icon aria-hidden />
+      </AOFLightboxButton>
     </AOFControlBar>
   );
 };

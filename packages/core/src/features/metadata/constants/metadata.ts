@@ -94,8 +94,9 @@ const PATH = {
  * The PNG icons every App generates. `inset` is the share of the edge the
  * logo fills on its opaque ground: the apple-touch-icon is the square logo
  * edge to edge, as Laura's is (its own ground and margins clear the corners
- * iOS rounds); a maskable icon keeps the logo inside the
- * safe circle a launcher crops to (0.8 of the edge).
+ * iOS rounds); a maskable icon keeps the logo's corners inside Android's safe
+ * circle (66 of an adaptive icon's 108dp). The web's own 0.8 circle is looser:
+ * a logo sized to it came out cut on an Android home screen.
  */
 const ICON = {
   APPLE: { edge: 180, inset: 1 },
@@ -103,8 +104,10 @@ const ICON = {
     LARGE: { edge: 512, file: "large.png", inset: 1, purpose: "any" },
     MASKABLE: {
       edge: 512,
-      file: "maskable.png",
-      inset: 0.8,
+      // Chrome 144+ re-reads an installed app's icon only when the manifest's
+      // `icons` change: new drawing, new name.
+      file: "maskable-v2.png",
+      inset: 0.65,
       purpose: "maskable",
     },
     SMALL: { edge: 192, file: "small.png", inset: 1, purpose: "any" },

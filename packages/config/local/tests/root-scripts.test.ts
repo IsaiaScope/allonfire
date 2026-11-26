@@ -121,6 +121,8 @@ describe("the root scripts", () => {
 
   it("run ShellCheck on every shell script in the repo, not a list of folders", () => {
     expect(SCRIPTS.get("static:shell")).toContain("git ls-files");
+    // The release hook is a shell script with no `.sh`.
+    expect(SCRIPTS.get("static:shell")).toContain(".iso/release-hook");
   });
 
   it("start only the Test services", () => {
@@ -131,6 +133,14 @@ describe("the root scripts", () => {
 
   it("runs the Apps' e2e one at a time, since they share the API's and the mail sink's ports", () => {
     expect(SCRIPTS.get("e2e:run")).toBe("turbo run test:e2e --concurrency=1");
+  });
+
+  // Side by side, the Apps' and ui's browsers crowd each other out and tests
+  // pass their time limit, even at `VITEST.BROWSER_MAX_WORKERS` files each.
+  it("runs the browser tests one package at a time", () => {
+    expect(SCRIPTS.get("e2e:browser")).toBe(
+      "turbo run test:browser --concurrency=1"
+    );
   });
 
   it.each(READERS)("%s names only root scripts that exist", (path) => {

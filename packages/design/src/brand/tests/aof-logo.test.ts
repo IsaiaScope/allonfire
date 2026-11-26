@@ -1,4 +1,5 @@
 // @module-tag unit
+import { METADATA } from "@allonfire/core/features/metadata/constants/metadata";
 import {
   AOF_LOGO,
   type AppLogo,
@@ -106,5 +107,31 @@ describe("aofLogoDataUrl", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe("the maskable icon", () => {
+  // Android shows a 108dp adaptive icon through a mask: content is safe only
+  // inside the 66dp circle at its centre. The web's own 0.8 circle is looser,
+  // and a logo sized to it comes out cut on a phone.
+  const ANDROID = { LAYER: 108, SAFE: 66 } as const;
+  /** The F's top right corner, in the square logo's units: its farthest. */
+  const F_CORNER = { x: 440, y: 106 } as const;
+
+  it("keeps the square logo's corners inside Android's safe circle", () => {
+    const { BANNER, HEIGHT, WIDTH } = AOF_LOGO.LAYOUT.square;
+    const centre = { x: WIDTH / 2, y: HEIGHT / 2 };
+    const reach = (x: number, y: number) =>
+      Math.hypot(x - centre.x, y - centre.y);
+    // The banner's bottom corners are round: the arc's centre, plus its radius.
+    const bottom = BANNER.TOP + BANNER.HEIGHT - BANNER.RADIUS;
+    const farthest = Math.max(
+      reach(F_CORNER.x, F_CORNER.y),
+      reach(BANNER.LEFT + BANNER.RADIUS, bottom) + BANNER.RADIUS,
+      reach(BANNER.LEFT + BANNER.WIDTH - BANNER.RADIUS, bottom) + BANNER.RADIUS
+    );
+    expect(
+      farthest * METADATA.ICON.MANIFEST.MASKABLE.inset
+    ).toBeLessThanOrEqual((WIDTH * ANDROID.SAFE) / ANDROID.LAYER / 2);
   });
 });

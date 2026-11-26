@@ -45,6 +45,13 @@ and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
   limit on top of the global one: `AUTH_RATE_LIMIT_MAX` attempts per
   `AUTH_RATE_LIMIT_WINDOW_MS` per client IP (default 10 per 15 minutes). Like
   the global limiter it fails open when Redis is down.
+- **Export bucket** — `GET /v1/images/:id/export` decodes and re-encodes a
+  picture, so it has its own limit on top of the global one:
+  `STORAGE_EXPORT_RATE_LIMIT_MAX` requests per
+  `STORAGE_EXPORT_RATE_LIMIT_WINDOW_MS` per signed-in User, whatever their
+  address (default 30 a minute). A visitor spends none of it: the route answers
+  401.
+  It fails open when Redis is down, like the others.
 - **Sessions live in Postgres**, read through Better Auth's five-minute cookie
   cache, so a revoked Session reaches the guards up to five minutes late. A
   User's Memberships are read on every Session read, so a Role change counts

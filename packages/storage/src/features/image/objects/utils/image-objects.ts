@@ -4,6 +4,7 @@ import {
   type BucketTotals,
   copyObject,
   deleteObjects,
+  getObject,
   listBucketTotals,
   listObjectSizes,
   type ObjectSize,
@@ -21,6 +22,12 @@ export const putImageObject = (
     cacheControl: IMAGE.CACHE.CONTROL,
     contentType: IMAGE.FORMAT.CONTENT_TYPE,
   });
+
+/** An Image's stored file, in the Images' bucket unless told another. */
+export const readImageObject = (
+  key: string,
+  bucket = env.STORAGE_BUCKET
+): Promise<Buffer> => getObject(bucket, key);
 
 /** The API sends at most 100 keys; one request takes 1000. */
 export const deleteImageObjects = (keys: readonly string[]): Promise<void> =>

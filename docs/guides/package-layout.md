@@ -18,6 +18,8 @@ src/
       <sub-feature>/  any folder that is not a kind; same shape, recursively
 ```
 
+A package's `package.json` `version` is never edited by hand: only a Release moves it (`deployment.md`), and no package is ahead of the repo's own `VERSION`. A package never reads an App's version, so each App passes its own (`AppDescriptor.version`, from its own `package.json`).
+
 Only `environment/`, `shared/` and `features/` sit at the top of `src/`, plus
 the API's root files: `index.ts`, `app.ts`, `client.ts` and `shutdown.ts`, with
 their tests (`client.test-d.ts`, `shutdown.test.ts`), as `api.md` and

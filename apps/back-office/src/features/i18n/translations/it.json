@@ -55,7 +55,7 @@
       "title": "Nessuna immagine corrisponde"
     },
     "error": {
-      "description": "Controlla la connessione, poi riprova.",
+      "description": "Controlla la connessione.",
       "retry": "Riprova",
       "title": "Non è stato possibile caricare le immagini"
     },
@@ -87,9 +87,9 @@
     },
     "edit": {
       "error": {
-        "failed": "Impossibile salvare. Riprova.",
+        "failed": "Impossibile salvare.",
         "gone": "Questa immagine non esiste più.",
-        "invalid": "Controlla i campi e riprova.",
+        "invalid": "Controlla i campi.",
         "refused": "Non puoi più modificare le immagini. Accedi di nuovo."
       },
       "page": "Immagine",
@@ -154,8 +154,8 @@
       "off": "Disabilitato"
     },
     "error": {
-      "changed": "Qualcuno ha modificato questo provider. Ricarica e riprova.",
-      "failed": "Il salvataggio non è riuscito. Riprova.",
+      "changed": "Qualcuno ha modificato questo provider. Ricarica la pagina.",
+      "failed": "Il salvataggio non è riuscito.",
       "incomplete": "Un provider attivo richiede un indirizzo mittente.",
       "invalid": "Controlla i campi evidenziati.",
       "refused": "La tua sessione non può più modificare i Servizi. Accedi di nuovo.",
@@ -185,7 +185,7 @@
       "MAIL": "Email"
     },
     "serviceEnabled": {
-      "failed": "Il Servizio non è cambiato. Riprova.",
+      "failed": "Il Servizio non è cambiato.",
       "label": "Servizio",
       "on": "Attivo",
       "off": "Spento"
@@ -197,9 +197,9 @@
       "rejected": "Rifiutata dal provider. Controlla chiave e impostazioni.",
       "uncertain": "Non si sa se è partita: conta, non è stata rinviata.",
       "unavailable": "Non inviata: Servizio spento, senza chiave o quota piena.",
-      "rateLimited": "Troppe email a questo indirizzo. Riprova più tardi.",
+      "rateLimited": "Troppe email a questo indirizzo.",
       "removed": "Questo provider è stato rimosso. Ricarica la pagina.",
-      "failed": "La prova non è stata inviata. Riprova.",
+      "failed": "La prova non è stata inviata.",
       "sending": "Invio"
     },
     "usage": {
@@ -244,7 +244,7 @@
       "clear": "Azzera la ricerca"
     },
     "error": {
-      "description": "Controlla la connessione, poi riprova.",
+      "description": "Controlla la connessione.",
       "retry": "Riprova",
       "title": "Impossibile caricare gli Utenti"
     },
@@ -297,9 +297,9 @@
       "confirmPassword": "Conferma la nuova password",
       "email": "Email",
       "error": {
-        "failed": "Impossibile salvare. Riprova.",
+        "failed": "Impossibile salvare.",
         "gone": "Questo Utente non esiste più.",
-        "invalid": "Controlla i campi e riprova.",
+        "invalid": "Controlla i campi.",
         "ownRole": "Non puoi cambiare il tuo Ruolo nel Back Office.",
         "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo."
       },
@@ -328,8 +328,8 @@
       "button": "Aggiungi",
       "email": "Email",
       "error": {
-        "failed": "Non è stato possibile aggiungere l'Utente. Riprova.",
-        "invalid": "Controlla i campi e riprova.",
+        "failed": "Non è stato possibile aggiungere l'Utente.",
+        "invalid": "Controlla i campi.",
         "refused": "Non puoi più modificare gli Utenti. Accedi di nuovo.",
         "taken": "Questa email ha già un account"
       },

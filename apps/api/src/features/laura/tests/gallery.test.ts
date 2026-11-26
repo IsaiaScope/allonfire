@@ -35,6 +35,7 @@ const record = (overrides: Partial<GalleryRecord> = {}): GalleryRecord => ({
   access: ImageAccess.PUBLIC,
   alt: { en: "A sea", it: "Un mare" },
   blurDataUrl: "data:image/webp;base64,AAAA",
+  createdAt: AT,
   favorite: false,
   height: 600,
   id: "image-1",
@@ -135,6 +136,15 @@ describe.each(PATHS)("GET /laura$base: the first use", ({ base, dep }) => {
 });
 
 describe.each(PATHS)("GET /laura$base: the page", ({ base, dep }) => {
+  it("answers each Image's creation date, as ISO text: an Export is named by it", async () => {
+    const res = await appWith(
+      { [dep]: () => Promise.resolve({ images: [record()], next: null }) },
+      sessionFor(LAURA_USER)
+    ).request(urlOf(base));
+    const { items } = galleryPageBodySchema.parse(await res.json());
+    expect(items[0]?.createdAt).toBe(AT.toISOString());
+  });
+
   it("signs a private picture for the hour and a public one without an end", async () => {
     vi.useFakeTimers({ now: NOW });
     try {

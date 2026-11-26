@@ -5,12 +5,13 @@ import { JAPAN_IMAGE_COLOR } from "@allonfire/design/designs/japan/image-colors"
 import type { AppDescriptor } from "@allonfire/ui/features/navigation/types/app-descriptor";
 import { SECTION } from "@/features/navigation/constants/sections";
 import type { Section } from "@/features/navigation/types/section";
+import pkg from "../../../package.json" with { type: "json" };
 import { BACK_OFFICE_BASE } from "./back-office-base";
 
 /**
  * What the Back Office says about itself: the descriptor the shared frame,
  * switcher and head read (`app`, `name`, `sections`, `entries`, `logo`,
- * `line`, `shareImageAlt`), and its own extras (`CHOSEN`, `PAGE`).
+ * `line`, `shareImageAlt`, `version`), and its own extras (`CHOSEN`, `PAGE`).
  */
 export const BACK_OFFICE = {
   app: App.BACK_OFFICE,
@@ -28,4 +29,6 @@ export const BACK_OFFICE = {
   sections: SECTION.LIST,
   /** The link-preview image's alt, the same in every language: two names. */
   shareImageAlt: `${BACK_OFFICE_BASE.NAME}, ${BRAND.NAME}`,
+  /** The Back Office's own release, from its own `package.json`: a Release moves it. */
+  version: pkg.version,
 } as const satisfies AppDescriptor<Section> & Record<string, unknown>;

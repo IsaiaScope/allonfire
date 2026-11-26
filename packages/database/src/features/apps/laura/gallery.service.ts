@@ -9,6 +9,8 @@ export type GalleryRecord = {
   access: ImageAccess;
   alt: ImageAlt;
   blurDataUrl: string;
+  /** When the Image was uploaded: what an Export is named by, never the placement's or the Favorite's time. */
+  createdAt: Date;
   /** True when the caller's own copy of the Favorite exists. */
   favorite: boolean;
   height: number;
@@ -92,7 +94,7 @@ export async function listGalleryPage({
     id,
   }));
   return {
-    images: page.map(({ alt, apps, createdAt: _at, ...image }) => ({
+    images: page.map(({ alt, apps, ...image }) => ({
       ...image,
       alt: readAlt(alt),
       favorite: apps.some(
@@ -138,7 +140,7 @@ export async function listFavoritesPage({
   }));
   return {
     images: page.map(({ imageApp }) => {
-      const { alt, createdAt: _at, ...image } = imageApp.image;
+      const { alt, ...image } = imageApp.image;
       return { ...image, alt: readAlt(alt), favorite: true };
     }),
     next,

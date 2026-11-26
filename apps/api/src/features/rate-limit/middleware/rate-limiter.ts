@@ -1,3 +1,4 @@
+import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { SEPARATOR } from "@allonfire/core/shared/constants/separators";
@@ -177,6 +178,24 @@ export function createRateLimiter(opts: {
     windowMs: opts.windowMs,
   });
 }
+
+/**
+ * A limiter counting each signed-in User apart, whatever address they share
+ * or change. A request with no Session passes uncounted: it spends nobody's
+ * allowance, the route's guard refuses it, and the global limiter still counts
+ * its address.
+ */
+export const userRateLimiter = (
+  opts: Omit<Parameters<typeof createRateLimiter>[0], "keyOf" | "trustedHops">
+): MiddlewareHandler => {
+  const limiter = createRateLimiter({
+    ...opts,
+    keyOf: (context) => context.get(AUTH.VAR.SESSION)?.user.id ?? "",
+    trustedHops: env.API_TRUSTED_PROXY_HOPS,
+  });
+  return (context, next) =>
+    context.get(AUTH.VAR.SESSION) ? limiter(context, next) : next();
+};
 
 /** The app's limiter, tuned from env. Probes bypass it. */
 export const rateLimit = (store: RateLimitStore): MiddlewareHandler => {

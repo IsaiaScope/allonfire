@@ -13,13 +13,12 @@ import {
 } from "react";
 import Lightbox, { type Slide } from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import { AOFButton } from "../../../shared/components/aof-button";
-import { AOFTooltip } from "../../../shared/components/aof-tooltip";
 import {
   AOFControlBar,
   AOFControlBarSeparator,
 } from "../../data-table/components/aof-control-bar";
 import { AOFLightboxArrow } from "./aof-lightbox-arrow";
+import { AOFLightboxButton } from "./aof-lightbox-button";
 
 /**
  * The library asks every slide for a source; ours are all drawn by the App
@@ -205,16 +204,9 @@ export const AOFLightbox = ({
           <AOFControlBar className="absolute bottom-(--gutter-bottom) left-1/2 -translate-x-1/2 gap-2 px-2">
             {actions}
             {actions ? <AOFControlBarSeparator /> : null}
-            <AOFTooltip label={labels.close}>
-              <AOFButton
-                aria-label={labels.close}
-                onClick={close}
-                size="icon"
-                variant="ghost"
-              >
-                <IconSquareRoundedX aria-hidden className="size-6" />
-              </AOFButton>
-            </AOFTooltip>
+            <AOFLightboxButton label={labels.close} onClick={close}>
+              <IconSquareRoundedX aria-hidden />
+            </AOFLightboxButton>
           </AOFControlBar>
           <div className="absolute inset-x-0 top-(--gutter-top) flex flex-col items-center gap-2 px-(--gutter-left) text-center">
             {caption}
@@ -222,11 +214,12 @@ export const AOFLightbox = ({
         </>
       ),
       // The photo stays inside the safe area and clear of the capsule, the
-      // caption and (from a tablet up) the arrows: nothing lies over it. It is
-      // centred between the caption and the capsule (4rem each, which both
-      // are 42px tall under) and on the screen (the wider side's gutter).
+      // caption and (from a tablet up) the arrows: nothing lies over it. The
+      // caption gets 4rem above and the capsule, with its 44px controls,
+      // 4.75rem below; sideways it is centred on the screen (the wider side's
+      // gutter).
       slide: ({ slide }: { slide: Slide }) => (
-        <div className="size-full px-[max(var(--gutter-left),var(--gutter-right))] pt-[calc(var(--gutter-top)+4rem)] pb-[calc(var(--gutter-bottom)+4rem)] sm:px-[calc(max(var(--gutter-left),var(--gutter-right))+4rem)]">
+        <div className="size-full px-[max(var(--gutter-left),var(--gutter-right))] pt-[calc(var(--gutter-top)+4rem)] pb-[calc(var(--gutter-bottom)+4.75rem)] sm:px-[calc(max(var(--gutter-left),var(--gutter-right))+4rem)]">
           {renderSlide(slides.indexOf(slide))}
         </div>
       ),

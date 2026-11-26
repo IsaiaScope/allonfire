@@ -3,6 +3,8 @@ import { USER } from "@allonfire/auth/features/users/constants/users";
 import { I18N } from "@allonfire/core/features/i18n/constants/locales";
 import { languageName } from "@allonfire/core/features/i18n/utils/language-name";
 import { SHARED_TRANSLATIONS } from "@allonfire/core/features/next/i18n/translations/shared-translations";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
+import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import type { ReactNode } from "react";
 import { page, userEvent } from "vitest/browser";
 import { renderInUi } from "../../../shared/tests/render-in-ui";
@@ -43,7 +45,13 @@ const EMAIL = "someone@example.test";
 const SHOWN_NAME = new RegExp(NAME);
 const ITALIAN = "it";
 
-const renderMenu = (seal?: ReactNode) =>
+const BADGE = {
+  /** Long enough to push a badge into Sign out if the row let it. */
+  LONG: "10.12.345",
+  SHORT: "7.8.9",
+} as const;
+
+const renderMenu = (seal?: ReactNode, version?: string) =>
   renderInUi({
     children: (
       <AOFSidebarProvider>
@@ -60,6 +68,7 @@ const renderMenu = (seal?: ReactNode) =>
           name={NAME}
           role={t.role.ADMIN}
           seal={seal}
+          version={version}
         />
       </AOFSidebarProvider>
     ),
@@ -156,5 +165,61 @@ describe("AOFAccountMenu", () => {
     await expect
       .element(page.getByRole("menuitem", { name: t.signOut }))
       .toHaveAttribute("form", NAVIGATION.FORM.SIGN_OUT);
+  });
+});
+
+describe("AOFAccountMenu version badge", () => {
+  it("shows the App's version on a badge, left of Sign out in the same row", async () => {
+    const screen = await renderMenu(undefined, BADGE.SHORT);
+    await screen.getByRole("button", { name: t.account }).click();
+    const badge = page.getByText(`v${BADGE.SHORT}`, { exact: true });
+    await expect.element(badge).toBeVisible();
+    const signOut = page.getByRole("menuitem", { name: t.signOut });
+    const badgeBox = badge.element().getBoundingClientRect();
+    const signOutBox = signOut.element().getBoundingClientRect();
+    expect(badgeBox.right).toBeLessThanOrEqual(signOutBox.left);
+    // One row: the two boxes overlap vertically.
+    expect(badgeBox.top).toBeLessThan(signOutBox.bottom);
+    expect(badgeBox.bottom).toBeGreaterThan(signOutBox.top);
+  });
+
+  it("keeps the version out of the menu's items", async () => {
+    const screen = await renderMenu(undefined, BADGE.SHORT);
+    await screen.getByRole("button", { name: t.account }).click();
+    await expect
+      .element(page.getByRole("menuitem", { name: `v${BADGE.SHORT}` }))
+      .not.toBeInTheDocument();
+  });
+
+  it("shows no badge when the App gives no version, and Sign out stays", async () => {
+    const screen = await renderMenu();
+    await screen.getByRole("button", { name: t.account }).click();
+    await expect
+      .element(page.getByRole("menuitem", { name: t.signOut }))
+      .toBeVisible();
+    await expect
+      .element(page.getByText(PATTERN.RELEASE.BADGE))
+      .not.toBeInTheDocument();
+  });
+
+  it("keeps a long version and Sign out inside the popup on a phone", async () => {
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
+    const screen = await renderMenu(undefined, BADGE.LONG);
+    await screen.getByRole("button", { name: t.account }).click();
+    await expect.element(page.getByRole("menu")).toBeVisible();
+    const menu = page.getByRole("menu").element().getBoundingClientRect();
+    const badge = page
+      .getByText(`v${BADGE.LONG}`, { exact: true })
+      .element()
+      .getBoundingClientRect();
+    const signOut = page
+      .getByRole("menuitem", { name: t.signOut })
+      .element()
+      .getBoundingClientRect();
+    expect(badge.right).toBeLessThanOrEqual(signOut.left);
+    expect(signOut.right).toBeLessThanOrEqual(menu.right);
   });
 });

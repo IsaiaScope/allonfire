@@ -31,6 +31,9 @@ import { docsRoutes } from "../routes";
 /** One Image's route, as OpenAPI spells it. */
 const IMAGE_BY_ID_ROUTE = `${API.PATH.IMAGES}${openApiPath(STORAGE.PATH.ONE)}`;
 
+/** One Image's Export route, as OpenAPI spells it. */
+const IMAGE_EXPORT_ROUTE = `${API.PATH.IMAGES}${openApiPath(STORAGE.PATH.EXPORT)}`;
+
 /** Only what these tests read; `looseObject` keeps the rest for `toMatchObject`. */
 const operationSchema = z.object({
   responses: z
@@ -478,6 +481,32 @@ describe("GET /openapi.json: Laura games", () => {
         "MemoryScoreInput",
       ])
     );
+  });
+});
+
+describe("GET /openapi.json for the Image Export", () => {
+  it("documents the Export as a JPEG, with its sign-in, hidden and limit errors", async () => {
+    const { paths } = await problemDocument();
+    expect(paths[IMAGE_EXPORT_ROUTE]).toHaveProperty(
+      [
+        "get",
+        "responses",
+        String(HTTP.STATUS.OK),
+        "content",
+        IMAGE.EXPORT.CONTENT_TYPE,
+      ],
+      expect.anything()
+    );
+    for (const status of [
+      HTTP.STATUS.UNAUTHORIZED,
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.TOO_MANY_REQUESTS,
+    ]) {
+      expect(paths[IMAGE_EXPORT_ROUTE]).toHaveProperty(
+        ["get", "responses", String(status)],
+        problemRefOf(status)
+      );
+    }
   });
 });
 

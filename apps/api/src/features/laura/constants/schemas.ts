@@ -1,11 +1,20 @@
 import { keysetCursor } from "@allonfire/core/features/search/keyset-cursor";
-import { pictureBodySchema } from "@allonfire/storage/features/image/constants/schemas";
+import {
+  imageBodySchema,
+  pictureBodySchema,
+} from "@allonfire/storage/features/image/constants/schemas";
 import { z } from "zod";
 import { LAURA } from "./laura";
 
-/** An Image as Laura's screens show it, with the caller's own Favorite flag. */
+/**
+ * An Image as Laura's screens show it, with the caller's own Favorite flag and
+ * the day it was uploaded (the name of its Export, ADR 0036).
+ */
 const galleryItemBodySchema = pictureBodySchema
-  .extend({ favorite: z.boolean() })
+  .extend({
+    createdAt: imageBodySchema.shape.createdAt,
+    favorite: z.boolean(),
+  })
   .meta({ ref: "GalleryItem" });
 export type GalleryItemBody = z.infer<typeof galleryItemBodySchema>;
 
