@@ -97,12 +97,9 @@
     "packages/shadcn/src/components/faceted.d.ts": ["exports"],
     "packages/shadcn/src/components/scroll-area.d.ts": ["exports"],
     "packages/shadcn/src/components/sonner.d.ts": ["exports"],
-    // Ocean's card back and sea emoji: held by the Memory game and the score
-    // screens, rebuilt in Phases 6 and 7 of the Laura rebuild.
-    "packages/design/src/designs/ocean/card-back.ts": ["exports"],
+    // Ocean's emoji catalogue: no App imports it, only its own test, which
+    // production mode leaves out.
     "packages/design/src/designs/ocean/sea-emoji.ts": ["exports"],
-    // Held only by the games and uploads Phases 6 and 7 rebuild.
-    "packages/core/src/features/errors/format-error-message.ts": ["exports"],
     // Read by the Apps' playwright.config.ts, which production mode leaves
     // out.
     "packages/config/tests/e2e/playwright.config.ts": ["exports"],
@@ -121,15 +118,6 @@
     ],
     // Kept for the Images page.
     "packages/ui/src/shared/components/aof-image.tsx": ["exports", "types"],
-    // Held only by Laura's feed and preview (Phase 4, Tasks 12 to 15) until they land; delete these entries then.
-    "packages/ui/src/features/image/components/aof-lightbox.tsx": [
-      "exports",
-      "types"
-    ],
-    "packages/ui/src/features/query/components/aof-infinite-sentinel.tsx": [
-      "exports"
-    ],
-    "packages/ui/src/features/query/hooks/use-aof-link-refresh.ts": ["exports"],
     "apps/back-office/src/features/images/utils/images-queries.ts": ["exports"],
     // Read by the Apps' next.config.ts, which production mode leaves out.
     "packages/auth/src/features/next/utils/with-provider-pictures.ts": [
@@ -201,11 +189,6 @@
     // asks of any command issued at startup, and only integration tests
     // issue one yet.
     "apps/api/src/features/redis/redis.ts": ["exports"],
-    // The Hono guard a host mounts to keep routes to an App's members
-    // (packages/auth/README.md); no API route mounts it yet, its tests do.
-    "packages/auth/src/features/hono/guards/middleware/require-app.ts": [
-      "exports"
-    ],
     // For an indexed App's pages (alternates, sitemap); no App is indexed yet,
     // so only its test reads them.
     "packages/core/src/features/next/metadata/utils/aof-indexed.ts": [

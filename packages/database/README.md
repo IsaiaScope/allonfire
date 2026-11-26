@@ -8,236 +8,110 @@
   <img src="https://img.shields.io/badge/BetterAuth-1.2-000000?style=flat" alt="BetterAuth" />
 </p>
 
-<p align="center">Shared database layer for the AllOnFire monorepo: one Prisma client over the App schemas, typed services per App, and the Liquibase changelog that builds the database.</p>
+<p align="center">The apps' shared database: the Prisma client, the services and access rules on top of it, and the Liquibase changelog that builds it.</p>
 
 ---
 
-## App Schemas
+## 🔧 Use it
 
-Every App keeps its tables in its own Postgres schema of the `allonfire`
-database ([ADR 0007](../../docs/adr/0007-one-postgres-schema-per-app.md)).
+Import one file at a time: there is no root entry and no barrel. `package.json` lists every path.
 
-| Schema | Owner | Holds |
-|---|---|---|
-| `auth` | the user base every App shares (Better Auth) | `User`, `Membership`, `Session`, `Account`, `Verification`, enums `Role`, `App` |
-| `image` | the Images, each placed in one or more Apps, public or private in each ([ADR 0013](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [ADR 0020](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md)) | `Image`, `ImageApp` |
-| `laura` | Laura | `MemoryScore` (one typed table per game, ADR 0034); the Profile tables `Profile`, `Favorite`, `ProfileFavorite` ([ADR 0034](../../docs/adr/0034-an-apps-data-about-a-user-lives-in-its-profile.md)) |
-| `public` | Liquibase | `databasechangelog`, `databasechangeloglock` only |
-
-Foreign keys cross schemas (`image."Image"."uploadedBy"` references
-`auth."User"."id"`), so one Prisma client spans them all. Prisma requires
-back-relations, which is why `Membership` in `auth.prisma` lists one line per App Profile (`User` lists none).
-
-## Exports
-
-| Import | Content |
+| I want to | Use |
 |---|---|
-| `@allonfire/database/features/prisma/client` | `prisma`, the one Prisma client, on the `pg` driver adapter (no root entry, no barrel) |
-| `@allonfire/database/features/image/image-stats` | `imageStats()`: every Image once (`total`, `totalBytes`) and, per App that has any, its bytes and count by access (`byApp`); an Image in two Apps counts in each; types `ImageStats`, `ImageAppStat` |
-| `@allonfire/database/features/image/image.service` | `createImages`, `listImagesPage` (a numbered page of the Images visible to the Apps the caller enters, narrowed by `app`, any of `apps`, any of `accesses` and `text`, which matches the alt in any language or the file name; with the count and bytes of every Image it matches), `getImage`, `updateImages(opened, resolve)` (each Image's `{ id, version }`; places and takes out only what the changes `resolve` works out from the locked placements name; an Image changed since its Version, or one left in no App, throws core's `ResourceChangedError`), `removeImagesFromApp` (deletes the Images left in no App), `deleteImages`; every write is all or nothing and locks its Images, and the update and both deletes run the caller's check on the placements they locked, `imageAltSchema`, `ImageNotFoundError`, types `ImageRecord` (with its `version`), `NewImage`, `OpenedImage`, `ImageChange`, `ImagePlacementsById`, `AuthorisePlacements`, `ResolveChanges` |
-| `@allonfire/database/features/image/random-images` | `randomImages({ app, count, enterable })`: some distinct Images placed in an App and visible to someone who enters `enterable`, drawn at random (Laura's Memory deck) |
-| `@allonfire/database/features/auth/access/access` | `AccessMembership`, `AccessUser`, `hasRole`, `roleIn`, `canEnterApp(user, app, min?)` (a Section's `min` Role only raises the door), `canManageImage(user, app)`, `canSeeImage`, `canManageEverywhere`, `enterableApps` (ADR 0020), `accessUserFrom`; the schemas and `ACCESS.ROLE_RANK` in `./constants/{schemas,access,access-schema}`; `ACCESS.APP_SETTINGS` (each App's `minRole` and `registration`), `registrationRoleSchema` in `./constants/access-schema` (ADR 0019) |
-| `@allonfire/database/features/apps/laura/memory-score.service` | `submitMemoryScore` (one score, with its rank and whether it is the Member's or the global best; a User's saves run one after the other, the same moves and time sent again within `MEMORY_SCORE.LIMIT.REPEAT_WINDOW_MS` answer with the game already saved, a game that ends sooner after the User's last save than its `timeMs` is refused as `tooSoon`, and `noProfile` means the Profile is gone; the answer is a `SubmitOutcome`), `memoryLeaderboard` (the best game of each current Member of Laura, fewest moves then the faster time), `memoryStats`, `userMemoryStats`, types `LeaderboardEntry`, `MemoryStats`, `UserMemoryStats`, `SubmittedScore` |
-| `@allonfire/database/features/apps/laura/constants/memory-rule` | `MEMORY_RULE` (`CARDS`, `MOVES.{MAX,MIN}`, `PAIRS`, `TIME.{MAX_MS,MIN_MS_PER_MOVE}`), shared by the API's plausibility check and Laura's deal |
-| `@allonfire/database/features/apps/laura/utils/is-plausible-score` | `isPlausibleScore({ moves, timeMs })`: whether a game could have been played, by `MEMORY_RULE` |
-| `@allonfire/database/features/apps/laura/{profile,favorite,gallery}.service` | `ensureLauraProfile` (first use: the Profile and the copies), `markFavorite` and `unmarkFavorite` (the master and every copy in one transaction), `listGalleryPage` and `listFavoritesPage` (the caller's own copies, by keyset) |
-| `@allonfire/database/enums` | Prisma enums as runtime values (`Role`, `App`) with no client attached |
-| `@allonfire/database/environment/environment` | Zod-validated `DATABASE_URL` and `NODE_ENV` (`src/environment/environment.ts`) |
-| `@allonfire/database/features/seed/fixtures/fixtures` | The Fixtures: `FIXTURE.USER` (one User per App per Role, plus `ADMIN_EVERYWHERE` and `NO_MEMBERSHIP`), `FIXTURE.USERS`, `FIXTURE.PASSWORD` (meets the password rules) and `FIXTURE.NEW_PASSWORD`; `FIXTURE.IMAGE` (type `FixtureImage`) and `FIXTURE.FAVORITE` (the one Image the master Favorites hold) |
-| `@allonfire/database/features/seed/utils/upsert-user` | `upsertUser(client, user, hash)`, for a test that needs a User of its own |
-| `@allonfire/database/features/test-database/{names,global-setup,local-env}` | The Test database: `global-setup` is the Vitest `globalSetup`, a Test database per run cloned from the template (built when missing, after a sweep of crashed runs), dropped when the run ends; `testDatabaseName` names it; `fillLocalDatabaseEnv()` fills an unset `DATABASE_URL` from `LOCAL`, for a test setup; the stamp is `testRunStamp` from `@allonfire/config/tests/run/test-run` |
-
-One subpath per service file, no barrel. Raw SQL names the schema:
-`FROM laura."MemoryScore"`, never `FROM "MemoryScore"`.
+| query the database | `prisma` from `./features/prisma/client` |
+| name a Role or an App, without loading the client | `./enums` |
+| check access | `./features/auth/access/access` |
+| read or change Users or Images | `./features/auth/user.service`, `./features/image/image.service` |
+| read or change one app's own data | `./features/apps/<app>/…` |
+| sign in or point at an Image in a test | `FIXTURE` from `./features/seed/fixtures/fixtures` |
 
 ```ts
-import { memoryLeaderboard } from "@allonfire/database/features/apps/laura/memory-score.service";
+import { canEnterApp } from "@allonfire/database/features/auth/access/access";
 
-const leaderboard = await memoryLeaderboard(25);
+export const memberOf = (app: App, reads: AdminReads = REAL_READS): CanManage =>
+  freshly(reads, (user) => canEnterApp(user, app));
 ```
 
-## Changing the Schema
+## 🧬 Change the schema
 
-Liquibase owns every change; Prisma drafts the SQL
-([ADR 0008](../../docs/adr/0008-liquibase-owns-the-changelog.md)).
+Docker must be running: Liquibase runs only there.
 
-1. Edit `prisma/schema/*.prisma`.
-2. `pnpm db:changeset <kebab-name>` brings the local database to the head of
-   the changelog, diffs it against the Prisma schema, and writes
-   `changelog/changesets/NNNN-<name>.sql` with the forward SQL and a
-   `--rollback` line per statement. It refuses when nothing changed.
-3. Read it. Drops, renames and type changes are where Prisma's draft is wrong
-   most often: a moved or renamed thing comes out as drop and create.
+1. Edit `prisma/schema/`.
+2. `pnpm db:changeset <kebab-name>` updates the Local database, then drafts a changeset with its rollback.
+3. Read the draft. A move or a rename often comes out as drop and create.
 4. `pnpm db:update`, then `pnpm db:drift` must say `No difference detected.`
 
-Rules:
+## 🗂️ Where things are
 
-- **Never edit a changeset that has reached any shared database.** Liquibase
-  checksums it and refuses to run. Fix forward with a new one.
-- **Expand, then contract.** A changeset must leave the previous release
-  working: add, backfill, switch the code, and drop the old thing only in a
-  later release. Rollback recreates structure, not data.
-- Never `prisma db push` or `prisma migrate`.
+```
+packages/database/
+  prisma/schema/      the models; one file per app under apps/
+  changelog/          Liquibase changesets, one SQL file each
+  liquibase/          the db-migrate image: backup, deploy, rollback
+  scripts/            drafts changesets, runs the image locally
+  src/
+    environment/      the variables it reads
+    features/
+      prisma/         the Prisma client
+      auth/           User services; access/ holds the access rules
+      image/          the shared Images
+      service/        mail Services and their providers
+      apps/           one folder per app, for its own data
+      seed/           the real Admin; fixtures/ for tests
+      test-database/  a throwaway database per test run
+```
 
-CI applies the changelog to an empty database, runs the drift check, and
-fails a `.prisma` edit that has no changeset.
+## ⚠️ Watch out
 
-## Scripts
+| Trap | Do this |
+|---|---|
+| Liquibase checksums applied changesets | never edit one that reached a shared database; add a new one |
+| The previous release must keep working | add and backfill first; drop in a later release |
+| `prisma db push` and `prisma migrate` skip the changelog | never use them |
+| Tables live in named schemas | name it in raw SQL: `image."Image"` |
+| The Local database has no Fixtures | the seed writes only the real Admin |
+| Changelog edits leave old image tags | `docker rmi $(docker images -q allonfire-db-migrate)` |
+
+## 🧪 Commands
+
+Copy `.env.example` to `.env` first. From the root:
 
 | Command | Does |
 |---|---|
-| `pnpm db:generate` | Regenerate the Prisma client |
-| `pnpm db:update` | Apply pending changesets |
-| `pnpm db:status` | List pending changesets |
-| `pnpm db:rollback --tag=<tag>` | Roll back every changeset after a tag |
-| `pnpm db:changeset <name>` | Draft a changeset from the Prisma schema |
-| `pnpm db:drift` | Compare the database with the Prisma schema |
-| `pnpm db:seed` | Seed the real Admin, Admin in every App; the Fixtures go only into the Test template |
-| `pnpm --filter @allonfire/database dev` | Open Prisma Studio on :5565, clear of the Android emulator's ADB port 5555 (`pnpm dev` starts it too) |
-| `pnpm --filter @allonfire/database test-database template \| create <label> <stamp> \| drop <label> <stamp>` | Build or check the template; make a Test database (prints its URL); drop it |
-| `pnpm test` | Unit tests, plus `*.integration.test.ts` on a Test database (`pnpm docker:up` first). Tests live in a `tests/` folder beside what they test |
+| `pnpm db:generate` | regenerate the Prisma client |
+| `pnpm db:status` | list pending changesets |
+| `pnpm db:rollback --tag=<tag>` | roll back everything after a tag |
+| `pnpm db:seed` | create the real Admin (`DATABASE_SEED_ADMIN_*`) |
+| `pnpm --filter @allonfire/database dev` | Prisma Studio on port 5565 (`pnpm dev` starts it too) |
+| `pnpm --filter @allonfire/database test` | tests; run `pnpm docker:up` first for integration |
 
-Liquibase needs Java, so it only runs in Docker: every `db:*` Liquibase script
-builds the same `db-migrate` image Production runs (`scripts/liquibase.sh`).
-The image is tagged `allonfire-db-migrate:<hash of its build context>`: an
-unchanged changelog reuses it, and callers running at once (every package's
-tests under Turbo) share one tag instead of moving it. Each changelog edit
-leaves one old tag; remove them with
-`docker rmi $(docker images -q allonfire-db-migrate)` (an image a container is
-using stays).
+## 🚢 Production
 
-## Test Databases and Fixtures
+Each deploy runs, in order:
 
-No test writes the Local database. The template is built on the server
-`DATABASE_URL` names: Liquibase's `update`, then `seedFixtures`. Its name,
-`aof_test_template_<YYMMDD>_<HHMMSS>_<fingerprint>` (UTC), carries the start of a sha256
-of `changelog/`, `liquibase/` and `src/features/seed/` (dotfiles and `tests/`
-left out), so a changeset, db-migrate or Fixture edit builds
-a new one on the next run while a tree built from other sources keeps its own;
-an advisory lock makes packages that start at once build it once. Each package's Vitest run clones it
-(`aof_test_<package>_<YYMMDD>_<HHMMSS>_p<pid>_<random>`, `<pid>` the run's process), hands the clone to its workers as
-`DATABASE_URL` and drops it at the end, also on Ctrl-C and a closed terminal
-(`dropWhenRunEnds`); a run with `--tags-filter=unit`
-skips all of it, so unit tests need no Docker. A run ended any other way
-(`kill`, Turbo stopping its tasks, a timeout) leaves its clone: Vitest exits a
-millisecond after SIGTERM, before any drop ends. The next run drops every clone
-whose process is gone, and any clone or template a day old that it does not clone. An e2e run drops every earlier
-e2e clone when it starts (`dropTestDatabasesOf`): Playwright runs no global
-teardown when a web server fails to start, and two e2e runs cannot share the
-API's port, so no earlier run is still using its clone.
+```
+db-backup (backup) --> db-migrate (deploy) --> storage-setup --> api --> back-office, laura
+```
 
-The Fixtures are the data every Test database holds (Local holds none: the
-seed writes only the real Admin, as in Production):
-`FIXTURE.USER.<App>.<Role>` (`back-office-admin@allonfire.test`, generated from
-the enums), `ADMIN_EVERYWHERE`, `NO_MEMBERSHIP`, all with `FIXTURE.PASSWORD`,
-and the Images in `FIXTURE.IMAGE` (their files live in `@allonfire/storage`).
-Tests sign in and point at them, never at a retyped email or key.
+A failed migration leaves the old apps serving. `deploy` tags the release `v<root version>` if it applied something.
 
-## The db-migrate Image
+From the Dokploy compose directory on the VPS, start each command with `docker compose -f docker/docker-compose.prod.yml run --rm db-migrate`:
 
-`liquibase/Dockerfile`, built from the repo root.
-
-- `liquibase/liquibase:5.0.4` pinned by digest, the PostgreSQL JDBC driver
-  pinned and checksum-verified, `postgresql-client-16` for backups.
-  Dependabot bumps the base image.
-- Runs as the unprivileged `liquibase` user; the changelog and scripts are
-  root-owned and read-only to it. Compose and `scripts/liquibase.sh` add a
-  read-only root filesystem, no Linux capabilities and `no-new-privileges`.
-- `DATABASE_URL` is split by `liquibase/database-url.sh`: the password
-  reaches Liquibase as `LIQUIBASE_COMMAND_PASSWORD` (masked in its output) and
-  pg_dump as `PGPASSWORD`, never inside a URL or on a command line.
-- Liquibase runs strict (`LIQUIBASE_STRICT=true`), with duplicate changelog
-  files as errors and a 5-minute lock wait. Sessions set `lock_timeout=10s`, so
-  a schema change waiting behind the App fails the deploy instead of stalling
-  the App.
-
-| Command | Does |
+| To | End it with |
 |---|---|
-| `backup` | `pg_dump -Fc` into `/backups`, verified with `pg_restore --list` before it counts; keeps the newest `DATABASE_BACKUP_KEEP` (14) |
-| `deploy` | `update` (which validates the changelog first), then tags the release (`v<root package.json version>`) only if something was applied |
-| anything else | passed to `liquibase` (`status --verbose` by default) |
+| undo back to a release, then redeploy the matching app image | `rollback --tag=v<version>` |
+| undo the last N changesets | `rollback-count --count=<N>` |
+| clear the lock a killed run left (deploys fail after 5 minutes) | `release-locks` |
 
-## Production
-
-Each deploy of the compose stack runs, in order:
-
-```
-db-backup (backup) --> db-migrate (deploy) --> laura
-```
-
-Each step starts only when the one before it exited 0, so a failed migration
-leaves the old App serving. Dumps live in the `allonfire-db-backups` volume on
-the same disk as the database: they serve rollback, not disaster recovery.
-
-Roll back from the Dokploy compose directory on the VPS, then redeploy the
-matching App image:
-
-```bash
-docker compose -f docker/docker-compose.prod.yml run --rm db-migrate rollback --tag=v0.2.0
-```
-
-The schema move itself (`0001-auth-laura-schemas`) has no tag before it on
-Production: the baseline is recorded and 0001 applied in the same deploy, and
-that deploy's tag lands on 0001. Undo it by count instead:
-
-```bash
-docker compose -f docker/docker-compose.prod.yml run --rm db-migrate rollback-count --count=1
-```
-
-A run killed mid-deploy can leave the changelog lock held; the next deploy
-waits 5 minutes and fails. Clear it with
-`docker compose -f docker/docker-compose.prod.yml run --rm db-migrate release-locks`.
-
-Last resort, when a rollback cannot bring data back: restore a dump.
+A rollback restores structure, not data. As a last resort, restore a dump:
 
 ```bash
 pg_restore --clean --if-exists --no-owner -d <url> /backups/allonfire-<stamp>.dump
 ```
 
-## Directory Structure
+The newest 14 dumps share the database's disk, so they are no disaster recovery.
 
-```
-packages/database/
-  prisma/schema/
-    schema.prisma           generator + datasource (schemas = auth, image, laura, service)
-    auth.prisma             auth schema (shared)
-    image.prisma            image schema (shared)
-    apps/laura.prisma       laura schema, one file per App under apps/
-  changelog/
-    db.changelog-master.yaml  root changelog, never edited
-    changesets/             one formatted-SQL changeset per file, in order
-  liquibase/
-    Dockerfile              the db-migrate image
-    entrypoint.sh           backup | deploy | any Liquibase command
-    database-url.sh         DATABASE_URL -> JDBC URL, libpq URL, user, password
-    tests/                  URL split, changelog up/down/deploy, backup;
-                            throwaway-db.ts (scratch databases on test-database/utils/server)
-  scripts/
-    liquibase.sh            build and run the image locally
-    changeset.ts            pnpm db:changeset
-    changeset-file.ts       changeset naming and formatting
-    tests/
-  src/
-    environment/            environment.ts (package), seed-environment.ts
-                            (seed scripts), tests/
-    features/
-      prisma/               client.ts (Prisma singleton)
-      auth/                 access/ (Role, Membership and App settings rules)
-      image/                image.service, tests/
-      apps/                 one folder per App
-        laura/              memory-score.service
-      seed/                 seed.ts, cli.ts (pnpm db:seed), seed-user.ts,
-                            upsert-user.ts, tests/
-        fixtures/           users.ts, images.ts, seed-fixtures.ts, tests/
-      test-database/        names, server, template, test-database, cli,
-                            global-setup, local-env, tests/
-```
+## 📚 More
 
-## Dependencies
-
-| Package | Purpose |
-|---|---|
-| `@prisma/client` / `prisma` | Generated client; `prisma migrate diff` drafts changesets |
-| `@t3-oss/env-core` | Type-safe environment validation |
-| `better-auth` | Password hashing in the seed script |
-| `zod` | Runtime schema validation |
+- Guides: [database](../../docs/guides/database.md), [testing](../../docs/guides/testing.md), [deployment](../../docs/guides/deployment.md), [VPS backups](../../docs/guides/vps-backups.md)
+- ADRs: [one schema per App](../../docs/adr/0007-one-postgres-schema-per-app.md), [Liquibase](../../docs/adr/0008-liquibase-owns-the-changelog.md), [Profiles](../../docs/adr/0034-an-apps-data-about-a-user-lives-in-its-profile.md)

@@ -55,6 +55,8 @@ server packages (auth, storage) are not covered, they run on Node.
 
 ## Constants
 
+- **The type comes from zod.** An `as const` object is the source, `z.enum(OBJECT)` (number values work too, `z.enum(HTTP.STATUS)`) or `z.literal(TUPLE)` builds the schema, and the type is the schema's `z.infer`: never a hand-written union, never `ValueOf`.
+
 - **Constants are one nested object per owner**, named so the first word says where a
   value comes from, never a flat `X_Y_Z` beside its siblings and never a name that
   carries its value (`VERSION.CURRENT`, not `V1`): `API` (`PATH`, `PROBE`, `VERSION`, `LIMIT`,
@@ -145,5 +147,5 @@ A message says what happened and stops: it never ends with “Try again”, “T
 
 ## Pointers
 
-- Core's helpers and constants, export by export: `packages/core/README.md`.
-- The TypeScript presets and each strictness option they turn on: `packages/config/README.md`.
+- Core's helpers and constants: each export's doc comment under `packages/core/src/`; what to reach for and the folder map: `packages/core/README.md`.
+- The TypeScript presets: `packages/config/README.md`; what each compiler option catches: `code-style.md`, Compiler options.

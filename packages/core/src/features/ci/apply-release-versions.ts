@@ -3,8 +3,11 @@ import { unitFolders } from "./affected";
 import { alignVersions, applyRelease } from "./release-workspace";
 import { affectedSince } from "./turbo-affected";
 
-// `/iso-push`'s release hook (`.iso/release-hook`) calls this; the contract is
-// in the package README. Prints one changed manifest per line.
+// `/iso-push`'s release hook (`.iso/release-hook`) calls this:
+// `pnpm -s ci:release-versions --root <dir> --previous <x.y.z> --next <x.y.z>
+// --from <sha>`. An empty `--from` counts every file and every unit;
+// `--align <x.y.z>` instead sets every package to that version. Prints one
+// changed manifest per line.
 const { values } = parseArgs({
   options: {
     align: { type: "string" },

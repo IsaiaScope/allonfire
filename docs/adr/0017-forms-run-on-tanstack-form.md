@@ -1,5 +1,7 @@
 # Forms run on TanStack Form, server actions stay the source of truth
 
+> Update: Laura's forms are AOF forms since the Laura rebuild (ADRs 0032 and 0033); the old package that used `react-hook-form` is deleted.
+
 Every form with fields is an AOF form: `useAOFForm` from `@allonfire/ui`
 (TanStack Form's `createFormHook`, bound to AOF field components) manages its
 fields and checks them in the browser, then hands the browser's own `FormData`

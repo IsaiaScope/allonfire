@@ -1,5 +1,7 @@
 # A standalone HTTP API, not Next server actions
 
+> Update: Since the Laura rebuild, Laura reads and writes through the API (ADR 0033).
+
 Laura's backend logic lives in Next server actions, which work well and will
 keep working. A React Native client is planned that shares the same users and
 the same data, and server actions cannot serve a non-Next caller. Rather than

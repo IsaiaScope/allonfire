@@ -4,7 +4,10 @@ const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE;
 const SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR;
 const BYTES_PER_KIB = 1024;
 
-/** How many of one unit make another: time in seconds and milliseconds, size in bytes. */
+/**
+ * How many of one unit make another: time in seconds and milliseconds, size in
+ * bytes. Code reads these, never a bare `1000` or `60 * 60 * 1000`.
+ */
 export const UNIT = {
   BYTES_PER_KIB,
   BYTES_PER_MIB: 1024 * BYTES_PER_KIB,

@@ -40,7 +40,10 @@ const SUPPORTED_LOCALES = [
 const BASE_LANGUAGES = ["en", "it"] as const;
 export type Language = ElementOf<typeof BASE_LANGUAGES>;
 
-/** Where a missing or unknown language lands, and what content falls back to. */
+/**
+ * Where a missing or unknown language lands, and what content falls back to.
+ * Code reads `I18N.DEFAULT_LANGUAGE`, never a literal `"en"` for this.
+ */
 const [DEFAULT_LANGUAGE] = BASE_LANGUAGES;
 
 /** Narrows next-intl's `useLocale()` (a plain string) to a base `Language`. */

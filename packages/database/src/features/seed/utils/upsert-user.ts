@@ -8,7 +8,8 @@ import type { SeedUser } from "./seed-user";
 /**
  * Creates or updates a seeded User, its Memberships and its password login,
  * all or nothing. Prints nothing: the test-database CLI seeds a template on
- * its way to printing a URL a shell captures.
+ * its way to printing a URL a shell captures. Exported too for a test that
+ * needs a User of its own.
  */
 export const upsertUser = (
   client: PrismaClient,

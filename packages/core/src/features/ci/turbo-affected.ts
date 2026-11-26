@@ -19,7 +19,24 @@ const manifestSchema = z.object({ packageManager: z.string().optional() });
 /**
  * What changed in the checkout at `root` since `base`, as Turbo reads it. No
  * base, or one that does not resolve, is every unit. The deploy and a Release
- * both ask here, so a unit's version moves exactly when it redeploys.
+ * both ask here, the one place Turbo is asked, so a unit's version moves
+ * exactly when it redeploys.
+ *
+ * What counts as affected is Turbo's (`futureFlags.affectedUsingTaskInputs`
+ * in `turbo.json`): a package whose task inputs changed, and its dependents.
+ * Every task excludes its package's Markdown, so a Markdown-only change
+ * deploys nothing. A lockfile change affects the packages whose resolved
+ * dependencies changed (all of them when the root's did), a `turbo.json`
+ * change affects everything, and a Release's own edit of the root
+ * `package.json` version and `VERSION` affects no Deploy unit.
+ *
+ * Two rules for Turbo config follow. A root task input that reaches another
+ * package's folder names its package (`@allonfire/<app>#tailwind:check`):
+ * left on every package, a `ui` change deployed the database migration. A
+ * Deploy unit's own `turbo.json` reads nothing outside the unit: Turbo lists
+ * the unit without its dependents, the Release bumps it, and its manifest then
+ * redeploys the dependents under their old numbers (a test that reads a file
+ * elsewhere lives in `packages/config`).
  */
 export const affectedSince = (root: string, base: string): Affected => {
   const run = (command: string, args: string[]) =>

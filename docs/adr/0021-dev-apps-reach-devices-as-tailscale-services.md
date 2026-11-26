@@ -1,5 +1,7 @@
 # Dev Apps reach other devices as Tailscale Services
 
+> Update: Since the Laura rebuild, Laura is built on `AOFCreateNextConfig` too.
+
 `pnpm dev` runs every App on the Mac (`localhost:3400`, `localhost:3200`, ...).
 To open them from a phone, `pnpm dev` (or `pnpm dev:tailscale` alone)
 advertises each App as its own Tailscale Service, so each one has its own HTTPS address on the tailnet:
@@ -35,7 +37,7 @@ stops them otherwise.
   - one `autoApprovers.services` entry per App's Service;
   - a grant to `autogroup:member` on 443 for the Services, beside the default
     allow-all grant.
-- The steps are in the root README, under "Local".
+- The steps are in `docs/guides/local.md`.
 
 ## Consequences
 

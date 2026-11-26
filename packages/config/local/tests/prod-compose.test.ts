@@ -32,12 +32,28 @@ const service = (name: string) => {
   return rest.slice(0, end === -1 ? undefined : end);
 };
 
+/** What both Next services merge in, so neither spells it out. */
+const NEXT_APP = COMPOSE.slice(
+  COMPOSE.indexOf("x-next-app: &next-app"),
+  COMPOSE.indexOf("\nservices:")
+);
+const INDENT = /\n +/g;
+/** A Next service as compose reads it, the merged anchor included, unindented. */
+const nextApp = (name: string) => {
+  const block = service(name);
+  const merged = block.includes("<<: *next-app")
+    ? `${block}${NEXT_APP}`
+    : block;
+  return merged.replace(INDENT, "\n");
+};
+
 /** Every `${KEY:?…}` the compose requires, so a deploy cannot start without it. */
 const REQUIRED = [...COMPOSE.matchAll(REQUIRED_KEY)].map(([, key = ""]) => key);
 const EXAMPLES = [
   "docker/.env.example",
   "apps/api/.env.example",
   "apps/back-office/.env.example",
+  "apps/laura/.env.example",
   "packages/database/.env.example",
   "packages/storage/.env.example",
 ].map(read);
@@ -136,6 +152,7 @@ describe("redis", () => {
 describe.each([
   ["api", "allonfire-api"],
   ["back-office", "allonfire-back-office"],
+  ["laura", "allonfire-laura"],
 ])("%s's telemetry", (name, serviceName) => {
   it("gets the plain endpoint, and the deploy fails without TELEMETRY_HEADERS", () => {
     const block = service(name);
@@ -147,6 +164,49 @@ describe.each([
     );
     expect(block).toContain(`TELEMETRY_SERVICE_NAME=${serviceName}`);
   });
+});
+
+describe("laura", () => {
+  const laura = service("laura");
+
+  it.each([
+    "image: ghcr.io/isaiascope/allonfire-laura:prod",
+    "- AUTH_APP=LAURA",
+    "- API_AUTH_URL=http://api:3000/v1/auth",
+    "- API_URL=http://api:3000",
+    `- LAURA_URL=${required("LAURA_URL")}`,
+    `- AUTH_COOKIE_DOMAIN=${interpolate("AUTH_COOKIE_DOMAIN:-")}`,
+    `traefik.http.routers.allonfire-laura.rule=Host(\`${interpolate("LAURA_HOST")}\`)`,
+    "traefik.http.routers.allonfire-laura.entrypoints=websecure",
+    "traefik.http.routers.allonfire-laura.tls.certresolver=letsencrypt",
+    "traefik.http.services.allonfire-laura.loadbalancer.server.port=3000",
+  ])("holds %s", (line) => {
+    expect(laura).toContain(line);
+  });
+
+  it("publishes no port and never reads the Back Office's address", () => {
+    expect(laura).not.toMatch(PORTS);
+    expect(laura).not.toContain("BACK_OFFICE_URL");
+  });
+
+  it.each([
+    "pull_policy: always",
+    "restart: unless-stopped",
+    "api:\ncondition: service_healthy",
+    '"http://127.0.0.1:3000/sign-in"',
+    "start_period: 30s",
+    "- allonfire\n- dokploy-network",
+  ])("runs as the Back Office does: %s", (line) => {
+    expect(nextApp("laura")).toContain(line);
+    expect(nextApp("back-office")).toContain(line);
+  });
+});
+
+it("lets both Apps' origins through the API's CORS", () => {
+  const origin = (key: string) => `https://${required(key)}`;
+  expect(service("api")).toContain(
+    `- API_CORS_ORIGINS=${origin("BACK_OFFICE_HOST")},${origin("LAURA_HOST")}\n`
+  );
 });
 
 it("reads the API's proxy hops from Dokploy, one (Traefik) by default", () => {
@@ -214,8 +274,7 @@ it("the prod compose reads no vendor variable and requires both Apps' public URL
   expect(service("back-office")).toContain(
     `BACK_OFFICE_URL=${required("BACK_OFFICE_URL")}`
   );
-  // The Back Office's switcher links to Laura; Laura's own service arrives
-  // with the cutover.
+  // The Back Office's switcher links to Laura.
   expect(service("back-office")).toContain(
     `LAURA_URL=${required("LAURA_URL")}`
   );

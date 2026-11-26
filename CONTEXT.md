@@ -6,8 +6,8 @@ one database, and one design system.
 ## Language
 
 **App**:
-One product in the monorepo, with its own users. Laura is the first App (rebuilt
-on the shared packages); the Back Office is the internal one, and a
+One product in the monorepo, with its own users. Laura is the first App (a private
+Gallery with a Memory game); the Back Office is the internal one, and a
 React Native client is planned. Who is allowed into an App is decided by their
 Membership in it and the lowest Role the App lets in, including for internal
 ones.
@@ -16,12 +16,12 @@ _Avoid_: site, project, product
 **Back Office**:
 The internal App where the family's content, users and data are managed. Only
 admins enter it.
-_Avoid_: dashboard, admin panel, console — Laura's `(dashboard)` is only a
-route-group name, not this App.
+_Avoid_: dashboard, admin panel, console
 
 **Section**:
 An area of an App reached from its main menu. The Back Office's are Home,
-Users and Storage; Home is the one a User lands on after Sign in.
+Users and Storage, and Laura's are Gallery, Favorites, Memory and Upload; Home
+is the one a User lands on after Sign in (Laura's Home is the Gallery).
 _Avoid_: page (a page is a route, and a Section can hold several), tab, module
 
 **App switcher**:
