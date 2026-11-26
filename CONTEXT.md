@@ -348,9 +348,9 @@ _Avoid_: service (the compose word), release.
 **Release**:
 What `/iso-push` cuts when work lands on dev: the repo's version (`VERSION`, the
 root `package.json`), its tag, and the new version of every workspace package
-the range changed. A Deploy unit's version moves when anything it is built from
-changed; a library's, only when its own files did. Each App shows its own
-version in the account menu.
+the range changed. A Deploy unit's version moves exactly when it redeploys; a
+library's, only when its own files changed. Each App shows its own version in
+the account menu.
 _Avoid_: deploy (a deploy ships a commit, a Release numbers it), build number.
 
 ### Data about usage

@@ -1,6 +1,7 @@
 // @module-tag unit
 import { LOCAL } from "../../../local/addresses";
 import { aofAppBrowserVitest, aofAppVitest } from "../app-vitest";
+import { VITEST } from "../vitest.config";
 
 const SRC = "/x/src";
 const SETUP_FILE = "./vitest.browser.setup.ts";
@@ -54,5 +55,12 @@ describe("aofAppBrowserVitest", () => {
 
   it("runs in a browser", () => {
     expect(config.test?.browser).toMatchObject({ enabled: true });
+  });
+
+  // Unset, Vitest opens cores minus one tabs per browser: on a 10-core Mac the
+  // two browsers' tabs crowd each other out and tests pass their time limit.
+  it("limits how many tabs each browser runs at once", () => {
+    expect(config.test?.maxWorkers).toBe(VITEST.BROWSER_MAX_WORKERS);
+    expect(VITEST.BROWSER_MAX_WORKERS).toBe(3);
   });
 });

@@ -55,7 +55,7 @@
       "title": "No Images match"
     },
     "error": {
-      "description": "Check the connection, then try again.",
+      "description": "Check the connection.",
       "retry": "Try again",
       "title": "The Images could not be loaded"
     },
@@ -87,9 +87,9 @@
     },
     "edit": {
       "error": {
-        "failed": "Could not save. Try again.",
+        "failed": "Could not save.",
         "gone": "This Image no longer exists.",
-        "invalid": "Check the fields and try again.",
+        "invalid": "Check the fields.",
         "refused": "You can no longer change Images. Sign in again."
       },
       "page": "Image",
@@ -154,8 +154,8 @@
       "off": "Disabled"
     },
     "error": {
-      "changed": "Someone changed this provider. Reload and try again.",
-      "failed": "Saving did not work. Try again.",
+      "changed": "Someone changed this provider. Reload the page.",
+      "failed": "Saving did not work.",
       "incomplete": "An enabled provider needs a sender address.",
       "invalid": "Check the highlighted fields.",
       "refused": "Your session can no longer change Services. Sign in again.",
@@ -185,7 +185,7 @@
       "MAIL": "Mail"
     },
     "serviceEnabled": {
-      "failed": "The Service did not change. Try again.",
+      "failed": "The Service did not change.",
       "label": "Service",
       "on": "On",
       "off": "Off"
@@ -197,9 +197,9 @@
       "rejected": "The provider refused it. Check the key and the settings.",
       "uncertain": "Unknown whether it left: it counts, and was not sent again.",
       "unavailable": "Not sent: Service off, no key, or quota full.",
-      "rateLimited": "Too many emails to this address. Try again later.",
+      "rateLimited": "Too many emails to this address.",
       "removed": "This provider was removed. Reload the page.",
-      "failed": "The test could not be sent. Try again.",
+      "failed": "The test could not be sent.",
       "sending": "Sending"
     },
     "usage": {
@@ -244,7 +244,7 @@
       "clear": "Clear the search"
     },
     "error": {
-      "description": "Check the connection, then try again.",
+      "description": "Check the connection.",
       "retry": "Try again",
       "title": "The Users could not be loaded"
     },
@@ -297,9 +297,9 @@
       "confirmPassword": "Confirm the new password",
       "email": "Email",
       "error": {
-        "failed": "Could not save. Try again.",
+        "failed": "Could not save.",
         "gone": "This User no longer exists.",
-        "invalid": "Check the fields and try again.",
+        "invalid": "Check the fields.",
         "ownRole": "You cannot change your own Role in the Back Office.",
         "refused": "You can no longer change Users. Sign in again."
       },
@@ -328,8 +328,8 @@
       "button": "Add",
       "email": "Email",
       "error": {
-        "failed": "The User could not be added. Try again.",
-        "invalid": "Check the fields and try again.",
+        "failed": "The User could not be added.",
+        "invalid": "Check the fields.",
         "refused": "You can no longer change Users. Sign in again.",
         "taken": "This email already has an account"
       },

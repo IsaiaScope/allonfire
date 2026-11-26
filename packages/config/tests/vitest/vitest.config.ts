@@ -5,6 +5,13 @@ import { configDefaults, defineConfig } from "vitest/config";
 export const VITEST = {
   /** Browser tests, which only `vitestBrowserConfig` collects. */
   BROWSER_FILES: "**/*.browser.test.{ts,tsx}",
+  /**
+   * How many test files each browser runs at once, in its own tab each.
+   * Vitest's own default is cores minus one: 9 per browser on a 10-core Mac,
+   * where the tabs of both crowd each other out and tests pass their time
+   * limit; 3 is that default on a 4-core machine.
+   */
+  BROWSER_MAX_WORKERS: 3,
 } as const;
 
 /**

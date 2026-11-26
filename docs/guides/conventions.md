@@ -65,7 +65,7 @@ server packages (auth, storage) are not covered, they run on Node.
   `ERROR_CODE`, `ERROR` (`SIGN_IN`, `FORGOT`, `RESET`), `MAIL.PARAM`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
   `@allonfire/auth/shared/constants/auth`); `IMAGE` (`BUCKET`, `CACHE`, `FORMAT`, `LIMIT`,
   `ERROR_CODE`, `DOC`, `OPENAPI_TAG`, `VAR`;
-  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `IMAGES`, `LIST`, `ONE`); core's `HTTP`
+  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `EXPORT`, `IMAGES`, `LIST`, `ONE`); core's `HTTP`
   (`STATUS`, `METHOD`, `HEADER`, `CONTENT_TYPE`), `LOG`, `TELEMETRY` (`PATH`, `ERROR`,
   `LIMIT`, `DEFAULT`, `ATTRIBUTE.RESOURCE`), `ENV`, `PATTERN` and `I18N`; and
   config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`) and `REPO`; the database's `ACCESS`
@@ -136,6 +136,8 @@ line is about that one alone.
 
 Use “can” or “is allowed” for permissions; reserve “may” for possibility.
 Name localized text “translations”, except where a library API requires “messages”.
+
+A message says what happened and stops: it never ends with “Try again”, “Try again later” or “in a moment” (Italian “Riprova …”). A step the person can take stays (“Check the connection.”, “Reload the page.”), a button can be called “Try again”, and the API’s rate-limit message keeps its wait in seconds: every `features/i18n/translations/*.json` and core’s own.
 
 ## Names
 

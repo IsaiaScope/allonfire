@@ -9,6 +9,7 @@ export const toGalleryItem = (
 ): GalleryItemBody => ({
   alt: record.alt,
   blurDataUrl: record.blurDataUrl,
+  createdAt: record.createdAt.toISOString(),
   favorite: record.favorite,
   height: record.height,
   id: record.id,

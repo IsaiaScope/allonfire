@@ -1,4 +1,5 @@
 // @module-tag integration
+import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import {
   AOFButton,
@@ -23,7 +24,11 @@ const LOOK = [
 
 const button = async (props: AOFButtonProps = {}) => {
   const screen = await render(<AOFButton {...props}>{LABEL}</AOFButton>);
-  return screen.getByRole("button", { name: LABEL }).element();
+  const element = screen.getByRole("button", { name: LABEL }).element();
+  // The pointer stays where an earlier file left it: parked, or a button it
+  // rests on wears its hover colour.
+  await userEvent.unhover(element);
+  return element;
 };
 
 const lookOf = (element: Element) => {
@@ -64,9 +69,13 @@ describe("AOFButton", () => {
         </>
       );
       const link = screen.getByRole("link", { name: LABEL }).element();
-      expect(lookOf(link)).toEqual(
-        lookOf(screen.getByRole("button", { name: LABEL }).element())
-      );
+      const twin = screen.getByRole("button", { name: LABEL }).element();
+      // The pointer stays where an earlier file left it, and hover fades the
+      // colour of whichever of the two it rests on.
+      await userEvent.unhover(link);
+      await afterTransitions(link);
+      await afterTransitions(twin);
+      expect(lookOf(link)).toEqual(lookOf(twin));
       // A link with an address, which every browser points at with a hand.
       expect(link.matches(":any-link")).toBe(true);
     }

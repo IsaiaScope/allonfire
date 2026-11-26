@@ -30,7 +30,7 @@ config/
       app-vitest.ts        `aofAppVitest(srcDir)` and `aofAppBrowserVitest(...)`: a Next App's whole Vitest and browser configs over the presets (the `@/` alias, JSX, next-intl), so an App's config files are a few lines
       environment-suite.ts `environmentSuite({ authApp, authPath, examplePath, importEnv })`: the cases every Next App's env module passes, so an App's `environment.test.ts` is one call
     browser/
-      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit: both Apps' and ui's
+      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit, each at most `VITEST.BROWSER_MAX_WORKERS` files at once: both Apps' and ui's
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
       asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/
@@ -118,6 +118,7 @@ them as projects):
 | `pnpm test:ui` | the Vitest UI with coverage on :51204. It runs nothing at start (`--standalone`), only what a save touches; press Run all in the UI for the full suite |
 | `pnpm dev` | runs `test` through turbo (unchanged packages come from cache, a change re-runs that package) next to the apps and the UI |
 | `pnpm e2e` | the `e2e` Stage: the Test services up, the browser tests, then end-to-end |
+| `pnpm e2e:browser` | the browser tests, through turbo, one package at a time (side by side they timed each other out), cached like `e2e:run` |
 | `pnpm e2e:run` | Playwright, through turbo, one App at a time (they share the e2e API and mail sink ports), cached: an App re-runs only when it or a package it reads changed |
 
 End-to-end tests run each spec once per project, on one build and one Test

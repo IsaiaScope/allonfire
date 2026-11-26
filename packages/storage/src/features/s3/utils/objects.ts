@@ -1,6 +1,7 @@
 import {
   CopyObjectCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -28,6 +29,19 @@ export async function putObject(
       Key: key,
     })
   );
+}
+
+/** The bytes of the object at `key` in `bucket`. Throws when it is missing or the provider refuses. */
+export async function getObject(bucket: string, key: string): Promise<Buffer> {
+  const { Body } = await s3.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key })
+  );
+  if (!Body) {
+    throw new Error(`Object ${key} has no body`);
+  }
+  const bytes = await Body.transformToByteArray();
+  // A view over the same memory, not a second copy of the object.
+  return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }
 
 /**

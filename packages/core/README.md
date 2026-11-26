@@ -63,11 +63,25 @@ database: the host hands `sendMail` a `MailStore` (the API's is
 
 | Export | Type | Description |
 |--------|------|-------------|
-| `affectedFrom(turboQueryJson, turboPackagesJson, changedFiles)` | Function | `turbo query affected --packages` read as `{ apps, deploy }`: the Apps CI tests end to end and the Deploy units to ship, `db-migrate` first. A changed image file Turbo does not read (`docker/`, `.dockerignore`, `pnpm-workspace.yaml`) reaches every unit (`turboPackagesJson`, a `turbo query` of every package) |
+| `affectedFrom(turboQueryJson, turboPackagesJson, changedFiles)` | Function | `turbo query affected --packages` read as `{ apps, deploy }`: the Apps CI tests end to end and the Deploy units to ship, `db-migrate` first. A changed image file Turbo does not read (`docker/`, `.dockerignore`, `.npmrc`, `pnpm-workspace.yaml`) reaches every unit (`turboPackagesJson`, a `turbo query` of every package) |
 | `everything(turboPackagesJson)` | Function | Every App and every Deploy unit |
 | `Affected` | Type | `{ apps, deploy }`: an App is a package under `apps/`, named by its folder (the API included); a Deploy unit is an App or `db-migrate` |
 
-CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `apps=` and `deploy=` for `$GITHUB_OUTPUT`. What counts as affected is Turbo's (`futureFlags.affectedUsingTaskInputs` in `turbo.json`): a package whose task inputs changed, and its dependents. Every task excludes `**/*.md`, so a Markdown-only change affects nothing, and a root `package.json`, `turbo.json` or lockfile change affects everything. No base, or one that does not resolve (no deploy yet), prints every unit.
+CI runs it as `pnpm -s ci:affected <base>`, from the repo root, and it prints `apps=` and `deploy=` for `$GITHUB_OUTPUT`. What counts as affected is Turbo's (`futureFlags.affectedUsingTaskInputs` in `turbo.json`): a package whose task inputs changed, and its dependents. Every task excludes its package's `**/*.md`, so a Markdown-only change deploys nothing. A new `packageManager` in the root `package.json` (the pnpm every image installs with) affects everything, though Turbo lists nothing for it. A lockfile change affects the packages whose resolved dependencies changed (all of them when the root's did), and a `turbo.json` change affects everything; a Release's own edit of the root `package.json` version and `VERSION` affects no Deploy unit. A root task input that reaches another package's folder names its package (`@allonfire/laura#tailwind:check`): left on every package, a `ui` change deployed the database migration. A Deploy unit's own `turbo.json` reads nothing outside the unit: Turbo lists the unit without its dependents, the Release bumps it, and its manifest then redeploys the dependents under their old numbers (a test that reads a file elsewhere lives in `packages/config`). No base, or one that does not resolve (no deploy yet), prints every unit. `affectedSince(root, base)` (`turbo-affected.ts`) is the one place Turbo is asked.
+
+### Release versions (`features/ci`, run from the repo root)
+
+Not imported by an App: `/iso-push`'s release hook (`.iso/release-hook`) runs it so every workspace package's `package.json` `version` moves in the `chore(release)` commit, and the Apps' account menus show their own (`CONTEXT.md`, **Release**).
+
+**A Deploy unit's number moves exactly when it redeploys**: both ask `affectedSince`. A library's moves when a file under its own folder changed, Markdown aside.
+
+| File | Role |
+|---|---|
+| `release-versions.ts` | Pure: `bumpVersion`, `releaseKind(previous, next)`, `setVersion` (only the top-level `"version"` line), `changedPackages(packages, changedFiles, deployed)` |
+| `release-workspace.ts` | Reads the workspace (the `packages:` globs of `pnpm-workspace.yaml` minus its `!` entries; a manifest it cannot read, or an entry it cannot expand, stops the Release) and writes the versions: `applyRelease`, `alignVersions` |
+| `apply-release-versions.ts` | The CLI: `pnpm -s ci:release-versions --root <dir> --previous <x.y.z> --next <x.y.z> --from <sha>` prints the manifests it changed; `--align <x.y.z>` sets every package; an empty `--from` counts every file and every unit |
+
+The hook runs it from the main checkout, which has the install, against the release worktree (`--root`). It first compares `features/ci` and `shared` (what those rules import) in both, tests aside, and stops the Release when they differ (a checkout behind the base, or uncommitted rules), so old rules never number a Release. `tests/deploy-selection.integration.test.ts` runs real Turbo on a copy of this workspace's manifests, lockfile and Turbo configs to hold which units a change redeploys.
 
 ### `./shared/utils/json`
 

@@ -107,9 +107,10 @@ export const AUTH = {
     SECRET_MIN_LENGTH: 32,
   },
   /**
-   * Every route where Better Auth checks or hashes a password. Hosts
-   * rate-limit these harder than anything else: each request is a guess or a
-   * hash.
+   * The routes anyone can call to make Better Auth check or hash a password.
+   * Hosts rate-limit these harder than anything else: each request is a guess
+   * or a hash. Reset password hashes too, but only once the token from the
+   * reset email holds, so it stays on the host's general limit.
    */
   LIMITED_PATHS: [SIGN_IN_EMAIL, SIGN_UP_EMAIL, CHANGE_PASSWORD],
   /**

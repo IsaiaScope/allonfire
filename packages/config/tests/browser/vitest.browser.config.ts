@@ -25,5 +25,6 @@ export const vitestBrowserConfig = defineConfig({
     },
     exclude: exclude.filter((pattern) => pattern !== VITEST.BROWSER_FILES),
     include: [`src/${VITEST.BROWSER_FILES}`],
+    maxWorkers: VITEST.BROWSER_MAX_WORKERS,
   },
 });

@@ -129,7 +129,7 @@ export const refuseWhileLimitDown = async (mail: AuthMail, path: string) => {
   if (sends && !(await mail.ready())) {
     throw new APIError("SERVICE_UNAVAILABLE", {
       code: AUTH.ERROR_CODE.MAIL_UNAVAILABLE,
-      message: "Email is unavailable right now; try again later",
+      message: "Email is unavailable right now",
     });
   }
 };

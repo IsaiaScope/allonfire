@@ -7,12 +7,17 @@ import { LAURA_LOGO } from "@allonfire/design/apps/laura/laura-logo";
 import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { LAURA } from "@/shared/constants/laura";
+import pkg from "../../../package.json" with { type: "json" };
 
 describe("LAURA", () => {
   it("is Laura's own descriptor", () => {
     expect(LAURA.app).toBe(App.LAURA);
     expect(LAURA.name).toBe("Laura");
     expect(LAURA.logo).toBe(LAURA_LOGO);
+  });
+
+  it("shows its own package's version, the one a Release moves", () => {
+    expect(LAURA.version).toBe(pkg.version);
   });
 
   it("opens on the Gallery at Home, then Favorites, Memory and Upload", () => {

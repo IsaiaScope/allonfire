@@ -133,9 +133,18 @@ describe.each([
   it("is refused on both writes, and the master and the copies stay as they were", async () => {
     const adminCookie = await cookieFor(app, FIXTURE.USER.LAURA.ADMIN);
     await send(HTTP.METHOD.PUT, laura, adminCookie);
-    const copies = await prisma.profileFavorite.count({
-      where: { imageId: laura },
-    });
+    // A copy to watch: a first read makes this reader's Profile, with the
+    // master's Favorites. Only theirs is counted, since other test files add
+    // and drop their own Members in this shared database while this one runs.
+    await favoritesOf(await cookieFor(app, await reader(FIRST_READER)));
+    const copiesOf = () =>
+      prisma.profileFavorite.count({
+        where: {
+          imageId: laura,
+          profile: { membership: { user: { email: FIRST_READER } } },
+        },
+      });
+    expect(await copiesOf()).toBe(1);
     const cookie = await cookieFor(app, user);
     expect((await send(HTTP.METHOD.DELETE, laura, cookie)).status).toBe(
       HTTP.STATUS.FORBIDDEN
@@ -144,9 +153,7 @@ describe.each([
       HTTP.STATUS.FORBIDDEN
     );
     expect(await prisma.favorite.count({ where: { imageId: laura } })).toBe(1);
-    expect(
-      await prisma.profileFavorite.count({ where: { imageId: laura } })
-    ).toBe(copies);
+    expect(await copiesOf()).toBe(1);
     expect(await prisma.favorite.count({ where: { imageId: office } })).toBe(0);
   });
 });

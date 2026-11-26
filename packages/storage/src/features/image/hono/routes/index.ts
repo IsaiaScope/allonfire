@@ -2,7 +2,7 @@ import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { Hono } from "hono";
 import { STORAGE } from "../../../../shared/constants/paths";
 import type { ImageDeps } from "../utils/deps";
-import { getHandlers, listHandlers } from "./read-handlers";
+import { exportHandlers, getHandlers, listHandlers } from "./read-handlers";
 import {
   deleteHandlers,
   patchHandlers,
@@ -18,6 +18,7 @@ export const imageRoutes = (deps: ImageDeps) =>
   new Hono<AuthEnv>()
     .get(STORAGE.PATH.LIST, ...listHandlers(deps))
     .get(STORAGE.PATH.ONE, ...getHandlers(deps))
+    .get(STORAGE.PATH.EXPORT, ...exportHandlers(deps))
     .post(STORAGE.PATH.LIST, ...uploadHandlers(deps))
     .patch(STORAGE.PATH.LIST, ...patchHandlers(deps))
     .delete(STORAGE.PATH.LIST, ...deleteHandlers(deps));

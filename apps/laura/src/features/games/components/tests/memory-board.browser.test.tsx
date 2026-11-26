@@ -3,6 +3,7 @@
 import { worker } from "@allonfire/config/tests/browser/msw";
 import { ERROR } from "@allonfire/core/features/errors/constants/error-codes";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { MEMORY_RULE } from "@allonfire/database/features/apps/laura/constants/memory-rule";
 import { AOFFreshOnReturn } from "@allonfire/ui/features/query/components/aof-fresh-on-return";
 import { HttpResponse, http } from "msw";
@@ -80,7 +81,7 @@ const PAIRS = Array.from({ length: MEMORY_RULE.PAIRS }, (_, index) => [
 ]);
 
 /** Twelve real clicks and their waits: the default 30 s is short when the suites run side by side. */
-const FULL_GAME_TIMEOUT_MS = 90_000;
+const FULL_GAME_TIMEOUT_MS = 90 * UNIT.MS_PER_SECOND;
 
 /** Plays every pair; the last one ends the game, whose dialog covers the board. */
 const playWholeGame = async () => {

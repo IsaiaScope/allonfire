@@ -4,6 +4,7 @@ import { withAppSession } from "@allonfire/auth/features/next/components/with-ap
 import { sessionOf } from "@allonfire/auth/features/next/tests/session-request-mocks";
 import { hasSectionRole } from "@allonfire/auth/features/next/utils/has-section-role";
 import { LOCAL } from "@allonfire/config/local/addresses";
+import { UNIT } from "@allonfire/core/shared/constants/units";
 import { App, Role } from "@allonfire/database/enums";
 import { SECTION } from "@/features/navigation/constants/sections";
 import { LAURA } from "@/shared/constants/laura";
@@ -26,18 +27,20 @@ vi.mock("@/environment/environment", () => ({
   env: { LAURA_URL: LOCAL.URL.LAURA },
 }));
 
+/** A page's first import is a cold module graph: the 5 s default is short when the suites run side by side. */
+const IMPORT_TIMEOUT_MS = 30 * UNIT.MS_PER_SECOND;
+
 /** A Session whose User holds `role` in Laura. */
 const heldAs = (role: Role) => sessionOf([{ app: App.LAURA, role }]);
 
 /** What the page tells `withAppSession`: its call, read as the page module is loaded. */
 const callOf = async (load: () => Promise<unknown>) => {
   vi.mocked(withAppSession).mockClear();
-  vi.resetModules();
   await load();
   return vi.mocked(withAppSession).mock.calls[0];
 };
 
-describe("the Upload gate", () => {
+describe("the Upload gate", { timeout: IMPORT_TIMEOUT_MS }, () => {
   it("holds Upload alone to the Admin Role, in the one list the proxy reads", () => {
     const closed = LAURA.sections.filter((section) => "minRole" in section);
     expect(closed).toEqual([SECTION.UPLOAD]);

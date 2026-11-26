@@ -20,6 +20,9 @@ export const DECK_URL = `${LOCAL.URL.TEST_API}${API.PATH.LAURA.GAMES.DECK}`;
 /** Where the browser asks for the Memory leaderboard. */
 export const LEADERBOARD_URL = `${LOCAL.URL.TEST_API}${API.PATH.LAURA.GAMES.LEADERBOARD}`;
 
+/** When every photo of these tests was uploaded: what its Export is named by. */
+export const PHOTO_CREATED_AT = "2026-11-25T08:30:00.000Z";
+
 /** One photo as the Gallery answers it. */
 const photo = (
   id: string,
@@ -29,6 +32,7 @@ const photo = (
 ) => ({
   alt: { en: `Photo ${id}`, it: `Foto ${id}` },
   blurDataUrl: "data:image/webp;base64,AAAA",
+  createdAt: PHOTO_CREATED_AT,
   favorite,
   height,
   id,

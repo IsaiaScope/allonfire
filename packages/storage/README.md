@@ -16,19 +16,20 @@
 
 | Export Path | What it provides |
 |-------------|-----------------|
-| `./environment/environment` | `env` and `storageEnvSchema`: the provider's `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, and the image server's `STORAGE_IMAGE_SERVER_URL`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT` (hex) |
-| `./shared/constants/paths` | `STORAGE.PATH`: `IMAGES` (`/images`, where a Host mounts the Image module), and the module's own `LIST` (`/`) and `ONE` (`/:id`) |
+| `./environment/environment` | `env` and `storageEnvSchema`: the provider's `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, the Export route's own limit (`STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX`, `_MAX`, `_WINDOW_MS`), and the image server's `STORAGE_IMAGE_SERVER_URL`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT` (hex) |
+| `./shared/constants/paths` | `STORAGE.PATH`: `IMAGES` (`/images`, where a Host mounts the Image module), and the module's own `LIST` (`/`), `ONE` (`/:id`) and `EXPORT` (`/:id/export`) |
 | `./features/image-server/sign` | `pictureLink({ bucket?, key, width, expiresAt? })`: a signed imgproxy link (HMAC-SHA256 over salt and path), changed width or key answers 403, past `expiresAt` 404; `pictureSrcSet(key, expiresAt?)`, one per width; `privateLinkExpiry(now)`, the end of the hour after the next |
 | `./features/image-server/constants/image-server` | `IMAGE_SERVER`: `WIDTHS` (640, 1080, 1920, 2560), `AVATAR_WIDTH` (256), `LINK` (`PRIVATE_HOURS`, `CACHE_LIFE`, `REFRESH_MS`), `CACHE` (`CHECK_SECONDS`, 2: how stale a copy the image cache serves can be; `GONE_WITHIN_MS`) |
 | `./features/avatar/constants/avatar` | `AVATAR`: `SIZE` (`STORED` 256, `CROP` 512, the browser's crop), `INPUT.BYTES`, `KEY_PREFIX`, `QUALITY` |
 | `./features/avatar/utils/avatar-key` | `avatarKey(userId)` (a new `avatar-<userId>-<uuid>.avif` each time), `avatarKeyOf(image)` (our file's name, else null), `avatarLink(image, now)` (ours signed for the hour, a provider's picture as it is) |
 | `./features/avatar/objects/avatar-objects` | `saveAvatar(userId, file)` (prepares and stores, answers the name), `deleteAvatarsWith(log)(images)` (deletes our own files among them, logs a failure) in the `image` bucket |
-| `./features/image/constants/image` | `IMAGE`: `IMAGE.BUCKET.DEFAULT`, `IMAGE.CACHE.*` (`TTL_SECONDS`, `CONTROL`), `IMAGE.FORMAT.*` (`CONTENT_TYPE`, `EXTENSION`), `IMAGE.LIMIT.*` (`FILE_BYTES`, `UPLOAD` with `BYTES`, `BODY_BYTES` and `TIMEOUT_MS`, `INPUT` with `MEGAPIXELS` and `PIXELS`, files per upload, batch, list page, stored dimension), `IMAGE.ERROR_CODE` (the module's own codes, `IMAGE_TOO_LARGE` and `UNSUPPORTED_IMAGE`; the standard ones it throws are core's `ERROR.CODE`), `IMAGE.DOC.<VERB>` (`DESCRIPTION`, `RESPONSE` keyed by status, `SUMMARY`), `IMAGE.OPENAPI_TAG`, `IMAGE.VAR` |
+| `./features/image/constants/image` | `IMAGE`: `IMAGE.BUCKET.DEFAULT`, `IMAGE.CACHE.*` (`TTL_SECONDS`, `CONTROL`), `IMAGE.FORMAT.*` (`CONTENT_TYPE`, `EXTENSION`), `IMAGE.LIMIT.*` (`FILE_BYTES`, `UPLOAD` with `BYTES`, `BODY_BYTES` and `TIMEOUT_MS`, `INPUT` with `MEGAPIXELS` and `PIXELS`, files per upload, batch, list page, stored dimension), `IMAGE.ERROR_CODE` (the module's own codes, `IMAGE_TOO_LARGE` and `UNSUPPORTED_IMAGE`; the standard ones it throws are core's `ERROR.CODE`), `IMAGE.DOC.<VERB>` (`DESCRIPTION`, `RESPONSE` keyed by status, `SUMMARY`), `IMAGE.EXPORT.*` (`CONTENT_TYPE`, `EXTENSION`, `ID_CHARS`, `QUALITY`, `RATE_LIMIT.DEFAULT`, `DOC`), `IMAGE.OPENAPI_TAG`, `IMAGE.VAR` |
 | `./features/image/prepare/prepare-image` | `prepareImage(buffer)`: upright, metadata-free AVIF (quality 64) capped at 2560px plus a 16px WebP blur data URL; HEIC (iPhone, Mac) decodes through `heic-decode`; `UnsupportedImageError` for anything but JPEG, PNG, WebP, AVIF or HEIC |
 | `./features/image/objects/utils/delete-leftovers` | `deleteLeftovers({ keys, log, reason, remove, retry? })`: deletes files no row names any more, logging a failure instead of throwing; `LeftoverLog` |
-| `./features/image/objects/utils/image-objects` | `putImageObject(key, body, bucket?)`, `deleteImageObjects(keys)`, `copyImageObject(from, to)`, `imageBucketTotals()` (objects and bytes of the whole bucket, Avatars included; pages through the listing) in the `image` bucket |
-| `./features/image/hono/routes` | `imageRoutes(deps)`, the Image module |
-| `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host |
+| `./features/image/objects/utils/image-objects` | `putImageObject(key, body, bucket?)`, `readImageObject(key, bucket?)` (a stored file's bytes), `deleteImageObjects(keys)`, `copyImageObject(from, to)`, `imageBucketTotals()` (objects and bytes of the whole bucket, Avatars included; pages through the listing) in the `image` bucket |
+| `./features/image/hono/routes` | `imageRoutes(deps)`, the Image module; its `GET /:id/export` makes an Export (ADR 0036): a signed-in User's visible Image as a metadata-free JPEG, `attachment`, `private, no-store` |
+| `./features/image/utils/export-name` | `exportName({ createdAt, id })`: `<created UTC date>-<first 8 id characters>.jpg`, what an Export is called (the API's header and the browser's `File` share it) |
+| `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host, `limitExport` (the Export route's limiter) among it |
 | `./features/next/utils/with-image-uploads` | `withImageUploads(config)`: an App's Next config able to take a whole Images upload (Server Action body limit and proxy buffer both `IMAGE.LIMIT.UPLOAD.BODY_BYTES`); every other setting stays. The Back Office and Laura wrap theirs in it, and their ingress must let a body that size through (`deployment.md`) |
 | `./features/image/hono/utils/upload` | `isImageUpload(method, path, basePath)`, so a host skips its own body limit and timeout for the upload |
 | `./features/image/hono/tests/stub-image-deps` | `stubImageDeps`, `imageRecord` for host tests; `imageHost(session, images?)`, the module on auth's `moduleTestHost` |
@@ -101,6 +102,7 @@ the setup Production runs. After changing a source file, run
 | `STORAGE_ACCESS_KEY` | ✅ | Access key ID |
 | `STORAGE_SECRET_KEY` | ✅ | Secret access key |
 | `STORAGE_BUCKET` | | The Images' bucket, `image` by default; a test run sets its own |
+| `STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX`, `_MAX`, `_WINDOW_MS` | | The Export route's own limit per client as the host counts one (the API: a signed-in User), `export:`, 30 and one minute by default |
 
 Locally, `image:setup` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
 

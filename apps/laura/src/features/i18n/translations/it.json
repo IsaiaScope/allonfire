@@ -15,13 +15,13 @@
       "title": "Ancora nessuna foto"
     },
     "error": {
-      "description": "Qualcosa è andato storto lungo la strada. Riprova tra un momento.",
+      "description": "Qualcosa è andato storto lungo la strada.",
       "retry": "Riprova",
       "title": "Le foto non si sono caricate"
     },
     "favorite": {
       "add": "Aggiungi ai preferiti",
-      "failed": "Non è stato possibile salvare il preferito. Riprova.",
+      "failed": "Non è stato possibile salvare il preferito.",
       "is": "Un preferito",
       "remove": "Togli dai preferiti",
       "toggle": "Preferito"
@@ -39,10 +39,15 @@
     },
     "preview": {
       "close": "Chiudi la foto",
+      "download": "Scarica l'immagine",
+      "downloadFailed": "Non è stato possibile scaricare l'immagine.",
       "gone": "Quella foto non c'è più.",
       "next": "Foto successiva",
       "position": "Foto {index} di {total}",
       "previous": "Foto precedente",
+      "share": "Condividi l'immagine",
+      "shareReady": "Immagine pronta. Tocca di nuovo Condividi.",
+      "shareFailed": "Non è stato possibile condividere l'immagine.",
       "title": "Visualizzatore di foto"
     },
     "remove": {
@@ -50,14 +55,14 @@
       "cancel": "Tieni la foto",
       "confirm": "Rimuovi la foto",
       "description": "La foto sparisce da Laura per tutti ed è eliminata se nessun'altra App la conserva.",
-      "failed": "Non è stato possibile rimuovere la foto. Riprova.",
+      "failed": "Non è stato possibile rimuovere la foto.",
       "title": "Rimuovere questa foto da Laura?"
     }
   },
   "Games": {
     "announceComplete": "Tutte le coppie trovate in {moves} mosse, in {time}.",
     "announceMatch": "Una coppia: {alt}.",
-    "announceMiss": "Non è una coppia. Riprova.",
+    "announceMiss": "Non è una coppia.",
     "anonymous": "Qualcuno",
     "averageTime": "Tempo medio",
     "bestGame": "Miglior partita: {time}, {moves} mosse",
@@ -68,7 +73,7 @@
     "close": "Chiudi",
     "date": "Giocata",
     "deckFailed": "Le carte non si sono caricate",
-    "deckFailedBody": "Qualcosa è andato storto. Riprova tra un momento.",
+    "deckFailedBody": "Qualcosa è andato storto.",
     "forbidden": "Memory non è aperto per te.",
     "gameComplete": "Hai trovato tutte le coppie",
     "gamesPlayed": "Partite giocate",

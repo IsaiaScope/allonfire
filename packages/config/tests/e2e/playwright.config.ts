@@ -155,6 +155,10 @@ export const aofPlaywrightConfig = ({
           // The fake provider's throwaway certificate.
           NODE_EXTRA_CA_CERTS: E2E.MAIL_SINK.CERT,
           PORT: String(LOCAL.PORT.API_E2E),
+          // Fresh Export counters each run, and room for every project's
+          // downloads from one address; the limit has its own tests.
+          STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX: `export:e2e:${STAMP}:`,
+          STORAGE_EXPORT_RATE_LIMIT_MAX: String(E2E_RATE_LIMIT_MAX),
           ...E2E_STORAGE_ENV,
         },
         timeout: START_TIMEOUT_MS,

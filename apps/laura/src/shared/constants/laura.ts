@@ -5,12 +5,13 @@ import { BRAND } from "@allonfire/design/brand/aof-monogram";
 import { OCEAN_IMAGE_COLOR } from "@allonfire/design/designs/ocean/image-colors";
 import type { AppDescriptor } from "@allonfire/ui/features/navigation/types/app-descriptor";
 import { SECTION } from "@/features/navigation/constants/sections";
+import pkg from "../../../package.json" with { type: "json" };
 import { LAURA_BASE } from "./laura-base";
 
 /**
  * What Laura says about itself: the descriptor the shared frame, switcher and
  * head read (`app`, `name`, `sections`, `entries`, `logo`, `line`,
- * `shareImageAlt`), and its own extras (`CHOSEN`, `PAGE`).
+ * `shareImageAlt`, `version`), and its own extras (`CHOSEN`, `PAGE`).
  */
 export const LAURA = {
   app: App.LAURA,
@@ -29,4 +30,6 @@ export const LAURA = {
   sections: SECTION.LIST,
   /** The link-preview image's alt, the same in every language: two names. */
   shareImageAlt: `${LAURA_LOGO.name}, ${BRAND.NAME}`,
+  /** Laura's own release, from its own `package.json`: a Release moves it. */
+  version: pkg.version,
 } as const satisfies AppDescriptor & Record<string, unknown>;
