@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { VITEST, vitestConfig } from "@allonfire/config/tests/vitest";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
@@ -24,7 +25,13 @@ export const vitestBrowserConfig = defineConfig({
       screenshotFailures: false,
     },
     exclude: exclude.filter((pattern) => pattern !== VITEST.BROWSER_FILES),
+    expect: { poll: { timeout: VITEST.BROWSER_WAIT_MS } },
     include: [`src/${VITEST.BROWSER_FILES}`],
     maxWorkers: VITEST.BROWSER_MAX_WORKERS,
+    // Before the package's own setup file: mergeConfig concatenates.
+    setupFiles: [
+      ...[nodeTest.setupFiles ?? []].flat(),
+      fileURLToPath(new URL("./vitest.browser.setup.ts", import.meta.url)),
+    ],
   },
 });

@@ -63,4 +63,11 @@ describe("aofAppBrowserVitest", () => {
     expect(config.test?.maxWorkers).toBe(VITEST.BROWSER_MAX_WORKERS);
     expect(VITEST.BROWSER_MAX_WORKERS).toBe(3);
   });
+
+  // A busy CI runner draws a table seconds after the render: Vitest's own
+  // one second failed there while the same page was only late.
+  it("waits ten seconds for the page to answer before a wait fails", () => {
+    expect(config.test?.expect?.poll?.timeout).toBe(VITEST.BROWSER_WAIT_MS);
+    expect(VITEST.BROWSER_WAIT_MS).toBe(10_000);
+  });
 });

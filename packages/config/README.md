@@ -30,7 +30,8 @@ config/
       app-vitest.ts        `aofAppVitest(srcDir)` and `aofAppBrowserVitest(...)`: a Next App's whole Vitest and browser configs over the presets (the `@/` alias, JSX, next-intl), so an App's config files are a few lines
       environment-suite.ts `environmentSuite({ authApp, authPath, examplePath, importEnv })`: the cases every Next App's env module passes, so an App's `environment.test.ts` is one call
     browser/
-      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit, each at most `VITEST.BROWSER_MAX_WORKERS` files at once: both Apps' and ui's
+      vitest.browser.config.ts   Browser tests (`*.browser.test.tsx`) in headless Chromium and WebKit, each at most `VITEST.BROWSER_MAX_WORKERS` files at once, each wait up to `VITEST.BROWSER_WAIT_MS`: both Apps' and ui's
+      vitest.browser.setup.ts  The preset's setup file: `vi.waitFor` waits as long as `expect.poll` (`VITEST.BROWSER_WAIT_MS`)
       msw.ts               One MSW worker: `startMsw(...handlers)` in the App's setup, `worker.use(...)` in a test; an unanswered request fails the test
       asset-url.d.ts       Types Vite's `?url` import (a file's address, for a test to fetch); a package with browser tests lists `@allonfire/config/tests/browser/asset-url` in its tsconfig `types`
     e2e/

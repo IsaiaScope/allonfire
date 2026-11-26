@@ -59,7 +59,10 @@ browser runs at most `VITEST.BROWSER_MAX_WORKERS` test files at once, and
 minus one, per browser) and the packages side by side, a many-core Mac timed
 tests out. A test that times out only in a full run points at load, so check what
 else is running (`pnpm dev` also runs the test watcher) before raising a
-time limit. An
+time limit. `expect.element`, `expect.poll` and `vi.waitFor` all wait up to
+`VITEST.BROWSER_WAIT_MS`, set by the preset (Vitest's own one second passes
+on a CI runner while the page is only late), so a test gives no `timeout` of
+its own unless the time is what it checks. An
 App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
 Design's `theme.css` (`src/shared/tests/browser.css`), never an App's. A
 look a visitor sees (a corner, a height, padding, an overflow axis, a

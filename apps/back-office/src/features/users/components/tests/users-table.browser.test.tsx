@@ -282,9 +282,7 @@ describe("UsersTable controls", () => {
     });
     await screen.getByRole("searchbox", { name: t.search.label }).fill(TEXT);
     await expect
-      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH), {
-        timeout: WAIT_MS,
-      })
+      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
     expect(lastQuery(onUrlUpdate).get(USER.PARAM.PAGE)).toBeNull();
     await expect.poll(() => sent.at(-1)?.get(USER.PARAM.SEARCH)).toBe(WORDS);
@@ -298,9 +296,7 @@ describe("UsersTable controls", () => {
     const halfTyped = `${TEXT} app:lau`;
     await box.fill(halfTyped);
     await expect
-      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH), {
-        timeout: WAIT_MS,
-      })
+      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(WORDS);
     await new Promise((settle) =>
       setTimeout(settle, USERS.LIMIT.TYPING_REST_MS)
@@ -314,9 +310,7 @@ describe("UsersTable controls", () => {
     const box = screen.getByRole("searchbox", { name: t.search.label });
     await box.fill(IN_LAURA);
     await expect
-      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH), {
-        timeout: WAIT_MS,
-      })
+      .poll(() => lastQuery(onUrlUpdate).get(USER.PARAM.SEARCH))
       .toBe(IN_LAURA);
     await expect.element(box).toHaveValue(TEXT);
     expect(onUrlUpdate.mock.lastCall?.[0].options.history).toBe(
@@ -566,9 +560,7 @@ describe("UsersTable states", () => {
         : HttpResponse.json(USERS_PAGE)
     );
     const screen = await renderAt();
-    await expect
-      .element(screen.getByText(t.error.title), { timeout: WAIT_MS })
-      .toBeVisible();
+    await expect.element(screen.getByText(t.error.title)).toBeVisible();
     await screen.getByRole("button", { name: t.error.retry }).click();
     const [laura] = USERS_PAGE.users;
     await expect

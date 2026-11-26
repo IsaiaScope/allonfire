@@ -12,6 +12,13 @@ export const VITEST = {
    * limit; 3 is that default on a 4-core machine.
    */
   BROWSER_MAX_WORKERS: 3,
+  /**
+   * How long a browser test waits for the page. Vitest's own default is one
+   * second: on a 4-core CI runner a table has taken over 3 seconds to appear.
+   * A passing wait ends as soon as the page answers; only a failing one lasts
+   * this long.
+   */
+  BROWSER_WAIT_MS: 10_000,
 } as const;
 
 /**
