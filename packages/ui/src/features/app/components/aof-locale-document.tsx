@@ -6,6 +6,7 @@ import { ENV } from "@allonfire/core/shared/constants/env";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
 import { AOFQueryProvider } from "../../query/components/aof-query-provider";
+import { AOFThemeColor } from "../../theme/components/aof-theme-color";
 
 /**
  * Every App's `[locale]` document: the language, the providers every page
@@ -39,6 +40,7 @@ export const AOFLocaleDocument = ({
       <NextIntlClientProvider>
         <AOFQueryProvider>
           <AOFThemeProvider>
+            <AOFThemeColor />
             <AOFNuqsAdapter>
               {toaster}
               <AOFPwa banner={banner} enabled={pwaEnabled} hint={hint}>

@@ -1,3 +1,8 @@
+import {
+  type ColorScheme,
+  METADATA,
+} from "@allonfire/core/features/metadata/constants/metadata";
+import { colorSchemeMedia } from "@allonfire/core/features/metadata/utils/color-scheme-media";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { cdp, page, server } from "vitest/browser";
 
@@ -5,6 +10,8 @@ import { cdp, page, server } from "vitest/browser";
 const EMULATED = {
   /** A visitor who asked for less motion (`motion-reduce:`). */
   MOTION: "prefers-reduced-motion",
+  /** The device's light or dark theme. */
+  SCHEME: "prefers-color-scheme",
   /** A touch screen's fingers: its pointer is coarse (`pointer-coarse:`). */
   TOUCH_POINTS: 5,
 } as const;
@@ -40,6 +47,33 @@ export const withReducedMotion = <T>(test: () => Promise<T>) =>
   emulating(
     () => reducedMotion("reduce"),
     () => reducedMotion(""),
+    test
+  );
+
+/**
+ * Gives the device the theme `value` ("" is the browser's own, light) and
+ * waits until the page has told its listeners: one added before this call
+ * has run by then. `value` must change the theme, or no one is told.
+ */
+const deviceScheme = async (value: "" | ColorScheme) => {
+  const told = new Promise((resolve) => {
+    matchMedia(colorSchemeMedia(METADATA.COLOR_SCHEME.DARK)).addEventListener(
+      "change",
+      resolve,
+      { once: true }
+    );
+  });
+  await cdp().send("Emulation.setEmulatedMedia", {
+    features: [{ name: EMULATED.SCHEME, value }],
+  });
+  await told;
+};
+
+/** Runs `test` while the device, light until then, is switched to dark. */
+export const withDarkDevice = <T>(test: () => Promise<T>) =>
+  emulating(
+    () => deviceScheme(METADATA.COLOR_SCHEME.DARK),
+    () => deviceScheme(""),
     test
   );
 
