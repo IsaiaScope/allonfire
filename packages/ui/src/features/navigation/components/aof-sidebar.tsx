@@ -33,6 +33,7 @@ import {
 } from "../../../shared/components/aof-button";
 import { AOFDropdownMenuContent } from "../../../shared/components/aof-dropdown-menu";
 import { cn } from "../../../shared/utils/utils";
+import { NAVIGATION } from "../constants/navigation";
 import {
   type AOFSidebarCollapsedBy,
   CollapsedOnArrival,
@@ -169,16 +170,24 @@ export const AOFSidebarMenuButton = ({
  * the way a click moves the sidebar. shadcn's
  * `SidebarTrigger` with the frame's own icon, which shadcn's hard-codes
  * beside an English "Toggle Sidebar"; the App names it in its language.
+ * shadcn learns it is on a phone only once the page has loaded: a tap before
+ * that opens the drawer here, or it would fold the desktop menu, unseen, and
+ * open nothing.
  */
 export const AOFSidebarTrigger = ({
   className,
   onClick,
   ...props
 }: AOFButtonProps & { "aria-label": string }) => {
-  const { isMobile, open, openMobile, toggleSidebar } = useSidebar();
+  const { isMobile, open, openMobile, setOpenMobile, toggleSidebar } =
+    useSidebar();
   const expanded = isMobile ? openMobile : open;
   const toggle: AOFButtonProps["onClick"] = (event) => {
     onClick?.(event);
+    if (!isMobile && window.matchMedia(NAVIGATION.MEDIA.PHONE).matches) {
+      setOpenMobile(true);
+      return;
+    }
     toggleSidebar();
   };
   return (
