@@ -4,6 +4,7 @@ import {
   type ColorScheme,
   METADATA,
 } from "../../../metadata/constants/metadata";
+import { colorSchemeMedia } from "../../../metadata/utils/color-scheme-media";
 
 type Options = {
   /** The App's ground in each scheme (its Design's image colours). */
@@ -25,7 +26,7 @@ export const AOFBaseViewport = ({ schemeColors }: Options) =>
     colorScheme: METADATA.PAGE_COLOR_SCHEME,
     themeColor: objectValues(METADATA.COLOR_SCHEME).map((scheme) => ({
       color: schemeColors[scheme].background,
-      media: `(prefers-color-scheme: ${scheme})`,
+      media: colorSchemeMedia(scheme),
     })),
     viewportFit: "cover",
   }) satisfies Viewport;

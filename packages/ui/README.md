@@ -53,7 +53,7 @@ src/
     navigation/   frame, sidebar, app switcher, account menu, breadcrumb
     pwa/          install hint and offline banner
     query/        query provider and views
-    theme/        theme toggle
+    theme/        theme toggle and the theme colour of the theme on screen
   shared/         button, card, dialog and other primitives, hooks, test helpers
   styles/         base.css
 ```
