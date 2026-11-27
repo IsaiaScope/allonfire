@@ -11,6 +11,7 @@ import {
   addressOf,
   CELLS,
   FIRST_DAY,
+  firstWrite,
   LAST_DAY,
   listAsked,
   listControls,
@@ -208,6 +209,7 @@ describe.each(CASES)("$name list: Filter panel", (one) => {
     await userEvent.click(
       panel().getByRole("button", { name: enT("List.view.showAll") })
     );
+    await firstWrite(onUrlUpdate);
     await expect
       .poll(() => addressOf(onUrlUpdate).has(params.HIDE))
       .toBe(false);
@@ -224,6 +226,7 @@ describe.each(CASES)("$name list: Filter panel", (one) => {
         name: enT("List.clear.filters"),
       })
     );
+    await firstWrite(onUrlUpdate);
     await expect
       .poll(() => addressOf(onUrlUpdate).has(params.SEARCH))
       .toBe(false);
@@ -250,6 +253,7 @@ describe.each(CASES)("$name list: Filter panel", (one) => {
     await userEvent.click(
       panel().getByRole("button", { name: one.resetAll }).first()
     );
+    await firstWrite(onUrlUpdate);
     await expect
       .poll(() => addressOf(onUrlUpdate).has(params.SORT))
       .toBe(false);

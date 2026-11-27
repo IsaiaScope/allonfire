@@ -33,6 +33,17 @@ export const setUpDesktopToday = () => {
 export const addressOf = (onUrlUpdate: UrlUpdate) =>
   onUrlUpdate.mock.lastCall?.[0].searchParams ?? NOT_WRITTEN;
 
+/**
+ * Waits for the address's first write. Until then it reads empty, so a check
+ * that a param is gone passes before anything has happened.
+ */
+export const firstWrite = (onUrlUpdate: UrlUpdate) =>
+  vi.waitFor(() => {
+    if (onUrlUpdate.mock.calls.length === 0) {
+      throw new Error("the address has not been written yet");
+    }
+  });
+
 /** Every query the list at `url` receives, as its search params, while the API answers `answer`. */
 export const listAsked = (url: string, answer: object) => {
   const asked: URLSearchParams[] = [];
