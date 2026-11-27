@@ -69,7 +69,7 @@ look a visitor sees (a corner, a height, padding, an overflow axis, a
 transition) is asserted from `getComputedStyle` against the token it should
 wear, through ui's `@allonfire/ui/shared/tests/computed-style`
 (`computedValue`, `colorAlpha`, `seconds`, `roundestCorner`) and
-`emulated-media` (`withReducedMotion`, `withCoarsePointer`; Chromium only,
+`emulated-media` (`withReducedMotion`, `withCoarsePointer`, `withDarkDevice`; Chromium only,
 `CAN_EMULATE_MEDIA`, as are the notch tests through
 `Emulation.setSafeAreaInsetsOverride`); a value that animates is read with
 `expect.poll`. An App's browser tests have MSW answering the API: the worker and its

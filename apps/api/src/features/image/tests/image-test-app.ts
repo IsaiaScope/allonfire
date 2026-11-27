@@ -105,12 +105,13 @@ export async function uploaded(res: Response) {
 export async function listKeys(
   app: TestApp,
   cookie = "",
-  options: { app?: App; perPage?: number } = {},
+  options: { app?: App; perPage?: number; sort?: string } = {},
   page = 1
 ): Promise<string[]> {
   const query = new URLSearchParams({
     ...(options.app && { app: options.app }),
     ...(options.perPage && { perPage: String(options.perPage) }),
+    ...(options.sort && { sort: options.sort }),
     page: String(page),
   });
   const res = await app.request(`${API.PATH.IMAGES}?${query}`, {
