@@ -1,7 +1,9 @@
 // @module-tag integration
 
+import { UNIT } from "@allonfire/core/shared/constants/units";
+
 /** Past Vitest's own one second: a page a busy CI runner draws late. */
-const LATE_MS = 1500;
+const LATE_MS = 1.5 * UNIT.MS_PER_SECOND;
 
 /** A page that is ready `LATE_MS` from now. */
 const latePage = () => {

@@ -4,7 +4,7 @@ import { renderInUi } from "./render-in-ui";
 /** As wide as the form's page beside the sidebar, where the fields pair up. */
 const WIDE_PX = 900;
 /** As narrow as a phone's page, where they stack. */
-const NARROW_PX = 360;
+export const NARROW_PX = 360;
 /** Between the two: one column, but more room than a phone (a tablet; a narrow window). */
 const MID_PX = 520;
 

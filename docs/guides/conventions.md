@@ -108,6 +108,15 @@ server packages (auth, storage) are not covered, they run on Node.
   and hand it to config's `aofPlaywrightConfig` (`apiPath`), since config, a leaf package,
   imports nothing.
 
+- **A duration or a size is written through `UNIT`**
+  (`@allonfire/core/shared/constants/units`): `10 * UNIT.MS_PER_SECOND`,
+  `5 * UNIT.MS_PER_MINUTE`, `2 * UNIT.BYTES_PER_MIB`, never `10_000`,
+  `300_000` or `1024 * 1024`, in tests and tool configs too; a wait under a
+  second stays a number (`{ timeout: 50 }`). The one exception is
+  `packages/config`: it imports no package (core depends on it, and Turbo
+  refuses the cycle), so a number there says its unit in its name
+  (`PAGE_MS`).
+
 - **The shape of an owner's object** (one rule each, the API's constants are the model):
   - **A lookup is a keyed record**, `as const satisfies Record<K, V>`, never a tuple array of pairs (`API.ERROR.STATUS_OF_CODE`: the status of each code, read by key).
   - **Sibling keys with a shared prefix nest.** `ADD_KANJI` and `EDIT_KANJI` are `KANJI.ADD` and `KANJI.EDIT`, `EDIT_ERROR` is `EDIT.ERROR`, `GET_SUMMARY` is `GET.SUMMARY` (`API.LIMIT`, `LAURA.GALLERY`, a route's `DOC.<VERB>.{DESCRIPTION,SUMMARY,RESPONSE}`).

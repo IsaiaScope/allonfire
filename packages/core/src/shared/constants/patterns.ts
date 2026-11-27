@@ -37,6 +37,11 @@ export const PATTERN = {
     /** A top-level key of `pnpm-workspace.yaml`, which ends the list before it. */
     WORKSPACE_KEY: /^([A-Za-z][\w-]*):/,
   },
+  /** One letter of a script that needs its own handling. */
+  SCRIPT: {
+    /** Written without capitals: uppercasing a letter switches alphabet. */
+    GEORGIAN: /\p{Script=Georgian}/u,
+  },
   /** The telemetry env's keys (`TELEMETRY_*`). */
   TELEMETRY: {
     /** `key=value,key=value`, each value percent-encoded, per the OTel spec. */

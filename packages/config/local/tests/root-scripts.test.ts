@@ -136,7 +136,7 @@ describe("the root scripts", () => {
   });
 
   // Side by side, the Apps' and ui's browsers crowd each other out and tests
-  // pass their time limit, even at `VITEST.BROWSER_MAX_WORKERS` files each.
+  // pass their time limit, even at `VITEST.BROWSER.LIMIT.MAX_WORKERS` files each.
   it("runs the browser tests one package at a time", () => {
     expect(SCRIPTS.get("e2e:browser")).toBe(
       "turbo run test:browser --concurrency=1"

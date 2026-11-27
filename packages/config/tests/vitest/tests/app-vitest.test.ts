@@ -60,14 +60,16 @@ describe("aofAppBrowserVitest", () => {
   // Unset, Vitest opens cores minus one tabs per browser: on a 10-core Mac the
   // two browsers' tabs crowd each other out and tests pass their time limit.
   it("limits how many tabs each browser runs at once", () => {
-    expect(config.test?.maxWorkers).toBe(VITEST.BROWSER_MAX_WORKERS);
-    expect(VITEST.BROWSER_MAX_WORKERS).toBe(3);
+    expect(config.test?.maxWorkers).toBe(VITEST.BROWSER.LIMIT.MAX_WORKERS);
+    expect(VITEST.BROWSER.LIMIT.MAX_WORKERS).toBe(3);
   });
 
   // A busy CI runner draws a table seconds after the render: Vitest's own
   // one second failed there while the same page was only late.
   it("waits ten seconds for the page to answer before a wait fails", () => {
-    expect(config.test?.expect?.poll?.timeout).toBe(VITEST.BROWSER_WAIT_MS);
-    expect(VITEST.BROWSER_WAIT_MS).toBe(10_000);
+    expect(config.test?.expect?.poll?.timeout).toBe(
+      VITEST.BROWSER.TIMEOUT.PAGE_MS
+    );
+    expect(VITEST.BROWSER.TIMEOUT.PAGE_MS).toBe(10_000);
   });
 });

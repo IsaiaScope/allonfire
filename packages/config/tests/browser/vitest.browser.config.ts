@@ -24,10 +24,10 @@ export const vitestBrowserConfig = defineConfig({
       provider: playwright(),
       screenshotFailures: false,
     },
-    exclude: exclude.filter((pattern) => pattern !== VITEST.BROWSER_FILES),
-    expect: { poll: { timeout: VITEST.BROWSER_WAIT_MS } },
-    include: [`src/${VITEST.BROWSER_FILES}`],
-    maxWorkers: VITEST.BROWSER_MAX_WORKERS,
+    exclude: exclude.filter((pattern) => pattern !== VITEST.BROWSER.FILES),
+    expect: { poll: { timeout: VITEST.BROWSER.TIMEOUT.PAGE_MS } },
+    include: [`src/${VITEST.BROWSER.FILES}`],
+    maxWorkers: VITEST.BROWSER.LIMIT.MAX_WORKERS,
     // Before the package's own setup file: mergeConfig concatenates.
     setupFiles: [
       ...[nodeTest.setupFiles ?? []].flat(),

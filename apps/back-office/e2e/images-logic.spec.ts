@@ -350,11 +350,17 @@ test.describe("Edit: another Admin got there first", () => {
     );
     await expect(page).not.toHaveURL(BACK_OFFICE.PAGE.STORAGE_IMAGES);
 
-    // A reload reads what the other Admin saved.
+    // A reload reads what the other Admin saved. React reports a server page
+    // the browser draws differently as a page error, and draws it again.
+    const pageErrors: Error[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error));
     await page.reload();
+    // Hydrated before the next click: one made earlier is lost.
+    await page.waitForLoadState("networkidle");
     await expect(altField(editForm(page), "English")).toHaveValue(
       `${alt} by other`
     );
+    expect(pageErrors).toEqual([]);
     await deleteOpened(page);
     await other.context.close();
   });

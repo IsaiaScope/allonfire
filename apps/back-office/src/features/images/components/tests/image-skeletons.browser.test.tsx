@@ -2,7 +2,7 @@
 
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App } from "@allonfire/database/enums";
-import { FORM_WIDTHS } from "@allonfire/ui/shared/tests/height-at";
+import { FORM_WIDTHS, NARROW_PX } from "@allonfire/ui/shared/tests/height-at";
 import { page } from "vitest/browser";
 import { heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
@@ -37,9 +37,6 @@ vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
   ),
 }));
 // jscpd:ignore-end
-
-/** A phone page's own width: the screen less the Section's gutters. */
-const PHONE_PAGE_PX = 360;
 
 /** Under one pixel nothing is seen to move: Safari on Linux rounds one line
  *  of the Edit form half a pixel off its bar. */
@@ -79,16 +76,16 @@ describe("AddImageSkeleton", () => {
       SCREEN.VIEWPORT.PHONE.WIDTH,
       SCREEN.VIEWPORT.PHONE.HEIGHT
     );
-    const real = await heightAt(PHONE_PAGE_PX, <AddImage apps={BOTH} />);
+    const real = await heightAt(NARROW_PX, <AddImage apps={BOTH} />);
     await expect
       .element(page.getByText(enT("Common.ImageUpload.pick.none")))
       .toBeVisible();
-    const skeleton = await heightAt(PHONE_PAGE_PX, <AddImageSkeleton />);
+    const skeleton = await heightAt(NARROW_PX, <AddImageSkeleton />);
     expect(movedPx(skeleton, real)).toBeLessThan(SEEN_PX);
   });
 
   it("draws the picker's placeholder as wide as the picker", async () => {
-    const real = await heightAt(PHONE_PAGE_PX, <AddImage apps={BOTH} />);
+    const real = await heightAt(NARROW_PX, <AddImage apps={BOTH} />);
     const picker = page
       .getByRole("button", {
         exact: true,
@@ -96,7 +93,7 @@ describe("AddImageSkeleton", () => {
       })
       .element()
       .getBoundingClientRect().width;
-    await heightAt(PHONE_PAGE_PX, <AddImageSkeleton />);
+    await heightAt(NARROW_PX, <AddImageSkeleton />);
     const placeholder = document
       .querySelector('[data-part="picker"]')
       ?.getBoundingClientRect().width;

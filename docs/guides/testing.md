@@ -54,13 +54,13 @@ checks them and nothing executes. Three layers: unit and integration tests run
 in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `integration`) render one client component in real Chromium and WebKit through
 `vitest.browser.config.ts`. Both Apps and `packages/ui` have them. Each
-browser runs at most `VITEST.BROWSER_MAX_WORKERS` test files at once, and
+browser runs at most `VITEST.BROWSER.LIMIT.MAX_WORKERS` test files at once, and
 `pnpm e2e:browser` runs one package at a time: with Vitest's default (cores
 minus one, per browser) and the packages side by side, a many-core Mac timed
 tests out. A test that times out only in a full run points at load, so check what
 else is running (`pnpm dev` also runs the test watcher) before raising a
 time limit. `expect.element`, `expect.poll` and `vi.waitFor` all wait up to
-`VITEST.BROWSER_WAIT_MS`, set by the preset (Vitest's own one second passes
+`VITEST.BROWSER.TIMEOUT.PAGE_MS`, set by the preset (Vitest's own one second passes
 on a CI runner while the page is only late), so a test gives no `timeout` of
 its own unless the time is what it checks. An
 App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
