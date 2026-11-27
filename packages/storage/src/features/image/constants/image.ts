@@ -29,6 +29,13 @@ const SEARCH = searchQuery(
   { ranges: ["created"] }
 );
 
+const EXPORT_RATE_LIMIT = {
+  /** Keeps the Export counters apart from the host's global ones in a shared store. */
+  KEY_PREFIX: "export:",
+  MAX: 30,
+  WINDOW_MS: UNIT.MS_PER_MINUTE,
+} as const;
+
 /** How an Images list's `sort` reads: `created.desc,size.asc` (ADR 0031); plain columns only. */
 const SORT = sortQuery(["created", "size", "access", "name"] as const);
 
@@ -153,6 +160,34 @@ export const IMAGE = {
     IMAGE_CHANGED: "IMAGE_CHANGED",
     IMAGE_TOO_LARGE: "IMAGE_TOO_LARGE",
     UNSUPPORTED_IMAGE: "UNSUPPORTED_IMAGE",
+  },
+  /**
+   * An Export (ADR 0036): the metadata-free JPEG made from an Image on
+   * request, never stored and never a link.
+   */
+  EXPORT: {
+    /** What a see-through picture is laid on: JPEG has no transparency. */
+    BACKGROUND: "#ffffff",
+    CONTENT_TYPE: "image/jpeg",
+    /** What the docs say about the Export route; the limit in the text is the default (env sets the enforced one). */
+    DOC: {
+      DESCRIPTION: `Signed in, even for a public Image: a visitor cannot make the server decode a picture. The Image must be visible to the User; any other answers 404, not 403, so its id stays hidden. The answer is a JPEG made on request, with no location or camera data, sent as an \`attachment\` named by the Image's UTC creation date and the start of its id; it is never stored and never a link. By default at most ${EXPORT_RATE_LIMIT.MAX} requests a minute per signed-in User.`,
+      RESPONSE: { [HTTP.STATUS.OK]: "The picture as a JPEG file" },
+      SUMMARY: "Export an Image as a JPEG",
+    },
+    EXTENSION: "jpg",
+    /** How many characters of an Image's id its Export's name keeps. */
+    ID_CHARS: 8,
+    /** Named so the look is a decision: JPEG 90 is near-lossless for photos. */
+    QUALITY: 90,
+    /**
+     * A decode costs the server, so an Export has a bucket of its own, on top
+     * of the host's global one. The size and window are env
+     * (`STORAGE_EXPORT_RATE_LIMIT_*`); these are the defaults.
+     */
+    RATE_LIMIT: {
+      DEFAULT: EXPORT_RATE_LIMIT,
+    },
   },
   /**
    * How every Image is stored: AVIF, about half the size of WebP at the same

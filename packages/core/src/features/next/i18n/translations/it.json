@@ -7,7 +7,7 @@
     },
     "Error": {
       "title": "Qualcosa è andato storto",
-      "description": "Questa pagina si è fermata all'improvviso. Riprova tra un attimo.",
+      "description": "Questa pagina si è fermata all'improvviso.",
       "retry": "Riprova",
       "reference": "Riferimento {digest}"
     },
@@ -24,7 +24,7 @@
     },
     "Offline": {
       "title": "Nessuna connessione",
-      "description": "Questa pagina ha bisogno della rete. Controlla la connessione e riprova.",
+      "description": "Questa pagina ha bisogno della rete. Controlla la connessione.",
       "retry": "Riprova",
       "banner": {
         "title": "Nessuna connessione",
@@ -37,7 +37,7 @@
       "cta": "Installa {app}",
       "install": "Installa",
       "installing": "Installazione",
-      "error": "Non installata. Riprova.",
+      "error": "Non installata.",
       "step": {
         "ios-share": "Tocca Condividi (o ···, poi Condividi)",
         "ios-add": "Scegli Aggiungi alla schermata Home, poi Aggiungi",
@@ -73,8 +73,8 @@
           "forbidden": "Questo account non ha accesso a {app}.",
           "invalid": "Email o password errate.",
           "missing": "Inserisci email e password.",
-          "rateLimited": "Troppi tentativi. Riprova tra qualche minuto.",
-          "unavailable": "L’accesso non è disponibile ora. Riprova tra poco."
+          "rateLimited": "Troppi tentativi.",
+          "unavailable": "L’accesso non è disponibile ora."
         },
         "field": {
           "emailInvalid": "Inserisci un indirizzo email valido.",
@@ -95,8 +95,8 @@
         "email": "Email",
         "error": {
           "invalid": "Inserisci un indirizzo email valido.",
-          "rateLimited": "Troppe richieste. Riprova più tardi.",
-          "unavailable": "L'invio dei link non è disponibile ora. Riprova più tardi."
+          "rateLimited": "Troppe richieste.",
+          "unavailable": "L'invio dei link non è disponibile ora."
         },
         "field": {
           "emailInvalid": "Inserisci un indirizzo email valido.",
@@ -116,8 +116,8 @@
         "error": {
           "invalid": "Le password devono coincidere e rispettare ogni regola.",
           "invalidToken": "Questo link non funziona più. Chiedine uno nuovo.",
-          "rateLimited": "Troppi tentativi. Riprova più tardi.",
-          "unavailable": "Salvataggio non disponibile ora. Riprova più tardi."
+          "rateLimited": "Troppi tentativi.",
+          "unavailable": "Salvataggio non disponibile ora."
         },
         "expiredIntro": "Chiedi un nuovo link e te lo invieremo via email, così potrai scegliere una nuova password.",
         "field": {
@@ -177,8 +177,8 @@
         "wrongType": "Questo file non è un'immagine supportata"
       },
       "error": {
-        "failed": "Impossibile aggiungere le immagini. Riprova.",
-        "invalid": "Controlla i campi e riprova.",
+        "failed": "Impossibile aggiungere le immagini.",
+        "invalid": "Controlla i campi.",
         "refused": "Non puoi più modificare le immagini. Accedi di nuovo.",
         "tooLarge": "Un'immagine o l'intero invio è troppo grande.",
         "unsupported": "Un file non è un'immagine supportata."

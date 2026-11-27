@@ -60,7 +60,10 @@ export type MailDriverImpl = {
   ) => Promise<MailUsage | null>;
 };
 
-/** Where the providers live. */
+/**
+ * Where the providers live. Core reaches no database: the host implements this
+ * and hands it to `sendMail`.
+ */
 export type MailStore = {
   /**
    * The enabled providers of the enabled Service, in slot order; with `only`,

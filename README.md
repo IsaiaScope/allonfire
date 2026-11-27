@@ -18,11 +18,33 @@
 
 ## 🔥 About
 
-AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infrastructure managed through pnpm workspaces. It provides a unified development experience with shared TypeScript config, UI components, database services, and CI/CD pipelines across all projects.
+A pnpm and Turborepo monorepo for private web apps and the API behind them. What apps share, such as sign-in, database, image storage and UI, lives in packages.
+
+---
 
 ## 📱 Apps
 
-<!-- Add a screenshot for each app as it's built -->
+<p align="center">
+  <img src="docs/assets/allonfire-back-office-horizontal.svg" width="200" alt="AllOnFire Back Office" />
+</p>
+
+<h3 align="center">Back Office</h3>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
+  <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/next--intl-i18n-007ACC?logoColor=white" alt="next-intl" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white" alt="TanStack Query" />
+</p>
+
+<p align="center">
+  Where the Admins change who can do what across the Apps: Users, Images and the mail Services, wearing the Japan Design.
+</p>
+
+<p align="center">
+  📖 <a href="docs/guides/back-office.md">See the guide</a>
+</p>
 
 <p align="center">
   <img src="docs/assets/allonfire-laura-horizontal.svg" width="200" alt="AllOnFire Laura" />
@@ -34,8 +56,8 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/BetterAuth-1.2-8B5CF6?logoColor=white" alt="BetterAuth" />
   <img src="https://img.shields.io/badge/next--intl-i18n-007ACC?logoColor=white" alt="next-intl" />
+  <img src="https://img.shields.io/badge/TanStack_Query-5-FF4154?logo=reactquery&logoColor=white" alt="TanStack Query" />
 </p>
 
 <p align="center">
@@ -50,14 +72,14 @@ AllOnFire is a Turborepo-powered monorepo with shared packages, apps, and infras
 
 ## 📦 Packages
 
-Shared libraries consumed by all apps in the monorepo.
-
 | | Package | Description |
 |-|---------|-------------|
-| 🗄️ | **[@allonfire/database](packages/database/)** | Prisma ORM, PostgreSQL services, encrypted token storage |
-| 🔐 | **[@allonfire/auth](packages/auth/)** | Shared BetterAuth config, session guards, login UI |
-| 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp + blurhash) |
-| 🎨 | **[@allonfire/ui](packages/ui/)** | Shared UI components (shadcn/ui + Radix + Tailwind) |
+| 🗄️ | **[@allonfire/database](packages/database/)** | Prisma client, PostgreSQL services and the Liquibase changelog |
+| 🔐 | **[@allonfire/auth](packages/auth/)** | Better Auth config, Roles and access, the API's guards and the Apps' Session helpers |
+| 📁 | **[@allonfire/storage](packages/storage/)** | S3/MinIO file uploads, image processing (Sharp, AVIF with a blur placeholder) |
+| 🎨 | **[@allonfire/ui](packages/ui/)** | The AOF components the Apps share (shadcn/ui on Base UI, Tailwind) |
+| 🖌️ | **[@allonfire/design](packages/design/)** | The Designs (fonts, theme CSS, rules) and the Brand |
+| 🧩 | **[@allonfire/shadcn](packages/shadcn/)** | The components the shadcn CLI generates, written by it alone |
 | 🔧 | **[@allonfire/core](packages/core/)** | Shared constants, helpers and the Next scaffolding |
 | ⚙️ | **[@allonfire/config](packages/config/)** | Shared TypeScript configuration |
 
@@ -70,29 +92,27 @@ Shared libraries consumed by all apps in the monorepo.
   <img src="https://img.shields.io/badge/Husky-hooks-000?logo=git&logoColor=white" alt="Husky" />
 </p>
 
-Apps, shared packages, infrastructure, and CI/CD — all managed through pnpm workspaces and Turborepo.
-
 ```
 allonfire/
   apps/
-    api/                  Hono HTTP backend (auth, Images)
+    api/                  Hono HTTP backend (auth, Images, Laura's routes)
     back-office/          Next.js admin app
-    laura/                Next.js photos & games app
+    laura/                Next.js Gallery and Memory game
   packages/
-    auth/                 Shared BetterAuth config
-    database/             Prisma ORM + services
-    storage/              S3/MinIO uploads + image processing
-    ui/                   Shared UI components
+    auth/                 Better Auth config, Roles, guards
+    config/               TypeScript and test config, repository checks
     core/                 Shared constants, helpers, Next scaffolding
-    config/               TypeScript config
+    database/             Prisma client, services, Liquibase changelog
+    design/               Designs and the Brand
+    shadcn/               Generated shadcn/ui components
+    storage/              S3/MinIO uploads + image processing
+    ui/                   Shared AOF components
   docker/                 Docker Compose + Dockerfile
   docs/                   Project documentation
   .github/                CI/CD workflows
 ```
 
 ## 🏗️ Infrastructure
-
-Production deployment stack powering all apps and services.
 
 | | Component | Stack |
 |-|-----------|-------|
@@ -104,107 +124,53 @@ Production deployment stack powering all apps and services.
 
 ### 🚢 Deploy
 
-A push to `prod` runs `.github/workflows/deploy.yml`: it builds an image only
-for each Deploy unit (`api`, `back-office`, `db-migrate`) affected since the
-last deploy (the `deployed/prod` tag), pushes it to GHCR as `:<sha>`, tags
-every one `:prod` once all are built, and asks Dokploy to redeploy the one
-compose project, which recreates only the services whose image changed (ADR 0018).
+```mermaid
+flowchart LR
+  D[dev] -->|PR| T[test] -->|PR| P[prod]
+```
 
-One-time setup:
+Only a push to `prod` deploys. Setup, rollback and how it picks what to build:
+[Deployment](docs/guides/deployment.md).
 
-1. GitHub, environment `prod`: secrets `DOKPLOY_API_KEY`, `DOKPLOY_URL` (with the panel's basic auth: `https://<user>:<password>@panel.isaiariva.com`), `NEXT_PUBLIC_API_URL`, `BACK_OFFICE_URL`, `LAURA_URL` (each environment holds its own values under the same names); variable `DOKPLOY_COMPOSE_ID`.
-2. Dokploy: a registry entry for `ghcr.io` with a GitHub token that has only `read:packages`.
-3. Dokploy compose project `allonfire` (`docker/docker-compose.prod.yml`): auto-deploy off; env holds every key of `docker/.env.example` except `POSTGRES_*` and `DOKPLOY_*`, filled from `docker/.env.production` (`pnpm env:prod`).
-4. First deploy: with no `deployed/prod` tag yet, the workflow builds every unit; a manual run (`workflow_dispatch`) does the same later.
+## 💻 Run it locally
 
-Before the API starts, the one-shot `storage-setup` service creates the `image` bucket when missing and leaves it closed to anonymous reads (no bucket policy); nothing is uploaded by hand.
+You need Node 24, pnpm 9 and Docker. The scripts are bash (on Windows use WSL).
 
-Rollback: `docker buildx imagetools create -t ghcr.io/isaiascope/allonfire-<unit>:prod ghcr.io/isaiascope/allonfire-<unit>:<sha>`, then redeploy the compose project in Dokploy.
+1. `pnpm install`
+2. Create the env files, each from the `.env.example` beside it, and fill in the Local values:
 
-Laura is out of Production until the cutover phase.
+   | File | For |
+   |------|-----|
+   | `apps/api/.env` | the API |
+   | `apps/back-office/.env.development` | the Back Office |
+   | `apps/laura/.env.development` | Laura |
+   | `packages/database/.env` | the database, and your Admin (`DATABASE_SEED_ADMIN_*`) |
+   | `packages/storage/.env` | image storage |
 
-### 💻 Local
+3. `pnpm dev:setup`, once: starts the services and fills the database.
+4. `pnpm dev`
 
-The scripts are bash: macOS and Linux run them as they are; on Windows use WSL.
+| | Open | Address |
+|-|------|---------|
+| 🛠️ | Back Office | http://localhost:3400 |
+| 🐙 | Laura | http://localhost:3200 |
+| 🔌 | API | http://localhost:3300 |
+| 🗄️ | Database console | http://localhost:8080 |
+| 📁 | Storage console | http://localhost:9001 |
 
-`pnpm dev:setup` starts the Local stack, applies the changelog, seeds the
-real Admin (`DATABASE_SEED_ADMIN_*` in `packages/database/.env`, Admin in
-every App) and creates the `image` bucket with its policy: Local holds what
-Production holds. The Fixtures live only in Test databases; remove
-`DATABASE_SEED_MODE` and `DATABASE_SEED_LAURA_VIEWER_*` from an older `.env`.
-`packages/storage/.env` (from its `.env.example`) holds the Local MinIO
-login the setup and the e2e run's bucket use.
+📱 To open the Apps on your phone: [Local and the tailnet](docs/guides/local.md).
 
-`pnpm dev` also serves each dev App over Tailscale as its own Tailscale
-Service, with HTTPS, and stops serving them when it stops (Ctrl+C); with
-Tailscale off it skips this and the Apps answer on localhost only.
-`pnpm dev:tailscale` does the same on its own: the Back Office at `https://back-office.<tailnet>.ts.net`,
-Laura at `https://laura.<tailnet>.ts.net`. Tailscale must be running on the
-Mac and on each device that opens them, with MagicDNS and HTTPS Certificates
-on in the tailnet's DNS settings. Started on its own, Tailscale keeps serving them across
-restarts; `pnpm dev:tailscale:off` stops it. `next dev` accepts only names
-on this tailnet, which it reads from `tailscale status` at start: sign in to
-Tailscale before `pnpm dev`, or restart `pnpm dev` after.
+## 📚 Docs
 
-One-time setup, in the admin console:
-
-1. Access controls: add the tag, let it host the Services, and let members
-   reach them:
-
-   ```json
-   "tagOwners": { "tag:dev": ["autogroup:admin"] },
-   "autoApprovers": {
-     "services": {
-       "svc:back-office": ["tag:dev"],
-       "svc:laura": ["tag:dev"],
-       "svc:cdn": ["tag:dev"],
-       "svc:api": ["tag:dev"]
-     }
-   },
-   "grants": [
-     { "src": ["autogroup:member"], "dst": ["svc:back-office", "svc:laura", "svc:cdn", "svc:api"], "ip": ["443"] }
-   ]
-   ```
-
-   Merge into the existing `tagOwners` and `grants`, and keep the default
-   allow-all grant.
-2. Tag the Mac (`tailscale up --advertise-tags=tag:dev` with your other
-   `up` flags, or Machines, Edit ACL tags). A Service host must be tagged,
-   so the Mac then belongs to the tag, not to a user.
-3. Services: define `back-office`, `laura`, `cdn` and `api`, each on `tcp:443`.
-4. Run `pnpm dev:tailscale`. A Service the Mac advertised before it was
-   defined stays pending: `tailscale serve clear svc:<name>`, then run it
-   again, and the auto-approval applies.
-5. Add each App's tailnet address to `API_CORS_ORIGINS` in `apps/api/.env`
-   (`https://back-office.<tailnet>.ts.net,https://laura.<tailnet>.ts.net`):
-   an App's server forwards the page's Origin to the API, whose Better Auth
-   refuses one it does not trust, and Sign in then reports itself unavailable.
-6. Set `STORAGE_IMAGE_SERVER_URL` in `apps/api/.env` to
-   `https://cdn.<tailnet>.ts.net/image`: the API signs every picture link
-   with that address and the browser loads it directly, so `localhost:9010`
-   reaches no phone. The Mac reaches it too while Tailscale is on; with
-   Tailscale off, put `http://localhost:9010/image` back.
-7. Set `BACK_OFFICE_URL` to `https://back-office.<tailnet>.ts.net` in
-   `apps/back-office/.env.development.local`, and `LAURA_URL` to
-   `https://laura.<tailnet>.ts.net` in `apps/laura/.env.development.local`, so
-   link previews on the phone load their images; delete a file to take that App
-   back to localhost.
-8. Set `NEXT_PUBLIC_API_REMOTE_URL` to `https://api.<tailnet>.ts.net` in the
-   same file of each App: a page opened on the tailnet address (the phone)
-   calls the API there, since `localhost:3300` reaches nothing on a phone (a saved edit
-   refreshes the list). A page on `localhost` keeps `NEXT_PUBLIC_API_URL`.
-   Restart the Apps: the value is baked in at build.
-9. Share the Session cookie with that API: set
-   `AUTH_COOKIE_DOMAIN=".<tailnet>.ts.net"` in `apps/api/.env` and in
-   each App's `.env.development.local`, restart them, and sign in again
-   at each address you use. Without it the browser's call to the API from the
-   tailnet address carries no Session and gets the signed-out answer (only
-   public Images, one page), so the pager's arrows step back and a delete
-   jumps to the last page. A sign-in from `localhost` gets a cookie with no
-   Domain (the API drops it for an Origin outside the domain), so `localhost`
-   and the tailnet address each keep their own Session.
-
-Why Services, and what a new App needs: ADR 0021.
+| You want to | Read |
+|-------------|------|
+| learn the words the project uses | [CONTEXT.md](CONTEXT.md) |
+| work on the API | [API guide](docs/guides/api.md) |
+| work on a Next App | [Next Apps](docs/guides/next-apps.md) |
+| change the database | [Database](docs/guides/database.md) |
+| write or run tests | [Testing](docs/guides/testing.md) |
+| ship or roll back | [Deployment](docs/guides/deployment.md) |
+| know why something is built this way | [Decision records](docs/adr/) |
 
 ---
 

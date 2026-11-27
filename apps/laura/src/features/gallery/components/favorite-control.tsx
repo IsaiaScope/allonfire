@@ -1,6 +1,10 @@
 "use client";
 
 import { aofErrorMeta } from "@allonfire/core/features/next/query/utils/aof-query-errors";
+import {
+  aofLightboxControl,
+  aofLightboxIcon,
+} from "@allonfire/ui/features/image/components/aof-lightbox-button";
 import { useAOFQuietToggle } from "@allonfire/ui/features/query/hooks/use-aof-quiet-toggle";
 import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
 import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
@@ -21,7 +25,7 @@ import { favoriteMutation } from "../utils/gallery-mutations";
 const heart = cva("", {
   variants: {
     surface: {
-      bar: "size-6",
+      bar: aofLightboxIcon(),
       photo: "filter-[drop-shadow(0_0_1px_var(--ink))] size-5",
     },
   },
@@ -43,7 +47,7 @@ const tone = cva(
     ],
     variants: {
       marked: { false: "", true: "text-coral hover:text-coral" },
-      surface: { bar: "", photo: "" },
+      surface: { bar: aofLightboxControl(), photo: "" },
     },
   }
 );

@@ -34,10 +34,6 @@ const Card: AOFAddImagesDressing["Card"] = ({ children, ...props }) => (
   </CardFrame>
 );
 
-const PickerSkeleton = () => (
-  <AOFFormBar className="w-44 shrink-0" part="button" tone="primary" />
-);
-
 const Picker = ({ disabled, pick }: AOFImagePickerProps) => {
   const t = useTranslations("Common.ImageUpload.pick");
   const { inputProps, open } = useImageFileInput(pick);
@@ -59,6 +55,25 @@ const Picker = ({ disabled, pick }: AOFImagePickerProps) => {
         />
       </AOFButton>
     </>
+  );
+};
+
+/** The picker's own shape, unseen, under the bar: the placeholder takes its
+ *  width at every screen size, whatever the words and the font. */
+const PickerSkeleton = () => {
+  const t = useTranslations("Common.ImageUpload.pick");
+  return (
+    <div aria-hidden className="relative shrink-0" data-part="picker">
+      <div className={cn("invisible", toolbarActionClass("labeled"))}>
+        <ToolbarActionBody
+          icon={<IconPlus />}
+          kanjiProps={{ kanji: IMAGES.KANJI.ADD }}
+          label={t("button")}
+          shape="labeled"
+        />
+      </div>
+      <AOFFormBar className="absolute inset-0" part="button" tone="primary" />
+    </div>
   );
 };
 

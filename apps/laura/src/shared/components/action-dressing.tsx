@@ -3,7 +3,7 @@ import {
   type AOFAction,
 } from "@allonfire/ui/shared/constants/action";
 import type { AOFActionDressing } from "@allonfire/ui/shared/types/action-dressing";
-import { IconAnchor } from "@tabler/icons-react";
+import { IconSailboat } from "@tabler/icons-react";
 import { cva } from "class-variance-authority";
 import { ActionArt } from "@/shared/components/action-art";
 import { MASCOT } from "@/shared/constants/mascots";
@@ -35,8 +35,8 @@ const smallArt = (which: AOFAction) => (
  */
 export const ACTION_DRESSING = {
   className: action(),
-  /** Laura goes in by the sea: an anchor, not the shared NFC tag. */
-  icons: { [AOF_ACTION.ENTER]: <IconAnchor aria-hidden /> },
+  /** Laura goes in by the sea: a sailboat, not the shared NFC tag. */
+  icons: { [AOF_ACTION.ENTER]: <IconSailboat aria-hidden /> },
   marks: {
     [AOF_ACTION.BACK]: <ActionArt art={MASCOT.ACTION[AOF_ACTION.BACK]} />,
     [AOF_ACTION.ENTER]: <ActionArt art={MASCOT.ACTION[AOF_ACTION.ENTER]} />,

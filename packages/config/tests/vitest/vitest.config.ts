@@ -3,8 +3,28 @@ import { configDefaults, defineConfig } from "vitest/config";
 
 /** The Vitest preset's own values. */
 export const VITEST = {
-  /** Browser tests, which only `vitestBrowserConfig` collects. */
-  BROWSER_FILES: "**/*.browser.test.{ts,tsx}",
+  BROWSER: {
+    /** Browser tests, which only `vitestBrowserConfig` collects. */
+    FILES: "**/*.browser.test.{ts,tsx}",
+    LIMIT: {
+      /**
+       * How many test files each browser runs at once, in its own tab each.
+       * Vitest's own default is cores minus one: 9 per browser on a 10-core
+       * Mac, where the tabs of both crowd each other out and tests pass their
+       * time limit; 3 is that default on a 4-core machine.
+       */
+      MAX_WORKERS: 3,
+    },
+    TIMEOUT: {
+      /**
+       * How long a browser test waits for the page. Vitest's own default is
+       * one second: on a 4-core CI runner a table has taken over 3 seconds to
+       * appear. A passing wait ends as soon as the page answers; only a
+       * failing one lasts this long.
+       */
+      PAGE_MS: 10_000,
+    },
+  },
 } as const;
 
 /**
@@ -26,7 +46,7 @@ export const vitestConfig = defineConfig({
       // Playwright owns these.
       "e2e/**",
       // The browser config runs these (../browser/vitest.browser.config.ts).
-      VITEST.BROWSER_FILES,
+      VITEST.BROWSER.FILES,
     ],
     // `describe`, `it`, `expect`, `vi` without an import. The package's
     // tsconfig lists `vitest/globals` so the types follow.

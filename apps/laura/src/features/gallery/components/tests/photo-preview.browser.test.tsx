@@ -1,15 +1,33 @@
 // @module-tag integration
 
+import { API } from "@allonfire/api/shared/constants/api";
+import { LOCAL } from "@allonfire/config/local/addresses";
 import { worker } from "@allonfire/config/tests/browser/msw";
+import { HTTP } from "@allonfire/core/features/http/constants/http";
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
+import { fillPath } from "@allonfire/core/shared/utils/route-path";
 import { svgDataUrl } from "@allonfire/core/shared/utils/svg-data-url";
 import { OCEAN_ART } from "@allonfire/design/designs/ocean/mascot-art";
+import { IMAGE as STORED_IMAGE } from "@allonfire/storage/features/image/constants/image";
+import { JPEG_SIGNATURE } from "@allonfire/storage/features/image/tests/jpeg-signature";
+import { exportName } from "@allonfire/storage/features/image/utils/export-name";
+import { STORAGE } from "@allonfire/storage/shared/constants/paths";
+import { IMAGE } from "@allonfire/ui/features/image/constants/image";
+import {
+  restoreShare,
+  stubShare,
+  watchSaves,
+} from "@allonfire/ui/features/image/tests/stub-share";
 import { computedValue } from "@allonfire/ui/shared/tests/computed-style";
 import { HttpResponse, http } from "msw";
 import { page, userEvent } from "vitest/browser";
 import IT from "@/features/i18n/translations/it.json" with { type: "json" };
 import { MASCOT } from "@/shared/constants/mascots";
-import { GALLERY_PAGE, GALLERY_URL } from "@/shared/tests/msw/handlers";
+import {
+  GALLERY_PAGE,
+  GALLERY_URL,
+  PHOTO_CREATED_AT,
+} from "@/shared/tests/msw/handlers";
 import { renderInApp } from "@/shared/tests/render-in-app";
 import { enT } from "@/shared/tests/translators";
 import { setFavorite } from "../../actions/favorite";
@@ -152,6 +170,32 @@ describe("PhotoPreview's capsule", () => {
     expect(capsule?.querySelector("[data-src]")?.getAttribute("data-src")).toBe(
       svgDataUrl(OCEAN_ART[MASCOT.CRUMB.gallery].SVG)
     );
+  });
+
+  it("clamps a long caption to two lines on a capsule no taller than a short one's", async ({
+    onTestFinished,
+  }) => {
+    const { innerHeight, innerWidth } = window;
+    onTestFinished(() => page.viewport(innerWidth, innerHeight));
+    await page.viewport(320, SCREEN.VIEWPORT.DESKTOP.HEIGHT);
+    const long = "A very long caption about the sea ".repeat(5).trim();
+    const [first, ...rest] = ONLY_PAGE.items;
+    const items = first
+      ? [{ ...first, alt: { en: long, it: long } }, ...rest]
+      : rest;
+    await renderInApp({ children: <Feed body={{ ...ONLY_PAGE, items }} /> });
+    await openTile(long);
+    const text = () => dialog().getByText(long).element();
+    const height = (element: Element | null) =>
+      element?.getBoundingClientRect().height ?? 0;
+    const lineHeight = Number.parseFloat(getComputedStyle(text()).lineHeight);
+    expect(height(text())).toBeCloseTo(lineHeight * 2, 0);
+    expect(text().scrollHeight).toBeGreaterThan(text().clientHeight);
+    const tall = height(text().closest("div.bg-card"));
+    await userEvent.keyboard("{ArrowRight}");
+    const short = () => dialog().getByText("Photo photo-b").element();
+    await vi.waitFor(() => short());
+    expect(height(short().closest("div.bg-card"))).toBe(tall);
   });
 
   it("leaves the photo as much room under the caption as above the capsule", async () => {
@@ -376,3 +420,252 @@ describe("PhotoPreview asking for more", () => {
     expect(asked).not.toHaveBeenCalled();
   });
 });
+
+/** Where the API makes one photo's Export. */
+const exportPath = (id: string) =>
+  `${API.PATH.IMAGES}${fillPath(STORAGE.PATH.EXPORT, { id })}`;
+const exportUrl = (id: string) => `${LOCAL.URL.TEST_API}${exportPath(id)}`;
+const exportNameOf = (id: string) =>
+  exportName({ createdAt: PHOTO_CREATED_AT, id });
+const downloadButton = () =>
+  dialog().getByRole("button", { name: enT("Gallery.preview.download") });
+const shareButton = () =>
+  dialog().getByRole("button", { name: enT("Gallery.preview.share") });
+
+/** `stubShare`, for a browser that says yes or no to every file. */
+const browserShares = (
+  canShare: boolean,
+  share?: (data: ShareData) => Promise<void>
+) => stubShare({ canShare: () => canShare, ...(share && { share }) });
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  restoreShare();
+  document.documentElement.classList.remove("dark");
+});
+
+/** The Export as the API answers it. */
+const jpegAnswer = () =>
+  HttpResponse.arrayBuffer(new Uint8Array(JPEG_SIGNATURE).buffer, {
+    headers: { [HTTP.HEADER.CONTENT_TYPE]: STORED_IMAGE.EXPORT.CONTENT_TYPE },
+  });
+
+describe("PhotoPreview's Download", () => {
+  it("downloads the open photo's Export under its name, and follows the photo it steps to", async () => {
+    browserShares(false);
+    const saved = watchSaves();
+    const names = () => saved.map(({ name }) => name);
+    worker.use(
+      ...["photo-a", "photo-b"].map((id) =>
+        http.get(exportUrl(id), () => jpegAnswer())
+      )
+    );
+    await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+    await openTile("Photo photo-a");
+    await downloadButton().click();
+    await vi.waitFor(() => expect(names()).toEqual([exportNameOf("photo-a")]));
+    await userEvent.keyboard("{ArrowRight}");
+    await expect
+      .element(dialog().getByRole("group", { name: "Photo 2 of 3" }))
+      .toBeVisible();
+    await downloadButton().click();
+    await vi.waitFor(() =>
+      expect(names()).toEqual([
+        exportNameOf("photo-a"),
+        exportNameOf("photo-b"),
+      ])
+    );
+  });
+
+  it("tells a refused download in the page's words, and keeps the preview", async () => {
+    browserShares(false);
+    worker.use(
+      http.get(
+        exportUrl("photo-a"),
+        () => new HttpResponse(null, { status: HTTP.STATUS.TOO_MANY_REQUESTS })
+      )
+    );
+    await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+    await openTile("Photo photo-a");
+    await downloadButton().click();
+    await expect
+      .element(page.getByText(enT("Gallery.preview.downloadFailed")))
+      .toBeVisible();
+    await expect.element(dialog()).toBeVisible();
+  });
+});
+
+// That no failure is said is `AOFExportActions`' own test: a toast of an
+// earlier test can still be on screen here.
+describe("PhotoPreview's Export of an image removed elsewhere", () => {
+  it.for([
+    { button: downloadButton, name: "Download" },
+    { button: shareButton, name: "Share" },
+  ])(
+    "$name reads the feed again, closes and says the image is gone",
+    async ({ button }) => {
+      browserShares(true);
+      worker.use(
+        http.get(
+          exportUrl("photo-b"),
+          () => new HttpResponse(null, { status: HTTP.STATUS.NOT_FOUND })
+        ),
+        http.get(GALLERY_URL, () =>
+          HttpResponse.json({
+            items: ONLY_PAGE.items.filter(({ id }) => id !== "photo-b"),
+            nextCursor: null,
+          })
+        )
+      );
+      await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+      await openTile("Photo photo-b");
+      await button().click();
+      await vi.waitFor(() => expect(dialog().elements()).toHaveLength(0));
+      await expect
+        .element(page.getByText(enT("Gallery.preview.gone")))
+        .toBeVisible();
+    }
+  );
+});
+
+describe("PhotoPreview's Share", () => {
+  it("hides Share where the browser cannot send files, and shows it where it can", async () => {
+    browserShares(false);
+    await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+    await openTile("Photo photo-a");
+    expect(shareButton().elements()).toHaveLength(0);
+    await expect.element(downloadButton()).toBeVisible();
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => expect(dialog().elements()).toHaveLength(0));
+    browserShares(true);
+    await openTile("Photo photo-a");
+    await expect.element(shareButton()).toBeVisible();
+  });
+
+  it("keeps a late Export and asks for one more tap, in the page's words", async () => {
+    const share = browserShares(true);
+    share.mockRejectedValueOnce(
+      new DOMException("too late", IMAGE.EXPORT.NOT_ALLOWED_ERROR)
+    );
+    worker.use(http.get(exportUrl("photo-a"), () => jpegAnswer()));
+    await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+    await openTile("Photo photo-a");
+    await shareButton().click();
+    await expect
+      .element(page.getByText(enT("Gallery.preview.shareReady")))
+      .toBeVisible();
+    expect(
+      page.getByText(enT("Gallery.preview.shareFailed")).elements()
+    ).toHaveLength(0);
+    await shareButton().click();
+    await vi.waitFor(() => expect(share).toHaveBeenCalledTimes(2));
+    expect(share.mock.calls[1]?.[0].files?.[0]?.name).toBe(
+      exportNameOf("photo-a")
+    );
+  });
+
+  it("tells a failed share in the page's words, and says nothing when the sheet is closed", async () => {
+    const share = browserShares(true, () =>
+      Promise.reject(new DOMException("closed", IMAGE.EXPORT.ABORT_ERROR))
+    );
+    worker.use(
+      http.get(
+        exportUrl("photo-a"),
+        () => new HttpResponse(null, { status: HTTP.STATUS.UNAUTHORIZED })
+      ),
+      http.get(exportUrl("photo-b"), () => jpegAnswer())
+    );
+    await renderInApp({ children: <Feed body={ONLY_PAGE} /> });
+    await openTile("Photo photo-a");
+    await shareButton().click();
+    await expect
+      .element(page.getByText(enT("Gallery.preview.shareFailed")))
+      .toBeVisible();
+    await userEvent.keyboard("{ArrowRight}");
+    await expect
+      .element(dialog().getByRole("group", { name: "Photo 2 of 3" }))
+      .toBeVisible();
+    await shareButton().click();
+    await vi.waitFor(() => expect(share).toHaveBeenCalledOnce());
+    expect(
+      page.getByText(enT("Gallery.preview.shareFailed")).elements()
+    ).toHaveLength(1);
+  });
+
+  it("names both in Italian", async () => {
+    browserShares(true);
+    await renderInApp({
+      children: <Feed body={ONLY_PAGE} />,
+      language: "it",
+      messages: IT,
+    });
+    await openTile("Foto photo-a");
+    await expect
+      .element(
+        dialog().getByRole("button", { name: IT.Gallery.preview.download })
+      )
+      .toBeVisible();
+    await expect
+      .element(dialog().getByRole("button", { name: IT.Gallery.preview.share }))
+      .toBeVisible();
+  });
+});
+
+describe.each([
+  { language: "en", width: 320 },
+  { language: "en", width: SCREEN.VIEWPORT.PHONE.WIDTH },
+  { language: "it", width: 320 },
+  { language: "it", width: SCREEN.VIEWPORT.PHONE.WIDTH },
+] as const)(
+  "PhotoPreview's capsule at $width px in $language",
+  ({ language, width }) => {
+    it.for([
+      { canMark: true, who: "an Admin" },
+      { canMark: false, who: "a User" },
+    ])(
+      "fits $who's controls without overflow or overlap, light and dark",
+      async ({ canMark }, { onTestFinished }) => {
+        const { innerHeight, innerWidth } = window;
+        onTestFinished(() => page.viewport(innerWidth, innerHeight));
+        await page.viewport(width, SCREEN.VIEWPORT.DESKTOP.HEIGHT);
+        browserShares(true);
+        await renderInApp({
+          children: <Feed body={ONLY_PAGE} canMark={canMark} />,
+          language,
+          ...(language === "it" && { messages: IT }),
+        });
+        await openTile(language === "it" ? "Foto photo-a" : "Photo photo-a");
+        for (const mode of ["light", "dark"]) {
+          document.documentElement.classList.toggle("dark", mode === "dark");
+          const capsule = dialog()
+            .getByRole("button", {
+              name:
+                language === "it"
+                  ? IT.Gallery.preview.download
+                  : enT("Gallery.preview.download"),
+            })
+            .element()
+            .closest('[data-slot="control-bar"]');
+          const frame = capsule?.getBoundingClientRect();
+          const controls = [...(capsule?.querySelectorAll("a, button") ?? [])]
+            .map((control) => control.getBoundingClientRect())
+            .filter((box) => box.width > 0);
+          // Download, Share and Close; an Admin's heart and Remove too (a User sees the mark only).
+          expect(controls).toHaveLength(canMark ? 5 : 3);
+          for (const box of controls) {
+            expect(box.left).toBeGreaterThanOrEqual((frame?.left ?? 0) - 0.5);
+            expect(box.right).toBeLessThanOrEqual((frame?.right ?? 0) + 0.5);
+          }
+          expect(frame?.right).toBeLessThanOrEqual(width);
+          const sorted = [...controls].sort((a, b) => a.left - b.left);
+          for (const [index, box] of sorted.entries()) {
+            const before = sorted[index - 1];
+            if (before) {
+              expect(box.left).toBeGreaterThanOrEqual(before.right - 0.5);
+            }
+          }
+        }
+      }
+    );
+  }
+);

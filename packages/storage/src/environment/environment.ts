@@ -15,6 +15,21 @@ export const storageEnvSchema = {
   /** The Images' bucket; a test run names its own. */
   STORAGE_BUCKET: z.string().min(3).default(IMAGE.BUCKET.DEFAULT),
   STORAGE_ENDPOINT: z.url(),
+  /** The Export route's own bucket (ADR 0036), on top of the host's global one. */
+  STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX: z
+    .string()
+    .min(1)
+    .default(IMAGE.EXPORT.RATE_LIMIT.DEFAULT.KEY_PREFIX),
+  STORAGE_EXPORT_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(IMAGE.EXPORT.RATE_LIMIT.DEFAULT.MAX),
+  STORAGE_EXPORT_RATE_LIMIT_WINDOW_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(IMAGE.EXPORT.RATE_LIMIT.DEFAULT.WINDOW_MS),
   /** The image server's signing key and salt, hex (imgproxy's `IMGPROXY_KEY`, `IMGPROXY_SALT`). */
   STORAGE_IMAGE_SERVER_KEY: z.string().regex(HEX),
   STORAGE_IMAGE_SERVER_SALT: z.string().regex(HEX),

@@ -1,49 +1,13 @@
-import { execFileSync } from "node:child_process";
 import { REPO } from "@allonfire/config/local/repo";
 import { stringifyJson } from "../../shared/utils/json";
-import { affectedFrom, everything } from "./affected";
+import { affectedSince } from "./turbo-affected";
 
-// CI's `changes` step; the contract is in the package README.
+// CI runs it as `pnpm -s ci:affected <base>` from the repo root; it prints
+// `apps=` and `deploy=` lines for `$GITHUB_OUTPUT`. What counts as affected:
+// `affectedSince` (`turbo-affected.ts`).
 const [base] = process.argv.slice(2);
 
-const run = (command: string, args: string[]) =>
-  execFileSync(command, args, {
-    // The repo root: run from a package's folder, Turbo scopes to it.
-    cwd: REPO.ROOT,
-    encoding: "utf8",
-  });
-
-const resolves = (ref: string) => {
-  try {
-    run("git", ["rev-parse", "--quiet", "--verify", `${ref}^{commit}`]);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-// A raw query, not `turbo ls --output=json`: that flag is experimental.
-const PACKAGES_QUERY = "query { packages { items { name path } } }";
-
-const all = run("pnpm", ["-s", "turbo", "query", PACKAGES_QUERY]);
-const { apps, deploy } =
-  base && resolves(base)
-    ? affectedFrom(
-        run("pnpm", [
-          "-s",
-          "turbo",
-          "query",
-          "affected",
-          "--packages",
-          `--base=${base}`,
-          "--head=HEAD",
-        ]),
-        all,
-        run("git", ["diff", "--name-only", `${base}...HEAD`])
-          .split("\n")
-          .filter(Boolean)
-      )
-    : everything(all);
+const { apps, deploy } = affectedSince(REPO.ROOT, base ?? "");
 process.stdout.write(
   `apps=${stringifyJson(apps)}\ndeploy=${stringifyJson(deploy)}\n`
 );

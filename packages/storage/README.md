@@ -1,131 +1,97 @@
 <h1 align="center">@allonfire/storage</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/AWS_S3-SDK-FF9900?logo=amazons3&logoColor=white" alt="AWS S3" />
-  <img src="https://img.shields.io/badge/Sharp-image_processing-99CC00?logo=sharp&logoColor=white" alt="Sharp" />
-  <img src="https://img.shields.io/badge/MinIO-object_storage-C72E49?logo=minio&logoColor=white" alt="MinIO" />
+  <img src="https://img.shields.io/badge/AWS_S3-SDK-FF9900?style=flat&logo=amazons3&logoColor=white" alt="AWS S3" />
+  <img src="https://img.shields.io/badge/Sharp-image_processing-99CC00?style=flat&logo=sharp&logoColor=white" alt="Sharp" />
+  <img src="https://img.shields.io/badge/MinIO-object_storage-C72E49?style=flat&logo=minio&logoColor=white" alt="MinIO" />
 </p>
 
-<p align="center">
-  Object storage for any kind of file; only <code>features/s3</code> knows the provider (MinIO today). Images are its first kind: <code>features/image</code> prepares them, stores them in the closed <code>image</code> bucket (ADR 0013, ADR 0027), ships the Image module any Host mounts (ADR 0015), and signs the image-server links every stored picture reaches a browser by (through the `cdn` nginx in front of imgproxy, under `/image`, which keeps each answer and, after checking with imgproxy that the link and the file still hold, serves it without resizing again). Avatars, a User's own picture, live in the same bucket.
-</p>
+<p align="center">The apps' file storage. Today that means pictures: preparing and storing Images and Avatars, signing the links a browser loads them by, and the Images HTTP routes.</p>
 
 ---
 
-## 📦 API Reference
+## 🔧 Use it
 
-| Export Path | What it provides |
-|-------------|-----------------|
-| `./environment/environment` | `env` and `storageEnvSchema`: the provider's `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET`, and the image server's `STORAGE_IMAGE_SERVER_URL`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT` (hex) |
-| `./shared/constants/paths` | `STORAGE.PATH`: `IMAGES` (`/images`, where a Host mounts the Image module), and the module's own `LIST` (`/`) and `ONE` (`/:id`) |
-| `./features/image-server/sign` | `pictureLink({ bucket?, key, width, expiresAt? })`: a signed imgproxy link (HMAC-SHA256 over salt and path), changed width or key answers 403, past `expiresAt` 404; `pictureSrcSet(key, expiresAt?)`, one per width; `privateLinkExpiry(now)`, the end of the hour after the next |
-| `./features/image-server/constants/image-server` | `IMAGE_SERVER`: `WIDTHS` (640, 1080, 1920, 2560), `AVATAR_WIDTH` (256), `LINK` (`PRIVATE_HOURS`, `CACHE_LIFE`, `REFRESH_MS`), `CACHE` (`CHECK_SECONDS`, 2: how stale a copy the image cache serves can be; `GONE_WITHIN_MS`) |
-| `./features/avatar/constants/avatar` | `AVATAR`: `SIZE` (`STORED` 256, `CROP` 512, the browser's crop), `INPUT.BYTES`, `KEY_PREFIX`, `QUALITY` |
-| `./features/avatar/utils/avatar-key` | `avatarKey(userId)` (a new `avatar-<userId>-<uuid>.avif` each time), `avatarKeyOf(image)` (our file's name, else null), `avatarLink(image, now)` (ours signed for the hour, a provider's picture as it is) |
-| `./features/avatar/objects/avatar-objects` | `saveAvatar(userId, file)` (prepares and stores, answers the name), `deleteAvatarsWith(log)(images)` (deletes our own files among them, logs a failure) in the `image` bucket |
-| `./features/image/constants/image` | `IMAGE`: `IMAGE.BUCKET.DEFAULT`, `IMAGE.CACHE.*` (`TTL_SECONDS`, `CONTROL`), `IMAGE.FORMAT.*` (`CONTENT_TYPE`, `EXTENSION`), `IMAGE.LIMIT.*` (`FILE_BYTES`, `UPLOAD` with `BYTES`, `BODY_BYTES` and `TIMEOUT_MS`, `INPUT` with `MEGAPIXELS` and `PIXELS`, files per upload, batch, list page, stored dimension), `IMAGE.ERROR_CODE` (the module's own codes, `IMAGE_TOO_LARGE` and `UNSUPPORTED_IMAGE`; the standard ones it throws are core's `ERROR.CODE`), `IMAGE.DOC.<VERB>` (`DESCRIPTION`, `RESPONSE` keyed by status, `SUMMARY`), `IMAGE.OPENAPI_TAG`, `IMAGE.VAR` |
-| `./features/image/prepare/prepare-image` | `prepareImage(buffer)`: upright, metadata-free AVIF (quality 64) capped at 2560px plus a 16px WebP blur data URL; HEIC (iPhone, Mac) decodes through `heic-decode`; `UnsupportedImageError` for anything but JPEG, PNG, WebP, AVIF or HEIC |
-| `./features/image/objects/utils/delete-leftovers` | `deleteLeftovers({ keys, log, reason, remove, retry? })`: deletes files no row names any more, logging a failure instead of throwing; `LeftoverLog` |
-| `./features/image/objects/utils/image-objects` | `putImageObject(key, body, bucket?)`, `deleteImageObjects(keys)`, `copyImageObject(from, to)`, `imageBucketTotals()` (objects and bytes of the whole bucket, Avatars included; pages through the listing) in the `image` bucket |
-| `./features/image/hono/routes` | `imageRoutes(deps)`, the Image module |
-| `./features/image/hono/utils/deps` | `ImageDeps`, what the module needs from its host |
-| `./features/next/utils/with-image-uploads` | `withImageUploads(config)`: an App's Next config able to take a whole Images upload (Server Action body limit and proxy buffer both `IMAGE.LIMIT.UPLOAD.BODY_BYTES`); every other setting stays. The Back Office and Laura wrap theirs in it, and their ingress must let a body that size through (`deployment.md`) |
-| `./features/image/hono/utils/upload` | `isImageUpload(method, path, basePath)`, so a host skips its own body limit and timeout for the upload |
-| `./features/image/hono/tests/stub-image-deps` | `stubImageDeps`, `imageRecord` for host tests; `imageHost(session, images?)`, the module on auth's `moduleTestHost` |
-| `./features/image/fixtures/constants/files` | `IMAGE_FIXTURE`: `DIR`, the folder of source files (one per accepted format, plus `animation.gif`), and `FILE`, each one's name |
-| `./features/image/fixtures/files/*` | The source files themselves, for a browser test's `?url` import |
-| `./features/image/fixtures/utils/read-fixture-image` | `readFixtureImage(name)`, a source file's bytes |
-| `./features/test-bucket/{global-setup,local-env}` | `global-setup` is the Vitest `globalSetup`: a bucket per test run (`createTestBucket` sweeps crashed runs' buckets, then `setupImageBucket` with every Fixture; named `testBucketName`, the Test database's name with hyphens), dropped when the run ends; `fillLocalStorageEnv()` fills each unset `STORAGE_*` from `LOCAL`, for a test setup |
+`package.json` lists every import path.
 
-## 📁 Directory Structure
+| I want to | Use |
+|---|---|
+| add the Images routes to a Hono host | `imageRoutes(deps)` from `./features/image/hono/routes` |
+| turn an upload into a stored Image file | `prepareImage`, then `putImageObject` |
+| give a browser a link to a stored picture | `./features/image-server/sign` |
+| save or show an Avatar | `saveAvatar`, `avatarLink` (under `./features/avatar/`) |
+| let a Next App take uploads | `withImageUploads` around its Next config |
+| use real picture files in a test | `IMAGE_FIXTURE` with `readFixtureImage` |
+| stub the Images routes in a host's test | `stubImageDeps` |
+
+How the API mounts the routes:
+
+```ts
+.route(
+  API.PATH.IMAGES,
+  imageRoutes({ ...deps.images, limitExport: exportRateLimit(store) })
+)
+```
+
+`ImageDeps` in `./features/image/hono/utils/deps` is everything the host passes in.
+
+## 🗂️ Where things are
 
 ```
 packages/storage/
   src/
-    environment/environment.ts   Zod-validated STORAGE_* variables
-    shared/constants/paths.ts    STORAGE (STORAGE.PATH.*)
-    shared/tests/stored-object-url.ts   storedObjectUrl, where the provider serves an object (tests)
+    environment/     the STORAGE_* variables, checked with Zod
+    shared/          the routes' paths
     features/
-      s3/                        the only code that knows the provider
-        client.ts                S3 client pointed at MinIO
-        objects.ts               putObject, deleteObjects, copyObject for any bucket
-        exists.ts                bucketExists: a 404 is "not there"
+      s3/            the only code that knows the provider (MinIO today)
       image/
-        constants/               image (IMAGE), schemas
-        prepare/                 sharp (+ heic-decode): orient, strip metadata, cap, AVIF, blur
-        objects/                 put and delete Image objects (through s3/objects)
-        hono/                    the Image module: routes, handlers, deps, errors, upload
-        setup/                   setupImageBucket: the bucket, closed (pnpm image:setup)
-        fixtures/                files/ (the Image Fixtures' sources),
-                                 scripts/describe-fixtures
-      image-server/              signed imgproxy links: sign, constants
-      avatar/                    a User's Avatar: prepare, key and link, objects, constants
-      test-bucket/               a bucket per test run, holding every Image Fixture: names, bucket, global-setup, local-env, cli
+        constants/   IMAGE: limits, formats, error codes
+        prepare/     orient, strip metadata, resize, AVIF and blur
+        objects/     store, read, copy and delete Image files
+        hono/        the Images routes; access rules in utils/access.ts
+        export/      the JPEG made when someone downloads an Image
+        setup/       creates the closed bucket
+        fixtures/    sample files for tests
+        utils/       file names and error mapping
+      image-server/  signed picture links
+      avatar/        a User's own picture
+      next/          Next config for uploads
+      test-bucket/   a throwaway bucket per test run
 ```
 
-## 🧪 Test buckets
+## ⚠️ Watch out
 
-A Vitest run with integration tests gets its own bucket
-(`aof-test-<package>-<YYMMDD>-<HHMMSS>-p<pid>-<random>`) holding every Image Fixture as
-AVIF, closed like `image`, as `STORAGE_BUCKET` (the Local image server reads it through the links tests sign); it is emptied
-and removed when the run ends; a killed run's is swept by the next run, which
-sees its process gone (the stamp carries it). e2e makes one per Playwright run through
-`pnpm test-bucket create|drop|name`, and `create` first drops every earlier
-e2e bucket (`dropTestBucketsOf`).
-The Local `image` bucket starts empty, like Production's:
-`pnpm --filter @allonfire/storage image:setup`, part of `pnpm dev:setup`, runs
-the setup Production runs. After changing a source file, run
-`scripts/describe-fixtures.ts` and copy its sizes into `FIXTURE.IMAGE`.
+| Trap | Do this |
+|---|---|
+| The `image` bucket holds private pictures | keep it closed, with no anonymous policy; a browser gets signed links only |
+| Private picture and Avatar links expire | a page that stays open has to read them again ([how](../../docs/guides/images.md)) |
+| A host's body limit or timeout refuses uploads | skip both when `isImageUpload` says so |
+| Next cuts large uploads off | wrap the config in `withImageUploads`, and let the [ingress](../../docs/guides/deployment.md) pass that size |
+| The Local `image` bucket starts empty | the test samples go only into test buckets |
+| A changed Fixture file leaves stale sizes | run `describe-fixtures` and copy its output into `FIXTURE.IMAGE` |
 
-## 🖼️ Image module
+## 🧪 Commands
 
-`imageRoutes(deps)` is the Images HTTP API (list, get, batch upload, patch, delete), typed on `AuthEnv`: it reads the Session the host's `sessionLoader` set. A host mounts it with one line:
+Variables are described in `.env.example`; copy it to `.env` for `image:setup` and `test-bucket`. Tests set their own.
 
-```ts
-.route(API.PATH.IMAGES, imageRoutes(deps.images))
+```bash
+# create the closed Local bucket (pnpm dev:setup runs it too)
+pnpm --filter @allonfire/storage image:setup
+
+# tests; start the services first for integration
+pnpm test:services
+pnpm --filter @allonfire/storage test
+
+# a test bucket by hand
+pnpm --filter @allonfire/storage test-bucket <create|drop|name> <label> <stamp>
+
+# sizes and blur of each Fixture file
+pnpm --filter @allonfire/storage exec tsx src/features/image/fixtures/scripts/describe-fixtures.ts
 ```
 
-`ImageDeps` is everything it touches: the `image.service` functions from `@allonfire/database` (`createImages`, `listImagesPage`, `getImage`, `updateImages`, `deleteImages`, `removeImagesFromApp`; a PATCH and a DELETE hand their check to the write itself, which runs it on the placements it locks), `putObject` and `deleteObjects` from `./features/image/objects/utils/image-objects`, `prepare` (`prepareImage`), `changed` (told after an upload, a change or a delete wrote, before the answer: the host drops what it kept of the bucket, as the API does for the Storage overview's totals; never throws) and `log` (`{ warn }`, pino's shape).
+## 📚 More
 
-- **Access** (ADR 0020): an Image is in one or more Apps, public or private in each. Reads need no Session: a visitor sees public placements, a User also the Apps they enter, and an Image they cannot see answers 404. Writes need one: placing an Image in an App, taking it out or switching it public needs the Admin Role there; its alt or deleting it everywhere needs it in every App it is in. A batch answers 404 for any Image the User cannot see before any 403. An upload from a User who is Admin in no App answers 403 before its body, up to 90 MiB, is read. `hono/utils/access.ts` holds these checks; `hono/tests/recap.test.ts` is the agreed table, one test per row.
-
-- **Errors** are `CodedError`s (ADR 0015) with a standard code from core's `ERROR.CODE` or one of the module's own from `IMAGE.ERROR_CODE`; the host renders and translates them. A host spreads `IMAGE.ERROR_CODE` into its own codes beside `ERROR.CODE`, so a code without a message fails its build.
-- **Limits**: the upload brings its own 90 MiB body limit and 5-minute timeout; `isImageUpload` lets the host skip its global ones.
-- **Docs**: each error response is `...problemResponses(status)` from `@allonfire/core/features/errors/utils/openapi`; a host publishing OpenAPI registers one `Problem<status>` per status, listing only the codes it sends with it.
-
-## 🔑 Environment Variables
-
-| Variable | Required | Description |
-|----------|:--------:|-------------|
-| `STORAGE_ENDPOINT` | ✅ | Object storage URL as the server reaches it (MinIO today) |
-| `STORAGE_ACCESS_KEY` | ✅ | Access key ID |
-| `STORAGE_SECRET_KEY` | ✅ | Secret access key |
-| `STORAGE_BUCKET` | | The Images' bucket, `image` by default; a test run sets its own |
-
-Locally, `image:setup` and `test-bucket` read `packages/storage/.env` (copy `.env.example`); Vitest sets the same values itself.
-
-The bucket is `image` (`IMAGE.BUCKET.DEFAULT` in `features/image/constants/image`), named like the Postgres schema; `STORAGE_BUCKET` overrides it only for a test run's own bucket. It is closed to anonymous reads, since it holds private Images and Avatars: `storage-init` runs `mc anonymous set none` in dev; in production the deploy's `storage-setup` service (`features/image/setup`) creates the bucket when missing and deletes any bucket policy. A browser reaches a picture only through a link the API signs (`features/image-server/sign`), served by the image server. Never give the bucket an anonymous policy again.
-
-## 🔧 Usage
-
-```ts
-import { IMAGE } from "@allonfire/storage/features/image/constants/image";
-import { putImageObject } from "@allonfire/storage/features/image/objects/utils/image-objects";
-import { prepareImage } from "@allonfire/storage/features/image/prepare/prepare-image";
-
-const image = await prepareImage(upload); // throws UnsupportedImageError
-await putImageObject(`${crypto.randomUUID()}${IMAGE.FORMAT.EXTENSION}`, image.buffer);
-// image.width, image.height, image.bytes, image.blurDataUrl go on the row
-```
-
-## 📦 Dependencies
-
-| Package | Why |
-|---------|-----|
-| `@aws-sdk/client-s3` | S3-compatible object storage operations |
-| `sharp` | Decoding, orienting, resizing, AVIF and WebP encoding |
-| `heic-decode` | HEIC decoding (libheif in WebAssembly): the prebuilt sharp leaves HEVC out |
-| `@allonfire/auth`, `@allonfire/database`, `@allonfire/core` | Guards and Session, the Image rows, shared constants and `CodedError` |
-| `hono` (peer), `hono-openapi` | The Image module: its routes, and the validators that check each request and document it |
-| `@hono/standard-validator` | hono-openapi's peer: its `validator` wraps `sValidator`, which it imports even though its manifest calls it optional |
-| `@t3-oss/env-core`, `zod` | Environment validation |
+- [Stored pictures](../../docs/guides/images.md): the image server, signed links, how pages show pictures
+- [API guide](../../docs/guides/api.md): upload, Export and list rules
+- [Testing](../../docs/guides/testing.md): test buckets and Fixtures
+- ADRs: [shared Images](../../docs/adr/0013-images-live-in-a-shared-image-schema.md), [modules and coded errors](../../docs/adr/0015-http-modules-ship-as-packages-and-throw-coded-errors.md), [an Image in several Apps](../../docs/adr/0020-an-image-is-in-one-or-more-apps.md), [public or private](../../docs/adr/0027-an-image-is-public-or-private-and-served-through-signed-links.md), [Export](../../docs/adr/0036-a-picture-leaves-the-apps-only-as-an-export.md)

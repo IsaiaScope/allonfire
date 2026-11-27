@@ -24,6 +24,7 @@ import {
 import { healthRoutes } from "./features/health/routes";
 import type { HealthDeps } from "./features/health/utils/status";
 import { localeResolver } from "./features/i18n/middleware/locale-resolver";
+import { exportRateLimit } from "./features/image/middleware/export-rate-limit";
 import { scoreRateLimit } from "./features/laura/games/middleware/score-rate-limit";
 import { lauraRoutes } from "./features/laura/routes";
 import type { LauraDeps } from "./features/laura/utils/deps";
@@ -46,8 +47,8 @@ export type AppDeps = HealthDeps &
     /** Every limiter's counters; each limiter brings its own window and key prefix. */
     store: RateLimitStore;
     auth: AuthLike;
-    /** Image storage and rows; tests stub them. */
-    images: ImageDeps;
+    /** Image storage and rows; tests stub them. The Export limiter is the app's own. */
+    images: Omit<ImageDeps, "limitExport">;
     /** Laura's routes: the Gallery and the Favorites; tests stub them. */
     laura: LauraDeps;
     /** The Services routes' stack: providers, quota, mail; tests stub it. */
@@ -98,7 +99,10 @@ export const createApp = (deps: AppDeps) => {
     .use(sessionLoader(deps.auth))
     // Counted by User, so after the Session is read.
     .use(API.PATH.LAURA.GAMES.SCORES, scoreRateLimit(store))
-    .route(API.PATH.IMAGES, imageRoutes(deps.images))
+    .route(
+      API.PATH.IMAGES,
+      imageRoutes({ ...deps.images, limitExport: exportRateLimit(store) })
+    )
     .route(API.PATH.LAURA.BASE, lauraRoutes(deps.laura))
     .route(API.PATH.BACK_OFFICE.BASE, backOfficeRoutes(deps))
     .route(API.PATH.SERVICES, servicesRoutes(deps.services));

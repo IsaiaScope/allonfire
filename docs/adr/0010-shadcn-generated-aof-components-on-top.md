@@ -1,5 +1,7 @@
 # shadcn components stay as generated; AOF components sit on top
 
+> Update: Laura left the pause in the Laura rebuild (ADRs 0032 and 0033), and the two old packages kept for reference are deleted.
+
 > **Superseded in part by [ADR 0011](0011-designs-and-screens-live-in-the-design-package.md):** the Theme per App moved out of `@allonfire/ui`; Designs are shared and live in `packages/design`.
 
 The old `packages/ui` held shadcn components that had been copied and then edited

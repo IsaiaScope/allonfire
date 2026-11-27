@@ -10,8 +10,8 @@ A User who wants to keep or send an Image asks the API for an **Export**:
 `GET /v1/images/:id/export`. The API checks the Session and the Image's
 visibility exactly as a read does (`canSeeImage`, a hidden Image is a 404),
 decodes the stored AVIF, writes a JPEG with no location or camera data, and
-streams it with `Content-Disposition: attachment` and `Cache-Control: private,
-no-store`. A browser saves it with a plain link, and shares it as a file
+answers with it, with `Content-Disposition: attachment` and `Cache-Control: private,
+no-store`. A browser fetches it, then saves it or shares it as a file
 (`navigator.share` with `canShare({ files })`); a link to an Image is never
 what is shared. A visitor cannot ask for one, even for a public Image: the
 decode costs the server, and the route has its own rate limit.
@@ -37,4 +37,12 @@ decode costs the server, and the route has its own rate limit.
 - If an installed iPhone app cannot take a link to another origin, Laura may
   proxy the same route from its own origin (`next.config` rewrite); the access
   check stays in the API either way.
+- Download first used a plain link. Changed on 2026-11-26: the link points at
+  another origin, so the browser ignored `download` and a refusal (401, 429)
+  replaced the App with the error's JSON (seen in iOS Safari). Fetching first
+  keeps the refusal on the page, at the cost of saving from a `blob:` address.
+- On a slow connection Share takes two taps (added 2026-11-26): the browser
+  opens the sheet only shortly after a tap, so a late file is kept for the next
+  one. Fetching ahead of the tap was rejected: it spends an Export, data and
+  the rate limit on every Image opened.
 - `docs/guides/images.md` loses "A photo has no Share button" and gains this rule.

@@ -53,7 +53,16 @@ the `.env.example` files by its guard test. Type tests (`*.test-d.ts`) take no t
 checks them and nothing executes. Three layers: unit and integration tests run
 in Node (`vitest.config.ts`); browser tests (`*.browser.test.tsx`,
 `integration`) render one client component in real Chromium and WebKit through
-`vitest.browser.config.ts`. Both Apps and `packages/ui` have them. An
+`vitest.browser.config.ts`. Both Apps and `packages/ui` have them. Each
+browser runs at most `VITEST.BROWSER.LIMIT.MAX_WORKERS` test files at once, and
+`pnpm e2e:browser` runs one package at a time: with Vitest's default (cores
+minus one, per browser) and the packages side by side, a many-core Mac timed
+tests out. A test that times out only in a full run points at load, so check what
+else is running (`pnpm dev` also runs the test watcher) before raising a
+time limit. `expect.element`, `expect.poll` and `vi.waitFor` all wait up to
+`VITEST.BROWSER.TIMEOUT.PAGE_MS`, set by the preset (Vitest's own one second passes
+on a CI runner while the page is only late), so a test gives no `timeout` of
+its own unless the time is what it checks. An
 App's run wears the App's stylesheet. ui's wears ui's base plus the Japan
 Design's `theme.css` (`src/shared/tests/browser.css`), never an App's. A
 look a visitor sees (a corner, a height, padding, an overflow axis, a
@@ -72,8 +81,15 @@ and a request no handler answers fails the test; ui fakes no API. Vitest serves 
 tests are Playwright's, under the App's `e2e/`, against the API plus the App
 (`aofPlaywrightConfig`), each spec once per project: `chromium`, `webkit`,
 `mobile-chrome` (Pixel 7) and `mobile-safari` (iPhone 15). Both layers are
-headless; `pnpm e2e:headed`, `pnpm e2e:ui` and
-`pnpm e2e:browser:headed` show the browser. A server action is mocked in a browser test and
+headless; `pnpm e2e:headed` (each project's window), `pnpm e2e:ui`
+(Playwright's UI: pick a spec and project, step through it) and
+`pnpm e2e:browser:headed` show the browser: from the root every App or package
+that has the script, one after another and never through Turbo, or one with
+`pnpm --filter @allonfire/<name>`; Playwright's own flags go after the script
+name (`pnpm e2e:headed --project=mobile-safari -g "signs in"`). WebKit is
+Safari's engine, not Safari: it shows layout, CSS and JavaScript differences,
+never what only a real iPhone does (the collapsing toolbar, the keyboard, safe
+areas). A server action is mocked in a browser test and
 covered for real by e2e. CI runs the browser tests of every affected package
 that has them (an App, ui: the `affected` job's `browser` output) and e2e
 tests for the affected Apps. Every App has an `e2e/safe-area.spec.ts`, one call
@@ -91,6 +107,9 @@ the e2e specs are one call each to ui's `signInSuite`, `frameSuite`,
 `headSuite`, `pwaSuite` and `safeAreaSuite`, over `aofAppPages()` for the
 frame's and Sign in form's helpers (`features/app/tests/e2e/`). An App's own
 specs sit beside them (Laura's `upload-gate.spec.ts`, `floating-frame.spec.ts`).
+`packages/config/local/tests/app-scaffold-shape.test.ts` compares the two Apps'
+files: a new file that only one App holds, or a scaffold file that grows past a
+thin binding, fails it.
 
 Every check sits in one **Stage** (`CONTEXT.md`): `static`, `test`, `e2e`
 or `build`, each one root command (`pnpm static`, …) that runs the same on a
@@ -127,6 +146,21 @@ it; a deprecated name a library's own type still requires goes in the rule's
 
 - Apply Biome fixes only to touched files, then run `pnpm static:types`, `pnpm static:lint` and `pnpm test`; fix lint rather than adding a Biome suppression without the owner's approval. Configuration: `biome.jsonc`, `.oxlintrc.json`, `packages/config/typescript/base.json`.
 - Only the e2e build sets `CONFIG_E2E_TESTING_API`, which turns on Next's `exposeTestingApiInProductionBuild` for `instant()` tests; an image that serves traffic never has it: `packages/config/tests/e2e/playwright.config.ts`. (`docs/superpowers/specs/2026-11-02-instant-users-navigation-design.md`)
-- The Vitest preset's options, the root test scripts (`test:unit` needs no Docker, `test:integration`, `test:coverage`, `test:ui`), the e2e projects and the headed scripts: `packages/config/README.md`.
+- Each option of the Vitest presets, with its reason in the comment beside it: `packages/config/tests/vitest/vitest.config.ts`, `packages/config/tests/browser/vitest.browser.config.ts`. A package merges its own options on top with `mergeConfig`.
+- A package that uses config's presets lists `@allonfire/config` as a dev dependency: Turbo's cache key follows declared dependencies, so a change there re-runs its tests and type checks.
+- Besides the Stages, the root runs every package as one Vitest run (`vitest.config.ts` lists the projects): `pnpm test:unit` (tag `unit`, no Docker), `pnpm test:integration`, `pnpm test:coverage` (one merged report in `coverage/`) and `pnpm test:ui` (the Vitest UI with coverage on :51204; with `--standalone` it runs nothing at start, only what a save touches, so press Run all for the full suite). `pnpm test:run` is every package's tests through Turbo, cached, without the rest of the Stage; `pnpm dev` runs the same beside the Apps, re-running a package when it changes.
 - The `static` Stage also runs ShellCheck on every shell script (Liquibase, database, config, the VPS's), `docker build --check` on the `db-migrate` image and actionlint on the workflows (a Mac without the binary skips the tool; CI has them all); the `test` Stage checks the changelog against the Prisma schema on the Test template (`pnpm test:drift`): `packages/config/stages/stages.ts`.
 - The `static` Stage runs `pnpm static:knip`, `pnpm static:knip-production` and `pnpm static:dupes` in the hook and on every PR, over the whole workspace (no affected-filter): an unused export or file, code only tests use, or a clone fails it wherever it sits. Fix the hit, or accept it with a reason (`tooling.md`, knip and jscpd): `.github/workflows/ci.yml`.
+
+## Device runs (Export, 2026-11-25)
+
+The Web Share API and downloads behave differently on a phone than in
+Playwright, so the Export's Download and Share were run by hand on the iOS and
+Android simulators (T3's device tools, `agent-device`), the dev Apps reached
+as Tailscale Services (ADR 0021): Laura at `laura.<tailnet>.ts.net`, the API at
+`api.<tailnet>.ts.net`. Dev holds no Fixture Users: a run adds one throwaway
+Laura Admin to the dev database and deletes it after. The record is in
+`docs/superpowers/plans/2026-11-25-feat-laura-photo-download-share.md`
+(Implementation Log). Tips: in Safari, `fill` leaves a React field empty, so
+`press` the field and `type`; a context menu is pressed by its coordinates
+(points on iOS, pixels on Android), since its refs go stale.

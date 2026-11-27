@@ -18,56 +18,48 @@
 
 ---
 
-Laura is a Next App on the shared scaffold (ADR 0033). It reads the API only: no
-Prisma client, no service, and Better Auth runs in the API. Screenshots arrive
-with the cutover phase.
-
 ## 📱 Routes
 
-| | Route | Page | Status |
-|-|-------|------|--------|
-| 🖼️ | `/` | Gallery | placeholder, Phase 4 |
-| ⭐ | `/favorites` | Favorites | placeholder, Phase 4 |
-| 🃏 | `/memory` | Memory game | placeholder, Phase 6 |
-| 🏆 | `/memory/leaderboard` | Memory leaderboard | placeholder, Phase 6 |
-| 📤 | `/upload` | Upload (Admin only) | placeholder, Phase 5 |
+| | Route | Page | Role |
+|-|-------|------|------|
+| 🖼️ | `/` | Gallery | User |
+| ⭐ | `/favorites` | Favorites | User |
+| 🃏 | `/memory` | Memory game | User |
+| 🏆 | `/memory/leaderboard` | Memory leaderboard | User |
+| 📤 | `/upload` | Upload | Admin |
 
-The signed-out pages are Sign in, Forgot password, Reset password, Email
-verified and Offline. Nobody registers: an Admin adds Users in the Back Office.
+Sign in, Forgot password, Reset password, Email verified and Offline work signed
+out. Nobody registers: an Admin adds Users in the Back Office.
 
-## 🏗️ Architecture
+## 🔧 Run it
+
+First time: the root [Run it locally](../../README.md#-run-it-locally). Then:
+
+| I want to | Command |
+|-----------|---------|
+| work on it, with the API and the services (`:3200`) | `pnpm dev` (from the root) |
+| run only this app | `pnpm --filter @allonfire/laura dev` |
+| unit tests | `pnpm --filter @allonfire/laura test` |
+| browser tests | `pnpm --filter @allonfire/laura test:browser` |
+| end-to-end on a production build (`:3210`) | `pnpm --filter @allonfire/laura test:e2e` |
+| look at a production build (`:3220`) | `pnpm --filter @allonfire/laura preview` |
+
+## 🗂️ Where things are
 
 ```
 src/
-  app/             Next's routes: [locale]/ pages, manifest, icons, special pages
-  environment/     the env schema (owner-prefixed names)
-  features/        auth, errors, i18n, metadata, navigation, pwa: thin bindings
-  shared/          constants (LAURA, page information), components, test helpers
+  app/             pages and Next's special files
+  environment/     the env variables, checked at start
+  features/        what each part of the app does
+  shared/          constants, components, test helpers
 ```
 
-An App holds only its descriptor (`LAURA` in `src/shared/constants/laura.ts`),
-its words, its Ocean dressing and its pages; the frame, account menu, sign-in
-pages, notices, PWA pieces and page information are shared packages
-(`packages/ui`, `packages/core`, `packages/auth`, `packages/design`). Where each
-one lives and what Laura binds: `docs/guides/laura.md`.
+The frame, account menu, sign-in pages, notices and install support are not
+here: they come from the shared packages.
 
-## 🔧 Development
+## 🔑 Environment
 
-```bash
-cp .env.example .env.development   # Local values; see the table below
-pnpm --filter @allonfire/laura dev       # :3200
-pnpm --filter @allonfire/laura test      # unit tests
-pnpm --filter @allonfire/laura test:browser
-pnpm --filter @allonfire/laura test:e2e  # production build on :3210, with the API
-pnpm --filter @allonfire/laura preview   # production build on :3220
-```
-
-`pnpm dev` from the repo root starts both Apps, the API and the Local services;
-over Tailscale, see the root `README.md` (Local).
-
-## 🔑 Environment Variables
-
-Every variable is documented in `.env.example`.
+Start from `.env.example`.
 
 | Variable | Required | Description |
 |----------|:--------:|-------------|
@@ -75,9 +67,22 @@ Every variable is documented in `.env.example`.
 | `API_AUTH_URL` | yes | The API's Auth address for the server |
 | `NEXT_PUBLIC_API_URL` | yes | The API's address for the browser, baked in at build |
 | `AUTH_APP` | yes | `LAURA`: the App a sign-in is for |
-| `AUTH_COOKIE_DOMAIN` | | Production: the parent domain the Apps share Session cookies on |
-| `LAURA_URL` | yes | Laura's own address; build and runtime must match |
+| `AUTH_COOKIE_DOMAIN` | | The parent domain the apps share the Session cookie on |
+| `LAURA_URL` | yes | This app's own address; build and runtime must match |
 | `TELEMETRY_*` | | No endpoint, no telemetry |
+
+## ⚠️ Watch out
+
+- It reads the API only: no database client and no Better Auth here.
+- `NEXT_PUBLIC_API_URL` and `LAURA_URL` are set at build time: change one, build again.
+
+## 📚 More
+
+| You want to | Read |
+|-------------|------|
+| know its pages, API routes, tables, caches and Roles | [Laura guide](../../docs/guides/laura.md) |
+| work on any Next App | [Next Apps](../../docs/guides/next-apps.md) |
+| open it on your phone | [Local and the tailnet](../../docs/guides/local.md) |
 
 ## 🐙 Credits
 

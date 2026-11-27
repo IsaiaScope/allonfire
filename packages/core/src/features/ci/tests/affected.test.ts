@@ -1,6 +1,6 @@
 // @module-tag unit
 import { stringifyJson } from "../../../shared/utils/json";
-import { affectedFrom, everything } from "../affected";
+import { affectedFrom, everything, unitFolders } from "../affected";
 
 const packagesAt = (paths: string[]) =>
   paths.map((path) => ({
@@ -87,5 +87,19 @@ describe("affectedFrom", () => {
 describe("everything", () => {
   it("lists every App and every Deploy unit, the migration first", () => {
     expect(everything(ALL)).toEqual(EVERY_UNIT);
+  });
+});
+
+describe("unitFolders", () => {
+  it("names the folder of every Deploy unit, the migration's included", () => {
+    expect(unitFolders(everything(ALL))).toEqual([
+      "packages/database",
+      "apps/api",
+      "apps/back-office",
+    ]);
+  });
+
+  it("is empty when nothing deploys", () => {
+    expect(unitFolders({ apps: [], deploy: [] })).toEqual([]);
   });
 });

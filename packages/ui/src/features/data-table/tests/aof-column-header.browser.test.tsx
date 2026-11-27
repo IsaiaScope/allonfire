@@ -69,8 +69,13 @@ describe("AOFColumnHeader menu", () => {
     await render(<Harness />);
     page.getByRole("button", { name: "Size" }).element().focus();
     await userEvent.keyboard("{Enter}");
-    await expect.element(page.getByRole("menu")).toBeVisible();
-    await userEvent.keyboard("{ArrowDown}{Enter}");
+    // The menu shows before the focus moves in, a frame later: a key pressed
+    // in between goes nowhere, so each one waits for the focus it acts on.
+    const item = (name: string) => page.getByRole("menuitemcheckbox", { name });
+    await expect.element(item("Asc")).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    await expect.element(item("Desc")).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
     await expect
       .poll(() => reported.sorting)
       .toEqual([{ desc: true, id: "size" }]);

@@ -1,26 +1,33 @@
 "use client";
 
+import { API } from "@allonfire/api/shared/constants/api";
 import type { HostLanguage } from "@allonfire/core/features/i18n/constants/locales";
 import { aofErrorMeta } from "@allonfire/core/features/next/query/utils/aof-query-errors";
+import { exportName } from "@allonfire/storage/features/image/utils/export-name";
+import { AOFExportActions } from "@allonfire/ui/features/image/components/aof-export-actions";
 import { AOFLightbox } from "@allonfire/ui/features/image/components/aof-lightbox";
+import { AOFLightboxButton } from "@allonfire/ui/features/image/components/aof-lightbox-button";
 import { aofAltFor } from "@allonfire/ui/features/image/utils/alt-for";
-import { AOFButton } from "@allonfire/ui/shared/components/aof-button";
-import { AOFTooltip } from "@allonfire/ui/shared/components/aof-tooltip";
+import { AOF_TOAST, aofToast } from "@allonfire/ui/shared/hooks/use-aof-toast";
 import { IconTrash } from "@tabler/icons-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { api } from "@/features/api/utils/api";
 import { OceanAlert } from "@/shared/components/ocean-alert";
 import { OceanArt } from "@/shared/components/ocean-art";
 import { MASCOT } from "@/shared/constants/mascots";
 import { GALLERY } from "../constants/gallery";
 import { usePhotoGone } from "../hooks/use-photo-gone";
 import type { GalleryItem } from "../utils/feed-patch";
-import { removePhotoMutation } from "../utils/gallery-mutations";
+import {
+  invalidateGallery,
+  removePhotoMutation,
+} from "../utils/gallery-mutations";
 import { FavoriteControl } from "./favorite-control";
 import { PreviewPicture } from "./preview-picture";
 
-/** The toolbar's own controls: the heart, and for an Admin Remove (it only asks: the confirm acts). */
+/** The toolbar's own controls: the heart, Download and Share of the photo's Export, and for an Admin Remove (it only asks: the confirm acts). */
 const PreviewActions = ({
   canMark,
   onRemove,
@@ -31,6 +38,31 @@ const PreviewActions = ({
   photo: GalleryItem;
 }) => {
   const t = useTranslations("Gallery.remove");
+  const tPreview = useTranslations("Gallery.preview");
+  const tellDownloadFailed = useCallback(
+    () => aofToast(tPreview("downloadFailed"), "error"),
+    [tPreview]
+  );
+  // At the top: the toaster's own place would cover the button to tap next.
+  const tellShareReady = useCallback(
+    () =>
+      aofToast(tPreview("shareReady"), "info", {
+        // It asks for a tap: it stays as long as a warning does.
+        ...AOF_TOAST.NEEDS_READING,
+        position: GALLERY.SHARE_READY_TOAST_POSITION,
+      }),
+    [tPreview]
+  );
+  const tellShareFailed = useCallback(
+    () => aofToast(tPreview("shareFailed"), "error"),
+    [tPreview]
+  );
+  // The read drops the removed photo; the preview then closes and says so (`usePhotoGone`).
+  const queryClient = useQueryClient();
+  const readAgain = useCallback(
+    () => invalidateGallery(queryClient),
+    [queryClient]
+  );
   return (
     <>
       <FavoriteControl
@@ -40,17 +72,24 @@ const PreviewActions = ({
         key={photo.id}
         surface="bar"
       />
+      <AOFExportActions
+        exportUrl={api[API.VERSION.CURRENT].images[":id"].export
+          .$url({ param: { id: photo.id } })
+          .toString()}
+        fileName={exportName(photo)}
+        labels={{
+          download: tPreview("download"),
+          share: tPreview("share"),
+        }}
+        onDownloadFailed={tellDownloadFailed}
+        onGone={readAgain}
+        onShareFailed={tellShareFailed}
+        onShareReady={tellShareReady}
+      />
       {canMark ? (
-        <AOFTooltip label={t("action")}>
-          <AOFButton
-            aria-label={t("action")}
-            onClick={onRemove}
-            size="icon"
-            variant="ghost"
-          >
-            <IconTrash aria-hidden className="size-6" />
-          </AOFButton>
-        </AOFTooltip>
+        <AOFLightboxButton label={t("action")} onClick={onRemove}>
+          <IconTrash aria-hidden />
+        </AOFLightboxButton>
       ) : null}
     </>
   );
@@ -160,9 +199,11 @@ export const PhotoPreview = ({
   const alt = current ? aofAltFor(current.alt, language) : "";
   const caption =
     alt === "" ? undefined : (
-      <div className="flex min-w-0 max-w-full items-center gap-2.5 rounded-lg border border-border bg-card py-1.5 pr-4 pl-2.5 shadow-sm">
+      <div className="flex h-10.5 min-w-0 max-w-full items-center gap-2.5 rounded-lg border border-border bg-card pr-4 pl-2.5 shadow-sm">
         <OceanArt art={MASCOT.CRUMB.gallery} className="size-7" />
-        <p className="truncate font-heading text-lg leading-snug">{alt}</p>
+        <p className="wrap-break-word line-clamp-2 min-w-0 font-heading text-sm leading-tight">
+          {alt}
+        </p>
       </div>
     );
   const actions = current ? (

@@ -7,181 +7,90 @@
   <img src="https://img.shields.io/badge/Zod-4-3068B7?logo=zod&logoColor=white" alt="Zod" />
 </p>
 
-<p align="center">The Auth module: signing in, Sessions and the access rules, mountable by any Hono backend and read by every Next App through it.</p>
+<p align="center">
+  Sign-in, Sessions, access guards and User management: mounted by a Hono backend, and used by a Next App through it.
+</p>
 
-## What it is
+---
 
-Better Auth's configuration, the Roles and Apps a User can hold, pure access
-predicates, a Hono adapter (routes, Session loader, guards) and the OpenAPI
-fragment a host merges into its own document. The API is the only backend that
-mounts it today.
+## 🔧 Use it
 
-A Next App never runs Better Auth itself, and holds no auth logic either:
-`features/next` signs in and out (server actions), guards pages, reads and
-renews the Session, all by calling the
-API from the App's server and setting the cookies it answers with on the
-App's own response. An App sets `AUTH_APP` and `API_AUTH_URL`
-(`environment/next-environment`, extended into its env; neither has a default),
-plus `AUTH_COOKIE_DOMAIN` where the API sets one (`authRoutes` drops its `Domain` from a cookie answered to an Origin outside it, as a Local `localhost` page, and sign out clears with the same rule)
-and draws its own components; who it lets in is `canEnterApp` with the App's
-row in `ACCESS.APP_SETTINGS` (its floor and Registration, ADR 0019), the same rule
-the API's `requireApp` applies.
-The old Next-bound package lives on in `packages/auth-old`, untracked and
-outside the workspace, kept only as reference.
+| I want to | Use |
+|-----------|-------------------------------------------|
+| run auth in a Hono backend | `createAuth` with `toAuthLike`, then `authRoutes`, `sessionLoader`, `authLimit`, `authOpenApi` |
+| keep a route to some people | `requireSession()`, `requireApp(app, min?)`, `manageGuard(canManage)` |
+| mount the User management routes | `userRoutes(deps)` |
+| sign in, sign out or reset a password in a Next App | the actions `signIn`, `signOut`, `requestPasswordReset`, `resetPassword` |
+| keep a page signed-in | `withAppSession`, `requireAppSession`, `hasSectionRole` |
+| guard and renew in `proxy.ts` | `withSignInGate`, `withSessionRefresh` |
+| test without a real instance | `stubAuth`, `sessionFor`, `moduleTestHost`, `stubUserDeps` |
 
-Everything the adapter touches goes through the `AuthLike` port
-(`basePath`, `handler`, `getSession`, `openApi`), so a test passes `stubAuth()` instead of a
-real instance.
+Imports are per file: [`package.json`](package.json) lists the exports, and each one's comment has its rules.
 
-## Exports
-
-Roles and Apps are the Prisma enums, imported from
-`@allonfire/database/enums` (`Role.ADMIN`, `App.LAURA`); this package keeps
-no copy of them. A User's Role is per App: the Session's `user.memberships`
-lists each App they belong to and their Role there. HTTP statuses and methods come from
-`@allonfire/core/features/http/constants/http`.
-
-| Export | Contents |
-|--------|----------|
-| `./environment/environment` | `authEnvSchema` (`AUTH_SECRET`, `AUTH_URL`, `AUTH_COOKIE_DOMAIN` (optional: the parent domain the Session cookies are set for), `AUTH_RATE_LIMIT_KEY_PREFIX`, `AUTH_RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`) to spread into a host's env |
-| `./features/hono/guards/middleware/require-app` | `requireApp(app, min?)` — 403 unless the User is allowed into it (`canEnterApp` from `@allonfire/database/features/auth/access/access`: a Membership there whose Role reaches the App's floor in `ACCESS.APP_SETTINGS`); mount it once per App. `min` raises the door for one Section (`requireApp(App.LAURA, Role.ADMIN)`, ADR 0032) and never lowers the floor |
-| `./features/hono/guards/middleware/require-session` | `requireSession()` — 401 when anonymous |
-| `./features/hono/guards/utils/manage-guard` | `manageGuard(canManage)` — 401 without a Session, 403 unless the Host's `canManage({ sessionId, userId })` says yes (`CanManage`); every Admin-only route takes it, never a guard of its own |
-| `./environment/next-environment` | `nextAuthEnv` (`API_AUTH_URL` and `AUTH_APP`, required; `AUTH_COOKIE_DOMAIN`, optional: the API's own value, so Sign out clears the cookies even when the API does not answer) for a Next App to extend its env with |
-| `./features/next/actions/password-reset` | `requestPasswordReset(locale, resetPage, previous, formData)` (`{ sent: true }` for any address, else `{ error }`) and `resetPassword(locale, token, previous, formData)` (Sign in once set, else `{ error }`): server actions for the Forgot and Reset password forms |
-| `./features/next/actions/sign-in` | `signIn(locale, previous, formData)` — server action for `useActionState`, locale bound: home once signed in, else `{ error }` |
-| `./features/next/actions/sign-out` | `signOut(locale)` — server action, locale bound: ends the Session, redirects to Sign in |
-| `./features/next/components/with-app-session` | `withAppSession(Page, fallback, { minRole }?)` — wraps every signed-in page: `requireAppSession` runs beside the page behind its own `<Suspense>` and redirects anyone the App keeps out; the page sits in its own `<Suspense>` showing `fallback` for its data, so a page without request-time data is in the static shell; a Section above the App's floor passes its `minRole`, and a lower Role is sent Home |
-| `./features/next/utils/redirect-to` | `redirectTo(locale, path)` (an unknown locale falls back to the first language, `languageOf`) — an action's form binds the locale (`action.bind(null, locale)`): `next/root-params` does not work in Server Actions yet |
-| `./features/next/utils/with-provider-pictures` | `withProviderPictures(config)` — lets an App's next/image optimize a sign-in provider's picture (`AUTH.PICTURE_HOSTS`, Google's today, over https), added to the App's own `remotePatterns`; a new provider adds its host there first |
-| `./features/next/utils/with-session-refresh` | `withSessionRefresh(proxy)` — wraps an App's proxy to renew the Session cookies |
-| `./features/next/utils/with-sign-in-gate` | `withSignInGate(proxy, { locales, sections })` (`sections`: the App's Sections as its descriptor lists them, `{ path, minRole? }`: each path after the locale, `""` for Home, is signed-in only; each one with a `minRole` is above the App's floor: a visit by a Session whose Role does not reach it goes Home (307), asked of the API only on those paths) — wraps an App's proxy to send a visit with no Session cookie to a signed-in page straight to Sign in (307), and a visit to Sign in or Forgot password by someone the App already lets in (asked of the API) to Home (307); Reset password always renders |
-| `./features/next/types/auth-state` | `SignInState`, `ForgotState`, `ResetState`: what each action hands back to its form (`useActionState`) |
-| `./features/next/utils/session` | `getSession()` (`null` when signed out), `requireAppSession({ minRole }?)` — a page's guard, run through `withAppSession`: the Session of someone `AUTH_APP` lets in (`canEnterApp`, its row in `ACCESS.APP_SETTINGS`) whose Role reaches `minRole` when given (`hasSectionRole`, `hasRoleIn` in `AUTH_APP`), or a redirect: to Sign in for someone kept out, Home for a Role below the Section's |
-| `./features/openapi/openapi` | `authOpenApi(auth)` — Better Auth's paths under `auth.basePath`, tagged `Auth` |
-| `./features/hono/rate-limit/middleware/auth-limit` | `authLimit(auth, limiter)` — runs the host's limiter on the routes that check a password (sign-in, change-password) only |
-| `./features/server/auth` | `createAuth(options)`, `Auth`, `toAuthLike(auth)` |
-| `./features/hono/session/middleware/session-loader` | `sessionLoader(auth)` — reads the Session once per request and passes on any cookie Better Auth refreshes while reading it |
-| `./features/hono/routes` | `authRoutes(auth)` — hands `GET`/`POST` under `auth.basePath` to Better Auth; mount it at the root |
-| `./shared/utils/auth-error-code` | `authErrorCodeSchema` (the values of `AUTH.ERROR_CODE`: `APP_FORBIDDEN`, `MAIL_UNAVAILABLE`, `PASSWORD_WEAK`, `REGISTRATION_CLOSED`) |
-| `./shared/constants/auth-schema` | `SignInError`, `ForgotError`, `ResetError`, `AppPath`: each the `z.infer` of an `AUTH` group (`AUTH.ERROR.*`, `AUTH.PAGE`) |
-| `./shared/constants/auth` | `AUTH`, everything the module fixes for every host: `AUTH.PATH.*` (`BASE`, the mount point, then `GET_SESSION`, `SIGN_IN_EMAIL`, `SIGN_UP_EMAIL`, `SIGN_OUT`, `CHANGE_PASSWORD`, `JOIN_APP`, and the three it disables: `OPENAPI_SCHEMA`, `OPENAPI_REFERENCE`, `VERIFY_PASSWORD`), `AUTH.LIMITED_PATHS`, `AUTH.PAGE.*` (`HOME`, `SIGN_IN`, an App's pages), `AUTH.HEADER.APP` (`x-aof-app`), `AUTH.COOKIE.*` (`MARKER`, `SESSION_DATA`), `AUTH.SESSION.*` (60 days, extended once a day, 5 min cookie cache), `AUTH.RATE_LIMIT.DEFAULT.*` (10 attempts / 15 min, `auth:` key prefix), `AUTH.LIMIT.SECRET_MIN_LENGTH`, `AUTH.LIMIT.API_TIMEOUT_MS` (10 s: how long an App's server waits for the API's auth routes), `AUTH.MAIL.PARAM.*` (`ERROR`, `TOKEN`, `VERIFIED`: the query parameters the mail links carry), `AUTH.ERROR_CODE`, `AUTH.ERROR.*` (`SIGN_IN`, `FORGOT`, `RESET`: an App translates each value), `AUTH.VAR.SESSION` (the Hono context key), `AUTH.METHODS`, `AUTH.OPENAPI_TAG`, `AUTH.DOC.JOIN_APP` |
-| `./features/users/hono/tests/stub-user-deps` | `stubUserDeps(overrides?)`: the User module's deps for a test (no access, writes throw, Avatars quiet); `userHost(session, deps)`, the module on `moduleTestHost` |
-| `./shared/tests/proxy-config` | tests only: `proxyConfig(() => import("./proxy"))` loads an App's `proxy.ts` for its matcher, the Session refresh, the sign-in gate and the locale middleware passed through |
-| `./shared/tests/stub-auth` | `stubAuth(overrides?)` (mounted at `/auth` unless `basePath` is overridden), `sessionFor(user?)` (a User in every App by default), `membershipsIn(role)` (that Role in every App), `cookieOf(response)` (the cookies it set, as one `cookie` header), `HOST_AUTH_PATH` |
-| `./shared/tests/test-host` | `moduleTestHost({ session, path, routes })`, the smallest host for an HTTP module's tests (a CodedError answers its code, errors and values; an HTTPException its status; anything else `INTERNAL_ERROR`), `json(method, body)` (a JSON request), `errorOf(response)` (the error it answered) |
-| `./shared/types/auth` | `AuthSession`, `AuthLike`, `OpenApiFragment` |
-| `./features/hono/types/variables` | `AuthVariables`, `AuthEnv` for a host's bindings; `SignedInEnv`, what a guard promises the handlers after it |
-
-## Directory structure
-
-The repo's package layout (`docs/guides/package-layout.md`):
-
-```
-src/
-  environment/   environment (authEnvSchema), next-environment (nextAuthEnv)
-  features/
-    hono/        the Hono adapter: routes/ (authRoutes), no constants of its own,
-                 types/variables (AuthEnv, SignedInEnv), tests/, and
-      guards/      middleware/{require-session,require-app},
-                   utils/guard, tests/ (incl. a type test)
-      rate-limit/  middleware/auth-limit, tests/
-      session/     middleware/session-loader, tests/
-    next/        a Next App's side, through the API: actions/{sign-in,sign-out},
-                 types/{proxy,auth-state},
-                 utils/{auth-client,redirect-to,refresh-session,session,
-                 with-provider-pictures,with-session-refresh,with-sign-in-gate,set-cookie,sign-in,sign-out}, tests/
-    openapi/     openapi (authOpenApi), tests/
-    server/      auth (createAuth, toAuthLike), routes/join-app,
-                 utils/registration, tests/
-  shared/
-    constants/   auth (AUTH), auth-schema (SignInError, ForgotError, ResetError, AppPath)
-    utils/       auth-error-code (authErrorCodeSchema), linked-picture
-    types/       auth (AuthSession, AuthLike, OpenApi*)
-    tests/       proxy-config (proxyConfig), stub-auth (stubAuth, sessionFor, membershipsIn),
-                 test-host (moduleTestHost, json, errorOf)
-```
-
-## Mounting it in a Hono backend
+How the API mounts it, cut down from `apps/api`:
 
 ```ts
 const auth = toAuthLike(
-  createAuth({ basePath: "/v1/auth", baseURL, secret, trustedOrigins })
+  createAuth({
+    avatarLink,
+    basePath: API.PATH.AUTH,
+    baseURL: env.AUTH_URL,
+    cookieDomain: env.AUTH_COOKIE_DOMAIN,
+    mail: authMail,
+    secret: env.AUTH_SECRET,
+    trustedOrigins: env.API_CORS_ORIGINS,
+  })
 );
 
-new Hono()
-  // Before the loader: Better Auth reads its own Session on its routes.
-  .route("/", authRoutes(auth))
-  .use(sessionLoader(auth))
-  .post("/v1/things", requireSession(), handler)
-  .route("/v1/laura", new Hono().use(requireApp(App.LAURA)).get(...))
-  // An Admin-only Section of the same App:
-  .route("/v1/laura-admin", new Hono().use(requireApp(App.LAURA, Role.ADMIN)).post(...));
+new Hono<AppBindings>()
+  .use(authRateLimit(auth, store)) // the host's limiter, wrapped in authLimit
+  .route(API.PATH.ROOT, authRoutes(auth))
+  .use(sessionLoader(auth));
 ```
 
-The `AuthLike` port carries the `basePath` given to `createAuth`, so the
-routes, the sign-in matcher and the OpenAPI paths all read it from there and
-nothing else can drift from it. Guards
-throw `HTTPException(401 | 403)`; the host's `onError` renders the response.
-An App's floor names the lowest Role allowed, never a list: Roles are ranked
-(`ACCESS.ROLE_RANK`, in `@allonfire/database`), and a Role added later slots between two ranks. Every guard
-types the Session as present for the handlers chained after it, so
-`c.get("session")` needs no null check there.
-Better Auth's own rate limiter is off. The host brings its own limiter, built
-with the `AUTH_RATE_LIMIT_*` env values, and wraps it in `authLimit(auth, limiter)`: the
-module decides which requests count (every route that checks or hashes a password,
-`AUTH.LIMITED_PATHS`), the host owns the store,
-the proxy hop count and the 429 body.
+## 🗂️ Where things are
 
-## Verification and password reset
+```
+src/
+  environment/   the backend's and a Next App's env schemas
+  features/
+    hono/        routes, Session loader, guards, rate limit
+    next/        a Next App's side: actions, page and proxy guards
+    openapi/     Better Auth's paths for the host's document
+    server/      createAuth, Registration, mail, joining an app
+    users/       User management routes and password rules
+  shared/        the AUTH constants, types, test helpers
+```
 
-`createAuth({ mail })` turns them on: a host's `AuthMail` (`sendVerification`,
-`sendPasswordReset`, `ready`). Sign-in then needs a verified email (a right
-password sends a fresh link, answering `EMAIL_NOT_VERIFIED`), links last an
-hour, and a reset ends every Session of the User. Sending runs after the
-response, so neither its time nor its failure tells whether an account
-exists. While `ready()` is false, the sending routes answer 503
-`MAIL_UNAVAILABLE` for every address. On `/verify-email` the `user.update`
-hook verifies with one conditional write (`verifyEmailIssuedAt`): a link
-issued before an Admin required verification again never counts. Without
-`mail`, neither email is ever sent and sign-in needs no verification.
+## ⚠️ Watch out
 
-## Registration
+| Trap | What to know |
+|------|--------------|
+| A Next App never runs Better Auth | it calls the API from its own server and sets the cookies the API answers with |
+| `API_AUTH_URL` in Production | the internal address: through the proxy, the per-IP limits count every visitor as one |
+| Mount order | `authRoutes` goes before `sessionLoader`: Better Auth reads its own Session there |
+| No limit on password guessing | Better Auth's limiter is off: the host brings one and wraps it in `authLimit` |
+| Better Auth's routes ignore `CodedError` | refuse there with `APIError` and an `AUTH.ERROR_CODE` ([ADR 0015](../../docs/adr/0015-http-modules-ship-as-packages-and-throw-coded-errors.md)) |
+| A revoked Session still passes | up to five minutes (cookie cache); Roles are read on every Session read |
+| Registering or joining is refused | the request needs `x-aof-app`, and every app is closed today (`ACCESS.APP_SETTINGS`) |
 
-Each App declares in `ACCESS.APP_SETTINGS` whether a visitor can register there
-(`registration`: the Role a newcomer gets, never Admin, or `null`). Every
-request that registers or joins names its App in `x-aof-app`, spelled as the
-enum key (`BACK_OFFICE`):
-
-- `POST /sign-up/email` creates the User with one Membership, in the named
-  App at its Registration Role; a closed App, an unknown name or no header
-  answers 403 `REGISTRATION_CLOSED` before the email is looked up.
-- `POST /join-app` (needs a Session) adds a Membership in the named open App;
-  a Membership already there is left alone, so a Role is never lowered.
-- `POST /sign-in/email` with `x-aof-app` answers 403 `APP_FORBIDDEN` to a
-  User the App does not let in, and leaves no Session or cookie behind.
-- `POST /sign-up/email`, `/reset-password` and `/change-password` answer 400
-  `PASSWORD_WEAK` to a new password that misses one of `passwordRules`:
-  Better Auth checks only its length.
-
-The codes are `AUTH.ERROR_CODE` in `./shared/constants/auth`. These
-refusals are Better Auth's `APIError`, not `CodedError`: Better Auth's handler
-answers them itself (ADR 0015). Every App is
-closed today.
-
-## Trade-off
-
-Sessions live in Postgres for 60 days from the last visit (extended at most
-once a day), behind Better Auth's five-minute cookie cache. A revoked
-Session reaches the guards up to five minutes late; a User's Memberships are
-read on every Session read, so a Role change counts at once (ADR 0019). See
-[ADR 0009](../../docs/adr/0009-auth-runs-in-the-api-sessions-in-postgres.md).
-
-## Tests
+## 🧪 Test it
 
 ```bash
+pnpm test:services
 pnpm --filter @allonfire/auth test
 pnpm --filter @allonfire/auth check-types
 ```
 
-Every test is `unit` (the Prisma client never connects unless a query runs) but `registration.integration.test.ts`, which registers, joins and signs in on the run's Test database.
+The services are for the `*.integration.test.ts` files, which run on a Test database.
+
+## 📚 More
+
+`Role`, `App` and the access rules live in [@allonfire/database](../database/README.md).
+
+| You want to | Read |
+|-------------|------|
+| build a signed-in page | [Next Apps](../../docs/guides/next-apps.md) |
+| see the API's guards in use | [API guide](../../docs/guides/api.md) |
+| know why auth runs in the API | [ADR 0009](../../docs/adr/0009-auth-runs-in-the-api-sessions-in-postgres.md) |
+| know how Roles and Registration work | [ADR 0019](../../docs/adr/0019-roles-are-per-app-memberships.md) |

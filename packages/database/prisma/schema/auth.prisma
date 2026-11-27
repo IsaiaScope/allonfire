@@ -1,5 +1,6 @@
 // The user base every App shares (ADR 0007). Better Auth owns these tables.
-// User lists Laura's models only because Prisma requires back-relations.
+// An App's models appear here only as the back-relations Prisma requires: one
+// per App Profile on Membership, none on User (ADR 0034).
 
 enum Role {
   ADMIN

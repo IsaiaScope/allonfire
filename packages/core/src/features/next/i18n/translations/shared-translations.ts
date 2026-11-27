@@ -7,8 +7,9 @@ export type SharedTranslations = typeof EN;
 
 /**
  * Text every App shows, under the reserved `Common` namespace; each App's own
- * translations are merged on top. `satisfies` fails when a base language has
- * none.
+ * translations are merged on top, and an App never defines `Common` itself.
+ * An error page that has no language (`global-error.tsx`) reads it in
+ * `I18N.DEFAULT_LANGUAGE`. `satisfies` fails when a base language has none.
  */
 export const SHARED_TRANSLATIONS = {
   en: EN,

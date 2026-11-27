@@ -39,3 +39,31 @@ Old Laura is already gone from the VPS. The only Laura items left are ones the r
 - No VPS delete task for old Laura (nothing exists). The plan keeps a short post-deploy check that the VPS still holds none of the items above, and the keep list.
 - Adds the production wiring the rebuilt Laura needs (compose service, `LAURA_HOST`, `LAURA_URL`, CORS origin).
 - Owner hand tasks: GHCR package check, `seed-photos` and Local bucket deletion after the upload, optional Docker prune.
+
+## Re-check, before the promotion (2026-11-26, read-only)
+
+Phase 7, Task 10. No value was printed and nothing on the VPS changed. `dev`, `test` and `prod` are all at 0.13.0, and none of their compose files has a `laura` service yet.
+
+| Check | Expected | Found | Match |
+|---|---|---|---|
+| Laura containers, images, volumes, networks | none | none | yes |
+| Traefik dynamic files naming Laura | none | `acme.json` holds a certificate entry for `laura.isaiariva.com` | no: a certificate, keep |
+| `LAURA_*` keys in the compose env (`code/docker/.env`) | none | `LAURA_URL` (`LAURA_HOST` not set) | no: `LAURA_URL` added ahead of Task 11 |
+| Dokploy projects naming Laura | none | none | yes |
+| Redis keys `*laura*` | none | none | yes |
+| Storage buckets | `image`, `telemetry` | `image`, `telemetry` | yes |
+| `laura` schema | `GameScore` (0 rows) | `Favorite`, `MemoryScore`, `Profile`, `ProfileFavorite` | no: 0008 to 0010 are already applied |
+| Liquibase, last three | not applied before the promotion | `0008`, `0009`, `0010` applied | no |
+| `auth."Membership"` | no `VIEWER` row | `laura` ADMIN 2, `back-office` ADMIN 2 (the 2026-11-17 audit counted one `laura` row) | yes for `VIEWER` |
+| `image."ImageApp"` rows | 0 | 0 | yes |
+| Postgres roles | none named for Laura | `allonfire`, `dokploy`, `mof`, `n8n` | yes |
+| GitHub secrets | `LAURA_URL` in `dev` and `prod` only | the same; no repository secret names Laura | yes |
+| `laura.isaiariva.com` | proxied, 404 | Cloudflare addresses, 404 | yes |
+
+Later on 2026-11-26: `LAURA_HOST` was added to the Dokploy compose env through Dokploy's API (26 keys became 27, every other line unchanged, no deploy started). The VPS file gets it at the next deploy.
+
+The plan's expectations that are out of date: the `Role` enum keeps `VIEWER` after `0008` (a data-only changeset), and `0010` replaced `GameScore` with `MemoryScore`.
+
+KEEP list, updated: objects of the `image` bucket; the `auth` schema; the `laura` schema with `Favorite`, `MemoryScore`, `Profile` and `ProfileFavorite`; the `laura.` Cloudflare record and its certificate; `LAURA_HOST` and `LAURA_URL` in the compose env and `LAURA_URL` in GitHub `dev` and `prod`; `dokploy-postgres`, `dokploy-redis`, the `monorepoonfire` application and its database; the volumes `allonfire-db-backups` and `storage_data` (and `old_storage_data` until Task 12 decides).
+
+Later on 2026-11-26 (read-only): the Cloudflare `laura` record is proxied to the VPS and SSL/TLS is Full (strict), read in the dashboard; the VPS and the Dokploy container read the `:prod` manifests of `api`, `back-office` and `allonfire-laura`; the VPS holds a valid Let's Encrypt certificate for `laura.isaiariva.com`; the latest Dokploy deployment is the one of 2026-11-25, so adding `LAURA_HOST` started none. The owner's reading of the KEEP list is still open.

@@ -1,294 +1,101 @@
-# @allonfire/api
+<h1 align="center">@allonfire/api</h1>
 
-The HTTP backend for the AllOnFire apps. Hono on Node, auth via the Auth module
-(`packages/auth`) under `/v1/auth`, the Images every App shows under
-`/v1/images`, each App's own routes under `/v1/<app>` (`/v1/laura`), and the
-admin console under `/v1/back-office` (ADR 0035).
+<p align="center">
+  <img src="https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=white" alt="Hono" />
+  <img src="https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white" alt="Node" />
+  <img src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Zod-4-3068B7?logo=zod&logoColor=white" alt="Zod" />
+</p>
 
-## Running it
+<p align="center">
+  The HTTP API the apps share: sign-in, images, mail and each app's own data. Hono on Node, port 3300.
+</p>
 
-```bash
-cp .env.example .env
-pnpm --filter @allonfire/api dev      # starts the redis, telemetry and storage services via predev, then tsx watch
-```
+---
 
-Then: `http://localhost:3300/health`, `/ready`, `/reference`.
+## 🔧 Use it
 
-`.env` is required — `dev` passes `--env-file=.env` to Node, so a missing file
-fails at startup rather than deep inside the env schema. Tests do not read it;
-they get their values from `vitest.setup.ts`.
+| I want to | Use |
+|-----------|-----|
+| read and try the endpoints | `http://localhost:3300/reference` (the document is `/openapi.json`) |
+| call it with types | `ApiType` from `@allonfire/api/client`, as the type of Hono's `hc` |
+| add a route | a folder under `src/features/`, mounted in `src/app.ts` ([API guide](../../docs/guides/api.md)) |
 
-## Environment
+In Production the reference is served only with `API_ENABLE_DOCS=true`.
 
-Every variable is documented in `.env.example`. `DATABASE_URL`, `API_REDIS_URL`,
-`API_CORS_ORIGINS`, `AUTH_SECRET`, `AUTH_URL`, `STORAGE_ENDPOINT`,
-`STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_IMAGE_SERVER_URL`,
-`STORAGE_IMAGE_SERVER_KEY` and `STORAGE_IMAGE_SERVER_SALT` are required — the
-process exits at boot if any is missing. The last three are the image server's
-(imgproxy) address and the hex key and salt the API signs every picture link
-with; the server checks them with the same pair. The `STORAGE_*` names say storage, not MinIO, so the
-server behind them can change without renaming them.
-
-## Auth
-
-Better Auth runs inside the API, built from the Auth module (`packages/auth`)
-and mounted at `/v1/auth`. `src/features/auth/auth.ts` builds the instance;
-`createApp` loads the Session once per request, after the rate limiters.
-
-- **Guards** — `requireSession` and `requireApp(App.LAURA)`
-  (mounted once per App) from `@allonfire/auth/features/hono/guards/middleware/*`. They throw
-  `HTTPException(401 | 403)` and `onError` renders the localised problem
-  document. A failing Session lookup is a 500, never anonymous.
-- **Auth bucket** — the routes where Better Auth checks or hashes a password,
-  `POST /v1/auth/sign-in/email`, `POST /v1/auth/sign-up/email` and
-  `POST /v1/auth/change-password`, share one
-  limit on top of the global one: `AUTH_RATE_LIMIT_MAX` attempts per
-  `AUTH_RATE_LIMIT_WINDOW_MS` per client IP (default 10 per 15 minutes). Like
-  the global limiter it fails open when Redis is down.
-- **Sessions live in Postgres**, read through Better Auth's five-minute cookie
-  cache, so a revoked Session reaches the guards up to five minutes late. A
-  User's Memberships are read on every Session read, so a Role change counts
-  at once (ADR 0019). Redis db 2 stays reserved; see ADR 0009.
-- **Docs** — Better Auth's endpoints appear in `/openapi.json` and `/reference`
-  under the `Auth` tag. The plugin's own schema route and reference page are off.
-- **Registration is per App** (`ACCESS.APP_SETTINGS`, ADR 0019): `/sign-up/email` and
-  `/join-app` need `x-aof-app` naming an App open to it, otherwise 403
-  `REGISTRATION_CLOSED`; every App is closed today. A sign-in with `x-aof-app`
-  answers 403 `APP_FORBIDDEN` to a User that App does not let in, before any
-  Session is written.
-
-## Images
-
-The Image module from `@allonfire/storage`, mounted at `/v1/images` (ADR 0013,
-ADR 0015). Its errors are `CodedError`s the API renders as its own localized
-problem documents. Files go to the closed
-`image` bucket as `<uuid>.avif`, prepared by `@allonfire/storage` (HEIC
-decoded, upright, EXIF stripped, capped at 2560px, AVIF, 16px blur); rows live in
-`image."Image"`, placements in `image."ImageApp"`. Apps show them through the
-image server, by the links the API signs (`docs/guides/images.md`, ADR 0027).
-
-| Endpoint | Guard | Does |
-|---|---|---|
-| `GET /v1/images?app=&page=&perPage=&search=&sort=` | none | a numbered page of the Images visible in `app` (any App when left out): placed there, and public or in an App the User enters; newest upload first, or in the `sort` order (`sort` is `created.desc,size.asc`: up to three of `name`, `created`, `size`, `access`, each `asc` or `desc`, ADR 0031; an unknown column, direction or duplicate is dropped, a `sort` over 200 characters reads as none, never a 400; the `id` is always the last tiebreak) (`search` is one string of `access:public,private`, `app:laura,back_office`, `created:2026-11-26..2026-11-28` (whole UTC days, both ends included; one day `created:2026-11-26`) and `input:<text>` pairs, ADR 0026, ADR 0031, the text matching the alt in any language or the file name, ignoring case; an unknown field or value is dropped); never 403. Answers `images`, `page`, `pageCount`, `total` and `totalBytes` of every visible Image |
-| `GET /v1/images/:id` | none; 404 unless visible in some App | one Image |
-| `POST /v1/images` | Session; `ADMIN` in every App named (a User who is `ADMIN` in no App is refused before the body is read) | multipart: repeated `file` parts plus one `meta` JSON part, `[{ apps: [App], alt: { en, it, …any other ISO 639-1 language }, access? }]` in file order (`access` is `PUBLIC` or `PRIVATE`, private when left out: ADR 0027) |
-| `PATCH /v1/images` | Session; `ADMIN` in each App whose placement is added, removed or switched public; for `alt`, in every App the Image is in | `[{ id, apps?, alt? }]`, each Image once: `apps` is the full new list; a `public` left out keeps the placement's own |
-| `DELETE /v1/images` | Session; with `app`, `ADMIN` there; without, in every App the Image is in | `{ ids, app? }`: with `app`, takes the Images out of it and deletes those left in none; without, deletes them everywhere; rows first, then files |
-
-- **All or nothing.** One bad file rejects the whole upload (415), an unknown
-  id rejects a whole PATCH or DELETE (404). A failed insert deletes the files
-  it already stored.
-- **Limits:** 20 MiB per file and 90 MiB per upload (413 naming the limit
-  crossed), 20 files per upload, 100 items per PATCH or DELETE. The upload
-  skips the API-wide 1 MiB body limit and brings its own.
-- **App values are the enum names**, `LAURA` and `BACK_OFFICE`, not the
-  lowercase the database stores. An App appears once in a list (400
-  otherwise). A batch with one Image the User cannot see answers 404, before
-  any 403, and writes nothing.
-- **Closed to anonymous reads.** The `image` bucket holds private Images and
-  Avatars, so it carries no policy: Locally `storage-init` runs
-  `mc anonymous set none`, in Production the one-shot `storage-setup` deletes
-  any bucket policy (`setupImageBucket`), as does every test run's bucket. A
-  browser reaches a picture only through a link the API signs, served by the
-  image server (docs/guides/images.md). Never give the bucket an anonymous
-  policy again, read-only included.
-
-## Laura
-
-Laura's own routes, under `/v1/laura` (ADR 0035). Each needs a Session with a Laura Membership.
-
-| Endpoint | Guard | Does |
-|---|---|---|
-| `GET /v1/laura/gallery?cursor=&limit=` | `requireApp(LAURA)` | a keyset page of the Images placed in Laura, newest first; `favorite` is the caller's own flag. The first read makes the caller's Laura Profile once; 403 when they have no Laura Membership now |
-| `GET /v1/laura/favorites?cursor=&limit=` | `requireApp(LAURA)` | a keyset page of the caller's own Favorites, most recently marked first (same first-use step) |
-| `PUT /v1/laura/favorites/:imageId` | `ADMIN` in Laura, read now | marks the Image for every Laura User; 404 when it is not placed in Laura; marking again changes nothing |
-| `DELETE /v1/laura/favorites/:imageId` | `ADMIN` in Laura, read now | clears it for every Laura User; an Image that is not a Favorite is no error |
-| `GET /v1/laura/games/memory/deck` | `requireApp(LAURA)` | 6 random Images placed in Laura and visible to the caller, as `id`, `alt`, `blurDataUrl`, `width`, `height` and signed `srcSet`, with `needed: 6` (fewer Images when Laura holds fewer). Answers `no-cache`: a draw is never kept |
-| `POST /v1/laura/games/memory/scores` | any Laura Member, read now | saves a finished game `{ moves, timeMs }` for the Session's User (a `userId` in the body is ignored) and answers `201` with `rank`, `isPersonalBest` and `isGlobalBest`. A game no player could have produced is refused with `400` `IMPLAUSIBLE_SCORE` and nothing is written. The same moves and time sent again within 30 seconds (a retry after a lost answer) is the game already saved: no second row, the same `id` and answer. A Member revoked while their game is saved gets `403`. One User can save 10 games a minute (counted by User, not address) and a game cannot end sooner after their last save than its `timeMs`: either answers `429` `RATE_LIMITED` with the seconds to wait |
-| `GET /v1/laura/games/memory/leaderboard` | `requireApp(LAURA)` | the top 10 players (best game of each current Member: fewest moves, then the faster time, then the earlier game), the caller's own `me` (best, rank, games, which might be past 10) and everyone's `stats`; entries carry `isMe`, a name, the player's email under it (Laura is private and its Members know each other: the owner's choice, in `schemas.ts`) and a signed Avatar link, never a user id. Answers `no-cache` |
-
-A Laura Admin has no extra power over Memory. The plausibility rule, `isPlausibleScore` (`@allonfire/database/features/apps/laura/utils/is-plausible-score`), reads `MEMORY_RULE` (`@allonfire/database/features/apps/laura/constants/memory-rule`): `moves` (`MOVES.MIN` to `MOVES.MAX`) from 6 to 1000, `timeMs` (`TIME.MIN_MS_PER_MOVE`) at least `700` ms per move and at most one day, whole numbers only. The board holds a pair face up 800 ms, so an honest game is never under the floor; a cheater with believable numbers passes, since the leaderboard is for a couple.
-
-## Back Office
-
-The admin console, under `/v1/back-office` (ADR 0035): routes only Back Office Admins call, tagged `Users` and `Overview` and grouped under `Back Office` in the docs. Each needs a Session whose User is a Back Office `ADMIN`; the writes read the User and the Session fresh. The User module is `packages/auth`'s and keeps its own `/users` paths; this API mounts it here.
-
-| Endpoint | Does |
-|---|---|
-| `GET /v1/back-office/users?page=&perPage=&search=&sort=` | a numbered page of Users, filtered and sorted |
-| `POST /v1/back-office/users` | adds a User with their Memberships |
-| `DELETE /v1/back-office/users` | deletes the Users named (never the caller) |
-| `GET /v1/back-office/users/:id` | one User, with their Version |
-| `PATCH /v1/back-office/users/:id` | edits the name, the Memberships and the password on the Version the form was opened on (409 when the User changed since) |
-| `PUT /v1/back-office/users/:id/avatar`, `DELETE ...` | sets or clears a User's Avatar |
-| `GET /v1/back-office/overview/users` | Session; a Back Office `ADMIN`, read now. `total`: every User once, and `byApp`: for each App that has a member, its `count` of members and its `admins` (a User in two Apps counts in both) |
-| `GET /v1/back-office/overview/storage` | Session; a Back Office `ADMIN`, read now. `buckets`: each bucket the API reads, `{ id, reading }` (`reading`: `objects`, `bytes`, `asOf`; Avatars included in the Images' bucket; listed at most every 5 minutes, kept in Redis per bucket; `null` when it cannot be listed), and `images`: the Images by App (`byApp`: public and private bytes and counts) with `total`, `totalBytes`, and `avatars`: the Avatars by App (`byApp`: bytes and count; a User's file counts in every App they are in), listed fresh |
-
-A User changing their own data later gets separate routes (`/v1/me`), never a "self or Admin" branch here.
-
-## Mail and Services
-
-Verification and password reset emails go through the MAIL Service's
-providers in slot order, each reached over its own HTTP API. Everything but
-where a provider is reached is edited on the Back Office's Services page.
-
-- **Environment, per slot.** `API_MAIL_PROVIDER_<slot>_URL` (the provider's API
-  base, https only), `_KEY` (its API key) and `_DRIVER` (the API shape it
-  speaks) in the API's environment (Dokploy in Production; never the repo).
-  Two drivers exist: `key-header-envelope` (an `api-key` header and a nested
-  sender, Brevo's v3 API: URL `https://api.brevo.com/v3`) and `bearer-flat`
-  (`Authorization: Bearer` and a flat body, Resend's API: URL
-  `https://api.resend.com`). A slot missing any of the three is skipped and
-  logged (`mail provider has no usable URL, key and driver in the
-  environment`). Rotating a key replaces its value and redeploys the API.
-- **Keys.** The SMTP keys of the old setup do not work: Brevo's REST API needs
-  a v3 API key (`xkeysib-…`), Resend's an API key. Brevo: a Full access key
-  works; a Restricted key needs Transactional email: All and Account: Read.
-  Resend: the key must be allowed to read metrics (a sending-only key may be
-  refused; the rings then draw empty and an error toast says so).
-- **Provider setup.** Brevo: allow the VPS's IP under Security, Authorized
-  IPs, then turn blocking on. Resend: verify the sending domain (one on the
-  free plan). Each provider's sender address goes on the Services page; it is
-  required, and a provider is enabled only with one. Names are labels an
-  Admin types; the seed names them `Provider 1` and `Provider 2`.
-- **DNS.** Before sending from the deployment domain, read the existing SPF,
-  DKIM, DMARC and return-path records, then add each provider's own beside
-  them (one SPF record, every sender included); never replace a record
-  another service relies on. A sending address is not an inbox.
-- **Quota.** Nothing here counts it. A provider that answers for want of room
-  (its daily or monthly quota, or a rate limit) or refuses is skipped for the
-  next one. The Services page's two rings read what each provider's own API
-  says it sent (today, the UTC day, and the last 31 days), kept 30 seconds in
-  Redis: a page and its prefetch ask the vendor once. A Resend-shaped
-  provider's metrics are built in buckets and trail a send by up to ~10
-  minutes; that lag is accepted, the count catches up on its own. `GET /v1/services`
-  takes `?type=` so a page asks only its own type's providers. A Brevo-shaped
-  provider's report is built with a delay while its credits move at once, so on
-  a `free` plan the day's count is the larger of the report and the card's
-  daily limit less the credits left (the ring's maximum is the card's);
-  the limits are the one the provider reports, else the day and month
-  limits an Admin set on the provider's card. They only size the rings and
-  never stop a send. Sends made outside AllOnFire count too, since the
-  provider counts them.
-- **Uncertain sends.** A timeout after the handoff is `uncertain`: never
-  retried through another provider, so nobody gets an email twice. The reader
-  asks again (sign in, or Forgot password), at most five emails per address in
-  any rolling hour.
-- **Keep-alive.** `POST /v1/services/keep-alive` with
-  `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>`, daily from the workflow
-  service (`docs/guides/vps-workflow.md`): a provider with no acceptance in 30
-  days sends one check email to `API_KEEP_ALIVE_RECIPIENT`, so no provider
-  deactivates an idle key (Brevo: after 90 days).
-- **What to watch.** The Services page (the rings, the last acceptance) and
-  the log lines `mail provider rejected the message`, `mail provider outcome
-  unknown; not retried elsewhere`, `no mail provider could take the message`,
-  `mail provider has no room left; trying the next`, `mail provider usage
-  could not be read` and `email refused: the per-address limit cannot count`.
-- **Rollback.** Turn the MAIL Service off on the Services page: nothing
-  sends, and sign-in of an unverified User answers that a link is on its way
-  without one leaving. Liquibase's rollback of `0007-service-mail` drops the
-  `service` schema and `User.verificationRequiredAt`; roll back the code that
-  reads them first.
-
-## Writing routes
-
-**Routes must be chained.** `hc<AppType>` derives client types from the chained
-return value; separate statements silently degrade them to nothing.
+Routes are always one chain, or the typed client loses them:
 
 ```ts
-// correct
-export const createThingRoutes = (deps: Deps) =>
-  new Hono()
-    .get("/things", (c) => c.json({ things: [] }))
-    .post("/things", validator("json", schema, invalidHook), (c) => c.json({}, 201));
-
-// wrong — client types become unusable, and no runtime test will notice
-const app = new Hono();
-app.get("/things", handler);
+export const servicesRoutes = (deps: ServicesDeps) =>
+  new Hono<AuthEnv>()
+    .post(SERVICES.PATH.KEEP_ALIVE, ...keepAliveHandlers(deps))
+    .get(SERVICES.PATH.LIST, ...listHandlers(deps))
+    .patch(SERVICES.PATH.SERVICE, ...serviceHandlers(deps));
 ```
 
-`src/client.test-d.ts` guards this. If it starts failing, a route was un-chained.
+| Under | What is there |
+|-------|---------------|
+| `/health`, `/ready` | probes, unversioned |
+| `/v1/auth` | sign in and out, the Session, password reset, joining an app |
+| `/v1/images` | the images the apps show, and their JPEG Export |
+| `/v1/services` | the mail providers, and the daily keep-alive |
+| `/v1/<app>` | data one app owns, such as `/v1/laura` |
+| `/v1/back-office` | Users and overviews, for Back Office Admins |
 
-**Domain routes mount under `/v1`**, through `API.PATH.VERSION`
-(`src/shared/constants/api.ts`) — never a hard-coded string:
-
-```ts
-.route(API.PATH.VERSION, createThingRoutes(deps))
-```
-
-`/health` and `/ready` stay unversioned — infrastructure endpoints are not part
-of the API contract.
-
-**Handlers stay thin.** Domain logic lives in `@allonfire/database`. Validate,
-call a service, shape a response.
-
-## Redis
-
-One project-scoped instance, split by database index:
-
-| index | contents | expiry |
-|---|---|---|
-| 0 | rate-limit counters, incl. `ratelimit:auth:*` | always |
-| 1 | cache (reserved, unused) | always |
-| 2 | sessions (reserved, unused) | never |
-
-Eviction policy is server-wide, so the instance runs `volatile-lru` and only
-keys that are safe to lose carry a TTL. Never set a TTL on a session key.
-
-The client runs with `enableOfflineQueue: false` so an outage fails fast instead
-of queueing. Anything issuing a command at startup must `awaitReady()` first —
-ioredis connects asynchronously, and a command sent before the socket is
-writable throws rather than waiting.
-
-## Telemetry
-
-Telemetry is on when `TELEMETRY_ENDPOINT` is set, which `.env.example`
-does. The `OTEL_*` variables are part of the zod env schema like every other
-setting: a malformed endpoint or header list fails the boot, and code reads
-them from `env`, never `process.env`.
-
-Traces, logs and metrics land in OpenObserve. Its login is the one exception to
-Local's `allonfire` / `allonfire`: OpenObserve refuses to boot unless the user
-is an email and the password has upper, lower, digit and symbol.
+## 🗂️ Where things are
 
 ```
-http://localhost:5080    allonfire@allonfire.local / Allonfire#1
+src/
+  index.ts       boot, signals, shutdown
+  app.ts         middleware order and route mounts
+  client.ts      the types a client imports
+  environment/   the env schema, checked at boot
+  features/      one folder per topic: routes, constants, tests
+  shared/        what several features read
 ```
 
-Where each signal comes from:
+## ⚠️ Watch out
 
-- **Request spans and `http.server.request.duration`**: `@hono/otel`, wrapped by
-  `features/telemetry/middleware/request-spans.ts`. Spans are named after the
-  route pattern (`GET /v1/things/:id`, or `GET /*` for a 404). On top of
-  `@hono/otel`, the wrapper:
-  - traces nothing for `/health` and `/ready`, not even `/ready`'s database check;
-  - drops the query string from `url.full`, where tokens travel, and adds
-    `url.path` / `url.scheme`;
-  - leaves a 4xx span unset and marks only a 5xx as an error.
-- **Prisma query spans**: `@prisma/instrumentation`, as children of the request.
-  Its two one-off startup spans are ignored.
-- **Logs**: a pino `mixin` stamps `trace_id`/`span_id` on lines logged inside a
-  request, and `pino-opentelemetry-transport` ships every line to OpenObserve.
-  Request lines record only the headers in `REQUEST_LOG.HEADERS`
-  (`features/logger/constants/request-log.ts`).
-- **Redis**: not traced. ioredis can only be traced by patching it at load,
-  which needs an ESM loader hook; see ADR 0006.
-- **OpenTelemetry's own failures** (collector down, wrong password) appear in
-  the API log as errors and warnings, instead of vanishing.
+| Trap | What to do |
+|------|------------|
+| Separate `app.get(...)` statements pass every runtime test and break client types | chain; `src/client.test-d.ts` guards it |
+| A missing `.env` stops `dev` | create it first; tests don't read it (`vitest.setup.ts`) |
+| `dev` starts only Redis, telemetry and storage | the database and the image server come from `pnpm docker:up` |
+| A Redis command sent before the socket is ready throws | at startup, `awaitReady()` first |
+| With Redis down, the rate limits let everything through | the per-address email limit instead refuses with 503 |
+| A revoked Session still passes the guards | up to five minutes; a Role change counts at once |
+| Registering or joining answers 403 `REGISTRATION_CLOSED` | it needs `x-aof-app`, and every app is closed today |
+| No traces or logs in OpenObserve (`localhost:5080`) | set `TELEMETRY_ENDPOINT`; the Local login is in `.env.example` |
 
-Traces, metrics and logs carry the same resource: `service.name`,
-`service.version` and `deployment.environment.name` (core's
-`features/telemetry/otlp.ts`).
+## 💻 Run it
 
-`index.ts` calls `startTelemetry()` before `createApp`, because `@hono/otel`
-binds its meter when the app is built. Nothing is patched, so there is no
-preload and no import-order rule. Tests never start the SDK.
+First time, from the repo root: [Run it locally](../../README.md#-run-it-locally), which creates `apps/api/.env` and runs `pnpm dev:setup`. Then:
 
-## Tests
+| I want to | Command |
+|-----------|---------|
+| run it, restarting on a change | `pnpm --filter @allonfire/api dev` |
+| run it once | `pnpm --filter @allonfire/api start` |
+| test it | `pnpm test:services`, then `pnpm --filter @allonfire/api test` |
+| check types | `pnpm --filter @allonfire/api check-types` |
+| check translations | `pnpm --filter @allonfire/api i18n:check` |
 
-```bash
-pnpm --filter @allonfire/api test
-```
+The integration tests need Docker. They run on a database and a bucket of their own.
 
-All tests but one run with stubs and no container. The rate-limit integration
-test requires Redis and will tell you the command to start it.
+## 🔑 Environment
+
+[`.env.example`](.env.example) lists and explains the variables. The API does not boot without these:
+
+- `API_CORS_ORIGINS`, `API_REDIS_URL`, `DATABASE_URL`
+- `AUTH_SECRET` (32 characters or more), `AUTH_URL`
+- `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`
+- `STORAGE_IMAGE_SERVER_URL`, `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT`
+
+## 📚 More
+
+| You want to | Read |
+|-------------|------|
+| structure, errors, guards, Redis, i18n, setting up mail | [API guide](../../docs/guides/api.md) |
+| understand images and signed links | [Images](../../docs/guides/images.md) |
+| mount or use sign-in | [@allonfire/auth](../../packages/auth/README.md) |
+| know why routes are grouped this way | [ADR 0035](../../docs/adr/0035-api-routes-are-grouped-by-who-calls-them.md) |
+| know why telemetry works this way | [ADR 0006](../../docs/adr/0006-self-hosted-observability.md) |

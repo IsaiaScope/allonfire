@@ -2,7 +2,7 @@ import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { Hono } from "hono";
 import { STORAGE } from "../../../../shared/constants/paths";
 import type { ImageDeps } from "../utils/deps";
-import { getHandlers, listHandlers } from "./read-handlers";
+import { exportHandlers, getHandlers, listHandlers } from "./read-handlers";
 import {
   deleteHandlers,
   patchHandlers,
@@ -13,11 +13,16 @@ import {
  * The Image module (ADR 0015): mount it where the host wants Images. It
  * reads the Session the host's sessionLoader set: reads work without one,
  * writes answer 401 (ADR 0020).
+ *
+ * The package depends on `@hono/standard-validator` though no file here
+ * imports it: hono-openapi's `validator` wraps its `sValidator` and imports
+ * it, even though hono-openapi's manifest calls the peer optional.
  */
 export const imageRoutes = (deps: ImageDeps) =>
   new Hono<AuthEnv>()
     .get(STORAGE.PATH.LIST, ...listHandlers(deps))
     .get(STORAGE.PATH.ONE, ...getHandlers(deps))
+    .get(STORAGE.PATH.EXPORT, ...exportHandlers(deps))
     .post(STORAGE.PATH.LIST, ...uploadHandlers(deps))
     .patch(STORAGE.PATH.LIST, ...patchHandlers(deps))
     .delete(STORAGE.PATH.LIST, ...deleteHandlers(deps));

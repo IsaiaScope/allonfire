@@ -12,7 +12,7 @@ Complete inventory of every documentation target in the AllOnFire monorepo.
 
 | File | Priority | Content Requirements |
 |------|----------|---------------------|
-| `README.md` | P0 | Badges, screenshot grid, "What is AllOnFire?", architecture ASCII, quick start table, scripts, tech stack, packages table, doc links |
+| `README.md` | P0 | Badges, what it is, the apps, packages, structure, run it locally, doc links. Written for a person (`SKILL.md`) |
 | `CLAUDE.md` | — | EXISTS. Laura app structure, routes, features, import rules, deployment. Keep current. |
 | `.claude/CLAUDE.md` | — | EXISTS. Ultracite/Biome code standards. Stable. |
 
@@ -31,56 +31,54 @@ None of the numbered guides below exist yet — they are targets, not records.
 
 ### Laura Screenshot Inventory
 
+**None is captured, on purpose.** These are the names to use if the owner asks;
+read the first rule of Phase 2 in `SKILL.md` before any capture.
+
 Every screenshot uses the `laura-` / `mobile-laura-` prefix. An unprefixed PNG in
 `docs/screenshots/` is legacy social-app output and should be deleted, not reused.
 
 | File | Page URL | App | Notes |
 |------|----------|-----|-------|
-| `docs/screenshots/laura-gallery.png` | `/` | Laura (:3200) | Masonry photo grid |
-| `docs/screenshots/mobile-laura-gallery.png` | `/` (390x844) | Laura | Mobile gallery |
-| `docs/screenshots/laura-upload.png` | `/upload` | Laura | Upload dropzone |
-| `docs/screenshots/mobile-laura-upload.png` | `/upload` (390x844) | Laura | Mobile upload |
-| `docs/screenshots/laura-games.png` | `/games` | Laura | Game hub |
-| `docs/screenshots/mobile-laura-games.png` | `/games` (390x844) | Laura | Mobile game hub |
-| `docs/screenshots/laura-memory.png` | `/games/memory` | Laura | Memory board |
-| `docs/screenshots/mobile-laura-memory.png` | `/games/memory` (390x844) | Laura | Mobile memory |
-| `docs/screenshots/laura-quiz.png` | `/games/quiz` | Laura | Quiz question |
-| `docs/screenshots/mobile-laura-quiz.png` | `/games/quiz` (390x844) | Laura | Mobile quiz |
-| `docs/screenshots/laura-settings.png` | `/settings` | Laura | Settings page |
-| `docs/screenshots/mobile-laura-settings.png` | `/settings` (390x844) | Laura | Mobile settings |
+| `docs/screenshots/laura-gallery.png` | `/` | Laura (:3200) | Gallery |
+| `docs/screenshots/mobile-laura-gallery.png` | `/` (390x844) | Laura | Gallery, phone |
+| `docs/screenshots/laura-favorites.png` | `/favorites` | Laura (:3200) | Favorites |
+| `docs/screenshots/mobile-laura-favorites.png` | `/favorites` (390x844) | Laura | Favorites, phone |
+| `docs/screenshots/laura-memory.png` | `/memory` | Laura (:3200) | Memory game |
+| `docs/screenshots/mobile-laura-memory.png` | `/memory` (390x844) | Laura | Memory game, phone |
+| `docs/screenshots/laura-leaderboard.png` | `/memory/leaderboard` | Laura (:3200) | Leaderboard |
+| `docs/screenshots/mobile-laura-leaderboard.png` | `/memory/leaderboard` (390x844) | Laura | Leaderboard, phone |
+| `docs/screenshots/laura-upload.png` | `/upload` | Laura (:3200) | Upload, Admin only |
+| `docs/screenshots/mobile-laura-upload.png` | `/upload` (390x844) | Laura | Upload, Admin only, phone |
 
 ## Apps
 
-| File | Priority | Content Requirements |
+Every README follows "Written for a person" (`SKILL.md`): the column says what
+its reader comes for, never a list of models or exports.
+
+| File | Priority | What its reader comes for |
 |------|----------|---------------------|
-| `apps/laura/README.md` | P0 | EXISTS. App overview, route map table, feature gallery, i18n setup, role system, env vars, dev commands |
+| `apps/laura/README.md` | P0 | Routes, how to run it, env, traps |
+| `apps/api/README.md` | P0 | Running it, env, where each route area lives, traps |
 
 ## Packages
 
-| File | Priority | Content Requirements |
+| File | Priority | What its reader comes for |
 |------|----------|---------------------|
-| `packages/database/README.md` | P0 | EXISTS. Schema overview (models table), service API (exported functions), enums, seed/migration commands |
-| `packages/auth/README.md` | P1 | EXISTS. BetterAuth setup, app-access guard (`checkAppAccess`), mutation guard, session helpers |
-| `packages/storage/README.md` | P1 | EXISTS. S3/MinIO client, upload helpers, bucket config |
-| `packages/ui/README.md` | P1 | EXISTS. Component inventory table, shadcn/ui setup, globals.css, cn utility, usage patterns |
-| `packages/core/README.md` | P2 | EXISTS. Shared constants, helpers, Next scaffolding |
-| `packages/config/README.md` | P3 | EXISTS. TypeScript config presets |
-| `packages/design/README.md` | P1 | Designs, Screens, `design:sync`, `/aof-design` |
+| `packages/database/README.md` | P0 | Changing the schema, scripts, Production steps, traps |
+| `packages/auth/README.md` | P1 | Guarding a route or a page, traps |
+| `packages/storage/README.md` | P1 | Using Images and buckets, traps |
+| `packages/ui/README.md` | P1 | Where a shared component goes, traps |
+| `packages/shadcn/README.md` | P2 | Adding a component with the CLI |
+| `packages/core/README.md` | P2 | Which area holds what, traps |
+| `packages/config/README.md` | P3 | TypeScript and test presets |
+| `packages/design/README.md` | P1 | Designs, `design:sync`, `/aof-design` |
 | `packages/design/src/apps/<app>/PRODUCT.md` | — | Kept by impeccable through `/aof-design`; never hand-generated |
 | `packages/design/src/apps/<app>/DESIGN.md` | — | Generated by `design:sync`; never document or edit by hand |
 
 ## Laura Features (`apps/laura/src/features/`)
 
-All five features have both a `README.md` and a `CLAUDE.md`. Use any existing pair
-as the template for new features.
-
-| Feature | Priority | Content Requirements |
-|---------|----------|---------------------|
-| `gallery/README.md` + `CLAUDE.md` | P1 | EXISTS. Masonry grid, infinite scroll, favorites, photo preview, blurhash placeholders, gallery actions |
-| `games/README.md` + `CLAUDE.md` | P0 | EXISTS. Memory game (card matching, timer, scoring), Quiz game (multiple choice, images, CRUD), leaderboards, game hooks |
-| `upload/README.md` + `CLAUDE.md` | P1 | EXISTS. Drag-drop upload, HEIC conversion, S3/MinIO storage, file validation, upload preview |
-| `settings/README.md` + `CLAUDE.md` | P2 | EXISTS. Language switcher (IT/EN), appearance toggle, user info card, sign out |
-| `layout/README.md` + `CLAUDE.md` | P2 | EXISTS. TopBar, page container, desktop/mobile navigation, UserRoleProvider integration |
+No feature has its own `README.md` or `CLAUDE.md`: `docs/guides/laura.md` holds
+what each one does.
 
 ## Memory Files
 

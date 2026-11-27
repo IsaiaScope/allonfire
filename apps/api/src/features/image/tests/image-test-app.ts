@@ -118,7 +118,12 @@ export async function listKeys(
   });
   const body = imagePageBodySchema.parse(await res.json());
   // The body names no file: each Image's key is read by its id, in order.
-  const keys = await Promise.all(body.images.map(({ id }) => keyOf(id)));
+  // Another file's row can be gone again by now: it is left out.
+  const stored = await prisma.image.findMany({
+    where: { id: { in: body.images.map(({ id }) => id) } },
+  });
+  const keyById = new Map(stored.map(({ id, key }) => [id, key]));
+  const keys = body.images.flatMap(({ id }) => keyById.get(id) ?? []);
   return page < body.pageCount
     ? [...keys, ...(await listKeys(app, cookie, options, page + 1))]
     : keys;

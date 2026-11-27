@@ -41,9 +41,10 @@ const APP = {
   },
   name: "Laura",
   sections: [{ icon: IconHome, label: "home", path: "" }],
+  version: "7.8.9",
 } as const satisfies Pick<
   AppDescriptor,
-  "app" | "entries" | "name" | "sections"
+  "app" | "entries" | "name" | "sections" | "version"
 >;
 
 const render = (props: Partial<Parameters<typeof AOFSignedInFrame>[0]> = {}) =>

@@ -127,6 +127,7 @@ describe(".env.production files", () => {
     "docker/.env.production",
     "apps/api/.env.production",
     "apps/back-office/env/.env.production",
+    "apps/laura/env/.env.production",
   ])("%s is ignored", (path) => {
     expect(git("check-ignore", "-q", path).status).toBe(0);
   });

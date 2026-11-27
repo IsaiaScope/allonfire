@@ -1,6 +1,6 @@
 {
   "name": "@allonfire/core",
-  "version": "1.0.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -22,7 +22,6 @@
     "./features/errors/coded-error": "./src/features/errors/coded-error.ts",
     "./features/errors/constants/error-codes": "./src/features/errors/constants/error-codes.ts",
     "./features/errors/utils/openapi": "./src/features/errors/utils/openapi.ts",
-    "./features/errors/format-error-message": "./src/features/errors/format-error-message.ts",
     "./features/http/constants/http": "./src/features/http/constants/http.ts",
     "./features/i18n/constants/dates": "./src/features/i18n/constants/dates.ts",
     "./features/i18n/constants/locales": "./src/features/i18n/constants/locales.ts",

@@ -7,12 +7,12 @@ Laura (`apps/laura`, `@allonfire/laura`) is the couple's private photo gallery a
 The Sections are `SECTION` in `src/features/navigation/constants/sections.ts`, as in the Back Office (`SECTION.LIST` is their explicit list, in menu order, that the sidebar, the proxy's sign-in gate and `sections.test.ts` all read), built from Laura's page paths in `src/shared/constants/laura-base.ts` (`LAURA_BASE.PAGE`); `LAURA` (`src/shared/constants/laura.ts`) is the App's descriptor and holds `LAURA.PAGE` and `LAURA.sections` (`SECTION.LIST`). `LAURA.entries` is `APP.ENTRY` (`@allonfire/design/apps/app`), the one definition of how each App is drawn that the Back Office reads too; the API's own `LAURA` (`@allonfire/api/features/laura/constants/laura`) is another object, imported as `API_LAURA` where both are needed:
 
 - `/` Gallery (Home), `/favorites`, `/memory` (Play) and `/memory/leaderboard` (Memory's second page, in its sub-menu), `/upload` (Admin only).
-- Every page but Memory is built: the Gallery and Favorites are Phase 4's (below), Upload Phase 5's (below); Phase 6 builds Memory and its leaderboard. Each phase replaces the page body and adds that page's skeleton and height test with its data; `generateMetadata`, `signedInPage(...)` and the `minRole` option stay (plan: `docs/superpowers/plans/2026-11-17-laura-p3-laura-shell.md`, "Page data checklist").
+- Each page has its skeleton and height test (`next-apps.md`, data checklist), and exports `generateMetadata` and a default from `signedInPage(...)`, with `minRole` where the Section has one.
 
 ## The frame and Ocean
 
-- The signed-in frame is `(signed-in)/layout.tsx` over ui's `AOFAppFrame` with `variant="floating"` and `collapsible="icon"` (ADR 0033); the account menu holds language, theme and sign out, and the App switcher lists the Back Office for a Back Office Admin. Back Office specifics are in `back-office.md`; the frame, signed-in pages and special pages are in `next-apps.md`.
-- Laura's Ocean dressing is bound once, in thin files, to the shared pieces through slots: `features/auth/components/dressing.tsx` (the sign-in pages), `features/errors/components` and `features/pwa/components` (notices and PWA cards), and `shared/components` (with `action-dressing.tsx`); the Section row's look is `sectionRow` in `features/navigation/utils/section-row.ts`. A `constants/` folder holds constants only. The Design itself is `packages/design/src/designs/ocean` and `src/apps/laura` (`design-system.md`).
+- The signed-in frame is `(signed-in)/layout.tsx` over ui's `AOFSignedInFrame` with `variant="floating"` and `collapsible="icon"` (ADR 0033); the account menu holds language, theme and sign out, with Laura's own release (`v0.12.0`, `LAURA.version`, from `apps/laura/package.json`) as a badge at the left of the last row, and the App switcher lists the Back Office for a Back Office Admin. Back Office specifics are in `back-office.md`; the frame, signed-in pages and special pages are in `next-apps.md`.
+- Laura's Ocean dressing is bound once, in thin files, to the shared pieces through slots: `features/auth/components/dressing.tsx` (the sign-in pages), `features/errors/components` and `features/pwa/components` (notices and PWA cards), and `shared/components` (with `action-dressing.tsx`); the Section row's look is `sectionRow` in `features/navigation/utils/section-row.ts`. A `constants/` folder holds constants only. The Design itself is `packages/design/src/designs/ocean` and `packages/design/src/apps/laura` (`design-system.md`).
 
 - Laura's mascot is a pool of emoji art (`OCEAN_ART`, `OCEAN_MASCOT_POOL`: `packages/design/src/designs/ocean/mascot-art.ts`, licences in `SOURCES.md`), never a drawing. `src/shared/constants/mascots.ts` (`MASCOT`) assigns one picture to each moment (gate, error, 404, offline, loading, toasts, Install card) and the server component `OceanArt` draws it; the frame's breadcrumb wears one beside each crumb, fixed: the favourite (`MASCOT.APP`) for the App, then `MASCOT.CRUMB` by `Navigation` label for each Section and page (`crumbArt`), never one whose fill all but vanishes on the light ground (the Noto jellyfish, lighthouse, shark, whale, the Fluent wave).
 
@@ -25,7 +25,7 @@ The Sections are `SECTION` in `src/features/navigation/constants/sections.ts`, a
 
 - One feed component draws both lists: `GalleryFeed` (`features/gallery/components`) over `useGalleryFeed`, the grid of `PhotoTile`s, the preview (`PhotoPreview` over ui's `AOFLightbox`) and the next page asked for by `AOFInfiniteSentinel` and a compact "Show more photos" button. The data follows `next-apps.md`: the first page in the private cache (`galleryHydration`, `favoritesHydration`, tag `GALLERY.CACHE.TAG`), later pages by `useInfiniteQuery` with a keyset cursor.
 - Changes are `favoriteMutation` and `removePhotoMutation` (`utils/gallery-mutations.ts`) over core's `optimisticMutation`: the feeds are patched first, a feed the patch made exact is not read again (`keeps`), and a burst of heart taps is one write (`useAOFQuietToggle`).
-- The heart is `FavoriteControl`: for an Admin a button in the theme's blue (coral once marked), for a User a static mark. Remove sits in the preview's capsule behind `OceanAlert` (`shared/components`), the Ocean dressing of ui's `AOFAlertDialog`; Remove deletes the photo from Laura for everyone, and from the system when no other App holds it.
+- The heart is `FavoriteControl`: for an Admin a button in the theme's blue (coral once marked), for a User a static mark. The capsule's controls take their size from ui (`AOFLightboxButton`, or `aofLightboxControl` for the heart): never set it in the App. The preview's capsule also holds Download and Share (`AOFExportActions`, ui): the Export link comes from the typed client (`images[":id"].export.$url`), its name from `exportName` over the item's `createdAt` (the Image's upload time, which the Gallery and Favorites items carry for this), and a refused download or share is the `Gallery.preview.downloadFailed` or `shareFailed` toast; closing the share sheet says nothing. A 404 (the image was removed elsewhere) is not a failure: both feeds are read again, so the preview closes with `Gallery.preview.gone`. A photo that arrived too late for the tap says `shareReady` (an 8 s notice at the top, clear of the capsule) and the next tap shares it; stepping to another photo or closing the preview drops it, with whatever was loading. Remove sits in the preview's capsule behind `OceanAlert` (`shared/components`), the Ocean dressing of ui's `AOFAlertDialog`; Remove deletes the photo from Laura for everyone, and from the system when no other App holds it.
 - A small action, like the load-more button, is `COMPACT_ACTION` (`shared/components/action-dressing.tsx`), the Back Office's compact button in the Ocean dressing.
 - Spec and plans: `docs/superpowers/plans/2026-11-17-laura-p4-gallery-favorites.md`.
 
@@ -36,19 +36,50 @@ The Sections are `SECTION` in `src/features/navigation/constants/sections.ts`, a
 - The end of a game is `GameCompleteDialog` over `OceanDialog` (the delete alert's dressing, with no corner close button): the time and moves as `BoardStat` badges (`labelled`), what saving earned as a grid of badges (`GameResult`), a link to the leaderboard under them, and every failure or refusal in one `AOFFormAlert` inside the dialog, never a toast. Try again is a compact themed button in the band's far end (`OceanDialog`'s `end`), only when saving failed; Close and Play again are the footer, a column on a phone and one line from `sm`, as the alert's; while the score is saving, Play again is the status (a spinner and "Saving the game", busy and disabled; a screen reader hears it in the results region). The leaderboard link is underlined and flush with the badges' left edge.
 - A time is `m:ss.cc` everywhere (core's `formatTime`: hundredths cut down, never rounded up). The board's clock is `GameClock` over `useElapsed`, read every `GAMES.MEMORY.DELAY.CLOCK_MS` (10 ms; a pair rests `GAMES.MEMORY.DELAY.HOLD_MS` face up) in its own leaf, so a tick redraws the time and never the cards; the score's time is the game's own, in ms.
 - The leaderboard lists the top ten (`LAURA.GAMES.LIMIT.LEADERBOARD_TOP`; the caller's own place is in their tiles, past ten too). `LeaderboardView` is: two columns of `LeaderboardStats` tiles (the caller's, everyone's; colour emoji and Tabler icons), a "Top 10" heading, `LeaderboardPodium` (the first three, second left, first middle, third right, with the Noto gold, silver and bronze medals and trophies: `PODIUM` in `utils/podium.ts`, its sizes in `leaderboard-podium-styles.ts`; a picture of the table, hidden from a screen reader, its height fixed so the skeleton matches) and the table of everyone, whose first three ranks wear the medals (`RankBadge`); each player's email is shown under their name, to every Member (Laura is private; the API sends it, `schemas.ts`). The podium's shape comes from Trophy UI (MIT, `ui.trophy.so`), rewritten with Ocean's tokens; the survey is `docs/superpowers/specs/2026-11-25-laura-leaderboard-library-survey.md`.
-- **Adding a game**: a typed `<Game>Score` table under `LauraProfile` (one changeset, its CHECKs and indexes), `<game>-score.service.ts`, routes under `/v1/laura/games/<game>/`, its own leaderboard query and its own Section page; never a shared score table with a `gameType` or a JSON score (ADR 0034).
+- A Laura Admin has no extra power over Memory. A game no player could have made is refused by `isPlausibleScore` over `MEMORY_RULE` (`packages/database/src/features/apps/laura`), whose comments give each bound and why a cheater with believable numbers is let through.
+- **Adding a game**: a typed `<Game>Score` table under `LauraProfile` (one changeset, its CHECKs and indexes), `<game>-score.service.ts`, routes under `/v1/laura/games/<game>/`, its own leaderboard query and its own Section page; never one score table shared by games, told apart by a column, or a JSON score (ADR 0034).
 - Plan: `docs/superpowers/plans/2026-11-17-laura-p6-memory-game.md`.
 
 ## Roles and the Upload gate
 
 - Laura admits two Roles, Admin and User, and no Viewer (ADR 0032): its floor in `ACCESS.APP_SETTINGS[App.LAURA]` is User. A User browses and plays; an Admin also adds Images.
-- Upload's `minRole` is read in four places that must agree: the proxy sends a User Home (`withSignInGate({ sections })`), the page does the same (`signedInPage(Page, { minRole: Role.ADMIN })`), the sidebar hides the row (`AOFRoleGatedSection`), and the API refuses with 403 (`requireApp(App.LAURA, Role.ADMIN)`, a route from Phase 5). Pinned by `upload-gate.test.ts`, `sections.test.ts` and `e2e/upload-gate.spec.ts`.
+- Upload's `minRole` is read in four places that must agree: the proxy sends a User Home (`withSignInGate({ sections })`), the page does the same (`signedInPage(Page, { minRole: Role.ADMIN })`), the sidebar hides the row (`AOFRoleGatedSection`), and the API refuses with 403 (`requireApp(App.LAURA, Role.ADMIN)`). Pinned by `upload-gate.test.ts`, `sections.test.ts` and `e2e/upload-gate.spec.ts`.
 
 ## Upload
 
 - `/upload` is Admin only (Section `minRole`, API `authoriseUpload`). Its form is ui's `AOFAddImages` (`features/image/upload`), bound in `features/upload`: `Upload` and `UploadSkeleton` over `UPLOAD_DRESSING` (the dropzone as picker, the Ocean action buttons), the `addImage` action and, after a saved add, `invalidateGallery`.
 - Every Laura upload is private, with no Access to choose, and goes to Laura only: the form has no Access or Apps, and `addImage` forces both server side (`images.md` says why). A saved add updates `GALLERY.CACHE.TAG` and reads the Gallery and Favorites again in the browser, then opens Home (`LAURA.PAGE.GALLERY`, with its slash: `AUTH.PAGE.HOME` is empty and `replace("")` stays on the page).
 - `next.config.ts` wraps in `withImageUploads`; the ingress must let a body that size through (`deployment.md`).
+
+## API routes
+
+Laura's own routes are `apps/api/src/features/laura` (ADR 0035); adding, removing and Export are the Image module's shared routes (`images.md`). Each Laura route asks `requireApp(App.LAURA)`; "Admin" asks the Admin Role too.
+
+| Route | Who | What Laura keeps of it |
+|---|---|---|
+| `GET /v1/laura/gallery` | User | first page in the private cache |
+| `GET /v1/laura/favorites` | User | first page in the private cache |
+| `PUT /v1/laura/favorites/:imageId` | Admin | a write |
+| `DELETE /v1/laura/favorites/:imageId` | Admin | a write |
+| `POST /v1/images` | Admin | a write (Upload) |
+| `DELETE /v1/images` | Admin | a write ("Remove from Laura": the body names the App) |
+| `GET /v1/images/:id/export` | signed in | never kept (30 a minute per User) |
+| `GET /v1/laura/games/memory/deck` | User | the browser only, for one round |
+| `POST /v1/laura/games/memory/scores` | User | a write, rate limited per User |
+| `GET /v1/laura/games/memory/leaderboard` | User | the private cache |
+
+## Tables and test data
+
+- Schema `laura` (`packages/database/prisma/schema/apps/laura.prisma`): `laura."Favorite"` (the Admins' list), `laura."Profile"` and `laura."ProfileFavorite"` (each User's copy), `laura."MemoryScore"`. The pictures are the shared Image module's (`images.md`).
+- Test data: `FIXTURE.USER.LAURA` and `FIXTURE.FAVORITE` (`packages/database/src/features/seed/fixtures/fixtures.ts`).
+
+## Caches
+
+- Two private-cache tags: `GALLERY.CACHE.TAG` (the Gallery's and the Favorites' first pages) and `GAMES.CACHE.TAG` (the leaderboard). Both live as long as the signed links they hold allow (`IMAGE_SERVER.LINK.CACHE_LIFE`).
+- The browser's query keys are `QUERY` (`apps/laura/src/shared/constants/query.ts`). A write in Laura clears the tag in its server action and refreshes the browser's copy too (`next-apps.md`, data checklist).
+- A change made in the Back Office clears no Laura tag: Laura shows it once its kept copy is stale, five minutes at most.
+- A Memory deck is a query alone, one key per round, never in the private cache: a kept copy would deal the same pictures again.
+- A page left open renews its signed links with ui's `useAOFLinkRefresh`, through core's `invalidateStatic`.
 
 ## Auth
 
@@ -63,15 +94,15 @@ The Sections are `SECTION` in `src/features/navigation/constants/sections.ts`, a
 ## Language
 
 - Laura speaks the Base languages and routes them like the Back Office (`aofBaseRouting`, as-needed): English has no prefix, Italian is `/it/...`. Which one a visitor sees at an unprefixed address is the cookie, then the browser, then English (`next-apps.md`, "an App routes `I18N.BASE_LANGUAGES`").
-- Laura has no Italian default on purpose. An Italian phone already opens `/it/...`, and the language switch is remembered by the cookie, so closing and reopening the installed app keeps the last choice. Forcing Italian (a default for Laura, or `/it` as the manifest's `start_url`) was planned and dropped on 2026-11-25: the first needs the ten shared ui pieces to read the App's navigation, the second undoes a switch to English at every cold start (`next-apps.md` has the reasons).
+- Laura has no Italian default on purpose. An Italian phone already opens `/it/...`, and the language switch is remembered by the cookie, so closing and reopening the installed app keeps the last choice. Forcing Italian (a default for Laura, or the Italian prefix as the manifest's `start_url`) was planned and dropped on 2026-11-25: the first needs the ten shared ui pieces to read the App's navigation, the second undoes a switch to English at every cold start (`next-apps.md` has the reasons).
 - Stored content falls back to English (`I18N.DEFAULT_LANGUAGE`): an image with no Italian alt text shows its English one, and every alt has English.
 
 ## Where each shared piece lives
 
-- The scaffold (providers, request config, page information, manifest, proxy matcher suite): core, `packages/core/README.md`.
+- The scaffold (providers, request config, page information, manifest, proxy matcher suite): core, `packages/core/src/features/next`.
 - The session pieces (`requireAppSession`, `withSignInGate`, `hasSectionRole`): auth, `packages/auth/README.md`.
 - The frame, account, switcher, signed-out pages (`AOFGateFrame`), `AOFLanguageSwitch`, notices (`AOFNoticeStage`), PWA cards, share card and the e2e and translation suites: ui, `package-layout.md` ("shared scaffold") and `testing.md`.
-- The Vitest presets and `environmentSuite`: `packages/config/README.md`.
+- The Vitest presets and `environmentSuite`: `packages/config/tests/vitest` (overview: `packages/config/README.md`).
 
 ## Parity audit
 
@@ -79,4 +110,6 @@ What became of every file and library of the old Laura: `docs/superpowers/specs/
 
 ## History and gotchas
 
+- 2026-11-19: Laura was rebuilt on the shared packages; the Viewer Role left Laura (changeset `0008`), and the second game and its rows went (`0010`). The old pictures had left Production at launch.
+- 2026-11-26: the old seed folder on the Mac and the Local `laura` bucket were deleted; nothing reads either.
 - 2026-11-19: the sidebar marked Play and Leaderboard both on `/memory/leaderboard`. Cause: `currentSubPage` took the first page whose path prefixes the address. Fix: ui's `currentSubPage` takes the longest match (`packages/ui/src/features/navigation/utils/sections.ts`).

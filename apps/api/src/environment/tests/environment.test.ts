@@ -27,6 +27,9 @@ describe("parseEnv", () => {
     expect(env.AUTH_RATE_LIMIT_MAX).toBe(10);
     expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(15 * UNIT.MS_PER_MINUTE);
     expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth:");
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_MAX).toBe(30);
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_WINDOW_MS).toBe(UNIT.MS_PER_MINUTE);
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX).toBe("export:");
   });
 
   it("reads the auth bucket from env", () => {
@@ -40,6 +43,21 @@ describe("parseEnv", () => {
     expect(env.AUTH_RATE_LIMIT_WINDOW_MS).toBe(UNIT.MS_PER_MINUTE);
     expect(env.AUTH_RATE_LIMIT_KEY_PREFIX).toBe("auth-v2:");
     expect(() => parseEnv({ ...valid, AUTH_RATE_LIMIT_MAX: "0" })).toThrow();
+  });
+
+  it("reads the Export bucket from env", () => {
+    const env = parseEnv({
+      ...valid,
+      STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX: "export-v2:",
+      STORAGE_EXPORT_RATE_LIMIT_MAX: "3",
+      STORAGE_EXPORT_RATE_LIMIT_WINDOW_MS: String(UNIT.MS_PER_HOUR),
+    });
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_MAX).toBe(3);
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_WINDOW_MS).toBe(UNIT.MS_PER_HOUR);
+    expect(env.STORAGE_EXPORT_RATE_LIMIT_KEY_PREFIX).toBe("export-v2:");
+    expect(() =>
+      parseEnv({ ...valid, STORAGE_EXPORT_RATE_LIMIT_MAX: "0" })
+    ).toThrow();
   });
 
   it("splits API_CORS_ORIGINS into a trimmed array", () => {
