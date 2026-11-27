@@ -17,6 +17,7 @@ const { SIGN_IN } = AUTH.PAGE;
 const COLOR_SCHEMES = objectValues(METADATA.COLOR_SCHEME).length;
 /** iOS must not turn a number into a phone link. */
 const NO_TELEPHONE = /telephone=no/;
+const THEME_COLOR_TAG = `meta[name="${METADATA.THEME_COLOR.NAME}"]`;
 /** The viewport drawn edge to edge, so the safe-area insets are real. */
 const EDGE_TO_EDGE = /viewport-fit=cover/;
 const NOT_FOUND = SHARED_TRANSLATIONS[I18N.DEFAULT_LANGUAGE].Common.NotFound;
@@ -99,9 +100,13 @@ const pageHeadTests = ({ app, baseUrl, description, indexing }: Options) => {
       "content",
       "summary_large_image"
     );
-    await expect(page.locator('meta[name="theme-color"]')).toHaveCount(
+    // Next's tag per device theme, and the one for the theme on screen,
+    // first so the browser takes it.
+    await expect(page.locator(`${THEME_COLOR_TAG}[media]`)).toHaveCount(
       COLOR_SCHEMES
     );
+    await expect(page.locator(THEME_COLOR_TAG)).toHaveCount(COLOR_SCHEMES + 1);
+    await expect(meta(THEME_COLOR_TAG)).not.toHaveAttribute("media");
     await expect(meta('meta[name="color-scheme"]')).toHaveAttribute(
       "content",
       METADATA.PAGE_COLOR_SCHEME

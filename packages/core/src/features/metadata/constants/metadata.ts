@@ -16,7 +16,7 @@ export type Indexing = z.infer<typeof indexingSchema>;
 /** The OS themes `prefers-color-scheme` reports; generated images come in both. */
 const COLOR_SCHEME = { DARK: "dark", LIGHT: "light" } as const;
 
-const colorSchemeSchema = z.enum(COLOR_SCHEME);
+export const colorSchemeSchema = z.enum(COLOR_SCHEME);
 export type ColorScheme = z.infer<typeof colorSchemeSchema>;
 
 const LAUNCH_ORIENTATION = {
@@ -147,4 +147,6 @@ export const METADATA = {
   ROBOTS: { NOINDEX: "noindex, nofollow" },
   /** The link-preview image: what Open Graph and X both show uncropped. */
   SHARE_IMAGE: { SIZE: { height: 630, width: 1200 } },
+  /** The name of the meta tag a browser colours its bars from. */
+  THEME_COLOR: { NAME: "theme-color" },
 } as const;

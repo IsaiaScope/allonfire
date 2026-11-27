@@ -5,6 +5,7 @@ import {
   type LaunchOrientation,
   METADATA,
 } from "../../../metadata/constants/metadata";
+import { colorSchemeMedia } from "../../../metadata/utils/color-scheme-media";
 
 export type LaunchScreenVariant = LaunchDevice & {
   orientation: LaunchOrientation;
@@ -49,6 +50,6 @@ export const launchScreenFile = ({
  */
 export const AOFLaunchScreenLinks = () =>
   launchScreenVariants().map((variant) => ({
-    media: `(device-width: ${variant.width}px) and (device-height: ${variant.height}px) and (-webkit-device-pixel-ratio: ${variant.ratio}) and (orientation: ${variant.orientation}) and (prefers-color-scheme: ${variant.scheme})`,
+    media: `(device-width: ${variant.width}px) and (device-height: ${variant.height}px) and (-webkit-device-pixel-ratio: ${variant.ratio}) and (orientation: ${variant.orientation}) and ${colorSchemeMedia(variant.scheme)}`,
     url: `${METADATA.PATH.LAUNCH_SCREEN}/${launchScreenFile(variant)}`,
   }));

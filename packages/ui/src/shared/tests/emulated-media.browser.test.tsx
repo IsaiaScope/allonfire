@@ -2,6 +2,7 @@
 import {
   CAN_EMULATE_MEDIA,
   withCoarsePointer,
+  withDarkDevice,
   withReducedMotion,
 } from "./emulated-media";
 
@@ -24,5 +25,13 @@ describe.runIf(CAN_EMULATE_MEDIA)("emulated media", () => {
     );
     expect(during).toBe(true);
     expect(matches("(prefers-reduced-motion: reduce)")).toBe(false);
+  });
+
+  it("has the device turn dark while the test runs, and light again after", async () => {
+    const during = await withDarkDevice(() =>
+      Promise.resolve(matches("(prefers-color-scheme: dark)"))
+    );
+    expect(during).toBe(true);
+    expect(matches("(prefers-color-scheme: dark)")).toBe(false);
   });
 });

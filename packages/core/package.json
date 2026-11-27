@@ -1,6 +1,6 @@
 {
   "name": "@allonfire/core",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "private": true,
   "type": "module",
   "exports": {
@@ -33,6 +33,7 @@
     "./features/mail/utils/send-mail": "./src/features/mail/utils/send-mail.ts",
     "./features/mail/utils/drivers": "./src/features/mail/utils/drivers.ts",
     "./features/metadata/constants/metadata": "./src/features/metadata/constants/metadata.ts",
+    "./features/metadata/utils/color-scheme-media": "./src/features/metadata/utils/color-scheme-media.ts",
     "./features/metadata/utils/page-title": "./src/features/metadata/utils/page-title.ts",
     "./features/next/api/tests/answering-api": "./src/features/next/api/tests/answering-api.ts",
     "./features/next/api/tests/fake-api": "./src/features/next/api/tests/fake-api.ts",
