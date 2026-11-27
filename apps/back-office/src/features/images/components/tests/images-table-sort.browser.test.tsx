@@ -3,6 +3,7 @@
 import { page, userEvent } from "vitest/browser";
 import {
   addressOf,
+  firstWrite,
   listAsked,
   listControls,
   renderList,
@@ -97,6 +98,7 @@ describe("ImagesTable selection and pages", () => {
       `?${IMAGES.PARAM.PAGE}=3&${IMAGES.PARAM.SEARCH}=created:2026-11-26`
     );
     await expect.poll(() => asked.length).toBeGreaterThan(0);
+    await firstWrite(onUrlUpdate);
     await expect
       .poll(() => addressOf(onUrlUpdate).has(IMAGES.PARAM.PAGE))
       .toBe(false);
