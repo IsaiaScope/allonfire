@@ -22,6 +22,8 @@ type Placements = ReadonlyMap<string, ImageVisibility>;
  * How the Image module authorises a write (ADR 0020). Every check over a
  * batch runs to its end before the next kind starts: 404 across the whole
  * batch first, then 403, so a refused batch never tells which ids exist.
+ * `../tests/recap.test.ts` is the agreed table of who gets what, one test per
+ * row.
  */
 
 /** Whether `user` may see `image`, and, given an `app`, it is placed in it. */

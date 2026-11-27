@@ -32,7 +32,8 @@ const signedInAs = (role: Role) =>
       name: "Someone",
     },
   });
-const APP = { app: App.BACK_OFFICE };
+const VERSION = "7.8.9";
+const APP = { app: App.BACK_OFFICE, version: VERSION };
 const stamp = (role: Role) => <span>SEAL {role}</span>;
 
 describe("AOFAccount", () => {
@@ -54,5 +55,11 @@ describe("AOFAccount", () => {
     expect(menu.props.role).toBe(
       SHARED_TRANSLATIONS.en.Common.Navigation.role.USER
     );
+  });
+
+  it("hands the menu the App's own version", async () => {
+    signedInAs(Role.ADMIN);
+    const menu = await AOFAccount({ app: APP });
+    expect(menu.props.version).toBe(VERSION);
   });
 });

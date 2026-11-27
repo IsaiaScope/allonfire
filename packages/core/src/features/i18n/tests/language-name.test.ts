@@ -13,4 +13,18 @@ describe("languageName", () => {
       expect(languageName(language)).not.toBe(language);
     }
   });
+
+  // Node writes "italiano" and WebKit "Italiano": a page the server draws
+  // with one and Safari with the other fails to hydrate (React #418).
+  it("prints a base language the same on the server and in every browser", () => {
+    expect(I18N.BASE_LANGUAGES.map(languageName)).toEqual([
+      "English",
+      "Italiano",
+    ]);
+  });
+
+  it("leaves a script that writes its names without capitals", () => {
+    // Uppercasing a Georgian letter gives the all-capitals alphabet.
+    expect(languageName("ka")).toBe("ქართული");
+  });
 });

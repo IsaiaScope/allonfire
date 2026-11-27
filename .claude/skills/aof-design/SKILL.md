@@ -177,7 +177,7 @@ and reads `PRODUCT.md`/`DESIGN.md` only by walking up from the App, ignoring
   edit `packages/shadcn`: a missing primitive is `npx shadcn@4.21.0 add <name>`
   from `apps/back-office`, then `pnpm --filter @allonfire/shadcn canonicalize` (core's Tailwind rewrite).
 - Mobile-first. Every image carries width and height (a static import gives
-  both). Framer Motion for anything beyond a CSS transition.
+  both). Motion is CSS only: no animation library (`docs/guides/code-style.md`).
 
 ## Owner's taste
 

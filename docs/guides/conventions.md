@@ -55,6 +55,8 @@ server packages (auth, storage) are not covered, they run on Node.
 
 ## Constants
 
+- **The type comes from zod.** An `as const` object is the source, `z.enum(OBJECT)` (number values work too, `z.enum(HTTP.STATUS)`) or `z.literal(TUPLE)` builds the schema, and the type is the schema's `z.infer`: never a hand-written union, never `ValueOf`.
+
 - **Constants are one nested object per owner**, named so the first word says where a
   value comes from, never a flat `X_Y_Z` beside its siblings and never a name that
   carries its value (`VERSION.CURRENT`, not `V1`): `API` (`PATH`, `PROBE`, `VERSION`, `LIMIT`,
@@ -65,7 +67,7 @@ server packages (auth, storage) are not covered, they run on Node.
   `ERROR_CODE`, `ERROR` (`SIGN_IN`, `FORGOT`, `RESET`), `MAIL.PARAM`, `VAR`, `METHODS`, `OPENAPI_TAG`, `DOC`;
   `@allonfire/auth/shared/constants/auth`); `IMAGE` (`BUCKET`, `CACHE`, `FORMAT`, `LIMIT`,
   `ERROR_CODE`, `DOC`, `OPENAPI_TAG`, `VAR`;
-  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `IMAGES`, `LIST`, `ONE`); core's `HTTP`
+  `@allonfire/storage/features/image/constants/image`); `STORAGE` (`PATH`: `EXPORT`, `IMAGES`, `LIST`, `ONE`); core's `HTTP`
   (`STATUS`, `METHOD`, `HEADER`, `CONTENT_TYPE`), `LOG`, `TELEMETRY` (`PATH`, `ERROR`,
   `LIMIT`, `DEFAULT`, `ATTRIBUTE.RESOURCE`), `ENV`, `PATTERN` and `I18N`; and
   config's `LOCAL` (`PORT`, `URL`, `DATABASE`, `STORAGE`) and `REPO`; the database's `ACCESS`
@@ -106,6 +108,15 @@ server packages (auth, storage) are not covered, they run on Node.
   and hand it to config's `aofPlaywrightConfig` (`apiPath`), since config, a leaf package,
   imports nothing.
 
+- **A duration or a size is written through `UNIT`**
+  (`@allonfire/core/shared/constants/units`): `10 * UNIT.MS_PER_SECOND`,
+  `5 * UNIT.MS_PER_MINUTE`, `2 * UNIT.BYTES_PER_MIB`, never `10_000`,
+  `300_000` or `1024 * 1024`, in tests and tool configs too; a wait under a
+  second stays a number (`{ timeout: 50 }`). The one exception is
+  `packages/config`: it imports no package (core depends on it, and Turbo
+  refuses the cycle), so a number there says its unit in its name
+  (`PAGE_MS`).
+
 - **The shape of an owner's object** (one rule each, the API's constants are the model):
   - **A lookup is a keyed record**, `as const satisfies Record<K, V>`, never a tuple array of pairs (`API.ERROR.STATUS_OF_CODE`: the status of each code, read by key).
   - **Sibling keys with a shared prefix nest.** `ADD_KANJI` and `EDIT_KANJI` are `KANJI.ADD` and `KANJI.EDIT`, `EDIT_ERROR` is `EDIT.ERROR`, `GET_SUMMARY` is `GET.SUMMARY` (`API.LIMIT`, `LAURA.GALLERY`, a route's `DOC.<VERB>.{DESCRIPTION,SUMMARY,RESPONSE}`).
@@ -137,11 +148,13 @@ line is about that one alone.
 Use “can” or “is allowed” for permissions; reserve “may” for possibility.
 Name localized text “translations”, except where a library API requires “messages”.
 
+A message says what happened and stops: it never ends with “Try again”, “Try again later” or “in a moment” (Italian “Riprova …”). A step the person can take stays (“Check the connection.”, “Reload the page.”), a button can be called “Try again”, and the API’s rate-limit message keeps its wait in seconds: every `features/i18n/translations/*.json` and core’s own.
+
 ## Names
 
 - Name a service, host, Dokploy service, Traefik file or env key after its purpose, never its software (`storage`, not `minio`; `workflow`, not `n8n`), so the software can change underneath. Example: `docker/docker-compose.prod.yml`.
 
 ## Pointers
 
-- Core's helpers and constants, export by export: `packages/core/README.md`.
-- The TypeScript presets and each strictness option they turn on: `packages/config/README.md`.
+- Core's helpers and constants: each export's doc comment under `packages/core/src/`; what to reach for and the folder map: `packages/core/README.md`.
+- The TypeScript presets: `packages/config/README.md`; what each compiler option catches: `code-style.md`, Compiler options.

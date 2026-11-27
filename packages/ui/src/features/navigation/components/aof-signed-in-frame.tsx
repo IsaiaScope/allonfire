@@ -16,7 +16,7 @@ export type AOFSignedInFrameProps = Omit<
    * mark, with no menu and no Session read.
    */
   addresses?: ComponentProps<typeof AOFAppSwitcher>["addresses"] | undefined;
-  app: Pick<AppDescriptor, "app" | "entries" | "name" | "sections">;
+  app: Pick<AppDescriptor, "app" | "entries" | "name" | "sections" | "version">;
   /** The App's own mark for a Role, beside the User; none, the Role's name alone. */
   seal?: (role: Role) => ReactNode;
 };

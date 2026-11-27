@@ -34,11 +34,21 @@
         "$TURBO_ROOT$/apps/**",
         "$TURBO_ROOT$/packages/**",
         "$TURBO_ROOT$/vitest.config.ts",
+        // The guards over guides, READMEs and skills (guide-paths, the old
+        // words, the parity audit) read Markdown. Here, not in an App's own
+        // turbo.json: that listed the App for a deploy on a doc edit.
+        "$TURBO_ROOT$/*.md",
+        "$TURBO_ROOT$/docs/**/*.md",
+        "$TURBO_ROOT$/.claude/skills/**/*.md",
+        // The root configs the old-world and scaffold guards read.
+        "$TURBO_ROOT$/.jscpd.json",
+        "$TURBO_ROOT$/.oxlintrc.json",
+        "$TURBO_ROOT$/biome.jsonc",
+        "$TURBO_ROOT$/tsconfig.json",
         "!$TURBO_ROOT$/**/node_modules/**",
         "!$TURBO_ROOT$/**/.next/**",
         "!$TURBO_ROOT$/**/.turbo/**",
-        "!$TURBO_ROOT$/**/coverage/**",
-        "!$TURBO_ROOT$/**/*.md"
+        "!$TURBO_ROOT$/**/coverage/**"
       ]
     }
   }

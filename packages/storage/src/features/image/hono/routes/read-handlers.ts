@@ -1,3 +1,4 @@
+import { requireSession } from "@allonfire/auth/features/hono/guards/middleware/require-session";
 import type { AuthEnv } from "@allonfire/auth/features/hono/types/variables";
 import { AUTH } from "@allonfire/auth/shared/constants/auth";
 import {
@@ -12,6 +13,8 @@ import {
 import { createFactory } from "hono/factory";
 import { validator } from "hono-openapi";
 import { IMAGE } from "../../constants/image";
+import { exportImage } from "../../export/export-image";
+import { exportName } from "../../utils/export-name";
 import {
   type ImagePageBody,
   idParamSchema,
@@ -19,7 +22,7 @@ import {
 } from "../constants/schemas";
 import type { ImageDeps } from "../utils/deps";
 import { toImageBody } from "../utils/image-body";
-import { getRoute, listRoute } from "./routes";
+import { exportRoute, getRoute, listRoute } from "./routes";
 
 const factory = createFactory<AuthEnv>();
 
@@ -72,5 +75,32 @@ export const getHandlers = (deps: ImageDeps) =>
         throw notFound();
       }
       return c.json(toImageBody(image, new Date()), HTTP.STATUS.OK);
+    }
+  );
+
+/**
+ * An Image's Export (ADR 0036): a JPEG without metadata, made on request.
+ * A Session is needed even for a public Image, since a decode costs the
+ * server; visibility is a read's (`canSeeImage`, hidden is 404, never 403).
+ */
+export const exportHandlers = (deps: ImageDeps) =>
+  factory.createHandlers(
+    exportRoute,
+    deps.limitExport,
+    requireSession(),
+    validator("param", idParamSchema, invalidHook),
+    async (c) => {
+      const image = await deps.getImage(c.req.valid("param").id);
+      if (!(image && canSeeImage(c.get(AUTH.VAR.SESSION).user, image))) {
+        throw notFound();
+      }
+      const jpeg = await exportImage(await deps.readObject(image.key));
+      return c.body(new Uint8Array(jpeg), HTTP.STATUS.OK, {
+        [HTTP.HEADER.CACHE_CONTROL]: HTTP.CACHE_CONTROL.PRIVATE_NO_STORE,
+        [HTTP.HEADER.CONTENT_DISPOSITION]:
+          `attachment; filename="${exportName({ createdAt: image.createdAt.toISOString(), id: image.id })}"`,
+        [HTTP.HEADER.CONTENT_TYPE]: IMAGE.EXPORT.CONTENT_TYPE,
+        [HTTP.HEADER.X_CONTENT_TYPE_OPTIONS]: HTTP.NO_SNIFF,
+      });
     }
   );

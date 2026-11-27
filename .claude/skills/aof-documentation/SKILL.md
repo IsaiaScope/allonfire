@@ -13,7 +13,7 @@ Generate and maintain documentation for the AllOnFire monorepo. Read [references
 
 ## Prerequisites
 
-- Target app running for screenshot capture: Laura on `:3200`
+- Screenshots: only on the owner's word, and only as Phase 2's first rule allows
 - Playwright MCP tools available for browser automation
 - Read [references/doc-standards.md](references/doc-standards.md) for visual formatting rules
 - Read [references/doc-map.md](references/doc-map.md) for the full inventory of documentation targets
@@ -42,7 +42,7 @@ These were learned from user feedback and MUST be followed:
 2. **Exception: root README** uses `<h3>` to avoid GitHub h1 underline
 3. **Centered header block** — title + badges + description all in `<p align="center">`
 4. **Left-aligned section headings** — standard markdown `##` with emoji prefix
-5. **Consistent layout** — every README follows the same header → screenshots → sections pattern
+5. **Consistent layout** — every README follows the same header → sections pattern
 
 ### Badges
 6. **Always HTML `<img>` tags** inside `<p align="center">` — NEVER markdown `![]()`
@@ -56,6 +56,15 @@ These were learned from user feedback and MUST be followed:
 12. **App README gallery**: desktop `550`, mobile `180`
 13. **Hide Next.js dev tools** before every screenshot capture (see doc-standards.md for the JS snippet)
 14. **Path depth matters** — features are 5 levels deep (`../../../../../docs/screenshots/`)
+
+### Written for a person (`docs/guides/writing.md`, READMEs)
+
+These win over any template below that asks for more.
+
+- Answer what it is, how to run it, where things are and what trips you up; skip any section the reader does not need.
+- Tables, trees and numbered lists before paragraphs.
+- Never retell a guide, an ADR or the code (setup walkthroughs, export-by-export references, design reasons): link the guide. Move a fact that lives only in a README into a guide or a doc comment before cutting it.
+- A Mermaid diagram has three boxes at most; anything bigger is a table or a list. An opening or About description is a couple of plain sentences, never a diagram. Write for apps still to come: outside the list of apps itself, say "the apps" or "a Next App", never a count and never one app's name where any app would do.
 
 ### Content
 15. **No box-drawing characters** — use plain `──>`, `+--`, `|` only
@@ -85,7 +94,7 @@ Always run this before any generation. Detects drift between docs and code.
 
 4. **Feature directory sync** — List actual feature directories under each app's `src/features/`. Compare against documented features in doc-map. Flag: new features without docs, removed features with stale docs.
 
-5. **Package export audit** — Read each package's `src/index.ts` exports. Compare against API Reference table in package README. Flag: new exports not documented, removed exports still listed.
+5. **Package README check** — Every path and name a package README mentions exists in its `package.json` `exports`. Flag a stale one. An export the README does not mention is fine: a README is not a reference.
 
 6. **Badge version check** — Parse `package.json` for each app/package. Compare major versions against badge values in README. Flag: version mismatches (e.g., badge says React 18 but package.json has React 19).
 
@@ -102,16 +111,23 @@ Always run this first, regardless of scope.
 
 ### Phase 2: Screenshots (`scope: screenshots`)
 
+**Read this first: the repo is public.** Never capture an App that holds real
+images or people's data (Local and Production do), and capture nothing unless the
+owner asks for screenshots. A requested capture runs on a Test stack with made-up
+pictures and Fixture Users. A committed picture stays in git history for good. No
+README shows a screenshot today (owner, 2026-11-26): a missing one is not a gap
+to fill.
+
 Save to `docs/screenshots/` (NOT `/screenshots/` which is gitignored).
 
 For each page: `browser_resize` → `browser_navigate` → **hide dev tools** (see snippet in doc-standards.md) → `browser_take_screenshot`.
 
 #### Laura App (port 3200)
 
-Desktop (1440x900): laura-gallery, laura-upload, laura-games, laura-memory, laura-quiz, laura-settings.
-Mobile (390x844): mobile-laura-gallery, mobile-laura-upload, mobile-laura-games, mobile-laura-memory, mobile-laura-quiz, mobile-laura-settings.
+Desktop (1440x900): laura-gallery, laura-favorites, laura-memory, laura-leaderboard, laura-upload.
+Mobile (390x844): the same names with a `mobile-` prefix.
 
-**Laura-specific:** Wait for Framer Motion animations to settle (2s delay) before capture. Laura uses Italian locale by default — screenshots show `/en` routes for English.
+**Laura-specific:** Laura uses Italian locale by default — screenshots show `/en` routes for English.
 
 ### Phase 3: Root README (`scope: root`)
 
@@ -128,6 +144,7 @@ Follow the structure in [references/doc-standards.md](references/doc-standards.m
 9. Packages — emoji table with brief description above
 10. Project Structure — badges for infra tech + description + plain-indentation folder tree
 11. Infrastructure — emoji table with brief description above. No sensitive details.
+    Then Run it locally (numbered steps, address table) and Docs ("you want to / read" table).
 12. `---` divider
 13. Footer — centered casual sign-off
 
@@ -135,7 +152,7 @@ Follow the structure in [references/doc-standards.md](references/doc-standards.m
 
 Use the template in [references/doc-standards.md](references/doc-standards.md) Section 8.
 
-Read the package's `src/index.ts` to discover the API surface. Read consuming files in `apps/laura/` for usage examples.
+Read the package's `package.json` `exports` to learn what it offers (no package has a barrel). Read consuming files in `apps/laura/` for usage examples.
 
 ### Phase 5: Feature Documentation (`scope: features`)
 

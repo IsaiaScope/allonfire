@@ -1,6 +1,6 @@
 {
   "name": "@allonfire/ui",
-  "version": "2.0.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -57,7 +57,9 @@
     "./features/auth/components/aof-email-verified": "./src/features/auth/components/aof-email-verified.tsx",
     "./features/auth/types/auth-dressing": "./src/features/auth/types/auth-dressing.ts",
     "./features/image/components/aof-avatar": "./src/features/image/components/aof-avatar.tsx",
+    "./features/image/components/aof-export-actions": "./src/features/image/components/aof-export-actions.tsx",
     "./features/image/components/aof-lightbox": "./src/features/image/components/aof-lightbox.tsx",
+    "./features/image/components/aof-lightbox-button": "./src/features/image/components/aof-lightbox-button.tsx",
     "./features/image/components/aof-brand-logo": "./src/features/image/components/aof-brand-logo.tsx",
     "./features/image/components/aof-share-card": "./src/features/image/components/aof-share-card.tsx",
     "./features/image/hooks/use-aof-alt-language": "./src/features/image/hooks/use-aof-alt-language.ts",
@@ -146,6 +148,7 @@
     "./shared/components/aof-tooltip": "./src/shared/components/aof-tooltip.tsx",
     "./shared/hooks/use-aof-theme-switch": "./src/shared/hooks/use-aof-theme-switch.ts",
     "./shared/hooks/use-aof-toast": "./src/shared/hooks/use-aof-toast.ts",
+    "./features/image/tests/stub-share": "./src/features/image/tests/stub-share.ts",
     "./shared/tests/computed-style": "./src/shared/tests/computed-style.ts",
     "./shared/tests/emulated-media": "./src/shared/tests/emulated-media.ts",
     "./shared/tests/render-in-ui": "./src/shared/tests/render-in-ui.tsx",

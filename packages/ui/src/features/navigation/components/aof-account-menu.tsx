@@ -52,6 +52,8 @@ export type AOFAccountMenuProps = {
   role: string;
   /** The App's own mark for the Role, drawn beside the User. */
   seal?: ReactNode;
+  /** The App's own release (`1.4.0`), badged as `v1.4.0` at the left of Sign out; none, no badge. */
+  version?: string | undefined;
 };
 
 const { DARK, LIGHT } = METADATA.COLOR_SCHEME;
@@ -105,6 +107,7 @@ export const AOFAccountMenu = ({
   name,
   role,
   seal,
+  version,
 }: AOFAccountMenuProps) => {
   const locale = useLocale();
   // The query too: switching language keeps a filtered list filtered.
@@ -182,15 +185,27 @@ export const AOFAccountMenu = ({
               </AOFDropdownMenuSegments>
             </ChoiceRow>
             <AOFDropdownMenuSeparator />
-            {/* Sign out on the right: where the menu ends. */}
-            <AOFDropdownMenuItem
-              className="ml-auto w-fit"
-              nativeButton
-              render={<button form={NAVIGATION.FORM.SIGN_OUT} type="submit" />}
-            >
-              <IconLogout aria-hidden />
-              {labels.signOut}
-            </AOFDropdownMenuItem>
+            {/* The release on the left, Sign out on the right: where the menu ends. */}
+            <div className="flex items-center gap-2">
+              {version ? (
+                <AOFBadge
+                  className="ml-1.5 shrink-0 font-mono"
+                  variant="secondary"
+                >
+                  {`v${version}`}
+                </AOFBadge>
+              ) : null}
+              <AOFDropdownMenuItem
+                className="ml-auto w-fit"
+                nativeButton
+                render={
+                  <button form={NAVIGATION.FORM.SIGN_OUT} type="submit" />
+                }
+              >
+                <IconLogout aria-hidden />
+                {labels.signOut}
+              </AOFDropdownMenuItem>
+            </div>
           </AOFSidebarDropdownContent>
         </AOFDropdownMenu>
       </AOFSidebarMenuItem>

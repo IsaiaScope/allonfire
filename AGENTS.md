@@ -75,7 +75,8 @@ pnpm + Turbo monorepo. Apps: `apps/api` (Hono, 3300), `apps/back-office`
 | VPS workflows and notifications | `vps-workflow.md` |
 | VPS agent service | `vps-agent.md` |
 | VPS services outside AllOnFire | `vps-other-apps.md` |
-| Laura | `laura.md` |
+| Laura only: Sections, routes, API routes, tables, caches, Roles | `laura.md` |
+| running Local, the dev Apps on a phone over Tailscale | `local.md` |
 | docs lookup, skills, MCP, exFAT | `tooling.md` |
 | issues (GitHub, `gh`) | `issue-tracker.md` |
 | triage labels | `triage-labels.md` |

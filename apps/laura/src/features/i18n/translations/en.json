@@ -15,13 +15,13 @@
       "title": "No photos yet"
     },
     "error": {
-      "description": "Something went wrong on the way. Try again in a moment.",
+      "description": "Something went wrong on the way.",
       "retry": "Try again",
       "title": "The photos did not load"
     },
     "favorite": {
       "add": "Add to favorites",
-      "failed": "The favorite could not be saved. Try again.",
+      "failed": "The favorite could not be saved.",
       "is": "A favorite",
       "remove": "Remove from favorites",
       "toggle": "Favorite"
@@ -39,10 +39,15 @@
     },
     "preview": {
       "close": "Close the photo",
+      "download": "Download the image",
+      "downloadFailed": "The image could not be downloaded.",
       "gone": "That photo is no longer there.",
       "next": "Next photo",
       "position": "Photo {index} of {total}",
       "previous": "Previous photo",
+      "share": "Share the image",
+      "shareReady": "The image is ready. Tap Share again.",
+      "shareFailed": "The image could not be shared.",
       "title": "Photo viewer"
     },
     "remove": {
@@ -50,14 +55,14 @@
       "cancel": "Keep photo",
       "confirm": "Remove photo",
       "description": "The photo leaves Laura for everyone, and is deleted if no other App holds it.",
-      "failed": "The photo could not be removed. Try again.",
+      "failed": "The photo could not be removed.",
       "title": "Remove this photo from Laura?"
     }
   },
   "Games": {
     "announceComplete": "All pairs found in {moves} moves, in {time}.",
     "announceMatch": "A pair: {alt}.",
-    "announceMiss": "Not a pair. Try again.",
+    "announceMiss": "Not a pair.",
     "anonymous": "Someone",
     "averageTime": "Average time",
     "bestGame": "Best game: {time}, {moves} moves",
@@ -68,7 +73,7 @@
     "close": "Close",
     "date": "Played",
     "deckFailed": "The cards did not load",
-    "deckFailedBody": "Something went wrong on the way. Try again in a moment.",
+    "deckFailedBody": "Something went wrong on the way.",
     "forbidden": "Memory is not open to you.",
     "gameComplete": "You found every pair",
     "gamesPlayed": "Games played",

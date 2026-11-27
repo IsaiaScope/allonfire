@@ -7,7 +7,7 @@
     },
     "Error": {
       "title": "Something went wrong",
-      "description": "This page stopped unexpectedly. Try again in a moment.",
+      "description": "This page stopped unexpectedly.",
       "retry": "Try again",
       "reference": "Reference {digest}"
     },
@@ -24,7 +24,7 @@
     },
     "Offline": {
       "title": "No connection",
-      "description": "This page needs the network. Check your connection and try again.",
+      "description": "This page needs the network. Check your connection.",
       "retry": "Try again",
       "banner": {
         "title": "No connection",
@@ -37,7 +37,7 @@
       "cta": "Install {app}",
       "install": "Install",
       "installing": "Installing",
-      "error": "Not installed. Try again.",
+      "error": "Not installed.",
       "step": {
         "ios-share": "Tap Share (or ···, then Share)",
         "ios-add": "Choose Add to Home Screen, then Add",
@@ -73,8 +73,8 @@
           "forbidden": "This account has no access to {app}.",
           "invalid": "Email or password is wrong.",
           "missing": "Enter your email and password.",
-          "rateLimited": "Too many attempts. Try again in a few minutes.",
-          "unavailable": "Signing in is not available right now. Try again shortly."
+          "rateLimited": "Too many attempts.",
+          "unavailable": "Signing in is not available right now."
         },
         "field": {
           "emailInvalid": "Enter a valid email address.",
@@ -95,8 +95,8 @@
         "email": "Email",
         "error": {
           "invalid": "Enter a valid email address.",
-          "rateLimited": "Too many requests. Try again later.",
-          "unavailable": "Sending links is not available right now. Try again later."
+          "rateLimited": "Too many requests.",
+          "unavailable": "Sending links is not available right now."
         },
         "field": {
           "emailInvalid": "Enter a valid email address.",
@@ -116,8 +116,8 @@
         "error": {
           "invalid": "The passwords must match and meet every rule.",
           "invalidToken": "This link no longer works. Ask for a new one.",
-          "rateLimited": "Too many attempts. Try again later.",
-          "unavailable": "Saving the password is not available now. Try again later."
+          "rateLimited": "Too many attempts.",
+          "unavailable": "Saving the password is not available now."
         },
         "expiredIntro": "Ask for a new link and we will send it to your email, so you can choose a new password.",
         "field": {
@@ -177,8 +177,8 @@
         "wrongType": "This file is not a supported picture"
       },
       "error": {
-        "failed": "The Images could not be added. Try again.",
-        "invalid": "Check the fields and try again.",
+        "failed": "The Images could not be added.",
+        "invalid": "Check the fields.",
         "refused": "You can no longer change Images. Sign in again.",
         "tooLarge": "A picture or the whole upload is too large.",
         "unsupported": "A file is not a supported picture."

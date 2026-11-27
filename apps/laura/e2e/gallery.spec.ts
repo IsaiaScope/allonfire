@@ -1,5 +1,12 @@
+import { readFile } from "node:fs/promises";
 import { HTTP } from "@allonfire/core/features/http/constants/http";
+import { PATTERN } from "@allonfire/core/shared/constants/patterns";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
+import {
+  JPEG_SIGNATURE,
+  signatureOf,
+} from "@allonfire/storage/features/image/tests/jpeg-signature";
 import { expect, test } from "@playwright/test";
 import { SECTION } from "../src/features/navigation/constants/sections";
 import { LAURA } from "../src/shared/constants/laura";
@@ -86,4 +93,44 @@ test("a User calling the writes is refused and the Favorites stay as they were",
   const clear = await page.request.delete(favoriteUrl(favoriteId));
   expect(clear.status()).toBe(HTTP.STATUS.FORBIDDEN);
   expect(fixtureOnly(await favoriteAlts(page))).toEqual([FAVORITE]);
+});
+
+test("downloads a JPEG named for the photo from the preview", async ({
+  page,
+}) => {
+  await page.goto(SECTION.GALLERY.path);
+  await tileOf(page, FAVORITE).click();
+  const preview = previewOf(page);
+  const saved = page.waitForEvent("download");
+  await preview
+    .getByRole("button", { name: enT("Gallery.preview.download") })
+    .click();
+  const download = await saved;
+  const name = download.suggestedFilename();
+  expect(name).toMatch(PATTERN.EXPORT_FILE_NAME);
+  // The stored file's name never leaves the API.
+  expect(name).not.toContain(FIXTURE.IMAGE.IN_BOTH_APPS.key);
+  const path = await download.path();
+  const bytes = await readFile(path);
+  expect(signatureOf(bytes)).toEqual(JPEG_SIGNATURE);
+});
+
+test("shows Share exactly where the browser can send an image file", async ({
+  page,
+}) => {
+  await page.goto(SECTION.GALLERY.path);
+  await tileOf(page, FAVORITE).click();
+  const preview = previewOf(page);
+  await expect(
+    preview.getByRole("button", { name: enT("Gallery.preview.download") })
+  ).toBeVisible();
+  const canShare = await page.evaluate(
+    (type) =>
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [new File([""], "x.jpg", { type })] }),
+    IMAGE.EXPORT.CONTENT_TYPE
+  );
+  await expect(
+    preview.getByRole("button", { name: enT("Gallery.preview.share") })
+  ).toHaveCount(canShare ? 1 : 0);
 });

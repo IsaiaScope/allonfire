@@ -24,6 +24,8 @@ export const GALLERY = {
     /** Asks once more after a server or network failure. */
     RETRIES: 1,
   },
+  /** "Image ready, tap Share again" shows here: at the toaster's own place it would cover that button. */
+  SHARE_READY_TOAST_POSITION: "top-center",
   /** The skeleton draws these tiles, their ratios cycled. */
   SKELETON: { RATIOS: [0.75, 1, 1.333, 0.667], TILES: 24 },
   /** Which list a feed shows: every photo placed in Laura, or the Favorites. */

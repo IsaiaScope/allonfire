@@ -1,8 +1,10 @@
 # Package versions in releases, and the version badge Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Every workspace package's `package.json` version moves in the `/iso-push` release commit when the package changed, and Laura and the Back Office show their own version (`v0.12.0`) on a secondary badge at the left of the account menu's last row.
+
+**Status:** implemented (uncommitted) @ 2026-11-25T17:22:43+01:00
 
 **Architecture:** A repo script in core computes, from the release range's changed files and the `package.json` workspace graph, which packages changed (libraries: own files; Deploy units: own files or any workspace dependency, transitively), and rewrites only their `"version"` line by the Release's kind. A repo hook `.iso/release-hook` runs it; a few lines in the global `/iso-push` release step call that hook inside the release worktree and `git add` what it changed, so the unit versions land in the same `chore(release)` PR. Each App passes its own version through `AppDescriptor.version` to ui's `AOFAccount`, which hands it to `AOFAccountMenu`'s badge.
 
@@ -44,10 +46,10 @@
 **Interfaces:**
 - Produces: `type WorkspacePackage = { dependencies: readonly string[]; name: string; path: string; unit: boolean; version: string }` (`dependencies`: workspace package names it lists, across `dependencies` and `devDependencies`); `bumpVersion(current: string, kind: ReleaseKind): string`; `releaseKind(previous: string, next: string): ReleaseKind` with `ReleaseKind = "major" | "minor" | "patch"` (zod enum, `releaseKindSchema`); `changedPackages(packages: readonly WorkspacePackage[], changedFiles: readonly string[]): WorkspacePackage[]` (a library: a changed file under its `path/`; a unit: itself or any transitive dependency changed); `setVersion(packageJson: string, version: string): string` (replaces only the first top-level `"version"` line, keeps everything else byte for byte, throws when none).
 
-- [ ] **Step 1: Failing tests** (`release-versions.test.ts`): `bumpVersion("0.12.0","minor")` is `"0.13.0"`, `("0.12.3","patch")` `"0.12.4"`, `("1.2.3","major")` `"2.0.0"`; `releaseKind("0.12.0","0.13.0")` is `minor`, `("0.12.0","0.12.1")` `patch`, `("0.12.0","1.0.0")` `major`, equal versions throw; `setVersion` changes `"version": "1.0.0"` to `"version": "0.12.0"` in a sample file and leaves the other lines and the final newline identical, and throws for a file with no version; `changedPackages`: a changed file in a library marks only that library; a changed file in a library a unit depends on (two levels deep) marks the unit; a changed file in the unit's own folder marks only it; a change in an unrelated library marks nothing; a changed root file (`package.json`, `VERSION`, a doc) marks nothing; no package is returned twice.
-- [ ] **Step 2:** `pnpm --filter @allonfire/core exec vitest run src/features/ci/tests/release-versions.test.ts`; expect FAIL.
-- [ ] **Step 3:** implement the five exports in `release-versions.ts` (arithmetic on three integers; a regex at module level for the version line; a visited set for the transitive walk) and the export key.
-- [ ] **Step 4:** rerun, `tsc --noEmit`, `pnpm exec biome check packages/core/src/features/ci`; expect PASS.
+- [x] **Step 1: Failing tests** (`release-versions.test.ts`): `bumpVersion("0.12.0","minor")` is `"0.13.0"`, `("0.12.3","patch")` `"0.12.4"`, `("1.2.3","major")` `"2.0.0"`; `releaseKind("0.12.0","0.13.0")` is `minor`, `("0.12.0","0.12.1")` `patch`, `("0.12.0","1.0.0")` `major`, equal versions throw; `setVersion` changes `"version": "1.0.0"` to `"version": "0.12.0"` in a sample file and leaves the other lines and the final newline identical, and throws for a file with no version; `changedPackages`: a changed file in a library marks only that library; a changed file in a library a unit depends on (two levels deep) marks the unit; a changed file in the unit's own folder marks only it; a change in an unrelated library marks nothing; a changed root file (`package.json`, `VERSION`, a doc) marks nothing; no package is returned twice.
+- [x] **Step 2:** `pnpm --filter @allonfire/core exec vitest run src/features/ci/tests/release-versions.test.ts`; expect FAIL.
+- [x] **Step 3:** implement the five exports in `release-versions.ts` (arithmetic on three integers; a regex at module level for the version line; a visited set for the transitive walk) and the export key.
+- [x] **Step 4:** rerun, `tsc --noEmit`, `pnpm exec biome check packages/core/src/features/ci`; expect PASS.
 
 ### Task 2: The script that rewrites the versions
 
@@ -59,11 +61,11 @@
 - Consumes: Task 1's functions.
 - Produces: the CLI `ci:release-versions --root <dir> --previous <X.Y.Z> --next <X.Y.Z> --from <ref>` (reads the workspace folders listed in `pnpm-workspace.yaml` under `<root>`, the changed files from `git -C <root> diff --name-only <from>..HEAD`, bumps each `changedPackages` entry by `releaseKind(previous, next)`, prints one changed `package.json` path per line, relative to the root) and `--align <X.Y.Z>` (sets every workspace package to that version, prints the changed paths).
 
-- [ ] **Step 1: Failing integration tests** in a temp git repository with a tiny workspace (an app depending on two libraries, one unrelated library): after a commit that touches one library, the CLI with `--previous 0.12.0 --next 0.13.0` bumps that library, the app, and nothing else; a range whose only commit changes `VERSION` and the root `package.json` changes nothing and prints nothing; `--align 0.12.0` sets all four packages and prints four paths; only the `"version"` line differs in each file (compare with `git diff -U0`); an invalid `--next` fails with a non-zero exit and writes nothing.
-- [ ] **Step 2:** run it; expect FAIL.
-- [ ] **Step 3:** implement the CLI (arguments through `node:util` `parseArgs`, as `print-affected.ts` and `cli.ts` do; workspace folders from `pnpm-workspace.yaml` globs `apps/*` and `packages/*` expanded with `node:fs`; a unit is `apps/*` plus `packages/database`, named once in a constant).
-- [ ] **Step 4:** the **sanity test** (integration, reads this repo): on the real range `3faa8c11^..3faa8c11` (the commit that landed Laura's gallery) the script's changed units equal the Deploy units `pnpm ci:affected` lists for the same range, minus any difference explained in a comment (the Image-file rule); expect PASS or an explained, asserted difference.
-- [ ] **Step 5:** rerun everything, `tsc --noEmit`, Biome.
+- [x] **Step 1: Failing integration tests** in a temp git repository with a tiny workspace (an app depending on two libraries, one unrelated library): after a commit that touches one library, the CLI with `--previous 0.12.0 --next 0.13.0` bumps that library, the app, and nothing else; a range whose only commit changes `VERSION` and the root `package.json` changes nothing and prints nothing; `--align 0.12.0` sets all four packages and prints four paths; only the `"version"` line differs in each file (compare with `git diff -U0`); an invalid `--next` fails with a non-zero exit and writes nothing.
+- [x] **Step 2:** run it; expect FAIL.
+- [x] **Step 3:** implement the CLI (arguments through `node:util` `parseArgs`, as `print-affected.ts` and `cli.ts` do; workspace folders from `pnpm-workspace.yaml` globs `apps/*` and `packages/*` expanded with `node:fs`; a unit is `apps/*` plus `packages/database`, named once in a constant).
+- [x] **Step 4:** the **sanity test** (integration, reads this repo): on the real range `3faa8c11^..3faa8c11` (the commit that landed Laura's gallery) the script's changed units equal the Deploy units `pnpm ci:affected` lists for the same range, minus any difference explained in a comment (the Image-file rule); expect PASS or an explained, asserted difference.
+- [x] **Step 5:** rerun everything, `tsc --noEmit`, Biome.
 
 ### Task 3: The hook in the repo and in `/iso-push`
 
@@ -75,11 +77,11 @@
 - Hook contract: `.iso/release-hook <previous> <next> <range-from-sha>`, executable, run with the release worktree as its working directory after `VERSION` and the root `package.json` are written and before the commit; it prints one changed path per line (relative to the worktree) and exits 0, or exits non-zero to stop the release. The skill `git add`s every printed path. No hook file: nothing runs.
 - The repo hook runs `pnpm ci:release-versions` against the worktree; because the worktree has no `node_modules`, it calls the CLI from the main checkout (`--root "$PWD"`) or, if the builder finds that unreliable, through `node --experimental-strip-types` on the TypeScript file (Node 24; the CLI imports only `node:` modules and zod-free code, so it needs no install). Pick one, state it in the file.
 
-- [ ] **Step 1: Failing shell tests** in `push.test.sh`, in its own style: a release in a scratch repo with a hook that edits `apps/a/package.json` and prints it puts that file in the release commit; a hook that exits 1 aborts the release with no commit, no PR and no tag; a repo with no hook releases exactly as before (compare the commit's file list).
-- [ ] **Step 2:** run `bash ~/.claude/skills/iso-push/scripts/push.test.sh`; expect the three new cases to FAIL.
-- [ ] **Step 3:** implement the hook call in `cmd_release` right after the `npm version` block (`previous` is the version read from `origin/$base:VERSION` before it is overwritten, `range-from` is `last_release origin/$base`), and the paragraph in `SKILL.md`; write `.iso/release-hook` in the repo.
-- [ ] **Step 4:** the new cases pass and the whole file stays green; run the repo hook by hand in a detached worktree of `origin/dev` with a fake `--next` and read the diff (then remove the worktree).
-- [ ] **Step 5:** tell the owner the skill files changed outside the repo.
+- [x] **Step 1: Failing shell tests** in `push.test.sh`, in its own style: a release in a scratch repo with a hook that edits `apps/a/package.json` and prints it puts that file in the release commit; a hook that exits 1 aborts the release with no commit, no PR and no tag; a repo with no hook releases exactly as before (compare the commit's file list).
+- [x] **Step 2:** run `bash ~/.claude/skills/iso-push/scripts/push.test.sh`; expect the three new cases to FAIL.
+- [x] **Step 3:** implement the hook call in `cmd_release` right after the `npm version` block (`previous` is the version read from `origin/$base:VERSION` before it is overwritten, `range-from` is `last_release origin/$base`), and the paragraph in `SKILL.md`; write `.iso/release-hook` in the repo.
+- [x] **Step 4:** the new cases pass and the whole file stays green; run the repo hook by hand in a detached worktree of `origin/dev` with a fake `--next` and read the diff (then remove the worktree).
+- [x] **Step 5:** tell the owner the skill files changed outside the repo.
 
 ### Task 4: Each App passes its version, the menu shows the badge
 
@@ -90,11 +92,11 @@
 **Interfaces:**
 - Produces: `AppDescriptor.version: string` (no `v`); `AOFAccountMenuProps.version?: string | undefined`.
 
-- [ ] **Step 1: Failing tests.** Browser: with `version="7.8.9"` the text `v7.8.9` is visible, its box ends at or before Sign out's left edge and shares its row; no `menuitem` carries the badge's name; with no version no `v\d+.\d+.\d+` text shows and Sign out is still visible; at 320 px a long `10.12.345` keeps Sign out inside the popup. Unit: `AOFAccount` gives the menu `props.version` equal to its `app.version`. Per App: `LAURA.version` and `BACK_OFFICE.version` equal that App's `package.json` `version` (import it in the test).
-- [ ] **Step 2:** run them; expect FAIL.
-- [ ] **Step 3:** implement as listed.
-- [ ] **Step 4:** `pnpm --filter @allonfire/ui exec vitest run src/features/navigation/tests/aof-account.test.tsx`, the browser file with `pnpm --filter @allonfire/ui test:browser` (Chromium and WebKit), the Apps' unit tests; `tsc --noEmit` in ui, Laura, Back Office; Biome.
-- [ ] **Step 5: See it.** In the owner's Chrome tab on the dev server (`localhost:3200`, never a new window, `/iso-browser`) open the account menu in the dark and the light theme and at a phone width; the owner signs in (never type their credentials) or a throwaway User is made in the Back Office with the owner's session. Do not stop the owner's dev servers.
+- [x] **Step 1: Failing tests.** Browser: with `version="7.8.9"` the text `v7.8.9` is visible, its box ends at or before Sign out's left edge and shares its row; no `menuitem` carries the badge's name; with no version no `v\d+.\d+.\d+` text shows and Sign out is still visible; at 320 px a long `10.12.345` keeps Sign out inside the popup. Unit: `AOFAccount` gives the menu `props.version` equal to its `app.version`. Per App: `LAURA.version` and `BACK_OFFICE.version` equal that App's `package.json` `version` (import it in the test).
+- [x] **Step 2:** run them; expect FAIL.
+- [x] **Step 3:** implement as listed.
+- [x] **Step 4:** `pnpm --filter @allonfire/ui exec vitest run src/features/navigation/tests/aof-account.test.tsx`, the browser file with `pnpm --filter @allonfire/ui test:browser` (Chromium and WebKit), the Apps' unit tests; `tsc --noEmit` in ui, Laura, Back Office; Biome.
+- [x] **Step 5: See it.** In the owner's Chrome tab on the dev server (`localhost:3200`, never a new window, `/iso-browser`) open the account menu in the dark and the light theme and at a phone width; the owner signs in (never type their credentials) or a throwaway User is made in the Back Office with the owner's session. Do not stop the owner's dev servers.
 
 ### Task 5: Align once, and keep it true
 
@@ -103,13 +105,48 @@
 - Create: `packages/core/src/features/ci/tests/package-versions.integration.test.ts`
 - Modify: `docs/guides/deployment.md` (the Release and the hook), `docs/guides/laura.md`, `docs/guides/back-office.md` (the badge, one clause each), `docs/guides/package-layout.md` (a package's version moves only in a Release)
 
-- [ ] **Step 1: Failing test** `package-versions.integration.test.ts`: every workspace `package.json` version is `major.minor.patch`; none is ahead of the root `package.json` version.
-- [ ] **Step 2:** run it; expect FAIL (`ui` and `auth` say `2.0.0`).
-- [ ] **Step 3:** run `pnpm ci:release-versions --root . --align 0.12.0`; `git diff -U0` shows only version lines across the thirteen package files.
-- [ ] **Step 4:** the test passes; write the guide lines; the **documentation review** (`/iso-write` step 3): read the guides above against the change and fix any rule it breaks, test first.
-- [ ] **Step 5: Final run:** `pnpm static:lint`, `pnpm exec biome check`, `pnpm static:knip`, `pnpm static:dupes`; `tsc --noEmit` in core, ui, laura and back-office; unit, browser and integration suites of core and ui, the Apps' unit suites; `bash ~/.claude/skills/iso-push/scripts/push.test.sh`. Expected: green except failures another session owns (report, do not chase).
-- [ ] **Step 6:** tick the plan, stamp it as `/iso-write` says, stop. Nothing is committed or staged.
+- [x] **Step 1: Failing test** `package-versions.integration.test.ts`: every workspace `package.json` version is `major.minor.patch`; none is ahead of the root `package.json` version.
+- [x] **Step 2:** run it; expect FAIL (`ui` and `auth` say `2.0.0`).
+- [x] **Step 3:** run `pnpm ci:release-versions --root . --align 0.12.0`; `git diff -U0` shows only version lines across the thirteen package files.
+- [x] **Step 4:** the test passes; write the guide lines; the **documentation review** (`/iso-write` step 3): read the guides above against the change and fix any rule it breaks, test first.
+- [x] **Step 5: Final run:** `pnpm static:lint`, `pnpm exec biome check`, `pnpm static:knip`, `pnpm static:dupes`; `tsc --noEmit` in core, ui, laura and back-office; unit, browser and integration suites of core and ui, the Apps' unit suites; `bash ~/.claude/skills/iso-push/scripts/push.test.sh`. Expected: green except failures another session owns (report, do not chase).
+- [x] **Step 6:** tick the plan, stamp it as `/iso-write` says, stop. Nothing is committed or staged.
+
+## Documentation checked
+
+- `docs/guides/conventions.md` (Constants): one nested object per owner (`RELEASE`: `FILE`, `GLOB`, `KIND`, `PATH`, keys sorted A to Z), no loose top-level consts, a regular expression only in core's `PATTERN` (`PATTERN.RELEASE`: `BADGE`, `VERSION`, `VERSION_LINE`, `WORKSPACE_ENTRY`), no path or file name as a string literal, tests included (tasks 1, 2, 4, 5; a test's sample folders sit in one nested object per file).
+- `docs/guides/testing.md`: first line `// @module-tag`, `*.integration.test.ts` for a test that runs git or Turbo, no `.only` or `.skip` (tasks 1, 2, 4, 5).
+- `docs/guides/code-style.md` and Biome: no `as` except `as const`, no `JSON.parse`/`Object.keys` (core's helpers), `useTopLevelRegex`, sorted keys, `noExcessiveLinesPerFunction` (tasks 1 to 5).
+- `docs/guides/package-layout.md`, `deployment.md`, `laura.md`, `back-office.md` and `packages/core/README.md`: updated in task 5 for what the change makes stale.
+- `docs/guides/design-system.md`: the badge is an `AOFBadge` variant inside the existing menu, no new class constant (task 4).
 
 ## Implementation Log
 
-(Filled by `/iso-write`: the sanity test's result, the hook's final form, the screenshots taken.)
+- Implemented: 2026-11-25T17:22:43+01:00
+- Workspace: current-branch — feat/laura-p0-drop
+- Committed: no — awaiting user review
+- Sanity test: on `de705d8b^..de705d8b` the Deploy units from `changedPackages` equal `turbo query affected` (apps/api, apps/back-office, apps/laura, packages/database); no explained difference was needed.
+- Hook: `.iso/release-hook` runs core's CLI from the main checkout (`git rev-parse --git-common-dir`) with `--root "$PWD"`, through `pnpm -s`, so stdout holds only the changed paths. Hand-run in a detached worktree: 10 manifests changed, version lines only.
+- Seen: the account menu in the owner's Laura tab (dark, desktop): `v0.12.0` on a mono badge at the left of Esci. The light theme and a phone width were pinned by browser tests (Chromium and WebKit), not looked at by eye.
+- Rulings:
+  - `auth-old` and `ui-old` are not workspace packages (`pnpm-workspace.yaml` excludes them), so the script reads the workspace file, including its `!` entries, and leaves them alone: eleven manifests aligned, not thirteen. Cost if wrong: two unused packages keep their old numbers.
+  - A bump moves each package from its own number by the Release's kind (a package at 0.14.0 goes to 0.15.0), not to the repo's number. Cost if wrong: numbers differ by package, which the spec expects.
+  - `changedPackages` also ignores Markdown (Turbo's task inputs exclude it) and treats `docker/`, `.dockerignore` and `pnpm-workspace.yaml` as touching every unit (core's `IMAGE_FILES`, now behind `touchesImage`), so it matches CI's affected rule. Cost if wrong: a unit bumps without a rebuild reason, or the reverse.
+  - An empty `--from` (no earlier Release) counts every file in the repo.
+  - The phone test uses `SCREEN.VIEWPORT.PHONE` (390), not 320: the popup is capped at `max-w-80` (320px) either way.
+  - A named JSON import (`import { version }`) breaks Turbopack, so both Apps use the default import (`pkg.version`), as `apps/api` does. A client component that imports the descriptor carries the whole `package.json` in dev; check the production client bundle at the first real build.
+  - The release-affected sanity test returns early when the commit is missing (a shallow clone), so it asserts nothing there.
+- 2026-11-26, owner's ruling, replacing the spec's own dependency walk and the `changedPackages` ruling above: **a Deploy unit's version moves exactly when it redeploys.** The deploy and the Release both ask core's `affectedSince` (`turbo-affected.ts`); `changedPackages(packages, changedFiles, deployed)` now only decides libraries by their own files. A lockfile or `turbo.json` change therefore numbers the units it redeploys. The release-affected sanity test is gone; `deploy-selection.integration.test.ts` runs real Turbo on a copy of the workspace's manifests, lockfile and Turbo configs instead (a whole clone timed out other core tests in 3 of 5 full runs).
+  - Over-deploy fixed: the root `tailwind:check` task's inputs reached every package, so a `ui` or `design` change deployed the database migration. The task now names the two Apps (`turbo-inputs.integration.test.ts` holds it).
+  - A 37-case matrix found one range where the redeploys outgrew the numbers: the API guide with another App's change. `apps/api/turbo.json` listed the guide as a test input, so Turbo listed the API without its dependents; the Release bumped it, and its manifest then redeployed Laura's neighbours unnumbered. The guide's test moved to `packages/config` and `apps/api/turbo.json` is gone; `turbo-inputs.integration.test.ts` keeps a Deploy unit's tasks inside the unit.
+  - Two deploys Turbo missed now happen: a new root `packageManager` and an `.npmrc`.
+  - Left as is: a test-only change in `ui` redeploys the three Apps, and in `core` or `config` all four units (Turbo's task inputs include tests, and other packages import some test helpers). A change to `deploy.yml` or to a GitHub build secret deploys nothing: run the workflow by hand.
+  - A production build of both Apps (`next build`, CI's placeholder `API_URL`) puts only `version:"0.13.0"` in the client chunks, none of the rest of `package.json`.
+  - Not yet seen: the hook inside a real `/iso-push`, and the badge after a real deploy.
+- 2026-11-26, rehearsals, nothing pushed to GitHub:
+  - `push.sh bump` and `release` with the real hook, against a local bare origin and a stand-in `gh`: the release commit held the repo's and all 11 packages' version lines only, and the tag landed on `dev`. A landing during a Release was numbered by that Release or the next one; a failing hook pushed nothing.
+  - The four images built as `deploy.yml` builds them (Turbo prune included) from that release commit, each carrying 0.14.0.
+  - A Linux container ran CI's install, `ci:affected origin/dev`, nine static checks and the core, config and design tests green.
+  - Fixed: core's test inputs lacked the lockfile and the packages' Turbo configs, so a cached pass could be replayed; the hook now stops when the main checkout's `features/ci` differs from the release's.
+  - Known, in `/iso-push` itself: the Release's kind is chosen before its commit is built, so a `feat` landing in between ships under a patch number; a refused push of `release/v<x>` leaves its temporary worktree behind.
+

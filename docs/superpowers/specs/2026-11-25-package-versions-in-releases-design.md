@@ -29,7 +29,7 @@ The owner asked for the released version on a badge at the left of the account m
 ## Constraints
 
 - `~/.claude/skills/iso-push/scripts/push.sh` is global, outside this repo's git: the hook change is described in the plan, tested in `push.test.sh`, and the owner commits it elsewhere.
-- The release worktree is detached with no `node_modules`: the script reads the workspace graph from the `package.json` files (`workspace:` dependencies), not from turbo, so it needs no install.
+- The release worktree is detached with no `node_modules`: the script reads the workspace graph from the `package.json` files (`workspace:` dependencies), not from turbo, so it needs no install. (As built: the redeploying units come from Turbo, so the script runs from the main checkout's install against the worktree.)
 - `npm version` is not used per package (workspace specs and a lint rule on `package.json` field order once shipped red): only the `"version"` line changes, text-edited.
 - A package never imports an App: each App passes its own version (`AppDescriptor.version`, from its own `package.json` import as `apps/api` does for its logger).
 - Repo rules: no `as` casts, no `JSON.parse/stringify` (core's helpers), constants one nested object per owner, tests first with `// @module-tag`, guides `package-layout.md`, `testing.md`, `code-style.md`, `conventions.md`, `design-system.md`.

@@ -29,7 +29,7 @@ One line each: what, Dokploy project or compose, host, guide. Hosts are all unde
 - Adminer: compose `infrastructure-adminer`; `database-console.` (`admin-gate`); `vps-other-apps.md`.
 - Beszel (monitoring): compose `infrastructure-beszel`, hub + agent; `monitor.` (own login); `vps-other-apps.md`.
 - Hermes agent: container `sofia`, compose `ai-agent-sofia`; `sofia.` (`sofia-gate`, rate limit, noindex); `vps-agent.md`.
-- `laura.`: proxied, answers 404 until Laura's rebuild (`laura.md`).
+- `laura.`: proxied, serves Laura (`laura.md`).
 
 ## Cloudflare
 

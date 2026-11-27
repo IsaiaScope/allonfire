@@ -104,10 +104,11 @@ From app README at `apps/{app}/`:
   the removed social app, so the prefix marks an asset as live. An unprefixed
   PNG in `docs/screenshots/` is legacy and should be deleted, not reused.
 - **Port**: Laura runs on `:3200`
-- **Animations**: Wait 2 seconds after navigation for Framer Motion animations to settle
 - **i18n**: Laura uses next-intl with `it` (Italian) as default locale. Screenshots use `/en` routes for English.
 
 ### Capture Process
+
+First read the first rule of Phase 2 in `SKILL.md`: the repo is public, and no capture shows real data.
 
 1. Ensure app is running: `pnpm dev` (port 3200)
 2. **Hide Next.js dev tools** before every screenshot:
@@ -163,7 +164,7 @@ https://img.shields.io/badge/{label}-{value}-{color}?logo={logo}&logoColor=white
 | **Root README** | Monorepo tooling only: pnpm, Turborepo, TypeScript, Biome, Node |
 | **Root README app section** | App-specific stack: Next.js, React, Prisma, Tailwind, etc. |
 | **App README** | Same as app section in root |
-| **Feature README** | Feature-specific libraries: dnd-kit, TanStack Query, Framer Motion, etc. |
+| **Feature README** | Feature-specific libraries: dnd-kit, TanStack Query, etc. |
 | **Package README** | Package-specific tech: Prisma, Sharp, Twitter API, etc. |
 | **Project Structure section** | Infra tech: Docker, PostgreSQL, Redis, GitHub Actions, Husky |
 
@@ -215,7 +216,7 @@ Use plain `──>`, `+--`, `|` only.
 ```
 allonfire/
   apps/
-    laura/                Next.js photo gallery + games app
+    laura/                Next.js Gallery and Memory game
   packages/
     database/             Prisma ORM + services
 ```
@@ -224,7 +225,7 @@ NOT `├──` and `└──`.
 
 ### Core Rules
 
-1. Max 5-7 nodes per diagram
+1. Mermaid: three boxes at most. A bigger idea is a table or a list. Plain text diagrams: 5-7 nodes at most
 2. One diagram per flow
 3. Full descriptive labels, no abbreviations
 4. Plain characters only
@@ -246,6 +247,7 @@ The root README is a **generic monorepo overview** that grows over time.
 9. **Packages** — brief description + emoji table
 10. **Project Structure** — infra badges + description + plain-indentation folder tree
 11. **Infrastructure** — brief description + emoji table. No sensitive details.
+    Then **Run it locally** (numbered steps, address table) and **Docs** ("you want to / read" table). Setup walkthroughs live in guides.
 12. **Divider** — `---`
 13. **Footer** — centered casual sign-off
 

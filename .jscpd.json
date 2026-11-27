@@ -19,8 +19,6 @@
     "**/._*",
     "**/node_modules/**",
     "**/.next/**",
-    "packages/auth-old/**",
-    "packages/ui-old/**",
     "packages/shadcn/**",
     "**/generated/**",
     "**/*.d.ts"

@@ -10,7 +10,8 @@ import { TELEMETRY } from "../constants/telemetry";
 
 /**
  * One server span and one `http.server.request.duration` point per request,
- * from `@hono/otel`, with three corrections on top:
+ * from `@hono/otel`, with three corrections on top. A span is named after the
+ * route pattern, never the raw path (`GET /v1/images/:id`; `GET /*` for a 404).
  *
  * - Probes trace nothing, not even the database check `/ready` runs: they are
  *   self-generated on a fixed schedule and would bury real traffic.

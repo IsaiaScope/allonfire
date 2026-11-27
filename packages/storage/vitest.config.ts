@@ -10,8 +10,9 @@ export default mergeConfig(
       globalSetup: ["./src/features/test-bucket/utils/global-setup.ts"],
       setupFiles: ["./vitest.setup.ts"],
       // sharp encodes real images (4000px at most): ~1s alone, but several
-      // seconds when `turbo run test` runs every package at once.
-      testTimeout: 20 * UNIT.MS_PER_SECOND,
+      // seconds when `turbo run test` runs every package at once. On a 4-core
+      // CI runner one encode has taken 16s, and once passed 20s.
+      testTimeout: 60 * UNIT.MS_PER_SECOND,
     },
   })
 );

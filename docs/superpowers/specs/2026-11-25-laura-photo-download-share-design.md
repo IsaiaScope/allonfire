@@ -66,15 +66,17 @@ Picked by the owner: **D**, "work done correctly, security first".
 
 ## Design
 
+**As built (2026-11-26):** Download is not a plain link. On the device runs a failed Download left the app, so it fetches the Export first, saves it from a `blob:` URL and tells a failure in a toast. This replaces every "plain link" line below, call 1 included. The rules now live in `docs/guides/images.md`.
+
 ### API
 
 - `GET /v1/images/:id/export` in `packages/storage` (`features/image/hono/routes`), beside `getRoute`, behind the same visibility check as `getHandlers` (`canSeeImage`, else 404; no 403).
-- It reads the stored object from the bucket, decodes with `sharp`, writes a **JPEG without metadata** at the stored size (quality a named constant), and streams it.
+- It reads the stored object from the bucket, decodes with `sharp`, writes a **JPEG without metadata** at the stored size (quality a named constant), and answers with it (built whole in memory, not streamed).
 - Headers: `Content-Type: image/jpeg`, `Content-Disposition: attachment; filename="<created UTC date>-<first 8 of the id>.jpg"` (stable and generic: the Image's creation date and a short id, so two photos never collide and the stored key is never shown; no App prefix, because a package never names an App, ADR 0033; one pure `exportName` in `packages/storage` builds it for the API's header and for the browser's `File`), `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`.
 - Failure modes: 404 hidden or missing; 413 or 422 never expected (stored files already passed `prepare-image`); a decode failure is a 500 with a coded error.
 - Documented in OpenAPI (`docs` module) with its translations (`apps/api` i18n), tests in `read.test.ts` style.
 - **Signed in only**, even for a public Image (a visitor cannot make the server decode and re-encode). The guard is the Session plus `canSeeImage`, else 404. It lives under plain `/v1/images` (ADR 0035: a capability several Apps use).
-- A **dedicated rate limit** (its own limiter and constants, as `authRateLimit` is for sign-in; 10 a minute per client) on top of the global 100.
+- A **dedicated rate limit** (its own limiter and constants, as `authRateLimit` is for sign-in; 10 a minute per client; raised to 30 and counted per signed-in User, not per address, on 2026-11-26) on top of the global 100.
 
 ### Shared UI (`packages/ui`)
 
@@ -112,7 +114,7 @@ A fresh reader asked six questions; these are the answers, each my call unless m
 3. **The filename is the Image's creation date plus a short id, with no App prefix** (see the API section): stable and collision-free, never the download date.
 4. **The metadata test writes an object with EXIF straight into the bucket** (bypassing `prepare-image`, as a legacy file could) and proves the JPEG has none, rather than relying on what upload does.
 5. **Share is probed, not waited for.** At the first client render the capsule asks `navigator.canShare({ files: [new File([""], "x.jpg", { type: "image/jpeg" })] })` with a dummy file, so Share is in the capsule from the first paint (the preview is client-only), never popping in later.
-6. **The Export is fetched when Share is pressed, not for every slide.** The spike checks whether iOS accepts `share()` after that fetch; if it rejects (`NotAllowedError`), Share becomes a two-step: the first tap fetches the file and the button reads "Ready", the second tap shares. The API route caps decode work (`sharp.concurrency`, one decode in flight per request) and sits under its own dedicated rate limit (Language and API sections).
+6. **The Export is fetched when Share is pressed, not for every slide.** The spike checks whether iOS accepts `share()` after that fetch; if it rejects (`NotAllowedError`), Share becomes a two-step: the first tap fetches the file and the button reads "Ready", the second tap shares (built 2026-11-26 as a notice, not a "Ready" button: the capsule holds icons only). The API route sits under its own dedicated rate limit (Language and API sections). The `sharp.concurrency` cap first planned here was dropped on 2026-11-26: no problem was seen that it fixes, and it is process-wide, so uploads would pay for it too.
 
 ## Left to the builder
 

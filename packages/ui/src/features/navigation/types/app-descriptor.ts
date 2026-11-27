@@ -53,4 +53,10 @@ export type AppDescriptor<S extends AppSection = AppSection> = {
   /** The menu's order: Home first, so there is always one. */
   sections: readonly [S, ...S[]];
   shareImageAlt: string;
+  /**
+   * The App's own release number, from its own `package.json` (a Release moves
+   * it, `CONTEXT.md`); shown as `v` + it on the account menu. A package never
+   * imports an App, so each App passes its own.
+   */
+  version: string;
 };

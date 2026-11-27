@@ -5,20 +5,33 @@ TypeScript, React and CSS rules that no linter enforces. Helpers and constants (
 ## What the tools enforce
 
 - Biome (`biome.jsonc`): the Ultracite presets (core, react, next, vitest, type-aware) plus `noFloatingPromises`, `noMisusedPromises`, `useExhaustiveSwitchCases`, `noReExportAll`, `noExcessiveLinesPerFile`, `useMaxParams`, `noImplicitCoercions`; `noProcessEnv` is off only in the files its override lists (environment files, tests, e2e).
-- oxlint (`.oxlintrc.json`): only `typescript/no-deprecated`, type-aware; ignores `*-old` packages and generated shadcn code.
-- TypeScript (`packages/config/typescript/base.json`): `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noImplicitReturns`, unused locals and parameters as errors.
+- oxlint (`.oxlintrc.json`): only `typescript/no-deprecated`, type-aware; ignores generated shadcn code.
+- TypeScript (`packages/config/typescript/base.json`): `strict` plus the options below, each catching what the others do not.
+
+## Compiler options
+
+- `noUncheckedIndexedAccess`: `arr[i]` and `record[key]` read as `T | undefined`.
+- `exactOptionalPropertyTypes`: `{ a?: string }` is "absent or a string", never an explicit `undefined`; write `?: string | undefined` where a caller can pass one.
+- `noImplicitOverride` (an overriding method says `override`), `noImplicitReturns` (a function that returns on some paths returns on all), `noFallthroughCasesInSwitch` (a non-empty `case` ends in `break`, `return` or `throw`).
+- `noUnusedLocals`, `noUnusedParameters` (Biome reports dead code too; an intentionally unused parameter starts with `_`), `allowUnreachableCode: false`, `allowUnusedLabels: false`.
+- `verbatimModuleSyntax`: a type-only import says `import type`, so nothing is imported at runtime by accident.
+- `erasableSyntaxOnly`: no `enum`, `namespace` or parameter properties, so every file is valid once its types are stripped (what `tsx` and Node's type stripping do).
+- `noUncheckedSideEffectImports`: `import "./x"` must resolve (Next's own types declare `*.css`). `moduleDetection: "force"` and `isolatedModules`: every file is a module and compiles on its own.
+- Left out on purpose: `noPropertyAccessFromIndexSignature` requires `obj["key"]`, which Biome's `useLiteralKeys` rewrites to `obj.key` (`noUncheckedIndexedAccess` already carries the safety); `declaration`, `sourceMap` and `incremental`, since `tsc` emits nothing (Next builds with SWC, the API runs through `tsx`) and every preset is `noEmit`.
+- `base.json` sets no `types`, so what it sees of `@types/*` depends on where TypeScript runs from. `node.json` and `nextjs.json` list `types` explicitly, so `process`, `Buffer` and `node:*` resolve the same in the editor, in `tsc` and in CI; a project that extends `base.json` directly lists its own.
+- TypeScript 6.0 is the last JavaScript-based release, and what it deprecates is what 7.0 removes, so the config is ready for 7. The move to 7.0 (the native compiler) waits for its JavaScript API, which Next's editor plugin and type-check integration load.
 
 ## TypeScript
 
 - Name files kebab-case; a type-only test ends in `.test-d.ts`. Example: `packages/core/src/shared/utils/json.ts`.
 - Narrow instead of casting, in this order: a type guard, `schema.parse()` for anything from outside (JSON, responses, Redis, env), `as const satisfies Record<K, V>` for lookup tables, `as const` for template literals, a generic that keeps a literal input literal. Example: `apps/api/src/shared/constants/error.ts`.
 - Wrap an untyped standard API in a generic core helper so types flow through: `unknown` by default, `NoInfer` so an annotation never sets `T` silently, overloads rather than casts. Example: `packages/core/src/shared/utils/json.ts`.
-- Never add a `biome-ignore`: restructure until the rule passes, and ask the owner when it truly cannot. The one sanctioned case is a package entry barrel. Example: `packages/database/src/index.ts`.
+- Never add a `biome-ignore`: restructure until the rule passes, and ask the owner when it truly cannot. A test fails on one in any App's or package's `src`: `packages/config/local/tests/knip-config.test.ts`.
 
 ## React
 
 - A component that wraps another takes the wrapped component's props (`ComponentProps<typeof X>`, minus what it sets itself) plus only the few it adds, and spreads the rest (`{...props}`); it never lists `children`, `className`, `disabled` and the like one by one, so its props stay few. Example: `packages/ui/src/features/auth/components/aof-gate-submit.tsx`.
-- Motion is CSS, behind `motion-safe:` where it is not essential; no animation library is installed (Laura dropped `framer-motion`), and an animation is never coordinated with `setTimeout`. Example: `apps/back-office/src/features/navigation/components/section-loading.tsx`.
+- Motion is CSS, behind `motion-safe:` where it is not essential; no animation library is installed, and an animation is never coordinated with `setTimeout`. Example: `apps/back-office/src/features/navigation/components/section-loading.tsx`.
 - Every `<img>` or `<Image>` gets `width` and `height`, or `fill` inside a sized box, so nothing shifts as it loads. Example: `packages/ui/src/shared/components/aof-image.tsx`.
 
 ## CSS

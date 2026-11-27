@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // features/ci/tests/ reads every workspace manifest and Turbo config, the
+      // lockfile and the release hook: a change to one re-runs it.
+      "inputs": [
+        "$TURBO_EXTENDS$",
+        "$TURBO_ROOT$/.iso/release-hook",
+        "$TURBO_ROOT$/package.json",
+        "$TURBO_ROOT$/pnpm-workspace.yaml",
+        "$TURBO_ROOT$/turbo.json",
+        "$TURBO_ROOT$/pnpm-lock.yaml",
+        "$TURBO_ROOT$/apps/*/turbo.json",
+        "$TURBO_ROOT$/packages/*/turbo.json",
+        "$TURBO_ROOT$/apps/*/package.json",
+        "$TURBO_ROOT$/packages/*/package.json"
+      ]
+    }
+  }
+}

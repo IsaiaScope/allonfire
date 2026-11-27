@@ -107,5 +107,5 @@ and ship nothing.
 ## Pointers
 
 - robots.txt is core's `AOFRobots` (`Allow: /`, plus a sitemap line when indexed), never `Disallow: /`, which would hide an unindexed App's `noindex` from search engines and block link-preview bots: `packages/core/src/features/next/metadata/utils/aof-indexed.ts`. (`docs/superpowers/specs/2026-10-08-back-office-special-pages-design.md`)
-- The App scaffolding (providers, i18n, PWA, the Next config), export by export: `packages/core/README.md`.
+- The App scaffolding (providers, i18n, PWA, the Next config): each piece's doc comment under `packages/core/src/features/next/`.
 - A Next App's side of auth (sign-in and sign-out actions, the Session, the proxy wrappers): `packages/auth/README.md`.

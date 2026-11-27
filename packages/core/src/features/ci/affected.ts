@@ -1,25 +1,32 @@
 import { z } from "zod";
 import { parseJsonWith } from "../../shared/utils/json";
+import { DEPLOY_UNIT } from "./constants/deploy-unit";
 
-/**
- * An App is a workspace package under `apps/` (the API included), named by
- * its folder, so Turbo lists every one of them.
- */
-const APPS_DIR = "apps/";
+const isApp = (folder: string) => folder.startsWith(DEPLOY_UNIT.PATH.APPS);
 
-/** A Deploy unit (CONTEXT.md): an App, or the database migration. */
-const DB_MIGRATE = "db-migrate";
-const DATABASE_PACKAGE = "@allonfire/database";
+/** Whether the package in this folder is a Deploy unit, for a deploy and a Release alike. */
+export const isDeployUnit = (folder: string): boolean =>
+  isApp(folder) || folder === DEPLOY_UNIT.PATH.MIGRATION;
 
 export type Affected = { apps: string[]; deploy: string[] };
 
 /**
  * Files every image is built from that no Turbo task reads, so Turbo lists
- * no package for them. Turbo's own global files (root `package.json`,
- * `turbo.json`, the lockfile) and Markdown (excluded from every task's
- * inputs) need nothing here.
+ * no package for them. `turbo.json` and the lockfile are Turbo's to read,
+ * and Markdown is excluded from every task's inputs. The root `package.json`
+ * stays out too: every Release edits it, and the one field every image
+ * depends on, `packageManager`, `affectedSince` compares itself.
  */
-const IMAGE_FILES = [/^docker\//, /^\.dockerignore$/, /^pnpm-workspace\.yaml$/];
+const IMAGE_FILES = [
+  /^docker\//,
+  /^\.dockerignore$/,
+  /^\.npmrc$/,
+  /^pnpm-workspace\.yaml$/,
+];
+
+/** Whether any of these files reaches every image (`IMAGE_FILES`). */
+const touchesImage = (files: readonly string[]): boolean =>
+  files.some((file) => IMAGE_FILES.some((pattern) => pattern.test(file)));
 
 const packagesSchema = z.array(
   z.object({ name: z.string(), path: z.string() })
@@ -30,18 +37,20 @@ const turboQuerySchema = z.object({
   data: z.object({ affectedPackages: z.object({ items: packagesSchema }) }),
 });
 
-/** `turbo query` output of every package (`PACKAGES_QUERY` in print-affected). */
+/** `turbo query` output of every package (`PACKAGES_QUERY` in turbo-affected). */
 const turboPackagesSchema = z.object({
   data: z.object({ packages: z.object({ items: packagesSchema }) }),
 });
 
-/** The Apps and Deploy units of these packages, the migration first. */
+/** The Apps (each named by its folder) and Deploy units of these packages, the migration first. */
 const unitsOf = (packages: z.infer<typeof packagesSchema>): Affected => {
   const apps = packages.flatMap(({ path }) =>
-    path.startsWith(APPS_DIR) ? [path.slice(APPS_DIR.length)] : []
+    isApp(path) ? [path.slice(DEPLOY_UNIT.PATH.APPS.length)] : []
   );
-  const migrate = packages.some(({ name }) => name === DATABASE_PACKAGE)
-    ? [DB_MIGRATE]
+  const migrate = packages.some(
+    ({ path }) => path === DEPLOY_UNIT.PATH.MIGRATION
+  )
+    ? [DEPLOY_UNIT.MIGRATE]
     : [];
   return { apps, deploy: [...migrate, ...apps] };
 };
@@ -51,8 +60,14 @@ export const everything = (turboPackagesJson: string): Affected => {
   const { apps } = unitsOf(
     parseJsonWith(turboPackagesJson, turboPackagesSchema).data.packages.items
   );
-  return { apps, deploy: [DB_MIGRATE, ...apps] };
+  return { apps, deploy: [DEPLOY_UNIT.MIGRATE, ...apps] };
 };
+
+/** The folder of every Deploy unit in it, from the repo root. */
+export const unitFolders = ({ apps, deploy }: Affected): string[] => [
+  ...(deploy.includes(DEPLOY_UNIT.MIGRATE) ? [DEPLOY_UNIT.PATH.MIGRATION] : []),
+  ...apps.map((app) => `${DEPLOY_UNIT.PATH.APPS}${app}`),
+];
 
 /**
  * Turbo's affected packages, read as the Apps to test end to end and the
@@ -65,7 +80,7 @@ export const affectedFrom = (
   turboPackagesJson: string,
   changedFiles: readonly string[]
 ): Affected =>
-  changedFiles.some((file) => IMAGE_FILES.some((pattern) => pattern.test(file)))
+  touchesImage(changedFiles)
     ? everything(turboPackagesJson)
     : unitsOf(
         parseJsonWith(turboQueryJson, turboQuerySchema).data.affectedPackages

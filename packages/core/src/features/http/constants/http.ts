@@ -105,6 +105,7 @@ const HEADER = {
   ACCEPT_LANGUAGE: "accept-language",
   AUTHORIZATION: "authorization",
   CACHE_CONTROL: "cache-control",
+  CONTENT_DISPOSITION: "content-disposition",
   CONTENT_LENGTH: "content-length",
   CONTENT_SECURITY_POLICY: "content-security-policy",
   CONTENT_TYPE: "content-type",
@@ -138,13 +139,16 @@ type HttpHeader = z.infer<typeof httpHeaderSchema>;
 /** Two years, the HSTS preload list's minimum. */
 const HSTS_MAX_AGE_S = 2 * UNIT.DAYS_PER_YEAR * UNIT.SECONDS_PER_DAY;
 
+/** What `X-Content-Type-Options` says: the browser trusts the declared type. */
+const NO_SNIFF = "nosniff";
+
 /**
  * Headers every allonfire app sends. Mutable on purpose: Next's `headers()`
  * config takes a `Header[]`, not a readonly one.
  */
 const SECURITY_HEADERS: { key: HttpHeader; value: string }[] = [
   { key: HEADER.X_FRAME_OPTIONS, value: "DENY" },
-  { key: HEADER.X_CONTENT_TYPE_OPTIONS, value: "nosniff" },
+  { key: HEADER.X_CONTENT_TYPE_OPTIONS, value: NO_SNIFF },
   {
     key: HEADER.REFERRER_POLICY,
     value: "strict-origin-when-cross-origin",
@@ -159,18 +163,21 @@ const SECURITY_HEADERS: { key: HttpHeader; value: string }[] = [
 /** `Cache-Control` values: `NO_CACHE` asks the server again on every use. */
 const CACHE_CONTROL = {
   NO_CACHE: "no-cache, no-store, must-revalidate",
+  /** For an answer made for one User: no shared cache keeps it, and no cache keeps it at all. */
+  PRIVATE_NO_STORE: "private, no-store",
 } as const;
 
 /** How an `Authorization` header names its scheme; a token follows after a space. */
 const AUTH_SCHEME = { BEARER: "Bearer" } as const;
 
-/** Everything HTTP names: `HTTP.CACHE_CONTROL.*`, `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, and the `SECURITY_HEADERS` every app sends. */
+/** Everything HTTP names: `HTTP.CACHE_CONTROL.*`, `HTTP.STATUS.*`, `HTTP.METHOD.*`, `HTTP.HEADER.*`, `HTTP.CONTENT_TYPE.*`, `HTTP.NO_SNIFF`, and the `SECURITY_HEADERS` every app sends. */
 export const HTTP = {
   AUTH_SCHEME,
   CACHE_CONTROL,
   CONTENT_TYPE: CONTENT_TYPES,
   HEADER,
   METHOD,
+  NO_SNIFF,
   SECURITY_HEADERS,
   STATUS,
 } as const;

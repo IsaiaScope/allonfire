@@ -50,6 +50,30 @@ export const getRoute = describeRoute({
   tags: [IMAGE.OPENAPI_TAG],
 });
 
+/** The Export's body is the JPEG itself, not JSON. */
+const exportBody = {
+  [IMAGE.EXPORT.CONTENT_TYPE]: {
+    schema: { format: "binary", type: "string" },
+  },
+} as const;
+
+export const exportRoute = describeRoute({
+  description: IMAGE.EXPORT.DOC.DESCRIPTION,
+  responses: {
+    [HTTP.STATUS.OK]: {
+      content: exportBody,
+      description: IMAGE.EXPORT.DOC.RESPONSE[HTTP.STATUS.OK],
+    },
+    ...problemResponses(
+      HTTP.STATUS.UNAUTHORIZED,
+      HTTP.STATUS.NOT_FOUND,
+      HTTP.STATUS.TOO_MANY_REQUESTS
+    ),
+  },
+  summary: IMAGE.EXPORT.DOC.SUMMARY,
+  tags: [IMAGE.OPENAPI_TAG],
+});
+
 export const uploadRoute = describeRoute({
   description: IMAGE.DOC.UPLOAD.DESCRIPTION,
   responses: {

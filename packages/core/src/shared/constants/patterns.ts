@@ -18,8 +18,30 @@ export const PATTERN = {
     UPPERCASE: /\p{Lu}/u,
     WHITESPACE: /\s/u,
   },
+  /** An Export's file name: `2026-11-25-1a2b3c4d.jpg` (storage's `exportName`). */
+  EXPORT_FILE_NAME: /^\d{4}-\d{2}-\d{2}-[0-9a-z]{8}\.jpg$/,
   /** A day as the lists write it: `2026-11-26` (a real day is checked beside it). */
   ISO_DAY: /^\d{4}-\d{2}-\d{2}$/,
+  /** A whole-line comment in a `turbo.json`, dropped before it is parsed. */
+  JSONC_LINE_COMMENT: /^\s*\/\/.*$/gm,
+  /** A Release's numbers (`features/ci/release-versions`). */
+  RELEASE: {
+    /** What an App's account menu shows: `v0.12.0`. */
+    BADGE: /^v\d+\.\d+\.\d+$/,
+    /** `major.minor.patch`, three whole numbers. */
+    VERSION: /^\d+\.\d+\.\d+$/,
+    /** A package.json's own `"version"` line (two spaces in), never a nested one. */
+    VERSION_LINE: /^( {2}"version": ")[^"]*(")/m,
+    /** A workspace entry of `pnpm-workspace.yaml`: `- "apps/*"`, `- "!x"`. */
+    WORKSPACE_ENTRY: /^\s*-\s*["']?(!?)([^"'\s]+)["']?\s*(?:#.*)?$/,
+    /** A top-level key of `pnpm-workspace.yaml`, which ends the list before it. */
+    WORKSPACE_KEY: /^([A-Za-z][\w-]*):/,
+  },
+  /** One letter of a script that needs its own handling. */
+  SCRIPT: {
+    /** Written without capitals: uppercasing a letter switches alphabet. */
+    GEORGIAN: /\p{Script=Georgian}/u,
+  },
   /** The telemetry env's keys (`TELEMETRY_*`). */
   TELEMETRY: {
     /** `key=value,key=value`, each value percent-encoded, per the OTel spec. */

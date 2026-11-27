@@ -88,6 +88,23 @@ const CHANGESETS_AFTER_BASELINE =
   readdirSync(CHANGESET.DIR).filter((file) => PATTERN.CHANGESET.FILE.test(file))
     .length - 1;
 
+/** Every column of the schemas Laura's changesets live beside, in a fixed order. */
+const columnsOf = (client: PrismaClient) =>
+  client.$queryRaw<
+    {
+      table_schema: string;
+      table_name: string;
+      column_name: string;
+      udt_name: string;
+      is_nullable: string;
+    }[]
+  >`
+    SELECT table_schema, table_name, column_name, udt_name, is_nullable
+    FROM information_schema.columns
+    WHERE table_schema IN ('auth', 'laura')
+    ORDER BY table_schema, table_name, column_name
+  `;
+
 describe("changelog on an empty database", () => {
   const database = throwawayName("changelog_fresh");
   const url = throwawayUrl(database);
@@ -178,6 +195,38 @@ describe("changelog on an empty database", () => {
     async (table, shape) => {
       expect(await lauraShapeOf(client, table)).toEqual(shape);
     }
+  );
+
+  // What `rollback --tag=<last deployed>` does on the VPS, all of Laura's at
+  // once; it ends updated again, as it found the database.
+  it(
+    "rolls Laura's changesets back to the old scores table, then forward to the same schema",
+    async () => {
+      const updated = await columnsOf(client);
+
+      liquibase(
+        url,
+        "rollback-count",
+        `--count=${CHANGESETS_FROM_LAURA_VIEWERS}`
+      );
+      const rolledBack = await columnsOf(client);
+
+      expect(await tablesIn(client, "laura")).toEqual(["GameScore"]);
+      const scores = rolledBack
+        .filter(({ table_name }) => table_name === "GameScore")
+        .map(({ column_name }) => column_name);
+      expect(scores).toEqual(expect.arrayContaining(["gameType", "metadata"]));
+      expect(scores).not.toContain("app");
+      // `auth` is untouched: 0008 moves data only.
+      expect(
+        rolledBack.filter(({ table_schema }) => table_schema === "auth")
+      ).toEqual(updated.filter(({ table_schema }) => table_schema === "auth"));
+
+      liquibase(url, "update");
+
+      expect(await columnsOf(client)).toEqual(updated);
+    },
+    TEST_DATABASE.TIMEOUT.DOCKER_MS
   );
 
   it(

@@ -110,6 +110,14 @@ describe("listGalleryPage", () => {
     expect(second.flags).toEqual([false, false, false]);
   });
 
+  it("tells when each Image was uploaded, as an Export is named by it", async () => {
+    const id = await photo("dated", 7);
+    const { images } = await listGalleryPage({ limit: 500, userId: FIRST });
+    expect(images.find((image) => image.id === id)?.createdAt).toEqual(
+      atHour(7)
+    );
+  });
+
   it("pages of limit cover every Image once, and the last next is null", async () => {
     const ids = await Promise.all(
       [1, 2, 3, 4, 5].map((hours) => photo(`p${hours}`, hours))
@@ -183,6 +191,15 @@ describe("listGalleryPage", () => {
 });
 
 describe("listFavoritesPage", () => {
+  it("tells when the Image was uploaded, not when it was marked", async () => {
+    const id = await photo("uploaded", 2);
+    await markAt(id, 9);
+    const { images } = await listFavoritesPage({ limit: 500, userId: FIRST });
+    expect(images.find((image) => image.id === id)?.createdAt).toEqual(
+      atHour(2)
+    );
+  });
+
   it("lists the caller's copies, most recently marked first, paged the same way", async () => {
     const [a, b, c] = await Promise.all([
       photo("fa", 1),

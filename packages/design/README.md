@@ -5,84 +5,82 @@
   <img src="https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind" />
 </p>
 
-<p align="center">What the Apps share visually, as fonts, CSS, Markdown and constants: the Designs, the Brand, each App's product context and stylesheet, and impeccable's state. No components.</p>
+<p align="center">How the apps look, as fonts, CSS, Markdown and constants: the Designs, the Brand and each app's product context. No components.</p>
 
-## What it is
+---
 
-A **Design** is a named visual world that one or more Apps wear (Japan is the
-Back Office's, Ocean is Laura's): its rules, tokens and fonts. Every component lives in an App, under
-`src/features/<topic>/components/`, or in `@allonfire/ui` when Apps share it,
-the generated-image ones included (`AOFBrandLogo`, `AOFShareCard`), which
-read this package's constants: the Brand's logo geometry and a Design's image
-fonts, colours and card look. An App's `globals.css` imports ui's
-`base.css`, then its stylesheet from here. This package depends only on `@allonfire/core`.
-See ADR 0011, ADR 0014 and ADR 0022.
+## 🔧 Use it
 
-Every change goes through `/aof-design`, which runs impeccable against this
-package. Plain `/impeccable` finds no product context here on purpose.
+A **Design** is a named visual world that apps wear: its rules, tokens and fonts.
 
-## Layout
+| I want to | Use |
+|-----------|-----|
+| change a Design, or add one | `/aof-design`, which runs impeccable against this package |
+| style an app with its Design | import its stylesheet after ui's base (below) |
+| copy a Design into the apps wearing it | `pnpm design:sync` |
+| draw an app's logo | `aofLogoSvg` (`@allonfire/design/brand/aof-logo`) |
+| use a Design's colours where CSS variables do not reach | its `image-colors` |
+| list how each app is drawn | `APP` (`@allonfire/design/apps/app`) |
 
-```
-.impeccable/            impeccable state: config.json and surfaces/ are tracked
-scripts/sync.ts         design:sync
-src/brand/              the AOF monogram (BRAND) and every App's logo around it
-src/designs/<name>/     DESIGN.md, DESIGN.json, theme.css, fonts/ (the source),
-                        image-font(s).ts, image-colors.ts, share-card-look.ts
-                        (what generated images read); Ocean also has
-                        email-look.ts, mascot-art.ts, card-back.ts,
-                        sea-wave.ts, sea-icons.ts and SOURCES.md (credits)
-src/designs/shared/     what every Design's tests and loaders share
-                        (the contract test, contrast helpers, font reader)
-src/apps/<app>/         PRODUCT.md, styles.css, DESIGN.md + DESIGN.json
-                        (generated copies), <app>-logo.ts
-src/apps/app.ts         APP: how every App is drawn, read by each App's switcher
+An app's whole `globals.css`:
+
+```css
+@import "@allonfire/ui/styles/base.css";
+@import "@allonfire/design/apps/back-office/styles.css";
+
+@source "../";
 ```
 
-## Exports
+## 🗂️ Where things are
 
-| Export | Contents |
-|--------|----------|
-| `./apps/app` | `APP.ENTRY` (each App's name and mark, keyed by the `App` enum's values) and `APP.OPTIONS` (the same Apps as a filter's options): the one definition every App's `entries` reads |
-| `./apps/back-office/styles.css` | the worn Design's tokens and the App's own rules, imported after ui's base |
-| `./brand/aof-monogram` | `BRAND`: the brand's name, the monogram as markup, SVG and data URL, its dark ground and letter colour |
-| `./brand/aof-logo` | `aofLogoSvg` (an App's logo as SVG: square or horizontal, dark, light or `auto`), `AOF_LOGO` geometry, `AppLogo` |
-| `./designs/japan/image-colors` | `JAPAN_IMAGE_COLOR`: the Design's colours for what cannot read CSS variables |
-| `./designs/japan/image-font` | `JAPAN_IMAGE_FONT.FAMILY`: the face's name, safe in a browser bundle |
-| `./designs/japan/image-fonts` | `loadJapanImageFonts`, the face's files for `ImageResponse` (server only: reads files) |
-| `./designs/japan/share-card-look` | `JAPAN_SHARE_CARD`: how ui's `AOFShareCard` looks in Japan, per scheme (colours, face, tactile edge) |
-| `./designs/japan/theme.css` | the Design's tokens alone, no App's rules: ui's browser tests wear it over ui's base |
-| `./apps/laura/styles.css` | Ocean's tokens and Laura's own rules, imported after ui's base |
-| `./designs/ocean/image-colors` | `OCEAN_IMAGE_COLOR`: colours for what cannot read CSS variables, and the logo `BANNER` |
-| `./designs/ocean/image-font` | `OCEAN_IMAGE_FONT.FAMILY` (Nunito), safe in a browser bundle |
-| `./designs/ocean/image-fonts` | `loadOceanImageFonts`, the static Nunito files for `ImageResponse` (server only) |
-| `./designs/ocean/share-card-look` | `OCEAN_SHARE_CARD`: ui's `AOFShareCard` in Ocean, per scheme (colours, face, wave edge) |
-| `./designs/ocean/email-look` | `OCEAN_EMAIL_LOOK`: the colours of ui's `AOFEmail` (no flourish) |
-| `./designs/ocean/mascot-art` | `OCEAN_ART` (the full-colour and one-colour emoji art as SVG, each with its licence), `OCEAN_MASCOT_POOL` (the six pictures the pages show) |
-| `./designs/ocean/sea-emoji` | `OCEAN_SEA_EMOJI`, `OCEAN_EMOJI_SET`: the Noto and Firefox emoji for each thing the app shows (drawn with `filter: var(--emoji-shadow)`) |
-| `./designs/ocean/card-back` | `OCEAN_CARD_BACK`: the Memory game's card back, 300 by 400, SVG and data URL |
-| `./designs/ocean/sea-wave` | `oceanWavePath`: the sea line as one open path |
-| `./designs/ocean/sea-icons` | `OCEAN_SEA_ICON` (crab, jellyfish, lighthouse) and `oceanSeaIconSvg` |
-| `./designs/ocean/theme.css` | Ocean's tokens alone, for ui's browser tests |
+```
+.impeccable/            impeccable's state
+scripts/                design:sync
+src/
+  brand/                the AOF monogram and the logo built around it
+  designs/<name>/       DESIGN.md, DESIGN.json, theme.css, fonts, looks for images and email
+  designs/shared/       the font file reader and the tests every Design passes
+  apps/<app>/           PRODUCT.md, styles.css, the app's logo, copies of its Design
+  apps/app.ts           how every app is drawn in a switcher
+```
 
-## design:sync
+## 🔁 design:sync
+
+From the repo root:
 
 ```bash
-pnpm design:sync                 # copy each Design into the Apps wearing it
-pnpm design:sync --check         # CI: exit 1 when a copy drifted
-pnpm design:sync --from <app>    # copy an App's edited copy back, fan out
+pnpm design:sync                 # copy each Design into the apps wearing it
+pnpm design:sync --check         # write nothing, exit 1 if a copy drifted (the static Stage runs it)
+pnpm design:sync --from <app>    # copy an app's edited copy back to its Design, then to every wearer
 ```
 
-An App's `DESIGN.json` is written by its first real page's `document` scan
-(Laura has none yet).
+An app wears the Design whose `theme.css` its `src/apps/<app>/styles.css` imports.
 
-It also refuses to run while a `PRODUCT.md` or `DESIGN.md` sits at the repo
-root, in `docs/`, in `.agents/context/` or at this package's root: impeccable
-would read it instead of the App's.
+## ⚠️ Watch out
 
-## Tests
+| Trap | What to do |
+|------|------------|
+| `DESIGN.md` and `DESIGN.json` under `src/apps/<app>/` are copies | Edit the ones in `src/designs/<name>/`, or bring your edit back with `--from` |
+| A `PRODUCT.md` or `DESIGN.md` at the repo root, in `docs/`, `.agents/context/` or this package's root hides the app's own, and so does `.impeccable/design.json` | `design:sync` refuses to run: move it into the app's folder |
+| Plain `/impeccable` finds no product context here, on purpose | Use `/aof-design` |
+| `image-fonts` reads font files, so it is server only | A browser bundle takes the face's name from `image-font` |
+| The Japan fonts are cut down to listed characters | A new kanji needs a new subset: [fonts README](src/designs/japan/fonts/README.md) |
+| Fonts and art carry licences | Record a new one beside it, as in [Ocean's sources](src/designs/ocean/SOURCES.md) |
+
+## 🧪 Run and test
 
 ```bash
-pnpm --filter @allonfire/design test
+pnpm --filter @allonfire/design test         # theme contrast, token contract, image colours, logos
 pnpm --filter @allonfire/design check-types
 ```
+
+## 📚 More
+
+- [Design system](../../docs/guides/design-system.md): what belongs here, in `ui` and in an app
+- ADRs: [Designs live in the design package](../../docs/adr/0011-designs-and-screens-live-in-the-design-package.md), [pages are built in their app](../../docs/adr/0014-pages-are-built-in-their-app.md), [no components here](../../docs/adr/0022-the-design-package-holds-no-components.md)
+
+---
+
+<p align="center">
+  ⬅️ <a href="../../README.md">Back to monorepo root</a>
+</p>

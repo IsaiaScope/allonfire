@@ -49,7 +49,18 @@
     "i18n:check": {
       "inputs": ["src/**/i18n/translations/**"]
     },
-    "tailwind:check": {
+    "@allonfire/back-office#tailwind:check": {
+      "inputs": [
+        "src/**",
+        "!**/*.md",
+        "$TURBO_ROOT$/packages/ui/src/**",
+        "$TURBO_ROOT$/packages/design/src/**",
+        "$TURBO_ROOT$/packages/shadcn/src/styles/**",
+        "$TURBO_ROOT$/packages/core/src/features/tailwind/**",
+        "!$TURBO_ROOT$/packages/**/*.md"
+      ]
+    },
+    "@allonfire/laura#tailwind:check": {
       "inputs": [
         "src/**",
         "!**/*.md",
