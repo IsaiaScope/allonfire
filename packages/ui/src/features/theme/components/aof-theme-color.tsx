@@ -21,19 +21,40 @@ export const AOFThemeColor = () => {
 
   useEffect(() => {
     const shown = colorSchemeSchema.safeParse(scheme).data;
-    const source =
-      shown &&
-      document.querySelector<HTMLMetaElement>(
-        `meta[name="${METADATA.THEME_COLOR.NAME}"][media="${colorSchemeMedia(shown)}"]`
-      );
-    if (!source) {
+    if (!shown) {
+      return;
+    }
+    const viewportTags = `meta[name="${METADATA.THEME_COLOR.NAME}"]`;
+    const ofShown = `[media="${colorSchemeMedia(shown)}"]`;
+    const source = document.querySelector<HTMLMetaElement>(
+      `${viewportTags}${ofShown}`
+    );
+    const other = document.querySelector<HTMLMetaElement>(
+      `${viewportTags}[media]:not(${ofShown})`
+    );
+    if (!(source && other)) {
       return;
     }
     const tag = document.createElement("meta");
     tag.name = METADATA.THEME_COLOR.NAME;
     tag.content = source.content;
     document.head.prepend(tag);
-    return () => tag.remove();
+    // When the device switches theme, an installed Android App rebuilds its
+    // screen in the manifest's colour, and Chrome repaints it only when the
+    // page's colour changes. Ours does not, so it takes the other theme's and
+    // goes straight back. Writing the same colour again is not enough.
+    const repaint = () => {
+      tag.content = other.content;
+      tag.content = source.content;
+    };
+    const device = window.matchMedia(
+      colorSchemeMedia(METADATA.COLOR_SCHEME.DARK)
+    );
+    device.addEventListener("change", repaint);
+    return () => {
+      device.removeEventListener("change", repaint);
+      tag.remove();
+    };
   }, [scheme]);
 
   return null;

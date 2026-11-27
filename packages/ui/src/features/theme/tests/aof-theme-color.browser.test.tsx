@@ -5,6 +5,10 @@ import { AOFThemeProvider } from "@allonfire/core/features/next/providers/compon
 import { useCallback } from "react";
 import { render } from "vitest-browser-react";
 import { useAOFColorScheme } from "../../../shared/hooks/use-aof-theme-switch";
+import {
+  CAN_EMULATE_MEDIA,
+  withDarkDevice,
+} from "../../../shared/tests/emulated-media";
 import { AOFThemeColor } from "../components/aof-theme-color";
 
 const { DARK, LIGHT } = METADATA.COLOR_SCHEME;
@@ -35,6 +39,19 @@ const writeViewportTags = () => {
 };
 
 const written = () => tags().map((tag) => [tag.media, tag.content]);
+
+/** The colours the page's tags give up from now on, oldest first. */
+const recordReplaced = () => {
+  const colors: (string | null)[] = [];
+  new MutationObserver((records) => {
+    colors.push(...records.map((record) => record.oldValue));
+  }).observe(document.head, {
+    attributeFilter: ["content"],
+    attributeOldValue: true,
+    subtree: true,
+  });
+  return colors;
+};
 
 const Choose = () => {
   const { setScheme } = useAOFColorScheme();
@@ -85,6 +102,27 @@ describe("AOFThemeColor", () => {
     await choose(DARK);
     await choose(LIGHT);
     await choose(DARK);
+  });
+
+  // Only Chromium can be told the device's theme.
+  describe.runIf(CAN_EMULATE_MEDIA)("on a device switching theme", () => {
+    // A browser repaints its bars only when the colour it reads changes:
+    // writing the same one again does nothing.
+    it("changes its colour and back, for a browser that forgot it", async () => {
+      writeViewportTags();
+      const screen = await renderThemed();
+      await screen.getByRole("button", { name: DARK }).click();
+      await expect.poll(barColor).toBe(GROUND[DARK].background);
+      const before = written();
+      const replaced = recordReplaced();
+
+      await withDarkDevice(async () => {
+        await expect
+          .poll(() => replaced)
+          .toEqual([GROUND[DARK].background, GROUND[LIGHT].background]);
+        expect(written()).toEqual(before);
+      });
+    });
   });
 
   it("leaves Next's own tags as they were, and takes its own away with it", async () => {

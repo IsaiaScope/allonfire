@@ -4,6 +4,7 @@ import { objectValues } from "@allonfire/core/shared/utils/object";
 import { App } from "@allonfire/database/enums";
 import { prisma } from "@allonfire/database/features/prisma/client";
 import { FIXTURE } from "@allonfire/database/features/seed/fixtures/fixtures";
+import { IMAGE } from "@allonfire/storage/features/image/constants/image";
 import { API } from "../../../shared/constants/api";
 import { cookieFor, ORIGIN, type TestApp } from "../../../shared/tests/sign-in";
 import { idOf, imageTestApp, listKeys } from "./image-test-app";
@@ -11,6 +12,14 @@ import { idOf, imageTestApp, listKeys } from "./image-test-app";
 const FIXTURE_KEYS = new Set<string>(
   objectValues(FIXTURE.IMAGE).map(({ key }) => key)
 );
+/**
+ * Oldest first puts the Fixtures ahead of what other files upload meanwhile:
+ * newest first, a row deleted while paging moves a Fixture onto a page already
+ * read, and it is never seen.
+ */
+const OLDEST_FIRST = IMAGE.SORT.serialize([
+  { column: "created", direction: "asc" },
+]);
 /** Only the Fixtures: other files upload into the same database meanwhile. */
 const fixturesIn = (keys: readonly string[]) =>
   keys.filter((key) => FIXTURE_KEYS.has(key));
@@ -44,13 +53,9 @@ describe("reading Images on the Fixtures", () => {
 
   it("filters by App and pages by number, skipping and repeating nothing", async () => {
     const cookie = await cookieFor(app, FIXTURE.USER.ADMIN_EVERYWHERE);
-    const all = await listKeys(app, cookie, { app: App.BACK_OFFICE });
-    const paged = await listKeys(app, cookie, {
-      app: App.BACK_OFFICE,
-      perPage: 1,
-    });
-    // As sets: pages by number can repeat a row when another file's upload
-    // lands between two requests, but never lose a Fixture.
+    const options = { app: App.BACK_OFFICE, sort: OLDEST_FIRST };
+    const all = await listKeys(app, cookie, options);
+    const paged = await listKeys(app, cookie, { ...options, perPage: 1 });
     expect(new Set(fixturesIn(paged))).toEqual(new Set(fixturesIn(all)));
     expect(all).not.toContain(FIXTURE.IMAGE.PRIVATE_IN_LAURA.key);
   });
