@@ -185,6 +185,37 @@ describe("AOFSidebar", () => {
 });
 
 // Only Chromium can be told its pointer is a finger.
+describe("AOFSidebarTrigger before shadcn knows it is on a phone", () => {
+  afterEach(() => {
+    forced.mobile = undefined;
+  });
+
+  // shadcn's phone test answers "no" until the page has loaded: a tap in that
+  // moment folded the desktop menu, unseen on a phone, and opened nothing.
+  it("opens the drawer on that first tap, the desktop menu left as it was", async () => {
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
+    forced.mobile = false;
+    const onOpenChange = vi.fn();
+    const screen = await render(
+      <AOFSidebarProvider onOpenChange={onOpenChange} open>
+        <AOFSidebar label={TOGGLE}>{SIGN_OUT}</AOFSidebar>
+        <AOFSidebarTrigger aria-label={TOGGLE} />
+      </AOFSidebarProvider>
+    );
+    // Read again from the next render on, as once the page has loaded: the
+    // tap itself still meets the button drawn with "no".
+    forced.mobile = undefined;
+
+    await screen.getByRole("button", { name: TOGGLE }).click();
+
+    await expect.element(screen.getByRole("dialog")).toBeVisible();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+});
+
 describe.runIf(CAN_EMULATE_MEDIA)("AOFSidebar on a touch screen", () => {
   it("grows a default row to a finger's size on a touch screen", async () => {
     const button = await row();
