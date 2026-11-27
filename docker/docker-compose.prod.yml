@@ -23,6 +23,23 @@ x-db-job: &db-job
   networks:
     - dokploy-network
 
+# What the two Next services share: each adds its image, environment and router.
+x-next-app: &next-app
+  pull_policy: always
+  restart: unless-stopped
+  depends_on:
+    api:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 30s
+  networks:
+    - allonfire
+    - dokploy-network
+
 services:
   # First: a verified custom-format dump of allonfire, newest 14 kept. Same
   # disk as the database: this serves rollback, not disaster recovery.
@@ -71,9 +88,7 @@ services:
       - allonfire
 
   # Every Deploy unit below is an image CI built (ADR 0018); compose recreates
-  # only the ones whose :prod tag moved. Laura's own service, host and Dokploy
-  # entry arrive with the cutover (ADR 0010); until then only the Back Office
-  # knows its address.
+  # only the ones whose :prod tag moved.
   api:
     image: ghcr.io/isaiascope/allonfire-api:prod
     pull_policy: always
@@ -88,7 +103,7 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
       - API_REDIS_URL=redis://redis:6379
-      - API_CORS_ORIGINS=https://${BACK_OFFICE_HOST:?BACK_OFFICE_HOST is required}
+      - API_CORS_ORIGINS=https://${BACK_OFFICE_HOST:?BACK_OFFICE_HOST is required},https://${LAURA_HOST:?LAURA_HOST is required}
       - API_TRUSTED_PROXY_HOPS=${API_TRUSTED_PROXY_HOPS:-1}
       - AUTH_SECRET=${AUTH_SECRET:?AUTH_SECRET is required}
       - AUTH_URL=https://${API_HOST:?API_HOST is required}
@@ -135,12 +150,8 @@ services:
 
   # NEXT_PUBLIC_API_URL, BACK_OFFICE_URL and LAURA_URL are baked in at build (deploy.yml); BACK_OFFICE_URL and LAURA_URL are also read at runtime, the same values (LAURA_URL is the switcher's link to Laura).
   back-office:
+    <<: *next-app
     image: ghcr.io/isaiascope/allonfire-back-office:prod
-    pull_policy: always
-    restart: unless-stopped
-    depends_on:
-      api:
-        condition: service_healthy
     environment:
       - API_AUTH_URL=http://api:3000/v1/auth
       - API_URL=http://api:3000
@@ -152,21 +163,35 @@ services:
       - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default
       - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:?TELEMETRY_HEADERS is required}
       - TELEMETRY_SERVICE_NAME=allonfire-back-office
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/sign-in"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - allonfire
-      - dokploy-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.allonfire-back-office.rule=Host(`${BACK_OFFICE_HOST}`)"
       - "traefik.http.routers.allonfire-back-office.entrypoints=websecure"
       - "traefik.http.routers.allonfire-back-office.tls.certresolver=letsencrypt"
       - "traefik.http.services.allonfire-back-office.loadbalancer.server.port=3000"
+
+  # NEXT_PUBLIC_API_URL and LAURA_URL are baked in at build (deploy.yml gives
+  # BACK_OFFICE_URL to the Back Office only); LAURA_URL is also read at
+  # runtime, the same value.
+  laura:
+    <<: *next-app
+    image: ghcr.io/isaiascope/allonfire-laura:prod
+    environment:
+      - API_AUTH_URL=http://api:3000/v1/auth
+      - API_URL=http://api:3000
+      - AUTH_APP=LAURA
+      - LAURA_URL=${LAURA_URL:?LAURA_URL is required}
+      - AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN:-}
+      # Telemetry: required, as the API's.
+      - TELEMETRY_ENDPOINT=http://telemetry:5080/api/default
+      - TELEMETRY_HEADERS=${TELEMETRY_HEADERS:?TELEMETRY_HEADERS is required}
+      - TELEMETRY_SERVICE_NAME=allonfire-laura
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.allonfire-laura.rule=Host(`${LAURA_HOST}`)"
+      - "traefik.http.routers.allonfire-laura.entrypoints=websecure"
+      - "traefik.http.routers.allonfire-laura.tls.certresolver=letsencrypt"
+      - "traefik.http.services.allonfire-laura.loadbalancer.server.port=3000"
 
   storage:
     # MinIO deleted minio/minio from Docker Hub; the same pin as Local.

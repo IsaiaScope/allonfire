@@ -40,7 +40,7 @@ for the whole family of Apps, not for a single product.
 
 - First job: Users and access. List Users, set a User's Memberships (the Apps they belong to and their Role in each),
   revoke Sessions.
-- Later, not yet decided: each App's content (Laura's photos and quiz), data
+- Later, not yet decided: each App's content (Laura's images and Memory game), data
   and health views.
 - Terminology is fixed by the domain glossary: App, User, Role, Viewer, Allowed
   apps, Session, Sign in / Sign out. Never "login", "permissions",

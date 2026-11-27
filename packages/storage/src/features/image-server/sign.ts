@@ -31,7 +31,8 @@ type PictureLinkOptions = {
 /**
  * A signed image-server link to the stored picture `key`, fitted to `width`
  * (never taller than it is), in the format the browser takes (AVIF, else
- * WebP). Changing any part of it, the width included, breaks the signature.
+ * WebP). Changing any part of it, the width or key included, breaks the
+ * signature: the image server answers 403, and 404 once `expiresAt` passes.
  */
 export const pictureLink = ({
   bucket = env.STORAGE_BUCKET,

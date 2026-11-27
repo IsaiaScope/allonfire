@@ -77,7 +77,7 @@ export const entryRoles = (app: App): Role[] => {
   );
 };
 
-/** Whether a User places Images in `app`, takes them out or switches them public there: Admin in that App. */
+/** Whether a User places Images in `app` or takes them out: Admin in that App. */
 export const canManageImage = (user: AccessUser, app: App): boolean =>
   roleIn(user, app) === Role.ADMIN;
 

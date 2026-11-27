@@ -19,7 +19,7 @@ const STRING = /"(?:[^"\\]|\\.)*"/g;
 const FIRST_STRING = /"((?:[^"\\]|\\.)*)"/;
 /** A glob whose last segments are only `*` or `**`: a whole folder. */
 const WHOLE_FOLDER = /(?:^|\/)\*\*?(?:\/\*\*?)*$/;
-/** A folder pnpm leaves out of the workspace (`- "!packages/auth-old"`). */
+/** A folder pnpm leaves out of the workspace (`- "!<folder>"`). */
 const OUTSIDE_WORKSPACE = /^\s*-\s*"!([^"]+)"/gm;
 const SIDECAR = /(?:^|\/)\._/;
 /**

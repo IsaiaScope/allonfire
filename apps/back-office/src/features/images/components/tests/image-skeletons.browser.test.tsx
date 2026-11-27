@@ -2,7 +2,7 @@
 
 import { SCREEN } from "@allonfire/core/shared/constants/screens";
 import { App } from "@allonfire/database/enums";
-import { FORM_WIDTHS } from "@allonfire/ui/shared/tests/height-at";
+import { FORM_WIDTHS, NARROW_PX } from "@allonfire/ui/shared/tests/height-at";
 import { page } from "vitest/browser";
 import { heightAt } from "@/shared/tests/height-at";
 import { renderInApp } from "@/shared/tests/render-in-app";
@@ -38,6 +38,13 @@ vi.mock("@allonfire/ui/shared/components/aof-image", async () => ({
 }));
 // jscpd:ignore-end
 
+/** Under one pixel nothing is seen to move: Safari on Linux rounds one line
+ *  of the Edit form half a pixel off its bar. */
+const SEEN_PX = 1;
+/** How far apart two measured heights are; no number when one is missing, which no limit passes. */
+const movedPx = (skeleton = Number.NaN, real = Number.NaN) =>
+  Math.abs(skeleton - real);
+
 const BOTH = [App.BACK_OFFICE, App.LAURA];
 const IMAGE = imageBody();
 
@@ -58,9 +65,41 @@ describe("AddImageSkeleton", () => {
         .element(page.getByText(enT("Common.ImageUpload.pick.none")))
         .toBeVisible();
       const skeleton = await heightAt(width, <AddImageSkeleton />);
-      expect(skeleton).toBeCloseTo(real ?? 0, 0);
+      expect(movedPx(skeleton, real)).toBeLessThan(SEEN_PX);
     }
   );
+
+  // On a phone's screen the picker is a square icon button: a placeholder of
+  // any fixed width squeezes the hint beside it onto more lines.
+  it("is as tall as the empty Add form on a phone's screen", async () => {
+    await page.viewport(
+      SCREEN.VIEWPORT.PHONE.WIDTH,
+      SCREEN.VIEWPORT.PHONE.HEIGHT
+    );
+    const real = await heightAt(NARROW_PX, <AddImage apps={BOTH} />);
+    await expect
+      .element(page.getByText(enT("Common.ImageUpload.pick.none")))
+      .toBeVisible();
+    const skeleton = await heightAt(NARROW_PX, <AddImageSkeleton />);
+    expect(movedPx(skeleton, real)).toBeLessThan(SEEN_PX);
+  });
+
+  it("draws the picker's placeholder as wide as the picker", async () => {
+    const real = await heightAt(NARROW_PX, <AddImage apps={BOTH} />);
+    const picker = page
+      .getByRole("button", {
+        exact: true,
+        name: enT("Common.ImageUpload.pick.button"),
+      })
+      .element()
+      .getBoundingClientRect().width;
+    await heightAt(NARROW_PX, <AddImageSkeleton />);
+    const placeholder = document
+      .querySelector('[data-part="picker"]')
+      ?.getBoundingClientRect().width;
+    expect(real).toBeGreaterThan(0);
+    expect(placeholder).toBeCloseTo(picker, 0);
+  });
 
   it("says the page is loading, without its parts being read", async () => {
     await renderInApp({ children: <AddImageSkeleton /> });
@@ -86,7 +125,7 @@ describe("EditImageSkeleton", () => {
         .element(page.getByRole("form", { name: EN.Images.edit.title }))
         .toBeVisible();
       const skeleton = await heightAt(width, <EditImageSkeleton />);
-      expect(skeleton).toBeCloseTo(real ?? 0, 0);
+      expect(movedPx(skeleton, real)).toBeLessThan(SEEN_PX);
     }
   );
 

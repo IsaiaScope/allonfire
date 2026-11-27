@@ -43,36 +43,36 @@ verifies this table before the cutover.
 | `src/i18n/*` | replaced | `src/features/i18n/*` over core's `aofBaseRouting` (Task 4) |
 | `src/types/css.d.ts` | deleted | Next's own types declare `*.css` |
 | `src/lib/auth.ts`, `src/app/api/auth/[...all]/route.ts` | deleted | the API's Auth module is the only auth (ADR 0009, spec decision 2); sign-in actions come from `@allonfire/auth` |
-| `src/lib/seo.ts` | replaced | `aofAppMetadata` in `src/shared/constants/page-information.ts` (Task 7) |
+| `src/lib/seo.ts` | replaced | `aofAppMetadata`, bound in `src/features/metadata/utils/page-information.ts` (Task 7) |
 | `src/components/json-ld.tsx` | deleted | Laura is unindexed, structured data has no reader (spec decision 7) |
 | `src/components/apple-splash-links.tsx` | replaced | `AOFLaunchScreenLinks()` through `aofAppMetadata({ startupImage })` |
 | `src/app/sitemap.ts` | deleted | Laura is unindexed |
 | `src/app/robots.ts` | kept (rewritten: `AOFRobots`) | the same path over core's `AOFRobots` |
 | `src/app/icon.svg` | replaced | `src/app/icon.tsx` over `aofLogoSvg` |
-| `src/app/opengraph-image.tsx`, `src/app/[locale]/global-error.tsx`, `src/app/not-found.tsx` | replaced | the shared share card in `[locale]/opengraph-image.tsx`; `src/app/global-error.tsx` outside `[locale]`; the localized 404 (`AOFWithLocalizedNotFound` in `next.config.ts`, `[locale]/not-found.tsx`) |
+| `src/app/opengraph-image.tsx`, `src/app/[locale]/global-error.tsx`, `src/app/not-found.tsx` | replaced | the shared share card in `[locale]/opengraph-image.tsx`; `src/app/global-error.tsx` outside the language folder; the localized 404 (`AOFWithLocalizedNotFound` in `next.config.ts`, `[locale]/not-found.tsx`) |
 | `src/app/[locale]/manifest.ts` | replaced | `src/app/manifest.ts` over `aofManifest` |
 | `src/app/[locale]/{layout,opengraph-image,twitter-image}.tsx` | kept (rewritten: `AOFLocaleDocument` binding and the shared share card through `aofAppImages`) | the same paths, thin bindings (Tasks 7 and 8) |
 | `src/app/[locale]/{error,not-found}.tsx` | kept (rewritten: `AOFErrorNotice` and `AOFNotFoundNotice` bindings) | the same paths over ui's notices (Task 8) |
 | `src/app/[locale]/{forbidden,unauthorized}.tsx` | deleted | no `authInterrupts`: a Role too low is sent Home by the proxy and the page, refused 403 by the API |
-| `src/app/[locale]/(auth)/login/page.tsx` | replaced | `sign-in` and the three password pages (Task 9); the viewer quick-login is gone with Viewer |
+| `src/app/[locale]/(auth)/login/page.tsx` | replaced | `src/app/[locale]/sign-in/page.tsx` and the three password pages (Task 9); the viewer quick-login is gone with Viewer |
 | `src/app/globals.css` | kept (rewritten: Ocean's stylesheet, bound once) | the same path over the Ocean Design (Task 6) |
 | `src/app/[locale]/(dashboard)/layout.tsx` | replaced | `(signed-in)/layout.tsx` over `AOFAppFrame` (Task 10) |
 | `src/app/[locale]/(dashboard)/**/loading.tsx` | deleted | no `loading.tsx` under `[locale]`; each page ships its own skeleton (Phases 4 to 6) |
-| `src/app/[locale]/(dashboard)/page.tsx`, `src/app/[locale]/(dashboard)/favorites/page.tsx` | replaced | Phase 4: the Gallery and Favorites pages (placeholders in Task 10) |
-| `src/app/[locale]/(dashboard)/upload/page.tsx` | replaced | Phase 5: the Upload page, Admin only (placeholder in Task 10) |
+| `src/app/[locale]/(dashboard)/page.tsx`, `src/app/[locale]/(dashboard)/favorites/page.tsx` | replaced | Phase 4: `src/app/[locale]/(signed-in)/page.tsx` and `src/app/[locale]/(signed-in)/favorites/page.tsx` |
+| `src/app/[locale]/(dashboard)/upload/page.tsx` | replaced | Phase 5: `src/app/[locale]/(signed-in)/upload/page.tsx`, Admin only |
 | `src/app/[locale]/(dashboard)/games/page.tsx` | deleted | Memory is the only game; its page is `/memory` (Phase 6) |
-| `src/app/[locale]/(dashboard)/games/memory/**` | replaced | Phase 6: `/memory` and `/memory/leaderboard` |
+| `src/app/[locale]/(dashboard)/games/memory/**` | replaced | Phase 6: `src/app/[locale]/(signed-in)/memory/page.tsx` and `src/app/[locale]/(signed-in)/memory/leaderboard/page.tsx` |
 | `src/app/[locale]/(dashboard)/games/leaderboard/**`, `src/app/[locale]/(dashboard)/games/quiz/**` | deleted | Quiz is removed completely (spec); the leaderboard is Memory's (Phase 6) |
 | `src/app/[locale]/(dashboard)/settings/**`, `src/features/settings/**` | deleted | language, theme and sign out live in the account menu (`AOFAccountMenu`, spec decision 6) |
 | `src/actions/check-access.ts` | deleted | `requireApp(App.LAURA[, Role.ADMIN])` in the API; `signedInPage({ minRole })` and the proxy `gated` list in the App |
 | `src/components/animated-page.tsx`, `src/components/motion-provider.tsx`, `src/lib/animation-variants.ts` | deleted | `framer-motion` is dropped; motion is CSS behind `motion-safe:` where the Design needs it |
 | `src/components/user-role-provider.tsx` | deleted | the Role is read on the server from the Session (`AOFRoleGatedSection`, the account menu); there is no client Role context, and Viewer is gone |
-| `src/lib/blur-placeholder.ts` | replaced | the API's `blurDataUrl` with `AOFStorageImage placeholder="blur"` (Phase 4) |
-| `src/lib/convert-heic.ts` | replaced | `heicToJpeg` and `isHeic` in `@allonfire/ui/shared/utils/heic-to-jpeg` (`heic-to`), for the preview only: the original file is sent (Phase 5, done) |
+| `src/lib/blur-placeholder.ts` | replaced | `AOFStorageImage` showing the API's blur data URL (Phase 4) |
+| `src/lib/convert-heic.ts` | replaced | `heicToJpeg` and `isHeic` in `packages/ui/src/shared/utils/heic-to-jpeg.ts` (`heic-to`), for the preview only: the original file is sent (Phase 5, done) |
 | `src/lib/file-validation.ts` | replaced | `acceptFiles` over the Image module's `IMAGE.LIMIT.*`, and the API's limits (Phase 5, done) |
 | `src/features/gallery/**` | kept (rewritten: Phase 4) | Phase 4 `features/gallery`: private-cache hydration, `useInfiniteQuery`, an `optimisticMutation` favorite, `AOFStorageImage`; `use-heart-animation.ts` and its heart are not carried (a Favorite is a static mark for a User) |
 | `src/features/games/**/quiz*`, `src/features/games/hooks/use-quiz-game.ts`, `src/features/games/components/game-hub.tsx` | deleted | Quiz is removed completely (spec); the hub listed games and Memory is the only one |
-| `src/features/games/utils/format-time.ts` | replaced | `formatTime` (`m:ss`) in core's `shared/utils/format-time`, over its `UNIT` (Phase 6) |
+| `src/features/games/utils/format-time.ts` | replaced | `formatTime`, minutes and seconds, in `packages/core/src/shared/utils/format-time.ts`, over core's `UNIT` (Phase 6) |
 | `src/features/games/**` | kept (rewritten: Phase 6) | the same folder, rebuilt as the Memory board, leaderboard and score action (the Quiz and the hub are gone) |
 | `src/features/layout/hooks/use-auto-hide-navbar.ts` | deleted | a sidebar frame has no navbar to hide |
 | `src/features/layout/**` | replaced | `AOFAppFrame`, `AOFSidebarSectionLink` and `AOFFrameBreadcrumb` in ui, bound in `src/features/navigation` (Task 10) |
@@ -85,9 +85,9 @@ verifies this table before the cutover.
 |---|---|---|
 | `framer-motion` | deleted | motion is CSS (see `animated-page.tsx` above) |
 | `lucide-react` | replaced | `@tabler/icons-react` |
-| `react-hook-form` | replaced | `useAOFForm` (`@allonfire/ui/features/form/utils/form`) |
+| `react-hook-form` | replaced | `useAOFForm` (`packages/ui/src/features/form/utils/form.ts`) |
 | `sonner` | replaced | `AOFToaster` and `useAOFToast` (ui); sonner stays inside ui |
-| `heic2any` | replaced | `heic-to` through ui's `heic-to-jpeg` (the dependency is removed) |
+| `heic2any` | replaced | `heic-to` through ui's `packages/ui/src/shared/utils/heic-to-jpeg.ts` (the dependency is removed) |
 | `@t3-oss/env-nextjs` | kept | `createEnv`, as the Back Office |
 | `better-auth`, `@better-auth/prisma-adapter` | deleted | auth runs in the API |
 | `@allonfire/database` | kept | enums, `ACCESS` and fixtures only; no Prisma client or service import (Task 1's guard) |

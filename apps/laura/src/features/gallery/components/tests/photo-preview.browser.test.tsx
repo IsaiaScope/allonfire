@@ -172,6 +172,32 @@ describe("PhotoPreview's capsule", () => {
     );
   });
 
+  it("clamps a long caption to two lines on a capsule no taller than a short one's", async ({
+    onTestFinished,
+  }) => {
+    const { innerHeight, innerWidth } = window;
+    onTestFinished(() => page.viewport(innerWidth, innerHeight));
+    await page.viewport(320, SCREEN.VIEWPORT.DESKTOP.HEIGHT);
+    const long = "A very long caption about the sea ".repeat(5).trim();
+    const [first, ...rest] = ONLY_PAGE.items;
+    const items = first
+      ? [{ ...first, alt: { en: long, it: long } }, ...rest]
+      : rest;
+    await renderInApp({ children: <Feed body={{ ...ONLY_PAGE, items }} /> });
+    await openTile(long);
+    const text = () => dialog().getByText(long).element();
+    const height = (element: Element | null) =>
+      element?.getBoundingClientRect().height ?? 0;
+    const lineHeight = Number.parseFloat(getComputedStyle(text()).lineHeight);
+    expect(height(text())).toBeCloseTo(lineHeight * 2, 0);
+    expect(text().scrollHeight).toBeGreaterThan(text().clientHeight);
+    const tall = height(text().closest("div.bg-card"));
+    await userEvent.keyboard("{ArrowRight}");
+    const short = () => dialog().getByText("Photo photo-b").element();
+    await vi.waitFor(() => short());
+    expect(height(short().closest("div.bg-card"))).toBe(tall);
+  });
+
   it("leaves the photo as much room under the caption as above the capsule", async () => {
     await renderInApp({ children: <Feed body={ONLY_PAGE} canMark /> });
     await openTile("Photo photo-a");

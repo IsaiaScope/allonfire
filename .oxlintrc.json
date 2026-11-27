@@ -15,7 +15,6 @@
       }
     ]
   },
-  // The untracked reference packages, generated shadcn code and the exFAT
-  // AppleDouble twins.
-  "ignorePatterns": ["packages/*-old/**", "packages/shadcn/src/**", "**/._*"]
+  // Generated shadcn code and the exFAT AppleDouble twins.
+  "ignorePatterns": ["packages/shadcn/src/**", "**/._*"]
 }

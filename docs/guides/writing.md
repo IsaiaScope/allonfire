@@ -11,7 +11,10 @@ Comments, docs, READMEs, pull requests and user copy. Comment and wording rules 
 
 ## READMEs
 
-- Follow `/aof-documentation`: centered header block, badges as HTML `<img>` in `<p align="center">`, screenshots from `docs/screenshots/`. Example: `README.md`.
+- A README is for a person: what this is, how to run it, where things are, what trips you up. Prefer a table, a tree or a numbered list to paragraphs, and drop a section the reader does not need.
+- A README never retells a guide, an ADR or the code (setup walkthroughs, export references, design reasons): it links the guide. A fact that lives only in a README moves into a guide or a doc comment before it is cut.
+- A Mermaid diagram has three boxes at most; anything bigger is a table or a list. An opening or About description is a couple of plain sentences, never a diagram. Write for apps still to come: outside the list of apps itself, say "the apps" or "a Next App", never a count and never one app's name where any app would do.
+- The look follows `/aof-documentation`: centered header block, badges as HTML `<img>` in `<p align="center">`, emoji section headings, screenshots from `docs/screenshots/`. Example: `README.md`.
 
 ## Pull requests
 

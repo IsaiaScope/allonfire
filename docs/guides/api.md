@@ -7,7 +7,7 @@
 The HTTP backend serving every app. Hono on Node, port 3300. It mounts the
 Auth module (`packages/auth`), the Image module (`packages/storage`), each App's own routes
 (`/v1/<app>`) and the admin console (`/v1/back-office`, which mounts the User module of
-`packages/auth`) under `/v1` — see `apps/api/README.md`.
+`packages/auth`) under `/v1`. Running it: `apps/api/README.md`.
 
 ```
 apps/api/
@@ -138,6 +138,7 @@ many, and `middlewares/` reads wrong.
 - **The docs nest tags in groups** (`OPENAPI.TAG_GROUPS`, `x-tagGroups`): each App's tags under the App's name (Back Office: Users, Overview; Laura: Gallery, Favorites), what every App shares under Platform (Auth, Image, Services, Infrastructure). A route's tag is its own feature's; a new tag goes into a group in the same edit, or the docs would hide it (`spec.test.ts` fails first).
 - **Domain routes mount under `/v1`** via `API.PATH.VERSION` (`shared/constants/api.ts`),
   never a hard-coded `"/v1"`; `/health` and `/ready` stay unversioned.
+- **Handlers stay thin:** validate, call a service, shape the response. Domain logic lives in `@allonfire/database`.
 
 ## Guards, env, Redis, i18n
 
@@ -166,9 +167,9 @@ many, and `middlewares/` reads wrong.
   `STORAGE_IMAGE_SERVER_KEY`, `STORAGE_IMAGE_SERVER_SALT`. Full list in
   `apps/api/.env.example`. `dev` loads it via Node's `--env-file`; tests use
   `apps/api/vitest.setup.ts`.
-- **Redis db indexes:** 0 rate limits, 1 cache (reserved), 2 sessions
+- **Redis db indexes:** 0 everything the API keeps today (the rate-limit counters, `ratelimit:auth:*` among them, the per-address email counts, the provider usage and bucket total caches), 1 cache (reserved), 2 sessions
   (reserved), 15 an e2e run's API (`LOCAL.URL.REDIS_E2E`), so its requests never
-  count against `pnpm dev`. Eviction is `volatile-lru`; never TTL a session key.
+  count against `pnpm dev`. Eviction is server-wide and `volatile-lru`, so only a key that is safe to lose carries a TTL; never TTL a session key.
 - **`I18N.LOCALE` lives in `@allonfire/core/features/i18n/constants/locales`**, shared with the
   Apps (ADR 0012), which route by its derived `Language`. `I18N.SUPPORTED_LOCALES`
   there is the explicit preference order `match()` sees, main variant of each
@@ -202,14 +203,30 @@ many, and `middlewares/` reads wrong.
 - **`/ready` answers 503 only when Postgres is down**; Redis down answers 200 `degraded`, since the rate limiter fails open and a degraded feature is no outage (`features/health/routes/handlers.ts`). (`docs/superpowers/specs/2026-08-27-hono-api-scaffold-design.md`)
 - **Mail** (`features/mail`, core's `features/mail`): Better Auth's verification and reset emails go through `createAuth`'s `mail`, sent after the response (`advanced.backgroundTasks`), each counted first against the reader's address (five in any rolling hour, `EMAIL.ADDRESS_LIMIT`; an Admin's provider test counts apart under its own prefix, so anonymous reset requests for an Admin's address never use up the budget their test needs; failing closed: while Redis cannot count, `/request-password-reset` and `/send-verification-email` answer 503 `MAIL_UNAVAILABLE` for any address). Providers are tried in slot order, each reached over its HTTP API (a driver named for the API's shape); one that answers for want of room (its quota or rate) or refuses is skipped for the next, and an uncertain outcome is never retried elsewhere. Each message carries its own `X-Entity-Ref-ID` (one `crypto.randomUUID()`, the same through a failover), in the `headers` both providers' APIs take: Resend documents it as the way to keep Gmail from threading mail that looks alike, which trims a repeat behind "..." (`MAIL.HEADER.ENTITY_REF_ID`). Where each is reached: `API_MAIL_PROVIDER_<slot>_URL`, `_KEY`, `_DRIVER`, read when sending. A reset link lands on the App's page (`<redirectTo>?token=`), never the API's `GET /reset-password/:token`, whose path the request log records.
 - **Services** (`features/services`): every route but the keep-alive needs a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`); `POST /v1/services/keep-alive` needs `Authorization: Bearer <API_KEEP_ALIVE_TOKEN>` (compared in constant time; unset, every call is 401) and sends its check emails to `API_KEEP_ALIVE_RECIPIENT` (no usage rows to prune: a provider reports its own). A Service is addressed by its `type` (`PATCH /v1/services/:type`); a test send to a provider that is gone is a 404, and a disabled provider can be tested while its Service is on.
+- **Image upload** (`POST /v1/images`, in `packages/storage`) skips the API-wide body limit and time budget and brings its own (`app.ts`), and a User who is Admin in no App is refused before the body is read.
 - **Image Export** (`GET /v1/images/:id/export`, ADR 0036, in `packages/storage`): a Session is needed even for a public Image (a decode costs the server); visibility is a read's (`canSeeImage`, hidden or missing is 404, never 403). It reads the stored file (`deps.readObject`), decodes it with `decodeUpright` and answers a JPEG with no metadata (`IMAGE.EXPORT.QUALITY`), `Content-Disposition: attachment; filename="<created UTC date>-<first 8 id characters>.jpg"` (`exportName`, never the stored key), `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`. It has its own bucket on top of the global one (`exportRateLimit`, `STORAGE_EXPORT_RATE_LIMIT_*`, 30 a minute per signed-in User by default, through `userRateLimiter` as Memory scores are): `createApp` hands it to the module as `deps.limitExport`, which the Export route runs first, so the router alone decides what counts (`HEAD`, which Hono answers with the `GET` handler, included). Nothing is stored.
 - **Laura** (`features/laura`): `GET /v1/laura/gallery` and `GET /v1/laura/favorites` (`?cursor=&limit=`, keyset pages) and the Admin-only `PUT`/`DELETE /v1/laura/favorites/:imageId`. Both reads first make sure the caller has a Laura Profile (`deps.ensureProfile`: get-or-create, the Favorites copied in) and answer 403 when they have no Laura Membership now; then they read the caller's own copies. The writes take `requireApp(App.LAURA, Role.ADMIN)` then `manageGuard(deps.canManage)` (a Laura Admin read now, `adminOf(App.LAURA)`) and change the master and every copy. Wired as `laura` in `createApp`'s deps.
 - **Users overview** (`features/back-office/overview/users`): `GET /v1/back-office/overview/users`, a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`). `userStats` (database) counts every User and the members of each App, read fresh; it has its own base path so it never meets `GET /v1/back-office/users/:id`. Wired as `overviewUsers` in `createApp`'s deps.
 - **Storage overview** (`features/back-office/overview/storage`): `GET /v1/back-office/overview/storage`, a Back Office Admin read now (`adminOf(App.BACK_OFFICE)`, as Services). Each bucket's totals (`listBucketTotals`, paged through the listing) are kept `OVERVIEW_STORAGE.CACHE.TTL_MS` (5 minutes) in the shared Redis under `OVERVIEW_STORAGE.CACHE.KEY_PREFIX` and its name by `createBucketReader`; the buckets listed are the `BUCKETS` lines of `storage-deps.ts` (a new bucket is one line there, and its storage login must be allowed to list it); a listing that fails answers that bucket's `reading: null` with the rest, a Redis that is down only means every read lists. The Image stats (`imageStats`) are read fresh, and so are the Avatars per App (`avatars`: the bucket's files under the Avatar prefix, `listObjectSizes`, matched to each User's `User.image` and Apps by `avatarsByApp`; a listing that fails logs and answers none). Wired as `overviewStorage` in `createApp`'s deps.
 - **Managing Users is gated on Admin in the Back Office** (`isBackOfficeAdmin`, `features/back-office/users/user-deps.ts`), never on its floor (`canEnterApp`), so lowering `minRole` never opens Users. (`docs/superpowers/specs/2026-10-21-back-office-users-list-design.md`)
-- **List sort and date range** (ADR 0031): `GET /v1/back-office/users` and `GET /v1/images` take `sort` (`USER.SORT`, `IMAGE.SORT` from `sortQuery`: `created.desc,size.asc`, at most three, an unknown column or direction dropped, `id` the last tiebreak) beside `search`, whose `created:2026-11-26..2026-11-28` field is a whole-UTC-day range; an empty sort is left out of the query. `hide` is the table's own and never reaches the API.
+- **List sort and date range** (ADR 0031): `GET /v1/back-office/users` and `GET /v1/images` take `sort` (`USER.SORT`, `IMAGE.SORT` from `sortQuery`: `created.desc,size.asc`, at most three, an unknown column or direction dropped, `id` the last tiebreak) beside `search`, whose `created:2026-11-26..2026-11-28` field is a whole-UTC-day range; an empty sort is left out of the query, and one over 200 characters reads as none, never a 400. `hide` is the table's own and never reaches the API.
+
+## Mail providers: setup and operations
+
+Where a provider is reached is the API's environment; everything else is edited on the Back Office's Services page (ADR 0030).
+
+- **Environment, per slot:** `API_MAIL_PROVIDER_<slot>_URL` (the provider's API base, https only), `_KEY` and `_DRIVER` (`apps/api/.env.example`), in Dokploy in Production, never the repo. A driver is the API shape a provider speaks: `key-header-envelope` is Brevo's v3 API (`https://api.brevo.com/v3`), `bearer-flat` is Resend's (`https://api.resend.com`). A slot missing any of the three is skipped and logged. Rotating a key replaces its value and redeploys the API.
+- **Keys:** SMTP keys do not work. Brevo needs a v3 API key (`xkeysib-…`): a Full access key works, a Restricted one needs Transactional email: All and Account: Read. Resend needs an API key allowed to read metrics (a sending-only key can be refused: the rings then draw empty and an error toast says so).
+- **Provider setup:** Brevo: allow the VPS's IP under Security, Authorized IPs, then turn blocking on. Resend: verify the sending domain (the free plan holds one). Each provider's sender address goes on the Services page, and a provider is enabled only with one. Names are labels an Admin types; the seed names them `Provider 1` and `Provider 2`.
+- **DNS:** before sending from the deployment domain, read the existing SPF, DKIM, DMARC and return-path records, then add each provider's own beside them (one SPF record, every sender included); never replace a record another service relies on. A sending address is not an inbox.
+- **Uncertain sends:** nothing sends the email again, so nobody gets it twice; the reader asks again (Sign in, or Forgot password), within the per-address limit.
+- **Keep-alive:** the workflow service calls it daily (`vps-workflow.md`), and a provider with no acceptance in 30 days sends one check email, so no provider deactivates an idle key (Brevo: after 90 days).
+- **What to watch:** the Services page (the rings, the last acceptance) and the log lines `mail provider rejected the message`, `mail provider outcome unknown; not retried elsewhere`, `no mail provider could take the message`, `mail provider has no room left; trying the next`, `mail provider usage could not be read` and `email refused: the per-address limit cannot count`.
+- **Rollback:** turn the MAIL Service off on the Services page: nothing sends, and sign-in of an unverified User answers that a link is on its way without one leaving. Liquibase's rollback of `0007-service-mail` drops the `service` schema and `User.verificationRequiredAt`, and takes every later changeset with it (newest first); roll back the code that reads them first.
 
 ## Pointers
 
-- Running the API, its Auth guards and password bucket, the Image endpoints, the Redis client, the telemetry signals, Local's OpenObserve login: `apps/api/README.md`.
-- The Auth module's exports, mounting it in a Hono host, Registration: `packages/auth/README.md`.
+- Running the API, its route areas, required env and traps: `apps/api/README.md`.
+- Each route's rules, guards and limits: the `DOC` texts in its constants (`IMAGE`, `USER`, `SERVICES`, each App's), served at `/reference`.
+- Mounting the Auth module in a Hono host and what a Next App uses from it: `packages/auth/README.md`; Verification, password reset and Registration: the doc comments under `packages/auth/src/features/server`.
+- The Redis client's startup rule (`awaitReady`) and the telemetry signals: the doc comments in `apps/api/src/features/redis` and `apps/api/src/features/telemetry`; Local's OpenObserve login: `apps/api/.env.example`.
